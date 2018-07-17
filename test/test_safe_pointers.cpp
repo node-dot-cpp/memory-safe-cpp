@@ -5,7 +5,7 @@
 #include <memory>
 #include <stdio.h>
 
-#include "safe_ptr.h"
+#include "../src/safe_ptr.h"
 
 int main()
 {

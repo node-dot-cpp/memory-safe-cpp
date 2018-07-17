@@ -15,17 +15,21 @@
 enum class MemorySafety {none, partial, full};
 
 #ifdef NODECPP_MEMORYSAFETY_NONE
-#define NODECPP_ISSAFE MemorySafety::none
+#define NODECPP_ISSAFE_MODE MemorySafety::none
+#define NODECPP_ISSAFE_DEFAULT false
 #elif defined NODECPP_MEMORYSAFETY_PARTIAL
-#define NODECPP_ISSAFE MemorySafety::partial
+#define NODECPP_ISSAFE_MODE MemorySafety::partial
+#define NODECPP_ISSAFE_DEFAULT true
 #elif defined NODECPP_MEMORYSAFETY_FULL
-#define NODECPP_ISSAFE MemorySafety::full
+#define NODECPP_ISSAFE_MODE MemorySafety::full
+#define NODECPP_ISSAFE_DEFAULT true
 #else
-#define NODECPP_ISSAFE MemorySafety::full
+#define NODECPP_ISSAFE_MODE MemorySafety::full
+#define NODECPP_ISSAFE_DEFAULT true
 #endif
 
 
-template<class T, enum class MemorySafety isSafe> class SoftPtr; // forward declaration
+template<class T, bool isSafe> class SoftPtr; // forward declaration
 
 template<class T>
 struct SoftPtrBase
@@ -35,7 +39,7 @@ struct SoftPtrBase
 	T* t;
 };
 
-template<class T, enum class MemorySafety isSafe=MemorySafety::partial>
+template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class OwningPtr
 {
 	friend class SoftPtr<T, isSafe>;
@@ -169,7 +173,69 @@ public:
 	}
 };
 
-template<class T, enum class MemorySafety isSafe=MemorySafety::partial>
+template<class T>
+class OwningPtr<T, false>
+{
+	friend class SoftPtr<T, false>;
+	T* t;
+
+public:
+	OwningPtr()
+	{
+		t = nullptr;
+	}
+	OwningPtr( T* t_ )
+	{
+		t = t_;
+	}
+	OwningPtr( OwningPtr& other ) = delete;
+	OwningPtr( OwningPtr&& other )
+	{
+		t = other.t;
+		other.head.t = nullptr;
+	}
+	~OwningPtr()
+	{
+		if ( NODECPP_LIKELY(head.t) )
+		{
+			delete head.t;
+		}
+	}
+
+	void reset( T* t_ = t )
+	{
+		T* tmp = head.t;
+		head.t = t_;
+		if ( NODECPP_LIKELY(tmp) )
+			delete head.t;
+	}
+
+	void swap( OwningPtr& other )
+	{
+		T* tmp = t;
+		t = other.t;
+		other.t = tmp;
+	}
+
+	T* get() const
+	{
+		return t;
+	}
+
+	T* release() // TODO: check necessity
+	{
+		T* ret =  head.t;
+		head.t = nullptr;
+		return ret;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return head.t != nullptr;
+	}
+};
+
+template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class SoftPtr : protected SoftPtrBase<T>
 {
 	friend class OwningPtr<T>;
