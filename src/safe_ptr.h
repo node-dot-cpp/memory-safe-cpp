@@ -240,21 +240,19 @@ class SoftPtr : protected SoftPtrBase<T>
 {
 	friend class OwningPtr<T>;
 
-	SoftPtrBase<T> item;
-
 	void removeFromList()
 	{
-		if ( item.next )
-			item.next->prev = item.prev;
-		if ( item.prev )
-			item.prev->next = item.next;
+		if ( this->next )
+			this->next->prev = this->prev;
+		if ( this->prev )
+			this->prev->next = this->next;
 	}
 
 	void dbgValidateList() const
 	{
-		const SoftPtrBase<T>* tmp = item.next;
+		const SoftPtrBase<T>* tmp = this->next;
 		assert( tmp == nullptr || tmp->prev == this );
-		assert( tmp == nullptr || tmp->t == item.t );
+		assert( tmp == nullptr || tmp->t == this->t );
 
 		if ( tmp )
 		{
@@ -263,13 +261,13 @@ class SoftPtr : protected SoftPtrBase<T>
 			while( tmp )
 			{
 				assert( tmp->prev == tmpPrev );
-				assert( tmp->t == item.t );
+				assert( tmp->t == this->t );
 				tmpPrev = tmp;
 				tmp = tmp->next;
 			}
 		}
 
-		tmp = item.prev;
+		tmp = this->prev;
 		if ( tmp )
 		{
 			const SoftPtrBase<T>* tmpPrev = tmp;
@@ -277,7 +275,7 @@ class SoftPtr : protected SoftPtrBase<T>
 			while( tmp )
 			{
 				assert( tmp->next == tmpPrev );
-				assert( tmp->t == item.t );
+				assert( tmp->t == this->t );
 				tmpPrev = tmp;
 				tmp = tmp->prev;
 			}
@@ -287,35 +285,35 @@ class SoftPtr : protected SoftPtrBase<T>
 public:
 	SoftPtr()
 	{
-		item.t = nullptr;
-		item.next = nullptr;
-		item.prev = nullptr;
+		this->t = nullptr;
+		this->next = nullptr;
+		this->prev = nullptr;
 	}
 	SoftPtr( OwningPtr<T>& owner )
 	{
-		item.t = owner.head.t;
-		item.next = owner.head.next;
+		this->t = owner.head.t;
+		this->next = owner.head.next;
 		if ( owner.head.next )
 			owner.head.next->prev = this;
-		item.prev = &(owner.head);
+		this->prev = &(owner.head);
 		owner.head.next = this;
 		dbgValidateList();
 	}
 	SoftPtr( SoftPtr<T>& other )
 	{
-		item.t = other.t;
-		item.next = &other;
-		item.prev = other.prev;
+		this->t = other.t;
+		this->next = &other;
+		this->prev = other.prev;
 		other.prev->next = this;
 		other.prev = this;
 		dbgValidateList();
 	}
 	SoftPtr( SoftPtr<T>&& other )
 	{
-		item.t = other.t;
+		this->t = other.t;
 		other.t = nullptr;
-		item.next = other.next;
-		item.prev = other.prev;
+		this->next = other.next;
+		this->prev = other.prev;
 		if ( other.prev )
 			other.prev.next = this;
 		if ( other.next )
@@ -326,44 +324,95 @@ public:
 	}
 	void swap( SoftPtr& other )
 	{
-		T* tmp = item.t;
-		item.t = other.t;
+		T* tmp = this->t;
+		this->t = other.t;
 		other.t = tmp;
-		auto tmpLP = item.prev;
-		item.prev = other.prev;
+		auto tmpLP = this->prev;
+		this->prev = other.prev;
 		other.prev = tmpLP;
-		tmpLP = item.next;
-		item.next = other.next;
+		tmpLP = this->next;
+		this->next = other.next;
 		other.next = tmpLP;
 		if ( other.prev )
 			other.prev->next = &other;
 		if ( other.next )
 			other.next->prev = &other;
-		if ( item.prev )
-			item.prev->next = this;
-		if ( item.next )
-			item.next->prev = this;
+		if ( this->prev )
+			this->prev->next = this;
+		if ( this->next )
+			this->next->prev = this;
 		dbgValidateList();
 	}
 	~SoftPtr()
 	{
 		dbgValidateList();
-		item.t = nullptr;
+		this->t = nullptr;
 		removeFromList();
 	}
 
 	T* get() const
 	{
-		assert( item.t != nullptr );
-		return item.t;
+		assert( this->t != nullptr );
+		return this->t;
 	}
 
 	T* release() // TODO: check necessity
 	{
-		assert( item.t != nullptr );
-		T* ret =  item.t;
-		item.t = nullptr;
+		assert( this->t != nullptr );
+		T* ret =  this->t;
+		this->t = nullptr;
 		removeFromList();
+		return ret;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return this->t != nullptr;
+	}
+};
+
+template<class T>
+class SoftPtr<T,false>
+{
+	friend class OwningPtr<T,false>;
+
+public:
+	SoftPtr()
+	{
+		this->t = nullptr;
+	}
+	SoftPtr( OwningPtr<T>& owner )
+	{
+		this->t = owner.head.t;
+	}
+	SoftPtr( SoftPtr<T>& other )
+	{
+		this->t = other.t;
+	}
+	SoftPtr( SoftPtr<T>&& other )
+	{
+		this->t = other.t;
+		other.t = nullptr;
+	}
+	void swap( SoftPtr& other )
+	{
+		T* tmp = this->t;
+		this->t = other.t;
+		other.t = tmp;
+	}
+	~SoftPtr()
+	{
+	}
+
+	T* get() const
+	{
+		return this->t;
+	}
+
+	T* release() // TODO: check necessity
+	{
+		T* ret =  this->t;
+		this->t = nullptr;
 		return ret;
 	}
 
