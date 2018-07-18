@@ -2,7 +2,6 @@
 #define SAFE_PTR_H
 
 #include <assert.h>
-#include "iibmalloc/iibmalloc.h"
 
 #if defined __GNUC__
 #define NODECPP_LIKELY(x)       __builtin_expect(!!(x),1)
@@ -42,6 +41,7 @@ struct SoftPtrBase
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class OwningPtr
 {
+	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	friend class SoftPtr<T, isSafe>;
 	SoftPtrBase<T> head;
 
@@ -84,8 +84,8 @@ public:
 		head.next = nullptr;
 		head.t = t_;
 	}
-	OwningPtr( OwningPtr& other ) = delete;
-	OwningPtr( OwningPtr&& other )
+	OwningPtr( OwningPtr<T, isSafe>& other ) = delete;
+	OwningPtr( OwningPtr<T, isSafe>&& other )
 	{
 		head.next = other.head.next;
 		other.head.next = nullptr;
@@ -138,7 +138,7 @@ public:
 		}
 	}
 
-	void swap( OwningPtr& other )
+	void swap( OwningPtr<T, isSafe>& other )
 	{
 		T* tmp = head.t;
 		head.t = other.head.t;
@@ -182,15 +182,18 @@ class OwningPtr<T, false>
 public:
 	OwningPtr()
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		t = nullptr;
 	}
 	OwningPtr( T* t_ )
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		t = t_;
 	}
-	OwningPtr( OwningPtr& other ) = delete;
-	OwningPtr( OwningPtr&& other )
+	OwningPtr( OwningPtr<T, false>& other ) = delete;
+	OwningPtr( OwningPtr<T, false>&& other )
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		t = other.t;
 		other.head.t = nullptr;
 	}
@@ -210,7 +213,7 @@ public:
 			delete head.t;
 	}
 
-	void swap( OwningPtr& other )
+	void swap( OwningPtr<T, false>& other )
 	{
 		T* tmp = t;
 		t = other.t;
@@ -238,7 +241,8 @@ public:
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class SoftPtr : protected SoftPtrBase<T>
 {
-	friend class OwningPtr<T>;
+	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+	friend class OwningPtr<T, isSafe>;
 
 	void removeFromList()
 	{
@@ -289,7 +293,7 @@ public:
 		this->next = nullptr;
 		this->prev = nullptr;
 	}
-	SoftPtr( OwningPtr<T>& owner )
+	SoftPtr( OwningPtr<T, isSafe>& owner )
 	{
 		this->t = owner.head.t;
 		this->next = owner.head.next;
@@ -299,7 +303,7 @@ public:
 		owner.head.next = this;
 		dbgValidateList();
 	}
-	SoftPtr( SoftPtr<T>& other )
+	SoftPtr( SoftPtr<T, isSafe>& other )
 	{
 		this->t = other.t;
 		this->next = &other;
@@ -308,7 +312,7 @@ public:
 		other.prev = this;
 		dbgValidateList();
 	}
-	SoftPtr( SoftPtr<T>&& other )
+	SoftPtr( SoftPtr<T, isSafe>&& other )
 	{
 		this->t = other.t;
 		other.t = nullptr;
@@ -322,7 +326,7 @@ public:
 		other.next = nullptr;
 		dbgValidateList();
 	}
-	void swap( SoftPtr& other )
+	void swap( SoftPtr<T, isSafe>& other )
 	{
 		T* tmp = this->t;
 		this->t = other.t;
@@ -379,22 +383,26 @@ class SoftPtr<T,false>
 public:
 	SoftPtr()
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		this->t = nullptr;
 	}
-	SoftPtr( OwningPtr<T>& owner )
+	SoftPtr( OwningPtr<T,false>& owner )
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		this->t = owner.head.t;
 	}
-	SoftPtr( SoftPtr<T>& other )
+	SoftPtr( SoftPtr<T,false>& other )
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		this->t = other.t;
 	}
-	SoftPtr( SoftPtr<T>&& other )
+	SoftPtr( SoftPtr<T,false>&& other )
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
 		this->t = other.t;
 		other.t = nullptr;
 	}
-	void swap( SoftPtr& other )
+	void swap( SoftPtr<T, false>& other )
 	{
 		T* tmp = this->t;
 		this->t = other.t;
