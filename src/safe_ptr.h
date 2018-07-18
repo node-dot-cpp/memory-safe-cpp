@@ -182,18 +182,18 @@ class OwningPtr<T, false>
 public:
 	OwningPtr()
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = nullptr;
 	}
 	OwningPtr( T* t_ )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = t_;
 	}
 	OwningPtr( OwningPtr<T, false>& other ) = delete;
 	OwningPtr( OwningPtr<T, false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = other.t;
 		other.head.t = nullptr;
 	}
@@ -383,22 +383,22 @@ class SoftPtr<T,false>
 public:
 	SoftPtr()
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = nullptr;
 	}
 	SoftPtr( OwningPtr<T,false>& owner )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = owner.head.t;
 	}
 	SoftPtr( SoftPtr<T,false>& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 	}
 	SoftPtr( SoftPtr<T,false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none );
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 		other.t = nullptr;
 	}
