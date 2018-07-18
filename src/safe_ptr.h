@@ -302,6 +302,7 @@ public:
 		this->prev = &(owner.head);
 		owner.head.next = this;
 		dbgValidateList();
+		owner.dbgValidateList();
 	}
 	SoftPtr( SoftPtr<T, isSafe>& other )
 	{
@@ -311,6 +312,7 @@ public:
 		other.prev->next = this;
 		other.prev = this;
 		dbgValidateList();
+		other.dbgValidateList();
 	}
 	SoftPtr( SoftPtr<T, isSafe>&& other )
 	{
@@ -325,6 +327,7 @@ public:
 		other.prev = nullptr;
 		other.next = nullptr;
 		dbgValidateList();
+		other.dbgValidateList();
 	}
 	void swap( SoftPtr<T, isSafe>& other )
 	{
