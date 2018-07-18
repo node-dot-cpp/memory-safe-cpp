@@ -103,6 +103,16 @@ public:
 		}
 	}
 
+	OwningPtr& operator = ( OwningPtr<T, isSafe>& other ) = delete;
+	OwningPtr& operator = ( OwningPtr<T, isSafe>&& other )
+	{
+		head.next = other.head.next;
+		other.head.next = nullptr;
+		head.t = other.head.t;
+		other.head.t = nullptr;
+		dbgValidateList();
+		return *this;
+	}
 	void reset()
 	{
 		if ( NODECPP_LIKELY(head.t) )
@@ -203,6 +213,15 @@ public:
 		{
 			delete head.t;
 		}
+	}
+
+	OwningPtr& operator = ( OwningPtr<T, false>& other ) = delete;
+	OwningPtr& operator = ( OwningPtr<T, false>&& other )
+	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
+		t = other.t;
+		other.head.t = nullptr;
+		return *this;
 	}
 
 	void reset( T* t_ = t )
@@ -329,6 +348,37 @@ public:
 		dbgValidateList();
 		other.dbgValidateList();
 	}
+
+	SoftPtr& operator = ( SoftPtr<T, isSafe>& other )
+	{
+		removeFromList();
+		this->t = other.t;
+		this->next = &other;
+		this->prev = other.prev;
+		other.prev->next = this;
+		other.prev = this;
+		dbgValidateList();
+		other.dbgValidateList();
+		return *this;
+	}
+	SoftPtr& operator = ( SoftPtr<T, isSafe>&& other )
+	{
+		removeFromList();
+		this->t = other.t;
+		other.t = nullptr;
+		this->next = other.next;
+		this->prev = other.prev;
+		if ( other.prev )
+			other.prev.next = this;
+		if ( other.next )
+			other.next.prev = this;
+		other.prev = nullptr;
+		other.next = nullptr;
+		dbgValidateList();
+		other.dbgValidateList();
+		return *this;
+	}
+
 	void swap( SoftPtr<T, isSafe>& other )
 	{
 		T* tmp = this->t;
@@ -350,12 +400,6 @@ public:
 			this->next->prev = this;
 		dbgValidateList();
 	}
-	~SoftPtr()
-	{
-		dbgValidateList();
-		this->t = nullptr;
-		removeFromList();
-	}
 
 	T* get() const
 	{
@@ -375,6 +419,13 @@ public:
 	explicit operator bool() const noexcept
 	{
 		return this->t != nullptr;
+	}
+
+	~SoftPtr()
+	{
+		dbgValidateList();
+		this->t = nullptr;
+		removeFromList();
 	}
 };
 
@@ -405,14 +456,26 @@ public:
 		this->t = other.t;
 		other.t = nullptr;
 	}
+
+	SoftPtr& operator = ( SoftPtr<T,false>& other )
+	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
+		this->t = other.t;
+		return *this;
+	}
+	SoftPtr& operator = ( SoftPtr<T,false>&& other )
+	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
+		this->t = other.t;
+		other.t = nullptr;
+		return *this;
+	}
+
 	void swap( SoftPtr<T, false>& other )
 	{
 		T* tmp = this->t;
 		this->t = other.t;
 		other.t = tmp;
-	}
-	~SoftPtr()
-	{
 	}
 
 	T* get() const
@@ -430,6 +493,10 @@ public:
 	explicit operator bool() const noexcept
 	{
 		return this->t != nullptr;
+	}
+
+	~SoftPtr()
+	{
 	}
 };
 
