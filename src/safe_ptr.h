@@ -353,9 +353,17 @@ public:
 	{
 		removeFromList();
 		this->t = other.t;
-		this->next = &other;
 		this->prev = other.prev;
-		other.prev->next = this;
+		if ( other.prev != nullptr )
+		{
+			assert( t != nullptr );
+			other.prev->next = this;
+		}
+		else
+		{
+			assert( t == nullptr );
+		}
+		this->next = &other;
 		other.prev = this;
 		dbgValidateList();
 		other.dbgValidateList();
