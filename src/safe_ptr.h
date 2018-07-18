@@ -218,7 +218,6 @@ public:
 	OwningPtr& operator = ( OwningPtr<T, false>& other ) = delete;
 	OwningPtr& operator = ( OwningPtr<T, false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = other.t;
 		other.head.t = nullptr;
 		return *this;
@@ -467,13 +466,11 @@ public:
 
 	SoftPtr& operator = ( SoftPtr<T,false>& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 		return *this;
 	}
 	SoftPtr& operator = ( SoftPtr<T,false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 		other.t = nullptr;
 		return *this;
