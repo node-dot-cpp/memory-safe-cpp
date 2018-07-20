@@ -41,7 +41,8 @@ struct SoftPtrBase
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class OwningPtr
 {
-	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+//	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class SoftPtr<T, isSafe>;
 	SoftPtrBase<T> head;
 
@@ -168,7 +169,7 @@ public:
 		return head.t;
 	}
 
-	// T* release() : prhibited by safity
+	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
@@ -179,29 +180,28 @@ public:
 template<class T>
 class OwningPtr<T, false>
 {
+	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
 	friend class SoftPtr<T, false>;
 	T* t;
 
 public:
 	OwningPtr()
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = nullptr;
 	}
 	OwningPtr( T* t_ )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = t_;
 	}
 	OwningPtr( OwningPtr<T, false>& other ) = delete;
 	OwningPtr( OwningPtr<T, false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = other.t;
 		other.t = nullptr;
 	}
 	~OwningPtr()
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: being placed at the level of class definition, the codition may be checked whether or not this specialization is instantiated (see, for instance, https://stackoverflow.com/questions/5246049/c11-static-assert-and-template-instantiation)
 		if ( NODECPP_LIKELY(t) )
 		{
 			delete t;
@@ -236,7 +236,7 @@ public:
 		return t;
 	}
 
-	// T* release() : prhibited by safity
+	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
@@ -247,7 +247,8 @@ public:
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class SoftPtr : protected SoftPtrBase<T>
 {
-	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+//	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class OwningPtr<T, isSafe>;
 
 	void removeFromList()
@@ -402,7 +403,7 @@ public:
 		return this->t;
 	}
 
-	// T* release() : prhibited by safity
+	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
@@ -420,27 +421,25 @@ public:
 template<class T>
 class SoftPtr<T,false>
 {
+	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
 	friend class OwningPtr<T,false>;
+	T* t;
 
 public:
 	SoftPtr()
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = nullptr;
 	}
 	SoftPtr( OwningPtr<T,false>& owner )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
-		this->t = owner.head.t;
+		this->t = owner.t;
 	}
 	SoftPtr( SoftPtr<T,false>& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 	}
 	SoftPtr( SoftPtr<T,false>&& other )
 	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		this->t = other.t;
 		other.t = nullptr;
 	}
@@ -469,7 +468,7 @@ public:
 		return this->t;
 	}
 
-	// T* release() : prhibited by safity
+	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
@@ -478,6 +477,7 @@ public:
 
 	~SoftPtr()
 	{
+		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 	}
 };
 
