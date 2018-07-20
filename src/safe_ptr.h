@@ -168,14 +168,7 @@ public:
 		return head.t;
 	}
 
-	T* release() // TODO: check necessity
-	{
-		assert( head.t != nullptr );
-		T* ret =  head.t;
-		head.t = nullptr;
-		updatePtrForListItems( nullptr );
-		return ret;
-	}
+	// T* release() : prhibited by safity
 
 	explicit operator bool() const noexcept
 	{
@@ -243,12 +236,7 @@ public:
 		return t;
 	}
 
-	T* release() // TODO: check necessity
-	{
-		T* ret =  head.t;
-		head.t = nullptr;
-		return ret;
-	}
+	// T* release() : prhibited by safity
 
 	explicit operator bool() const noexcept
 	{
@@ -414,14 +402,7 @@ public:
 		return this->t;
 	}
 
-	T* release() // TODO: check necessity
-	{
-		assert( this->t != nullptr );
-		T* ret =  this->t;
-		this->t = nullptr;
-		removeFromList();
-		return ret;
-	}
+	// T* release() : prhibited by safity
 
 	explicit operator bool() const noexcept
 	{
@@ -488,12 +469,7 @@ public:
 		return this->t;
 	}
 
-	T* release() // TODO: check necessity
-	{
-		T* ret =  this->t;
-		this->t = nullptr;
-		return ret;
-	}
+	// T* release() : prhibited by safity
 
 	explicit operator bool() const noexcept
 	{
