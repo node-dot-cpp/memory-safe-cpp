@@ -205,13 +205,13 @@ public:
 	{
 		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 		t = other.t;
-		other.head.t = nullptr;
+		other.t = nullptr;
 	}
 	~OwningPtr()
 	{
-		if ( NODECPP_LIKELY(head.t) )
+		if ( NODECPP_LIKELY(t) )
 		{
-			delete head.t;
+			delete t;
 		}
 	}
 
@@ -225,10 +225,10 @@ public:
 
 	void reset( T* t_ = t )
 	{
-		T* tmp = head.t;
-		head.t = t_;
 		if ( NODECPP_LIKELY(tmp) )
 			delete head.t;
+		T* tmp = t;
+		t = t_;
 	}
 
 	void swap( OwningPtr<T, false>& other )
@@ -252,7 +252,7 @@ public:
 
 	explicit operator bool() const noexcept
 	{
-		return head.t != nullptr;
+		return t != nullptr;
 	}
 };
 
