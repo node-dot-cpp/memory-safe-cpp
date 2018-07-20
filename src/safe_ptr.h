@@ -212,16 +212,16 @@ public:
 	OwningPtr& operator = ( OwningPtr<T, false>&& other )
 	{
 		t = other.t;
-		other.head.t = nullptr;
+		other.t = nullptr;
 		return *this;
 	}
 
 	void reset( T* t_ = t )
 	{
-		if ( NODECPP_LIKELY(tmp) )
-			delete head.t;
 		T* tmp = t;
 		t = t_;
+		// if ( NODECPP_LIKELY(tmp) ) : we do not need this check
+		delete tmp;
 	}
 
 	void swap( OwningPtr<T, false>& other )
