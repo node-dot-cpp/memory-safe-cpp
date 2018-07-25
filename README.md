@@ -1,4 +1,4 @@
-# safe-memory
+# memory-safe-cpp
 A dialect of C++ with memory safety guarantees
 
 ## Principles 
