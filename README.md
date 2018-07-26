@@ -25,4 +25,4 @@ Safety checks are two-fold:
 
 ## Current Status
 
-We have just started, need some time to produce anything which is worth a look :-( . 
+We have just started, need some time to produce anything which is worth a look . Stay tuned! :-)
