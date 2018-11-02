@@ -71,7 +71,7 @@ struct FirstControlBlock // not reallocatable
 		Ptr2PtrAnddata2* start = firstFree;
 		while( start ) {
 			assert( !start->isUsed() );
-			assert( ( start->getPtr() == 0 || start->is1stBlock() && start - slots < maxSlots ) || ( (!start->is1stBlock()) && start - otherAllockedSlots < otherAllockedCnt ) );
+			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots) < otherAllockedCnt ) );
 			start = ((Ptr2PtrAnddata2*)(start->getPtr()));
 		}
 	}
@@ -132,12 +132,14 @@ struct FirstControlBlock // not reallocatable
 		if ( idx < maxSlots ) {
 			slots[idx].set( firstFree );
 			firstFree = slots + idx;
+			firstFree->setUnused();
 		}
 		else {
 			assert( idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
 			otherAllockedSlots[idx].set( firstFree );
 			firstFree = otherAllockedSlots + idx;
+			firstFree->setUnused();
 		}
 		assert( firstFree == nullptr || !firstFree->isUsed() );
 		dbgCheckFreeList();
@@ -443,8 +445,10 @@ public:
 		size_t idx = this->idx;
 		this->idx = other.idx;
 		other.idx = idx;
-		getControlBlock()->resetPtr(this->idx, this);
-		other.getControlBlock()->resetPtr(other.idx, &other);
+		if ( this->t )
+			getControlBlock()->resetPtr(this->idx, this);
+		if ( other.t )
+			other.getControlBlock()->resetPtr(other.idx, &other);
 	}
 
 	T* get() const
