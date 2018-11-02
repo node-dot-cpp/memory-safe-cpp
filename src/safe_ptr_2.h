@@ -42,17 +42,19 @@ enum class MemorySafety {none, partial, full};
 struct Ptr2PtrAnddata2 {
 private:
 	uintptr_t ptr;
-	enum WHICH_BLOCK {IN_1ST_BLOCK = 0, IN_2ND_BLOCK = 1 };
+	//enum WHICH_BLOCK {IN_1ST_BLOCK = 0, IN_2ND_BLOCK = 1 };
 public:
-	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( (ptr&3) == 0 ); } // assumed to be from the first block and free (reasonable default)
+	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( !isUsed() ); }// reasonable default
 	void* getPtr() { return (void*)( ptr & ~((uintptr_t)1) ); }
 	void setUsed() { ptr |= 1; }
 	void setUnused() { ptr &= ~((uintptr_t)1); }
 	bool isUsed() { return ptr & 1; }
-	void set1stBlock() { ptr &= ~((uintptr_t)2); }
-	void set2ndBlock() { ptr |= 2; }
-	WHICH_BLOCK is1stBlock() { return (WHICH_BLOCK)((ptr &= 2)>>1); }
-	static WHICH_BLOCK is1stBlock( uintptr_t ptr ) { return (WHICH_BLOCK)((ptr &= 2)>>1); }
+	void set1stBlock() { ptr |= 2; }
+	void set2ndBlock() { ptr &= ~((uintptr_t)2); }
+//	WHICH_BLOCK is1stBlock() { return (WHICH_BLOCK)((ptr & 2)>>1); }
+//	static WHICH_BLOCK is1stBlock( uintptr_t ptr ) { return (WHICH_BLOCK)((ptr & 2)>>1); }
+	bool is1stBlock() { return (ptr & 2)>>1; }
+	static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
 };
 static_assert( sizeof(Ptr2PtrAnddata2) == 8 );
 
@@ -67,13 +69,17 @@ struct FirstControlBlock // not reallocatable
 
 	void init() {
 		firstFree = slots;
-		for ( size_t i=0; i<maxSlots-1; ++i )
+		for ( size_t i=0; i<maxSlots-1; ++i ) {
 			slots[i].set(slots + i + 1);
+			slots[i].set1stBlock();
+		}
 		slots[maxSlots-1].set(nullptr);
 		otherAllockedCnt = 0;
 		otherAllockedSlots = nullptr;
+		assert( firstFree == nullptr || !firstFree->isUsed() );
 	}
 	size_t insert( void* ptr ) {
+		assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( firstFree != nullptr ) {
 			Ptr2PtrAnddata2* tmp = (Ptr2PtrAnddata2*)(firstFree->getPtr());
 			assert( !firstFree->isUsed() );
@@ -108,6 +114,7 @@ struct FirstControlBlock // not reallocatable
 		}
 	}
 	void remove( size_t idx ) {
+		assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( idx < maxSlots ) {
 			slots[idx].set( firstFree );
 			firstFree = slots + idx;
@@ -118,6 +125,7 @@ struct FirstControlBlock // not reallocatable
 			otherAllockedSlots[idx].set( firstFree );
 			firstFree = otherAllockedSlots + idx;
 		}
+		assert( firstFree == nullptr || !firstFree->isUsed() );
 	}
 	void clear() {
 	}
