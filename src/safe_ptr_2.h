@@ -45,7 +45,7 @@ private:
 	//enum WHICH_BLOCK {IN_1ST_BLOCK = 0, IN_2ND_BLOCK = 1 };
 public:
 	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( !isUsed() ); }// reasonable default
-	void* getPtr() { return (void*)( ptr & ~((uintptr_t)1) ); }
+	void* getPtr() { return (void*)( ptr & ~((uintptr_t)3) ); }
 	void setUsed() { ptr |= 1; }
 	void setUnused() { ptr &= ~((uintptr_t)1); }
 	bool isUsed() { return ptr & 1; }
@@ -67,6 +67,15 @@ struct FirstControlBlock // not reallocatable
 	Ptr2PtrAnddata2* otherAllockedSlots;
 	Ptr2PtrAnddata2 slots[maxSlots];
 
+	void dbgCheckFreeList() {
+		Ptr2PtrAnddata2* start = firstFree;
+		while( start ) {
+			assert( !start->isUsed() );
+			assert( ( start->getPtr() == 0 || start->is1stBlock() && start - slots < maxSlots ) || ( (!start->is1stBlock()) && start - otherAllockedSlots < otherAllockedCnt ) );
+			start = ((Ptr2PtrAnddata2*)(start->getPtr()));
+		}
+	}
+
 	void init() {
 		firstFree = slots;
 		for ( size_t i=0; i<maxSlots-1; ++i ) {
@@ -76,12 +85,13 @@ struct FirstControlBlock // not reallocatable
 		slots[maxSlots-1].set(nullptr);
 		otherAllockedCnt = 0;
 		otherAllockedSlots = nullptr;
-		assert( firstFree == nullptr || !firstFree->isUsed() );
+		assert( !firstFree->isUsed() );
+		dbgCheckFreeList();
 	}
 	size_t insert( void* ptr ) {
 		assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( firstFree != nullptr ) {
-			Ptr2PtrAnddata2* tmp = (Ptr2PtrAnddata2*)(firstFree->getPtr());
+			Ptr2PtrAnddata2* tmp = ((Ptr2PtrAnddata2*)(firstFree->getPtr()));
 			assert( !firstFree->isUsed() );
 			size_t idx;
 			if ( firstFree->is1stBlock() )
@@ -91,6 +101,8 @@ struct FirstControlBlock // not reallocatable
 			firstFree->set(ptr);
 			firstFree->setUsed();
 			firstFree = tmp;
+			assert( firstFree == nullptr || !firstFree->isUsed() );
+			dbgCheckFreeList();
 			return idx;
 		}
 		else {
@@ -112,6 +124,8 @@ struct FirstControlBlock // not reallocatable
 			otherAllockedSlots[idx].setUsed();
 			otherAllockedSlots[idx].set1stBlock();
 		}
+		dbgCheckFreeList();
+		assert( firstFree == nullptr || !firstFree->isUsed() );
 	}
 	void remove( size_t idx ) {
 		assert( firstFree == nullptr || !firstFree->isUsed() );
@@ -126,6 +140,7 @@ struct FirstControlBlock // not reallocatable
 			firstFree = otherAllockedSlots + idx;
 		}
 		assert( firstFree == nullptr || !firstFree->isUsed() );
+		dbgCheckFreeList();
 	}
 	void clear() {
 	}
@@ -312,6 +327,25 @@ public:
 	}
 };
 #endif // 0
+
+template<bool _Test,
+	class _Ty = void>
+	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
+
+template<class _Ty>
+	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
+
+template<class _Ty,
+	class... _Types,
+	enable_if_t<!is_array_v<_Ty>, int> = 0>
+	_NODISCARD inline OwningPtr<_Ty> make_owning(_Types&&... _Args)
+	{	// make a unique_ptr
+	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+	return OwningPtr<_Ty>(objPtr);
+//	return (OwningPtr<_Ty>(new _Ty(_STD forward<_Types>(_Args)...)));
+	}
+
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class SoftPtr

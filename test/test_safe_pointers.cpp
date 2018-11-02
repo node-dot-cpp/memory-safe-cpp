@@ -7,7 +7,7 @@
 
 #include "../src/safe_ptr_2.h"
 
-int main()
+int main1()
 {
 	SoftPtr<int> s13;
 	SoftPtr<int> s14;
@@ -25,6 +25,32 @@ int main()
 		*s11.get() += 1;
 		*s22.get() += 1;
 		printf( "*n1 = %d, *n2 = %d\n", *n1, *n2 );
+		printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
+		s21.swap(s12);
+ 		printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
+		s14.swap(s11);
+ 		printf( "*s14 = %d\n", *s14.get() );
+	}
+	printf( "*s14 = %d\n", *s14.get() );
+	return 0;
+}
+
+int main()
+{
+	SoftPtr<int> s13;
+	SoftPtr<int> s14;
+	{
+		OwningPtr<int> p1 = make_owning<int>();
+		*(p1.get()) = 5;
+		OwningPtr<int> p2 = make_owning<int>();
+		*(p2.get()) = 25;
+		SoftPtr<int> s11(p1);
+		SoftPtr<int> s12(p1);
+		SoftPtr<int> s21(p2);
+		SoftPtr<int> s22(p2);
+		*s11.get() += 1;
+		*s22.get() += 1;
+//		printf( "*n1 = %d, *n2 = %d\n", *n1, *n2 );
 		printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
 		s21.swap(s12);
  		printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
