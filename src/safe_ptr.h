@@ -13,6 +13,9 @@
 
 enum class MemorySafety {none, partial, full};
 
+//#define NODECPP_MEMORYSAFETY_NONE
+#define NODECPP_MEMORYSAFETY_EARLY_DETECTION
+
 #ifdef NODECPP_MEMORYSAFETY_NONE
 #define NODECPP_ISSAFE_MODE MemorySafety::none
 #define NODECPP_ISSAFE_DEFAULT false
@@ -25,6 +28,12 @@ enum class MemorySafety {none, partial, full};
 #else
 #define NODECPP_ISSAFE_MODE MemorySafety::full
 #define NODECPP_ISSAFE_DEFAULT true
+#endif
+
+#ifndef NODECPP_MEMORYSAFETY_NONE
+#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
+constexpr void* invalid_ptr = (void*)(1);
+#endif
 #endif
 
 
@@ -55,6 +64,8 @@ class OwningPtr
 			next = next->next;
 		}
 	}
+
+	void updatePtrForListItemsWithInvalidPtr() { updatePtrForListItems( nullptr ) ); }
 
 	void dbgValidateList() const
 	{
@@ -100,7 +111,10 @@ public:
 		if ( NODECPP_LIKELY(head.t) )
 		{
 			delete head.t;
-			updatePtrForListItems( nullptr );
+#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
+			head.t = nullptr;
+#endif
+			updatePtrForListItemsWithInvalidPtr();
 		}
 	}
 
@@ -120,7 +134,7 @@ public:
 		{
 			delete head.t;
 			head.t = nullptr;
-			updatePtrForListItems( nullptr );
+			updatePtrForListItemsWithInvalidPtr();
 		}
 	}
 
@@ -139,7 +153,7 @@ public:
 			else
 			{
 				head.t = nullptr;
-				updatePtrForListItems( nullptr );
+				updatePtrForListItemsWithInvalidPtr();
 			}
 		}
 		else
