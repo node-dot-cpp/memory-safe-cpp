@@ -39,7 +39,7 @@ enum class MemorySafety {none, partial, full};
 
 //template<class T> class SoftPtr; // forward declaration
 
-struct Ptr2PtrAnddata2 {
+struct Ptr2PtrWishFlags {
 private:
 	uintptr_t ptr;
 	//enum WHICH_BLOCK {IN_1ST_BLOCK = 0, IN_2ND_BLOCK = 1 };
@@ -56,23 +56,60 @@ public:
 	bool is1stBlock() { return (ptr & 2)>>1; }
 	static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
 };
-static_assert( sizeof(Ptr2PtrAnddata2) == 8 );
+static_assert( sizeof(Ptr2PtrWishFlags) == 8 );
+
+struct Ptr2PtrWishData {
+//private:
+	uintptr_t ptr;
+	static constexpr uintptr_t ptrMask_ = 0xFFFFFFFFFFF8ULL;
+	static constexpr uintptr_t upperDataMask_ = ~(0xFFFFFFFFFFFFULL);
+	static constexpr uintptr_t lowerDataMask_ = 0x7ULL;
+	static constexpr uintptr_t upperDataMaskInData_ = 0x7FFF8ULL;
+	static constexpr size_t upperDataSize_ = 16;
+	static constexpr size_t lowerDataSize_ = 3;
+	static constexpr size_t upperDataShift_ = 45;
+	static_assert ( (upperDataMaskInData_ << upperDataShift_ ) == upperDataMask_ );
+	static_assert ( (ptrMask_ & upperDataMask_) == 0 );
+	static_assert ( (ptrMask_ >> (upperDataShift_ + lowerDataSize_)) == 0 );
+	static_assert ( (ptrMask_ & lowerDataMask_) == 0 );
+	static_assert ( (upperDataMask_ & lowerDataMask_) == 0 );
+	static_assert ( (ptrMask_ | upperDataMask_ | lowerDataMask_) == 0xFFFFFFFFFFFFFFFFULL );
+public:
+	void init( void* ptr_ ) { 
+		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
+		ptr = (uintptr_t)ptr_; 
+	}
+	void* getPtr() { return (void*)( ptr & ptrMask_ ); }
+	size_t getData() { return ( (ptr & upperDataMask_) >> 45 ) | (ptr & lowerDataMask_); }
+	void updatePtr( void* ptr_ ) { 
+		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
+		ptr &= ~ptrMask_; 
+		ptr |= (uintptr_t)ptr_; }
+	void updateData( size_t data ) { 
+		assert( data < (1<<(upperDataSize_+lowerDataSize_)) ); 
+		ptr &= ptrMask_; 
+		ptr |= data & lowerDataMask_; 
+		ptr |= (data & upperDataMaskInData_) << upperDataShift_; 
+	}
+};
+static_assert( sizeof(Ptr2PtrWishData) == 8 );
 
 static_assert( sizeof(void*) == 8 );
 struct FirstControlBlock // not reallocatable
 {
+	
 	static constexpr size_t maxSlots = 5;
-	Ptr2PtrAnddata2* firstFree;
+	Ptr2PtrWishFlags* firstFree;
 	size_t otherAllockedCnt; // TODO: try to rely on our allocator on deriving this value
-	Ptr2PtrAnddata2* otherAllockedSlots;
-	Ptr2PtrAnddata2 slots[maxSlots];
+	Ptr2PtrWishFlags* otherAllockedSlots;
+	Ptr2PtrWishFlags slots[maxSlots];
 
 	void dbgCheckFreeList() {
-		Ptr2PtrAnddata2* start = firstFree;
+		Ptr2PtrWishFlags* start = firstFree;
 		while( start ) {
 			assert( !start->isUsed() );
 			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots) < otherAllockedCnt ) );
-			start = ((Ptr2PtrAnddata2*)(start->getPtr()));
+			start = ((Ptr2PtrWishFlags*)(start->getPtr()));
 		}
 	}
 
@@ -91,7 +128,7 @@ struct FirstControlBlock // not reallocatable
 	size_t insert( void* ptr ) {
 		assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( firstFree != nullptr ) {
-			Ptr2PtrAnddata2* tmp = ((Ptr2PtrAnddata2*)(firstFree->getPtr()));
+			Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
 			assert( !firstFree->isUsed() );
 			size_t idx;
 			if ( firstFree->is1stBlock() )
