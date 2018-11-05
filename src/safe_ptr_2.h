@@ -133,6 +133,7 @@ struct FirstControlBlock // not reallocatable
 			slots[idx].set( firstFree );
 			firstFree = slots + idx;
 			firstFree->setUnused();
+			firstFree->set1stBlock();
 		}
 		else {
 			assert( idx - maxSlots < otherAllockedCnt );
@@ -140,6 +141,7 @@ struct FirstControlBlock // not reallocatable
 			otherAllockedSlots[idx].set( firstFree );
 			firstFree = otherAllockedSlots + idx;
 			firstFree->setUnused();
+			firstFree->set2ndBlock();
 		}
 		assert( firstFree == nullptr || !firstFree->isUsed() );
 		dbgCheckFreeList();
@@ -192,11 +194,11 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
+			updatePtrForListItemsWithInvalidPtr();
 			delete [] getControlBlock();
 #ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
 			t = nullptr;
 #endif
-			updatePtrForListItemsWithInvalidPtr();
 		}
 	}
 
@@ -205,9 +207,9 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
+			updatePtrForListItemsWithInvalidPtr();
 			delete [] getControlBlock();
 			t = nullptr;
-			updatePtrForListItemsWithInvalidPtr();
 		}
 	}
 
@@ -466,8 +468,11 @@ public:
 
 	~SoftPtr()
 	{
-		getControlBlock()->remove(idx);
-		this->t = nullptr;
+		if( this->t != nullptr ) {
+			assert( this->idx != (size_t)(-1) );
+			getControlBlock()->remove(idx);
+			this->t = nullptr;
+		}
 	}
 };
 

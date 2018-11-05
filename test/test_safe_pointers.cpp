@@ -57,7 +57,7 @@ int main()
 		s14.swap(s11);
  		printf( "*s14 = %d\n", *s14.get() );
 	}
-	printf( "*s14 = %d\n", *s14.get() );
+	printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
 	return 0;
 }
 
