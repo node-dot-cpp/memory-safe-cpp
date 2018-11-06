@@ -11,6 +11,8 @@
 #define NODECPP_UNLIKELY(x) (x)
 #endif
 
+//#define NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+
 enum class MemorySafety {none, partial, full};
 
 //#define NODECPP_MEMORYSAFETY_NONE
@@ -79,18 +81,20 @@ public:
 		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
 		ptr = (uintptr_t)ptr_; 
 	}
-	void* getPtr() { return (void*)( ptr & ptrMask_ ); }
-	size_t getData() { return ( (ptr & upperDataMask_) >> 45 ) | (ptr & lowerDataMask_); }
+	void* getPtr() const { return (void*)( ptr & ptrMask_ ); }
+	size_t getData() const { return ( (ptr & upperDataMask_) >> 45 ) | (ptr & lowerDataMask_); }
 	void updatePtr( void* ptr_ ) { 
 		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
 		ptr &= ~ptrMask_; 
-		ptr |= (uintptr_t)ptr_; }
+		ptr |= (uintptr_t)ptr_; 
+	}
 	void updateData( size_t data ) { 
 		assert( data < (1<<(upperDataSize_+lowerDataSize_)) ); 
 		ptr &= ptrMask_; 
 		ptr |= data & lowerDataMask_; 
 		ptr |= (data & upperDataMaskInData_) << upperDataShift_; 
 	}
+	void swap( Ptr2PtrWishData& other ) { uintptr_t tmp = ptr; ptr = other.ptr; other.ptr = tmp; }
 };
 static_assert( sizeof(Ptr2PtrWishData) == 8 );
 
@@ -203,10 +207,10 @@ class OwningPtr
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->slots[i].getPtr())->t = t_;
+				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->slots[i].getPtr())->setPtr_( t_ );
 		for ( size_t i=0; i<cb->otherAllockedCnt; ++i )
 			if ( cb->otherAllockedSlots[i].isUsed() )
-				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->t = t_;
+				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->setPtr_( t_ );
 	}
 
 	void updatePtrForListItemsWithInvalidPtr() { updatePtrForListItems( nullptr ); }
@@ -395,120 +399,137 @@ class SoftPtr
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class OwningPtr<T, isSafe>;
 
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 	T* t;
 	size_t idx;
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
-
-	void dbgValidateList() const
-	{
-#if 0
-		const SoftPtrBase<T>* tmp = this->next;
-		assert( tmp == nullptr || tmp->prev == this );
-		assert( tmp == nullptr || tmp->t == this->t );
-
-		if ( tmp )
-		{
-			const SoftPtrBase<T>* tmpPrev = tmp;
-			tmp = tmp->next;
-			while( tmp )
-			{
-				assert( tmp->prev == tmpPrev );
-				assert( tmp->t == this->t );
-				tmpPrev = tmp;
-				tmp = tmp->next;
-			}
-		}
-
-		tmp = this->prev;
-		if ( tmp )
-		{
-			const SoftPtrBase<T>* tmpPrev = tmp;
-			tmp = tmp->prev;
-			while( tmp )
-			{
-				assert( tmp->next == tmpPrev );
-				assert( tmp->t == this->t );
-				tmpPrev = tmp;
-				tmp = tmp->prev;
-			}
-		}
-#endif // 0
-	}
+	T* getPtr_() const { return t; }
+	void setPtr_( T* t_ ) { t = t_; }
+	size_t getIdx_() const { return idx; }
+#else
+	Ptr2PtrWishData td;
+	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
+	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
+	size_t getIdx_() const { return td.getData(); }
+#endif
+	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
 
 public:
 	SoftPtr()
 	{
-		this->t = nullptr;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = nullptr;
 		idx = (size_t)(-1);
+#else
+		td.init(nullptr);
+#endif
 	}
 	SoftPtr( OwningPtr<T, isSafe>& owner )
 	{
-		this->t = owner.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = owner.t;
 		idx = getControlBlock()->insert(this);
+#else
+		td.init(owner.t);
+		td.updateData(getControlBlock()->insert(this));
+#endif
 	}
 	SoftPtr( SoftPtr<T, isSafe>& other )
 	{
-		this->t = other.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
 		idx = getControlBlock()->insert(this);
+#else
+		td = other.td;
+		td.updateData(getControlBlock()->insert(this));
+#endif
 	}
 	SoftPtr( SoftPtr<T, isSafe>&& other )
 	{
-		this->t = other.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
 		other.t = nullptr;
-		this->idx = other.idx;
+		idx = other.idx;
 		other.idx = (size_t)(-1);
-		getControlBlock()->resetPtr(this->idx, this);
+#else
+		td = other.td;
+		other.td.init(nullptr);
+#endif
+		getControlBlock()->resetPtr(getIdx_(), this);
 	}
 
 	SoftPtr& operator = ( SoftPtr<T, isSafe>& other )
 	{
-		this->t = other.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
 		idx = getControlBlock()->insert(this);
+#else
+		td = other.td;
+		td.setData(getControlBlock()->insert(this));
+#endif
 		return *this;
 	}
 	SoftPtr& operator = ( SoftPtr<T, isSafe>&& other )
 	{
-		this->t = other.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
 		other.t = nullptr;
-		this->idx = other.idx;
+		idx = other.idx;
 		other.idx = (size_t)(-1);
-		getControlBlock()->resetPtr(this->idx, this);
+#else
+		td = other.td;
+		other.td.init(nullptr);
+#endif
+		getControlBlock()->resetPtr(getIdx_(), this);
 		return *this;
 	}
 
 	void swap( SoftPtr<T, isSafe>& other )
 	{
-		T* tmp = this->t;
-		this->t = other.t;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		T* tmp = t;
+		t = other.t;
 		other.t = tmp;
-		size_t idx = this->idx;
-		this->idx = other.idx;
+		size_t idx = idx;
+		idx = other.idx;
 		other.idx = idx;
-		if ( this->t )
-			getControlBlock()->resetPtr(this->idx, this);
+		if ( t )
+			getControlBlock()->resetPtr(idx, this);
 		if ( other.t )
 			other.getControlBlock()->resetPtr(other.idx, &other);
+#else
+		td.swap( other.td );
+#endif
+		if ( getPtr_() )
+			getControlBlock()->resetPtr(getIdx_(), this);
+		if ( other.getPtr_() )
+			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 	}
 
 	T* get() const
 	{
-		assert( this->t != nullptr );
-		return this->t;
+		assert( getPtr_() != nullptr );
+		return getPtr_();
 	}
 
 	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
-		return this->t != nullptr;
+		return getPtr_() != nullptr;
 	}
 
 	~SoftPtr()
 	{
-		if( this->t != nullptr ) {
-			assert( this->idx != (size_t)(-1) );
-			getControlBlock()->remove(idx);
-			this->t = nullptr;
+		if( getPtr_() != nullptr ) {
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+			assert( idx != (size_t)(-1) );
+			getControlBlock()->remove(getIdx_());
+			t = nullptr;
+#else
+			//assert( idx != (size_t)(-1) );
+			getControlBlock()->remove(getIdx_());
+			td.init(nullptr);
+#endif
 		}
 	}
 };
