@@ -39,12 +39,9 @@ enum class MemorySafety {none, partial, full};
 #endif
 
 
-//template<class T> class soft_ptr; // forward declaration
-
 struct Ptr2PtrWishFlags {
 private:
 	uintptr_t ptr;
-	//enum WHICH_BLOCK {IN_1ST_BLOCK = 0, IN_2ND_BLOCK = 1 };
 public:
 	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( !isUsed() ); }// reasonable default
 	void* getPtr() { return (void*)( ptr & ~((uintptr_t)3) ); }
@@ -53,8 +50,6 @@ public:
 	bool isUsed() { return ptr & 1; }
 	void set1stBlock() { ptr |= 2; }
 	void set2ndBlock() { ptr &= ~((uintptr_t)2); }
-//	WHICH_BLOCK is1stBlock() { return (WHICH_BLOCK)((ptr & 2)>>1); }
-//	static WHICH_BLOCK is1stBlock( uintptr_t ptr ) { return (WHICH_BLOCK)((ptr & 2)>>1); }
 	bool is1stBlock() { return (ptr & 2)>>1; }
 	static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
 };
@@ -237,8 +232,6 @@ template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
-	friend class soft_ptr<T, isSafe>;
-
 	T* t;
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 
@@ -466,10 +459,10 @@ public:
 	soft_ptr( owning_ptr<T, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.t;
+		t = owner.get();
 		idx = getControlBlock()->insert(this);
 #else
-		td.init(owner.t);
+		td.init(owner.get());
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
