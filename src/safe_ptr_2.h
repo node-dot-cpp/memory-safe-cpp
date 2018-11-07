@@ -39,7 +39,7 @@ enum class MemorySafety {none, partial, full};
 #endif
 
 
-//template<class T> class SoftPtr; // forward declaration
+//template<class T> class soft_ptr; // forward declaration
 
 struct Ptr2PtrWishFlags {
 private:
@@ -232,12 +232,12 @@ struct FirstControlBlock // not reallocatable
 };
 static_assert( sizeof(FirstControlBlock) == 64 );
 
-template<class T, bool isSafe> class SoftPtr; // forward declaration
+template<class T, bool isSafe> class soft_ptr; // forward declaration
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
-class OwningPtr
+class owning_ptr
 {
-	friend class SoftPtr<T, isSafe>;
+	friend class soft_ptr<T, isSafe>;
 
 	T* t;
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
@@ -247,29 +247,29 @@ class OwningPtr
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->slots[i].getPtr())->setPtr_( t_ );
+				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->setPtr_( t_ );
 		for ( size_t i=0; i<cb->otherAllockedCnt; ++i )
 			if ( cb->otherAllockedSlots[i].isUsed() )
-				reinterpret_cast<SoftPtr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->setPtr_( t_ );
+				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->setPtr_( t_ );
 	}
 
 	void updatePtrForListItemsWithInvalidPtr() { updatePtrForListItems( nullptr ); }
 
 public:
-	OwningPtr()
+	owning_ptr()
 	{
 		t = nullptr;
 	}
-	OwningPtr( T* t_ )
+	owning_ptr( T* t_ )
 	{
 		t = t_;
 		getControlBlock()->init();
 	}
-	OwningPtr( OwningPtr<T, isSafe>& other ) = delete;
-	OwningPtr( OwningPtr<T, isSafe>&& other ) = default;
-	OwningPtr& operator = ( OwningPtr<T, isSafe>& other ) = delete;
-	OwningPtr& operator = ( OwningPtr<T, isSafe>&& other ) = default;
-	~OwningPtr()
+	owning_ptr( owning_ptr<T, isSafe>& other ) = delete;
+	owning_ptr( owning_ptr<T, isSafe>&& other ) = default;
+	owning_ptr& operator = ( owning_ptr<T, isSafe>& other ) = delete;
+	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other ) = default;
+	~owning_ptr()
 	{
 		//dbgValidateList();
 		if ( NODECPP_LIKELY(t) )
@@ -320,7 +320,7 @@ public:
 		}
 	}
 
-	void swap( OwningPtr<T, isSafe>& other )
+	void swap( owning_ptr<T, isSafe>& other )
 	{
 		T* tmp = t;
 		t = other.t;
@@ -346,28 +346,28 @@ public:
 
 #if 0
 template<class T>
-class OwningPtr<T>
+class owning_ptr<T>
 {
 	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
-	friend class SoftPtr<T>;
+	friend class soft_ptr<T>;
 	T* t;
 
 public:
-	OwningPtr()
+	owning_ptr()
 	{
 		t = nullptr;
 	}
-	OwningPtr( T* t_ )
+	owning_ptr( T* t_ )
 	{
 		t = t_;
 	}
-	OwningPtr( OwningPtr<T, false>& other ) = delete;
-	OwningPtr( OwningPtr<T, false>&& other )
+	owning_ptr( owning_ptr<T, false>& other ) = delete;
+	owning_ptr( owning_ptr<T, false>&& other )
 	{
 		t = other.t;
 		other.t = nullptr;
 	}
-	~OwningPtr()
+	~owning_ptr()
 	{
 		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: being placed at the level of class definition, the codition may be checked whether or not this specialization is instantiated (see, for instance, https://stackoverflow.com/questions/5246049/c11-static-assert-and-template-instantiation)
 		if ( NODECPP_LIKELY(t) )
@@ -376,8 +376,8 @@ public:
 		}
 	}
 
-	OwningPtr& operator = ( OwningPtr<T, false>& other ) = delete;
-	OwningPtr& operator = ( OwningPtr<T, false>&& other )
+	owning_ptr& operator = ( owning_ptr<T, false>& other ) = delete;
+	owning_ptr& operator = ( owning_ptr<T, false>&& other )
 	{
 		t = other.t;
 		other.t = nullptr;
@@ -392,7 +392,7 @@ public:
 		delete tmp;
 	}
 
-	void swap( OwningPtr<T, false>& other )
+	void swap( owning_ptr<T, false>& other )
 	{
 		T* tmp = t;
 		t = other.t;
@@ -423,21 +423,21 @@ template<class _Ty>
 template<class _Ty,
 	class... _Types,
 	enable_if_t<!is_array_v<_Ty>, int> = 0>
-	_NODISCARD inline OwningPtr<_Ty> make_owning(_Types&&... _Args)
+	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
 	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
 	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
-	return OwningPtr<_Ty>(objPtr);
-//	return (OwningPtr<_Ty>(new _Ty(_STD forward<_Types>(_Args)...)));
+	return owning_ptr<_Ty>(objPtr);
+//	return (owning_ptr<_Ty>(new _Ty(_STD forward<_Types>(_Args)...)));
 	}
 
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
-class SoftPtr
+class soft_ptr
 {
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
-	friend class OwningPtr<T, isSafe>;
+	friend class owning_ptr<T, isSafe>;
 
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 	T* t;
@@ -454,7 +454,7 @@ class SoftPtr
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
 
 public:
-	SoftPtr()
+	soft_ptr()
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = nullptr;
@@ -463,7 +463,7 @@ public:
 		td.init(nullptr);
 #endif
 	}
-	SoftPtr( OwningPtr<T, isSafe>& owner )
+	soft_ptr( owning_ptr<T, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.t;
@@ -473,7 +473,7 @@ public:
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
-	SoftPtr( SoftPtr<T, isSafe>& other )
+	soft_ptr( soft_ptr<T, isSafe>& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
@@ -483,7 +483,7 @@ public:
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
-	SoftPtr( SoftPtr<T, isSafe>&& other )
+	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
@@ -497,7 +497,7 @@ public:
 		getControlBlock()->resetPtr(getIdx_(), this);
 	}
 
-	SoftPtr& operator = ( SoftPtr<T, isSafe>& other )
+	soft_ptr& operator = ( soft_ptr<T, isSafe>& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
@@ -508,7 +508,7 @@ public:
 #endif
 		return *this;
 	}
-	SoftPtr& operator = ( SoftPtr<T, isSafe>&& other )
+	soft_ptr& operator = ( soft_ptr<T, isSafe>&& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
@@ -523,7 +523,7 @@ public:
 		return *this;
 	}
 
-	void swap( SoftPtr<T, isSafe>& other )
+	void swap( soft_ptr<T, isSafe>& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		T* tmp = t;
@@ -558,7 +558,7 @@ public:
 		return getPtr_() != nullptr;
 	}
 
-	~SoftPtr()
+	~soft_ptr()
 	{
 		if( getPtr_() != nullptr ) {
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
@@ -576,44 +576,44 @@ public:
 
 #if 0
 template<class T>
-class SoftPtr<T,false>
+class soft_ptr<T,false>
 {
 	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
-	friend class OwningPtr<T,false>;
+	friend class owning_ptr<T,false>;
 	T* t;
 
 public:
-	SoftPtr()
+	soft_ptr()
 	{
 		this->t = nullptr;
 	}
-	SoftPtr( OwningPtr<T,false>& owner )
+	soft_ptr( owning_ptr<T,false>& owner )
 	{
 		this->t = owner.t;
 	}
-	SoftPtr( SoftPtr<T,false>& other )
+	soft_ptr( soft_ptr<T,false>& other )
 	{
 		this->t = other.t;
 	}
-	SoftPtr( SoftPtr<T,false>&& other )
+	soft_ptr( soft_ptr<T,false>&& other )
 	{
 		this->t = other.t;
 		other.t = nullptr;
 	}
 
-	SoftPtr& operator = ( SoftPtr<T,false>& other )
+	soft_ptr& operator = ( soft_ptr<T,false>& other )
 	{
 		this->t = other.t;
 		return *this;
 	}
-	SoftPtr& operator = ( SoftPtr<T,false>&& other )
+	soft_ptr& operator = ( soft_ptr<T,false>&& other )
 	{
 		this->t = other.t;
 		other.t = nullptr;
 		return *this;
 	}
 
-	void swap( SoftPtr<T, false>& other )
+	void swap( soft_ptr<T, false>& other )
 	{
 		T* tmp = this->t;
 		this->t = other.t;
@@ -632,7 +632,7 @@ public:
 		return this->t != nullptr;
 	}
 
-	~SoftPtr()
+	~soft_ptr()
 	{
 		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
 	}

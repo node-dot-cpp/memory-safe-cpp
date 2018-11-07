@@ -29,17 +29,17 @@ void testPtrsWithData()
 
 void testSafePointers()
 {
-	SoftPtr<int> s13;
-	SoftPtr<int> s14;
+	soft_ptr<int> s13;
+	soft_ptr<int> s14;
 	{
-		OwningPtr<int> p1 = make_owning<int>();
+		owning_ptr<int> p1 = make_owning<int>();
 		*(p1.get()) = 5;
-		OwningPtr<int> p2 = make_owning<int>();
+		owning_ptr<int> p2 = make_owning<int>();
 		*(p2.get()) = 25;
-		SoftPtr<int> s11(p1);
-		SoftPtr<int> s12(p1);
-		SoftPtr<int> s21(p2);
-		SoftPtr<int> s22(p2);
+		soft_ptr<int> s11(p1);
+		soft_ptr<int> s12(p1);
+		soft_ptr<int> s21(p2);
+		soft_ptr<int> s22(p2);
 		*s11.get() += 1;
 		*s22.get() += 1;
 //		printf( "*n1 = %d, *n2 = %d\n", *n1, *n2 );
