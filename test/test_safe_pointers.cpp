@@ -5,7 +5,7 @@
 #include <memory>
 #include <stdio.h>
 
-#include "../src/safe_ptr_2.h"
+#include "../src/safe_ptr.h"
 
 void testPtrsWithData()
 {
