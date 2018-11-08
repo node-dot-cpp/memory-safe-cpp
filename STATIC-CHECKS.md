@@ -55,7 +55,7 @@ Legend for TEST CASES:
   + NB: this rule effectively ensures that all our functions are no-side-effect ones (at least unless explicitly marked so)
   + TEST CASES/PROHIBIT: `int x;` at global scope, `thread_local int x;`, `static int x;` within function, `static int x;` within the class
   + TEST CASES/ALLOW: `static void f();` within class, free-standing `static void f();`, `static constexpr int x;`, `static const int x;` (both in class and globally)
-* **[Rule S4]** new operator is prohibited (developers should use make_owning<> instead)
+* **[Rule S4]** new operator (including placement new) is prohibited (developers should use make_owning<> instead); delete operator is also prohibited
   + TEST CASES/PROHIBIT: `new X()`, `new int`
   + TEST CASES/ALLOW: `make_owning<X>()`, `make_owning<int>()`
   - **[Rule S4.1]** result of make_owning<>() call MUST be assigned to an owning_ptr<T> (or passed to a function taking owning_ptr<T>) 
