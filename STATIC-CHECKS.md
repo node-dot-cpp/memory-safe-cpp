@@ -66,10 +66,13 @@ Legend for TEST CASES:
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
   + **[Rule S5.2]** If we cannot find a scope of pointer/reference returned by a function, looking only at its signature - it is an error.
     + if any function takes ONLY ONE pointer (this includes safe_ptr<> and owning_ptr<>), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
-      + similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
-      + NB: this stands because of prohibition on non-const globals
-      + NB: it allows getters returning references
-      + in the future, we MAY add mark-up to say which of the input pointers the returned one refers to. 
+      - similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
+      - NB: this stands because of prohibition on non-const globals
+      - NB: it allows getters returning references
+      - in the future, we MAY add mark-up to say which of the input pointers the returned one refers to. 
+      - in the future, we MAY add type-based analysis here
+    + TEST CASES/PROHIBIT: `X* x = ff(x1,x2);` where x1 and x2 have different scope
+    + TEST CASES/ALLOW: `X* x = ff(x1);`, `X* x = ff(x1,x2);` where x1 and x2 have the same scope
   + **[Rule S5.3]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a naked_ptr<>).
     - NB: it also applies to multi-level pointers: to be valid, ALL outer pointers/references except for last one, MUST be const
     - NB: passing naked_ptrs by value is ok. Even if several naked_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
