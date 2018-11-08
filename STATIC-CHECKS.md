@@ -65,7 +65,7 @@ Legend for TEST CASES:
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
   + **[Rule S5.2]** If we cannot find a scope of pointer/reference returned by a function, looking only at its signature - it is an error.
-    + if any function takes ONLY ONE pointer (this includes safe_ptr<> and owning_ptr<>), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
+    + if any function takes ONLY ONE pointer (this includes safe_ptr<> and owning_ptr<>, AND `this` pointer if applicable), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
       - similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
       - NB: this stands because of prohibition on non-const globals
       - NB: it allows getters returning references
