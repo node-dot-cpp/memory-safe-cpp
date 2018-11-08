@@ -16,8 +16,11 @@ Legend for TEST CASES:
 * "fp()" - function taking raw pointer type (T*)
 * "fop()" - function taking owning_ptr<T>
 
-### Memory Safety Checks
+* **IMPORTANT**: whenever we're speaking of safe_ptr<T> or naked_ptr<T>, then not_null<safe_ptr<T>> and not_null<naked_ptr<T>> are ALWAYS implied (and SHOULD be included into relevant test cases)
+* **IMPORTANT**: whenever we're speaking of owning_ptr<T>, safe_ptr<T> or naked_ptr<T>, then their short aliases (optr<T>, sptr<T>, and nptr<T>) are ALWAYS implied (and SHOULD be included into relevant test cases)
 
+### Memory Safety Checks
+  
 * Not allowing to create pointers except in an allowed manner
   - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
     + the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
@@ -34,7 +37,7 @@ Legend for TEST CASES:
   + TEST CASES/PROHIBIT: `*nullptr`, `*p`
   + TEST CASES/ALLOW: `*np`, `*sp`, `*op`
   - **[Rule S2.1]** raw pointer variables (of type T*) are prohibited (necessary to ensure nullptr safety). Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1]+[Rule S2] makes such variables perfectly useless so it is better to prohibit them outright
-    + NB: raw references are ok
+    + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
 * **[Rule S3]** double pointers are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer.
   + TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(int*& x)`
