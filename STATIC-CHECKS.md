@@ -23,12 +23,12 @@ Legend for TEST CASES:
   
 * Not allowing to create pointers except in an allowed manner
   - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
-    + the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
-      * this allows for assignments, passing arguments to functions, and that's about it. 
-      * ability to get X* from owning_ptr<T> and/or from soft_ptr<T> and/or from naked_ptr<T> is provided by our library
-    + or the right side of (sub)expression is a dynamic_cast<> 
+    + (sub)expression is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
+    + or (sub)expression is a dynamic_cast<> 
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all those which cast between different classes) MUST be prohibited under generic [Rule 1], but SHOULD be reported separately under [Rule 1.1]
-    + or the right side of (sub)expression is nullptr
+    + or (sub)expression is a function call
+      * in practice, only unsafe functions can do it - but returning X* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
+    + or (sub)expression is nullptr
     + or the (sub)expression is taking a variable address ("&i")
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`
