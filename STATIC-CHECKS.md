@@ -29,31 +29,32 @@ Legend for TEST CASES:
     + or (sub)expression is a function call
       * in practice, only unsafe functions can do it - but returning T* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
     + or (sub)expression is nullptr
-    + or (sub)expression is dereferencing of a raw pointer (T*), naked_ptr<T>, soft_ptr<T>, or owning_ptr<T>
+    + or (sub)expression is dereferencing of a naked_ptr<T>, soft_ptr<T>, or owning_ptr<T>
+      - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
     + NB: taking a variable address ("&i") is not necessary (it is done via constructor of naked_ptr<>)
-    + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`
-    + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`
-  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule is NOT necessary to ensure safety, but significantly simplifies explaining and reporting.
-* **[Rule S2]** dereferencing of raw X* pointers is prohibited (it is dereferencing of naked_ptr<T>, soft_ptr<T>, owning_ptr<T> which is allowed).
-  + TEST CASES/PROHIBIT: `*nullptr`, `*p`
-  + TEST CASES/ALLOW: `*np`, `*sp`, `*op`
-  - **[Rule S2.1]** raw pointer variables (of type T*) are prohibited (necessary to ensure nullptr safety). Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1]+[Rule S2] makes such variables perfectly useless so it is better to prohibit them outright
+    + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p`
+    + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
+  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and reporting.
+    + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, reinterpret_cast<int*>(p)   
+  - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
+    + TEST CASES/PROHIBIT: `*p`
+  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited (necessary to ensure nullptr safety). Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
-* **[Rule S3]** double pointers are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer.
+* **[Rule S2]** double pointers are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer.
   + TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(int*& x)`
-* **[Rule S4]** scope of raw pointer (T*) cannot expand
-  + TEST CASES/PROHIBIT: return pointer to local variable, TODO (lots of them)
-* **[Rule S5]** non-constant global variables, static variables, and thread_local variables are prohibited. NB: while prohibiting thread_local is not 100% required to ensure safety, it is still prohibited at least for now.
+* **[Rule S3]** non-constant global variables, static variables, and thread_local variables are prohibited. NB: while prohibiting thread_local is not 100% required to ensure safety, it is still prohibited at least for now.
   + TEST CASES/PROHIBIT: `int x;` at global scope, `thread_local int x;`, `static int x;` within function, `static int x;` within the class
   + TEST CASES/ALLOW: `static void f();` within class, free-standing `static void f();`, `static constexpr int x;`
   + TODO/DECIDE: const statics (allowing them will require enforcing const-ness, including prohibiting mutables)
-* **[Rule S6]** new operator is prohibited (developers should use make_owning<> instead)
+* **[Rule S4]** new operator is prohibited (developers should use make_owning<> instead)
   + TEST CASES/PROHIBIT: `new X()`, `new int`
   + TEST CASES/ALLOW: `make_owning<X>()`, `make_owning<int>()`
-  - **[Rule S6.1]** result of make_owning<>() call MUST be assigned to an owning_ptr<T> (or passed to a function taking owning_ptr<T>) 
+  - **[Rule S4.1]** result of make_owning<>() call MUST be assigned to an owning_ptr<T> (or passed to a function taking owning_ptr<T>) 
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
+* **[Rule S5]** scope of raw pointer (T*) cannot expand
+  + TEST CASES/PROHIBIT: return pointer to local variable, TODO (lots of them)
   
 ### Determinism Checks
 
