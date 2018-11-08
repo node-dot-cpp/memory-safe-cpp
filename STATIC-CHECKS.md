@@ -97,6 +97,8 @@ Legend for TEST CASES:
   + **[Rule S5.7]** Lambda is considered as an implicit naked_struct, containing all the naked_ptrs which are captured by reference
       - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp:may_extend_to_this]]`) passing lambda with local vars passed by reference
       - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference, `sort()` passing lamda with local vars captured by reference
+* **[Rule S6]** Prohibit inherently unsafe things
+  + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with, so it is only GCC/Clang asm which has to be detected and thrown away
   
 ### Determinism Checks
 
