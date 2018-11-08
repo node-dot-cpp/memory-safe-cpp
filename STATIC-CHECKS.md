@@ -99,6 +99,8 @@ Legend for TEST CASES:
       - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference, `sort()` passing lamda with local vars captured by reference
 * **[Rule S6]** Prohibit inherently unsafe things
   + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with (TODO: CHECK!), so it is only GCC/Clang asm which has to be detected and thrown away
+* **[Rule S7]** Prohibit unsupported-yet things
+  + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
   
 ### Determinism Checks
 
