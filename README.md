@@ -5,8 +5,10 @@ A dialect of C++ with memory safety guarantees
 
 Principles behind are discussed in http://ithare.com/a-usable-c-dialect-that-is-safe-against-memory-corruption/ , 
 though some implementation details here are different; in particular:
-* "soft pointers" are implemented via double-linked-lists from owning pointers, with non-trivial move constructors for both owning pointers and soft pointers 
-  * an optimization for stack-only pointers pending 
+* "soft pointers" are implemented via vectors of soft pointers within owning pointers, with non-trivial move constructors for soft pointers
+  * this ensures an almost-zero cost of dereferencing a soft pointer, at the cost of slowing down copying/destruction of "soft pointers" (but not by much)
+  * an optimization for stack-only soft-pointers still pending 
+* X* pointers are prohibited, naked_ptr<> has to be used instead (to enforce safety against nullptr)
 
 ## Goals
 
