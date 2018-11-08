@@ -25,7 +25,7 @@ Legend for TEST CASES:
   - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
     + (sub)expression is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
     + or (sub)expression is a dynamic_cast<> 
-      * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all those which cast between different classes) MUST be prohibited under generic [Rule 1], but SHOULD be reported separately under [Rule 1.1]
+      * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all those casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
       * in practice, only unsafe functions can do it - but returning T* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
     + or (sub)expression is nullptr
@@ -34,7 +34,7 @@ Legend for TEST CASES:
     + NB: taking a variable address ("&i") is not necessary (it is done via constructor of naked_ptr<>)
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p` (necessary to ensure nullptr safety)
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
-  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and reporting.
+  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, reinterpret_cast<int*>(p)   
   - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
     + TEST CASES/PROHIBIT: `*nullptr', `*p`
