@@ -49,6 +49,7 @@ Legend for TEST CASES:
   + TEST CASE/PROHIBIT: `const_cast<X*>`, `mutable int x;`
 * **[Rule S3]** non-constant global variables, static variables, and thread_local variables are prohibited. NB: while prohibiting thread_local is not 100% required to ensure safety, it is still prohibited at least for now.
   + const statics/globals are ok (because of [Rule S2])
+  + NB: this rule effectively ensures that all our functions are no-side-effect ones (at least unless explicitly marked so)
   + TEST CASES/PROHIBIT: `int x;` at global scope, `thread_local int x;`, `static int x;` within function, `static int x;` within the class
   + TEST CASES/ALLOW: `static void f();` within class, free-standing `static void f();`, `static constexpr int x;`, `static const int x;` (both in class and globally)
 * **[Rule S4]** new operator is prohibited (developers should use make_owning<> instead)
@@ -59,24 +60,35 @@ Legend for TEST CASES:
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand
   + TEST CASES/PROHIBIT: return pointer to local variable, TODO
-  + **[Rule S5.1]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a naked_ptr<>).
+  + **[Rule S5.1]** each naked_ptr<> and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
+    + for pointers/references originating from owning_ptr<> or safe_ptr<>, scope is always "infinity"
+    + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
+    + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
+  + **[Rule S5.2]** If we cannot find a scope of pointer/reference returned by a function, looking only at its signature - it is an error.
+    + if any function takes ONLY ONE pointer (this includes safe_ptr<> and owning_ptr<>), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
+      + similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
+      + NB: this stands because of prohibition on non-const globals
+      + NB: it allows getters returning references
+      + in the future, we MAY add mark-up to say which of the input pointers the returned one refers to. 
+  + **[Rule S5.3]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a naked_ptr<>).
+    - NB: it also applies to multi-level pointers: to be valid, ALL outer pointers/references except for last one, MUST be const
     - NB: passing naked_ptrs by value is ok. Even if several naked_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
     - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(naked_ptr<int>& x)`
     - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const naked_ptr<int>& np);`, `const int *& x = p;`
-  + **[Rule S5.2]** by default, no struct/class may contain a naked_ptr<> (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
+  + **[Rule S5.4]** by default, no struct/class may contain a naked_ptr<> (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
     - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
     - TEST CASES/PROHIBIT: `struct X { naked_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct Y {}; [[nodecpp:naked_struct]] struct X { soft_ptr<Y> y; };`
     - TEST CASES/ALLOW: `struct X { soft_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { naked_ptr<Y> y; };`
-  + **[Rule S5.3]** Creating a non-const pointer/reference to a naked_struct (or passing naked_struct by reference) is prohibited (it would violate [Rule S5.1]).
+  + **[Rule S5.5]** Creating a non-const pointer/reference to a naked_struct (or passing naked_struct by reference) is prohibited (it would violate [Rule S5.1]).
     - This implies prohibition on member functions of naked_struct (as `this` parameter is always a pointer), except for `const` ones
     - NB: passing naked_struct by value is ok - and should be treated as passing several naked_ptrs (with their respective scopes)
     - TEST CASES/PROHIBIT: `naked_ptr<NSTR>`, `void ff(NSTR&)`
     - TEST CASES/ALLOW: `const_naked_ptr<NSTR>`, `void ff(const NSTR&)`
-  + **[Rule S5.4]** There is special parameter mark-up `[[nodecpp::may_extend_to_this]]`. It applies to parameters which are naked pointers or naked structs, AND means that the scope of marked-up parameter MAY be extended to 'this' of current function. If such a parameter is specified, then the scope of `this` MUST be not-larger-than the scope of ALL the naked_ptrs within marked-up parameter
+  + **[Rule S5.6]** There is special parameter mark-up `[[nodecpp::may_extend_to_this]]`. It applies to parameters which are naked pointers or naked structs, AND means that the scope of marked-up parameter MAY be extended to 'this' of current function. If such a parameter is specified, then the scope of `this` MUST be not-larger-than the scope of ALL the naked_ptrs within marked-up parameter
       + In the future, we MAY introduce other similar mark-up (`[[nodecpp:may_extend_to_a]]`?)
-  + **[Rule S5.5]** Lambda is considered as an implicit naked_struct, containing all the naked_ptrs which are captured by reference
+  + **[Rule S5.7]** Lambda is considered as an implicit naked_struct, containing all the naked_ptrs which are captured by reference
       - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp:may_extend_to_this]]`) passing lambda with local vars passed by reference
       - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference, `sort()` passing lamda with local vars captured by reference
   
