@@ -27,9 +27,10 @@ Legend for TEST CASES:
     + or (sub)expression is a dynamic_cast<> 
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all those which cast between different classes) MUST be prohibited under generic [Rule 1], but SHOULD be reported separately under [Rule 1.1]
     + or (sub)expression is a function call
-      * in practice, only unsafe functions can do it - but returning X* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
+      * in practice, only unsafe functions can do it - but returning T* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
     + or (sub)expression is nullptr
-    + or the (sub)expression is taking a variable address ("&i")
+    + or (sub)expression is dereferencing of a raw pointer (T*), naked_ptr<T>, soft_ptr<T>, or owning_ptr<T>
+    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of naked_ptr<>)
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`
   - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule is NOT necessary to ensure safety, but significantly simplifies explaining and reporting.
