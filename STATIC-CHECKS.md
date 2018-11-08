@@ -38,7 +38,7 @@ Legend for TEST CASES:
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, reinterpret_cast<int*>(p)   
   - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
     + TEST CASES/PROHIBIT: `*nullptr`, `*p`
-  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited. Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
+  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
 * **[Rule S2]** double pointers are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer.
@@ -55,6 +55,17 @@ Legend for TEST CASES:
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand
   + TEST CASES/PROHIBIT: return pointer to local variable, TODO (lots of them)
+  + **[Rule S5.1]** by default, no struct/class may contain a naked_ptr<> (neither a naked struct, neither even a pointer to a naked struct)
+    - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers)
+      + naked_struct has its own scope similar to that of the naked pointers; normally , naked_struct requires that all the pointers within have the same scope, and then naked_struct has the same scope as all its pointers. [TODO: think about relaxing this requirement]
+    - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
+  + **[Rule S5.2]** all functions are no-side-effect functions unless explicitly marked up
+    - if a function without any markup accepts ONLY ONE naked_ptr<>, it is safe because there is no chance that this pointer is stored to any other parameter (it is not possible to store naked_ptr<> into a non-naked struct)
+    - if a function without any markup accepts MORE THAN ONE naked_ptr<>, we have to assume that the scope of any of the naked-pointer parameters MAY extend to any other naked-pointer parameter.
+      + In the future, we MAY introduce type-based analysis to relax this restriction
+    - there is special parameter mark-up `[[nodecpp::may_extend_to_this]]`. It applies to parameters which are naked pointers or naked structs, AND means that the scope of marked-up parameter MAY be extended to 'this' of current function.
+      + In the future, we MAY introduce other similar mark-up (`[[nodecpp:may_extend_to_a]]`?)
+  + **[Rule S5.3]** Lambda is considered as an implicit naked struct, with the scope of lambda calculated as the NARROWEST of its captured references 
   
 ### Determinism Checks
 
