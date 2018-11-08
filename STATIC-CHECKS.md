@@ -46,6 +46,7 @@ Legend for TEST CASES:
 * **[Rule S2]** const-ness is enforced
   + **[Rule S2.1]** const_cast is prohibited
   + **[Rule S2.2]** mutable members are prohibited
+  + TEST CASE/PROHIBIT: `const_cast<X*>`, `mutable int x;`
 * **[Rule S3]** non-constant global variables, static variables, and thread_local variables are prohibited. NB: while prohibiting thread_local is not 100% required to ensure safety, it is still prohibited at least for now.
   + const statics/globals are ok (because of [Rule S2])
   + TEST CASES/PROHIBIT: `int x;` at global scope, `thread_local int x;`, `static int x;` within function, `static int x;` within the class
