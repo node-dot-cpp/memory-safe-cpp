@@ -43,6 +43,9 @@ Legend for TEST CASES:
   - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
+  - **[Rule S1.4]**. Unions with any raw/naked/soft/owning pointers (including any classes containing any such pointers) are prohibited
+    + TEST CASES/PROHIBIT: `union { naked_ptr<X> x; int y; }`
+    + TEST CASES/ALLOW: `union { int x; long y; }`
 * **[Rule S2]** const-ness is enforced
   + **[Rule S2.1]** const_cast is prohibited
   + **[Rule S2.2]** mutable members are prohibited
