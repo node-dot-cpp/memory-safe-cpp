@@ -56,6 +56,6 @@ Legend for TEST CASES:
 * Not allowing to convert pointers into non-pointers
   - **[Rule D1]** any (sub)expression which takes an argument of raw pointer type X* AND returns non-pointer type is prohibited, unless it is one of the following:
     + function call taking X* as parameter
-    + TEST CASES: prohibit: `(int)p`, `static_cast<int>(p)`
-    + TEST CASES: allow; `fp(p)`
+    + TEST CASES/PROHIBIT: `(int)p`, `static_cast<int>(p)`
+    + TEST CASES/ALLOW: `fp(p)`
     
