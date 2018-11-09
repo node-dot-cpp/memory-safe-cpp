@@ -1,8 +1,6 @@
 // TestSafePointers.cpp : Defines the entry point for the console application.
 //
 
-#include <stdint.h>
-#include <memory>
 #include <stdio.h>
 
 #include "../src/safe_ptr.h"

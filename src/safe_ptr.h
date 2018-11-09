@@ -1,6 +1,8 @@
 #ifndef SAFE_PTR_H
 #define SAFE_PTR_H
 
+#include <memory>
+#include <stdint.h>
 #include <assert.h>
 
 #if defined __GNUC__
