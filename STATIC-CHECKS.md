@@ -27,7 +27,7 @@ Legend for TEST CASES:
   - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
     + (sub)expression is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
     + or (sub)expression is a dynamic_cast<> 
-      * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all those casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
+      * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
       * in practice, only unsafe functions can do it - but returning T* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
     + or (sub)expression is nullptr
