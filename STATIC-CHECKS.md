@@ -86,7 +86,7 @@ Legend for TEST CASES:
     - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - allocating naked_struct on heap is prohibited
     - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
-    - TEST CASES/PROHIBIT: `struct X { naked_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct Y {}; [[nodecpp:naked_struct]] struct X { soft_ptr<Y> y; };`, `make_owning<NSTR>()`
+    - TEST CASES/PROHIBIT: `struct X { naked_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { soft_ptr<NSTR> y; };`, `make_owning<NSTR>()`
     - TEST CASES/ALLOW: `struct X { soft_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { naked_ptr<Y> y; };`
   + **[Rule S5.5]** Creating a non-const pointer/reference to a naked_struct (or passing naked_struct by reference) is prohibited (it would violate [Rule S5.1]).
     - This implies prohibition on member functions of naked_struct (as `this` parameter is always a pointer), except for `const` ones
