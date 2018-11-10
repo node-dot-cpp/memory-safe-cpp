@@ -81,7 +81,7 @@ Legend for TEST CASES:
     - NB: passing naked_ptrs by value is ok. Even if several naked_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
     - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(naked_ptr<int>& x)`
-    - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const naked_ptr<int>& np);`, `const int *& x = p;`
+    - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const_naked_ptr<int>& np);`, `const int *& x = p;`
   + **[Rule S5.4]** by default, no struct/class may contain a naked_ptr<> (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
     - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - allocating naked_struct on heap is prohibited
