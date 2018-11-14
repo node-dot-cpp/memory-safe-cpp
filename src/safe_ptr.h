@@ -261,9 +261,17 @@ public:
 		getControlBlock()->init();
 	}
 	owning_ptr( owning_ptr<T, isSafe>& other ) = delete;
-	owning_ptr( owning_ptr<T, isSafe>&& other ) = default;
 	owning_ptr& operator = ( owning_ptr<T, isSafe>& other ) = delete;
-	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other ) = default;
+	owning_ptr( owning_ptr<T, isSafe>&& other )
+	{
+		t = other.t;
+		other.t = nullptr;
+	}
+	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other )
+	{
+		t = other.t;
+		other.t = nullptr;
+	}
 	~owning_ptr()
 	{
 		//dbgValidateList();
@@ -471,7 +479,7 @@ public:
 		t = owner.get();
 		idx = getControlBlock()->insert(this);
 #else
-		td.init(owner.get());
+		setPtr_(owner.get());
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
@@ -493,7 +501,7 @@ public:
 		t = owner.get();
 		idx = getControlBlock()->insert(this);
 #else
-		td.init(owner.get());
+		setPtr_(owner.get());
 		td.updateData(getControlBlock()->insert(this));
 #endif
 		return *this;
@@ -519,7 +527,7 @@ public:
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
-		td = other.td;
+		setPtr_( other.get() );
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
@@ -530,7 +538,7 @@ public:
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
-		td = other.td;
+		setPtr_( other.get() );
 		td.updateData(getControlBlock()->insert(this));
 #endif
 		return *this;
