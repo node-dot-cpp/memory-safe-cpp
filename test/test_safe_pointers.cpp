@@ -50,11 +50,25 @@ void testSafePointers()
 	printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
 }
 
+void testCasts()
+{
+	class Base { public: virtual ~Base(){} };
+	class Derived : public Base { public: virtual ~Derived(){} };
+	owning_ptr<Derived> p = make_owning<Derived>();
+	soft_ptr<Base> p1 = p;
+	soft_ptr<Derived> p2 = soft_ptr_static_cast<Derived>(p1);
+	soft_ptr<Derived> p3 = soft_ptr_reinterpret_cast<Derived>(p1);
+	assert( p.get() == p2.get() );
+	assert( p3.get() == p2.get() );
+}
+
 int main()
 {
 	testPtrsWithData();
 	printf( "\n" );
 	testSafePointers();
+	printf( "\n" );
+	testCasts();
 
 	return 0;
 }

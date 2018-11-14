@@ -433,6 +433,10 @@ class soft_ptr
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class owning_ptr<T, isSafe>;
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 	T* t;
@@ -458,7 +462,18 @@ public:
 		td.init(nullptr);
 #endif
 	}
-	soft_ptr( owning_ptr<T, isSafe>& owner )
+/*	soft_ptr( owning_ptr<T, isSafe>& owner )
+	{
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = owner.get();
+		idx = getControlBlock()->insert(this);
+#else
+		td.init(owner.get());
+		td.updateData(getControlBlock()->insert(this));
+#endif
+	}*/
+	template<class T1>
+	soft_ptr( owning_ptr<T1, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.get();
@@ -468,7 +483,19 @@ public:
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
-	soft_ptr( soft_ptr<T, isSafe>& other )
+	template<class T1>
+	soft_ptr& operator = ( owning_ptr<T1, isSafe>& owner )
+	{
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = owner.get();
+		idx = getControlBlock()->insert(this);
+#else
+		td.init(owner.get());
+		td.updateData(getControlBlock()->insert(this));
+#endif
+		return *this;
+	}
+/*	soft_ptr( soft_ptr<T, isSafe>& other )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
@@ -477,6 +504,29 @@ public:
 		td = other.td;
 		td.updateData(getControlBlock()->insert(this));
 #endif
+	}*/
+	template<class T1>
+	soft_ptr( soft_ptr<T1, isSafe>& other )
+	{
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
+		idx = getControlBlock()->insert(this);
+#else
+		td = other.td;
+		td.updateData(getControlBlock()->insert(this));
+#endif
+	}
+	template<class T1>
+	soft_ptr& operator = ( soft_ptr<T1, isSafe>& other )
+	{
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+		t = other.t;
+		idx = getControlBlock()->insert(this);
+#else
+		td = other.td;
+		td.updateData(getControlBlock()->insert(this));
+#endif
+		return *this;
 	}
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
@@ -633,5 +683,31 @@ public:
 	}
 };
 #endif // 0
+
+template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
+	soft_ptr<T, isSafe> ret;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+	ret.t = static_cast<T*>(p.get());
+	ret.idx = getControlBlock()->insert(this);
+#else
+	ret.td.updatePtr( static_cast<T*>(p.get()) );
+	ret.td.updateData(ret.getControlBlock()->insert(&ret));
+#endif
+	return ret;
+}
+
+template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
+	soft_ptr<T, isSafe> ret;
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+	ret.t = reinterpret_cast<T*>(p.get());
+	ret.idx = getControlBlock()->insert(this);
+#else
+	ret.td.updatePtr( reinterpret_cast<T*>(p.get()) );
+	ret.td.updateData(ret.getControlBlock()->insert(&ret));
+#endif
+	return ret;
+}
 
 #endif
