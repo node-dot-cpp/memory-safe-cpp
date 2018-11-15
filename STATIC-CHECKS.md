@@ -19,16 +19,16 @@ Mode of check (memory safety, determinism, or both) is specified in the command 
 Legend for TEST CASES:
 * "i" - variable of integral type
 * "p" - variable of raw pointer type (T*)
-* "np" - variable of naked_ptr<T>
-* "sp" - variable of soft_ptr<T>
-* "op" - variable of owning_ptr<T>
+* "np" - variable of `naked_ptr<T>` type
+* "sp" - variable of `soft_ptr<T>` type
+* "op" - variable of `owning_ptr<T>` type
 * "fp()" - function taking raw pointer type (T*)
-* "fop()" - function taking owning_ptr<T>
+* "fop()" - function taking `owning_ptr<T>`
 * NSTR - naked_struct type
 * nstr - variable of naked_struct type
 
-* **IMPORTANT**: whenever we're speaking of safe_ptr<T> or naked_ptr<T>, then not_null<safe_ptr<T>> and not_null<naked_ptr<T>> are ALWAYS implied (and SHOULD be included into relevant test cases)
-* **IMPORTANT**: whenever we're speaking of owning_ptr<T>, safe_ptr<T> or naked_ptr<T>, then their short aliases (optr<T>, sptr<T>, and nptr<T>) are ALWAYS implied (and SHOULD be included into relevant test cases)
+* **IMPORTANT**: whenever we're speaking of `safe_ptr<T>` or `naked_ptr<T>`, then `not_null<safe_ptr<T>>` and `not_null<naked_ptr<T>>` are ALWAYS implied (and SHOULD be included into relevant test cases)
+* **IMPORTANT**: whenever we're speaking of `owning_ptr<T>`, `safe_ptr<T>` or `naked_ptr<T>`, then their short aliases (`optr<T>`, `sptr<T>`, and `nptr<T>`) are ALWAYS implied (and SHOULD be included into relevant test cases)
 
 ### Consistency Checks
 
@@ -46,22 +46,22 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * Not allowing to create pointers except in an allowed manner
   - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
     + (sub)expression is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
-    + or (sub)expression is a dynamic_cast<> 
+    + or (sub)expression is a `dynamic_cast<>` 
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
-      * in practice, only unsafe functions can do it - but returning T* from owning_ptr<T>/soft_ptr<T>/naked_ptr<T> functions is necessary
+      * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`naked_ptr<T>` functions is necessary
     + or (sub)expression is nullptr
-    + or (sub)expression is dereferencing of a naked_ptr<T>, soft_ptr<T>, or owning_ptr<T>
+    + or (sub)expression is dereferencing of a `naked_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
       - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
-    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of naked_ptr<>)
+    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `naked_ptr<>`)
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p` (necessary to ensure nullptr safety)
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
   - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: if [Rule S1] is already enforced, this rule [Rule S1.1] (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
-    + **[Rule S1.1.1]** special casts, in particular soft_ptr_static_cast<>. are also prohibited in safe code 
+    + **[Rule S1.1.1]** special casts, in particular `soft_ptr_static_cast<>`. are also prohibited in safe code 
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, `reinterpret_cast<int*>(p)`, `soft_ptr_static_cast<X*>(p)`   
   - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
     + TEST CASES/PROHIBIT: `*nullptr`, `*p`
-  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use naked_ptr<> instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
+  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use `naked_ptr<>` instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
   - **[Rule S1.4]**. Unions with any raw/naked/soft/owning pointers (including any classes containing any such pointers) are prohibited
@@ -79,17 +79,17 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * **[Rule S4]** new operator (including placement new) is prohibited (developers should use make_owning<> instead); delete operator is also prohibited
   + TEST CASES/PROHIBIT: `new X()`, `new int`
   + TEST CASES/ALLOW: `make_owning<X>()`, `make_owning<int>()`
-  - **[Rule S4.1]** result of make_owning<>() call MUST be assigned to an owning_ptr<T> (or passed to a function taking owning_ptr<T>) 
+  - **[Rule S4.1]** result of `make_owning<>()` call MUST be assigned to an `owning_ptr<T>` (or passed to a function taking `owning_ptr<T>`) 
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand
-  + **[Rule S5.1]** each naked_ptr<> and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
-    + for pointers/references originating from owning_ptr<> or safe_ptr<>, scope is always "infinity"
+  + **[Rule S5.1]** each `naked_ptr<>` and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
+    + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
     + TEST CASES/PROHIBIT: return pointer to local variable, TODO
   + **[Rule S5.2]** If we cannot find a scope of pointer/reference returned by a function, looking only at its signature - it is an error.
-    + if any function takes ONLY ONE pointer (this includes safe_ptr<> and owning_ptr<>, AND `this` pointer if applicable), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
+    + if any function takes ONLY ONE pointer (this includes `safe_ptr<>` and `owning_ptr<>`, AND `this` pointer if applicable), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
       - similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
       - NB: this stands because of prohibition on non-const globals
       - NB: it allows getters returning references
@@ -97,7 +97,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
       - in the future, we MAY add type-based analysis here
     + TEST CASES/PROHIBIT: `X* x = ff(x1,x2);` where x1 and x2 have different scope
     + TEST CASES/ALLOW: `X* x = ff(x1);`, `X* x = ff(x1,x2);` where x1 and x2 have the same scope
-  + **[Rule S5.3]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a naked_ptr<>).
+  + **[Rule S5.3]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a `naked_ptr<>`).
     - NB: it also applies to multi-level pointers: to be valid, ALL outer pointers/references except for last one, MUST be const
     - NB: passing naked_ptrs by value is ok. Even if several naked_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
