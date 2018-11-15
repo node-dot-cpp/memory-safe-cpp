@@ -111,4 +111,5 @@ Legend for TEST CASES:
     + function call taking X* as parameter
     + TEST CASES/PROHIBIT: `(int)p`, `static_cast<int>(p)`
     + TEST CASES/ALLOW: `fp(p)`
+* **[Rule D2]** Prohibiting uinitialized variables
     
