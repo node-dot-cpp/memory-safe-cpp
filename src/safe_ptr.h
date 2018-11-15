@@ -146,6 +146,7 @@ struct FirstControlBlock // not reallocatable
 			begin[i].set1stBlock();
 		}
 		begin[count-1].set(nullptr);
+		begin[count-1].set1stBlock();
 		dbgCheckFreeList();
 	}
 	void enlargeSecondBlock() {

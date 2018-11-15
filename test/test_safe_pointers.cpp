@@ -46,6 +46,14 @@ void testSafePointers()
  		printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
 		s14.swap(s11);
  		printf( "*s14 = %d\n", *s14.get() );
+		soft_ptr<int> s13(p1);
+		soft_ptr<int> s14(p1);
+		{
+			soft_ptr<int> s15(p1);
+ 			printf( "*s15 = %d\n", *s15.get() );
+		}
+		soft_ptr<int> s15(p1);
+ 		printf( "*s15 = %d\n", *s15.get() );
 	}
 	printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
 }
