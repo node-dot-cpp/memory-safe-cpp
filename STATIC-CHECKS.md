@@ -3,7 +3,7 @@
 ## Check Domains
 
 In addition to checking for memory consistency, our static checker can also check for potential violations of determinism. 
-Mode of check (memory safety, determinism, or both) is specified in the command line. 
+Mode of check (memory safety, determinism, or both) is specified in the command line. TODO: non-memory UB checks, cross-platform checks
 
 ## List of checks
 
@@ -104,7 +104,7 @@ Legend for TEST CASES:
 * **[Rule S7]** Prohibit unsupported-yet things
   + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
   
-### Determinism Checks
+### Determinism Checks (strictly - same-executable determinism)
 
 * Not allowing to convert pointers into non-pointers
   - **[Rule D1]** any (sub)expression which takes an argument of raw pointer type X* AND returns non-pointer type is prohibited, unless it is one of the following:
