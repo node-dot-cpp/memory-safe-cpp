@@ -12,6 +12,7 @@ Mode of check (memory safety, determinism, or both) is specified in the command 
     - by default, all the classes/functions are considered 'safe', and are analysed for safety
     - if a class/function is labeled as [[nodecpp::memory_unsafe]] , *or belongs to a namespace labeled as [[nodecpp::memory_unsafe]]*, memory safety checks are skipped for this class/function
     - if a class/function is labeled as [[nodecpp::non_deterministic]] , *or belongs to a namespace labeled as [[nodecpp::non_deterministic]]*, determinism checks are skipped for this class/function
+    - NB: first, have to double-check that attributes on namespaces are really allowed by all three major compilers
 
 ## List of checks
 
@@ -33,9 +34,12 @@ Legend for TEST CASES:
 
 Consistency checks always apply (regardless of the command line, and any attributes)
 
-- **[Rule C1]** ONLY those [[nodecpp::] attributes which are specified by this document, are allowed. Using of unspecified [[nodecpp::]] attribute is an error.
-- **[Rule C2]** use of [[nodecpp::] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
-- **[Rule C3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
+* **[Rule C1]** ONLY those [[nodecpp::]] attributes which are specified by this document, are allowed. Using of unspecified [[nodecpp::]] attribute is an error.
+  - TEST CASES/PROHIBIT: `[[nodecpp::abracadabra]]`
+* **[Rule C2]** use of [[nodecpp::]] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
+  - TEST CASES/PROHIBIT: `[[nodecpp::naked_struct]] void f();`
+* **[Rule C3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
+  - TEST CASES/PROHINIT: `namespace [[nodecpp:memory_unsafe]] abc {}; namespace abc {};`
 
 ### Memory Safety Checks
   
