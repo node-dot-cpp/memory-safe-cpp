@@ -33,9 +33,9 @@ Legend for TEST CASES:
 
 Consistency checks always apply (regardless of the command line, and any attributes)
 
-    - **[Rule C.1]** ONLY those [[nodecpp::] attributes which are specified by this document, are allowed. Using of unspecified [[nodecpp::]] attribute is an error. 
-    - **[Rule C.2]** use of [[nodecpp::] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
-    - **[Rule C.3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
+- **[Rule C.1]** ONLY those [[nodecpp::] attributes which are specified by this document, are allowed. Using of unspecified [[nodecpp::]] attribute is an error.
+- **[Rule C.2]** use of [[nodecpp::] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
+- **[Rule C.3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
 
 ### Memory Safety Checks
   
