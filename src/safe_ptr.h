@@ -40,6 +40,25 @@ enum class MemorySafety {none, partial, full};
 #endif
 #endif
 
+#define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
+
+template<class T>
+void checkNotNullLargeSize( T* ptr )
+{
+	if constexpr ( sizeof(T) <= CONTROL_BLOCK_SIZE ) ;
+	else {
+		if ( ptr == nullptr )
+			throw std::bad_alloc();
+	}
+}
+
+template<class T>
+void checkNotNullAllSizes( T* ptr )
+{
+	if ( ptr == nullptr )
+		throw std::bad_alloc();
+}
+
 
 struct Ptr2PtrWishFlags {
 private:
@@ -340,6 +359,18 @@ public:
 		return t;
 	}
 
+	T& operator * () const
+	{
+		checkNotNullAllSizes( t );
+		return *t;
+	}
+
+	T* operator -> () const 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
 	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
@@ -622,6 +653,18 @@ public:
 	T* get() const
 	{
 		assert( getPtr_() != nullptr );
+		return getPtr_();
+	}
+
+	T& operator * () const
+	{
+		checkNotNullAllSizes( getPtr_() );
+		return *getPtr_();
+	}
+
+	T* operator -> () const 
+	{
+		checkNotNullLargeSize( getPtr_() );
 		return getPtr_();
 	}
 

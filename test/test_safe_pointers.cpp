@@ -59,6 +59,10 @@ void testSafePointers()
 			soft_ptr<int> s17(p1);
  			printf( "*s17 = %d\n", *s17.get() );
 		}
+		printf( "*p1 = %d, *p2 = %d\n", *p1, *p2 );
+		const owning_ptr<int> p3 = make_owning<int>();
+		*(p3.get()) = 17;
+		printf( "*p3 = %d\n", *p3 );
 	}
 	printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
 }
