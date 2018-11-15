@@ -36,7 +36,7 @@ Legend for TEST CASES:
     + NB: taking a variable address ("&i") is not necessary (it is done via constructor of naked_ptr<>)
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p` (necessary to ensure nullptr safety)
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
-  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: this rule (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
+  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: if [Rule S1] is already enforced, this rule [Rule S1.1] (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
     + **[Rule S1.1.1]** special casts, in particular soft_ptr_static_cast<>. are also prohibited in safe code 
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, `reinterpret_cast<int*>(p)`, `soft_ptr_static_cast<X*>(p)`   
   - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
