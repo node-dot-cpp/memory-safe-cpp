@@ -1,9 +1,17 @@
 # static checks for memory-safe-cpp
 
-## Check Domains
+## Scope, #includes, and Check Domains
 
+### Check Domains
 In addition to checking for memory consistency, our static checker can also check for potential violations of determinism. 
-Mode of check (memory safety, determinism, or both) is specified in the command line. TODO: non-memory UB checks, cross-platform checks
+Mode of check (memory safety, determinism, or both) is specified in the command line. TODO: non-memory UB checks, cross-platform checks.
+
+### Scope of analysis
+* all files included via `#include <>` are considered library files. Out of functions declared in library files, ONLY functions which protoypes are explicitly listed in a special file safe_library.h, are allowed. safe_library.h MUST include ALL safe functions from C library. TODO: safe classes (with ALL safe functions of the class also explicitly listed)
+* all files included via `#include ""` are considered project files. For such "project files":
+    - by default, all the classes/functions are considered 'safe', and are analysed for safety
+    - if a class/function is labeled as [[nodecpp::memory_unsafe]] , *or belongs to a namespace labeled as [[nodecpp::memory_unsafe]]*, memory safety checks are skipped for this class/function
+    - if a class/function is labeled as [[nodecpp::non_deterministic]] , *or belongs to a namespace labeled as [[nodecpp::non_deterministic]]*, determinism checks are skipped for this class/function
 
 ## List of checks
 
@@ -20,6 +28,14 @@ Legend for TEST CASES:
 
 * **IMPORTANT**: whenever we're speaking of safe_ptr<T> or naked_ptr<T>, then not_null<safe_ptr<T>> and not_null<naked_ptr<T>> are ALWAYS implied (and SHOULD be included into relevant test cases)
 * **IMPORTANT**: whenever we're speaking of owning_ptr<T>, safe_ptr<T> or naked_ptr<T>, then their short aliases (optr<T>, sptr<T>, and nptr<T>) are ALWAYS implied (and SHOULD be included into relevant test cases)
+
+### Consistency Checks
+
+Consistency checks always apply (regardless of the command line, and any attributes)
+
+    - **[Rule C.1]** ONLY those [[nodecpp::] attributes which are specified by this document, are allowed. Using of unspecified [[nodecpp::]] attribute is an error. 
+    - **[Rule C.2]** use of [[nodecpp::] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
+    - **[Rule C.3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
 
 ### Memory Safety Checks
   
@@ -103,8 +119,16 @@ Legend for TEST CASES:
   + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with (TODO: CHECK!), so it is only GCC/Clang asm which has to be detected and thrown away
 * **[Rule S7]** Prohibit unsupported-yet things
   + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
+* **[Rule S8]** Prohibit functions except for those safe ones. 
+  + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special file safe_library.h, are allowed. safe_library.h MUST include ALL safe functions from C library. 
+    - safe_library.h should allow specifying safe classes (with ALL safe functions within the class also explicitly listed)
+    - safe_library.h should support `#include` within safe_library.h; it also SHOULD allow including whole library files (such as our own soft_ptr.h). It implies that safe_library.h MUST use regular C++ syntax. 
+    - TODO: support for strlen() etc. - provided that the parameter is zstring(!)
+    - TEST CASES/PROHIBIT: `memset(p,1,1)`
+    - TEST CASES/ALLOW: `soft_ptr<X*> px;`
+  + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
   
-### Determinism Checks (strictly - same-executable determinism)
+### Determinism Checks (strictly - ensuring Same-Executable Determinism)
 
 * Not allowing to convert pointers into non-pointers
   - **[Rule D1]** any (sub)expression which takes an argument of raw pointer type X* AND returns non-pointer type is prohibited, unless it is one of the following:
