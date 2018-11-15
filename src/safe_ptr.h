@@ -115,14 +115,14 @@ struct FirstControlBlock // not reallocatable
 	}
 
 	void init() {
-		/*firstFree = slots;
+		firstFree = slots;
 		for ( size_t i=0; i<maxSlots-1; ++i ) {
 			slots[i].set(slots + i + 1);
 			slots[i].set1stBlock();
 		}
-		slots[maxSlots-1].set(nullptr);*/
-		firstFree = nullptr;
-		addToRfeeList( slots, maxSlots );
+		slots[maxSlots-1].set(nullptr);
+		slots[maxSlots-1].set1stBlock();
+
 		otherAllockedCnt = 0;
 		otherAllockedSlots = nullptr;
 		assert( !firstFree->isUsed() );
@@ -138,15 +138,15 @@ struct FirstControlBlock // not reallocatable
 			assert( otherAllockedCnt == 0 );
 		}
 	}
-	void addToRfeeList( Ptr2PtrWishFlags* begin, size_t count ) {
+	void addToFreeList( Ptr2PtrWishFlags* begin, size_t count ) {
 		assert( firstFree == nullptr );
 		firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
 			begin[i].set(begin + i + 1);
-			begin[i].set1stBlock();
+			begin[i].set2ndBlock();
 		}
 		begin[count-1].set(nullptr);
-		begin[count-1].set1stBlock();
+		begin[count-1].set2ndBlock();
 		dbgCheckFreeList();
 	}
 	void enlargeSecondBlock() {
@@ -157,14 +157,14 @@ struct FirstControlBlock // not reallocatable
 			memcpy( newOtherAllockedSlots, otherAllockedSlots, sizeof(Ptr2PtrWishFlags) * otherAllockedCnt );
 			delete [] otherAllockedSlots;
 			otherAllockedSlots = newOtherAllockedSlots;
-			addToRfeeList( otherAllockedSlots + otherAllockedCnt, otherAllockedCnt );
+			addToFreeList( otherAllockedSlots + otherAllockedCnt, otherAllockedCnt );
 			otherAllockedCnt = newSize;
 		}
 		else {
 			assert( otherAllockedCnt == 0 );
 			otherAllockedCnt = secondBlockStartSize;
 			otherAllockedSlots = new Ptr2PtrWishFlags[otherAllockedCnt];
-			addToRfeeList( otherAllockedSlots, otherAllockedCnt );
+			addToFreeList( otherAllockedSlots, otherAllockedCnt );
 		}
 	}
 	size_t insert( void* ptr ) {
@@ -179,7 +179,7 @@ struct FirstControlBlock // not reallocatable
 		if ( firstFree->is1stBlock() )
 			idx = firstFree - slots;
 		else
-			idx = maxSlots + otherAllockedSlots - firstFree;
+			idx = maxSlots + firstFree - otherAllockedSlots;
 		firstFree->set(ptr);
 		firstFree->setUsed();
 		firstFree = tmp;
@@ -207,6 +207,7 @@ struct FirstControlBlock // not reallocatable
 	void remove( size_t idx ) {
 		assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( idx < maxSlots ) {
+			assert( slots[idx].isUsed() );
 			slots[idx].set( firstFree );
 			firstFree = slots + idx;
 			firstFree->setUnused();
@@ -270,6 +271,7 @@ public:
 	{
 		t = other.t;
 		other.t = nullptr;
+		return *this;
 	}
 	~owning_ptr()
 	{
