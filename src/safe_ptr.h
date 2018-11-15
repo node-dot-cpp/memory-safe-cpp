@@ -168,26 +168,24 @@ struct FirstControlBlock // not reallocatable
 	}
 	size_t insert( void* ptr ) {
 		assert( firstFree == nullptr || !firstFree->isUsed() );
-		if ( firstFree != nullptr ) {
-			Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
-			assert( !firstFree->isUsed() );
-			size_t idx;
-			if ( firstFree->is1stBlock() )
-				idx = firstFree - slots;
-			else
-				idx = maxSlots + otherAllockedSlots - firstFree;
-			firstFree->set(ptr);
-			firstFree->setUsed();
-			firstFree = tmp;
-			assert( firstFree == nullptr || !firstFree->isUsed() );
-			dbgCheckFreeList();
-			return idx;
-		}
-		else {
-			// TODO: reallocate
-			assert(false); // TODO+++++
-			return -1;
-		}
+		if ( firstFree == nullptr )
+			enlargeSecondBlock();
+		assert( firstFree != nullptr );
+
+		Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
+		assert( !firstFree->isUsed() );
+		size_t idx;
+		if ( firstFree->is1stBlock() )
+			idx = firstFree - slots;
+		else
+			idx = maxSlots + otherAllockedSlots - firstFree;
+		firstFree->set(ptr);
+		firstFree->setUsed();
+		firstFree = tmp;
+		assert( firstFree == nullptr || !firstFree->isUsed() );
+		dbgCheckFreeList();
+		assert( idx < (1<<19) ); // TODO
+		return idx;
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
 		if ( idx < maxSlots ) {
@@ -550,7 +548,8 @@ public:
 		idx = getControlBlock()->insert(this);
 #else
 		td = other.td;
-		td.updateData(getControlBlock()->insert(this));
+		size_t idx = getControlBlock()->insert(this);
+		td.updateData(idx);
 #endif
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
