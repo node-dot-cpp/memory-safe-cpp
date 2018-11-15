@@ -123,7 +123,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
   + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special file safe_library.h, are allowed. safe_library.h MUST include ALL safe functions from C library. 
     - safe_library.h should allow specifying safe classes (with ALL safe functions within the class also explicitly listed)
     - safe_library.h should support `#include` within safe_library.h; it also SHOULD allow including whole library files (such as our own soft_ptr.h). It implies that safe_library.h MUST use regular C++ syntax. 
-    - TODO: support for strlen() etc. - provided that the parameter is zstring(!)
+    - TODO: support for `strlen()` etc. - provided that the parameter is zstring(!)
     - TEST CASES/PROHIBIT: `memset(p,1,1)`
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
