@@ -111,5 +111,9 @@ Legend for TEST CASES:
     + function call taking X* as parameter
     + TEST CASES/PROHIBIT: `(int)p`, `static_cast<int>(p)`
     + TEST CASES/ALLOW: `fp(p)`
-* **[Rule D2]** Prohibiting uinitialized variables
-    
+* **[Rule D2]** Prohibiting uinitialized variables, including partially unitialized arrays
+  - TEST CASES/PROHIBIT: `int x;` (in function), `int a[3] = {1,2};` (in function)
+  - TEST CASES/ALLOW: `int x = 0;` (in function), `X x;` (in function, provided that class X has default constructor), `int a[3] = {1,2,3};` (in function)
+  - **[Rule D2.1]** Prohibiting uninitialized class members; at the moment, ONLY C++11 initializers next to data member are recognized. TODO: allow scenarios when ALL the constructors initialize data member in question. 
+    + TEST CASES/PROHIBIT: `int x;` (as data member), `int a[3] = {1,2};` (as data member)
+    + TEST CASES/ALLOW: `int x = 0;` (as data member), `X x;` (as data member, provided that class X has default constructor), `int a[3] = {1,2,3};` (as data member)
