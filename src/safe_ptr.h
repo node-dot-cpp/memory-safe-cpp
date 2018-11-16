@@ -254,6 +254,9 @@ template<class T, bool isSafe> class naked_ptr; // forward declaration
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+
 	T* t;
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 
@@ -351,13 +354,11 @@ public:
 		other.t = tmp;
 	}
 
-	T* get() const
+	naked_ptr<T, isSafe> get() const
 	{
-		// if zero guard page... if constexpr( sizeof(T)<4096); then add signal handler
-		//todo: pair<ptr,sz> realloc(ptr,minsise,desiredsize); also: size_t try_inplace_realloc(ptr,minsise,desiredsize)
-		//<bool isSafe=NODECPP_ISSAFE()>
-		assert( t != nullptr );
-		return t;
+		naked_ptr<T, isSafe> ret;
+		ret.t = t;
+		return ret;
 	}
 
 	T& operator * () const
@@ -509,10 +510,10 @@ public:
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.get();
+		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
-		setPtr_(owner.get());
+		setPtr_(owner.t);
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
@@ -520,10 +521,10 @@ public:
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.get();
+		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
-		td.init(owner.get());
+		td.init(owner.t);
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
@@ -531,10 +532,10 @@ public:
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.get();
+		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
-		setPtr_(owner.get());
+		setPtr_(owner.t);
 		td.updateData(getControlBlock()->insert(this));
 #endif
 		return *this;
@@ -543,10 +544,10 @@ public:
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
 #ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.get();
+		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
-		td.init(owner.get());
+		td.init(owner.t);
 		td.updateData(getControlBlock()->insert(this));
 #endif
 		return *this;
@@ -560,7 +561,7 @@ public:
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
-		setPtr_( other.get() );
+		setPtr_( other.getPtr_() );
 		td.updateData(getControlBlock()->insert(this));
 #endif
 	}
@@ -571,7 +572,7 @@ public:
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
-		setPtr_( other.get() );
+		setPtr_( other.getPtr_() );
 		td.updateData(getControlBlock()->insert(this));
 #endif
 		return *this;
@@ -651,10 +652,12 @@ public:
 			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 	}
 
-	T* get() const
+	naked_ptr<T, isSafe> get() const
 	{
 		assert( getPtr_() != nullptr );
-		return getPtr_();
+		naked_ptr<T, isSafe> ret;
+		ret.t = getPtr_();
+		return ret;
 	}
 
 	T& operator * () const
@@ -764,7 +767,7 @@ soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
 	ret.t = static_cast<T*>(p.get());
 	ret.idx = getControlBlock()->insert(this);
 #else
-	ret.td.updatePtr( static_cast<T*>(p.get()) );
+	ret.td.updatePtr( static_cast<T*>(p.getPtr_()) );
 	ret.td.updateData(ret.getControlBlock()->insert(&ret));
 #endif
 	return ret;
@@ -777,7 +780,7 @@ soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
 	ret.t = reinterpret_cast<T*>(p.get());
 	ret.idx = getControlBlock()->insert(this);
 #else
-	ret.td.updatePtr( reinterpret_cast<T*>(p.get()) );
+	ret.td.updatePtr( reinterpret_cast<T*>(p.getPtr_()) );
 	ret.td.updateData(ret.getControlBlock()->insert(&ret));
 #endif
 	return ret;
@@ -787,12 +790,21 @@ soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class naked_ptr
 {
+	friend class owning_ptr<T, isSafe>;
+	friend class soft_ptr<T, isSafe>;
+	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 
 	T* t;
 
 public:
 	naked_ptr() { t = nullptr; }
+
+	naked_ptr(T& t_) { t = &t_; }
 
 	template<class T1>
 	naked_ptr( const owning_ptr<T1, isSafe>& owner ) { t = owner.get(); }
@@ -825,31 +837,13 @@ public:
 		other.t = tmp;
 	}
 
-	T* get() const
-	{
-		assert( t != nullptr );
-		return t;
-	}
-
-	T& operator * () 
+	T& operator * () const
 	{
 		checkNotNullAllSizes( t );
 		return *t;
 	}
 
-	const T& operator * () const
-	{
-		checkNotNullAllSizes( t );
-		return *t;
-	}
-
-	T* operator -> () 
-	{
-		checkNotNullLargeSize( t );
-		return t;
-	}
-
-	const T* operator -> () const 
+	T* operator -> () const 
 	{
 		checkNotNullLargeSize( t );
 		return t;
