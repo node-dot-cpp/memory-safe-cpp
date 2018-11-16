@@ -249,6 +249,7 @@ struct FirstControlBlock // not reallocatable
 static_assert( sizeof(FirstControlBlock) == 64 );
 
 template<class T, bool isSafe> class soft_ptr; // forward declaration
+template<class T, bool isSafe> class naked_ptr; // forward declaration
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
@@ -781,5 +782,90 @@ soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
 #endif
 	return ret;
 }
+
+
+template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+class naked_ptr
+{
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
+
+	T* t;
+
+public:
+	naked_ptr() { t = nullptr; }
+
+	template<class T1>
+	naked_ptr( const owning_ptr<T1, isSafe>& owner ) { t = owner.get(); }
+	naked_ptr( const owning_ptr<T, isSafe>& owner ) { t = owner.get(); }
+	template<class T1>
+	naked_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner ) { t = owner.get(); return *this; }
+	naked_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner ) { t = owner.get(); return *this; }
+
+	template<class T1>
+	naked_ptr( const soft_ptr<T1, isSafe>& other ) { t = other.get(); }
+	naked_ptr( const soft_ptr<T, isSafe>& other ) { t = other.get(); }
+	template<class T1>
+	naked_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other ) { t = other.get(); return *this; }
+	naked_ptr<T>& operator = ( const soft_ptr<T, isSafe>& other ) { t = other.get(); return *this; }
+
+	template<class T1>
+	naked_ptr( const naked_ptr<T1, isSafe>& other ) { t = other.t; }
+	template<class T1>
+	naked_ptr<T>& operator = ( const naked_ptr<T1, isSafe>& other ) { t = other.t; return *this; }
+	naked_ptr( const naked_ptr<T, isSafe>& other ) { t = other.t; }
+	naked_ptr<T>& operator = ( naked_ptr<T, isSafe>& other ) { t = other.t; return *this; }
+
+	naked_ptr( naked_ptr<T, isSafe>&& other ) { t = other.t; other.t = nullptr; }
+	naked_ptr<T>& operator = ( naked_ptr<T, isSafe>&& other ) { t = other.t; other.t = nullptr; return *this; }
+
+	void swap( naked_ptr<T, isSafe>& other )
+	{
+		T* tmp = t;
+		t = other.t;
+		other.t = tmp;
+	}
+
+	T* get() const
+	{
+		assert( t != nullptr );
+		return t;
+	}
+
+	T& operator * () 
+	{
+		checkNotNullAllSizes( t );
+		return *t;
+	}
+
+	const T& operator * () const
+	{
+		checkNotNullAllSizes( t );
+		return *t;
+	}
+
+	T* operator -> () 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
+	const T* operator -> () const 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
+	// T* release() : prhibited by safity requirements
+
+	explicit operator bool() const noexcept
+	{
+		return t != nullptr;
+	}
+
+	~naked_ptr()
+	{
+		t = nullptr;
+	}
+};
 
 #endif
