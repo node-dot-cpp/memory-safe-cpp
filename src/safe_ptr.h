@@ -824,11 +824,11 @@ public:
 	naked_ptr( const naked_ptr<T1, isSafe>& other ) { t = other.t; }
 	template<class T1>
 	naked_ptr<T>& operator = ( const naked_ptr<T1, isSafe>& other ) { t = other.t; return *this; }
-	naked_ptr( const naked_ptr<T, isSafe>& other ) { t = other.t; }
-	naked_ptr<T>& operator = ( naked_ptr<T, isSafe>& other ) { t = other.t; return *this; }
+	naked_ptr( const naked_ptr<T, isSafe>& other ) = default;
+	naked_ptr<T, isSafe>& operator = ( naked_ptr<T, isSafe>& other ) = default;
 
-	naked_ptr( naked_ptr<T, isSafe>&& other ) { t = other.t; other.t = nullptr; }
-	naked_ptr<T>& operator = ( naked_ptr<T, isSafe>&& other ) { t = other.t; other.t = nullptr; return *this; }
+	naked_ptr( naked_ptr<T, isSafe>&& other ) = default;
+	naked_ptr<T, isSafe>& operator = ( naked_ptr<T, isSafe>&& other ) = default;
 
 	void swap( naked_ptr<T, isSafe>& other )
 	{
