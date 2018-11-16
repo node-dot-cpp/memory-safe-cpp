@@ -11,8 +11,8 @@ void testPtrsWithData()
 	int* n2 = new int;
 	printf( "n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
 	Ptr2PtrWishData n1D, n2D;
-	n1D.init(n1);
-	n2D.init(n2);
+	n1D.init(n1,Ptr2PtrWishData::invalidData);
+	n2D.init(n2,Ptr2PtrWishData::invalidData);
 	printf( "n1D.ptr = 0x%llx, n1D.data = %zd, n2D.ptr = 0x%llx, n2D.data = %zd\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 	n1D.updateData(6);
 	n2D.updateData(500000);

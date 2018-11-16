@@ -76,6 +76,30 @@ public:
 };
 static_assert( sizeof(Ptr2PtrWishFlags) == 8 );
 
+#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+struct Ptr2PtrWishData {
+	static constexpr size_t invalidData = (size_t)(-1);
+	void* ptr;
+	size_t data;
+	void init( void* ptr_, size_t data_ ) { 
+		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
+		ptr = ptr_; 
+		data = data_;
+	}
+	void* getPtr() const { return ptr; }
+	size_t getData() const { return data; }
+	void updatePtr( void* ptr_ ) { ptr = ptr_ }
+	void updateData( size_t data ) { data = data_; }
+	void swap( Ptr2PtrWishData& other ) { 
+		void* tmpPtr = ptr; ptr = other.ptr; other.ptr = tmpPtr; 
+		size_t tmpData = data; data = other.data; other.data = tmpData; 
+	}
+};
+	size_t idx;
+	T* getPtr_() const { return t; }
+	void setPtr_( T* t_ ) { t = t_; }
+	size_t getIdx_() const { return idx; }
+#else
 struct Ptr2PtrWishData {
 //private:
 	uintptr_t ptr;
@@ -86,6 +110,7 @@ struct Ptr2PtrWishData {
 	static constexpr size_t upperDataSize_ = 16;
 	static constexpr size_t lowerDataSize_ = 3;
 	static constexpr size_t upperDataShift_ = 45;
+	static constexpr size_t invalidData = ( lowerDataMask_ | upperDataMaskInData_ );
 	static_assert ( (upperDataMaskInData_ << upperDataShift_ ) == upperDataMask_ );
 	static_assert ( (ptrMask_ & upperDataMask_) == 0 );
 	static_assert ( (ptrMask_ >> (upperDataShift_ + lowerDataSize_)) == 0 );
@@ -93,9 +118,12 @@ struct Ptr2PtrWishData {
 	static_assert ( (upperDataMask_ & lowerDataMask_) == 0 );
 	static_assert ( (ptrMask_ | upperDataMask_ | lowerDataMask_) == 0xFFFFFFFFFFFFFFFFULL );
 public:
-	void init( void* ptr_ ) { 
+	void init( void* ptr_, size_t data ) { 
 		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
 		ptr = (uintptr_t)ptr_; 
+		assert( data < (1<<(upperDataSize_+lowerDataSize_)) ); 
+		ptr |= data & lowerDataMask_; 
+		ptr |= (data & upperDataMaskInData_) << upperDataShift_; 
 	}
 	void* getPtr() const { return (void*)( ptr & ptrMask_ ); }
 	size_t getData() const { return ( (ptr & upperDataMask_) >> 45 ) | (ptr & lowerDataMask_); }
@@ -113,6 +141,7 @@ public:
 	void swap( Ptr2PtrWishData& other ) { uintptr_t tmp = ptr; ptr = other.ptr; other.ptr = tmp; }
 };
 static_assert( sizeof(Ptr2PtrWishData) == 8 );
+#endif
 
 static_assert( sizeof(void*) == 8 );
 struct FirstControlBlock // not reallocatable
@@ -482,7 +511,7 @@ class soft_ptr
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 	T* t;
 	size_t idx;
 	T* getPtr_() const { return t; }
@@ -493,63 +522,71 @@ class soft_ptr
 	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
 	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
 	size_t getIdx_() const { return td.getData(); }
-#endif
+#endif*/
+	Ptr2PtrWishData td;
+	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
+	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
+	size_t getIdx_() const { return td.getData(); }
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
+	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 
 public:
 	soft_ptr()
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = nullptr;
 		idx = (size_t)(-1);
 #else
-		td.init(nullptr);
-#endif
+#endif*/
+		td.init(nullptr, Ptr2PtrWishData::invalidData);
 	}
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
 		setPtr_(owner.t);
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	//template<>
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
 		td.init(owner.t);
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
 		setPtr_(owner.t);
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
-	//template<>
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = owner.t;
 		idx = getControlBlock()->insert(this);
 #else
 		td.init(owner.t);
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
 
@@ -557,53 +594,57 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
 		setPtr_( other.getPtr_() );
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
 		setPtr_( other.getPtr_() );
 		td.updateData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
 		td = other.td;
 		size_t idx = getControlBlock()->insert(this);
 		td.updateData(idx);
-#endif
+#endif*/
+		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		idx = getControlBlock()->insert(this);
 #else
 		td = other.td;
 		td.setData(getControlBlock()->insert(this));
-#endif
+#endif*/
+		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 
 
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		other.t = nullptr;
 		idx = other.idx;
@@ -612,12 +653,16 @@ public:
 		td = other.td;
 		other.td.init(nullptr);
 #endif
+		getControlBlock()->resetPtr(getIdx_(), this);*/
+		td = other.td;
 		getControlBlock()->resetPtr(getIdx_(), this);
+		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
+		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 	}
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		t = other.t;
 		other.t = nullptr;
 		idx = other.idx;
@@ -626,13 +671,16 @@ public:
 		td = other.td;
 		other.td.init(nullptr);
 #endif
-		getControlBlock()->resetPtr(getIdx_(), this);
+		getControlBlock()->resetPtr(getIdx_(), this);*/
+		td = other.td;
+		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
+		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 		return *this;
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 		T* tmp = t;
 		t = other.t;
 		other.t = tmp;
@@ -645,7 +693,8 @@ public:
 			other.getControlBlock()->resetPtr(other.idx, &other);
 #else
 		td.swap( other.td );
-#endif
+#endif*/
+		td.swap( other.td );
 		if ( getPtr_() )
 			getControlBlock()->resetPtr(getIdx_(), this);
 		if ( other.getPtr_() )
@@ -682,7 +731,7 @@ public:
 	~soft_ptr()
 	{
 		if( getPtr_() != nullptr ) {
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
+/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 			assert( idx != (size_t)(-1) );
 			getControlBlock()->remove(getIdx_());
 			t = nullptr;
@@ -690,7 +739,10 @@ public:
 			//assert( idx != (size_t)(-1) );
 			getControlBlock()->remove(getIdx_());
 			td.init(nullptr);
-#endif
+#endif*/
+			assert( getIdx_() != Ptr2PtrWishData::invalidData );
+			getControlBlock()->remove(getIdx_());
+			td.init(nullptr, Ptr2PtrWishData::invalidData);
 		}
 	}
 };
@@ -855,6 +907,8 @@ public:
 	{
 		return t != nullptr;
 	}
+
+	bool operator == ( const naked_ptr<T, isSafe>& other ) const { return t == other.t; } // TODO: revise necessity
 
 	~naked_ptr()
 	{
