@@ -494,7 +494,6 @@ template<class _Ty,
 	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
 	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
 	return owning_ptr<_Ty>(objPtr);
-//	return (owning_ptr<_Ty>(new _Ty(_STD forward<_Types>(_Args)...)));
 	}
 
 
@@ -511,18 +510,6 @@ class soft_ptr
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-	T* t;
-	size_t idx;
-	T* getPtr_() const { return t; }
-	void setPtr_( T* t_ ) { t = t_; }
-	size_t getIdx_() const { return idx; }
-#else
-	Ptr2PtrWishData td;
-	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
-	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
-	size_t getIdx_() const { return td.getData(); }
-#endif*/
 	Ptr2PtrWishData td;
 	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
 	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
@@ -533,59 +520,26 @@ class soft_ptr
 public:
 	soft_ptr()
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = nullptr;
-		idx = (size_t)(-1);
-#else
-#endif*/
 		td.init(nullptr, Ptr2PtrWishData::invalidData);
 	}
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.t;
-		idx = getControlBlock()->insert(this);
-#else
-		setPtr_(owner.t);
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	//template<>
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td.init(owner.t);
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.t;
-		idx = getControlBlock()->insert(this);
-#else
-		setPtr_(owner.t);
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td.init(owner.t);
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
@@ -594,49 +548,20 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		setPtr_( other.getPtr_() );
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		setPtr_( other.getPtr_() );
-		td.updateData(getControlBlock()->insert(this));
-#endif*/
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td = other.td;
-		size_t idx = getControlBlock()->insert(this);
-		td.updateData(idx);
-#endif*/
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td = other.td;
-		td.setData(getControlBlock()->insert(this));
-#endif*/
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
@@ -644,16 +569,6 @@ public:
 
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		other.t = nullptr;
-		idx = other.idx;
-		other.idx = (size_t)(-1);
-#else
-		td = other.td;
-		other.td.init(nullptr);
-#endif
-		getControlBlock()->resetPtr(getIdx_(), this);*/
 		td = other.td;
 		getControlBlock()->resetPtr(getIdx_(), this);
 		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
@@ -662,16 +577,6 @@ public:
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		other.t = nullptr;
-		idx = other.idx;
-		other.idx = (size_t)(-1);
-#else
-		td = other.td;
-		other.td.init(nullptr);
-#endif
-		getControlBlock()->resetPtr(getIdx_(), this);*/
 		td = other.td;
 		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
 		other.td.init(nullptr,Ptr2PtrWishData::invalidData);
@@ -681,20 +586,6 @@ public:
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		T* tmp = t;
-		t = other.t;
-		other.t = tmp;
-		size_t idx = idx;
-		idx = other.idx;
-		other.idx = idx;
-		if ( t )
-			getControlBlock()->resetPtr(idx, this);
-		if ( other.t )
-			other.getControlBlock()->resetPtr(other.idx, &other);
-#else
-		td.swap( other.td );
-#endif*/
 		td.swap( other.td );
 		if ( getPtr_() )
 			getControlBlock()->resetPtr(getIdx_(), this);
@@ -732,15 +623,6 @@ public:
 	~soft_ptr()
 	{
 		if( getPtr_() != nullptr ) {
-/*#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-			assert( idx != (size_t)(-1) );
-			getControlBlock()->remove(getIdx_());
-			t = nullptr;
-#else
-			//assert( idx != (size_t)(-1) );
-			getControlBlock()->remove(getIdx_());
-			td.init(nullptr);
-#endif*/
 			assert( getIdx_() != Ptr2PtrWishData::invalidData );
 			getControlBlock()->remove(getIdx_());
 			td.init(nullptr, Ptr2PtrWishData::invalidData);
