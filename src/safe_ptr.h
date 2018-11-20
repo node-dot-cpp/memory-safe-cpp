@@ -59,6 +59,12 @@ void checkNotNullAllSizes( T* ptr )
 		throw std::bad_alloc();
 }
 
+void throwPointerOutOfRange()
+{
+	// TODO: actual implementation
+	throw std::bad_alloc();
+}
+
 
 struct Ptr2PtrWishFlags {
 private:
@@ -277,6 +283,25 @@ struct FirstControlBlock // not reallocatable
 };
 static_assert( sizeof(FirstControlBlock) == 64 );
 
+#define USING_COOPERATIVE_ALLOCATOR
+#ifdef USING_COOPERATIVE_ALLOCATOR
+//#error "Not implemented"
+inline
+FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+inline
+size_t getAllocSize(void* t) { assert( t != nullptr ); return 0; }
+inline
+uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)); }
+#else
+inline
+FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+inline
+size_t getAllocSize(void* t) { assert( t != nullptr ); return *(reinterpret_cast<uint64_t*>(getControlBlock_(t)) - 1); }
+inline
+uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(t) - ( sizeof( uint64_t ) + sizeof( FirstControlBlock ) ); }
+#endif // USING_COOPERATIVE_ALLOCATOR
+
+
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
 
@@ -298,7 +323,9 @@ template<class _Ty,
 	friend class soft_ptr;
 
 	T* t;
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+//	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+	FirstControlBlock* getControlBlock() { return getControlBlock_(t); }
+	uint8_t* getAllocatedBlock() {return getAllocatedBlock_(t); }
 
 	void updatePtrForListItemsWithInvalidPtr()
 	{
@@ -342,7 +369,7 @@ public:
 		{
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
-			delete [] getControlBlock();
+			delete [] getAllocatedBlock();
 #ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
 			t = nullptr;
 #endif
@@ -355,7 +382,7 @@ public:
 		{
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
-			delete [] getControlBlock();
+			delete [] getAllocatedBlock();
 			t = nullptr;
 		}
 	}
@@ -474,8 +501,15 @@ template<class _Ty,
 	enable_if_t<!is_array_v<_Ty>, int> = 0>
 	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
+#ifdef USING_COOPERATIVE_ALLOCATOR
 	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	// note: size will be taken from an allocator
 	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+#else
+	uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
+	_Ty* objPtr = new ( data + sizeof(uint64_t) + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+#endif // USING_COOPERATIVE_ALLOCATOR
 	return owning_ptr<_Ty>(objPtr);
 	}
 
@@ -501,11 +535,12 @@ class soft_ptr
 	size_t getIdx_() const { return td.getData(); }
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
 	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }*/
-	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); }
+	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); t = nullptr; }
 	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
-	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+//	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
+	FirstControlBlock* getControlBlock() { return getControlBlock_(getPtr_()); }
+	FirstControlBlock* getControlBlock(T* t) { return getControlBlock_(t); }
 
 public:
 	soft_ptr()
@@ -513,6 +548,8 @@ public:
 		td.init(nullptr, Ptr2PtrWishData::invalidData);
 		t = nullptr;
 	}
+
+
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
@@ -584,6 +621,38 @@ public:
 		other.td.init(nullptr,Ptr2PtrWishData::invalidData);
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 		return *this;
+	}
+
+	template<class T1>
+	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
+	{
+		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < t_ + sizeof(T) )
+			throwPointerOutOfRange();
+		t = t_;
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+	}
+	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
+	{
+		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < t_ + sizeof(T) )
+			throwPointerOutOfRange();
+		t = t_;
+		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+	}
+
+	template<class T1>
+	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
+	{
+		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < t_ + sizeof(T) )
+			throwPointerOutOfRange();
+		t = t_;
+		td.init( other.t, getControlBlock(other.t)->insert(this) );
+	}
+	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
+	{
+		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < t_ + sizeof(T) )
+			throwPointerOutOfRange();
+		t = t_;
+		td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
