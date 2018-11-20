@@ -778,26 +778,16 @@ public:
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
 	soft_ptr<T, isSafe> ret;
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-	ret.t = static_cast<T*>(p.get());
-	ret.idx = getControlBlock()->insert(this);
-#else
-	ret.td.updatePtr( static_cast<T*>(p.getPtr_()) );
-	ret.td.updateData(ret.getControlBlock()->insert(&ret));
-#endif
+	ret.t = static_cast<T*>(p.getPtr_());
+	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
 	return ret;
 }
 
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
 	soft_ptr<T, isSafe> ret;
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-	ret.t = reinterpret_cast<T*>(p.get());
-	ret.idx = getControlBlock()->insert(this);
-#else
-	ret.td.updatePtr( reinterpret_cast<T*>(p.getPtr_()) );
-	ret.td.updateData(ret.getControlBlock()->insert(&ret));
-#endif
+	ret.t = reinterpret_cast<T*>(p.getPtr_());
+	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
 	return ret;
 }
 
