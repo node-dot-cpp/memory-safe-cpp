@@ -330,8 +330,8 @@ public:
 		//dbgValidateList();
 		if ( NODECPP_LIKELY(t) )
 		{
-			t->~T();
 			updatePtrForListItemsWithInvalidPtr();
+			t->~T();
 			delete [] getControlBlock();
 #ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
 			t = nullptr;
@@ -674,6 +674,7 @@ public:
 		getControlBlock()->resetPtr(getIdx_(), this);*/
 		td = other.td;
 		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
+		other.td.init(nullptr,Ptr2PtrWishData::invalidData);
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 		return *this;
 	}
