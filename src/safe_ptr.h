@@ -494,8 +494,15 @@ class soft_ptr
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
 	Ptr2PtrWishData td;
-	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
+	T* t;
+
+/*	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
 	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
+	size_t getIdx_() const { return td.getData(); }
+	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
+	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }*/
+	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); }
+	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
 	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
@@ -504,25 +511,30 @@ public:
 	soft_ptr()
 	{
 		td.init(nullptr, Ptr2PtrWishData::invalidData);
+		t = nullptr;
 	}
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
+		t = owner.t; // automatic type conversion (if at all possible)
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	//template<>
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
+		t = owner.t;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
+		t = owner.t; // automatic type conversion (if at all possible)
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
+		t = owner.t;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
@@ -531,20 +543,24 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
+		t = other.t; // automatic type conversion (if at all possible)
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
+		t = other.t; // automatic type conversion (if at all possible)
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
+		t = other.t;
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
+		t = other.t;
 		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
@@ -552,6 +568,8 @@ public:
 
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
+		t = other.t;
+		other.t = nullptr;
 		td = other.td;
 		getControlBlock()->resetPtr(getIdx_(), this);
 		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
@@ -561,6 +579,7 @@ public:
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
 		td = other.td;
+		other.t = nullptr;
 		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
 		other.td.init(nullptr,Ptr2PtrWishData::invalidData);
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
@@ -569,6 +588,9 @@ public:
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
+		auto tmp = t;
+		t = other.t;
+		other.t = tmp;
 		td.swap( other.td );
 		if ( getPtr_() )
 			getControlBlock()->resetPtr(getIdx_(), this);
