@@ -280,37 +280,47 @@ static_assert( sizeof(FirstControlBlock) == 64 );
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
 
+template<bool _Test,
+	class _Ty = void>
+	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
+
+template<class _Ty>
+	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
+
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
+template<class _Ty,
+	class... _Types,
+	enable_if_t<!is_array_v<_Ty>, int> = 0>
+	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
 	T* t;
 	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 
-	void updatePtrForListItems( T* t_ )
+	void updatePtrForListItemsWithInvalidPtr()
 	{
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->setPtr_( t_ );
+				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->invalidatePtr();
 		for ( size_t i=0; i<cb->otherAllockedCnt; ++i )
 			if ( cb->otherAllockedSlots[i].isUsed() )
-				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->setPtr_( t_ );
+				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->invalidatePtr();
 	}
 
-	void updatePtrForListItemsWithInvalidPtr() { updatePtrForListItems( nullptr ); }
+	owning_ptr( T* t_ )
+	{
+		t = t_;
+		getControlBlock()->init();
+	}
 
 public:
 	owning_ptr()
 	{
 		t = nullptr;
-	}
-	owning_ptr( T* t_ )
-	{
-		t = t_;
-		getControlBlock()->init();
 	}
 	owning_ptr( owning_ptr<T, isSafe>& other ) = delete;
 	owning_ptr& operator = ( owning_ptr<T, isSafe>& other ) = delete;
@@ -343,8 +353,8 @@ public:
 	{
 		if ( NODECPP_LIKELY(t) )
 		{
-			t->~T();
 			updatePtrForListItemsWithInvalidPtr();
+			t->~T();
 			delete [] getControlBlock();
 			t = nullptr;
 		}
@@ -352,28 +362,8 @@ public:
 
 	void reset( T* t_ ) // Q: what happens to safe ptrs?
 	{
-		T* tmp = t;
-		t = t_;
-		if ( NODECPP_LIKELY(t) )
-		{
-			t->~T();
-			delete [] getControlBlock();
-			if ( NODECPP_LIKELY(t != t_) )
-			{
-				t = t_;
-				updatePtrForListItems( t_ );
-			}
-			else
-			{
-				t = nullptr;
-				updatePtrForListItemsWithInvalidPtr();
-			}
-		}
-		else
-		{
-			t = t_;
-			updatePtrForListItems( t_ );
-		}
+		assert( t == nullptr );
+		reset();
 	}
 
 	void swap( owning_ptr<T, isSafe>& other )
@@ -478,13 +468,6 @@ public:
 	}
 };
 #endif // 0
-
-template<bool _Test,
-	class _Ty = void>
-	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
-
-template<class _Ty>
-	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
 
 template<class _Ty,
 	class... _Types,
@@ -676,9 +659,15 @@ public:
 		other.t = tmp;
 	}
 
-	T* get() const
+
+	T& operator * () const
 	{
-		return this->t;
+		return *t;
+	}
+
+	T* operator -> () const 
+	{
+		return t;
 	}
 
 	// T* release() : prhibited by safity requirements
