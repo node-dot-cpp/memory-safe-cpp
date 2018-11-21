@@ -59,6 +59,7 @@ void checkNotNullAllSizes( T* ptr )
 		throw std::bad_alloc();
 }
 
+inline
 void throwPointerOutOfRange()
 {
 	// TODO: actual implementation
@@ -539,8 +540,8 @@ class soft_ptr
 	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
 //	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
-	FirstControlBlock* getControlBlock() { return getControlBlock_(getPtr_()); }
-	FirstControlBlock* getControlBlock(T* t) { return getControlBlock_(t); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(getPtr_()); }
+	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 public:
 	soft_ptr()
@@ -626,14 +627,14 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < t_ + sizeof(T) )
+		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < t_ + sizeof(T) )
+		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
@@ -642,14 +643,14 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < t_ + sizeof(T) )
+		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < t_ + sizeof(T) )
+		if ( reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );

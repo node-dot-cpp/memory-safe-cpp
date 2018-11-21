@@ -79,6 +79,29 @@ void testCasts()
 //	assert( p3.get() == p2.get() );
 }
 
+void testPointersToMembers()
+{
+	class SmallNonVirtualBase { public: int n; int m;};
+	class SmallVirtualBase : public SmallNonVirtualBase { public: int n1; int m1; virtual ~SmallVirtualBase() {}};
+	class Small : public SmallVirtualBase { public: int n2; int m2;};
+
+	class LargeNonVirtualBase { public: int n[0x10000]; int m;};
+	class LargeVirtualBase : public LargeNonVirtualBase { public: int n1; int m1[0x10000]; virtual ~LargeVirtualBase() {}};
+	class Large : public LargeVirtualBase { public: int n2; int m2;};
+
+	owning_ptr<Small> pSmall = make_owning<Small>();
+	soft_ptr<Small> spSmall(pSmall);
+	soft_ptr<SmallVirtualBase> spSmallVirtualBase = soft_ptr_reinterpret_cast<SmallVirtualBase>( spSmall );
+	soft_ptr<SmallNonVirtualBase> spSmallNonVirtualBase = soft_ptr_static_cast<SmallNonVirtualBase>( spSmall );
+	soft_ptr<int> pintSmall( pSmall, &(pSmall->n) );
+
+	owning_ptr<Large> pLarge = make_owning<Large>();
+	soft_ptr<Large> spLarge(pLarge);
+	soft_ptr<LargeVirtualBase> spLargeVirtualBase = soft_ptr_reinterpret_cast<LargeVirtualBase>( spLarge );
+	soft_ptr<LargeNonVirtualBase> spLargeNonVirtualBase = soft_ptr_static_cast<LargeNonVirtualBase>( spLarge );
+	soft_ptr<int> pintLarge( pLarge, &(pLarge->m) );
+}
+
 int main()
 {
 	testPtrsWithData();
