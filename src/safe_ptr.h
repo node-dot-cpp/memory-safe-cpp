@@ -284,7 +284,7 @@ struct FirstControlBlock // not reallocatable
 };
 static_assert( sizeof(FirstControlBlock) == 64 );
 
-#define USING_COOPERATIVE_ALLOCATOR
+//#define USING_COOPERATIVE_ALLOCATOR
 #ifdef USING_COOPERATIVE_ALLOCATOR
 //#error "Not implemented"
 inline
@@ -531,15 +531,9 @@ class soft_ptr
 	Ptr2PtrWishData td;
 	T* t;
 
-/*	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
-	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
-	size_t getIdx_() const { return td.getData(); }
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
-	FirstControlBlock* getControlBlock(T* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }*/
 	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); t = nullptr; }
 	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
-//	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(getPtr_()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
@@ -627,7 +621,7 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		if ( reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) ) // TODO: revise!!!
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
@@ -700,7 +694,8 @@ public:
 		if( getPtr_() != nullptr ) {
 			assert( getIdx_() != Ptr2PtrWishData::invalidData );
 			getControlBlock()->remove(getIdx_());
-			td.init(nullptr, Ptr2PtrWishData::invalidData);
+			//td.init(nullptr, Ptr2PtrWishData::invalidData);
+			//invalidatePtr();
 		}
 	}
 };
@@ -778,17 +773,19 @@ public:
 
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
-	soft_ptr<T, isSafe> ret;
+/*	soft_ptr<T, isSafe> ret;
 	ret.t = static_cast<T*>(p.getPtr_());
-	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
+	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );*/
+	soft_ptr<T, isSafe> ret(p,static_cast<T*>(p.getPtr_()));
 	return ret;
 }
 
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
-	soft_ptr<T, isSafe> ret;
-	ret.t = reinterpret_cast<T*>(p.getPtr_());
-	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
+//	soft_ptr<T, isSafe> ret;
+//	ret.t = reinterpret_cast<T*>(p.getPtr_());
+//	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
+	soft_ptr<T, isSafe> ret(p,reinterpret_cast<T*>(p.getPtr_()));
 	return ret;
 }
 

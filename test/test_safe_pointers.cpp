@@ -145,7 +145,7 @@ const lest::test specification[] =
 		}
 	},
 
-	/*CASE( "test Pointers-To-Members" )
+	CASE( "test Pointers-To-Members" )
 	{
 		SETUP("basic safe pointer test")
 		{
@@ -169,7 +169,7 @@ const lest::test specification[] =
 			soft_ptr<LargeNonVirtualBase> spLargeNonVirtualBase = soft_ptr_static_cast<LargeNonVirtualBase>( spLarge );
 			soft_ptr<int> pintLarge( pLarge, &(pLarge->m) );
 		}
-	},*/
+	},
 
 };
 
