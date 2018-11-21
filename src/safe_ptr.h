@@ -371,9 +371,7 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
 			delete [] getAllocatedBlock();
-#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
 			t = nullptr;
-#endif
 		}
 	}
 
@@ -534,7 +532,7 @@ class soft_ptr
 	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); t = nullptr; }
 	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
-	FirstControlBlock* getControlBlock() const { return getControlBlock_(getPtr_()); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(td.getPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 public:
@@ -694,8 +692,7 @@ public:
 		if( getPtr_() != nullptr ) {
 			assert( getIdx_() != Ptr2PtrWishData::invalidData );
 			getControlBlock()->remove(getIdx_());
-			//td.init(nullptr, Ptr2PtrWishData::invalidData);
-			//invalidatePtr();
+			invalidatePtr();
 		}
 	}
 };
