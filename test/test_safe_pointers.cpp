@@ -149,25 +149,39 @@ const lest::test specification[] =
 	{
 		SETUP("basic safe pointer test")
 		{
-			class SmallNonVirtualBase { public: int n; int m;};
-			class SmallVirtualBase : public SmallNonVirtualBase { public: int n1; int m1; virtual ~SmallVirtualBase() {}};
-			class Small : public SmallVirtualBase { public: int n2; int m2;};
+			class SmallNonVirtualBase { public: int sn; int sm;};
+			class SmallVirtualBase : public SmallNonVirtualBase { public: int sn1; int sm1; virtual ~SmallVirtualBase() {}};
+			class Small : public SmallVirtualBase { public: int sn2; int sm2;};
 
-			class LargeNonVirtualBase { public: int n[0x10000]; int m;};
-			class LargeVirtualBase : public LargeNonVirtualBase { public: int n1; int m1[0x10000]; virtual ~LargeVirtualBase() {}};
-			class Large : public LargeVirtualBase { public: int n2; int m2;};
+			class LargeNonVirtualBase { public: int ln[0x10000]; int lm;};
+			class LargeVirtualBase : public LargeNonVirtualBase { public: int ln1; int lm1[0x10000]; virtual ~LargeVirtualBase() {}};
+			class Large : public LargeVirtualBase { public: int ln2; int lm2;};
+
+			class Multiple : public LargeVirtualBase, SmallVirtualBase { public: int mn3; int mm3;};
 
 			owning_ptr<Small> pSmall = make_owning<Small>();
 			soft_ptr<Small> spSmall(pSmall);
 			soft_ptr<SmallVirtualBase> spSmallVirtualBase = soft_ptr_reinterpret_cast<SmallVirtualBase>( spSmall );
 			soft_ptr<SmallNonVirtualBase> spSmallNonVirtualBase = soft_ptr_static_cast<SmallNonVirtualBase>( spSmall );
-			soft_ptr<int> pintSmall( pSmall, &(pSmall->n) );
+			soft_ptr<int> pintSmall( pSmall, &(pSmall->sn) );
 
 			owning_ptr<Large> pLarge = make_owning<Large>();
 			soft_ptr<Large> spLarge(pLarge);
 			soft_ptr<LargeVirtualBase> spLargeVirtualBase = soft_ptr_reinterpret_cast<LargeVirtualBase>( spLarge );
 			soft_ptr<LargeNonVirtualBase> spLargeNonVirtualBase = soft_ptr_static_cast<LargeNonVirtualBase>( spLarge );
-			soft_ptr<int> pintLarge( pLarge, &(pLarge->m) );
+			soft_ptr<int> pintLarge( pLarge, &(pLarge->lm) );
+
+			owning_ptr<Multiple> pMultiple = make_owning<Multiple>();
+			soft_ptr<Multiple> spMultiple(pMultiple);
+			soft_ptr<LargeVirtualBase> spMultipleViaLarge = soft_ptr_reinterpret_cast<LargeVirtualBase>( spMultiple );
+			soft_ptr<SmallVirtualBase> spMultipleViaSmall = soft_ptr_reinterpret_cast<SmallVirtualBase>( spMultiple );
+			soft_ptr<int> pintMultiple( pMultiple, &(pMultiple->mm3) );
+
+			EXPECT_THROWS( soft_ptr<int> pintError1( pMultiple, nullptr ) );
+
+			int * anyN = new int;
+			EXPECT_THROWS( soft_ptr<int> pintError2( pMultiple, anyN ) );
+			delete anyN;
 		}
 	},
 
