@@ -18,8 +18,6 @@ FORCE_INLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { r
 inline void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
 inline void deallocate( void* ptr ) { delete [] ptr; }
 inline void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
-	//uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
-	//*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
 inline void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
 inline bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
 #endif
@@ -306,23 +304,13 @@ struct FirstControlBlock // not reallocatable
 };
 static_assert( sizeof(FirstControlBlock) == 64 );
 
-#define USING_COOPERATIVE_ALLOCATOR
-#ifdef USING_COOPERATIVE_ALLOCATOR
-//#error "Not implemented"
 inline
 FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 inline
 size_t getAllocSize(void* t) { assert( t != nullptr ); return 0; }
 inline
 uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)); }
-#else
-inline
-FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
-inline
-size_t getAllocSize(void* t) { assert( t != nullptr ); return *(reinterpret_cast<uint64_t*>(getControlBlock_(t)) - 1); }
-inline
-uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(t) - ( sizeof( uint64_t ) + sizeof( FirstControlBlock ) ); }
-#endif // USING_COOPERATIVE_ALLOCATOR
+#define USING_COOPERATIVE_ALLOCATOR
 
 
 template<class T, bool isSafe> class soft_ptr; // forward declaration
@@ -346,7 +334,6 @@ template<class _Ty,
 	friend class soft_ptr;
 
 	T* t;
-//	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 	FirstControlBlock* getControlBlock() { return getControlBlock_(t); }
 	uint8_t* getAllocatedBlock() {return getAllocatedBlock_(t); }
 
@@ -524,18 +511,8 @@ template<class _Ty,
 	enable_if_t<!is_array_v<_Ty>, int> = 0>
 	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
-#ifdef USING_COOPERATIVE_ALLOCATOR
-//	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) + sizeof(_Ty) ) );
-	// note: size will be taken from an allocator
 	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
-#else
-//	uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
-	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) + sizeof(_Ty) ) );
-	//*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
-	//_Ty* objPtr = new ( data + sizeof(uint64_t) + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
-	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
-#endif // USING_COOPERATIVE_ALLOCATOR
 	return owning_ptr<_Ty>(objPtr);
 	}
 
