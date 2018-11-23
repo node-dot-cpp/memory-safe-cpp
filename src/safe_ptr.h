@@ -14,12 +14,14 @@ FORCE_INLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 FORCE_INLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 FORCE_INLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 FORCE_INLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
+FORCE_INLINE constexpr size_t getPrefixByteCount() { return guaranteed_prefix_size; }
 #else
 inline void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
 inline void deallocate( void* ptr ) { delete [] ptr; }
 inline void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
 inline void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
 inline bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
+inline constexpr size_t getPrefixByteCount() { return 0; }
 #endif
 
 
@@ -380,7 +382,7 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
 			//delete [] getAllocatedBlock();
-			zombieDeallocate( getAllocatedBlock() );
+			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			t = nullptr;
 		}
 	}
@@ -392,7 +394,7 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
 			//delete [] getAllocatedBlock();
-			zombieDeallocate( getAllocatedBlock() );
+			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			t = nullptr;
 		}
 	}
@@ -511,8 +513,8 @@ template<class _Ty,
 	enable_if_t<!is_array_v<_Ty>, int> = 0>
 	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
-	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) + sizeof(_Ty) ) );
-	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) - getPrefixByteCount() ) _Ty(_STD forward<_Types>(_Args)...);
 	return owning_ptr<_Ty>(objPtr);
 	}
 
