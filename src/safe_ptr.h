@@ -356,6 +356,14 @@ struct FirstControlBlockV2 // not reallocatable
 			assert( idx < (1<<19) ); // TODO
 			return idx;
 		}
+		void resetPtr( size_t idx, void* newPtr ) {
+			assert( idx < otherAllockedCnt );
+			slots[idx].set( newPtr );
+			slots[idx].setUsed();
+			slots[idx].set2ndBlock();
+			//dbgCheckFreeList();
+			//assert( firstFree == nullptr || !firstFree->isUsed() );
+		}
 		void remove( size_t idx ) {
 			assert( firstFree == nullptr || !firstFree->isUsed() );
 			assert( idx < otherAllockedCnt );
@@ -386,7 +394,7 @@ struct FirstControlBlockV2 // not reallocatable
 				ret->otherAllockedCnt = secondBlockStartSize;
 				//present->firstFree->set(nullptr);
 				//otherAllockedSlots.setPtr( reinterpret_cast<Ptr2PtrWishFlags*>( allocate( otherAllockedCnt * sizeof(Ptr2PtrWishFlags) ) ) );
-				ret->addToFreeList( present->slots, secondBlockStartSize );
+				ret->addToFreeList( ret->slots, secondBlockStartSize );
 				return ret;
 			}
 		}
@@ -528,17 +536,18 @@ struct FirstControlBlockV2 // not reallocatable
 			slots[idx].set1stBlock();
 		}
 		else {
-			assert( idx - maxSlots < otherAllockedCnt );
+			//assert( idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
-			otherAllockedSlots.getPtr()->slots[idx].set( newPtr );
+			otherAllockedSlots.getPtr()->resetPtr( idx, newPtr );
+			/*otherAllockedSlots.getPtr()->slots[idx].set( newPtr );
 			otherAllockedSlots.getPtr()->slots[idx].setUsed();
-			otherAllockedSlots.getPtr()->slots[idx].set1stBlock();
+			otherAllockedSlots.getPtr()->slots[idx].set1stBlock();*/
 		}
 		//dbgCheckFreeList();
 		//assert( firstFree == nullptr || !firstFree->isUsed() );
 	}
 	void remove( size_t idx ) {
-		assert( firstFree == nullptr || !firstFree->isUsed() );
+		//assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( idx < maxSlots ) {
 			assert( slots[idx].isUsed() );
 			slots[idx].setUnused();
@@ -552,7 +561,7 @@ struct FirstControlBlockV2 // not reallocatable
 			firstFree = otherAllockedSlots.getPtr() + idx;
 			firstFree->setUnused();
 			firstFree->set2ndBlock();*/
-			assert( idx - maxSlots < otherAllockedCnt );
+			//assert( idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
 			assert( otherAllockedSlots.getPtr() != nullptr );
 			otherAllockedSlots.getPtr()->remove( idx );
