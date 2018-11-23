@@ -6,6 +6,17 @@
 #include "../src/safe_ptr.h"
 #include "../3rdparty/lest/include/lest/lest.hpp"
 
+class IIBMallocInitializer
+{
+public:
+	IIBMallocInitializer()
+	{
+		g_AllocManager.initialize();
+		g_AllocManager.enable();
+	}
+};
+static IIBMallocInitializer iibmallocinitializer;
+
 const lest::test specification[] =
 {
 	CASE( "testing pointers-with-data" )

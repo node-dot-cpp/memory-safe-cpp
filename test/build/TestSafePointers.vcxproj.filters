@@ -21,9 +21,30 @@
     <ClCompile Include="..\test_safe_pointers.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc_windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\page_allocator_windows.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\page_allocator_linux.cpp">
+      <Filter>linux-staff-for-quick-editing</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc_new_linux.cpp">
+      <Filter>linux-staff-for-quick-editing</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\safe_ptr.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

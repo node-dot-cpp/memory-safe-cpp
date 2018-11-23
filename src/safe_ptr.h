@@ -5,6 +5,26 @@
 #include <stdint.h>
 #include <assert.h>
 
+#define USE_IIBMALLOC
+
+#ifdef USE_IIBMALLOC
+#include "iibmalloc/src/iibmalloc.h"
+FORCE_INLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
+FORCE_INLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+FORCE_INLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
+FORCE_INLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
+FORCE_INLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
+#else
+inline void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
+inline void deallocate( void* ptr ) { delete [] ptr; }
+inline void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
+	//uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	//*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
+inline void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
+inline bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
+#endif
+
+
 #if defined __GNUC__
 #define NODECPP_LIKELY(x)       __builtin_expect(!!(x),1)
 #define NODECPP_UNLIKELY(x)     __builtin_expect(!!(x),0)
@@ -186,7 +206,8 @@ struct FirstControlBlock // not reallocatable
 	void deinit() {
 		if ( otherAllockedSlots != nullptr ) {
 			assert( otherAllockedCnt != 0 );
-			delete [] otherAllockedSlots;
+			//delete [] otherAllockedSlots;
+			deallocate( otherAllockedSlots );
 			otherAllockedCnt = 0;
 		}
 		else {
@@ -208,9 +229,10 @@ struct FirstControlBlock // not reallocatable
 		if ( otherAllockedSlots != nullptr ) {
 			assert( otherAllockedCnt != 0 );
 			size_t newSize = otherAllockedCnt << 1;
-			Ptr2PtrWishFlags* newOtherAllockedSlots = new Ptr2PtrWishFlags[newSize];
+			Ptr2PtrWishFlags* newOtherAllockedSlots = reinterpret_cast<Ptr2PtrWishFlags*>( allocate( newSize * sizeof(Ptr2PtrWishFlags) ) );
 			memcpy( newOtherAllockedSlots, otherAllockedSlots, sizeof(Ptr2PtrWishFlags) * otherAllockedCnt );
-			delete [] otherAllockedSlots;
+			//delete [] otherAllockedSlots;
+			deallocate( otherAllockedSlots );
 			otherAllockedSlots = newOtherAllockedSlots;
 			addToFreeList( otherAllockedSlots + otherAllockedCnt, otherAllockedCnt );
 			otherAllockedCnt = newSize;
@@ -218,7 +240,7 @@ struct FirstControlBlock // not reallocatable
 		else {
 			assert( otherAllockedCnt == 0 );
 			otherAllockedCnt = secondBlockStartSize;
-			otherAllockedSlots = new Ptr2PtrWishFlags[otherAllockedCnt];
+			otherAllockedSlots = reinterpret_cast<Ptr2PtrWishFlags*>( allocate( otherAllockedCnt * sizeof(Ptr2PtrWishFlags) ) );
 			addToFreeList( otherAllockedSlots, otherAllockedCnt );
 		}
 	}
@@ -284,7 +306,7 @@ struct FirstControlBlock // not reallocatable
 };
 static_assert( sizeof(FirstControlBlock) == 64 );
 
-//#define USING_COOPERATIVE_ALLOCATOR
+#define USING_COOPERATIVE_ALLOCATOR
 #ifdef USING_COOPERATIVE_ALLOCATOR
 //#error "Not implemented"
 inline
@@ -370,7 +392,8 @@ public:
 		{
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
-			delete [] getAllocatedBlock();
+			//delete [] getAllocatedBlock();
+			zombieDeallocate( getAllocatedBlock() );
 			t = nullptr;
 		}
 	}
@@ -381,7 +404,8 @@ public:
 		{
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
-			delete [] getAllocatedBlock();
+			//delete [] getAllocatedBlock();
+			zombieDeallocate( getAllocatedBlock() );
 			t = nullptr;
 		}
 	}
@@ -501,13 +525,16 @@ template<class _Ty,
 	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
 #ifdef USING_COOPERATIVE_ALLOCATOR
-	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
+//	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) + sizeof(_Ty) ) );
 	// note: size will be taken from an allocator
 	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
 #else
-	uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
-	*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
-	_Ty* objPtr = new ( data + sizeof(uint64_t) + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+//	uint8_t* data = new uint8_t[ sizeof(uint64_t) + sizeof(FirstControlBlock) + sizeof(_Ty) ];
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) + sizeof(_Ty) ) );
+	//*reinterpret_cast<uint64_t*>(data) = sizeof(_Ty); // well, here we allocate exactly this size
+	//_Ty* objPtr = new ( data + sizeof(uint64_t) + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
+	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
 #endif // USING_COOPERATIVE_ALLOCATOR
 	return owning_ptr<_Ty>(objPtr);
 	}
@@ -619,14 +646,16 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		if ( !isZombieablePointerInBlock( getControlBlock(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		if ( !isZombieablePointerInBlock( getControlBlock(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
@@ -635,14 +664,16 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		if ( !isZombieablePointerInBlock( getControlBlock(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
-		if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		if ( !isZombieablePointerInBlock( getControlBlock(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );
