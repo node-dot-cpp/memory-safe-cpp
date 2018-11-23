@@ -308,10 +308,10 @@ static_assert( sizeof(FirstControlBlock) == 64 );
 
 inline
 FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+//inline
+//size_t getAllocSize(void* t) { assert( t != nullptr ); return 0; }
 inline
-size_t getAllocSize(void* t) { assert( t != nullptr ); return 0; }
-inline
-uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)); }
+uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
 #define USING_COOPERATIVE_ALLOCATOR
 
 
@@ -382,7 +382,8 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
 			//delete [] getAllocatedBlock();
-			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
+			//zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
+			zombieDeallocate( getAllocatedBlock_(t) );
 			t = nullptr;
 		}
 	}
@@ -394,7 +395,8 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			t->~T();
 			//delete [] getAllocatedBlock();
-			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
+//			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
+			zombieDeallocate( getAllocatedBlock_(t) );
 			t = nullptr;
 		}
 	}
@@ -626,7 +628,7 @@ public:
 	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
-		if ( !isZombieablePointerInBlock( getControlBlock(owner.t), t_ ) )
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
@@ -634,7 +636,7 @@ public:
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
-		if ( !isZombieablePointerInBlock( getControlBlock(owner.t), t_ ) )
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
@@ -644,7 +646,7 @@ public:
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
 	{
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
-		if ( !isZombieablePointerInBlock( getControlBlock(other.td.getPtr()), t_ ) )
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );
@@ -652,7 +654,7 @@ public:
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
-		if ( !isZombieablePointerInBlock( getControlBlock(other.td.getPtr()), t_ ) )
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
 		td.init( other.t, getControlBlock(other.t)->insert(this) );
