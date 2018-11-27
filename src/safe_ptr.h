@@ -187,142 +187,8 @@ static_assert( sizeof(Ptr2PtrWishData) == 8 );
 #endif
 
 static_assert( sizeof(void*) == 8 );
-struct FirstControlBlockV1 // not reallocatable
-{
-	static constexpr size_t maxSlots = 5;
-	static constexpr size_t secondBlockStartSize = 8;	
-	Ptr2PtrWishFlags* firstFree;
-	size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
-	Ptr2PtrWishFlags* otherAllockedSlots = nullptr;
-	Ptr2PtrWishFlags slots[maxSlots];
 
-	void dbgCheckFreeList() {
-		Ptr2PtrWishFlags* start = firstFree;
-		while( start ) {
-			assert( !start->isUsed() );
-			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots) < otherAllockedCnt ) );
-			start = ((Ptr2PtrWishFlags*)(start->getPtr()));
-		}
-	}
-
-	void init() {
-		firstFree = slots;
-		for ( size_t i=0; i<maxSlots-1; ++i ) {
-			slots[i].set(slots + i + 1);
-			slots[i].set1stBlock();
-		}
-		slots[maxSlots-1].set(nullptr);
-		slots[maxSlots-1].set1stBlock();
-
-		otherAllockedCnt = 0;
-		otherAllockedSlots = nullptr;
-		assert( !firstFree->isUsed() );
-		dbgCheckFreeList();
-	}
-	void deinit() {
-		if ( otherAllockedSlots != nullptr ) {
-			assert( otherAllockedCnt != 0 );
-			//delete [] otherAllockedSlots;
-			deallocate( otherAllockedSlots );
-			otherAllockedCnt = 0;
-		}
-		else {
-			assert( otherAllockedCnt == 0 );
-		}
-	}
-	void addToFreeList( Ptr2PtrWishFlags* begin, size_t count ) {
-		assert( firstFree == nullptr );
-		firstFree = begin;
-		for ( size_t i=0; i<count-1; ++i ) {
-			begin[i].set(begin + i + 1);
-			begin[i].set2ndBlock();
-		}
-		begin[count-1].set(nullptr);
-		begin[count-1].set2ndBlock();
-		dbgCheckFreeList();
-	}
-	void enlargeSecondBlock() {
-		if ( otherAllockedSlots != nullptr ) {
-			assert( otherAllockedCnt != 0 );
-			size_t newSize = otherAllockedCnt << 1;
-			Ptr2PtrWishFlags* newOtherAllockedSlots = reinterpret_cast<Ptr2PtrWishFlags*>( allocate( newSize * sizeof(Ptr2PtrWishFlags) ) );
-			memcpy( newOtherAllockedSlots, otherAllockedSlots, sizeof(Ptr2PtrWishFlags) * otherAllockedCnt );
-			//delete [] otherAllockedSlots;
-			deallocate( otherAllockedSlots );
-			otherAllockedSlots = newOtherAllockedSlots;
-			addToFreeList( otherAllockedSlots + otherAllockedCnt, otherAllockedCnt );
-			otherAllockedCnt = newSize;
-		}
-		else {
-			assert( otherAllockedCnt == 0 );
-			otherAllockedCnt = secondBlockStartSize;
-			otherAllockedSlots = reinterpret_cast<Ptr2PtrWishFlags*>( allocate( otherAllockedCnt * sizeof(Ptr2PtrWishFlags) ) );
-			addToFreeList( otherAllockedSlots, otherAllockedCnt );
-		}
-	}
-	size_t insert( void* ptr ) {
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		if ( firstFree == nullptr )
-			enlargeSecondBlock();
-		assert( firstFree != nullptr );
-
-		Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
-		assert( !firstFree->isUsed() );
-		size_t idx;
-		if ( firstFree->is1stBlock() )
-			idx = firstFree - slots;
-		else
-			idx = maxSlots + firstFree - otherAllockedSlots;
-		firstFree->set(ptr);
-		firstFree->setUsed();
-		firstFree = tmp;
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		dbgCheckFreeList();
-		assert( idx < (1<<19) ); // TODO
-		return idx;
-	}
-	void resetPtr( size_t idx, void* newPtr ) {
-		if ( idx < maxSlots ) {
-			slots[idx].set( newPtr );
-			slots[idx].setUsed();
-			slots[idx].set1stBlock();
-		}
-		else {
-			assert( idx - maxSlots < otherAllockedCnt );
-			idx -= maxSlots;
-			otherAllockedSlots[idx].set( newPtr );
-			otherAllockedSlots[idx].setUsed();
-			otherAllockedSlots[idx].set1stBlock();
-		}
-		dbgCheckFreeList();
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-	}
-	void remove( size_t idx ) {
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		if ( idx < maxSlots ) {
-			assert( slots[idx].isUsed() );
-			slots[idx].set( firstFree );
-			firstFree = slots + idx;
-			firstFree->setUnused();
-			firstFree->set1stBlock();
-		}
-		else {
-			assert( idx - maxSlots < otherAllockedCnt );
-			idx -= maxSlots;
-			otherAllockedSlots[idx].set( firstFree );
-			firstFree = otherAllockedSlots + idx;
-			firstFree->setUnused();
-			firstFree->set2ndBlock();
-		}
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		dbgCheckFreeList();
-	}
-	void clear() {
-	}
-};
-static_assert( sizeof(FirstControlBlockV1) == 64 );
-
-struct FirstControlBlockV2 // not reallocatable
+struct FirstControlBlock // not reallocatable
 {
 	struct SecondCBHeader
 	{
@@ -468,30 +334,9 @@ struct FirstControlBlockV2 // not reallocatable
 		dbgCheckFreeList();
 	}
 	void enlargeSecondBlock() {
-		/*if ( otherAllockedSlots.getPtr() != nullptr ) {
-			assert( otherAllockedCnt != 0 );
-			size_t newSize = otherAllockedCnt << 1;
-			Ptr2PtrWishFlags* newOtherAllockedSlots = reinterpret_cast<Ptr2PtrWishFlags*>( allocate( newSize * sizeof(Ptr2PtrWishFlags) ) );
-			memcpy( newOtherAllockedSlots, otherAllockedSlots.getPtr(), sizeof(Ptr2PtrWishFlags) * otherAllockedCnt );
-			//delete [] otherAllockedSlots;
-			deallocate( otherAllockedSlots.getPtr() );
-			otherAllockedSlots.setPtr( newOtherAllockedSlots );
-			addToFreeList( otherAllockedSlots.getPtr() + otherAllockedCnt, otherAllockedCnt );
-			otherAllockedCnt = newSize;
-		}
-		else {
-			assert( otherAllockedCnt == 0 );
-			otherAllockedCnt = secondBlockStartSize;
-			otherAllockedSlots.setPtr( reinterpret_cast<Ptr2PtrWishFlags*>( allocate( otherAllockedCnt * sizeof(Ptr2PtrWishFlags) ) ) );
-			addToFreeList( otherAllockedSlots.getPtr(), otherAllockedCnt );
-		}*/
 		otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
 	}
 	size_t insert( void* ptr ) {
-		/*assert( firstFree == nullptr || !firstFree->isUsed() );
-		if ( firstFree == nullptr )
-			enlargeSecondBlock();
-		assert( firstFree != nullptr );*/
 		size_t mask = otherAllockedSlots.getMask();
 		//if ( mask != 0x7 )
 		{
@@ -513,21 +358,6 @@ struct FirstControlBlockV2 // not reallocatable
 			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			return maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
 		}
-
-		/*Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
-		assert( !firstFree->isUsed() );
-		size_t idx;
-		if ( firstFree->is1stBlock() )
-			idx = firstFree - slots;
-		else
-			idx = maxSlots + firstFree - otherAllockedSlots.getPtr();
-		firstFree->set(ptr);
-		firstFree->setUsed();
-		firstFree = tmp;
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		dbgCheckFreeList();
-		assert( idx < (1<<19) ); // TODO
-		return idx;*/
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
 		if ( idx < maxSlots ) {
@@ -539,15 +369,10 @@ struct FirstControlBlockV2 // not reallocatable
 			//assert( idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
 			otherAllockedSlots.getPtr()->resetPtr( idx, newPtr );
-			/*otherAllockedSlots.getPtr()->slots[idx].set( newPtr );
-			otherAllockedSlots.getPtr()->slots[idx].setUsed();
-			otherAllockedSlots.getPtr()->slots[idx].set1stBlock();*/
 		}
 		//dbgCheckFreeList();
-		//assert( firstFree == nullptr || !firstFree->isUsed() );
 	}
 	void remove( size_t idx ) {
-		//assert( firstFree == nullptr || !firstFree->isUsed() );
 		if ( idx < maxSlots ) {
 			assert( slots[idx].isUsed() );
 			slots[idx].setUnused();
@@ -555,12 +380,6 @@ struct FirstControlBlockV2 // not reallocatable
 			otherAllockedSlots.setMask( otherAllockedSlots.getMask() & ~(1<<idx) );
 		}
 		else {
-			/*assert( idx - maxSlots < otherAllockedCnt );
-			idx -= maxSlots;
-			otherAllockedSlots.getPtr()->slots[idx].set( firstFree );
-			firstFree = otherAllockedSlots.getPtr() + idx;
-			firstFree->setUnused();
-			firstFree->set2ndBlock();*/
 			//assert( idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
 			assert( otherAllockedSlots.getPtr() != nullptr );
@@ -575,19 +394,14 @@ struct FirstControlBlockV2 // not reallocatable
 		otherAllockedSlots.setZombie();
 	}
 };
-static_assert( sizeof(FirstControlBlockV2) == 32 );
-
-using FirstControlBlock = FirstControlBlockV2;
+static_assert( sizeof(FirstControlBlock) == 32 );
 
 
 
 inline
 FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
-//inline
-//size_t getAllocSize(void* t) { assert( t != nullptr ); return 0; }
 inline
 uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
-#define USING_COOPERATIVE_ALLOCATOR
 
 
 template<class T, bool isSafe> class soft_ptr; // forward declaration
