@@ -18,6 +18,33 @@ public:
 	}
 };
 
+// testing stack optimization
+owning_ptr<int> gop;
+soft_ptr<int> gsp;
+void fn1( soft_ptr<int> sp ) { gsp = sp; }
+void fn2( soft_ptr<int> sp ) { fn1(sp); }
+void fn3( soft_ptr<int> sp ) { fn2(sp); }
+void fn4( soft_ptr<int> sp ) { fn3(sp); }
+void fn5( soft_ptr<int> sp ) { fn4(sp); }
+void fn6( soft_ptr<int> sp ) { fn5(sp); }
+void fn7( soft_ptr<int> sp ) { fn6(sp); }
+void fn8( soft_ptr<int> sp ) { fn7(sp); }
+void fnStart() { 
+	owning_ptr<int> op = make_owning<int>(); 
+	*op = 17;
+	soft_ptr<int> sp = op; 
+	gop = std::move(op); 
+	fn5(sp); 
+}
+void fnSoftEnd() { 
+	assert( *gsp == 17 );
+	soft_ptr<int> sp = std::move(gsp); 
+}
+void fnOwningEnd() { 
+	assert( *gop == 17 );
+	gop.reset(); 
+}
+
 static IIBMallocInitializer iibmallocinitializer;
 const lest::test specification[] =
 {
@@ -216,5 +243,8 @@ const lest::test specification[] =
 
 int main( int argc, char * argv[] )
 {
+	fnStart();
+	fnSoftEnd();
+	fnOwningEnd();
     return lest::run( specification, argc, argv );
 }

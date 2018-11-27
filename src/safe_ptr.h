@@ -479,11 +479,11 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			getControlBlock()->clear();
 			t->~T();
 			//delete [] getAllocatedBlock();
 			//zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
+			getControlBlock()->clear();
 			t = nullptr;
 		}
 	}
@@ -497,6 +497,7 @@ public:
 			//delete [] getAllocatedBlock();
 //			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
+			getControlBlock()->clear();
 			t = nullptr;
 		}
 	}
@@ -819,9 +820,9 @@ public:
 		t = other.t;
 		other.t = tmp;
 		td.swap( other.td );
-		if ( getPtr_() )
+		if ( getPtr_() && getIdx_() != Ptr2PtrWishData::invalidData )
 			getControlBlock()->resetPtr(getIdx_(), this);
-		if ( other.getPtr_() )
+		if ( other.getPtr_() && other.getIdx_() != Ptr2PtrWishData::invalidData)
 			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 	}
 
