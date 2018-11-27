@@ -418,8 +418,8 @@ struct FirstControlBlockV2 // not reallocatable
 	static constexpr size_t maxSlots = 3;
 	Ptr2PtrWishFlags slots[maxSlots];
 	static constexpr size_t secondBlockStartSize = 8;	
-	Ptr2PtrWishFlags* firstFree;
-	size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
+	//Ptr2PtrWishFlags* firstFree;
+	//size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
 	PtrWithMaskAndFlag otherAllockedSlots;
 
 	void dbgCheckFreeList() {
@@ -432,7 +432,7 @@ struct FirstControlBlockV2 // not reallocatable
 	}
 
 	void init() {
-		firstFree = slots;
+		//firstFree = slots;
 		for ( size_t i=0; i<maxSlots-1; ++i ) {
 			slots[i].set(slots + i + 1);
 			slots[i].set1stBlock();
@@ -440,12 +440,12 @@ struct FirstControlBlockV2 // not reallocatable
 		slots[maxSlots-1].set(nullptr);
 		slots[maxSlots-1].set1stBlock();
 
-		otherAllockedCnt = 0;
+		//otherAllockedCnt = 0;
 		otherAllockedSlots.init();
-		assert( !firstFree->isUsed() );
+		//assert( !firstFree->isUsed() );
 		dbgCheckFreeList();
 	}
-	void deinit() {
+	/*void deinit() {
 		if ( otherAllockedSlots.getPtr() != nullptr ) {
 			assert( otherAllockedCnt != 0 );
 			//delete [] otherAllockedSlots;
@@ -455,10 +455,10 @@ struct FirstControlBlockV2 // not reallocatable
 		else {
 			assert( otherAllockedCnt == 0 );
 		}
-	}
+	}*/
 	void addToFreeList( Ptr2PtrWishFlags* begin, size_t count ) {
-		assert( firstFree == nullptr );
-		firstFree = begin;
+		//assert( firstFree == nullptr );
+		//firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
 			begin[i].set(begin + i + 1);
 			begin[i].set2ndBlock();
@@ -575,7 +575,7 @@ struct FirstControlBlockV2 // not reallocatable
 		otherAllockedSlots.setZombie();
 	}
 };
-static_assert( sizeof(FirstControlBlockV2) == 48 );
+static_assert( sizeof(FirstControlBlockV2) == 32 );
 
 using FirstControlBlock = FirstControlBlockV2;
 
@@ -620,9 +620,10 @@ template<class _Ty,
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
 				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->invalidatePtr();
-		for ( size_t i=0; i<cb->otherAllockedCnt; ++i )
-			if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
-				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 	}
 
 	owning_ptr( T* t_ )
