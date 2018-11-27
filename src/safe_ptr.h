@@ -14,7 +14,7 @@ FORCE_INLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 FORCE_INLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 FORCE_INLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 FORCE_INLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
-FORCE_INLINE constexpr size_t getPrefixByteCount() { return guaranteed_prefix_size; }
+FORCE_INLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 #else
 inline void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
 inline void deallocate( void* ptr ) { delete [] ptr; }
@@ -62,18 +62,12 @@ enum class MemorySafety {none, partial, full};
 
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
-template<class T>
-bool isGuaranteedOnStack( T* ptr )
+FORCE_INLINE
+bool isGuaranteedOnStack( void* ptr )
 {
-	if constexpr ( sizeof(T) <= CONTROL_BLOCK_SIZE )
-	{
-		int a;
-		constexpr uintptr_t upperBitsMask = ~( CONTROL_BLOCK_SIZE - 1 );
-		return ( ( ((uintptr_t)(ptr)) ^ ((uintptr_t)(&a)) ) & upperBitsMask ) == 0;
-	}
-	else {
-		return false;
-	}
+	int a;
+	constexpr uintptr_t upperBitsMask = ~( CONTROL_BLOCK_SIZE - 1 );
+	return ( ( ((uintptr_t)(ptr)) ^ ((uintptr_t)(&a)) ) & upperBitsMask ) == 0;
 }
 
 template<class T>
@@ -407,6 +401,7 @@ struct FirstControlBlock // not reallocatable
 			otherAllockedSlots.getPtr()->dealloc();
 		otherAllockedSlots.setZombie();
 	}
+	bool isZombie() { return otherAllockedSlots.isZombie(); }
 };
 static_assert( sizeof(FirstControlBlock) == 32 );
 
@@ -660,25 +655,41 @@ public:
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
 		t = owner.t; // automatic type conversion (if at all possible)
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	//template<>
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
 		t = owner.t;
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
 		t = owner.t; // automatic type conversion (if at all possible)
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
 		t = owner.t;
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
 	}
 
@@ -687,24 +698,40 @@ public:
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
 		t = other.t; // automatic type conversion (if at all possible)
-		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+//		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
 		t = other.t; // automatic type conversion (if at all possible)
-		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+//		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
 		t = other.t;
-		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+//		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
 		t = other.t;
-		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+//		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 		return *this;
 	}
 
@@ -714,16 +741,21 @@ public:
 		t = other.t;
 		other.t = nullptr;
 		td = other.td;
-		getControlBlock()->resetPtr(getIdx_(), this);
+//		getControlBlock()->resetPtr(getIdx_(), this);
+		if ( getIdx_() != Ptr2PtrWishData::invalidData )
+			getControlBlock()->resetPtr(getIdx_(), this);
 		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 	}
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
+		// TODO: revise
 		td = other.td;
 		other.t = nullptr;
-		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
+//		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
+		if ( getIdx_() != Ptr2PtrWishData::invalidData )
+			td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
 		other.td.init(nullptr,Ptr2PtrWishData::invalidData);
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 		return *this;
@@ -736,7 +768,11 @@ public:
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
@@ -744,7 +780,11 @@ public:
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
-		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+//		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(owner.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
 
 	template<class T1>
@@ -754,7 +794,11 @@ public:
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
-		td.init( other.t, getControlBlock(other.t)->insert(this) );
+//		td.init( other.t, getControlBlock(other.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
@@ -762,7 +806,11 @@ public:
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		t = t_;
-		td.init( other.t, getControlBlock(other.t)->insert(this) );
+//		td.init( other.t, getControlBlock(other.t)->insert(this) );
+		if ( isGuaranteedOnStack( this ) )
+			td.init(other.t, Ptr2PtrWishData::invalidData);
+		else
+			td.init( other.t, getControlBlock(other.t)->insert(this) );
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
@@ -807,8 +855,9 @@ public:
 	~soft_ptr()
 	{
 		if( getPtr_() != nullptr ) {
-			assert( getIdx_() != Ptr2PtrWishData::invalidData );
-			getControlBlock()->remove(getIdx_());
+			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
+			if ( getIdx_() != Ptr2PtrWishData::invalidData )
+				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
 		}
 	}
@@ -887,18 +936,12 @@ public:
 
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
-/*	soft_ptr<T, isSafe> ret;
-	ret.t = static_cast<T*>(p.getPtr_());
-	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );*/
 	soft_ptr<T, isSafe> ret(p,static_cast<T*>(p.getPtr_()));
 	return ret;
 }
 
 template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
-//	soft_ptr<T, isSafe> ret;
-//	ret.t = reinterpret_cast<T*>(p.getPtr_());
-//	ret.td.init( p.getPtr_(), p.getControlBlock()->insert(&ret) );
 	soft_ptr<T, isSafe> ret(p,reinterpret_cast<T*>(p.getPtr_()));
 	return ret;
 }
