@@ -17,8 +17,8 @@ public:
 #endif
 	}
 };
-static IIBMallocInitializer iibmallocinitializer;
 
+static IIBMallocInitializer iibmallocinitializer;
 const lest::test specification[] =
 {
 	CASE( "testing pointers-with-data" )
@@ -198,6 +198,20 @@ const lest::test specification[] =
 		}
 	},
 
+	CASE( "test is-on-stack" )
+	{
+		SETUP("basic safe pointer test")
+		{
+			int a;
+			//EXPECT( isGuaranteedOnStack( &a ) );
+			int* pn = new int;
+			class Large { public: int val[0x10000];};
+			Large l;
+			EXPECT( isGuaranteedOnStack( &a ) );
+			EXPECT( !isGuaranteedOnStack( pn ) );
+			EXPECT( !isGuaranteedOnStack( &l ) );
+		}
+	}
 };
 
 int main( int argc, char * argv[] )

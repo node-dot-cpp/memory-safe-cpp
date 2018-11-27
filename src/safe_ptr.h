@@ -63,6 +63,20 @@ enum class MemorySafety {none, partial, full};
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
 template<class T>
+bool isGuaranteedOnStack( T* ptr )
+{
+	if constexpr ( sizeof(T) <= CONTROL_BLOCK_SIZE )
+	{
+		int a;
+		constexpr uintptr_t upperBitsMask = ~( CONTROL_BLOCK_SIZE - 1 );
+		return ( ( ((uintptr_t)(ptr)) ^ ((uintptr_t)(&a)) ) & upperBitsMask ) == 0;
+	}
+	else {
+		return false;
+	}
+}
+
+template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
 	if constexpr ( sizeof(T) <= CONTROL_BLOCK_SIZE ) ;
