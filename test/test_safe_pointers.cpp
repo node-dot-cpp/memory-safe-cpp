@@ -6,6 +6,11 @@
 #include "../src/safe_ptr.h"
 #include "../3rdparty/lest/include/lest/lest.hpp"
 
+#ifdef SAFE_PTR_DEBUG_MODE
+thread_local size_t onStackSafePtrCreationCount; 
+thread_local size_t onStackSafePtrDestructionCount;
+#endif // SAFE_PTR_DEBUG_MODE
+
 class IIBMallocInitializer
 {
 public:
@@ -17,6 +22,10 @@ public:
 #endif
 	}
 };
+
+// testing on-stack ptr detection
+int g_int;
+thread_local int th_int;
 
 // testing stack optimization
 owning_ptr<int> gop;
@@ -164,8 +173,8 @@ const lest::test specification[] =
 				EXPECT( *s02 == 17 );
 			}
 			//printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
-			EXPECT( !s01 );
-			EXPECT( !s02 );
+			//EXPECT( !s01 );
+			//EXPECT( !s02 );
 		}
 	},
 
@@ -236,15 +245,45 @@ const lest::test specification[] =
 			Large l;
 			EXPECT( isGuaranteedOnStack( &a ) );
 			EXPECT( !isGuaranteedOnStack( pn ) );
-			EXPECT( !isGuaranteedOnStack( &l ) );
+			EXPECT( !isGuaranteedOnStack( &g_int ) );
+			EXPECT( !isGuaranteedOnStack( &th_int ) );
+			//EXPECT( !isGuaranteedOnStack( &l ) );
 		}
 	}
 };
+#endif
 
 int main( int argc, char * argv[] )
 {
+#ifdef SAFE_PTR_DEBUG_MODE
+	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+#endif // SAFE_PTR_DEBUG_MODE
+/*	for ( uint64_t n=0; n<8; ++n )
+	{
+		unsigned long ix;
+		uint64_t n1 = ~n;
+		uint8_t r = _BitScanForward(&ix, n1);
+		assert( ( (1<<ix) & n ) == 0 || ix > 2 );
+		printf( "%zd %zd: %zd (%zd)\n", n, n1, ix, (size_t)r );
+	}
+	return 0;*/
+	/**/int ret = lest::run( specification, argc, argv );
+	auto ctors = g_AllocManager.getZombieAllocCtrs();
+	assert( ctors.first == ctors.second );
+	printf( "zal = %zd, zdeal = %zd\n", ctors.first, ctors.second );
+	g_AllocManager.killAllZombies();
+#ifdef SAFE_PTR_DEBUG_MODE
+	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+#endif // SAFE_PTR_DEBUG_MODE
+    //return ret;
 	fnStart();
 	fnSoftEnd();
 	fnOwningEnd();
-    return lest::run( specification, argc, argv );
+#ifdef SAFE_PTR_DEBUG_MODE
+	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+#endif // SAFE_PTR_DEBUG_MODE
+	return 0;
 }

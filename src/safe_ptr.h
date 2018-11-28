@@ -283,7 +283,7 @@ struct FirstControlBlock // not reallocatable
 		void init() { Ptr2PtrWishDataBase::init( nullptr, 0 ); }
 		void setPtr(SecondCBHeader* ptr) { Ptr2PtrWishDataBase::updatePtr( ptr ); }
 		SecondCBHeader* getPtr() { return reinterpret_cast<SecondCBHeader*>( Ptr2PtrWishDataBase::getPtr() ); }
-		size_t getMask() { return Ptr2PtrWishDataBase::get3bitBlockData(); }
+		uint32_t getMask() { return (uint32_t)(Ptr2PtrWishDataBase::get3bitBlockData()); }
 		void setMask(size_t mask) { return Ptr2PtrWishDataBase::update3bitBlockData(mask); }
 		void setZombie() { Ptr2PtrWishDataBase::init( nullptr, Ptr2PtrWishDataBase::invalidData ); }
 		bool isZombie() { return Ptr2PtrWishDataBase::getLargerBlockData() != 0; }
@@ -345,7 +345,7 @@ struct FirstControlBlock // not reallocatable
 		otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
 	}
 	size_t insert( void* ptr ) {
-		size_t mask = otherAllockedSlots.getMask();
+		uint32_t mask = otherAllockedSlots.getMask();
 		//if ( mask != 0x7 )
 		{
 			// TODO: optimize!
@@ -622,6 +622,20 @@ template<class _Ty,
 	}
 
 
+
+#define SAFE_PTR_DEBUG_MODE
+
+#ifdef SAFE_PTR_DEBUG_MODE
+extern thread_local size_t onStackSafePtrCreationCount; 
+extern thread_local size_t onStackSafePtrDestructionCount;
+#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;bornOnStack = true;}
+#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*assert( isGuaranteedOnStack( this ) );*/ ++onStackSafePtrDestructionCount;}}
+#else
+#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
+#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {}
+#endif // SAFE_PTR_DEBUG_MODE
+
+
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class soft_ptr
 {
@@ -644,11 +658,18 @@ class soft_ptr
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(td.getPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
+#ifdef SAFE_PTR_DEBUG_MODE
+	bool bornOnStack = false;
+#endif // SAFE_PTR_DEBUG_MODE
 public:
 	soft_ptr()
 	{
 		td.init(nullptr, Ptr2PtrWishData::invalidData);
 		t = nullptr;
+		if ( isGuaranteedOnStack( this ) )
+		{
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 	}
 
 
@@ -658,7 +679,10 @@ public:
 		t = owner.t; // automatic type conversion (if at all possible)
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
@@ -668,7 +692,10 @@ public:
 		t = owner.t;
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
@@ -678,7 +705,10 @@ public:
 		t = owner.t; // automatic type conversion (if at all possible)
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			//INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
@@ -688,7 +718,10 @@ public:
 		t = owner.t;
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			//INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		return *this;
@@ -701,9 +734,12 @@ public:
 		t = other.t; // automatic type conversion (if at all possible)
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
@@ -711,9 +747,12 @@ public:
 		t = other.t; // automatic type conversion (if at all possible)
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
@@ -721,18 +760,24 @@ public:
 		t = other.t;
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
 		t = other.t;
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			//INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 		return *this;
 	}
 
@@ -743,8 +788,19 @@ public:
 		other.t = nullptr;
 		td = other.td;
 //		getControlBlock()->resetPtr(getIdx_(), this);
-		if ( getIdx_() != Ptr2PtrWishData::invalidData )
-			getControlBlock()->resetPtr(getIdx_(), this);
+		if ( isGuaranteedOnStack( this ) )
+		{
+			if ( other.getIdx_() != Ptr2PtrWishData::invalidData )
+				getControlBlock()->remove(getIdx_());
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData );
+		}
+		else
+		{
+			if ( getIdx_() != Ptr2PtrWishData::invalidData )
+				getControlBlock()->resetPtr(getIdx_(), this);
+			else
+				td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+		}
 		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
 	}
@@ -771,7 +827,10 @@ public:
 		t = t_;
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
@@ -783,7 +842,10 @@ public:
 		t = t_;
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
+		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
 			td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 	}
@@ -797,9 +859,12 @@ public:
 		t = t_;
 //		td.init( other.t, getControlBlock(other.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
@@ -809,9 +874,12 @@ public:
 		t = t_;
 //		td.init( other.t, getControlBlock(other.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
-			td.init(other.t, Ptr2PtrWishData::invalidData);
+		{
+			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
 		else
-			td.init( other.t, getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
@@ -853,7 +921,7 @@ public:
 		return getPtr_() != nullptr;
 	}
 
-	~soft_ptr()
+	void reset()
 	{
 		if( getPtr_() != nullptr ) {
 			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
@@ -861,6 +929,13 @@ public:
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
 		}
+		//if ( isGuaranteedOnStack( this ) )
+			INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
+	}
+
+	~soft_ptr()
+	{
+		reset();
 	}
 };
 
