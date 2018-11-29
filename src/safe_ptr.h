@@ -6,6 +6,13 @@
 #include <assert.h>
 
 #define USE_IIBMALLOC
+#if defined _MSC_VER
+#define NODISCARD _NODISCARD
+#elif defined __GNUC__
+#define NODISCARD [[nodiscard]]
+#else
+#define NODISCARD
+#endif
 
 #ifdef USE_IIBMALLOC
 #include "iibmalloc/src/iibmalloc.h"
@@ -416,20 +423,20 @@ uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getCont
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
 
-template<bool _Test,
+/*template<bool _Test,
 	class _Ty = void>
-	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
+	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;*/
 
-template<class _Ty>
-	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
+//template<class _Ty>
+//	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
-template<class _Ty,
+/*template<class _Ty,
 	class... _Types,
-	enable_if_t<!is_array_v<_Ty>, int> = 0>
-	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);
+	enable_if_t<!is_array_v<_Ty>, int>>
+	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);*/
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
@@ -449,13 +456,13 @@ template<class _Ty,
 					reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 	}
 
+public:
+
 	owning_ptr( T* t_ )
 	{
 		t = t_;
 		getControlBlock()->init();
 	}
-
-public:
 	owning_ptr()
 	{
 		t = nullptr;
@@ -613,11 +620,11 @@ public:
 
 template<class _Ty,
 	class... _Types,
-	enable_if_t<!is_array_v<_Ty>, int> = 0>
-	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
+	std::enable_if_t<!std::is_array_v<_Ty>, int> = 0>
+	NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
-	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) - getPrefixByteCount() ) _Ty(_STD forward<_Types>(_Args)...);
+	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) - getPrefixByteCount() ) _Ty(::std::forward<_Types>(_Args)...);
 	return owning_ptr<_Ty>(objPtr);
 	}
 
