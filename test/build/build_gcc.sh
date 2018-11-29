@@ -1,0 +1,1 @@
+g++-7 ../test_safe_pointers.cpp ../../src/iibmalloc/src/iibmalloc_windows.cpp ../../src/iibmalloc/src/iibmalloc_new_linux.cpp ../../3rdparty/fmt/src/format.cc -std=c++17 -DUSING_T_SOCKETS -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-empty-body -DNDEBUG -O2 -flto -lpthread -o test.bin
