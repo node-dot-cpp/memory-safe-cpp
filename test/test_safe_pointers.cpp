@@ -255,6 +255,8 @@ const lest::test specification[] =
 
 int main( int argc, char * argv[] )
 {
+	testDestruction();
+
 #ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
