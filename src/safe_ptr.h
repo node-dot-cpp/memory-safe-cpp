@@ -109,11 +109,12 @@ struct Ptr2PtrWishFlags {
 private:
 	uintptr_t ptr;
 public:
-	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; }
-	void* getPtr() { return (void*)( ptr & ~((uintptr_t)7) ); }
+	void init( void* ptr_ ) { ptr = (uintptr_t)ptr_ & ~((uintptr_t)7); }
+	void resetPtr( void* ptr_ ) { ptr = (ptr & 7) | ((uintptr_t)ptr_ & ~((uintptr_t)7)); }
+	void* getPtr() const { return (void*)( ptr & ~((uintptr_t)7) ); }
 	void setFlag(size_t pos) { assert( pos < 3); ptr |= ((uintptr_t)(1))<<pos; }
 	void unsetFlag(size_t pos) { assert( pos < 3); ptr &= ~(((uintptr_t)(1))<<pos); }
-	bool isFlag(size_t pos) { assert( pos < 3); return (ptr & (((uintptr_t)(1))<<pos))>>pos; }
+	bool isFlag(size_t pos) const { assert( pos < 3); return (ptr & (((uintptr_t)(1))<<pos))>>pos; }
 };
 static_assert( sizeof(Ptr2PtrWishFlags) == 8 );
 
@@ -206,7 +207,7 @@ struct FirstControlBlock // not reallocatable
 {
 	struct PtrWishFlagsForSoftPtrList : public Ptr2PtrWishFlags {
 	public:
-		void set( void* ptr_ ) { Ptr2PtrWishFlags::set(ptr_); assert( !isUsed() ); }// reasonable default
+		void setPtr( void* ptr_ ) { Ptr2PtrWishFlags::init(ptr_); }
 		void* getPtr() { return Ptr2PtrWishFlags::getPtr(); }
 		void setUsed() { setFlag(0); }
 		void setUnused() { unsetFlag(0); }
@@ -228,10 +229,10 @@ struct FirstControlBlock // not reallocatable
 			//assert( firstFree == nullptr );
 			firstFree = begin;
 			for ( size_t i=0; i<count-1; ++i ) {
-				begin[i].set(begin + i + 1);
+				begin[i].setPtr(begin + i + 1);
 				begin[i].set2ndBlock();
 			}
-			begin[count-1].set(nullptr);
+			begin[count-1].setPtr(nullptr);
 			begin[count-1].set2ndBlock();
 			//dbgCheckFreeList();
 		}
@@ -242,7 +243,7 @@ struct FirstControlBlock // not reallocatable
 			size_t idx;
 			assert( !firstFree->is1stBlock() );
 			idx = firstFree - slots;
-			firstFree->set(ptr);
+			firstFree->setPtr(ptr);
 			firstFree->setUsed();
 			firstFree = tmp;
 			assert( firstFree == nullptr || !firstFree->isUsed() );
@@ -252,7 +253,7 @@ struct FirstControlBlock // not reallocatable
 		}
 		void resetPtr( size_t idx, void* newPtr ) {
 			assert( idx < otherAllockedCnt );
-			slots[idx].set( newPtr );
+			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
 			slots[idx].set2ndBlock();
 			//dbgCheckFreeList();
@@ -261,7 +262,7 @@ struct FirstControlBlock // not reallocatable
 		void remove( size_t idx ) {
 			assert( firstFree == nullptr || !firstFree->isUsed() );
 			assert( idx < otherAllockedCnt );
-			slots[idx].set( firstFree );
+			slots[idx].setPtr( firstFree );
 			firstFree = slots + idx;
 			firstFree->setUnused();
 			firstFree->set2ndBlock();
@@ -328,10 +329,10 @@ struct FirstControlBlock // not reallocatable
 	void init() {
 		//firstFree = slots;
 		for ( size_t i=0; i<maxSlots-1; ++i ) {
-			slots[i].set(slots + i + 1);
+			slots[i].setPtr(slots + i + 1);
 			slots[i].set1stBlock();
 		}
-		slots[maxSlots-1].set(nullptr);
+		slots[maxSlots-1].setPtr(nullptr);
 		slots[maxSlots-1].set1stBlock();
 
 		//otherAllockedCnt = 0;
@@ -354,10 +355,10 @@ struct FirstControlBlock // not reallocatable
 		//assert( firstFree == nullptr );
 		//firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
-			begin[i].set(begin + i + 1);
+			begin[i].setPtr(begin + i + 1);
 			begin[i].set2ndBlock();
 		}
-		begin[count-1].set(nullptr);
+		begin[count-1].setPtr(nullptr);
 		begin[count-1].set2ndBlock();
 		dbgCheckFreeList();
 	}
@@ -373,7 +374,7 @@ struct FirstControlBlock // not reallocatable
 				if ( ( mask & (((size_t)1)<<i)) == 0 )
 				{
 					mask |= (((size_t)1)<<i);
-					slots[i].set(ptr);
+					slots[i].setPtr(ptr);
 					slots[i].setUsed();
 					otherAllockedSlots.setMask( mask );
 					return i;
@@ -389,7 +390,7 @@ struct FirstControlBlock // not reallocatable
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
 		if ( idx < maxSlots ) {
-			slots[idx].set( newPtr );
+			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
 			slots[idx].set1stBlock();
 		}
@@ -648,8 +649,9 @@ template<class _Ty,
 #ifdef SAFE_PTR_DEBUG_MODE
 extern thread_local size_t onStackSafePtrCreationCount; 
 extern thread_local size_t onStackSafePtrDestructionCount;
-#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;bornOnStack = true;}
-#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*assert( isGuaranteedOnStack( this ) );*/ ++onStackSafePtrDestructionCount;}}
+#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;}
+//#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*assert( isGuaranteedOnStack( this ) );*/ ++onStackSafePtrDestructionCount;}}
+#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() { if ( derefPtr.isOnStack() ) {++onStackSafePtrDestructionCount;} }
 #else
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
 #define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {}
@@ -670,24 +672,43 @@ class soft_ptr
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
 	Ptr2PtrWishData td;
-	T* t;
+#ifndef SAFE_PTR_DEBUG_MODE
+	T* derefPtr;
+	T* getPtr_() const { return derefPtr; }
+	void setPtr_(T* ptr) { derefPtr = ptr; }
+	void resetPtr_(T* ptr) { derefPtr = ptr; }
+	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); derefPtr = nullptr; }
+	void setOnStack() {}
+#else
+	struct PtrWishOnStackFlag : public Ptr2PtrWishFlags {
+	public:
+		void init( void* ptr_ ) { Ptr2PtrWishFlags::init(ptr_); }
+		void resetPtr( void* ptr_ ) { Ptr2PtrWishFlags::resetPtr(ptr_); }
+		void* getPtr() const { return Ptr2PtrWishFlags::getPtr(); }
+		void setOnStack() { setFlag(0); }
+		bool isOnStack() { return isFlag(0); }
+	};
+	static_assert( sizeof(PtrWishOnStackFlag) == 8 );
+	PtrWishOnStackFlag derefPtr;
+	T* getPtr_() const { return reinterpret_cast<T*>( derefPtr.getPtr() ); }
+	void setPtr_(T* ptr) { derefPtr.init(reinterpret_cast<void*>(ptr)); }
+	void resetPtr_(T* ptr) { derefPtr.resetPtr(reinterpret_cast<void*>(ptr)); }
+	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); derefPtr.resetPtr(nullptr); }
+	void setOnStack() { derefPtr.setOnStack(); }
+#endif // SAFE_PTR_DEBUG_MODE
 
-	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); t = nullptr; }
-	T* getPtr_() const { return t; }
 	size_t getIdx_() const { return td.getData(); }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(td.getPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
-#ifdef SAFE_PTR_DEBUG_MODE
-	bool bornOnStack = false;
-#endif // SAFE_PTR_DEBUG_MODE
 public:
 	soft_ptr()
 	{
 		td.init(nullptr, Ptr2PtrWishData::invalidData);
-		t = nullptr;
+		setPtr_(nullptr);
 		if ( isGuaranteedOnStack( this ) )
 		{
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 	}
@@ -696,11 +717,12 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-		t = owner.t; // automatic type conversion (if at all possible)
+		setPtr_(owner.t); // automatic type conversion (if at all possible)
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -709,11 +731,12 @@ public:
 	//template<>
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
-		t = owner.t;
+		setPtr_(owner.t);
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -722,7 +745,7 @@ public:
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-		t = owner.t; // automatic type conversion (if at all possible)
+		resetPtr_(owner.t); // automatic type conversion (if at all possible)
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
@@ -735,7 +758,7 @@ public:
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
-		t = owner.t;
+		resetPtr_(owner.t);
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
@@ -751,45 +774,48 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
-		t = other.t; // automatic type conversion (if at all possible)
+		setPtr_(other.getPtr_()); // automatic type conversion (if at all possible)
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-		t = other.t; // automatic type conversion (if at all possible)
+		resetPtr_(other.getPtr_()); // automatic type conversion (if at all possible)
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
-		t = other.t;
+		setPtr_(other.getPtr_());
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
-		t = other.t;
+		resetPtr_(other.getPtr_());
 //		td.init( other.getPtr_(), getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
@@ -797,15 +823,15 @@ public:
 			//INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 		return *this;
 	}
 
 
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
-		t = other.t;
-		other.t = nullptr;
+		setPtr_(other.getPtr_());
+		other.resetPtr_(nullptr);
 		td = other.td;
 //		getControlBlock()->resetPtr(getIdx_(), this);
 		if ( isGuaranteedOnStack( this ) )
@@ -819,7 +845,7 @@ public:
 			if ( getIdx_() != Ptr2PtrWishData::invalidData )
 				getControlBlock()->resetPtr(getIdx_(), this);
 			else
-				td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+				td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 		}
 		other.td.init( nullptr, Ptr2PtrWishData::invalidData );
 		// TODO: think about pointer-like move semantic: td.init( other.getPtr_(), getControlBlock()->insert(this) );
@@ -828,8 +854,9 @@ public:
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
 		// TODO: revise
+		resetPtr_(other.getPtr_());
 		td = other.td;
-		other.t = nullptr;
+		other.resetPtr_( nullptr );
 //		td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
 		if ( getIdx_() != Ptr2PtrWishData::invalidData )
 			td.init( other.getPtr_(), getControlBlock()->resetPtr(getIdx_(), this) );
@@ -844,11 +871,12 @@ public:
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
-		t = t_;
+		setPtr_(t_);
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -859,11 +887,12 @@ public:
 		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(owner.t) || reinterpret_cast<uint8_t*>(owner.t) + getAllocSize(owner.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
-		t = t_;
+		setPtr_(t_);
 //		td.init( owner.t, getControlBlock(owner.t)->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init(owner.t, Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -873,40 +902,42 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
 	{
-		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.getPtr_()) || reinterpret_cast<uint8_t*>(other.getPtr_()) + getAllocSize(other.getPtr_()) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
-		t = t_;
-//		td.init( other.t, getControlBlock(other.t)->insert(this) );
+		setPtr_(t_);
+//		td.init( other.t, getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
-		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.t) || reinterpret_cast<uint8_t*>(other.t) + getAllocSize(other.t) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
+		//if ( reinterpret_cast<uint8_t*>(t_) < reinterpret_cast<uint8_t*>(other.getPtr_()) || reinterpret_cast<uint8_t*>(other.getPtr_()) + getAllocSize(other.getPtr_()) < reinterpret_cast<uint8_t*>(t_) + sizeof(T) )
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.td.getPtr()), t_ ) )
 			throwPointerOutOfRange();
-		t = t_;
-//		td.init( other.t, getControlBlock(other.t)->insert(this) );
+		setPtr_(t_);
+//		td.init( other.t, getControlBlock(other.getPtr_())->insert(this) );
 		if ( isGuaranteedOnStack( this ) )
 		{
 			td.init( other.td.getPtr(), Ptr2PtrWishData::invalidData);
+			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
-			td.init( other.td.getPtr(), getControlBlock(other.t)->insert(this) );
+			td.init( other.td.getPtr(), getControlBlock(other.getPtr_())->insert(this) );
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
-		auto tmp = t;
-		t = other.t;
-		other.t = tmp;
+		auto tmp = getPtr_();
+		resetPtr_(other.getPtr_());
+		other.resetPtr_(tmp);
 		td.swap( other.td );
 		if ( getPtr_() && getIdx_() != Ptr2PtrWishData::invalidData )
 			getControlBlock()->resetPtr(getIdx_(), this);
@@ -949,12 +980,11 @@ public:
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
 		}
-		//if ( isGuaranteedOnStack( this ) )
-			INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 	}
 
 	~soft_ptr()
 	{
+		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		reset();
 	}
 };
