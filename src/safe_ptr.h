@@ -109,15 +109,11 @@ struct Ptr2PtrWishFlags {
 private:
 	uintptr_t ptr;
 public:
-	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( !isUsed() ); }// reasonable default
-	void* getPtr() { return (void*)( ptr & ~((uintptr_t)3) ); }
-	void setUsed() { ptr |= 1; }
-	void setUnused() { ptr &= ~((uintptr_t)1); }
-	bool isUsed() { return ptr & 1; }
-	void set1stBlock() { ptr |= 2; }
-	void set2ndBlock() { ptr &= ~((uintptr_t)2); }
-	bool is1stBlock() { return (ptr & 2)>>1; }
-	static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
+	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; }
+	void* getPtr() { return (void*)( ptr & ~((uintptr_t)7) ); }
+	void setFlag(size_t pos) { assert( pos < 3); ptr |= ((uintptr_t)(1))<<pos; }
+	void unsetFlag(size_t pos) { assert( pos < 3); ptr &= ~(((uintptr_t)(1))<<pos); }
+	bool isFlag(size_t pos) { assert( pos < 3); return (ptr & (((uintptr_t)(1))<<pos))>>pos; }
 };
 static_assert( sizeof(Ptr2PtrWishFlags) == 8 );
 
@@ -208,13 +204,27 @@ static_assert( sizeof(void*) == 8 );
 
 struct FirstControlBlock // not reallocatable
 {
+	struct PtrWishFlagsForSoftPtrList : public Ptr2PtrWishFlags {
+	public:
+		void set( void* ptr_ ) { Ptr2PtrWishFlags::set(ptr_); assert( !isUsed() ); }// reasonable default
+		void* getPtr() { return Ptr2PtrWishFlags::getPtr(); }
+		void setUsed() { setFlag(0); }
+		void setUnused() { unsetFlag(0); }
+		bool isUsed() { return isFlag(0); }
+		void set1stBlock() { setFlag(1); }
+		void set2ndBlock() { unsetFlag(1); }
+		bool is1stBlock() { return isFlag(1); }
+		static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
+	};
+	static_assert( sizeof(PtrWishFlagsForSoftPtrList) == 8 );
+
 	struct SecondCBHeader
 	{
 		static constexpr size_t secondBlockStartSize = 8;	
-		Ptr2PtrWishFlags* firstFree;
+		PtrWishFlagsForSoftPtrList* firstFree;
 		size_t otherAllockedCnt;
-		Ptr2PtrWishFlags slots[1];
-		void addToFreeList( Ptr2PtrWishFlags* begin, size_t count ) {
+		PtrWishFlagsForSoftPtrList slots[1];
+		void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
 			//assert( firstFree == nullptr );
 			firstFree = begin;
 			for ( size_t i=0; i<count-1; ++i ) {
@@ -227,7 +237,7 @@ struct FirstControlBlock // not reallocatable
 		}
 		size_t insert( void* ptr ) {
 			assert( firstFree != nullptr );
-			Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
+			PtrWishFlagsForSoftPtrList* tmp = ((PtrWishFlagsForSoftPtrList*)(firstFree->getPtr()));
 			assert( !firstFree->isUsed() );
 			size_t idx;
 			assert( !firstFree->is1stBlock() );
@@ -263,9 +273,9 @@ struct FirstControlBlock // not reallocatable
 			if ( present != nullptr ) {
 				assert( present->otherAllockedCnt != 0 );
 				size_t newSize = (present->otherAllockedCnt << 1) + 2;
-				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(Ptr2PtrWishFlags) ) );
-				//Ptr2PtrWishFlags* newOtherAllockedSlots = 
-				memcpy( ret->slots, present->slots, sizeof(Ptr2PtrWishFlags) * present->otherAllockedCnt );
+				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
+				//PtrWishFlagsForSoftPtrList* newOtherAllockedSlots = 
+				memcpy( ret->slots, present->slots, sizeof(PtrWishFlagsForSoftPtrList) * present->otherAllockedCnt );
 				deallocate( present );
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
@@ -274,10 +284,10 @@ struct FirstControlBlock // not reallocatable
 			}
 			else {
 				//assert( otherAllockedCnt == 0 );
-				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (secondBlockStartSize + 2) * sizeof(Ptr2PtrWishFlags) ) );
+				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (secondBlockStartSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
 				ret->otherAllockedCnt = secondBlockStartSize;
 				//present->firstFree->set(nullptr);
-				//otherAllockedSlots.setPtr( reinterpret_cast<Ptr2PtrWishFlags*>( allocate( otherAllockedCnt * sizeof(Ptr2PtrWishFlags) ) ) );
+				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
 				ret->addToFreeList( ret->slots, secondBlockStartSize );
 				return ret;
 			}
@@ -300,18 +310,18 @@ struct FirstControlBlock // not reallocatable
 	};
 
 	static constexpr size_t maxSlots = 3;
-	Ptr2PtrWishFlags slots[maxSlots];
+	PtrWishFlagsForSoftPtrList slots[maxSlots];
 	static constexpr size_t secondBlockStartSize = 8;	
-	//Ptr2PtrWishFlags* firstFree;
+	//PtrWishFlagsForSoftPtrList* firstFree;
 	//size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
 	PtrWithMaskAndFlag otherAllockedSlots;
 
 	void dbgCheckFreeList() {
-		/*Ptr2PtrWishFlags* start = firstFree;
+		/*PtrWishFlagsForSoftPtrList* start = firstFree;
 		while( start ) {
 			assert( !start->isUsed() );
 			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots.getPtr()) < otherAllockedCnt ) );
-			start = ((Ptr2PtrWishFlags*)(start->getPtr()));
+			start = ((PtrWishFlagsForSoftPtrList*)(start->getPtr()));
 		}*/
 	}
 
@@ -340,7 +350,7 @@ struct FirstControlBlock // not reallocatable
 			assert( otherAllockedCnt == 0 );
 		}
 	}*/
-	void addToFreeList( Ptr2PtrWishFlags* begin, size_t count ) {
+	void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
 		//assert( firstFree == nullptr );
 		//firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
