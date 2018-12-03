@@ -33,6 +33,9 @@
     <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc_new_linux.cpp">
       <Filter>linux-staff-for-quick-editing</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\safe_ptr_helper.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\safe_ptr.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\test_destruction.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

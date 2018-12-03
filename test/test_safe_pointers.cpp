@@ -5,6 +5,8 @@
 
 #include "../src/safe_ptr.h"
 #include "../3rdparty/lest/include/lest/lest.hpp"
+#include "test_destruction.h"
+#include "test_nullptr_access.h"
 
 #ifdef SAFE_PTR_DEBUG_MODE
 thread_local size_t onStackSafePtrCreationCount; 
@@ -20,6 +22,13 @@ public:
 		g_AllocManager.initialize();
 		g_AllocManager.enable();
 #endif
+	}
+	~IIBMallocInitializer()
+	{
+#ifdef SAFE_PTR_DEBUG_MODE
+	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+#endif // SAFE_PTR_DEBUG_MODE
 	}
 };
 
@@ -43,7 +52,7 @@ void fnStart() {
 	*op = 17;
 	soft_ptr<int> sp = op; 
 	gop = std::move(op); 
-	fn5(sp); 
+	fn8(sp); 
 }
 void fnSoftEnd() { 
 	assert( *gsp == 17 );
@@ -55,6 +64,7 @@ void fnOwningEnd() {
 }
 
 static IIBMallocInitializer iibmallocinitializer;
+#if 1
 const lest::test specification[] =
 {
 	CASE( "testing pointers-with-data" )
@@ -255,7 +265,8 @@ const lest::test specification[] =
 
 int main( int argc, char * argv[] )
 {
-	testDestruction();
+	testDestruction(); return 0;
+	testNullPtrAccess();
 
 #ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
@@ -271,9 +282,6 @@ int main( int argc, char * argv[] )
 	}
 	return 0;*/
 	/**/int ret = lest::run( specification, argc, argv );
-	auto ctors = g_AllocManager.getZombieAllocCtrs();
-	assert( ctors.first == ctors.second );
-	printf( "zal = %zd, zdeal = %zd\n", ctors.first, ctors.second );
 	g_AllocManager.killAllZombies();
 #ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
