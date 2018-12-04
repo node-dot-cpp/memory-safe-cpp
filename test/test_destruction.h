@@ -47,6 +47,25 @@ uint64_t* ptr2 = &dummy;
 
 extern void dummyCall( void* p );
 
+inline
+void* readVMT(void* p) { return *((void**)p); }
+
+inline
+void restoreVMT(void* p, void* vpt) { *((void**)p) = vpt; }
+
+template<class T>
+void destruct( T* t )
+{
+	if constexpr ( std::is_polymorphic<T>::value )
+	{
+		auto vpt = readVMT(t);
+		t->~T();
+		restoreVMT( t, vpt);
+	}
+	else
+		t->~T();
+}
+
 void testDestruction()
 {
 	size_t rngSeed = 155;
@@ -58,7 +77,7 @@ void testDestruction()
 		uint64_t sn; 
 		virtual void doSmthSmall() {printf( "SmallNonVirtualBase::doSmthSmall()\n" );} 
 		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NeverNull();}
-		virtual ~SmallNonVirtualBase() { sn = 0; doSmthSmall(); printf( "~SmallNonVirtualBase(): *ptr1 = 0x%llx, *ptr2 = 0x%llx\n", *ptr1, *ptr2); dummyCall(this);}
+		virtual ~SmallNonVirtualBase() { sn = 0;dummyCall(this);}
 		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64NeverNull();}
 		bool checkPostDtor(size_t seed) {PRNG rng(seed); return sn == 0;}
 	};
@@ -67,7 +86,7 @@ void testDestruction()
 		uint64_t sn1; 
 		void doSmthSmall() override {printf( "SmallVirtualBase::doSmthSmall()\n" );} 
 		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NeverNull(); SmallNonVirtualBase::init(rng.rng64NeverNull());} 
-		virtual ~SmallVirtualBase() {sn1 = 0; doSmthSmall(); printf( "~SmallVirtualBase(): *ptr1 = 0x%llx, *ptr2 = 0x%llx\n", *ptr1, *ptr2); dummyCall(this);}
+		virtual ~SmallVirtualBase() {sn1 = 0; dummyCall(this);}
 		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64NeverNull() && SmallNonVirtualBase::check(rng.rng64NeverNull());}
 		bool checkPostDtor(size_t seed) {PRNG rng(seed); rng.rng64NeverNull(); return sn1 == 0 && SmallNonVirtualBase::checkPostDtor(rng.rng64NeverNull());}
 	};
@@ -88,7 +107,7 @@ void testDestruction()
 		uint64_t ln[SZ]; 
 		virtual void doSmthLarge() {printf( "SLargeNonVirtualBase::doSmthLarge()\n" );} 
 		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln[i] = rng.rng64NeverNull();}
-		virtual ~LargeNonVirtualBase() { ln[0] = 0; doSmthLarge(); printf( "~LargeNonVirtualBase(): *ptr1 = 0x%llx, *ptr2 = 0x%llx\n", *ptr1, *ptr2); dummyCall(this);}
+		virtual ~LargeNonVirtualBase() { ln[0] = 0; dummyCall(this);}
 		bool check(size_t seed) {PRNG rng(seed); bool ret = true; for ( size_t i=0; i<SZ;++i) ret = ret && ln[i] == rng.rng64NeverNull(); return ret;}
 		bool checkPostDtor(size_t seed) {PRNG rng(seed); rng.rng64NeverNull(); bool ret = ln[0] == 0; for ( size_t i=1; i<SZ;++i) ret = ret && ln[i] == rng.rng64NeverNull(); return ret;}
 	};
@@ -97,7 +116,7 @@ void testDestruction()
 		uint64_t ln1[SZ]; 
 		void doSmthLarge() override {printf( "LargeVirtualBase::doSmthLarge()\n" );} 
 		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln1[i] = rng.rng64NeverNull(); LargeNonVirtualBase::init(rng.rng64NeverNull());} 
-		virtual ~LargeVirtualBase() {ln1[0] = 0; doSmthLarge(); printf( "~LargeVirtualBase(): *ptr1 = 0x%llx, *ptr2 = 0x%llx\n", *ptr1, *ptr2); dummyCall(this);}
+		virtual ~LargeVirtualBase() {ln1[0] = 0; dummyCall(this);}
 		bool check(size_t seed) {PRNG rng(seed); bool ret = ln1[0] == rng.rng64NeverNull(); for ( size_t i=1; i<SZ;++i) ret = ret && ln1[i] == rng.rng64NeverNull(); return ret && LargeNonVirtualBase::check(rng.rng64NeverNull());}
 		bool checkPostDtor(size_t seed) {PRNG rng(seed); rng.rng64NeverNull(); bool ret = ln[0] == 0; for ( size_t i=1; i<SZ;++i) ret = ret && ln1[i] == rng.rng64NeverNull(); return ret && LargeNonVirtualBase::checkPostDtor(rng.rng64NeverNull());}
 	};
@@ -108,13 +127,33 @@ void testDestruction()
 		int lm2; 
 	};*/
 
-	class Multiple : public LargeVirtualBase, public SmallVirtualBase { 
+
+	class YetNonVirtualBase { 
+	public: 
+		uint64_t sn; 
+		virtual void doSmthYet() {printf( "YetNonVirtualBase::doSmthYet()\n" );} 
+		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NeverNull();}
+		virtual ~YetNonVirtualBase() { sn = 0; dummyCall(this);}
+		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64NeverNull();}
+		bool checkPostDtor(size_t seed) {PRNG rng(seed); return sn == 0;}
+	};
+	class YetVirtualBase : public YetNonVirtualBase { 
+	public: 
+		uint64_t sn1; 
+		void doSmthYet() override {printf( "YetVirtualBase::doSmthYet()\n" );} 
+		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NeverNull(); YetNonVirtualBase::init(rng.rng64NeverNull());} 
+		virtual ~YetVirtualBase() {sn1 = 0; dummyCall(this);}
+		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64NeverNull() && YetNonVirtualBase::check(rng.rng64NeverNull());}
+		bool checkPostDtor(size_t seed) {PRNG rng(seed); rng.rng64NeverNull(); return sn1 == 0 && YetNonVirtualBase::checkPostDtor(rng.rng64NeverNull());}
+	};
+
+	class Multiple : public LargeVirtualBase, public SmallVirtualBase, public YetNonVirtualBase { 
 	public: 
 		uint64_t mn3; 
 		void doSmthSmall() override {printf( "Multiple::doSmthSmall()\n" );} 
 		void doSmthLarge() override {printf( "Multiple::doSmthLarge()\n" );} 
 		void init(size_t seed) {PRNG rng(seed); mn3 = rng.rng64NeverNull(); LargeVirtualBase::init(rng.rng64NeverNull()); SmallVirtualBase::init(rng.rng64NeverNull());} 
-		~Multiple() { mn3 = 0; doSmthSmall(); doSmthLarge(); printf( "~Multiple(): *ptr1 = 0x%llx, *ptr2 = 0x%llx\n", *ptr1, *ptr2); dummyCall(this);}
+		~Multiple() { mn3 = 0; dummyCall(this);}
 		bool check(size_t seed) {PRNG rng(seed); return mn3 == rng.rng64NeverNull() && LargeVirtualBase::check(rng.rng64NeverNull()) && SmallVirtualBase::check(rng.rng64NeverNull());}
 		bool checkPostDtor(size_t seed) {PRNG rng(seed); rng.rng64NeverNull(); return mn3 == 0 && LargeVirtualBase::checkPostDtor(rng.rng64NeverNull()) && SmallVirtualBase::checkPostDtor(rng.rng64NeverNull());}
 	};
@@ -163,7 +202,8 @@ void testDestruction()
 	SmallVirtualBasePtr->init(rngCheckVal);
 	Assert( SmallVirtualBasePtr->check(rngCheckVal));
 	memcpy( mem4SmallVirtualBaseCopy, mem4SmallVirtualBase, sizeof(SmallVirtualBase) );
-	SmallVirtualBasePtr->~SmallVirtualBase();
+	//SmallVirtualBasePtr->~SmallVirtualBase();
+	destruct( SmallVirtualBasePtr );
 	if ( SmallVirtualBasePtr->check(rngCheckVal) )
 		printf( "writing in dtor is opt out\n" );
 	else
@@ -193,7 +233,10 @@ void testDestruction()
 	SmallPtr->init(rngCheckVal);
 	Assert( SmallPtr->check(rngCheckVal));
 	memcpy( mem4SmallCopy, mem4Small, sizeof(Small) );
-	SmallPtr->~Small();
+
+	//SmallPtr->~Small();
+	destruct( SmallPtr );
+
 	if ( SmallPtr->check(rngCheckVal) )
 		printf( "writing in dtor is opt out\n" );
 	else
@@ -226,7 +269,10 @@ void testDestruction()
 	memcpy( mem4MultipleCopy, mem4Multiple, sizeof(Multiple) );
 	ptr1 = (uint64_t*)mem4Multiple;
 	ptr2 = ((uint64_t*)mem4Multiple) + sizeof(LargeVirtualBase) / sizeof(uint64_t);
-	MultiplePtr->~Multiple();
+	//auto vpt = readVMT(MultiplePtr);
+	//MultiplePtr->~Multiple();
+	//restoreVMT( MultiplePtr, vpt);
+	destruct( MultiplePtr );
 	if ( MultiplePtr->check(rngCheckVal) )
 		printf( "writing in dtor is opt out\n" );
 	else
@@ -260,6 +306,8 @@ void testDestruction()
 	secondBase2->doSmthSmall();
 	printf( "[3] accessing virtual method of the second base:\n" );
 	MultiplePtr->doSmthSmall();
+	printf( "[3] accessing virtual method of the third base:\n" );
+	MultiplePtr->doSmthYet();
 
 	printf( "testDestruction(): OK\n\n" );
 }
