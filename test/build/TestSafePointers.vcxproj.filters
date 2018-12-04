@@ -33,7 +33,7 @@
     <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc_new_linux.cpp">
       <Filter>linux-staff-for-quick-editing</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\src\safe_ptr_helper.cpp">
+    <ClCompile Include="..\..\gcc_lto_workaround\gcc_lto_workaround.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -50,7 +50,7 @@
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\test_destruction.h">
+    <ClInclude Include="..\test_common.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

@@ -4,8 +4,8 @@
 #include <stdio.h>
 
 #include "../src/safe_ptr.h"
+#include "../src/startup_checks.h"
 #include "../3rdparty/lest/include/lest/lest.hpp"
-#include "test_destruction.h"
 #include "test_nullptr_access.h"
 
 #ifdef SAFE_PTR_DEBUG_MODE
@@ -259,14 +259,18 @@ const lest::test specification[] =
 			EXPECT( !isGuaranteedOnStack( &th_int ) );
 			//EXPECT( !isGuaranteedOnStack( &l ) );
 		}
+	},
+
+	CASE( "test destruction means" )
+	{
+		EXPECT_NO_THROW( testDestructionMeans() );
 	}
 };
 #endif
 
 int main( int argc, char * argv[] )
 {
-	testDestruction(); return 0;
-	testNullPtrAccess();
+	//testNullPtrAccess(); return 0;
 
 #ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );

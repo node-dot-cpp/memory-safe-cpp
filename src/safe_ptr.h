@@ -72,6 +72,8 @@ enum class MemorySafety {none, partial, full};
 
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
+extern void dummyCall( void* p ); // TODO: if not gcc, just #define dummyCall(x)
+
 
 FORCE_INLINE
 void* readVMT(void* p) { return *((void**)p); }
@@ -520,13 +522,11 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			//t->~T();
 			destruct( t );
-			//delete [] getAllocatedBlock();
-			//zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
 			getControlBlock()->clear();
-			t = nullptr;
+			t = nullptr; 
+			dummyCall(this); // force compilers to apply the above instruction
 		}
 	}
 
@@ -535,10 +535,7 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			//t->~T();
 			destruct( t );
-			//delete [] getAllocatedBlock();
-//			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
 			getControlBlock()->clear();
 			t = nullptr;
@@ -1007,7 +1004,13 @@ public:
 	~soft_ptr()
 	{
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
-		reset();
+		if( getPtr_() != nullptr ) {
+			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
+			if ( getIdx_() != Ptr2PtrWishData::invalidData )
+				getControlBlock()->remove(getIdx_());
+			invalidatePtr();
+			dummyCall(this); // force compilers to apply the above instruction
+		}
 	}
 };
 

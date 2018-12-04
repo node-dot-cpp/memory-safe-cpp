@@ -3,8 +3,6 @@
 
 void StartupCheckAssertion( bool cond ) { if (!cond) throw std::bad_exception(); } // TODO: replace by means standard for the project
 
-extern void dummyCall( void* p ); // TODO: if not gcc, just #define dummyCall(x)
-
 inline
 void testDestructionMeans( bool verbose = false )
 {
