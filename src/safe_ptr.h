@@ -72,6 +72,26 @@ enum class MemorySafety {none, partial, full};
 
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
+
+FORCE_INLINE
+void* readVMT(void* p) { return *((void**)p); }
+
+FORCE_INLINE
+void restoreVMT(void* p, void* vpt) { *((void**)p) = vpt; }
+
+template<class T>
+void destruct( T* t )
+{
+	if constexpr ( std::is_polymorphic<T>::value )
+	{
+		auto vpt = readVMT(t);
+		t->~T();
+		restoreVMT( t, vpt);
+	}
+	else
+		t->~T();
+}
+
 FORCE_INLINE
 bool isGuaranteedOnStack( void* ptr )
 {
@@ -500,7 +520,8 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			t->~T();
+			//t->~T();
+			destruct( t );
 			//delete [] getAllocatedBlock();
 			//zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
@@ -514,7 +535,8 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			t->~T();
+			//t->~T();
+			destruct( t );
 			//delete [] getAllocatedBlock();
 //			zombieDeallocate( reinterpret_cast<uint8_t*>(getAllocatedBlock()) + getPrefixByteCount() );
 			zombieDeallocate( getAllocatedBlock_(t) );
@@ -1149,5 +1171,9 @@ public:
 		t = nullptr;
 	}
 };
+
+
+#include "startup_checks.h"
+
 
 #endif
