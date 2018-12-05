@@ -72,7 +72,7 @@ enum class MemorySafety {none, partial, full};
 
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
-extern void dummyCall( void* p ); // TODO: if not gcc, just #define dummyCall(x)
+extern void forcePreviousChangesToThisInDtor( void* p ); // TODO: if not gcc, just #define forcePreviousChangesToThisInDtor(x)
 
 
 FORCE_INLINE

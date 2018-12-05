@@ -23,7 +23,7 @@ class StartupChecker
 		uint64_t sn; 
 		virtual int doSmthSmall() { return 0x1;} 
 		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NoNull();}
-		virtual ~SmallBase() { sn = 0;dummyCall(this);}
+		virtual ~SmallBase() { sn = 0;forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64();}
 	};
 	class SmallDerived : public SmallBase { 
@@ -31,7 +31,7 @@ class StartupChecker
 		uint64_t sn1; 
 		int doSmthSmall() override {return 0x2;} 
 		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NoNull(); SmallBase::init(rng.rng64());} 
-		virtual ~SmallDerived() {sn1 = 0; dummyCall(this);}
+		virtual ~SmallDerived() {sn1 = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64() && SmallBase::check(rng.rng64());}
 	};
 	class Small : public SmallDerived { 
@@ -40,7 +40,7 @@ class StartupChecker
 		int doSmthSmall() override { return 0x3; } 
 		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rng64NoNull(); 
 		SmallDerived::init(rng.rng64());} 
-		virtual ~Small() {sn2 = 0; dummyCall(this);}
+		virtual ~Small() {sn2 = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SmallDerived::check(rng.rng64());}
 	};
 
@@ -51,7 +51,7 @@ class StartupChecker
 		uint64_t ln[SZ]; 
 		virtual int doSmthLarge() { return 0x100;} 
 		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln[i] = rng.rng64NoNull();}
-		virtual ~LargeBase() { ln[0] = 0; dummyCall(this);}
+		virtual ~LargeBase() { ln[0] = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); bool ret = true; for ( size_t i=0; i<SZ;++i) ret = ret && ln[i] == rng.rng64(); return ret;}
 	};
 	class LargeDerived : public LargeBase { 
@@ -59,7 +59,7 @@ class StartupChecker
 		uint64_t ln1[SZ]; 
 		int doSmthLarge() override { return 0x200;} 
 		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln1[i] = rng.rng64NoNull(); LargeBase::init(rng.rng64());} 
-		virtual ~LargeDerived() {ln1[0] = 0; dummyCall(this);}
+		virtual ~LargeDerived() {ln1[0] = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); bool ret = ln1[0] == rng.rng64(); for ( size_t i=1; i<SZ;++i) ret = ret && ln1[i] == rng.rng64(); return ret && LargeBase::check(rng.rng64());}
 	};
 	class Large : public LargeDerived { 
@@ -68,7 +68,7 @@ class StartupChecker
 		int doSmthLarge() override { return 0x3; } 
 		void init(size_t seed) {PRNG rng(seed); ln2 = rng.rng64NoNull(); 
 		LargeDerived::init(rng.rng64());} 
-		virtual ~Large() {ln2 = 0; dummyCall(this);}
+		virtual ~Large() {ln2 = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); return ln2 == rng.rng64() && LargeDerived::check(rng.rng64());}
 	};
 
