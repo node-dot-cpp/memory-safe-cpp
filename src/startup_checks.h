@@ -74,57 +74,22 @@ class StartupChecker
 
 	enum ChangeStatus { no = 0, yes = 1, potential = 2 };
 
-	static void checkSmall()
+	static void setAddressesOfChanges( Small* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
 	{
-		size_t rngSeed = 155;
-		PRNG rng(rngSeed);
-		uint64_t rngCheckVal;
-
-		rngCheckVal = rng.rng64();
-
-		uint8_t* mem4Small = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Small)));
-		uint8_t* mem4SmallCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Small)));
-		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Small)));
-		Small* SmallPtr = new ( mem4Small ) Small;
-		SmallPtr->init(rngCheckVal);
-		StartupCheckAssertion( SmallPtr->check(rngCheckVal));
-		memcpy( mem4SmallCopy, mem4Small, sizeof(Small) );
-
-		// collect actual addresses of changes in destructors
-		uint64_t* snAddr = &(SmallPtr->sn);
-		uint64_t* sn1Addr = &(SmallPtr->sn1);
-		uint64_t* sn2Addr = &(SmallPtr->sn2);
-		auto vmtVal = readVMT( SmallPtr );
-
-		memset( changeMap, ChangeStatus::no, sizeof(Small) );
-		memset( changeMap + ( ((uint8_t*)snAddr) - mem4Small ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)sn1Addr) - mem4Small ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)sn2Addr) - mem4Small ), ChangeStatus::yes, sizeof( uint64_t) );
-		auto vmtPos = getVMPPos( mem4Small );
-		memset( changeMap + vmtPos.first, ChangeStatus::yes, vmtPos.second );
-
-		destruct( SmallPtr );
-
-		if( memcmp( mem4SmallCopy, mem4Small, sizeof(Small) ) != 0 )
-		{
-			// check explicitly that changes done in dtor actually happened as intended (fast detection)
-			StartupCheckAssertion( *snAddr == 0 );
-			StartupCheckAssertion( *sn1Addr == 0 );
-			StartupCheckAssertion( *sn1Addr == 0 );
-
-			for ( size_t i=0; i<sizeof(Small); ++i )
-				if ( mem4Small[i] != mem4SmallCopy[i] ) 
-					StartupCheckAssertion( changeMap[i] != ChangeStatus::no );
-		}
-		else
-			StartupCheckAssertion( false ); // our intention in dtor was to change memory state under the object
-
-		g_AllocManager.deallocate( mem4Small );
-		g_AllocManager.deallocate( mem4SmallCopy );
-		g_AllocManager.deallocate( changeMap );
+		*addr1 = &(obj->sn);
+		*addr2 = &(obj->sn1);
+		*addr3 = &(obj->sn2);
 	}
 
-	static void checkLarge()
+	static void setAddressesOfChanges( Large* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
+	{
+		*addr1 = &(obj->ln[0]);
+		*addr2 = &(obj->ln1[0]);
+		*addr3 = &(obj->ln2);
+	}
+
+	template<class T>
+	static void checkT()
 	{
 		size_t rngSeed = 155;
 		PRNG rng(rngSeed);
@@ -132,56 +97,54 @@ class StartupChecker
 
 		rngCheckVal = rng.rng64();
 
-		uint8_t* mem4Large = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Large)));
-		uint8_t* mem4LargeCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Large)));
-		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(Large)));
-		Large* LargePtr = new ( mem4Large ) Large;
-		LargePtr->init(rngCheckVal);
-		StartupCheckAssertion( LargePtr->check(rngCheckVal));
-		memcpy( mem4LargeCopy, mem4Large, sizeof(Large) );
+		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
+		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
+		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
+		T* TPtr = new ( mem4T ) T;
+		TPtr->init(rngCheckVal);
+		StartupCheckAssertion( TPtr->check(rngCheckVal));
+		memcpy( mem4TCopy, mem4T, sizeof(T) );
 
 		// collect actual addresses of changes in destructors
-		uint64_t* lnAddr = &(LargePtr->ln[0]);
-		uint64_t* ln1Addr = &(LargePtr->ln1[0]);
-		uint64_t* ln2Addr = &(LargePtr->ln2);
-		auto vmtVal = readVMT( LargePtr );
+		uint64_t* addr1;
+		uint64_t* addr2;
+		uint64_t* addr3;
+		setAddressesOfChanges( TPtr, &addr1, &addr2, &addr3 );
+		auto vmtVal = readVMT( TPtr );
 
-		memset( changeMap, ChangeStatus::no, sizeof(Large) );
-		memset( changeMap + ( ((uint8_t*)lnAddr) - mem4Large ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)ln1Addr) - mem4Large ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)ln2Addr) - mem4Large ), ChangeStatus::yes, sizeof( uint64_t) );
-		auto vmtPos = getVMPPos( mem4Large );
+		memset( changeMap, ChangeStatus::no, sizeof(T) );
+		memset( changeMap + ( ((uint8_t*)addr1) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+		memset( changeMap + ( ((uint8_t*)addr2) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+		memset( changeMap + ( ((uint8_t*)addr3) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+		auto vmtPos = getVMPPos( mem4T );
 		memset( changeMap + vmtPos.first, ChangeStatus::yes, vmtPos.second );
 
-		destruct( LargePtr );
+		destruct( TPtr );
 
-		if( memcmp( mem4LargeCopy, mem4Large, sizeof(Large) ) != 0 )
+		if( memcmp( mem4TCopy, mem4T, sizeof(T) ) != 0 )
 		{
 			// check explicitly that changes done in dtor actually happened as intended (fast detection)
-			StartupCheckAssertion( *lnAddr == 0 );
-			StartupCheckAssertion( *ln1Addr == 0 );
-			StartupCheckAssertion( *ln1Addr == 0 );
+			StartupCheckAssertion( *addr1 == 0 );
+			StartupCheckAssertion( *addr2 == 0 );
+			StartupCheckAssertion( *addr3 == 0 );
 
-			uint64_t* p64 = reinterpret_cast<uint64_t*>(mem4Large);
-			uint64_t* p64Copy = reinterpret_cast<uint64_t*>(mem4LargeCopy);
-
-			for ( size_t i=0; i<sizeof(Large); ++i )
-				if ( mem4Large[i] != mem4LargeCopy[i] ) 
+			for ( size_t i=0; i<sizeof(T); ++i )
+				if ( mem4T[i] != mem4TCopy[i] ) 
 					StartupCheckAssertion( changeMap[i] != ChangeStatus::no );
 		}
 		else
 			StartupCheckAssertion( false ); // our intention in dtor was to change memory state under the object
 
-		g_AllocManager.deallocate( mem4Large );
-		g_AllocManager.deallocate( mem4LargeCopy );
+		g_AllocManager.deallocate( mem4T );
+		g_AllocManager.deallocate( mem4TCopy );
 		g_AllocManager.deallocate( changeMap );
 	}
 
 public:
 	static void check()
 	{
-		checkSmall();
-		checkLarge();
+		checkT<Small>();
+		checkT<Large>();
 	}
 };
 
