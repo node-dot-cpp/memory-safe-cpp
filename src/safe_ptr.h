@@ -81,6 +81,9 @@ void* readVMT(void* p) { return *((void**)p); }
 FORCE_INLINE
 void restoreVMT(void* p, void* vpt) { *((void**)p) = vpt; }
 
+FORCE_INLINE
+std::pair<size_t, size_t> getVMPPos(void* p) { return std::make_pair( 0, sizeof(void*) ); }
+
 template<class T>
 void destruct( T* t )
 {

@@ -263,8 +263,8 @@ const lest::test specification[] =
 
 	CASE( "test destruction means" )
 	{
-		EXPECT_NO_THROW( testDestructionMeans() );
-	}
+		EXPECT_NO_THROW( StartupChecker::check() );
+	},
 };
 #endif
 
