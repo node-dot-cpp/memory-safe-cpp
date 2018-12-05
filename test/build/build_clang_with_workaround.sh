@@ -1,0 +1,1 @@
+clang++-6.0 ../test_safe_pointers.cpp ../../src/iibmalloc/src/page_allocator_linux.cpp ../../src/iibmalloc/src/iibmalloc_new_linux.cpp -L/root/tests/safe-memory/test/build -lgcc_lto_workaround -std=c++17 -DUSING_T_SOCKETS -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-empty-body -DNDEBUG -O2 -flto -lpthread -o test.bin

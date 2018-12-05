@@ -1,0 +1,1 @@
+g++-7 ../test_safe_pointers.cpp ../../src/iibmalloc/src/page_allocator_linux.cpp ../../src/iibmalloc/src/iibmalloc_new_linux.cpp ../../gcc_lto_workaround/gcc_lto_workaround.cpp -std=c++17 -DUSING_T_SOCKETS -g -Wall -Wextra -Wno-unused-variable -Wno-unused-parameter -Wno-empty-body -DNDEBUG -O2 -lpthread -o test.bin
