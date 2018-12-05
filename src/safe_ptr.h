@@ -529,7 +529,7 @@ public:
 			zombieDeallocate( getAllocatedBlock_(t) );
 			getControlBlock()->clear();
 			t = nullptr; 
-			dummyCall(this); // force compilers to apply the above instruction
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
 	}
 
@@ -1012,7 +1012,7 @@ public:
 			if ( getIdx_() != Ptr2PtrWishData::invalidData )
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
-			dummyCall(this); // force compilers to apply the above instruction
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
 	}
 };
