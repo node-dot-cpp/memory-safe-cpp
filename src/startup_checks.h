@@ -110,13 +110,13 @@ class StartupChecker
 		uint64_t* addr2;
 		uint64_t* addr3;
 		setAddressesOfChanges( TPtr, &addr1, &addr2, &addr3 );
-		auto vmtVal = readVMT( TPtr );
+		auto vmtVal = nodecpp::platform::backup_vmt_pointer( TPtr );
 
 		memset( changeMap, ChangeStatus::no, sizeof(T) );
 		memset( changeMap + ( ((uint8_t*)addr1) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
 		memset( changeMap + ( ((uint8_t*)addr2) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
 		memset( changeMap + ( ((uint8_t*)addr3) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
-		auto vmtPos = getVMPPos( mem4T );
+		auto vmtPos = nodecpp::platform::get_vmt_pointer_size_pos();
 		memset( changeMap + vmtPos.first, ChangeStatus::yes, vmtPos.second );
 
 		destruct( TPtr );
