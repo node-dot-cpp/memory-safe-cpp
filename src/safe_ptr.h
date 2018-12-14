@@ -55,12 +55,13 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieab
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 #else
-inline void* allocate( size_t sz ) { return new uint8_t[ sz ]; }
-inline void deallocate( void* ptr ) { delete [] ptr; }
-inline void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
-inline void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
-inline bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
-inline constexpr size_t getPrefixByteCount() { return 0; }
+// NOTE: following calls make not too much practical sense and can be somehow used for debug purposes only
+NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; memset( ret, 0, sz ); return ret; }
+NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; memset( ret, 0, sizeof(uint64_t) + sz ); *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
+NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
+NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return 0; }
 #endif
 
 
@@ -305,9 +306,11 @@ struct FirstControlBlock // not reallocatable
 			assert( firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
 			assert( idx < (1<<19) ); // TODO
+				printf( "at 2nd block 0x%zx: inserted idx %zd with 0x%zx\n", (size_t)this, idx, (size_t)ptr);
 			return idx;
 		}
 		void resetPtr( size_t idx, void* newPtr ) {
+				printf( "at 2nd block 0x%zx: about to reset idx %zd to 0x%zx\n", (size_t)this, idx, (size_t)newPtr);
 			assert( idx < otherAllockedCnt );
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -336,7 +339,8 @@ struct FirstControlBlock // not reallocatable
 				deallocate( present );
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
-				present->otherAllockedCnt = newSize;
+				ret->otherAllockedCnt = newSize;
+				printf( "after 2nd block relocation: ret = 0x%zx, ret->otherAllockedCnt = %zd (reallocation)\n", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 			else {
@@ -346,6 +350,7 @@ struct FirstControlBlock // not reallocatable
 				//present->firstFree->set(nullptr);
 				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
 				ret->addToFreeList( ret->slots, secondBlockStartSize );
+				printf( "after 2nd block relocation: ret = 0x%zx, ret->otherAllockedCnt = %zd (ini allocation)\n", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 		}
@@ -396,6 +401,7 @@ struct FirstControlBlock // not reallocatable
 		otherAllockedSlots.init();
 		//assert( !firstFree->isUsed() );
 		dbgCheckFreeList();
+		printf( "1CB initialized at 0x%zx, otherAllockedSlots.getPtr() = 0x%zx\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 	}
 	/*void deinit() {
 		if ( otherAllockedSlots.getPtr() != nullptr ) {
@@ -434,19 +440,26 @@ struct FirstControlBlock // not reallocatable
 					slots[i].setPtr(ptr);
 					slots[i].setUsed();
 					otherAllockedSlots.setMask( mask );
+					printf( "1CB 0x%zx: inserted 0x%zx at idx %zd\n", (size_t)this, (size_t)ptr, i );
 					return i;
 				}
 		}
 		//else
 		{
 			if ( otherAllockedSlots.getPtr() == nullptr || otherAllockedSlots.getPtr()->firstFree == nullptr )
+			{
+		printf( "1CB 0x%zx: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x%zx\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
+		printf( "1CB 0x%zx: after reset 2nd block, otherAllockedSlots.getPtr() = 0x%zx\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+			}
 			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
+					printf( "1CB 0x%zx: inserted 0x%zx at idx %zd\n", (size_t)this, (size_t)ptr, idx );
 			return idx;
 		}
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
+		printf( "1CB 0x%zx: about to reset to 0x%zx at idx %zd\n", (size_t)this, (size_t)newPtr, idx );
 		if ( idx < maxSlots ) {
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -460,6 +473,7 @@ struct FirstControlBlock // not reallocatable
 		//dbgCheckFreeList();
 	}
 	void remove( size_t idx ) {
+		printf( "1CB 0x%zx: about to remove at idx %zd\n", (size_t)this, idx );
 		if ( idx < maxSlots ) {
 			assert( slots[idx].isUsed() );
 			slots[idx].setUnused();
@@ -476,6 +490,7 @@ struct FirstControlBlock // not reallocatable
 		//dbgCheckFreeList();
 	}
 	void clear() {
+		printf( "1CB 0x%zx: clear(), otherAllockedSlots.getPtr() = 0x%zx\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		if ( otherAllockedSlots.getPtr() != nullptr )
 			otherAllockedSlots.getPtr()->dealloc();
 		otherAllockedSlots.setZombie();
@@ -787,6 +802,8 @@ public:
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
+		//assert(isOnStack());
+		printf( "1 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 
 
@@ -804,6 +821,8 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "2 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
@@ -818,6 +837,8 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "3 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
@@ -834,6 +855,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
 		return *this;
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
@@ -850,6 +872,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
 		return *this;
 	}
 
@@ -868,6 +891,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "4 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
@@ -875,7 +900,7 @@ public:
 		if ( this == &other ) return;
 		bool iWasOnStack = isOnStack();
 		reset();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		if ( iWasOnStack )
 		{
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 			setOnStack();
@@ -885,6 +910,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
 		return *this;
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
@@ -900,6 +926,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "5 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
@@ -916,6 +944,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
 		return *this;
 	}
 
@@ -923,26 +952,35 @@ public:
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
 		if ( this == &other ) return;
+		bool otherOnStack = other.isOnStack();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			if ( other.getIdx_() != PointersT::max_data )
+			/*if ( other.getIdx_() != PointersT::max_data )
 			{
 				other.getControlBlock()->remove(other.getIdx_());
 				other.pointers.init(PointersT::max_data);
 			}
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();*/
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+			if ( other.getIdx_() != PointersT::max_data )
+				other.getControlBlock()->remove(other.getIdx_());
+			other.pointers.init(PointersT::max_data);
+			if ( otherOnStack)
+				other.setOnStack();
 		}
 		else
 		{
-			if ( other.isOnStack())
+			if ( otherOnStack)
 			{
 				if ( other.getDereferencablePtr() )
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 				else
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 				other.pointers.init(PointersT::max_data);
+				other.setOnStack();
 			}
 			else
 			{
@@ -952,6 +990,8 @@ public:
 				other.pointers.init(PointersT::max_data);
 			}
 		}
+		//assert(isOnStack());
+		printf( "6 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
@@ -997,6 +1037,7 @@ public:
 				other.init( PointersT::max_data );
 			}
 		}
+		//assert(isOnStack());
 		return *this;
 	}
 
@@ -1016,6 +1057,8 @@ public:
 				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "7 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
@@ -1032,6 +1075,8 @@ public:
 				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "8 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 
 	template<class T1>
@@ -1050,6 +1095,8 @@ public:
 				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "9 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
@@ -1066,6 +1113,8 @@ public:
 				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		//assert(isOnStack());
+		printf( "10 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 
 #if 0
@@ -1149,15 +1198,31 @@ public:
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
 		}
+		//assert(isOnStack());
 	}
 
 	~soft_ptr()
 	{
+		printf( "about to delete soft_ptr at 0x%zx\n", (size_t)this );
+		//assert(isOnStack());
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
 			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
+			assert( getAllocatedPtr() );
+			if(getIdx_()>=3 && getIdx_() != PointersT::max_data)
+			{
+			printf( "getIdx_() in dtor: 0x%zx\n", getIdx_() ); // otherAllockedSlots.getPtr()
+			printf( "getAllocatedPtr() in dtor: 0x%zx\n", (size_t)(getAllocatedPtr()) ); // otherAllockedSlots.getPtr()
+			printf( "getControlBlock() in dtor: 0x%zx\n", (size_t)(getControlBlock()) ); // 
+			printf( "getControlBlock()->otherAllockedSlots.getPtr() in dtor: 0x%zx\n", (size_t)(getControlBlock()->otherAllockedSlots.getPtr()) ); // 
+			if ( getControlBlock()->otherAllockedSlots.getPtr() == 0 )
+			printf( "isOnStack() in dtor: %s\n", isOnStack() ? "YES :(" : "NO" ); // 
+			}
 			if ( getIdx_() != PointersT::max_data )
+			{
+				assert(!isOnStack());
 				getControlBlock()->remove(getIdx_());
+			}
 			invalidatePtr();
 			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}

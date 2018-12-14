@@ -1,6 +1,8 @@
 #ifndef STARTUP_CHECKS_H
 #define STARTUP_CHECKS_H
 
+#include "foundation/include/foundation.h"
+
 void StartupCheckAssertion( bool cond ) { if (!cond) throw std::bad_exception(); } // TODO: replace by means standard for the project
 
 class StartupChecker
@@ -13,9 +15,9 @@ class StartupChecker
 		PRNG( size_t seed_ ) { seedVal = seed_ ? seed_ : 1; }
 		void seed( size_t seed_ ) { seedVal = seed_ ? seed_ : 1; }
 		// based on implementation of xorshift by Arvid Gerstmann; see, for instance, https://arvid.io/2018/07/02/better-cxx-prng/
-		FORCE_INLINE uint32_t rng32() { uint64_t ret = seedVal * 0xd989bcacc137dcd5ull; seedVal ^= seedVal >> 11; seedVal ^= seedVal << 31; seedVal ^= seedVal >> 18; return uint32_t(ret >> 32ull); }
-		FORCE_INLINE uint64_t rng64() { uint64_t ret = rng32(); ret <<= 32; return ret + rng32(); }
-		FORCE_INLINE uint64_t rng64NoNull() { uint64_t ret; do { ret = rng32(); ret <<= 32; ret += rng32(); } while (ret == 0); return ret; }
+		NODECPP_FORCEINLINE uint32_t rng32() { uint64_t ret = seedVal * 0xd989bcacc137dcd5ull; seedVal ^= seedVal >> 11; seedVal ^= seedVal << 31; seedVal ^= seedVal >> 18; return uint32_t(ret >> 32ull); }
+		NODECPP_FORCEINLINE uint64_t rng64() { uint64_t ret = rng32(); ret <<= 32; return ret + rng32(); }
+		NODECPP_FORCEINLINE uint64_t rng64NoNull() { uint64_t ret; do { ret = rng32(); ret <<= 32; ret += rng32(); } while (ret == 0); return ret; }
 	};
 
 	class SmallBase { 
@@ -97,6 +99,7 @@ class StartupChecker
 
 		rngCheckVal = rng.rng64();
 
+#ifdef USE_IIBMALLOC
 		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
@@ -138,6 +141,9 @@ class StartupChecker
 		g_AllocManager.deallocate( mem4T );
 		g_AllocManager.deallocate( mem4TCopy );
 		g_AllocManager.deallocate( changeMap );
+#else
+//#error not implemented (but implementation for any other allocator (or generalization) should not become a greate task anyway)
+#endif
 	}
 
 public:
