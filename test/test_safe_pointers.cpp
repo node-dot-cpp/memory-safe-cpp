@@ -40,25 +40,25 @@ thread_local size_t onStackSafePtrCreationCount;
 thread_local size_t onStackSafePtrDestructionCount;
 #endif // SAFE_PTR_DEBUG_MODE
 
+#ifdef USE_IIBMALLOC
 class IIBMallocInitializer
 {
 public:
 	IIBMallocInitializer()
 	{
-#ifdef USE_IIBMALLOC
 		g_AllocManager.initialize();
 		g_AllocManager.enable();
-#endif
 	}
 	~IIBMallocInitializer()
 	{
-#ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
-#endif // SAFE_PTR_DEBUG_MODE
 	}
 };
 static IIBMallocInitializer iibmallocinitializer;
+#elif defined USE_NEW_DELETE_ALLOC
+thread_local void** zombieList_ = nullptr;
+#endif // SAFE_PTR_DEBUG_MODE
 
 // testing on-stack ptr detection
 int g_int;
@@ -308,7 +308,11 @@ int testWithLest( int argc, char * argv[] )
 
 void test__allocated_ptr_and_ptr_and_data_and_flags()
 {
+#ifdef NODECPP_X64
 	constexpr size_t maxData = 32;
+#else
+	constexpr size_t maxData = 26;
+#endif
 	nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<maxData, 1> obj;
 
 	// allocated_ptr_and_ptr_and_data_and_flags::init()
@@ -359,7 +363,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 
 	obj.init();
 
-	for ( size_t i=0; i<48;++i )
+	for ( size_t i=0; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 
@@ -376,7 +380,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 
 	obj.init();
 
-	for ( size_t i=3; i<48;++i )
+	for ( size_t i=3; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 		obj.init(nullptr, ptr, 0);
@@ -429,7 +433,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 	assert( obj.get_allocated_ptr() == 0 );
 	assert( obj.get_data() == 0 );
 
-	for ( size_t i=0; i<48;++i )
+	for ( size_t i=0; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 		obj.set_ptr(ptr);
@@ -451,7 +455,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 
 	obj.init();
 
-	for ( size_t i=3; i<48;++i )
+	for ( size_t i=3; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 		obj.set_allocated_ptr(ptr);
@@ -559,11 +563,8 @@ int main( int argc, char * argv[] )
 	return 0;*/
 	//int ret = lest::run( specification, argc, argv );
 	/**/int ret = testWithLest( argc, argv );
-#ifdef USE_IIBMALLOC
-	g_AllocManager.killAllZombies();
-#else
-//#error not implemented (but implementation for any other allocator (or generalization) should not become a greate task anyway)
-#endif
+	killAllZombies();
+
 #ifdef SAFE_PTR_DEBUG_MODE
 	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );

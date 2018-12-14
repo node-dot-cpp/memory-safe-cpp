@@ -34,7 +34,9 @@
 
 #include "foundation/include/foundation.h"
 
-#define USE_IIBMALLOC
+//#define USE_IIBMALLOC
+#define USE_NEW_DELETE_ALLOC
+
 #if defined _MSC_VER
 #define NODISCARD _NODISCARD
 #define INLINE_VAR _INLINE_VAR
@@ -54,14 +56,27 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zo
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
-#else
-// NOTE: following calls make not too much practical sense and can be somehow used for debug purposes only
-NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; memset( ret, 0, sz ); return ret; }
+void killAllZombies() { g_AllocManager.killAllZombies(); }
+#elif defined USE_NEW_DELETE_ALLOC
+// NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
+extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
+inline void killAllZombies()
+{
+	while ( zombieList_ != nullptr )
+	{
+		void** next = reinterpret_cast<void**>( *zombieList_ );
+		delete [] zombieList_;
+		zombieList_ = next;
+	}
+}
+NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
-NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; memset( ret, 0, sizeof(uint64_t) + sz ); *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { delete [] (reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); }
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
-NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return 0; }
+NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
+#else
+#error at least some specific allocation functionality must be selected
 #endif
 
 
@@ -674,7 +689,11 @@ class soft_ptr
 	void resetPtr_(T* ptr) { derefPtr.resetPtr(reinterpret_cast<void*>(ptr)); }
 	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); derefPtr.resetPtr(nullptr); }
 	void setOnStack() { derefPtr.setOnStack(); }*/
+#ifdef NODECPP_X64
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
 	PointersT pointers;
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
 	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
