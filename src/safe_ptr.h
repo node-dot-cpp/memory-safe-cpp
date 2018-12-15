@@ -705,6 +705,7 @@ class soft_ptr
 	//void resetPtr_(T* ptr) { derefPtr.resetPtr(reinterpret_cast<void*>(ptr)); }
 	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
 	void setOnStack() { pointers.set_flag<0>(); }
+	void setNotOnStack() { pointers.unset_flag<0>(); }
 	bool isOnStack() { return pointers.has_flag<0>(); }
 #endif // SAFE_PTR_DEBUG_MODE
 
@@ -1023,9 +1024,8 @@ public:
 		printf( "10 created soft_ptr at 0x%zx\n", (size_t)this );
 	}
 
-#if 0
 	void swap( soft_ptr<T, isSafe>& other )
-	{return;
+	{
 		bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
 		auto tmp = pointers;
@@ -1035,17 +1035,41 @@ public:
 		{
 			if ( otherWasOnStack )
 			{
+				assert(isOnStack());
+				assert(other.isOnStack());
+				// ... and we have to do nothing else
 			}
 			else
 			{
-				////assert( getDereferencablePtr() && getIdx_() != PointersT::max_data );
-				getControlBlock()->insert(this);
+				if ( getIdx_() != PointersT::max_data )
+				{
+					assert( getDereferencablePtr() );
+					getControlBlock()->remove(getIdx_());
+				}
+				setOnStack();
+				pointers.set_data( PointersT::max_data );
+				if ( other.getDereferencablePtr() )
+					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
+				else
+					assert( other.getIdx_() == PointersT::max_data );
+				other.setNotOnStack();
 			}
 		}
 		else
 		{
 			if ( otherWasOnStack )
 			{
+				if ( getDereferencablePtr() )
+					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
+				else
+					assert( getIdx_() == PointersT::max_data );
+				setNotOnStack();
+				if ( other.getIdx_() != PointersT::max_data )
+				{
+					getControlBlock(other.getAllocatedPtr())->remove(other.getIdx_());
+					other.pointers.set_data( PointersT::max_data );
+				}
+				other.setOnStack();
 			}
 			else
 			{
@@ -1055,19 +1079,7 @@ public:
 					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 			}
 		}
-		/*auto tmp = getDereferencablePtr();
-		resetPtr_(other.getDereferencablePtr());
-		other.resetPtr_(tmp);
-		td.swap( other.td );*/
-		auto tmp = pointers;
-		other.pointers = pointers;
-		pointers = tmp;
-		if ( getDereferencablePtr() && getIdx_() != PointersT::max_data )
-			getControlBlock()->resetPtr(getIdx_(), this);
-		if ( other.getDereferencablePtr() && other.getIdx_() != PointersT::max_data)
-			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 	}
-#endif
 
 	naked_ptr<T, isSafe> get() const
 	{
