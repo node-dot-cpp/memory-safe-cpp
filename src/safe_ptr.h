@@ -658,42 +658,15 @@ class soft_ptr
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
-	//Ptr2PtrWishData td;
 #ifndef SAFE_PTR_DEBUG_MODE
-	T* derefPtr;
-	T* getPtr_() const { return derefPtr; }
-	void setPtr_(T* ptr) { derefPtr = ptr; }
-	void resetPtr_(T* ptr) { derefPtr = ptr; }
-	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); derefPtr = nullptr; }
-	void setOnStack() {}
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
 #else
-	/*struct PtrWishOnStackFlag : public nodecpp::platform::allocated_ptr_with_flags<1> {
-	public:
-		void init( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
-		void resetPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::set_ptr(ptr_); }
-		void* getPtr() const { return nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr(); }
-		void setOnStack() { set_flag<0>(); }
-		bool isOnStack() { return has_flag<0>(); }
-	};
-    struct PtrWishOnStackFlag : public Ptr2PtrWishFlags {
-        void init( void* ptr_ ) { Ptr2PtrWishFlags::init(ptr_); }
-        void resetPtr( void* ptr_ ) { Ptr2PtrWishFlags::resetPtr(ptr_); }
-        void* getPtr() const { return Ptr2PtrWishFlags::getPtr(); }
-        void setOnStack() { setFlag(0); }
-        bool isOnStack() { return isFlag(0); }
-	};
-	static_assert( sizeof(PtrWishOnStackFlag) == 8 );
-	PtrWishOnStackFlag derefPtr;
-	T* getPtr_() const { return reinterpret_cast<T*>( derefPtr.getPtr() ); }
-	void setPtr_(T* ptr) { derefPtr.init(reinterpret_cast<void*>(ptr)); }
-	void resetPtr_(T* ptr) { derefPtr.resetPtr(reinterpret_cast<void*>(ptr)); }
-	void invalidatePtr() { td.init( nullptr, Ptr2PtrWishData::invalidData ); derefPtr.resetPtr(nullptr); }
-	void setOnStack() { derefPtr.setOnStack(); }*/
 #ifdef NODECPP_X64
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
 #else
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
 #endif
+#endif // SAFE_PTR_DEBUG_MODE
 	PointersT pointers;
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
 	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
@@ -701,16 +674,11 @@ class soft_ptr
 	template<class T1>
 	void init( T* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
 
-	//void setPtr_(T* ptr) { derefPtr.init(reinterpret_cast<void*>(ptr)); }
-	//void resetPtr_(T* ptr) { derefPtr.resetPtr(reinterpret_cast<void*>(ptr)); }
 	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
 	void setOnStack() { pointers.set_flag<0>(); }
 	void setNotOnStack() { pointers.unset_flag<0>(); }
 	bool isOnStack() { return pointers.has_flag<0>(); }
-#endif // SAFE_PTR_DEBUG_MODE
 
-	/*size_t getIdx_() const { return td.getData(); }
-	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr); }*/
 	size_t getIdx_() const { return pointers.get_data(); }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
