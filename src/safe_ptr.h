@@ -34,8 +34,8 @@
 
 #include "foundation/include/foundation.h"
 
-//#define USE_IIBMALLOC
-#define USE_NEW_DELETE_ALLOC
+#define NODECPP_USE_IIBMALLOC
+//#define NODECPP_USE_NEW_DELETE_ALLOC
 
 #if defined _MSC_VER
 #define NODISCARD _NODISCARD
@@ -48,7 +48,7 @@
 #define INLINE_VAR
 #endif
 
-#ifdef USE_IIBMALLOC
+#ifdef NODECPP_USE_IIBMALLOC
 #include "iibmalloc/src/iibmalloc.h"
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
@@ -57,7 +57,7 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieab
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 void killAllZombies() { g_AllocManager.killAllZombies(); }
-#elif defined USE_NEW_DELETE_ALLOC
+#elif defined NODECPP_USE_NEW_DELETE_ALLOC
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
 inline void killAllZombies()
@@ -631,9 +631,10 @@ template<class _Ty,
 
 
 
-#define SAFE_PTR_DEBUG_MODE
+#define NODECPP_SAFE_PTR_DEBUG_MODE
+#define NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
-#ifdef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 extern thread_local size_t onStackSafePtrCreationCount; 
 extern thread_local size_t onStackSafePtrDestructionCount;
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;}
@@ -642,7 +643,7 @@ extern thread_local size_t onStackSafePtrDestructionCount;
 #else
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
 #define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {}
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
@@ -658,8 +659,12 @@ class soft_ptr
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 
-#ifndef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_X64
 	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
 #else
 #ifdef NODECPP_X64
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 

@@ -35,12 +35,12 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 #include "test_nullptr_access.h"
 
-#ifdef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 thread_local size_t onStackSafePtrCreationCount; 
 thread_local size_t onStackSafePtrDestructionCount;
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
-#ifdef USE_IIBMALLOC
+#ifdef NODECPP_USE_IIBMALLOC
 class IIBMallocInitializer
 {
 public:
@@ -56,9 +56,9 @@ public:
 	}
 };
 static IIBMallocInitializer iibmallocinitializer;
-#elif defined USE_NEW_DELETE_ALLOC
+#elif defined NODECPP_USE_NEW_DELETE_ALLOC
 thread_local void** zombieList_ = nullptr;
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_USE_xxx_ALLOC
 
 // testing on-stack ptr detection
 int g_int;
@@ -548,10 +548,10 @@ int main( int argc, char * argv[] )
 	//testNullPtrAccess(); return 0;
 	test__allocated_ptr_and_ptr_and_data_and_flags(); //return 0;
 
-#ifdef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 /*	for ( uint64_t n=0; n<8; ++n )
 	{
 		unsigned long ix;
@@ -565,18 +565,18 @@ int main( int argc, char * argv[] )
 	/**/int ret = testWithLest( argc, argv );
 	killAllZombies();
 
-#ifdef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
     //return ret;
 	fnStart();
 	fnSoftEnd();
 	fnOwningEnd();
-#ifdef SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
-#endif // SAFE_PTR_DEBUG_MODE
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 	printf( "about to exit main()...\n" );
 	return 0;
 }
