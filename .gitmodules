@@ -4,6 +4,3 @@
 [submodule "src/iibmalloc"]
 	path = src/iibmalloc
 	url = https://github.com/node-dot-cpp/iibmalloc
-[submodule "src/foundation"]
-	path = src/foundation
-	url = https://github.com/node-dot-cpp/nodecpp-foundation

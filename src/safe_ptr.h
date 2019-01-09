@@ -32,7 +32,7 @@
 #include <stdint.h>
 #include <assert.h>
 
-#include "foundation/include/foundation.h"
+#include <foundation.h>
 
 #define NODECPP_USE_IIBMALLOC
 //#define NODECPP_USE_NEW_DELETE_ALLOC
