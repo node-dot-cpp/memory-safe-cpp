@@ -117,7 +117,11 @@ enum class MemorySafety {none, partial, full};
 
 #define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
 
-extern void forcePreviousChangesToThisInDtor( void* p ); // TODO: if not gcc, just #define forcePreviousChangesToThisInDtor(x)
+#ifdef NODECPP_LINUX
+extern void forcePreviousChangesToThisInDtor( void* p );
+#else
+#define forcePreviousChangesToThisInDtor(x)
+#endif
 
 
 /*NODECPP_FORCEINLINE
