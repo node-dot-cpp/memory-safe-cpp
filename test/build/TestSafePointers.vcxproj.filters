@@ -50,5 +50,8 @@
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\startup_checks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
