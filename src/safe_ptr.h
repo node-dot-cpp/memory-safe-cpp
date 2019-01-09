@@ -56,7 +56,7 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zo
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
-void killAllZombies() { g_AllocManager.killAllZombies(); }
+inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
