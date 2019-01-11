@@ -36,9 +36,11 @@
 #include "test_nullptr_access.h"
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-thread_local size_t onStackSafePtrCreationCount; 
-thread_local size_t onStackSafePtrDestructionCount;
+thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount; 
+thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+
+using namespace nodecpp::safememory;
 
 #ifdef NODECPP_USE_IIBMALLOC
 using namespace nodecpp::iibmalloc;

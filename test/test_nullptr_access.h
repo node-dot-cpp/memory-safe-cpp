@@ -1,7 +1,9 @@
 #ifndef TEST_NULLPTR_ACCESS_H
 #define TEST_NULLPTR_ACCESS_H
 
-#include "../src/safe_ptr.h"
+#include <safe_ptr.h>
+
+using namespace nodecpp::safememory;
 
 void testNullPtrAccess()
 {

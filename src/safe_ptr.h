@@ -34,13 +34,18 @@
 
 #include <foundation.h>
 
+namespace nodecpp::safememory
+{
+	constexpr uint64_t module_id = 2;
+} // namespace nodecpp::safememory
+
 #define NODECPP_USE_IIBMALLOC
 //#define NODECPP_USE_NEW_DELETE_ALLOC
 
-#if defined _MSC_VER
+#if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #define INLINE_VAR _INLINE_VAR
-#elif defined __GNUC__
+#elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
 #define NODISCARD [[nodiscard]]
 #define INLINE_VAR inline
 #else
@@ -49,8 +54,11 @@
 #endif
 
 #ifdef NODECPP_USE_IIBMALLOC
+
 #include <iibmalloc.h>
 using namespace nodecpp::iibmalloc;
+namespace nodecpp::safememory
+{
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
@@ -58,7 +66,12 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieab
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 inline void killAllZombies() { g_AllocManager.killAllZombies(); }
+} // namespace nodecpp::safememory
+
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
+
+namespace nodecpp::safememory
+{
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
 inline void killAllZombies()
@@ -76,21 +89,17 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
+} //namespace nodecpp::safememory
+
 #else
 #error at least some specific allocation functionality must be selected
 #endif
 
 
-#if defined __GNUC__
-#define NODECPP_LIKELY(x)       __builtin_expect(!!(x),1)
-#define NODECPP_UNLIKELY(x)     __builtin_expect(!!(x),0)
-#else
-#define NODECPP_LIKELY(x) (x)
-#define NODECPP_UNLIKELY(x) (x)
-#endif
-
 //#define NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 
+namespace nodecpp::safememory
+{
 enum class MemorySafety {none, partial, full};
 
 //#define NODECPP_MEMORYSAFETY_NONE
@@ -116,23 +125,11 @@ enum class MemorySafety {none, partial, full};
 #endif
 #endif
 
-#define CONTROL_BLOCK_SIZE 4096 // TODO: make platform-dependent consideration
-
 #ifdef NODECPP_LINUX
 extern void forcePreviousChangesToThisInDtor( void* p );
 #else
 #define forcePreviousChangesToThisInDtor(x)
 #endif
-
-
-/*NODECPP_FORCEINLINE
-void* readVMT(void* p) { return *((void**)p); }
-
-NODECPP_FORCEINLINE
-void restoreVMT(void* p, void* vpt) { *((void**)p) = vpt; }
-
-NODECPP_FORCEINLINE
-std::pair<size_t, size_t> getVMPPos(void* p) { return std::make_pair( 0, sizeof(void*) ); }*/
 
 template<class T>
 void destruct( T* t )
@@ -147,18 +144,10 @@ void destruct( T* t )
 		t->~T();
 }
 
-/*NODECPP_FORCEINLINE
-bool isGuaranteedOnStack( void* ptr )
-{
-	int a;
-	constexpr uintptr_t upperBitsMask = ~( CONTROL_BLOCK_SIZE - 1 );
-	return ( ( ((uintptr_t)(ptr)) ^ ((uintptr_t)(&a)) ) & upperBitsMask ) == 0;
-}*/
-
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
-	if constexpr ( sizeof(T) <= CONTROL_BLOCK_SIZE ) ;
+	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
 	else {
 		if ( ptr == nullptr )
 			throw std::bad_alloc();
@@ -1287,5 +1276,6 @@ public:
 
 #include "startup_checks.h"
 
+} // namespace nodecpp::safememory
 
 #endif
