@@ -54,7 +54,7 @@ public:
 	}
 	~IIBMallocInitializer()
 	{
-	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 	}
 };
@@ -107,27 +107,27 @@ int testWithLest( int argc, char * argv[] )
 	#if 0 // TODO: rework for new data structures
 				int* n1 = new int;
 				int* n2 = new int;
-			 //printf( "[1] n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[1] n1 = 0x{:x}, n2 = 0x{:x}\n", (uintptr_t)n1, (uintptr_t)n2 );
 				Ptr2PtrWishData n1D, n2D;
 				//SECTION( "initializing ptrs-with-data" )
 				{
 					n1D.init(n1,Ptr2PtrWishData::invalidData);
 					n2D.init(n2,Ptr2PtrWishData::invalidData);
-				 //printf( "n1D.ptr = 0x%llx, n1D.data = %zd, n2D.ptr = 0x%llx, n2D.data = %zd\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //printf( "[2] n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[2] n1 = 0x{:x}, n2 = 0x{:x}\n", (uintptr_t)n1, (uintptr_t)n2 );
 					EXPECT( n1D.getPtr() == n1 );
 					EXPECT( n2D.getPtr() == n2 );
 					EXPECT( n1D.getData() == Ptr2PtrWishData::invalidData );
 					EXPECT( n2D.getData() == Ptr2PtrWishData::invalidData );
-			 //printf( "[3] n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[3] n1 = 0x{:x}, n2 = 0x{:x}\n", (uintptr_t)n1, (uintptr_t)n2 );
 				}
 				//SECTION( "updating data" )
 				{
-			 //printf( "[4] n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[4] n1 = 0x{:x}, n2 = 0x{:x}\n", (uintptr_t)n1, (uintptr_t)n2 );
 					n1D.updateData(6);
 					n2D.updateData(500000);
-				 //printf( "n1D.ptr = 0x%llx, n1D.data = %zd, n2D.ptr = 0x%llx, n2D.data = %zd\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //printf( "[5] n1 = 0x%llx, n2 = 0x%llx\n", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[5] n1 = 0x{:x}, n2 = 0x{:x}\n", (uintptr_t)n1, (uintptr_t)n2 );
 					EXPECT( n1D.getPtr() == n1 );
 					EXPECT( n2D.getPtr() == n2 );
 					EXPECT( n1D.getData() == 6 );
@@ -141,7 +141,7 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( n2D.getPtr() == n1 );
 					EXPECT( n1D.getData() == 6 );
 					EXPECT( n2D.getData() == 500000 );
-					//printf( "n1D.ptr = 0x%llx, n1D.data = %zd, n2D.ptr = 0x%llx, n2D.data = %zd\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				//SECTION( "yet updating data" )
 				{
@@ -151,7 +151,7 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( n2D.getPtr() == n1 );
 					EXPECT( n1D.getData() == 500000 );
 					EXPECT( n2D.getData() == 6 );
-					//printf( "n1D.ptr = 0x%llx, n1D.data = %zd, n2D.ptr = 0x%llx, n2D.data = %zd\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}\n", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				delete n1;
 				delete n2;
@@ -183,43 +183,43 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( *s12 == 6 );
 					EXPECT( *s21 == 26 );
 					EXPECT( *s22 == 26 );
-					//printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
 					s21.swap(s12);
 					//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
  					EXPECT( *s11 == 6 );
 					EXPECT( *s12 == 26 );
 					EXPECT( *s21 == 6 );
 					EXPECT( *s22 == 26 );
-					//printf( "*s11 = %d, *s12 = %d, *s11 = %d, *s12 = %d\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}\n", *s11.get(), *s12.get(), *s21.get(), *s22.get() );
 					s01.swap(s11);
 					//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
- 					//printf( "*s14 = %d\n", *s14.get() );
+ 					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s14 = {}\n", *s14.get() );
  					EXPECT( *s01 == 6 );
 					soft_ptr<int> s13(p1);
 					soft_ptr<int> s14(p1);
 					{
 						soft_ptr<int> s15(p1);
- 						//printf( "*s15 = %d\n", *s15.get() );
+ 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}\n", *s15.get() );
 						EXPECT( *s15 == 6 );
 					}
 					soft_ptr<int> s15(p1);
 					EXPECT( *s15 == 6 );
- 					//printf( "*s15 = %d\n", *s15.get() );
+ 					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}\n", *s15.get() );
 					soft_ptr<int> s16(p1);
 					{
 						soft_ptr<int> s17(p1);
 						EXPECT( *s17 == 6 );
- 						//printf( "*s17 = %d\n", *s17.get() );
+ 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}\n", *s17.get() );
 					}
 					EXPECT( *p1 == 6 );
 					EXPECT( *p2 == 26 );
-					//printf( "*p1 = %d, *p2 = %d\n", *p1, *p2 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}\n", *p1, *p2 );
 					owning_ptr<int> p3 = make_owning<int>();
 					*p3 = 17;
 					s02 = p3;
 					EXPECT( *s02 == 17 );
 				}
-				//printf( "is s14 == NULL (as it shoudl be)? %s\n", s14 ? "NO" : "YES" );
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}\n", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
 				//EXPECT( !s02 );
 			}
@@ -547,12 +547,12 @@ int main( int argc, char * argv[] )
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
 
 	int any = 0;
-	printf( "&any = 0x%zx\n", (size_t)(&any) );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "&any = 0x{:x}\n", (size_t)(&any) );
 	//testNullPtrAccess(); return 0;
 	test__allocated_ptr_and_ptr_and_data_and_flags(); //return 0;
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	printf( "   ===>> onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>> onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 /*	for ( uint64_t n=0; n<8; ++n )
@@ -561,7 +561,7 @@ int main( int argc, char * argv[] )
 		uint64_t n1 = ~n;
 		uint8_t r = _BitScanForward(&ix, n1);
 		assert( ( (1<<ix) & n ) == 0 || ix > 2 );
-		printf( "%zd %zd: %zd (%zd)\n", n, n1, ix, (size_t)r );
+		nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "{} {}: {} ({})\n", n, n1, ix, (size_t)r );
 	}
 	return 0;*/
 	//int ret = lest::run( specification, argc, argv );
@@ -569,7 +569,7 @@ int main( int argc, char * argv[] )
 	killAllZombies();
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
     //return ret;
@@ -577,9 +577,9 @@ int main( int argc, char * argv[] )
 	fnSoftEnd();
 	fnOwningEnd();
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	printf( "   ===>>onStackSafePtrCreationCount = %zd, onStackSafePtrDestructionCount = %zd\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}\n", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	assert( onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	printf( "about to exit main()...\n" );
+	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to exit main()...\n" );
 	return 0;
 }
