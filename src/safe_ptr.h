@@ -125,7 +125,7 @@ enum class MemorySafety {none, partial, full};
 #endif
 #endif
 
-#ifdef NODECPP_LINUX
+#ifdef NODECPP_GCC
 extern void forcePreviousChangesToThisInDtor( void* p );
 #else
 #define forcePreviousChangesToThisInDtor(x)
@@ -474,6 +474,7 @@ public:
 	}
 	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other )
 	{
+		if ( this == &other ) return *this;
 		t = other.t;
 		other.t = nullptr;
 		return *this;
@@ -780,7 +781,7 @@ public:
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-		if ( this == &other ) return;
+		if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -876,7 +877,7 @@ public:
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
 		// TODO+++: revise
-		if ( this == &other ) return;
+		if ( this == &other ) return *this;
 		bool wasOnStack = isOnStack();
 		reset();
 		if ( wasOnStack )
