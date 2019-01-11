@@ -83,7 +83,7 @@ struct ClangTidyStats {
 
   unsigned errorsIgnored() const {
     return ErrorsIgnoredNOLINT + ErrorsIgnoredCheckFilter +
-           ErrorsIgnoredNonUserCode + ErrorsIgnoredLineFilter;
+           /*ErrorsIgnoredNonUserCode +*/ ErrorsIgnoredLineFilter;
   }
 };
 

@@ -89,7 +89,7 @@ Can be used together with -line-filter.
 This option overrides the 'HeaderFilter' option
 in .clang-tidy file, if any.
 )"),
-                                         cl::init(""),
+                                         cl::init(".*"),
                                          cl::cat(ClangTidyCategory));
 
 static cl::opt<bool>
@@ -218,10 +218,10 @@ static void printStats(const ClangTidyStats &Stats) {
   if (Stats.errorsIgnored()) {
     llvm::errs() << "Suppressed " << Stats.errorsIgnored() << " warnings (";
     StringRef Separator = "";
-    if (Stats.ErrorsIgnoredNonUserCode) {
-      llvm::errs() << Stats.ErrorsIgnoredNonUserCode << " in non-user code";
-      Separator = ", ";
-    }
+  //   if (Stats.ErrorsIgnoredNonUserCode) {
+  //     llvm::errs() << Stats.ErrorsIgnoredNonUserCode << " in non-user code";
+  //     Separator = ", ";
+  //   }
     if (Stats.ErrorsIgnoredLineFilter) {
       llvm::errs() << Separator << Stats.ErrorsIgnoredLineFilter
                    << " due to line filter";
@@ -235,10 +235,10 @@ static void printStats(const ClangTidyStats &Stats) {
       llvm::errs() << Separator << Stats.ErrorsIgnoredCheckFilter
                    << " with check filters";
     llvm::errs() << ").\n";
-    if (Stats.ErrorsIgnoredNonUserCode)
-      llvm::errs() << "Use -header-filter=.* to display errors from all "
-                      "non-system headers. Use -system-headers to display "
-                      "errors from system headers as well.\n";
+  //   if (Stats.ErrorsIgnoredNonUserCode)
+  //     llvm::errs() << "Use -header-filter=.* to display errors from all "
+  //                     "non-system headers. Use -system-headers to display "
+  //                     "errors from system headers as well.\n";
   }
 }
 
