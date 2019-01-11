@@ -239,7 +239,10 @@ static void printStats(const ClangTidyStats &Stats) {
   //     llvm::errs() << "Use -header-filter=.* to display errors from all "
   //                     "non-system headers. Use -system-headers to display "
   //                     "errors from system headers as well.\n";
-  }
+  } 
+  else {
+    llvm::errs() << "No warnings suppressed.\n";
+  } 
 }
 
 static void printProfileData(const ProfileData &Profile,
