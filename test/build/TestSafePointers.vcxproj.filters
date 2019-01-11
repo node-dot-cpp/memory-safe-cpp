@@ -36,6 +36,12 @@
     <ClCompile Include="..\..\gcc_lto_workaround\gcc_lto_workaround.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\foundation\3rdparty\fmt\src\format.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\log.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\src\safe_ptr.h">

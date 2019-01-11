@@ -30,8 +30,8 @@
 
 #include <stdio.h>
 
-#include "../src/safe_ptr.h"
-#include "../src/startup_checks.h"
+#include <safe_ptr.h>
+#include <startup_checks.h>
 #include "../3rdparty/lest/include/lest/lest.hpp"
 #include "test_nullptr_access.h"
 
@@ -41,6 +41,7 @@ thread_local size_t onStackSafePtrDestructionCount;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 #ifdef NODECPP_USE_IIBMALLOC
+using namespace nodecpp::iibmalloc;
 class IIBMallocInitializer
 {
 public:
@@ -285,8 +286,8 @@ int testWithLest( int argc, char * argv[] )
 				int a;
 				//EXPECT( nodecpp::platform::is_guaranteed_on_stack( &a ) );
 				int* pn = new int;
-				class Large { public: int val[0x10000];};
-				Large l;
+				//class Large { public: int val[0x10000];};
+				//Large l;
 				EXPECT( nodecpp::platform::is_guaranteed_on_stack( &a ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( pn ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &g_int ) );

@@ -49,7 +49,8 @@
 #endif
 
 #ifdef NODECPP_USE_IIBMALLOC
-#include "iibmalloc/src/iibmalloc.h"
+#include <iibmalloc.h>
+using namespace nodecpp::iibmalloc;
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }

@@ -1,7 +1,7 @@
 #ifndef STARTUP_CHECKS_H
 #define STARTUP_CHECKS_H
 
-#include "foundation/include/foundation.h"
+#include <foundation.h>
 
 inline
 void StartupCheckAssertion( bool cond ) { if (!cond) throw std::bad_exception(); } // TODO: replace by means standard for the project
