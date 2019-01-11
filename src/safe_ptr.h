@@ -194,7 +194,7 @@ struct FirstControlBlock // not reallocatable
 		size_t otherAllockedCnt;
 		PtrWishFlagsForSoftPtrList slots[1];
 		void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
-			//assert( firstFree == nullptr );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr );
 			firstFree = begin;
 			for ( size_t i=0; i<count-1; ++i ) {
 				begin[i].setPtr(begin + i + 1);
@@ -205,44 +205,44 @@ struct FirstControlBlock // not reallocatable
 			//dbgCheckFreeList();
 		}
 		size_t insert( void* ptr ) {
-			assert( firstFree != nullptr );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree != nullptr );
 			PtrWishFlagsForSoftPtrList* tmp = ((PtrWishFlagsForSoftPtrList*)(firstFree->getPtr()));
-			assert( !firstFree->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
 			size_t idx;
-			assert( !firstFree->is1stBlock() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->is1stBlock() );
 			idx = firstFree - slots;
 			firstFree->setPtr(ptr);
 			firstFree->setUsed();
 			firstFree = tmp;
-			assert( firstFree == nullptr || !firstFree->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
-			assert( idx < (1<<19) ); // TODO
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}\n", (size_t)this, idx, (size_t)ptr);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
 			return idx;
 		}
 		void resetPtr( size_t idx, void* newPtr ) {
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}\n", (size_t)this, idx, (size_t)newPtr);
-			assert( idx < otherAllockedCnt );
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
 			slots[idx].set2ndBlock();
 			//dbgCheckFreeList();
-			//assert( firstFree == nullptr || !firstFree->isUsed() );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 		}
 		void remove( size_t idx ) {
-			assert( firstFree == nullptr || !firstFree->isUsed() );
-			assert( idx < otherAllockedCnt );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
 			slots[idx].setPtr( firstFree );
 			firstFree = slots + idx;
 			firstFree->setUnused();
 			firstFree->set2ndBlock();
-			assert( firstFree == nullptr || !firstFree->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
 		}
 		static SecondCBHeader* reallocate(SecondCBHeader* present )
 		{
 			if ( present != nullptr ) {
-				assert( present->otherAllockedCnt != 0 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, present->otherAllockedCnt != 0 );
 				size_t newSize = (present->otherAllockedCnt << 1) + 2;
 				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
 				//PtrWishFlagsForSoftPtrList* newOtherAllockedSlots = 
@@ -251,17 +251,17 @@ struct FirstControlBlock // not reallocatable
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
 				ret->otherAllockedCnt = newSize;
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)\n", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 			else {
-				//assert( otherAllockedCnt == 0 );
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt == 0 );
 				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (secondBlockStartSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
 				ret->otherAllockedCnt = secondBlockStartSize;
 				//present->firstFree->set(nullptr);
 				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
 				ret->addToFreeList( ret->slots, secondBlockStartSize );
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)\n", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 		}
@@ -293,8 +293,8 @@ struct FirstControlBlock // not reallocatable
 	void dbgCheckFreeList() {
 		/*PtrWishFlagsForSoftPtrList* start = firstFree;
 		while( start ) {
-			assert( !start->isUsed() );
-			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots.getPtr()) < otherAllockedCnt ) );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !start->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots.getPtr()) < otherAllockedCnt ) );
 			start = ((PtrWishFlagsForSoftPtrList*)(start->getPtr()));
 		}*/
 	}
@@ -310,23 +310,23 @@ struct FirstControlBlock // not reallocatable
 
 		//otherAllockedCnt = 0;
 		otherAllockedSlots.init();
-		//assert( !firstFree->isUsed() );
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
 		dbgCheckFreeList();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 	}
 	/*void deinit() {
 		if ( otherAllockedSlots.getPtr() != nullptr ) {
-			assert( otherAllockedCnt != 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt != 0 );
 			//delete [] otherAllockedSlots;
 			deallocate( otherAllockedSlots.getPtr() );
 			otherAllockedCnt = 0;
 		}
 		else {
-			assert( otherAllockedCnt == 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt == 0 );
 		}
 	}*/
 	void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
-		//assert( firstFree == nullptr );
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr );
 		//firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
 			begin[i].setPtr(begin + i + 1);
@@ -351,7 +351,7 @@ struct FirstControlBlock // not reallocatable
 					slots[i].setPtr(ptr);
 					slots[i].setUsed();
 					otherAllockedSlots.setMask( mask );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}\n", (size_t)this, (size_t)ptr, i );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
 					return i;
 				}
 		}
@@ -359,49 +359,49 @@ struct FirstControlBlock // not reallocatable
 		{
 			if ( otherAllockedSlots.getPtr() == nullptr || otherAllockedSlots.getPtr()->firstFree == nullptr )
 			{
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 			}
 			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}\n", (size_t)this, (size_t)ptr, idx );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
 			return idx;
 		}
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset to 0x{:x} at idx {}\n", (size_t)this, (size_t)newPtr, idx );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
 		if ( idx < maxSlots ) {
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
 			slots[idx].set1stBlock();
 		}
 		else {
-			//assert( idx - maxSlots < otherAllockedCnt );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
 			otherAllockedSlots.getPtr()->resetPtr( idx, newPtr );
 		}
 		//dbgCheckFreeList();
 	}
 	void remove( size_t idx ) {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to remove at idx {}\n", (size_t)this, idx );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
 		if ( idx < maxSlots ) {
-			assert( slots[idx].isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].isUsed() );
 			slots[idx].setUnused();
 			slots[idx].set1stBlock();
 			otherAllockedSlots.setMask( otherAllockedSlots.getMask() & ~(1<<idx) );
 		}
 		else {
-			//assert( idx - maxSlots < otherAllockedCnt );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
-			assert( otherAllockedSlots.getPtr() != nullptr );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr() != nullptr );
 			otherAllockedSlots.getPtr()->remove( idx );
 		}
-		//assert( firstFree == nullptr || !firstFree->isUsed() );
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 		//dbgCheckFreeList();
 	}
 	void clear() {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}\n", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		if ( otherAllockedSlots.getPtr() != nullptr )
 			otherAllockedSlots.getPtr()->dealloc();
 		otherAllockedSlots.setZombie();
@@ -506,7 +506,7 @@ public:
 
 	void reset( T* t_ ) // Q: what happens to safe ptrs?
 	{
-		assert( t == nullptr );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t == nullptr );
 		reset();
 	}
 
@@ -632,7 +632,7 @@ template<class _Ty,
 extern thread_local size_t onStackSafePtrCreationCount; 
 extern thread_local size_t onStackSafePtrDestructionCount;
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;}
-//#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*assert( nodecpp::platform::is_guaranteed_on_stack( this ) );*/ ++onStackSafePtrDestructionCount;}}
+//#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, nodecpp::platform::is_guaranteed_on_stack( this ) );*/ ++onStackSafePtrDestructionCount;}}
 #define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() { if ( isOnStack() ) {++onStackSafePtrDestructionCount;} }
 #else
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
@@ -691,7 +691,7 @@ public:
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 
@@ -709,7 +709,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "2 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "2 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
@@ -724,7 +724,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "3 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "3 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
@@ -775,7 +775,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "4 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "4 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
@@ -808,7 +808,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "5 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "5 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
@@ -870,7 +870,7 @@ public:
 				other.pointers.init(PointersT::max_data);
 			}
 		}
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "6 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "6 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
@@ -881,7 +881,7 @@ public:
 		reset();
 		if ( wasOnStack )
 		{
-			assert( getIdx_() == PointersT::max_data );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
 			if ( other.isOnStack() )
 			{
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -935,7 +935,7 @@ public:
 				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "7 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "7 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
@@ -952,7 +952,7 @@ public:
 				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "8 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "8 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 	template<class T1>
@@ -971,7 +971,7 @@ public:
 				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "9 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "9 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
@@ -988,7 +988,7 @@ public:
 				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "10 created soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "10 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
@@ -997,7 +997,7 @@ public:
 		bool otherWasOnStack = other.isOnStack();
 		auto tmp = pointers;
 		pointers = other.pointers;
-		pointers = tmp;
+		other.pointers = tmp;
 		if ( iWasOnStack )
 		{
 			if ( otherWasOnStack )
@@ -1010,7 +1010,7 @@ public:
 			{
 				if ( getIdx_() != PointersT::max_data )
 				{
-					assert( getDereferencablePtr() );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() );
 					getControlBlock()->remove(getIdx_());
 				}
 				setOnStack();
@@ -1018,7 +1018,7 @@ public:
 				if ( other.getDereferencablePtr() )
 					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
 				else
-					assert( other.getIdx_() == PointersT::max_data );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.getIdx_() == PointersT::max_data );
 				other.setNotOnStack();
 			}
 		}
@@ -1029,7 +1029,7 @@ public:
 				if ( getDereferencablePtr() )
 					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
 				else
-					assert( getIdx_() == PointersT::max_data );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
 				setNotOnStack();
 				if ( other.getIdx_() != PointersT::max_data )
 				{
@@ -1050,7 +1050,7 @@ public:
 
 	naked_ptr<T, isSafe> get() const
 	{
-		assert( getDereferencablePtr() != nullptr );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() != nullptr );
 		naked_ptr<T, isSafe> ret;
 		ret.t = getDereferencablePtr();
 		return ret;
@@ -1078,7 +1078,7 @@ public:
 	void reset()
 	{
 		if( getDereferencablePtr() != nullptr ) {
-			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
 			if ( getIdx_() != PointersT::max_data )
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
@@ -1087,19 +1087,19 @@ public:
 
 	~soft_ptr()
 	{
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to delete soft_ptr at 0x{:x}\n", (size_t)this );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to delete soft_ptr at 0x{:x}", (size_t)this );
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
-			//assert( getIdx_() != Ptr2PtrWishData::invalidData );
-			assert( getAllocatedPtr() );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
 			/*if(getIdx_()>=3 && getIdx_() != PointersT::max_data)
 			{
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getIdx_() in dtor: 0x{:x}\n", getIdx_() ); // otherAllockedSlots.getPtr()
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getAllocatedPtr() in dtor: 0x{:x}\n", (size_t)(getAllocatedPtr()) ); // otherAllockedSlots.getPtr()
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock() in dtor: 0x{:x}\n", (size_t)(getControlBlock()) ); // 
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock()->otherAllockedSlots.getPtr() in dtor: 0x{:x}\n", (size_t)(getControlBlock()->otherAllockedSlots.getPtr()) ); // 
+			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getIdx_() in dtor: 0x{:x}", getIdx_() ); // otherAllockedSlots.getPtr()
+			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getAllocatedPtr() in dtor: 0x{:x}", (size_t)(getAllocatedPtr()) ); // otherAllockedSlots.getPtr()
+			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock() in dtor: 0x{:x}", (size_t)(getControlBlock()) ); // 
+			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock()->otherAllockedSlots.getPtr() in dtor: 0x{:x}", (size_t)(getControlBlock()->otherAllockedSlots.getPtr()) ); // 
 			//if ( getControlBlock()->otherAllockedSlots.getPtr() == 0 )
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "isOnStack() in dtor: {}\n", isOnStack() ? "YES :(" : "NO" ); // 
+			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "isOnStack() in dtor: {}", isOnStack() ? "YES :(" : "NO" ); // 
 			}*/
 			if ( getIdx_() != PointersT::max_data )
 			{
