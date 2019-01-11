@@ -1,4 +1,4 @@
-// RUN: clang-tidy %s --checks=-*,nodecpp-raw-pointer-assignment -- -std=c++11 -nostdinc++ | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s --checks=-*,nodecpp-raw-pointer-assignment -- -std=c++11 -nostdinc++ | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
 
 void good1() { 
 	int* p1 = nullptr; 
