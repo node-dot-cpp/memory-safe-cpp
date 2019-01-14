@@ -29,3 +29,8 @@ add_clang_library(nodecppChecker
 
 add_subdirectory(nodecpp)
 add_subdirectory(tool)
+
+# Add the testsuite after all the tools.
+if(CLANG_INCLUDE_TESTS)
+add_subdirectory(test)
+endif()
