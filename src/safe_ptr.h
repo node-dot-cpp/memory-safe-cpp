@@ -436,6 +436,8 @@ class owning_ptr
 	enable_if_t<!is_array_v<_Ty>, int>>
 	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);*/
 	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
 	T* t;
@@ -476,6 +478,20 @@ public:
 	{
 		if ( this == &other ) return *this;
 		t = other.t;
+		other.t = nullptr;
+		return *this;
+	}
+	template<class T1>
+	owning_ptr( owning_ptr<T1, isSafe>&& other )
+	{
+		t = other.t; // implicit cast, if at all possible
+		other.t = nullptr;
+	}
+	template<class T1>
+	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other )
+	{
+		if ( this == &other ) return *this;
+		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
 		return *this;
 	}
@@ -1254,6 +1270,12 @@ public:
 	}
 
 	T* operator -> () const 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
+	T* get_dereferencable() const 
 	{
 		checkNotNullLargeSize( t );
 		return t;
