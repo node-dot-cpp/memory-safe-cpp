@@ -24,5 +24,5 @@ void bad() {
 
 	int b = 0;
 	int c = (&b)[0];
-// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: do not use index operator on unsafe types
+// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: (S1)
 }

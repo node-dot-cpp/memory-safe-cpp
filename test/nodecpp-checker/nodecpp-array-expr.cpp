@@ -4,5 +4,5 @@ void f() {
 	int i;
 
 	(&i)[2];
-// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: do not use index operator
+// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: (S1)
 }

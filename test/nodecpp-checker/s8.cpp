@@ -2,8 +2,6 @@
 
 #include <safe_ptr.h>
 
-using namespace bad;
-
 void func() {
 	
 	int i = 0;

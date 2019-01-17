@@ -1,10 +1,8 @@
 #ifndef SAFE_PTR_H
 #define SAFE_PTR_H
 
-namespace bad {
+void* memset( void* dest, int ch, int count );
 
-	void* memset( void* dest, int ch, int count );
-}
 
 namespace nodecpp {
 
