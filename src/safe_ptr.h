@@ -902,7 +902,7 @@ public:
 			if ( other.isOnStack() )
 			{
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-				other.init( PointersT::max_data );
+				other.pointers.init( PointersT::max_data );
 				other.setOnStack();
 			}
 			else
@@ -910,7 +910,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 				if ( other.getIdx_() != PointersT::max_data )
 					other.getControlBlock()->remove(other.getIdx_());
-				other.init( PointersT::max_data );
+				other.pointers.init( PointersT::max_data );
 			}
 			setOnStack();
 		}
@@ -922,7 +922,7 @@ public:
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 				else
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-				other.init( PointersT::max_data );
+				other.pointers.init( PointersT::max_data );
 				other.setOnStack();
 			}
 			else
@@ -930,7 +930,7 @@ public:
 				pointers = other.pointers;
 				if ( getIdx_() != PointersT::max_data )
 					getControlBlock()->resetPtr(getIdx_(), this);
-				other.init( PointersT::max_data );
+				other.pointers.init( PointersT::max_data );
 			}
 		}
 		return *this;

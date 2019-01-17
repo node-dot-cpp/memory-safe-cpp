@@ -220,6 +220,10 @@ int testWithLest( int argc, char * argv[] )
 					*p3 = 17;
 					s02 = p3;
 					EXPECT( *s02 == 17 );
+
+					soft_ptr<int> s30;
+					s30 = std::move( s02 );
+					EXPECT( *s30 == 17 );
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
@@ -287,12 +291,15 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("test is-on-stack")
 			{
-				int a;
+				// NOTE: test below may occasionally failed: 
+				//       stack var can be reported as not being such
+				//       but heap value must never be reported as guaranteed on stack
+				//int a;
 				//EXPECT( nodecpp::platform::is_guaranteed_on_stack( &a ) );
+
 				int* pn = new int;
 				//class Large { public: int val[0x10000];};
 				//Large l;
-				EXPECT( nodecpp::platform::is_guaranteed_on_stack( &a ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( pn ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &g_int ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &th_int ) );
