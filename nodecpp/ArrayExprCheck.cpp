@@ -39,7 +39,7 @@ void ArrayExprCheck::check(const MatchFinder::MatchResult &Result) {
   }
   
   if(auto expr = Result.Nodes.getNodeAs<ArraySubscriptExpr>("expr")) {
-    diag(expr->getRBracketLoc(), "do not use index operator on unsafe types");
+    diag(expr->getRBracketLoc(), "(S1) array expression not allowed");
     return;
   }
 }

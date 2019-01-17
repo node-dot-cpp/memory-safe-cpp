@@ -85,6 +85,10 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
       // don't report here
       return;
   }
+  else if(isa<CXXConstCastExpr>(expr)) {
+      // don't report here
+      return;
+  }
 
   else if(isa<CXXStaticCastExpr>(expr)) {
     diag(expr->getExprLoc(), "(S1.1) static_cast not allowed");
