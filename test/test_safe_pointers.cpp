@@ -224,6 +224,15 @@ int testWithLest( int argc, char * argv[] )
 					soft_ptr<int> s30;
 					s30 = std::move( s02 );
 					EXPECT( *s30 == 17 );
+
+					soft_ptr<void> sv;
+//					sv = std::move( s30 );
+					sv = soft_ptr_static_cast<int>( s30 );
+					EXPECT( sv );
+
+					soft_ptr<int> s31;
+					s31 = soft_ptr_static_cast<int>( sv );
+					EXPECT( *s31 == 17 );
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );

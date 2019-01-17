@@ -1129,6 +1129,330 @@ public:
 	}
 };
 
+template<>
+class soft_ptr<void, true>
+{
+	static constexpr bool isSafe = true;
+//	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
+	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
+#else
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
+#endif // SAFE_PTR_DEBUG_MODE
+	PointersT pointers;
+	void* getDereferencablePtr() const { return reinterpret_cast<void*>( pointers.get_ptr() ); }
+	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
+	void init( void* ptr, void* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+	template<class T1>
+	void init( void* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+
+	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
+	void setOnStack() { pointers.set_flag<0>(); }
+	void setNotOnStack() { pointers.unset_flag<0>(); }
+	bool isOnStack() { return pointers.has_flag<0>(); }
+
+	size_t getIdx_() const { return pointers.get_data(); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
+	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
+
+public:
+	soft_ptr()
+	{
+		pointers.init( PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+	}
+
+
+	template<class T1>
+	soft_ptr( const owning_ptr<T1, isSafe>& owner )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+	}
+	template<class T1>
+	soft_ptr<void>& operator = ( const owning_ptr<T1, isSafe>& owner )
+	{
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		return *this;
+	}
+
+
+	template<class T1>
+	soft_ptr( const soft_ptr<T1, isSafe>& other )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+	}
+	template<class T1>
+	soft_ptr<void>& operator = ( const soft_ptr<T1, isSafe>& other )
+	{
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		return *this;
+	}
+	soft_ptr( const soft_ptr<void, isSafe>& other )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+	}
+	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>& other )
+	{
+		if ( this == &other ) return *this;
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		return *this;
+	}
+
+
+	soft_ptr( soft_ptr<void, isSafe>&& other )
+	{
+		if ( this == &other ) return;
+		bool otherOnStack = other.isOnStack();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+			if ( other.getIdx_() != PointersT::max_data )
+				other.getControlBlock()->remove(other.getIdx_());
+			other.pointers.init(PointersT::max_data);
+			if ( otherOnStack)
+				other.setOnStack();
+		}
+		else
+		{
+			if ( otherOnStack)
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init(PointersT::max_data);
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( other.getDereferencablePtr() )
+					getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
+				other.pointers.init(PointersT::max_data);
+			}
+		}
+	}
+
+	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>&& other )
+	{
+		// TODO+++: revise
+		if ( this == &other ) return *this;
+		bool wasOnStack = isOnStack();
+		reset();
+		if ( wasOnStack )
+		{
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+			if ( other.isOnStack() )
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				if ( other.getIdx_() != PointersT::max_data )
+					other.getControlBlock()->remove(other.getIdx_());
+				other.pointers.init( PointersT::max_data );
+			}
+			setOnStack();
+		}
+		else
+		{
+			if ( other.isOnStack() )
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				other.pointers.init( PointersT::max_data );
+			}
+		}
+		return *this;
+	}
+
+	void swap( soft_ptr<void, isSafe>& other )
+	{
+		bool iWasOnStack = isOnStack();
+		bool otherWasOnStack = other.isOnStack();
+		auto tmp = pointers;
+		pointers = other.pointers;
+		other.pointers = tmp;
+		if ( iWasOnStack )
+		{
+			if ( otherWasOnStack )
+			{
+				assert(isOnStack());
+				assert(other.isOnStack());
+				// ... and we have to do nothing else
+			}
+			else
+			{
+				if ( getIdx_() != PointersT::max_data )
+				{
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() );
+					getControlBlock()->remove(getIdx_());
+				}
+				setOnStack();
+				pointers.set_data( PointersT::max_data );
+				if ( other.getDereferencablePtr() )
+					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.getIdx_() == PointersT::max_data );
+				other.setNotOnStack();
+			}
+		}
+		else
+		{
+			if ( otherWasOnStack )
+			{
+				if ( getDereferencablePtr() )
+					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+				setNotOnStack();
+				if ( other.getIdx_() != PointersT::max_data )
+				{
+					getControlBlock(other.getAllocatedPtr())->remove(other.getIdx_());
+					other.pointers.set_data( PointersT::max_data );
+				}
+				other.setOnStack();
+			}
+			else
+			{
+				if ( getDereferencablePtr() && getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				if ( other.getDereferencablePtr() && other.getIdx_() != PointersT::max_data)
+					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
+			}
+		}
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return getDereferencablePtr() != nullptr;
+	}
+
+	void reset()
+	{
+		if( getDereferencablePtr() != nullptr ) {
+			if ( getIdx_() != PointersT::max_data )
+				getControlBlock()->remove(getIdx_());
+			invalidatePtr();
+		}
+	}
+
+	~soft_ptr()
+	{
+		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
+		if( getDereferencablePtr() != nullptr ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
+			if ( getIdx_() != PointersT::max_data )
+			{
+				assert(!isOnStack());
+				getControlBlock()->remove(getIdx_());
+			}
+			invalidatePtr();
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
+		}
+	}
+};
+
 #if 0
 template<class T>
 class soft_ptr<T,false>
