@@ -11,7 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "RecordDeclCheck.h"
-#include "NakedPtrhelper.h"
+#include "NakedPtrHelper.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
