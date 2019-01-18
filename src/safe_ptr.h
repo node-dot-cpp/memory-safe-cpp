@@ -1008,6 +1008,22 @@ public:
 		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "10 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
+
+	soft_ptr( T* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( t )
+				init( t, t, getControlBlock(t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
+	}
+
 	void swap( soft_ptr<T, isSafe>& other )
 	{
 		bool iWasOnStack = isOnStack();

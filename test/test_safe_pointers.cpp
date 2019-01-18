@@ -233,6 +233,12 @@ int testWithLest( int argc, char * argv[] )
 					soft_ptr<int> s31;
 					s31 = soft_ptr_static_cast<int>( sv );
 					EXPECT( *s31 == 17 );
+
+					class S[[nodecpp::owning_only]]{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
+					owning_ptr<S> sS = make_owning<S>();
+					sS->m = 17;
+					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );
+					
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
