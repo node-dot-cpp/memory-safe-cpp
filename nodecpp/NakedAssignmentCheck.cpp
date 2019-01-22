@@ -38,13 +38,13 @@ void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
         auto checker = NakedPtrScopeChecker::makeChecker(this, getContext(), Result.Context, left);
 
         if(!checker.checkExpr(expr->getArg(1)))
-            diag(expr->getExprLoc(), "assignment of naked_ptr may extend scope");
+            diag(expr->getExprLoc(), "(S5.2) assignment of naked_ptr may extend scope");
     }
     else if(isNakedStructType(lqt, getContext())) {
         auto checker = NakedPtrScopeChecker::makeChecker(this, getContext(), Result.Context, left);
 
         if(!checker.checkExpr(expr->getArg(1)))
-            diag(expr->getExprLoc(), "assignment of naked_struct may extend scope");
+            diag(expr->getExprLoc(), "(S5.2) assignment of naked_struct may extend scope");
     }
   }
 }

@@ -22,17 +22,33 @@ namespace tidy {
 namespace nodecpp {
 
 void NakedPtrReturnCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(returnStmt(hasReturnValue(hasType(pointerType()))).bind("stmt"),
-      this);
+  Finder->addMatcher(returnStmt().bind("stmt"), this);
 }
 
 void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
   auto stmt = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
 
   auto expr = stmt->getRetValue();
-  auto ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-  if(!ch.checkExpr(expr)) 
-      diag(expr->getExprLoc(), "return of naked pointer may extend scope");
+  if(!expr)
+    return;
+
+  QualType qt = expr->getType().getCanonicalType();
+  if(isRawPointerType(qt)) {
+    auto ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+    if(!ch.checkExpr(expr)) 
+        diag(expr->getExprLoc(), "(S5.1) return of raw pointer may extend scope");
+  }
+  else if(isNakedPointerType(qt, getContext())) {
+    auto checker = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+
+    if(!checker.checkExpr(expr))
+        diag(expr->getExprLoc(), "(S5.1) return of naked pointer may extend scope");
+  }
+  else if(isNakedStructType(qt, getContext())) {
+    diag(expr->getExprLoc(), "(S5.5) return of naked struct not allowed");
+  }
+
+
 
 }
 

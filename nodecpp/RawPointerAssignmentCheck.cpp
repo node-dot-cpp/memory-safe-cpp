@@ -37,7 +37,7 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
   auto checker = NakedPtrScopeChecker::makeChecker(this, getContext(), Result.Context, expr->getLHS());
 
   if(!checker.checkExpr(expr->getRHS()))
-    diag(expr->getExprLoc(), "assignment of raw pointer may extend scope");
+    diag(expr->getExprLoc(), "(S5.2) assignment of raw pointer may extend scope");
 }
 
 } // namespace nodecpp
