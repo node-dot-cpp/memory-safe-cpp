@@ -1311,6 +1311,7 @@ public:
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
+		dbgCheckMySlotConsistency();
 	}
 
 
@@ -1328,6 +1329,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
 	}
 	template<class T1>
 	soft_ptr<void>& operator = ( const owning_ptr<T1, isSafe>& owner )
@@ -1344,6 +1346,7 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
 		return *this;
 	}
 
@@ -1362,6 +1365,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 	}
 	template<class T1>
 	soft_ptr<void>& operator = ( const soft_ptr<T1, isSafe>& other )
@@ -1378,6 +1383,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 		return *this;
 	}
 	soft_ptr( const soft_ptr<void, isSafe>& other )
@@ -1393,6 +1400,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 	}
 	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>& other )
 	{
@@ -1409,6 +1418,8 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 		return *this;
 	}
 
@@ -1447,6 +1458,8 @@ public:
 				other.pointers.init(PointersT::max_data);
 			}
 		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 	}
 
 	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>&& other )
@@ -1492,6 +1505,8 @@ public:
 				other.pointers.init( PointersT::max_data );
 			}
 		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 		return *this;
 	}
 
@@ -1550,6 +1565,8 @@ public:
 					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 			}
 		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 	}
 
 	explicit operator bool() const noexcept
@@ -1564,10 +1581,12 @@ public:
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
 		}
+		dbgCheckMySlotConsistency();
 	}
 
 	~soft_ptr()
 	{
+		dbgCheckMySlotConsistency();
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
