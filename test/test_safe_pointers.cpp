@@ -239,6 +239,14 @@ int testWithLest( int argc, char * argv[] )
 					sS->m = 17;
 					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );
 					
+					struct StrWithSoftPtr { soft_ptr<int> sp; };
+					owning_ptr<int> p4 = make_owning<int>();
+					owning_ptr<StrWithSoftPtr> p5 = make_owning<StrWithSoftPtr>();
+					p5->sp = p4;
+					EXPECT( p5->sp );
+					p4.reset();
+					EXPECT( !(p5->sp) );
+
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
