@@ -42,10 +42,6 @@ struct FileFilter {
 struct ClangTidyGlobalOptions {
   ClangTidyGlobalOptions() {}
 
-  ClangTidyGlobalOptions(std::set<std::string> SafeFunctions, std::set<std::string> SafeTypes)
-    :SafeFunctions(std::move(SafeFunctions)), SafeTypes(std::move(SafeTypes))  {}
-
-
   /// \brief Output warnings from certain line ranges of certain files only.
   /// If empty, no warnings will be filtered.
   std::vector<FileFilter> LineFilter;

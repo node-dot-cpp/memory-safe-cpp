@@ -52,6 +52,15 @@ Configuration files:
 
 )");
 
+static cl::opt<std::string> SafeLibraryDb("safe-library-db", cl::desc(R"(
+Specifies a safe library dababase file
+When the value is empty, nodecpp-checker will
+attempt to find a file named safe-library.json
+in the source and its parent directories.
+)"),
+                                   cl::init(""), cl::cat(ClangTidyCategory));
+
+
 const char DefaultChecks[] = // Enable these checks by default:
 //    "clang-diagnostic-*,"    //   * compiler diagnostics
 //    "clang-analyzer-*,"      //   * Static Analyzer checks
@@ -284,12 +293,35 @@ static void printProfileData(const ProfileData &Profile,
   OS.flush();
 }
 
-static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(std::set<std::string> SafeFunctions, std::set<std::string> SafeTypes) {
-  ClangTidyGlobalOptions GlobalOptions(std::move(SafeFunctions), std::move(SafeTypes));
+static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef FilePath) {
+  ClangTidyGlobalOptions GlobalOptions;
   if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
     llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
     llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
     return nullptr;
+  }
+
+  std::string ErrorMessage;
+  std::unique_ptr<JSONSafeDatabase> Safes;
+  if (!SafeLibraryDb.empty()) {
+    Safes =JSONSafeDatabase::loadFromSpecificFile(SafeLibraryDb, ErrorMessage);    
+  }
+  else {
+  // if (!BuildPath.empty()) {
+  //   Safes =
+  //       CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage);
+  // } else {
+      Safes = JSONSafeDatabase::autoDetectFromSource(FilePath,
+                                                              ErrorMessage);
+//  }
+  }
+
+  if (!Safes) {
+    llvm::errs() << ErrorMessage << "\nRunning without safe functions database.\n";
+  }
+  else {
+    Safes->getFunctions(GlobalOptions.SafeFunctions);
+    Safes->getTypes(GlobalOptions.SafeTypes);
   }
 
   ClangTidyOptions DefaultOptions;
@@ -357,28 +389,7 @@ static int clangTidyMain(int argc, const char **argv) {
                  << EC.message() << "\n";
   }
 
-  std::string ErrorMessage;
-  std::unique_ptr<JSONSafeDatabase> Safes;
-  // if (!BuildPath.empty()) {
-  //   Safes =
-  //       CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage);
-  // } else {
-    Safes = JSONSafeDatabase::autoDetectFromSource(FilePath,
-                                                              ErrorMessage);
-//  }
-
-  std::set<std::string> SafeFunctions;
-  std::set<std::string> SafeTypes;
-
-  if (!Safes) {
-    llvm::errs() << "Error while trying to load a safe functions database:\n"
-                  << ErrorMessage << "Running without safe functions database.\n";
-  } else {
-    Safes->getFunctions(SafeFunctions);
-    Safes->getTypes(SafeTypes);
-  }
-
-  auto OwningOptionsProvider = createOptionsProvider(std::move(SafeFunctions), std::move(SafeTypes));
+  auto OwningOptionsProvider = createOptionsProvider(FilePath);
   auto *OptionsProvider = OwningOptionsProvider.get();
   if (!OptionsProvider)
     return 1;

@@ -26,18 +26,6 @@
 namespace clang {
 namespace tidy {
 
-std::unique_ptr<JSONSafeDatabase>
-JSONSafeDatabase::loadFromDirectory(StringRef BuildDirectory,
-                                       std::string &ErrorMessage) {
-  llvm::raw_string_ostream ErrorStream(ErrorMessage);
-  std::string DatabaseErrorMessage;
-  if (std::unique_ptr<JSONSafeDatabase> DB =
-          loadFromDirectory2(BuildDirectory, DatabaseErrorMessage))
-    return DB;
-  ErrorStream << "json-safe-library-database" << ": " << DatabaseErrorMessage << "\n";
-  return nullptr;
-}
-
 static std::unique_ptr<JSONSafeDatabase>
 findCompilationDatabaseFromDirectory(StringRef Directory,
                                      std::string &ErrorMessage) {
@@ -51,7 +39,7 @@ findCompilationDatabaseFromDirectory(StringRef Directory,
       return DB;
 
     if (!HasErrorMessage) {
-      ErrorStream << "No compilation database found in " << Directory.str()
+      ErrorStream << "No safe library database found in " << Directory.str()
                   << " or any parent directory\n" << LoadErrorMessage;
       HasErrorMessage = true;
     }
@@ -72,7 +60,7 @@ JSONSafeDatabase::autoDetectFromSource(StringRef SourceFile,
       findCompilationDatabaseFromDirectory(Directory, ErrorMessage);
 
   if (!DB)
-    ErrorMessage = ("Could not auto-detect compilation database for file \"" +
+    ErrorMessage = ("Could not auto-detect safe library database for file \"" +
                    SourceFile + "\"\n" + ErrorMessage).str();
   return DB;
 }
@@ -86,18 +74,34 @@ JSONSafeDatabase::autoDetectFromDirectory(StringRef SourceDir,
       findCompilationDatabaseFromDirectory(AbsolutePath, ErrorMessage);
 
   if (!DB)
-    ErrorMessage = ("Could not auto-detect compilation database from directory \"" +
+    ErrorMessage = ("Could not auto-detect safe library database from directory \"" +
                    SourceDir + "\"\n" + ErrorMessage).str();
   return DB;
 }
 
 
 std::unique_ptr<JSONSafeDatabase>
-JSONSafeDatabase::loadFromDirectory2(StringRef Directory, std::string &ErrorMessage) {
+JSONSafeDatabase::loadFromDirectory(StringRef Directory, std::string &ErrorMessage) {
   SmallString<1024> JSONDatabasePath(Directory);
   llvm::sys::path::append(JSONDatabasePath, "safe_library.json");
   return loadFromFile(
       JSONDatabasePath, ErrorMessage);
+}
+
+std::unique_ptr<JSONSafeDatabase>
+JSONSafeDatabase::loadFromSpecificFile(StringRef JSONDatabasePath,
+                                      std::string &ErrorMessage) {
+  std::string LoadErrorMessage;
+
+  if (std::unique_ptr<JSONSafeDatabase> DB =
+          JSONSafeDatabase::loadFromFile(JSONDatabasePath, LoadErrorMessage))
+    return DB;
+
+  std::stringstream ErrorStream;
+  ErrorStream << "No safe library database found at \"" << JSONDatabasePath.str()
+                << "\"\n" << LoadErrorMessage;
+  ErrorMessage = ErrorStream.str();
+  return nullptr;
 }
 
 std::unique_ptr<JSONSafeDatabase>

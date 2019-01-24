@@ -77,14 +77,12 @@ public:
   static std::unique_ptr<JSONSafeDatabase>
   autoDetectFromDirectory(StringRef SourceDir, std::string &ErrorMessage);
 
-
-  /// \brief Loads a JSON safe database from the specified folder.
+  /// \brief Loads a JSON safe database from the specified file.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be
   /// loaded from the given file.
   static std::unique_ptr<JSONSafeDatabase>
-  loadFromDirectory2(StringRef Directory, std::string &ErrorMessage);
-
+  loadFromSpecificFile(StringRef JSONDatabasePath, std::string &ErrorMessage);
 
   /// \brief Loads a JSON safe database from the specified file.
   ///
