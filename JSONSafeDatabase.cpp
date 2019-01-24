@@ -100,7 +100,7 @@ JSONSafeDatabase::loadFromSpecificFile(StringRef JSONDatabasePath,
     return DB;
 
   std::stringstream ErrorStream;
-  ErrorStream << "No safe library database found at \"" << JSONDatabasePath.str()
+  ErrorStream << "No safe library database found at \"" << AbsolutePath.str().str()
                 << "\"\n" << LoadErrorMessage;
   ErrorMessage = ErrorStream.str();
   return nullptr;
