@@ -726,8 +726,11 @@ template<class _Ty,
 	NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
-	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) - getPrefixByteCount() ) _Ty(::std::forward<_Types>(_Args)...);
-	return owning_ptr<_Ty>(objPtr);
+	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+	owning_ptr<_Ty> op((_Ty*)(uintptr_t)(dataForObj));
+	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	//return owning_ptr<_Ty>(objPtr);
+	return op;
 	}
 
 
