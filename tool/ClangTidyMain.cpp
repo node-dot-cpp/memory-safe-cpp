@@ -55,7 +55,7 @@ Configuration files:
 static cl::opt<std::string> SafeLibraryDb("safe-library-db", cl::desc(R"(
 Specifies a safe library dababase file
 When the value is empty, nodecpp-checker will
-attempt to find a file named safe-library.json
+attempt to find a file named safe_library.json
 in the source and its parent directories.
 )"),
                                    cl::init(""), cl::cat(ClangTidyCategory));

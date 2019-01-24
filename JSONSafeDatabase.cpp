@@ -91,10 +91,12 @@ JSONSafeDatabase::loadFromDirectory(StringRef Directory, std::string &ErrorMessa
 std::unique_ptr<JSONSafeDatabase>
 JSONSafeDatabase::loadFromSpecificFile(StringRef JSONDatabasePath,
                                       std::string &ErrorMessage) {
+  SmallString<1024> AbsolutePath(clang::tooling::getAbsolutePath(JSONDatabasePath));
+
   std::string LoadErrorMessage;
 
   if (std::unique_ptr<JSONSafeDatabase> DB =
-          JSONSafeDatabase::loadFromFile(JSONDatabasePath, LoadErrorMessage))
+          JSONSafeDatabase::loadFromFile(AbsolutePath, LoadErrorMessage))
     return DB;
 
   std::stringstream ErrorStream;
