@@ -811,14 +811,12 @@ public:
 
 	soft_ptr()
 	{
-		//printf( "[11] soft_ptr() created at 0x%zx\n", (size_t)this );
 		pointers.init( PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1 created soft_ptr at 0x{:x}", (size_t)this );
 		dbgCheckMySlotConsistency();
 	}
 
@@ -826,7 +824,6 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-		//printf( "[12] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -838,12 +835,10 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "2 created soft_ptr at 0x{:x}", (size_t)this );
 		dbgCheckMySlotConsistency();
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner )
 	{
-		//printf( "[13] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -855,7 +850,6 @@ public:
 				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "3 created soft_ptr at 0x{:x}", (size_t)this );
 		dbgCheckMySlotConsistency();
 	}
 	template<class T1>
@@ -898,7 +892,6 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
-		//printf( "[14] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -912,7 +905,6 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "4 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
@@ -936,7 +928,6 @@ public:
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other )
 	{
-		//printf( "[15] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -950,7 +941,6 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "5 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
@@ -975,18 +965,10 @@ public:
 
 	soft_ptr( soft_ptr<T, isSafe>&& other )
 	{
-		//printf( "[16] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			/*if ( other.getIdx_() != PointersT::max_data )
-			{
-				other.getControlBlock()->remove(other.getIdx_());
-				other.pointers.init(PointersT::max_data);
-			}
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();*/
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 			setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1015,7 +997,6 @@ public:
 				other.pointers.init(PointersT::max_data);
 			}
 		}
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "6 created soft_ptr at 0x{:x}", (size_t)this );
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
@@ -1071,7 +1052,6 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
-		//printf( "[17] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1086,11 +1066,9 @@ public:
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "7 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
-		//printf( "[18] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1105,13 +1083,11 @@ public:
 			else
 				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "8 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
 	{
-		//printf( "[19] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1127,11 +1103,9 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "9 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
 	{
-		//printf( "[110] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1147,7 +1121,6 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "10 created soft_ptr at 0x{:x}", (size_t)this );
 	}
 
 
@@ -1260,7 +1233,6 @@ public:
 	void reset()
 	{
 		if( getDereferencablePtr() != nullptr ) {
-			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
 			if ( getIdx_() != PointersT::max_data )
 				getControlBlock()->remove(getIdx_());
 			invalidatePtr();
@@ -1271,20 +1243,10 @@ public:
 	~soft_ptr()
 	{
 		dbgCheckMySlotConsistency();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to delete soft_ptr at 0x{:x}", (size_t)this );
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
 			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
-			/*if(getIdx_()>=3 && getIdx_() != PointersT::max_data)
-			{
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getIdx_() in dtor: 0x{:x}", getIdx_() ); // otherAllockedSlots.getPtr()
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getAllocatedPtr() in dtor: 0x{:x}", (size_t)(getAllocatedPtr()) ); // otherAllockedSlots.getPtr()
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock() in dtor: 0x{:x}", (size_t)(getControlBlock()) ); // 
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "getControlBlock()->otherAllockedSlots.getPtr() in dtor: 0x{:x}", (size_t)(getControlBlock()->otherAllockedSlots.getPtr()) ); // 
-			//if ( getControlBlock()->otherAllockedSlots.getPtr() == 0 )
-			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "isOnStack() in dtor: {}", isOnStack() ? "YES :(" : "NO" ); // 
-			}*/
 			if ( getIdx_() != PointersT::max_data )
 			{
 				assert(!isOnStack());
@@ -1293,7 +1255,6 @@ public:
 			invalidatePtr();
 			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
-		//printf( "deleting soft_ptr @0x%zx\n", (size_t)(this) );
 	}
 };
 
@@ -1358,7 +1319,6 @@ public:
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	soft_ptr()
 	{
-		//printf( "[1] soft_ptr() created at 0x%zx\n", (size_t)this );
 		pointers.init( PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1372,7 +1332,6 @@ public:
 	template<class T1>
 	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-		//printf( "[2] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -1409,7 +1368,6 @@ public:
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other )
 	{
-		//printf( "[3] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
@@ -1447,7 +1405,6 @@ public:
 	}
 	soft_ptr( const soft_ptr<void, isSafe>& other )
 	{
-		//printf( "[4] soft_ptr() created at 0x%zx\n", (size_t)this );
 		other.getControlBlock(other.getAllocatedPtr())->dbgCheckValidity<void, isSafe>();
 		other.dbgCheckMySlotConsistency();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1488,7 +1445,6 @@ public:
 
 	soft_ptr( soft_ptr<void, isSafe>&& other )
 	{
-		//printf( "[5] soft_ptr() created at 0x%zx\n", (size_t)this );
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1661,7 +1617,6 @@ public:
 			invalidatePtr();
 			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
-		//printf( "deleting soft_ptr @0x%zx\n", (size_t)(this) );
 	}
 };
 
