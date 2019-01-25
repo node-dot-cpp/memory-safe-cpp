@@ -66,6 +66,7 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieab
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 inline void killAllZombies() { g_AllocManager.killAllZombies(); }
+NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 } // namespace nodecpp::safememory
 
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
@@ -89,6 +90,7 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
+NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 } //namespace nodecpp::safememory
 
 #else
@@ -1149,9 +1151,12 @@ public:
 	}
 
 
-	soft_ptr( T* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
+	template<class TSupplied>
+	soft_ptr( TSupplied* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
 	{
-		//printf( "[111] soft_ptr() created at 0x%zx\n", (size_t)this );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+			t == nullptr || (((uintptr_t)getControlBlock(t)) & (allocatorAlignmentSize() - 1)) == 0,
+			"indeed: t = {}, allocatorAlignmentSize() = {}", (uintptr_t)(getControlBlock(t)), allocatorAlignmentSize() ); // Note: passing this check yet guarantees nothing; not passing is an explicit problem
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
