@@ -1136,7 +1136,7 @@ public:
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
 			t == nullptr || (((uintptr_t)getControlBlock(t)) & (allocatorAlignmentSize() - 1)) == 0,
-			"indeed: t = {}, allocatorAlignmentSize() = {}", (uintptr_t)(getControlBlock(t)), allocatorAlignmentSize() ); // Note: passing this check yet guarantees nothing; not passing is an explicit problem
+			"indeed: getControlBlock(0x{:x}) = 0x{:x}, allocatorAlignmentSize() = {}", (uintptr_t)t, (uintptr_t)(getControlBlock(t)), allocatorAlignmentSize() ); // Note: passing this check yet guarantees nothing; not passing is an explicit problem
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
