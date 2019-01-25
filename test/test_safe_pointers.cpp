@@ -247,6 +247,24 @@ int testWithLest( int argc, char * argv[] )
 					p4.reset();
 					EXPECT( !(p5->sp) );
 
+					owning_ptr<int> op1 = make_owning<int>();
+					owning_ptr<int> op2 = make_owning<int>();
+					soft_ptr<int> sp11( op1 );
+					soft_ptr<int> sp12( op1 );
+					soft_ptr<int> sp21( op2 );
+					EXPECT(  sp11 == op1 );
+					EXPECT(  op1 == sp11 );
+					EXPECT(  sp11 == sp12 );
+					EXPECT(  !(sp11 != op1) );
+					EXPECT(  !(op1 != sp11) );
+					EXPECT(  !(sp11 != sp12) );
+					EXPECT(  sp11 != op2 );
+					EXPECT(  op2 != sp11 );
+					EXPECT(  sp11 != sp21 );
+					EXPECT(  !(sp11 == op2) );
+					EXPECT(  !(op2 == sp11) );
+					EXPECT(  !(sp11 == sp21) );
+
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );

@@ -644,6 +644,14 @@ public:
 		return t;
 	}
 
+	bool operator == (const soft_ptr<T, isSafe>& other ) const { return t == other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return t == other.getDereferencablePtr(); }
+
+	bool operator != (const soft_ptr<T, isSafe>& other ) const { return t != other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return t != other.getDereferencablePtr(); }
+
 	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
@@ -1238,6 +1246,22 @@ public:
 		}
 		dbgCheckMySlotConsistency();
 	}
+
+	bool operator == (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.t; }
+	template<class T1, bool isSafe1> 
+	bool operator == (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() == other.t; }
+
+	bool operator == (const soft_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+
+	bool operator != (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
+	template<class T1, bool isSafe1> 
+	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
+
+	bool operator != (const soft_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
 
 	~soft_ptr()
 	{
