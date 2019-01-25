@@ -173,8 +173,6 @@ void throwPointerOutOfRange()
 
 //static_assert( sizeof(void*) == 8 );
 
-#define NODECPP_SAFEMEMORY_HEAVY_DEBUG
-
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
 
@@ -327,6 +325,7 @@ struct FirstControlBlock // not reallocatable
 						"getIdx_() = {}, expected: {}", reinterpret_cast<soft_ptr<T, isSafe>*>(otherAllockedSlots.getPtr()->slots[i].getPtr())->getIdx_(), i + FirstControlBlock::maxSlots );
 	}
 #else
+	template <class T, bool isSafe>
 	void dbgCheckValidity() const {}
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 
