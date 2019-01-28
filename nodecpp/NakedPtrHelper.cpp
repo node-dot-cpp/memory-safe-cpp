@@ -37,22 +37,32 @@ bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) 
 }
 
 
-bool isOwnerPtrName(const std::string &Name) {
-  return Name == "std::unique_ptr" || Name == "nodecpp::owning_ptr" || Name == "owning_ptr";
+bool isOwnerPtrName(const std::string& name) {
+  return name == "std::unique_ptr" || name == "nodecpp::owning_ptr" || name == "owning_ptr";
 }
 
-bool isOwningPtrRecord(const CXXRecordDecl *decl) {
-  return  isOwnerPtrName(decl->getQualifiedNameAsString());
+bool isOwnerPtrDecl(const NamedDecl* decl) {
+  if(!decl)
+    return false;
+
+  std::string name = decl->getQualifiedNameAsString();
+  return isOwnerPtrName(name);
 }
 
-bool isSafePtrName(const std::string &Name) {
-  return isOwnerPtrName(Name) || Name == "nodecpp::soft_ptr" ||
-   Name == "nodecpp::safe_ptr" || Name == "soft_ptr";
+
+bool isSafePtrName(const std::string& name) {
+  return isOwnerPtrName(name) || name == "nodecpp::soft_ptr" ||
+   name == "nodecpp::safe_ptr" || name == "soft_ptr";
 }
 
 bool isNakedPtrName(const std::string& name) {
   return name == "nodecpp::naked_ptr" || name == "naked_ptr";
 }
+
+bool isConstNakedPtrName(const std::string& name) {
+  return name == "nodecpp::const_naked_ptr" || name == "const_naked_ptr";
+}
+
 
 bool isStdFunctionType(QualType qt) {
   
@@ -65,7 +75,7 @@ bool isStdFunctionType(QualType qt) {
   return decl->getQualifiedNameAsString() == "std::function";
 }
 
-bool isAnyFunctionType(QualType qt) {
+bool isAnyFunctorType(QualType qt) {
 
   return isStdFunctionType(qt) || isNodecppFunctionOwnedArg0Type(qt);
 }
@@ -219,14 +229,14 @@ bool isNodecppFunctionOwnedArg0Type(QualType qt) {
 }
 
 bool isRawPointerType(QualType qt) {
+  assert(qt.isCanonical());
 
-  return qt.getCanonicalType()->isPointerType();
+  return qt->isPointerType();
 }
 
-static
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType qt) {
   
-  qt = qt.getCanonicalType();
+  assert(qt.isCanonical());
 
   auto decl = dyn_cast_or_null<ClassTemplateSpecializationDecl>(qt->getAsCXXRecordDecl());
   if(!decl)
@@ -271,24 +281,15 @@ QualType getPointeeType(QualType qt) {
   return arg0.getAsType().getCanonicalType();
 }
 
-QualType unwrapConstRefType(QualType qt) {
-
-  assert(qt.isCanonical());
-  if(qt->isReferenceType() && qt.isConstQualified())
-    return qt->getPointeeType().getCanonicalType();
-
-  return qt;
-}
-
-
 KindCheck isNakedPointerType(QualType qt, const ClangTidyContext* context, DiagHelper& dh) {
   
+  assert(qt.isCanonical());
   auto decl = getTemplatePtrDecl(qt);
   if(!decl)
     return KindCheck(false, false);
 
-  auto name = decl->getQualifiedNameAsString();
-  if(isNakedPtrName(name)) {
+  std::string name = decl->getQualifiedNameAsString();
+  if(isNakedPtrName(name) || isConstNakedPtrName(name)) {
     QualType pointee = getPointeeType(qt);
     return KindCheck(true, isSafeType(pointee, context, dh));
   }
@@ -296,14 +297,28 @@ KindCheck isNakedPointerType(QualType qt, const ClangTidyContext* context, DiagH
   return KindCheck(false, false);
 }
 
-
-bool isSafePtrType(QualType qt) {
+bool isConstNakedPointerType(QualType qt) {
+  
+  assert(qt.isCanonical());
 
   auto decl = getTemplatePtrDecl(qt);
   if(!decl)
     return false;
 
-  auto name = decl->getQualifiedNameAsString();
+  std::string name = decl->getQualifiedNameAsString();
+  return isConstNakedPtrName(name);
+}
+
+
+bool isSafePtrType(QualType qt) {
+
+  assert(qt.isCanonical());
+
+  auto decl = getTemplatePtrDecl(qt);
+  if(!decl)
+    return false;
+
+  std::string name = decl->getQualifiedNameAsString();
   return isSafePtrName(name);
 }
 
@@ -415,9 +430,13 @@ bool checkUnion(const CXXRecordDecl *decl, DiagHelper& dh) {
 }
 
 bool isOsnPtrRecord(const CXXRecordDecl *decl) {
+
+  if(!decl)
+    return false;
+
   std::string name = decl->getQualifiedNameAsString();
 
-  return isSafePtrName(name) || isNakedPtrName(name);
+  return isSafePtrName(name) || isNakedPtrName(name) || isConstNakedPtrName(name);
 }
 
 const Expr* getBaseIfOsnPtrDerref(const Expr* expr) {
@@ -670,7 +689,7 @@ bool NakedPtrScopeChecker::checkCallExpr(const CallExpr *call) {
       return false;
     }
 
-    if(isSafePtrType(callee->getBase()->getType()))
+    if(isSafePtrType(callee->getBase()->getType().getCanonicalType()))
       return true;
 
     if(!checkExpr(callee->getBase())) {
@@ -694,7 +713,7 @@ bool NakedPtrScopeChecker::checkCallExpr(const CallExpr *call) {
       return false;
     }
 
-    if(isSafePtrType((*it)->getType()))
+    if(isSafePtrType((*it)->getType().getCanonicalType()))
       return true;
 
     if (!checkExpr(*it)) {

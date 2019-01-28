@@ -1,6 +1,6 @@
 // RUN: nodecpp-checker %s -- -std=c++14 -isystem %S/Inputs | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
 
-#include <functional>
+#include <function_owned.h>
 
 void my_sort(std::function<void()>) {}
 

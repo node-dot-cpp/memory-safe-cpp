@@ -74,12 +74,32 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-//  bool isParam = isa<ParmVarDecl>(var);
+  bool isParam = isa<ParmVarDecl>(var);
   auto qt = var->getType().getCanonicalType();
 
+  //first check references initializers
+  if(qt->isReferenceType() && !isParam) {
+    auto e = var->getInit();
+    if(!e) {
+      // this is actually a build error
+      diag(var->getLocation(), "(S5.3) reference without initializer is prohibited");
+      return;
+    }
+
+    if(isa<ExprWithCleanups>(e)) {
+      diag(e->getExprLoc(), "(S5.3) reference with temporary initializer is prohibited");
+      return;
+    }
+  }
+
+
+
   //unwrap const ref
-  if(qt->isReferenceType() && qt.isConstQualified())
-    qt = qt->getPointeeType().getCanonicalType();
+  if(qt->isReferenceType()) {
+    if(qt.isConstQualified() || isConstNakedPointerType(qt)) {
+      qt = qt->getPointeeType().getCanonicalType();
+    }
+  }
   
   if(auto u = isUnionType(qt)) {
     if(!checkUnion(u)) {
@@ -105,30 +125,35 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if(isAnyFunctionType(qt))
+  if(isAnyFunctorType(qt))
     return;
 
+
   if(isRawPointerType(qt)) {
-    // if(!checkRawPointerType(qt, this)) {
-    //   diag(var->getLocation(), "Unsafe raw pointer declaration");
-    //   return;
-    // }
+    //getContext()->getGlobalOptions().SafeFunctions;
+    bool allow = false;
+    if(!allow) {
+      diag(var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
+      return;
+    }
+
+    QualType inner = qt->getPointeeType().getCanonicalType();
+    if(!isSafeType(inner, getContext())) {
+      diag(var->getLocation(), "(S5.3) raw pointer of unsafe type is prohibited");
+      return;
+    }
 
     
     // //params don't need initializer
-    // if(isParam) {
-    //   diag(var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
-    //   return;
-    // }
+    if(!isParam) {
+      auto e = var->getInit();
+      if(!e) {
+        diag(var->getLocation(), "(S5.3) raw pointer variable type must have initializer");
+        return;
+      }
+    }
     
-    // auto e = var->getInit();
-    // if(!e) {
-    //   diag(var->getLocation(), "raw pointer type must have initializer");
-    //   return;
-    // }
-
     //this is all for raw pointer
-    diag(var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
     return;
   }
 

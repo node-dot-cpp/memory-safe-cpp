@@ -53,14 +53,15 @@ bool isSystemSafeName(const ClangTidyContext* context, const std::string& name);
 
 /// FIXME: Write a short description.
 ///
-bool isOwnerPtrName(const std::string &Name);
-bool isOwningPtrRecord(const CXXRecordDecl *decl);
-bool isSafePtrName(const std::string &Name);
+bool isOwnerPtrName(const std::string& name);
+bool isOwnerPtrDecl(const NamedDecl* decl);
+bool isSafePtrName(const std::string& name);
 
 bool isNakedPtrName(const std::string& name);
+bool isConstNakedPtrName(const std::string& name);
 
 bool isStdFunctionType(QualType qt);
-bool isAnyFunctionType(QualType qt);
+bool isAnyFunctorType(QualType qt);
 
 bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
@@ -70,11 +71,12 @@ KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHe
 bool isLambdaType(QualType qt);
 bool isNodecppFunctionOwnedArg0Type(QualType qt);
 
+bool isRawPointerType(QualType qt);
+const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType qt);
+
 QualType getPointeeType(QualType qt);
 KindCheck isNakedPointerType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
-
-bool isRawPointerType(QualType qt);
-const ClassTemplateSpecializationDecl* getSafePtrDecl(QualType qt);
+bool isConstNakedPointerType(QualType qt);
 bool isSafePtrType(QualType qt);
 
 bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);

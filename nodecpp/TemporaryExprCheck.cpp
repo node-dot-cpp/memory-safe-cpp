@@ -33,7 +33,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
     QualType qt = tmp->getType().getCanonicalType();
     if (isSafeType(qt, getContext()))
       return;
-    if(isAnyFunctionType(qt))
+    if(isAnyFunctorType(qt))
       return;
 
     if(isRawPointerType(qt))

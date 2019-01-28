@@ -55,21 +55,21 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
       if (auto constructor = dyn_cast<CXXConstructExpr>(parent)) {
         auto decl = constructor->getConstructor()->getParent();
 
-        if (isOwningPtrRecord(decl)) {
+        if (isOwnerPtrDecl(decl)) {
           // this is ok!
           return;
         }
       } else if (auto member = dyn_cast<CXXMemberCallExpr>(parent)) {
 
         auto decl = member->getMethodDecl()->getParent();
-        if(isOwningPtrRecord(decl)) {
+        if(isOwnerPtrDecl(decl)) {
           // this is ok!
           return;
         }
       }
       else if(auto op = dyn_cast<CXXOperatorCallExpr>(parent)) {
         auto opDecl = dyn_cast<CXXMethodDecl>(op->getDirectCallee());
-        if (opDecl && isOwningPtrRecord(opDecl->getParent())) {
+        if (opDecl && isOwnerPtrDecl(opDecl->getParent())) {
           if(opDecl->isMoveAssignmentOperator() 
             || opDecl->isCopyAssignmentOperator()) {
               // this is ok!
