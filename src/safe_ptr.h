@@ -731,7 +731,7 @@ public:
 
 template<class _Ty,
 	class... _Types,
-	std::enable_if_t<!std::is_array_v<_Ty>, int> = 0>
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 	NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
@@ -769,8 +769,12 @@ class soft_ptr
 	friend class soft_ptr;
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
 	friend struct FirstControlBlock;
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
@@ -1293,6 +1297,13 @@ class soft_ptr<void, true>
 	friend class soft_ptr;
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	friend struct FirstControlBlock;
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
 	friend struct FirstControlBlock;
@@ -1408,7 +1419,7 @@ public:
 	template<class T1>
 	soft_ptr<void>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-		getControlBlock(other.getAllocatedPtr())->dbgCheckValidity<void, isSafe>();
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -1421,14 +1432,14 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		getControlBlock(other.getAllocatedPtr())->dbgCheckValidity<void, isSafe>();
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
 	soft_ptr( const soft_ptr<void, isSafe>& other )
 	{
-		other.getControlBlock(other.getAllocatedPtr())->dbgCheckValidity<void, isSafe>();
+		other.getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		other.dbgCheckMySlotConsistency();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1441,7 +1452,7 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		getControlBlock(other.getAllocatedPtr())->dbgCheckValidity<void, isSafe>();
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
@@ -1714,15 +1725,27 @@ public:
 };
 #endif // 0
 
-template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+template<class T, class T1, bool isSafe>
 soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
 	soft_ptr<T, isSafe> ret(p,static_cast<T*>(p.getDereferencablePtr()));
 	return ret;
 }
 
-template<class T, class T1, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+template<class T, class T1>
+soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<T1, NODECPP_ISSAFE_DEFAULT> p ) {
+	soft_ptr<T, NODECPP_ISSAFE_DEFAULT> ret(p,static_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+template<class T, class T1, bool isSafe>
 soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
 	soft_ptr<T, isSafe> ret(p,reinterpret_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+template<class T, class T1>
+soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<T1, NODECPP_ISSAFE_DEFAULT> p ) {
+	soft_ptr<T, NODECPP_ISSAFE_DEFAULT> ret(p,reinterpret_cast<T*>(p.getDereferencablePtr()));
 	return ret;
 }
 
