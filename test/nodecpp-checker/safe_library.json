@@ -1,5 +1,6 @@
 [
 {
-  "functions": ["nodecpp::make_owning"]
+    "functions" : ["fmt::v5::print", "nodecpp::make_owning", ],
+    "types" : ["nodecpp::safe_ptr", "nodecpp::naked_ptr", "nodecpp::Buffer", "nodecpp::net::Socket", "nodecpp::net::Server", "nodecpp::net::Address", "nodecpp::net::SocketTBase", ]
 }
 ]
