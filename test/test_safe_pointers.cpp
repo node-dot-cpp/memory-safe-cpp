@@ -117,6 +117,7 @@ public:
 		soft_this_ptr stp;
 		soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
 		opS->setOwner( sp );
+		softpS = opS;
 	}
 	SomethingLarger(int k, bool) {
 		soft_this_ptr stp;
@@ -396,6 +397,9 @@ int testWithLest( int argc, char * argv[] )
 				owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
 				EXPECT( *(opSL->opS->m) == 17 );
 				EXPECT( *(opSL->softpS->m) == 17 );
+				owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27 );
+				EXPECT( *(opSL_1->opS->m) == 27 );
+				EXPECT( *(opSL_1->softpS->m) == 27 );
 			}
 		},
 
