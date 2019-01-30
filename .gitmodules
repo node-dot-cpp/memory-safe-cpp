@@ -1,0 +1,6 @@
+[submodule "3rdparty/lest"]
+	path = 3rdparty/lest
+	url = https://github.com/martinmoene/lest
+[submodule "src/iibmalloc"]
+	path = src/iibmalloc
+	url = https://github.com/node-dot-cpp/iibmalloc

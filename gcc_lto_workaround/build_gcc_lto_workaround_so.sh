@@ -1,0 +1,1 @@
+g++ -shared -o libgcc_lto_workaround.so -fPIC gcc_lto_workaround.cpp

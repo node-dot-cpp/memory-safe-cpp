@@ -1,18 +1,107 @@
+/* -------------------------------------------------------------------------------
+* Copyright (c) 2018, OLogN Technologies AG
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the OLogN Technologies AG nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL OLogN Technologies AG BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* -------------------------------------------------------------------------------*/
+
 #ifndef SAFE_PTR_H
 #define SAFE_PTR_H
 
+#include <memory>
+#include <stdint.h>
 #include <assert.h>
 
-#if defined __GNUC__
-#define NODECPP_LIKELY(x)       __builtin_expect(!!(x),1)
-#define NODECPP_UNLIKELY(x)     __builtin_expect(!!(x),0)
+#include <foundation.h>
+
+namespace nodecpp::safememory
+{
+	constexpr uint64_t module_id = 2;
+} // namespace nodecpp::safememory
+
+#define NODECPP_USE_IIBMALLOC
+//#define NODECPP_USE_NEW_DELETE_ALLOC
+
+#if defined NODECPP_MSVC
+#define NODISCARD _NODISCARD
+#define INLINE_VAR _INLINE_VAR
+#elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
+#define NODISCARD [[nodiscard]]
+#define INLINE_VAR inline
 #else
-#define NODECPP_LIKELY(x) (x)
-#define NODECPP_UNLIKELY(x) (x)
+#define NODISCARD
+#define INLINE_VAR
 #endif
+
+#ifdef NODECPP_USE_IIBMALLOC
+
+#include <iibmalloc.h>
+using namespace nodecpp::iibmalloc;
+namespace nodecpp::safememory
+{
+NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
+NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
+NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
+NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
+inline void killAllZombies() { g_AllocManager.killAllZombies(); }
+NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
+} // namespace nodecpp::safememory
+
+#elif defined NODECPP_USE_NEW_DELETE_ALLOC
+
+namespace nodecpp::safememory
+{
+// NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
+extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
+inline void killAllZombies()
+{
+	while ( zombieList_ != nullptr )
+	{
+		void** next = reinterpret_cast<void**>( *zombieList_ );
+		delete [] zombieList_;
+		zombieList_ = next;
+	}
+}
+NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
+NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
+NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
+NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
+NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
+} //namespace nodecpp::safememory
+
+#else
+#error at least some specific allocation functionality must be selected
+#endif
+
 
 //#define NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
 
+namespace nodecpp::safememory
+{
 enum class MemorySafety {none, partial, full};
 
 //#define NODECPP_MEMORYSAFETY_NONE
@@ -38,279 +127,493 @@ enum class MemorySafety {none, partial, full};
 #endif
 #endif
 
+#ifdef NODECPP_GCC
+extern void forcePreviousChangesToThisInDtor( void* p );
+#else
+#define forcePreviousChangesToThisInDtor(x)
+#endif
 
-struct Ptr2PtrWishFlags {
-private:
-	uintptr_t ptr;
-public:
-	void set( void* ptr_ ) { ptr = (uintptr_t)ptr_; assert( !isUsed() ); }// reasonable default
-	void* getPtr() { return (void*)( ptr & ~((uintptr_t)3) ); }
-	void setUsed() { ptr |= 1; }
-	void setUnused() { ptr &= ~((uintptr_t)1); }
-	bool isUsed() { return ptr & 1; }
-	void set1stBlock() { ptr |= 2; }
-	void set2ndBlock() { ptr &= ~((uintptr_t)2); }
-	bool is1stBlock() { return (ptr & 2)>>1; }
-	static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
-};
-static_assert( sizeof(Ptr2PtrWishFlags) == 8 );
+template<class T>
+void destruct( T* t )
+{
+	if constexpr ( std::is_polymorphic<T>::value )
+	{
+		auto vpt = nodecpp::platform::backup_vmt_pointer(t);
+		t->~T();
+		nodecpp::platform::restore_vmt_pointer( t, vpt);
+	}
+	else
+		t->~T();
+}
 
-struct Ptr2PtrWishData {
-//private:
-	uintptr_t ptr;
-	static constexpr uintptr_t ptrMask_ = 0xFFFFFFFFFFF8ULL;
-	static constexpr uintptr_t upperDataMask_ = ~(0xFFFFFFFFFFFFULL);
-	static constexpr uintptr_t lowerDataMask_ = 0x7ULL;
-	static constexpr uintptr_t upperDataMaskInData_ = 0x7FFF8ULL;
-	static constexpr size_t upperDataSize_ = 16;
-	static constexpr size_t lowerDataSize_ = 3;
-	static constexpr size_t upperDataShift_ = 45;
-	static_assert ( (upperDataMaskInData_ << upperDataShift_ ) == upperDataMask_ );
-	static_assert ( (ptrMask_ & upperDataMask_) == 0 );
-	static_assert ( (ptrMask_ >> (upperDataShift_ + lowerDataSize_)) == 0 );
-	static_assert ( (ptrMask_ & lowerDataMask_) == 0 );
-	static_assert ( (upperDataMask_ & lowerDataMask_) == 0 );
-	static_assert ( (ptrMask_ | upperDataMask_ | lowerDataMask_) == 0xFFFFFFFFFFFFFFFFULL );
-public:
-	void init( void* ptr_ ) { 
-		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
-		ptr = (uintptr_t)ptr_; 
+template<class T>
+void checkNotNullLargeSize( T* ptr )
+{
+	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
+	else {
+		if ( ptr == nullptr )
+			throw std::bad_alloc();
 	}
-	void* getPtr() const { return (void*)( ptr & ptrMask_ ); }
-	size_t getData() const { return ( (ptr & upperDataMask_) >> 45 ) | (ptr & lowerDataMask_); }
-	void updatePtr( void* ptr_ ) { 
-		assert( ( (uintptr_t)ptr_ & (~ptrMask_) ) == 0 ); 
-		ptr &= ~ptrMask_; 
-		ptr |= (uintptr_t)ptr_; 
-	}
-	void updateData( size_t data ) { 
-		assert( data < (1<<(upperDataSize_+lowerDataSize_)) ); 
-		ptr &= ptrMask_; 
-		ptr |= data & lowerDataMask_; 
-		ptr |= (data & upperDataMaskInData_) << upperDataShift_; 
-	}
-	void swap( Ptr2PtrWishData& other ) { uintptr_t tmp = ptr; ptr = other.ptr; other.ptr = tmp; }
-};
-static_assert( sizeof(Ptr2PtrWishData) == 8 );
+}
 
-static_assert( sizeof(void*) == 8 );
+template<class T>
+void checkNotNullAllSizes( T* ptr )
+{
+	if ( ptr == nullptr )
+		throw std::bad_alloc();
+}
+
+inline
+void throwPointerOutOfRange()
+{
+	// TODO: actual implementation
+	throw std::bad_alloc();
+}
+
+
+//static_assert( sizeof(void*) == 8 );
+
+template<class T, bool isSafe> class soft_ptr; // forward declaration
+template<class T, bool isSafe> class naked_ptr; // forward declaration
+
 struct FirstControlBlock // not reallocatable
 {
-	static constexpr size_t maxSlots = 5;
+	struct PtrWishFlagsForSoftPtrList : public nodecpp::platform::allocated_ptr_with_flags<2> {
+	public:
+		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<2>::init(ptr_); }
+		void* getPtr() const { return nodecpp::platform::allocated_ptr_with_flags<2>::get_ptr(); }
+		void setUsed() { set_flag<0>(); }
+		void setUnused() { unset_flag<0>(); }
+		bool isUsed() const { return has_flag<0>(); }
+		void set1stBlock() { set_flag<1>(); }
+		void set2ndBlock() { unset_flag<1>(); }
+		bool is1stBlock() const { return has_flag<1>(); }
+		static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
+	};
+	static_assert( sizeof(PtrWishFlagsForSoftPtrList) == 8 );
+
+	struct SecondCBHeader
+	{
+		static constexpr size_t secondBlockStartSize = 8;	
+		PtrWishFlagsForSoftPtrList* firstFree;
+		size_t otherAllockedCnt;
+		PtrWishFlagsForSoftPtrList slots[1];
+		void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr );
+			firstFree = begin;
+			for ( size_t i=0; i<count-1; ++i ) {
+				begin[i].setPtr(begin + i + 1);
+				begin[i].set2ndBlock();
+			}
+			begin[count-1].setPtr(nullptr);
+			begin[count-1].set2ndBlock();
+			//dbgCheckFreeList();
+		}
+		size_t insert( void* ptr ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree != nullptr );
+			PtrWishFlagsForSoftPtrList* tmp = ((PtrWishFlagsForSoftPtrList*)(firstFree->getPtr()));
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
+			size_t idx;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->is1stBlock() );
+			idx = firstFree - slots;
+			firstFree->setPtr(ptr);
+			firstFree->setUsed();
+			firstFree = tmp;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+			//dbgCheckFreeList();
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
+			return idx;
+		}
+		void resetPtr( size_t idx, void* newPtr ) {
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
+			slots[idx].setPtr( newPtr );
+			slots[idx].setUsed();
+			slots[idx].set2ndBlock();
+			//dbgCheckFreeList();
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+		}
+		void remove( size_t idx ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
+			slots[idx].setPtr( firstFree );
+			firstFree = slots + idx;
+			firstFree->setUnused();
+			firstFree->set2ndBlock();
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+			//dbgCheckFreeList();
+		}
+		static SecondCBHeader* reallocate(SecondCBHeader* present )
+		{
+			if ( present != nullptr ) {
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, present->otherAllockedCnt != 0 );
+				size_t newSize = (present->otherAllockedCnt << 1) + 2;
+				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
+				//PtrWishFlagsForSoftPtrList* newOtherAllockedSlots = 
+				memcpy( ret->slots, present->slots, sizeof(PtrWishFlagsForSoftPtrList) * present->otherAllockedCnt );
+				deallocate( present );
+				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
+				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
+				ret->otherAllockedCnt = newSize;
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
+				return ret;
+			}
+			else {
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt == 0 );
+				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (secondBlockStartSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
+				ret->otherAllockedCnt = secondBlockStartSize;
+				//present->firstFree->set(nullptr);
+				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
+				ret->addToFreeList( ret->slots, secondBlockStartSize );
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
+				return ret;
+			}
+		}
+		void dealloc()
+		{
+			deallocate( this );
+		}
+	};
+
+	struct PtrWithMaskAndFlag : protected nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>
+	{
+		void init() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::init(); }
+		void setPtr(SecondCBHeader* ptr) { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_ptr( ptr ); }
+		SecondCBHeader* getPtr() { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_ptr() ); }
+		const SecondCBHeader* getPtr() const { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_ptr() ); }
+		uint32_t getMask() const { return (uint32_t)(nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_mask()); }
+		void setMask(size_t mask) { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_mask(mask); }
+		void setZombie() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::init(); nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_flag<0>(); }
+		bool isZombie() { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::has_flag<0>(); }
+	};
+
+	static constexpr size_t maxSlots = 3;
+	PtrWishFlagsForSoftPtrList slots[maxSlots];
 	static constexpr size_t secondBlockStartSize = 8;	
-	Ptr2PtrWishFlags* firstFree;
-	size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
-	Ptr2PtrWishFlags* otherAllockedSlots = nullptr;
-	Ptr2PtrWishFlags slots[maxSlots];
+	//PtrWishFlagsForSoftPtrList* firstFree;
+	//size_t otherAllockedCnt = 0; // TODO: try to rely on our allocator on deriving this value
+//	nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1> otherAllockedSlots;
+	PtrWithMaskAndFlag otherAllockedSlots;
 
 	void dbgCheckFreeList() {
-		Ptr2PtrWishFlags* start = firstFree;
+		/*PtrWishFlagsForSoftPtrList* start = firstFree;
 		while( start ) {
-			assert( !start->isUsed() );
-			assert( ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots) < otherAllockedCnt ) );
-			start = ((Ptr2PtrWishFlags*)(start->getPtr()));
-		}
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !start->isUsed() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ( start->getPtr() == 0 || start->is1stBlock() && (size_t)(start - slots) < maxSlots ) || ( (!start->is1stBlock()) && (size_t)(start - otherAllockedSlots.getPtr()) < otherAllockedCnt ) );
+			start = ((PtrWishFlagsForSoftPtrList*)(start->getPtr()));
+		}*/
 	}
 
+#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	template <class T, bool isSafe>
+	void dbgCheckValidity() const
+	{
+		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( slots[i].isUsed() )
+			{
+				//bool ok = reinterpret_cast<soft_ptr<T, isSafe>*>(slots[i].getPtr())->getIdx_() == i;
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+					(reinterpret_cast<soft_ptr<T, isSafe>*>(slots[i].getPtr())->getIdx_() == i), 
+					"getIdx_() = {}, i = {}", reinterpret_cast<soft_ptr<T, isSafe>*>(slots[i].getPtr())->getIdx_(), i );
+			}
+		if ( otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+						(reinterpret_cast<soft_ptr<T, isSafe>*>(otherAllockedSlots.getPtr()->slots[i].getPtr())->getIdx_() == i + FirstControlBlock::maxSlots), 
+						"getIdx_() = {}, expected: {}", reinterpret_cast<soft_ptr<T, isSafe>*>(otherAllockedSlots.getPtr()->slots[i].getPtr())->getIdx_(), i + FirstControlBlock::maxSlots );
+	}
+#else
+	template <class T, bool isSafe>
+	void dbgCheckValidity() const {}
+#endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
+
+#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	void dbgCheckIdxConsistency( size_t idx, const void* ptr ) const {
+		if ( idx < maxSlots ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].isUsed(), "idx = {}", idx );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].getPtr() == ptr, "idx = {}", idx );
+		}
+		else {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr() != nullptr );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx - maxSlots < otherAllockedSlots.getPtr()->otherAllockedCnt, "idx - maxSlots = {}, otherAllockedSlots.getPtr()->otherAllockedCnt = {}", idx - maxSlots, otherAllockedSlots.getPtr()->otherAllockedCnt);
+			idx -= maxSlots;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr()->slots[idx].isUsed(), "idx = {}", idx );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr()->slots[idx].getPtr() == ptr, "idx = {}", idx );
+		}
+	}
+#else
+	void dbgCheckIdxConsistency( size_t idx, const void* ptr ) const {}
+#endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
+
 	void init() {
-		/*firstFree = slots;
+		//firstFree = slots;
 		for ( size_t i=0; i<maxSlots-1; ++i ) {
-			slots[i].set(slots + i + 1);
+			slots[i].setPtr(slots + i + 1);
 			slots[i].set1stBlock();
 		}
-		slots[maxSlots-1].set(nullptr);*/
-		firstFree = nullptr;
-		addToRfeeList( slots, maxSlots );
-		otherAllockedCnt = 0;
-		otherAllockedSlots = nullptr;
-		assert( !firstFree->isUsed() );
+		slots[maxSlots-1].setPtr(nullptr);
+		slots[maxSlots-1].set1stBlock();
+
+		//otherAllockedCnt = 0;
+		otherAllockedSlots.init();
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
 		dbgCheckFreeList();
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		dbgCheckValidity<void, true>();
 	}
-	void deinit() {
-		if ( otherAllockedSlots != nullptr ) {
-			assert( otherAllockedCnt != 0 );
-			delete [] otherAllockedSlots;
+	/*void deinit() {
+		if ( otherAllockedSlots.getPtr() != nullptr ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt != 0 );
+			//delete [] otherAllockedSlots;
+			deallocate( otherAllockedSlots.getPtr() );
 			otherAllockedCnt = 0;
 		}
 		else {
-			assert( otherAllockedCnt == 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedCnt == 0 );
 		}
-	}
-	void addToRfeeList( Ptr2PtrWishFlags* begin, size_t count ) {
-		assert( firstFree == nullptr );
-		firstFree = begin;
+	}*/
+	void addToFreeList( PtrWishFlagsForSoftPtrList* begin, size_t count ) {
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr );
+		//firstFree = begin;
 		for ( size_t i=0; i<count-1; ++i ) {
-			begin[i].set(begin + i + 1);
-			begin[i].set1stBlock();
+			begin[i].setPtr(begin + i + 1);
+			begin[i].set2ndBlock();
 		}
-		begin[count-1].set(nullptr);
+		begin[count-1].setPtr(nullptr);
+		begin[count-1].set2ndBlock();
 		dbgCheckFreeList();
+		dbgCheckValidity<void, true>();
 	}
 	void enlargeSecondBlock() {
-		if ( otherAllockedSlots != nullptr ) {
-			assert( otherAllockedCnt != 0 );
-			size_t newSize = otherAllockedCnt << 1;
-			Ptr2PtrWishFlags* newOtherAllockedSlots = new Ptr2PtrWishFlags[newSize];
-			memcpy( newOtherAllockedSlots, otherAllockedSlots, sizeof(Ptr2PtrWishFlags) * otherAllockedCnt );
-			delete [] otherAllockedSlots;
-			otherAllockedSlots = newOtherAllockedSlots;
-			addToRfeeList( otherAllockedSlots + otherAllockedCnt, otherAllockedCnt );
-			otherAllockedCnt = newSize;
-		}
-		else {
-			assert( otherAllockedCnt == 0 );
-			otherAllockedCnt = secondBlockStartSize;
-			otherAllockedSlots = new Ptr2PtrWishFlags[otherAllockedCnt];
-			addToRfeeList( otherAllockedSlots, otherAllockedCnt );
-		}
+		otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
 	}
 	size_t insert( void* ptr ) {
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		if ( firstFree != nullptr ) {
-			Ptr2PtrWishFlags* tmp = ((Ptr2PtrWishFlags*)(firstFree->getPtr()));
-			assert( !firstFree->isUsed() );
-			size_t idx;
-			if ( firstFree->is1stBlock() )
-				idx = firstFree - slots;
-			else
-				idx = maxSlots + otherAllockedSlots - firstFree;
-			firstFree->set(ptr);
-			firstFree->setUsed();
-			firstFree = tmp;
-			assert( firstFree == nullptr || !firstFree->isUsed() );
-			dbgCheckFreeList();
-			return idx;
+		dbgCheckValidity<void, true>();
+		uint32_t mask = otherAllockedSlots.getMask();
+		//if ( mask != 0x7 )
+		{
+			// TODO: optimize!
+			for ( size_t i=0; i<3; ++i )
+				if ( ( mask & (((size_t)1)<<i)) == 0 )
+				{
+					mask |= (((size_t)1)<<i);
+					slots[i].setPtr(ptr);
+					slots[i].setUsed();
+					otherAllockedSlots.setMask( mask );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
+					return i;
+				}
 		}
-		else {
-			// TODO: reallocate
-			assert(false); // TODO+++++
-			return -1;
+		//else
+		{
+			if ( otherAllockedSlots.getPtr() == nullptr || otherAllockedSlots.getPtr()->firstFree == nullptr )
+			{
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+			}
+			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
+			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
+			return idx;
 		}
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
 		if ( idx < maxSlots ) {
-			slots[idx].set( newPtr );
+			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
 			slots[idx].set1stBlock();
 		}
 		else {
-			assert( idx - maxSlots < otherAllockedCnt );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
-			otherAllockedSlots[idx].set( newPtr );
-			otherAllockedSlots[idx].setUsed();
-			otherAllockedSlots[idx].set1stBlock();
+			otherAllockedSlots.getPtr()->resetPtr( idx, newPtr );
 		}
-		dbgCheckFreeList();
-		assert( firstFree == nullptr || !firstFree->isUsed() );
+		//dbgCheckFreeList();
+		dbgCheckValidity<void, true>();
 	}
 	void remove( size_t idx ) {
-		assert( firstFree == nullptr || !firstFree->isUsed() );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
 		if ( idx < maxSlots ) {
-			slots[idx].set( firstFree );
-			firstFree = slots + idx;
-			firstFree->setUnused();
-			firstFree->set1stBlock();
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].isUsed() );
+			slots[idx].setUnused();
+			slots[idx].set1stBlock();
+			otherAllockedSlots.setMask( otherAllockedSlots.getMask() & ~(1<<idx) );
 		}
 		else {
-			assert( idx - maxSlots < otherAllockedCnt );
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx - maxSlots < otherAllockedCnt );
 			idx -= maxSlots;
-			otherAllockedSlots[idx].set( firstFree );
-			firstFree = otherAllockedSlots + idx;
-			firstFree->setUnused();
-			firstFree->set2ndBlock();
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr() != nullptr );
+			otherAllockedSlots.getPtr()->remove( idx );
 		}
-		assert( firstFree == nullptr || !firstFree->isUsed() );
-		dbgCheckFreeList();
+		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
+		//dbgCheckFreeList();
+		dbgCheckValidity<void, true>();
 	}
 	void clear() {
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		if ( otherAllockedSlots.getPtr() != nullptr )
+			otherAllockedSlots.getPtr()->dealloc();
+		otherAllockedSlots.setZombie();
+		//dbgCheckValidity<void, true>();
 	}
+	bool isZombie() { return otherAllockedSlots.isZombie(); }
 };
-static_assert( sizeof(FirstControlBlock) == 64 );
+//static_assert( sizeof(FirstControlBlock) == 32 );
 
-template<class T, bool isSafe> class soft_ptr; // forward declaration
+
+
+inline
+FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+inline
+uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
+
+
+/*template<bool _Test,
+	class _Ty = void>
+	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;*/
+
+//template<class _Ty>
+//	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
-	T* t;
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+/*template<class _Ty,
+	class... _Types,
+	enable_if_t<!is_array_v<_Ty>, int>>
+	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);*/
+	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
 
-	void updatePtrForListItems( T* t_ )
+	T* t;
+	FirstControlBlock* getControlBlock() { return getControlBlock_(t); }
+	const FirstControlBlock* getControlBlock() const { return getControlBlock_(t); }
+	uint8_t* getAllocatedBlock() {return getAllocatedBlock_(t); }
+
+	void updatePtrForListItemsWithInvalidPtr()
 	{
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->setPtr_( t_ );
-		for ( size_t i=0; i<cb->otherAllockedCnt; ++i )
-			if ( cb->otherAllockedSlots[i].isUsed() )
-				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots[i].getPtr())->setPtr_( t_ );
+				reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->invalidatePtr();
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 	}
 
-	void updatePtrForListItemsWithInvalidPtr() { updatePtrForListItems( nullptr ); }
+#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	void dbgCheckValidity() const
+	{
+		if ( t == nullptr )
+			return;
+		const FirstControlBlock* cb = getControlBlock();
+		cb->dbgCheckValidity<T, isSafe>();
+		/*for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( cb->slots[i].isUsed() )
+			{
+				//bool ok = reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->getIdx_() == i;
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+					(reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->getIdx_() == i), 
+					"getIdx_() = {}, i = {}", reinterpret_cast<soft_ptr<T, isSafe>*>(cb->slots[i].getPtr())->getIdx_(), i );
+			}
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+						(reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->getIdx_() == i + FirstControlBlock::maxSlots), 
+						"getIdx_() = {}, expected: {}", reinterpret_cast<soft_ptr<T, isSafe>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->getIdx_(), i + FirstControlBlock::maxSlots );*/
+	}
+#else
+	void dbgCheckValidity() const {}
+#endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 
 public:
-	owning_ptr()
-	{
-		t = nullptr;
-	}
+
 	owning_ptr( T* t_ )
 	{
 		t = t_;
 		getControlBlock()->init();
+		dbgCheckValidity();
+	}
+	owning_ptr()
+	{
+		t = nullptr;
 	}
 	owning_ptr( owning_ptr<T, isSafe>& other ) = delete;
-	owning_ptr( owning_ptr<T, isSafe>&& other ) = default;
 	owning_ptr& operator = ( owning_ptr<T, isSafe>& other ) = delete;
-	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other ) = default;
+	owning_ptr( owning_ptr<T, isSafe>&& other )
+	{
+		t = other.t;
+		other.t = nullptr;
+		other.dbgCheckValidity();
+		dbgCheckValidity();
+	}
+	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other )
+	{
+		if ( this == &other ) return *this;
+		t = other.t;
+		other.t = nullptr;
+		other.dbgCheckValidity();
+		dbgCheckValidity();
+		return *this;
+	}
+	template<class T1>
+	owning_ptr( owning_ptr<T1, isSafe>&& other )
+	{
+		t = other.t; // implicit cast, if at all possible
+		other.t = nullptr;
+		other.dbgCheckValidity();
+		dbgCheckValidity();
+	}
+	template<class T1>
+	owning_ptr& operator = ( owning_ptr<T, isSafe>&& other )
+	{
+		if ( this == &other ) return *this;
+		t = other.t; // implicit cast, if at all possible
+		other.t = nullptr;
+		other.dbgCheckValidity();
+		dbgCheckValidity();
+		return *this;
+	}
 	~owning_ptr()
 	{
 		//dbgValidateList();
 		if ( NODECPP_LIKELY(t) )
 		{
-			t->~T();
 			updatePtrForListItemsWithInvalidPtr();
-			delete [] getControlBlock();
-#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
-			t = nullptr;
-#endif
+			destruct( t );
+			zombieDeallocate( getAllocatedBlock_(t) );
+			getControlBlock()->clear();
+			t = nullptr; 
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
+		dbgCheckValidity();
 	}
 
 	void reset()
 	{
 		if ( NODECPP_LIKELY(t) )
 		{
-			t->~T();
 			updatePtrForListItemsWithInvalidPtr();
-			delete [] getControlBlock();
+			destruct( t );
+			zombieDeallocate( getAllocatedBlock_(t) );
+			getControlBlock()->clear();
 			t = nullptr;
 		}
+		dbgCheckValidity();
 	}
 
 	void reset( T* t_ ) // Q: what happens to safe ptrs?
 	{
-		T* tmp = t;
-		t = t_;
-		if ( NODECPP_LIKELY(t) )
-		{
-			t->~T();
-			delete [] getControlBlock();
-			if ( NODECPP_LIKELY(t != t_) )
-			{
-				t = t_;
-				updatePtrForListItems( t_ );
-			}
-			else
-			{
-				t = nullptr;
-				updatePtrForListItemsWithInvalidPtr();
-			}
-		}
-		else
-		{
-			t = t_;
-			updatePtrForListItems( t_ );
-		}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t == nullptr );
+		reset();
 	}
 
 	void swap( owning_ptr<T, isSafe>& other )
@@ -318,16 +621,36 @@ public:
 		T* tmp = t;
 		t = other.t;
 		other.t = tmp;
+		other.dbgCheckValidity();
+		dbgCheckValidity();
 	}
 
-	T* get() const
+	naked_ptr<T, isSafe> get() const
 	{
-		// if zero guard page... if constexpr( sizeof(T)<4096); then add signal handler
-		//todo: pair<ptr,sz> realloc(ptr,minsise,desiredsize); also: size_t try_inplace_realloc(ptr,minsise,desiredsize)
-		//<bool isSafe=NODECPP_ISSAFE()>
-		assert( t != nullptr );
+		naked_ptr<T, isSafe> ret;
+		ret.t = t;
+		return ret;
+	}
+
+	T& operator * () const
+	{
+		checkNotNullAllSizes( t );
+		return *t;
+	}
+
+	T* operator -> () const 
+	{
+		checkNotNullLargeSize( t );
 		return t;
 	}
+
+	bool operator == (const soft_ptr<T, isSafe>& other ) const { return t == other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return t == other.getDereferencablePtr(); }
+
+	bool operator != (const soft_ptr<T, isSafe>& other ) const { return t != other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return t != other.getDereferencablePtr(); }
 
 	// T* release() : prhibited by safity requirements
 
@@ -406,23 +729,34 @@ public:
 };
 #endif // 0
 
-template<bool _Test,
-	class _Ty = void>
-	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;
-
-template<class _Ty>
-	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
-
 template<class _Ty,
 	class... _Types,
-	enable_if_t<!is_array_v<_Ty>, int> = 0>
-	_NODISCARD inline owning_ptr<_Ty> make_owning(_Types&&... _Args)
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+	NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	{	// make a unique_ptr
-	uint8_t* data = new uint8_t[ sizeof(FirstControlBlock) + sizeof(_Ty) ];
-	_Ty* objPtr = new ( data + sizeof(FirstControlBlock) ) _Ty(_STD forward<_Types>(_Args)...);
-	return owning_ptr<_Ty>(objPtr);
-//	return (owning_ptr<_Ty>(new _Ty(_STD forward<_Types>(_Args)...)));
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+	owning_ptr<_Ty> op((_Ty*)(uintptr_t)(dataForObj));
+	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	//return owning_ptr<_Ty>(objPtr);
+	return op;
 	}
+
+
+
+#define NODECPP_SAFE_PTR_DEBUG_MODE
+#define NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+extern thread_local size_t onStackSafePtrCreationCount; 
+extern thread_local size_t onStackSafePtrDestructionCount;
+#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {++onStackSafePtrCreationCount;}
+//#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {if ( bornOnStack ) { /*NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, nodecpp::platform::is_guaranteed_on_stack( this ) );*/ ++onStackSafePtrDestructionCount;}}
+#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() { if ( isOnStack() ) {++onStackSafePtrDestructionCount;} }
+#else
+#define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
+#define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {}
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
@@ -431,138 +765,891 @@ class soft_ptr
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class owning_ptr<T, isSafe>;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	friend struct FirstControlBlock;
 
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-	T* t;
-	size_t idx;
-	T* getPtr_() const { return t; }
-	void setPtr_( T* t_ ) { t = t_; }
-	size_t getIdx_() const { return idx; }
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
 #else
-	Ptr2PtrWishData td;
-	T* getPtr_() const { return static_cast<T*>(td.getPtr()); }
-	void setPtr_( T* t_ ) { td.updatePtr( t_ ); }
-	size_t getIdx_() const { return td.getData(); }
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
 #endif
-	FirstControlBlock* getControlBlock() { return reinterpret_cast<FirstControlBlock*>(getPtr_()) - 1; }
+#else
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
+#endif // SAFE_PTR_DEBUG_MODE
+	PointersT pointers;
+	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
+	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
+	void init( T* ptr, T* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+	template<class T1>
+	void init( T* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+
+	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
+	void setOnStack() { pointers.set_flag<0>(); }
+	void setNotOnStack() { pointers.unset_flag<0>(); }
+	bool isOnStack() { return pointers.has_flag<0>(); }
+
+	size_t getIdx_() const { return pointers.get_data(); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
+	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 public:
+#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	void dbgCheckMySlotConsistency() const
+	{
+		if ( getIdx_() != PointersT::max_data )
+		{
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() != nullptr );
+			getControlBlock()->dbgCheckIdxConsistency(getIdx_(), this);
+		}
+	}
+#else
+	void dbgCheckMySlotConsistency() const {}
+#endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
+
 	soft_ptr()
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = nullptr;
-		idx = (size_t)(-1);
-#else
-		td.init(nullptr);
-#endif
-	}
-	soft_ptr( owning_ptr<T, isSafe>& owner )
-	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = owner.get();
-		idx = getControlBlock()->insert(this);
-#else
-		td.init(owner.get());
-		td.updateData(getControlBlock()->insert(this));
-#endif
-	}
-	soft_ptr( soft_ptr<T, isSafe>& other )
-	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td = other.td;
-		td.updateData(getControlBlock()->insert(this));
-#endif
-	}
-	soft_ptr( soft_ptr<T, isSafe>&& other )
-	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		other.t = nullptr;
-		idx = other.idx;
-		other.idx = (size_t)(-1);
-#else
-		td = other.td;
-		other.td.init(nullptr);
-#endif
-		getControlBlock()->resetPtr(getIdx_(), this);
+		pointers.init( PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		dbgCheckMySlotConsistency();
 	}
 
-	soft_ptr& operator = ( soft_ptr<T, isSafe>& other )
+
+	template<class T1>
+	soft_ptr( const owning_ptr<T1, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		idx = getControlBlock()->insert(this);
-#else
-		td = other.td;
-		td.setData(getControlBlock()->insert(this));
-#endif
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+	soft_ptr( const owning_ptr<T, isSafe>& owner )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+	template<class T1>
+	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
+	{
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
 		return *this;
 	}
-	soft_ptr& operator = ( soft_ptr<T, isSafe>&& other )
+	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		t = other.t;
-		other.t = nullptr;
-		idx = other.idx;
-		other.idx = (size_t)(-1);
-#else
-		td = other.td;
-		other.td.init(nullptr);
-#endif
-		getControlBlock()->resetPtr(getIdx_(), this);
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
 		return *this;
+	}
+
+
+	template<class T1>
+	soft_ptr( const soft_ptr<T1, isSafe>& other )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+	template<class T1>
+	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other )
+	{
+		if ( this == &other ) return *this;
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+	soft_ptr( const soft_ptr<T, isSafe>& other )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
+	{
+		if ( this == &other ) return *this;
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+
+
+	soft_ptr( soft_ptr<T, isSafe>&& other )
+	{
+		if ( this == &other ) return;
+		bool otherOnStack = other.isOnStack();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+			if ( other.getIdx_() != PointersT::max_data )
+				other.getControlBlock()->remove(other.getIdx_());
+			other.pointers.init(PointersT::max_data);
+			if ( otherOnStack)
+				other.setOnStack();
+		}
+		else
+		{
+			if ( otherOnStack)
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init(PointersT::max_data);
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( other.getDereferencablePtr() )
+					getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
+				other.pointers.init(PointersT::max_data);
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+
+	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
+	{
+		// TODO+++: revise
+		if ( this == &other ) return *this;
+		bool wasOnStack = isOnStack();
+		reset();
+		if ( wasOnStack )
+		{
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+			if ( other.isOnStack() )
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				if ( other.getIdx_() != PointersT::max_data )
+					other.getControlBlock()->remove(other.getIdx_());
+				other.pointers.init( PointersT::max_data );
+			}
+			setOnStack();
+		}
+		else
+		{
+			if ( other.isOnStack() )
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				other.pointers.init( PointersT::max_data );
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+
+	template<class T1>
+	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
+			throwPointerOutOfRange();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t), t_ ) )
+			throwPointerOutOfRange();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( t_, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+
+	template<class T1>
+	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
+			throwPointerOutOfRange();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
+			throwPointerOutOfRange();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( t_, other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+
+
+	template<class TSupplied>
+	soft_ptr( TSupplied* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
+	{
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
+			t == nullptr || (((uintptr_t)getControlBlock(t)) & (allocatorAlignmentSize() - 1)) == 0,
+			"indeed: getControlBlock(0x{:x}) = 0x{:x}, allocatorAlignmentSize() = {}", (uintptr_t)t, (uintptr_t)(getControlBlock(t)), allocatorAlignmentSize() ); // Note: passing this check yet guarantees nothing; not passing is an explicit problem
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( t )
+				init( t, t, getControlBlock(t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
 	}
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-		T* tmp = t;
-		t = other.t;
-		other.t = tmp;
-		size_t idx = idx;
-		idx = other.idx;
-		other.idx = idx;
-		if ( t )
-			getControlBlock()->resetPtr(idx, this);
-		if ( other.t )
-			other.getControlBlock()->resetPtr(other.idx, &other);
-#else
-		td.swap( other.td );
-#endif
-		if ( getPtr_() )
-			getControlBlock()->resetPtr(getIdx_(), this);
-		if ( other.getPtr_() )
-			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
+		bool iWasOnStack = isOnStack();
+		bool otherWasOnStack = other.isOnStack();
+		auto tmp = pointers;
+		pointers = other.pointers;
+		other.pointers = tmp;
+		if ( iWasOnStack )
+		{
+			if ( otherWasOnStack )
+			{
+				assert(isOnStack());
+				assert(other.isOnStack());
+				// ... and we have to do nothing else
+			}
+			else
+			{
+				if ( getIdx_() != PointersT::max_data )
+				{
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() );
+					getControlBlock()->remove(getIdx_());
+				}
+				setOnStack();
+				pointers.set_data( PointersT::max_data );
+				if ( other.getDereferencablePtr() )
+					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.getIdx_() == PointersT::max_data );
+				other.setNotOnStack();
+			}
+		}
+		else
+		{
+			if ( otherWasOnStack )
+			{
+				if ( getDereferencablePtr() )
+					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+				setNotOnStack();
+				if ( other.getIdx_() != PointersT::max_data )
+				{
+					getControlBlock(other.getAllocatedPtr())->remove(other.getIdx_());
+					other.pointers.set_data( PointersT::max_data );
+				}
+				other.setOnStack();
+			}
+			else
+			{
+				if ( getDereferencablePtr() && getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				if ( other.getDereferencablePtr() && other.getIdx_() != PointersT::max_data)
+					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
 	}
 
-	T* get() const
+	naked_ptr<T, isSafe> get() const
 	{
-		assert( getPtr_() != nullptr );
-		return getPtr_();
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() != nullptr );
+		naked_ptr<T, isSafe> ret;
+		ret.t = getDereferencablePtr();
+		return ret;
+	}
+
+	T& operator * () const
+	{
+		checkNotNullAllSizes( getDereferencablePtr() );
+		return *getDereferencablePtr();
+	}
+
+	T* operator -> () const 
+	{
+		checkNotNullLargeSize( getDereferencablePtr() );
+		return getDereferencablePtr();
 	}
 
 	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
-		return getPtr_() != nullptr;
+		return getDereferencablePtr() != nullptr;
+	}
+
+	void reset()
+	{
+		if( getDereferencablePtr() != nullptr ) {
+			if ( getIdx_() != PointersT::max_data )
+				getControlBlock()->remove(getIdx_());
+			invalidatePtr();
+		}
+		dbgCheckMySlotConsistency();
+	}
+
+	bool operator == (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.t; }
+	template<class T1, bool isSafe1> 
+	bool operator == (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() == other.t; }
+
+	bool operator == (const soft_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+
+	bool operator != (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
+	template<class T1, bool isSafe1> 
+	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
+
+	bool operator != (const soft_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
+	template<class T1, bool isSafe1>
+	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
+
+	~soft_ptr()
+	{
+		dbgCheckMySlotConsistency();
+		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
+		if( getDereferencablePtr() != nullptr ) {
+			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
+			if ( getIdx_() != PointersT::max_data )
+			{
+				assert(!isOnStack());
+				getControlBlock()->remove(getIdx_());
+			}
+			invalidatePtr();
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
+		}
+	}
+};
+
+template<>
+class soft_ptr<void, true>
+{
+	static constexpr bool isSafe = true;
+//	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
+	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+	template<class TT, class TT1>
+	friend soft_ptr<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<TT1, NODECPP_ISSAFE_DEFAULT> );
+	friend struct FirstControlBlock;
+	template<class TT, class TT1, bool isSafe1>
+	friend soft_ptr<TT, isSafe1> soft_ptr_reinterpret_cast( soft_ptr<TT1, isSafe1> );
+	friend struct FirstControlBlock;
+
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::reference_impl__allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
+#else
+#ifdef NODECPP_X64
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+#else
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+#endif
+#endif // SAFE_PTR_DEBUG_MODE
+	PointersT pointers;
+	void* getDereferencablePtr() const { return reinterpret_cast<void*>( pointers.get_ptr() ); }
+	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
+	void init( void* ptr, void* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+	template<class T1>
+	void init( void* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+
+	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
+	void setOnStack() { pointers.set_flag<0>(); }
+	void setNotOnStack() { pointers.unset_flag<0>(); }
+	bool isOnStack() { return pointers.has_flag<0>(); }
+
+	size_t getIdx_() const { return pointers.get_data(); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
+	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
+
+public:
+
+#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	void dbgCheckMySlotConsistency() const
+	{
+		if ( getIdx_() != PointersT::max_data )
+		{
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() != nullptr );
+			getControlBlock()->dbgCheckIdxConsistency(getIdx_(), this);
+		}
+	}
+#else
+	void dbgCheckMySlotConsistency() const {}
+#endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
+	soft_ptr()
+	{
+		pointers.init( PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		dbgCheckMySlotConsistency();
+	}
+
+
+	template<class T1>
+	soft_ptr( const owning_ptr<T1, isSafe>& owner )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+	template<class T1>
+	soft_ptr<void>& operator = ( const owning_ptr<T1, isSafe>& owner )
+	{
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( owner.t )
+				init( owner.t, owner.t, getControlBlock(owner.t)->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t, owner.t, PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+
+
+	template<class T1>
+	soft_ptr( const soft_ptr<T1, isSafe>& other )
+	{
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+	template<class T1>
+	soft_ptr<void>& operator = ( const soft_ptr<T1, isSafe>& other )
+	{
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+	soft_ptr( const soft_ptr<void, isSafe>& other )
+	{
+		other.getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
+		other.dbgCheckMySlotConsistency();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>& other )
+	{
+		if ( this == &other ) return *this;
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+		}
+		else
+			if ( other.getAllocatedPtr() )
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+
+
+	soft_ptr( soft_ptr<void, isSafe>&& other )
+	{
+		if ( this == &other ) return;
+		bool otherOnStack = other.isOnStack();
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+			if ( other.getIdx_() != PointersT::max_data )
+				other.getControlBlock()->remove(other.getIdx_());
+			other.pointers.init(PointersT::max_data);
+			if ( otherOnStack)
+				other.setOnStack();
+		}
+		else
+		{
+			if ( otherOnStack)
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init(PointersT::max_data);
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( other.getDereferencablePtr() )
+					getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
+				other.pointers.init(PointersT::max_data);
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+
+	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>&& other )
+	{
+		// TODO+++: revise
+		if ( this == &other ) return *this;
+		bool wasOnStack = isOnStack();
+		reset();
+		if ( wasOnStack )
+		{
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+			if ( other.isOnStack() )
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				if ( other.getIdx_() != PointersT::max_data )
+					other.getControlBlock()->remove(other.getIdx_());
+				other.pointers.init( PointersT::max_data );
+			}
+			setOnStack();
+		}
+		else
+		{
+			if ( other.isOnStack() )
+			{
+				if ( other.getDereferencablePtr() )
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				other.pointers.init( PointersT::max_data );
+				other.setOnStack();
+			}
+			else
+			{
+				pointers = other.pointers;
+				if ( getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				other.pointers.init( PointersT::max_data );
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
+
+	void swap( soft_ptr<void, isSafe>& other )
+	{
+		bool iWasOnStack = isOnStack();
+		bool otherWasOnStack = other.isOnStack();
+		auto tmp = pointers;
+		pointers = other.pointers;
+		other.pointers = tmp;
+		if ( iWasOnStack )
+		{
+			if ( otherWasOnStack )
+			{
+				assert(isOnStack());
+				assert(other.isOnStack());
+				// ... and we have to do nothing else
+			}
+			else
+			{
+				if ( getIdx_() != PointersT::max_data )
+				{
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() );
+					getControlBlock()->remove(getIdx_());
+				}
+				setOnStack();
+				pointers.set_data( PointersT::max_data );
+				if ( other.getDereferencablePtr() )
+					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.getIdx_() == PointersT::max_data );
+				other.setNotOnStack();
+			}
+		}
+		else
+		{
+			if ( otherWasOnStack )
+			{
+				if ( getDereferencablePtr() )
+					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
+				else
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
+				setNotOnStack();
+				if ( other.getIdx_() != PointersT::max_data )
+				{
+					getControlBlock(other.getAllocatedPtr())->remove(other.getIdx_());
+					other.pointers.set_data( PointersT::max_data );
+				}
+				other.setOnStack();
+			}
+			else
+			{
+				if ( getDereferencablePtr() && getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+				if ( other.getDereferencablePtr() && other.getIdx_() != PointersT::max_data)
+					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
+			}
+		}
+		other.dbgCheckMySlotConsistency();
+		dbgCheckMySlotConsistency();
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return getDereferencablePtr() != nullptr;
+	}
+
+	void reset()
+	{
+		if( getDereferencablePtr() != nullptr ) {
+			if ( getIdx_() != PointersT::max_data )
+				getControlBlock()->remove(getIdx_());
+			invalidatePtr();
+		}
+		dbgCheckMySlotConsistency();
 	}
 
 	~soft_ptr()
 	{
-		if( getPtr_() != nullptr ) {
-#ifdef NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-			assert( idx != (size_t)(-1) );
-			getControlBlock()->remove(getIdx_());
-			t = nullptr;
-#else
-			//assert( idx != (size_t)(-1) );
-			getControlBlock()->remove(getIdx_());
-			td.init(nullptr);
-#endif
+		dbgCheckMySlotConsistency();
+		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
+		if( getDereferencablePtr() != nullptr ) {
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
+			if ( getIdx_() != PointersT::max_data )
+			{
+				assert(!isOnStack());
+				getControlBlock()->remove(getIdx_());
+			}
+			invalidatePtr();
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
 	}
 };
@@ -613,9 +1700,15 @@ public:
 		other.t = tmp;
 	}
 
-	T* get() const
+
+	T& operator * () const
 	{
-		return this->t;
+		return *t;
+	}
+
+	T* operator -> () const 
+	{
+		return t;
 	}
 
 	// T* release() : prhibited by safity requirements
@@ -631,5 +1724,118 @@ public:
 	}
 };
 #endif // 0
+
+template<class T, class T1, bool isSafe>
+soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
+	soft_ptr<T, isSafe> ret(p,static_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+template<class T, class T1>
+soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_static_cast( soft_ptr<T1, NODECPP_ISSAFE_DEFAULT> p ) {
+	soft_ptr<T, NODECPP_ISSAFE_DEFAULT> ret(p,static_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+template<class T, class T1, bool isSafe>
+soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
+	soft_ptr<T, isSafe> ret(p,reinterpret_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+template<class T, class T1>
+soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<T1, NODECPP_ISSAFE_DEFAULT> p ) {
+	soft_ptr<T, NODECPP_ISSAFE_DEFAULT> ret(p,reinterpret_cast<T*>(p.getDereferencablePtr()));
+	return ret;
+}
+
+
+template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
+class naked_ptr
+{
+	friend class owning_ptr<T, isSafe>;
+	friend class soft_ptr<T, isSafe>;
+	template<class TT, bool isSafe1>
+	friend class owning_ptr;
+	template<class TT, bool isSafe1>
+	friend class soft_ptr;
+
+	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
+
+	T* t;
+
+public:
+	naked_ptr() { t = nullptr; }
+
+	naked_ptr(T& t_) { t = &t_; }
+
+	template<class T1>
+	naked_ptr( const owning_ptr<T1, isSafe>& owner ) { t = owner.get(); }
+	naked_ptr( const owning_ptr<T, isSafe>& owner ) { t = owner.get(); }
+	template<class T1>
+	naked_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner ) { t = owner.get(); return *this; }
+	naked_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner ) { t = owner.get(); return *this; }
+
+	template<class T1>
+	naked_ptr( const soft_ptr<T1, isSafe>& other ) { t = other.get(); }
+	naked_ptr( const soft_ptr<T, isSafe>& other ) { t = other.get(); }
+	template<class T1>
+	naked_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other ) { t = other.get(); return *this; }
+	naked_ptr<T>& operator = ( const soft_ptr<T, isSafe>& other ) { t = other.get(); return *this; }
+
+	template<class T1>
+	naked_ptr( const naked_ptr<T1, isSafe>& other ) { t = other.t; }
+	template<class T1>
+	naked_ptr<T>& operator = ( const naked_ptr<T1, isSafe>& other ) { t = other.t; return *this; }
+	naked_ptr( const naked_ptr<T, isSafe>& other ) = default;
+	naked_ptr<T, isSafe>& operator = ( naked_ptr<T, isSafe>& other ) = default;
+
+	naked_ptr( naked_ptr<T, isSafe>&& other ) = default;
+	naked_ptr<T, isSafe>& operator = ( naked_ptr<T, isSafe>&& other ) = default;
+
+	void swap( naked_ptr<T, isSafe>& other )
+	{
+		T* tmp = t;
+		t = other.t;
+		other.t = tmp;
+	}
+
+	T& operator * () const
+	{
+		checkNotNullAllSizes( t );
+		return *t;
+	}
+
+	T* operator -> () const 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
+	T* get_dereferencable() const 
+	{
+		checkNotNullLargeSize( t );
+		return t;
+	}
+
+	// T* release() : prhibited by safity requirements
+
+	explicit operator bool() const noexcept
+	{
+		return t != nullptr;
+	}
+
+	bool operator == ( const naked_ptr<T, isSafe>& other ) const { return t == other.t; } // TODO: revise necessity
+
+	~naked_ptr()
+	{
+		t = nullptr;
+	}
+};
+
+
+#include "startup_checks.h"
+
+} // namespace nodecpp::safememory
 
 #endif
