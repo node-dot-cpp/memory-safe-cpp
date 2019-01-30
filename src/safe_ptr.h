@@ -473,6 +473,7 @@ inline
 uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
 inline
 uint8_t* getAllocatedBlockFromControlBlock_(void* cb) { return reinterpret_cast<uint8_t*>(cb) + getPrefixByteCount(); }
+inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
@@ -726,7 +727,7 @@ public:
 };
 #endif // 0
 
-thread_local void* thg_stackPtrForMakeOwningCall;
+extern thread_local void* thg_stackPtrForMakeOwningCall;
 
 template<class _Ty,
 	class... _Types,
