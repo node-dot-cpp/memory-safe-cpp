@@ -6,6 +6,7 @@
 
 
 using namespace nodecpp;
+using namespace nodecpp::safememory;
 
 
 

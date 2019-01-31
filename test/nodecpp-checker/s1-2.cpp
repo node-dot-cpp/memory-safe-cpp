@@ -2,7 +2,7 @@
 
 #include <safe_ptr.h>
 
-using namespace nodecpp;
+using namespace nodecpp::safememory;
 
 
 struct Some {

@@ -6,17 +6,20 @@ namespace v5 {
 }
 
 namespace nodecpp {
+namespace safememory {
 	void make_owning();
 
-	class safe_ptr;
-	class naked_ptr;
-	class Buffer;
-	namespace net {
-		class Socket;
-		class Server;
-		class Address;
-		class SocketTBase;
-	}
+	// class owning_ptr;
+	// class soft_ptr;
+	// class naked_ptr;
+}
+class Buffer;
+namespace net {
+	class Socket;
+	class Server;
+	class Address;
+	class SocketTBase;
+}
 }
 
 

@@ -5,6 +5,7 @@ void* memset( void* dest, int ch, int count );
 
 
 namespace nodecpp {
+namespace safememory {
 
 template<class T>
 class owning_ptr {
@@ -91,6 +92,7 @@ owning_ptr<T> make_owning(ARGS ... args) {
 	return owning_ptr<T>(new T(args...));
 }
 
+}
 }
 
 #endif //SAFE_PTR_H

@@ -4,6 +4,7 @@
 #include <function_owned.h>
 
 using namespace nodecpp;
+using namespace nodecpp::safememory;
 
 
 class MyServer;
