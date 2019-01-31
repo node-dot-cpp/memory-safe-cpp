@@ -475,7 +475,7 @@ const Expr *getParentExpr(ASTContext *context, const Expr *expr) {
     return nullptr;
     
   if (isa<ParenExpr>(p) || isa<ImplicitCastExpr>(p) 
-    || isa<MaterializeTemporaryExpr>(p))
+    || isa<MaterializeTemporaryExpr>(p) || isa<CXXBindTemporaryExpr>(p))
     return getParentExpr(context, p);
   else
     return p;
