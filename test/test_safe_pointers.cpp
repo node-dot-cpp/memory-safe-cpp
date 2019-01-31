@@ -40,6 +40,8 @@ thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount;
 thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
+thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
+
 using namespace nodecpp::safememory;
 
 #ifdef NODECPP_USE_IIBMALLOC
@@ -94,6 +96,56 @@ void fnOwningEnd() {
 	gsp.reset();
 	gop.reset(); 
 }
+
+// prereqs for testing soft_this_ptr
+class SomethingLarger; //forward declaration
+class Something
+{
+public:
+	soft_this_ptr myThis;
+	owning_ptr<int> m;
+	soft_ptr<SomethingLarger> prtToOwner;
+	Something( int k) { m = make_owning<int>(); *m = k; }
+	Something(soft_ptr<SomethingLarger> prtToOwner_, int k);
+	Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k);
+	void setOwner(soft_ptr<SomethingLarger> prtToOwner_) { prtToOwner = prtToOwner_ ; }
+};
+class SomethingLarger
+{
+public:
+	soft_this_ptr myThis;
+	soft_ptr<Something> softpS;
+	owning_ptr<Something> opS;
+	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
+		opS->setOwner( sp );
+		softpS = opS;
+	}
+	SomethingLarger(int k, bool) {
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
+		opS = make_owning<Something>( sp, k );
+	}
+	SomethingLarger(int k, bool, bool) {
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
+		opS = make_owning<Something>( false, sp, k );
+	}
+	void doBackRegistration( soft_ptr<Something> s ) { softpS = s; }
+};
+Something::Something(soft_ptr<SomethingLarger> prtToOwner_, int k) {
+	prtToOwner = prtToOwner_;
+	soft_ptr<Something> sp = myThis.getSoftPtr( this );
+	m = make_owning<int>(); 
+	*m = k; 
+	prtToOwner->doBackRegistration( sp );
+}
+Something::Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k) {
+	prtToOwner = prtToOwner_;
+	soft_ptr<Something> sp = soft_ptr_in_constructor( this );
+	m = make_owning<int>(); 
+	*m = k; 
+	prtToOwner->doBackRegistration( sp );
+}
+
 
 #if 1
 int testWithLest( int argc, char * argv[] )
@@ -234,10 +286,10 @@ int testWithLest( int argc, char * argv[] )
 					s31 = soft_ptr_static_cast<int>( sv );
 					EXPECT( *s31 == 17 );
 
-					class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
+					/*class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
 					owning_ptr<S> sS = make_owning<S>();
 					sS->m = 17;
-					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );
+					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );*/
 					
 					struct StrWithSoftPtr { soft_ptr<int> sp; };
 					owning_ptr<int> p4 = make_owning<int>();
@@ -345,6 +397,22 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &g_int ) );
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &th_int ) );
 				//EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &l ) );
+			}
+		},
+
+		CASE( "test soft_this_ptr" )
+		{
+			SETUP("test soft_this_ptr")
+			{
+				owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
+				EXPECT( *(opSL->opS->m) == 17 );
+				EXPECT( *(opSL->softpS->m) == 17 );
+				owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27, false );
+				EXPECT( *(opSL_1->opS->m) == 27 );
+				EXPECT( *(opSL_1->softpS->m) == 27 );
+				owning_ptr<SomethingLarger> opSL_2 = make_owning<SomethingLarger>( 37, false, false );
+				EXPECT( *(opSL_2->opS->m) == 37 );
+				EXPECT( *(opSL_2->softpS->m) == 37 );
 			}
 		},
 
@@ -591,8 +659,20 @@ void test__allocated_ptr_with_mask_and_flags()
 
 }
 
+void test_soft_this_ptr()
+{
+	owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->opS->m) == 17 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->softpS->m) == 17 );
+	owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->opS->m) == 27 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->softpS->m) == 27 );
+
+	SomethingLarger sl(37);
+}
 int main( int argc, char * argv[] )
 {
+	//test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
 

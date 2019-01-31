@@ -175,6 +175,7 @@ void throwPointerOutOfRange()
 
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
+class soft_this_ptr; // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -470,15 +471,13 @@ inline
 FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
 inline
 uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
+inline
+uint8_t* getAllocatedBlockFromControlBlock_(void* cb) { return reinterpret_cast<uint8_t*>(cb) + getPrefixByteCount(); }
+inline
+void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
-/*template<bool _Test,
-	class _Ty = void>
-	using enable_if_t = typename std::enable_if<_Test, _Ty>::type;*/
-
-//template<class _Ty>
-//	_INLINE_VAR constexpr bool is_array_v = std::is_array<_Ty>::value;
-
+struct make_owning_t {};
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
@@ -536,7 +535,7 @@ class owning_ptr
 
 public:
 
-	owning_ptr( T* t_ )
+	owning_ptr( make_owning_t, T* t_ ) // make it private with a friend make_owning()!
 	{
 		t = t_;
 		getControlBlock()->init();
@@ -729,6 +728,8 @@ public:
 };
 #endif // 0
 
+extern thread_local void* thg_stackPtrForMakeOwningCall;
+
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
@@ -736,8 +737,11 @@ template<class _Ty,
 	{	// make a unique_ptr
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr<_Ty> op((_Ty*)(uintptr_t)(dataForObj));
+	owning_ptr<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	void* stackTmp = thg_stackPtrForMakeOwningCall;
+	thg_stackPtrForMakeOwningCall = dataForObj;
 	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	thg_stackPtrForMakeOwningCall = stackTmp;
 	//return owning_ptr<_Ty>(objPtr);
 	return op;
 	}
@@ -757,7 +761,6 @@ extern thread_local size_t onStackSafePtrDestructionCount;
 #define INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT() {}
 #define INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT() {}
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class soft_ptr
@@ -805,6 +808,27 @@ class soft_ptr
 	size_t getIdx_() const { return pointers.get_data(); }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
+
+private:
+	friend class soft_this_ptr;
+	template<class T>
+	friend soft_ptr<T> soft_ptr_in_constructor(T* ptr);
+	soft_ptr(FirstControlBlock* cb, T* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
+	{
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			init( t, getPtrToAllocatedObjectFromControlBlock_(cb), PointersT::max_data ); // automatic type conversion (if at all possible)
+			setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( t )
+				init( t, getPtrToAllocatedObjectFromControlBlock_(cb), cb->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t, getPtrToAllocatedObjectFromControlBlock_(cb), PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
 
 public:
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
@@ -1135,7 +1159,7 @@ public:
 	}
 
 
-	template<class TSupplied>
+	/*template<class TSupplied>
 	soft_ptr( TSupplied* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, 
@@ -1153,7 +1177,7 @@ public:
 			else
 				init( t, t, PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
-	}
+	}*/
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
@@ -1749,6 +1773,63 @@ soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<T1, NODE
 	return ret;
 }
 
+
+class soft_this_ptr
+{
+	FirstControlBlock* cbPtr = nullptr;
+	uint32_t offset;
+
+public:
+	soft_this_ptr()
+	{
+		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
+		uintptr_t delta = reinterpret_cast<uint8_t*>(this) - reinterpret_cast<uint8_t*>(cbPtr);
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, delta <= UINT32_MAX, "delta = 0x{:x}", delta );
+		offset = (uint32_t)delta;
+	}
+
+	soft_this_ptr( soft_this_ptr& other ) {}
+	soft_this_ptr& operator = ( soft_this_ptr& other ) { return *this; }
+
+	soft_this_ptr( soft_this_ptr&& other ) {}
+	soft_this_ptr& operator = ( soft_this_ptr&& other ) { return *this; }
+
+	explicit operator bool() const noexcept
+	{
+		return cbPtr != nullptr;
+	}
+
+	template<class T>
+	soft_ptr<T> getSoftPtr(T* ptr)
+	{
+		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
+		if ( allocatedPtr == nullptr )
+			throwPointerOutOfRange();
+		//return soft_ptr<T, true>( allocatedPtr, ptr );
+		//FirstControlBlock* cb = cbPtr;
+		FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
+		return soft_ptr<T, true>( cb, ptr );
+	}
+
+	~soft_this_ptr()
+	{
+	}
+};
+
+template<class T>
+soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
+//	soft_this_ptr p;
+//	return p.getSoftPtr<T>( ptr );
+	FirstControlBlock* cbPtr = nullptr;
+		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
+		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
+		if ( allocatedPtr == nullptr )
+			throwPointerOutOfRange();
+		//return soft_ptr<T, true>( allocatedPtr, ptr );
+		FirstControlBlock* cb = cbPtr;
+		//FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
+		return soft_ptr<T, true>( cb, ptr );
+}
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class naked_ptr
