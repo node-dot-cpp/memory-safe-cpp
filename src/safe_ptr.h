@@ -477,6 +477,7 @@ inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
+struct make_owning_t {};
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class owning_ptr
 {
@@ -534,7 +535,7 @@ class owning_ptr
 
 public:
 
-	owning_ptr( T* t_ )
+	owning_ptr( make_owning_t, T* t_ ) // make it private with a friend make_owning()!
 	{
 		t = t_;
 		getControlBlock()->init();
@@ -736,7 +737,7 @@ template<class _Ty,
 	{	// make a unique_ptr
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr<_Ty> op((_Ty*)(uintptr_t)(dataForObj));
+	owning_ptr<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
 	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
@@ -1776,31 +1777,22 @@ soft_ptr<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast( soft_ptr<T1, NODE
 class soft_this_ptr
 {
 	FirstControlBlock* cbPtr = nullptr;
+	uint32_t offset;
 
 public:
 	soft_this_ptr()
 	{
 		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
+		uintptr_t delta = reinterpret_cast<uint8_t*>(this) - reinterpret_cast<uint8_t*>(cbPtr);
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, delta <= UINT32_MAX, "delta = 0x{:x}", delta );
+		offset = (uint32_t)delta;
 	}
 
-	soft_this_ptr& operator = ( soft_this_ptr& other )
-	{
-		// do nothing;
-		return *this;
-	}
+	soft_this_ptr( soft_this_ptr& other ) {}
+	soft_this_ptr& operator = ( soft_this_ptr& other ) { return *this; }
 
-
-	soft_this_ptr( soft_this_ptr&& other )
-	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, false, "not implemented so far" );
-	}
-
-	soft_this_ptr& operator = ( soft_this_ptr&& other )
-	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, false, "not implemented so far" );
-		return *this;
-	}
-
+	soft_this_ptr( soft_this_ptr&& other ) {}
+	soft_this_ptr& operator = ( soft_this_ptr&& other ) { return *this; }
 
 	explicit operator bool() const noexcept
 	{
@@ -1814,7 +1806,9 @@ public:
 		if ( allocatedPtr == nullptr )
 			throwPointerOutOfRange();
 		//return soft_ptr<T, true>( allocatedPtr, ptr );
-		return soft_ptr<T, true>( cbPtr, ptr );
+		//FirstControlBlock* cb = cbPtr;
+		FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
+		return soft_ptr<T, true>( cb, ptr );
 	}
 
 	~soft_this_ptr()

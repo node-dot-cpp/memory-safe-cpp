@@ -102,6 +102,7 @@ class SomethingLarger; //forward declaration
 class Something
 {
 public:
+	soft_this_ptr myThis;
 	owning_ptr<int> m;
 	soft_ptr<SomethingLarger> prtToOwner;
 	Something( int k) { m = make_owning<int>(); *m = k; }
@@ -111,25 +112,29 @@ public:
 class SomethingLarger
 {
 public:
+	soft_this_ptr myThis;
 	soft_ptr<Something> softpS;
 	owning_ptr<Something> opS;
 	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {
-		soft_this_ptr stp;
-		soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
+		//soft_this_ptr stp;
+		//soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS->setOwner( sp );
 		softpS = opS;
 	}
 	SomethingLarger(int k, bool) {
-		soft_this_ptr stp;
-		soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
+		//soft_this_ptr stp;
+		//soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS = make_owning<Something>( sp, k );
 	}
 	void doBackRegistration( soft_ptr<Something> s ) { softpS = s; }
 };
 Something::Something(soft_ptr<SomethingLarger> prtToOwner_, int k) {
 	prtToOwner = prtToOwner_;
-	soft_this_ptr stp;
-	soft_ptr<Something> sp = stp.getSoftPtr( this );
+	//soft_this_ptr stp;
+	//soft_ptr<Something> sp = stp.getSoftPtr( this );
+	soft_ptr<Something> sp = myThis.getSoftPtr( this );
 	m = make_owning<int>(); 
 	*m = k; 
 	prtToOwner->doBackRegistration( sp );
@@ -275,10 +280,10 @@ int testWithLest( int argc, char * argv[] )
 					s31 = soft_ptr_static_cast<int>( sv );
 					EXPECT( *s31 == 17 );
 
-					class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
+					/*class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
 					owning_ptr<S> sS = make_owning<S>();
 					sS->m = 17;
-					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );
+					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );*/
 					
 					struct StrWithSoftPtr { soft_ptr<int> sp; };
 					owning_ptr<int> p4 = make_owning<int>();
@@ -646,8 +651,20 @@ void test__allocated_ptr_with_mask_and_flags()
 
 }
 
+void test_soft_this_ptr()
+{
+	owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->opS->m) == 17 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->softpS->m) == 17 );
+	owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->opS->m) == 27 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->softpS->m) == 27 );
+
+	SomethingLarger sl(37);
+}
 int main( int argc, char * argv[] )
 {
+	test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
 
