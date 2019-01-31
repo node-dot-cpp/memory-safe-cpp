@@ -32,7 +32,7 @@ void NewExprCheck::registerMatchers(MatchFinder *Finder) {
       cxxDeleteExpr().bind("delete"), this);
 
   Finder->addMatcher(
-      callExpr(callee(functionDecl(hasName("nodecpp::make_owning"))))
+      callExpr(callee(functionDecl(hasName("nodecpp::safememory::make_owning"))))
           .bind("make"),
       this);
 }

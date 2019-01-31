@@ -38,7 +38,7 @@ bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) 
 
 
 bool isOwnerPtrName(const std::string& name) {
-  return name == "std::unique_ptr" || name == "nodecpp::owning_ptr" || name == "owning_ptr";
+  return name == "nodecpp::safememory::owning_ptr";
 }
 
 bool isOwnerPtrDecl(const NamedDecl* decl) {
@@ -51,16 +51,15 @@ bool isOwnerPtrDecl(const NamedDecl* decl) {
 
 
 bool isSafePtrName(const std::string& name) {
-  return isOwnerPtrName(name) || name == "nodecpp::soft_ptr" ||
-   name == "nodecpp::safe_ptr" || name == "soft_ptr";
+  return isOwnerPtrName(name) || name == "nodecpp::safememory::soft_ptr";
 }
 
 bool isNakedPtrName(const std::string& name) {
-  return name == "nodecpp::naked_ptr" || name == "naked_ptr";
+  return name == "nodecpp::safememory::naked_ptr";
 }
 
 bool isConstNakedPtrName(const std::string& name) {
-  return name == "nodecpp::const_naked_ptr" || name == "const_naked_ptr";
+  return name == "nodecpp::safememory::const_naked_ptr";
 }
 
 
