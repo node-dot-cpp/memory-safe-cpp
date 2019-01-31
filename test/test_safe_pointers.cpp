@@ -116,15 +116,11 @@ public:
 	soft_ptr<Something> softpS;
 	owning_ptr<Something> opS;
 	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {
-		//soft_this_ptr stp;
-		//soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
 		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS->setOwner( sp );
 		softpS = opS;
 	}
 	SomethingLarger(int k, bool) {
-		//soft_this_ptr stp;
-		//soft_ptr<SomethingLarger> sp = stp.getSoftPtr( this );
 		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS = make_owning<Something>( sp, k );
 	}
@@ -132,8 +128,6 @@ public:
 };
 Something::Something(soft_ptr<SomethingLarger> prtToOwner_, int k) {
 	prtToOwner = prtToOwner_;
-	//soft_this_ptr stp;
-	//soft_ptr<Something> sp = stp.getSoftPtr( this );
 	soft_ptr<Something> sp = myThis.getSoftPtr( this );
 	m = make_owning<int>(); 
 	*m = k; 
