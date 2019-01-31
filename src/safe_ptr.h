@@ -811,7 +811,8 @@ class soft_ptr
 
 private:
 	friend class soft_this_ptr;
-	template<class T>
+	template<class TT>
+	friend soft_ptr<TT> soft_ptr_in_constructor(TT* ptr);
 	friend soft_ptr<T> soft_ptr_in_constructor(T* ptr);
 	soft_ptr(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
