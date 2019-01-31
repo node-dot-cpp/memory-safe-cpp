@@ -107,6 +107,7 @@ public:
 	soft_ptr<SomethingLarger> prtToOwner;
 	Something( int k) { m = make_owning<int>(); *m = k; }
 	Something(soft_ptr<SomethingLarger> prtToOwner_, int k);
+	Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k);
 	void setOwner(soft_ptr<SomethingLarger> prtToOwner_) { prtToOwner = prtToOwner_ ; }
 };
 class SomethingLarger
@@ -124,11 +125,22 @@ public:
 		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS = make_owning<Something>( sp, k );
 	}
+	SomethingLarger(int k, bool, bool) {
+		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
+		opS = make_owning<Something>( false, sp, k );
+	}
 	void doBackRegistration( soft_ptr<Something> s ) { softpS = s; }
 };
 Something::Something(soft_ptr<SomethingLarger> prtToOwner_, int k) {
 	prtToOwner = prtToOwner_;
 	soft_ptr<Something> sp = myThis.getSoftPtr( this );
+	m = make_owning<int>(); 
+	*m = k; 
+	prtToOwner->doBackRegistration( sp );
+}
+Something::Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k) {
+	prtToOwner = prtToOwner_;
+	soft_ptr<Something> sp = soft_ptr_in_constructor( this );
 	m = make_owning<int>(); 
 	*m = k; 
 	prtToOwner->doBackRegistration( sp );
@@ -392,13 +404,15 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("test soft_this_ptr")
 			{
-				
 				owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
 				EXPECT( *(opSL->opS->m) == 17 );
 				EXPECT( *(opSL->softpS->m) == 17 );
-				owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27 );
+				owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27, false );
 				EXPECT( *(opSL_1->opS->m) == 27 );
 				EXPECT( *(opSL_1->softpS->m) == 27 );
+				owning_ptr<SomethingLarger> opSL_2 = make_owning<SomethingLarger>( 37, false, false );
+				EXPECT( *(opSL_2->opS->m) == 37 );
+				EXPECT( *(opSL_2->softpS->m) == 37 );
 			}
 		},
 
@@ -658,7 +672,7 @@ void test_soft_this_ptr()
 }
 int main( int argc, char * argv[] )
 {
-	test_soft_this_ptr(); return 0;
+	//test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
 
