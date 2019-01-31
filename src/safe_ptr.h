@@ -813,7 +813,7 @@ private:
 	friend class soft_this_ptr;
 	template<class T>
 	friend soft_ptr<T> soft_ptr_in_constructor(T* ptr);
-	soft_ptr(FirstControlBlock* cb, T* t) // to beused for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1818,17 +1818,13 @@ public:
 
 template<class T>
 soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
-//	soft_this_ptr p;
-//	return p.getSoftPtr<T>( ptr );
 	FirstControlBlock* cbPtr = nullptr;
-		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
-		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
-		if ( allocatedPtr == nullptr )
-			throwPointerOutOfRange();
-		//return soft_ptr<T, true>( allocatedPtr, ptr );
-		FirstControlBlock* cb = cbPtr;
-		//FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
-		return soft_ptr<T, true>( cb, ptr );
+	cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
+	void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
+	if ( allocatedPtr == nullptr )
+		throwPointerOutOfRange();
+	FirstControlBlock* cb = cbPtr;
+	return soft_ptr<T, true>( cb, ptr );
 }
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
