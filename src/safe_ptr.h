@@ -1936,8 +1936,8 @@ public:
 };
 
 
-#include "startup_checks.h"
-
 } // namespace nodecpp::safememory
+
+#include "startup_checks.h"
 
 #endif

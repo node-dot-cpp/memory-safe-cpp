@@ -440,7 +440,7 @@ int testWithLest( int argc, char * argv[] )
 
 		CASE( "test destruction means" )
 		{
-			EXPECT_NO_THROW( StartupChecker::check() );
+			EXPECT_NO_THROW( testing::StartupChecker::check() );
 		},
 	};
 
@@ -692,6 +692,7 @@ void test_soft_this_ptr()
 
 	SomethingLarger sl(37);
 }
+
 int main( int argc, char * argv[] )
 {
 	//test_soft_this_ptr(); return 0;

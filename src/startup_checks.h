@@ -30,11 +30,14 @@
 
 #include <foundation.h>
 
-inline
-void StartupCheckAssertion( bool cond ) { if (!cond) throw std::bad_exception(); } // TODO: replace by means standard for the project
+namespace nodecpp::safememory::testing {
 
-class StartupChecker
-{
+using namespace ::nodecpp::safememory;
+
+// For various testing purposes we will need misc objects (classes, ...) doing nothing but representing certain constructions to be tested
+// Such objects are gathered in the namespace nodecpp::safememory::testing::dummy_objects
+namespace dummy_objects {
+
 	class PRNG
 	{
 		uint64_t seedVal;
@@ -102,16 +105,20 @@ class StartupChecker
 		bool check(size_t seed) {PRNG rng(seed); return ln2 == rng.rng64() && LargeDerived::check(rng.rng64());}
 	};
 
+} // namespace dummy_objects
+
+class StartupChecker
+{
 	enum ChangeStatus { no = 0, yes = 1, potential = 2 };
 
-	static void setAddressesOfChanges( Small* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
+	static void setAddressesOfChanges( dummy_objects::Small* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
 	{
 		*addr1 = &(obj->sn);
 		*addr2 = &(obj->sn1);
 		*addr3 = &(obj->sn2);
 	}
 
-	static void setAddressesOfChanges( Large* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
+	static void setAddressesOfChanges( dummy_objects::Large* obj, uint64_t** addr1, uint64_t** addr2, uint64_t** addr3 )
 	{
 		*addr1 = &(obj->ln[0]);
 		*addr2 = &(obj->ln1[0]);
@@ -122,18 +129,18 @@ class StartupChecker
 	static void checkT()
 	{
 		size_t rngSeed = 155;
-		PRNG rng(rngSeed);
+		dummy_objects::PRNG rng(rngSeed);
 		uint64_t rngCheckVal;
 
 		rngCheckVal = rng.rng64();
 
-#ifdef USE_IIBMALLOC
+#ifdef NODECPP_USE_IIBMALLOC
 		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		T* TPtr = new ( mem4T ) T;
 		TPtr->init(rngCheckVal);
-		StartupCheckAssertion( TPtr->check(rngCheckVal));
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
 		memcpy( mem4TCopy, mem4T, sizeof(T) );
 
 		// collect actual addresses of changes in destructors
@@ -155,16 +162,16 @@ class StartupChecker
 		if( memcmp( mem4TCopy, mem4T, sizeof(T) ) != 0 )
 		{
 			// check explicitly that changes done in dtor actually happened as intended (fast detection)
-			StartupCheckAssertion( *addr1 == 0 );
-			StartupCheckAssertion( *addr2 == 0 );
-			StartupCheckAssertion( *addr3 == 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *addr1 == 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *addr2 == 0 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *addr3 == 0 );
 
 			for ( size_t i=0; i<sizeof(T); ++i )
 				if ( mem4T[i] != mem4TCopy[i] ) 
-					StartupCheckAssertion( changeMap[i] != ChangeStatus::no );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, changeMap[i] != ChangeStatus::no );
 		}
 		else
-			StartupCheckAssertion( false ); // our intention in dtor was to change memory state under the object
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
 
 		g_AllocManager.deallocate( mem4T );
 		g_AllocManager.deallocate( mem4TCopy );
@@ -177,9 +184,11 @@ class StartupChecker
 public:
 	static void check()
 	{
-		checkT<Small>();
-		checkT<Large>();
+		checkT<dummy_objects::Small>();
+		checkT<dummy_objects::Large>();
 	}
 };
+
+} // namespace nodecpp::safememory::testing
 
 #endif // STARTUP_CHECKS_H
