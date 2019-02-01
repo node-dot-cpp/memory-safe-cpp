@@ -51,8 +51,7 @@ First clone and checkout everything:
 	(proj)\llvm\tools> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang.git
 	(proj)\llvm\tools> cd clang\tools
 	(proj)\llvm\tools\clang\tools> git clone -b release_70 https://github.com/llvm-mirror/clang-tools-extra.git extra
-	(proj)\llvm\tools\clang\tools> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang-tools-nodecpp-checker.git nodecpp-checker
-	(proj)\llvm\tools\clang\tools> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang-tools-nodecpp-safe-library.git nodecpp-safe-library
+	(proj)\llvm\tools\clang\tools> git clone https://github.com/node-dot-cpp/nodecpp-checker.git
 	(proj)\llvm\tools\clang\tools> cd ..\..\..\..
 
 
