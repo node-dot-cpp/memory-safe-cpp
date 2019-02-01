@@ -416,6 +416,28 @@ int testWithLest( int argc, char * argv[] )
 			}
 		},
 
+		CASE( "test comparison operators" )
+		{
+			// TODO: extend to other relevant cases
+			owning_ptr<uint32_t> op;
+			EXPECT( op == nullptr );
+			op = make_owning<uint32_t>(17);
+			EXPECT( op != nullptr );
+			soft_ptr<uint32_t> sp;
+			EXPECT( sp == nullptr );
+			sp = op;
+			EXPECT( sp != nullptr );
+			EXPECT( sp == op );
+			EXPECT( op == sp );
+			EXPECT( op == op );
+			EXPECT( sp == sp );
+			owning_ptr<uint32_t> op1 = make_owning<uint32_t>(27);
+			soft_ptr<uint32_t> sp1 = op1;
+			EXPECT( sp != sp1 );
+			EXPECT( sp != op1 );
+			// ...
+		},
+
 		CASE( "test destruction means" )
 		{
 			EXPECT_NO_THROW( StartupChecker::check() );
