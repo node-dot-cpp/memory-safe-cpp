@@ -59,5 +59,8 @@
     <ClInclude Include="..\..\src\startup_checks.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\dummy_test_objects.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

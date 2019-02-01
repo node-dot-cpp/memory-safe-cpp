@@ -33,7 +33,8 @@
 #include <safe_ptr.h>
 #include <startup_checks.h>
 #include "../3rdparty/lest/include/lest/lest.hpp"
-#include "test_nullptr_access.h"
+//#include "test_nullptr_access.h"
+#include "dummy_test_objects.h"
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount; 
@@ -43,6 +44,7 @@ thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount;
 thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
 
 using namespace nodecpp::safememory;
+using namespace nodecpp::safememory::testing::dummy_objects;
 
 #ifdef NODECPP_USE_IIBMALLOC
 using namespace nodecpp::iibmalloc;
@@ -95,55 +97,6 @@ void fnOwningEnd() {
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *gop == 17 );
 	gsp.reset();
 	gop.reset(); 
-}
-
-// prereqs for testing soft_this_ptr
-class SomethingLarger; //forward declaration
-class Something
-{
-public:
-	soft_this_ptr myThis;
-	owning_ptr<int> m;
-	soft_ptr<SomethingLarger> prtToOwner;
-	Something( int k) { m = make_owning<int>(); *m = k; }
-	Something(soft_ptr<SomethingLarger> prtToOwner_, int k);
-	Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k);
-	void setOwner(soft_ptr<SomethingLarger> prtToOwner_) { prtToOwner = prtToOwner_ ; }
-};
-class SomethingLarger
-{
-public:
-	soft_this_ptr myThis;
-	soft_ptr<Something> softpS;
-	owning_ptr<Something> opS;
-	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {
-		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
-		opS->setOwner( sp );
-		softpS = opS;
-	}
-	SomethingLarger(int k, bool) {
-		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
-		opS = make_owning<Something>( sp, k );
-	}
-	SomethingLarger(int k, bool, bool) {
-		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
-		opS = make_owning<Something>( false, sp, k );
-	}
-	void doBackRegistration( soft_ptr<Something> s ) { softpS = s; }
-};
-Something::Something(soft_ptr<SomethingLarger> prtToOwner_, int k) {
-	prtToOwner = prtToOwner_;
-	soft_ptr<Something> sp = myThis.getSoftPtr( this );
-	m = make_owning<int>(); 
-	*m = k; 
-	prtToOwner->doBackRegistration( sp );
-}
-Something::Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k) {
-	prtToOwner = prtToOwner_;
-	soft_ptr<Something> sp = soft_ptr_in_constructor( this );
-	m = make_owning<int>(); 
-	*m = k; 
-	prtToOwner->doBackRegistration( sp );
 }
 
 
@@ -440,7 +393,8 @@ int testWithLest( int argc, char * argv[] )
 
 		CASE( "test destruction means" )
 		{
-			EXPECT_NO_THROW( testing::StartupChecker::check() );
+			EXPECT_NO_THROW( testing::StartupChecker::checkBasics() );
+			EXPECT_NO_THROW( testing::StartupChecker::checkSafePointers() );
 		},
 	};
 
@@ -691,6 +645,10 @@ void test_soft_this_ptr()
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->softpS->m) == 27 );
 
 	SomethingLarger sl(37);
+}
+
+void test_zombie_objects()
+{
 }
 
 int main( int argc, char * argv[] )

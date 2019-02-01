@@ -99,11 +99,70 @@ namespace dummy_objects {
 	public: 
 		uint64_t ln2; 
 		int doSmthLarge() override { return 0x3; } 
-		void init(size_t seed) {PRNG rng(seed); ln2 = rng.rng64NoNull(); 
-		LargeDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); ln2 = rng.rng64NoNull(); LargeDerived::init(rng.rng64());} 
 		virtual ~Large() {ln2 = 0; forcePreviousChangesToThisInDtor(this);}
 		bool check(size_t seed) {PRNG rng(seed); return ln2 == rng.rng64() && LargeDerived::check(rng.rng64());}
 	};
+
+	class SomeBase { 
+	public: 
+		uint64_t sn; 
+		virtual int doSmthSome() { return 0x1;} 
+		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NoNull();}
+		virtual ~SomeBase() {}
+		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64();}
+	};
+	class SomeDerived : public SomeBase { 
+	public: 
+		uint64_t sn1; 
+		int doSmthSome() override {return 0x2;} 
+		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NoNull(); SomeBase::init(rng.rng64());} 
+		virtual ~SomeDerived() {}
+		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64() && SomeBase::check(rng.rng64());}
+	};
+	class Some : public SomeDerived { 
+	public: 
+		uint64_t sn2; 
+		int doSmthSome() override { return 0x3; } 
+		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rng64NoNull(); 
+		SomeDerived::init(rng.rng64());} 
+		virtual ~Some() {}
+		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
+	};
+
+	class SomeWithSafePointers : public Some { 
+	public: 
+		uint64_t sn3; 
+		soft_ptr<uint32_t> spLarge;
+		owning_ptr<uint32_t> opLarge;
+		SomeWithSafePointers() { 
+			opLarge = make_owning<uint32_t>(17);
+			spLarge = opLarge;
+		}
+		int doSmthSome() override { return 0x4; } 
+		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); 
+		SomeDerived::init(rng.rng64());} 
+		virtual ~SomeWithSafePointers() {}
+		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
+		struct MyNonPointerMembers
+		{
+			uint64_t sn; 
+			uint64_t sn1; 
+			uint64_t sn2; 
+			uint64_t sn3; 
+			bool operator == ( const MyNonPointerMembers& other ) { return sn == other.sn && sn1 == other.sn1 && sn2 == other.sn2 && sn3 == other.sn3; }
+		};
+		MyNonPointerMembers getMyNonPointerMembers() {
+			MyNonPointerMembers ret;
+			ret.sn = sn;
+			ret.sn1 = sn1;
+			ret.sn2 = sn2;
+			ret.sn3 = sn3;
+			return ret;
+		}
+	};
+	static_assert( sizeof(SomeWithSafePointers::MyNonPointerMembers) + sizeof(SomeWithSafePointers::spLarge) + sizeof(SomeWithSafePointers::opLarge) + sizeof(void*) == sizeof(SomeWithSafePointers) );
+
 
 } // namespace dummy_objects
 
@@ -126,7 +185,7 @@ class StartupChecker
 	}
 
 	template<class T>
-	static void checkT()
+	static void checkBasicsT()
 	{
 		size_t rngSeed = 155;
 		dummy_objects::PRNG rng(rngSeed);
@@ -181,11 +240,45 @@ class StartupChecker
 #endif
 	}
 
-public:
-	static void check()
+	static void checkSafePointers_()
 	{
-		checkT<dummy_objects::Small>();
-		checkT<dummy_objects::Large>();
+		using T = dummy_objects::SomeWithSafePointers;
+
+		size_t rngSeed = 155;
+		dummy_objects::PRNG rng(rngSeed);
+		uint64_t rngCheckVal = rng.rng64();
+
+		owning_ptr<T> TPtr = make_owning<T>(); // create an object
+		TPtr->init(rngCheckVal);
+		typename T::MyNonPointerMembers iniData = TPtr->getMyNonPointerMembers();
+
+		T* rawTPtr = &(*TPtr);
+		soft_ptr<T> softTPtr = TPtr;
+
+		TPtr.reset();
+
+		typename T::MyNonPointerMembers postDtorData = rawTPtr->getMyNonPointerMembers();
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, iniData == postDtorData );
+
+		softTPtr->doSmthSome();
+		
+		owning_ptr<uint32_t> opTarget( std::move( softTPtr->opLarge ) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, opTarget == nullptr );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, softTPtr->opLarge == nullptr );
+		soft_ptr<uint32_t> spTarget( std::move( softTPtr->spLarge ) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, spTarget == nullptr );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, softTPtr->spLarge == nullptr );
+	}
+
+public:
+	static void checkBasics()
+	{
+		checkBasicsT<dummy_objects::Small>();
+		checkBasicsT<dummy_objects::Large>();
+	}
+	static void checkSafePointers()
+	{
+		checkSafePointers_();
 	}
 };
 
