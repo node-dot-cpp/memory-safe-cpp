@@ -43,6 +43,11 @@ void RawPointerDereferenceCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
   else if(auto expr = Result.Nodes.getNodeAs<UnaryOperator>("star")) {
+    auto base = expr->IgnoreParenImpCasts();
+    if(isa<CXXThisExpr>(base))
+      return;
+    else if(isa<CallExpr>(base))
+      return;
 
     diag(expr->getExprLoc(), "(S1.2) dereference of raw pointers is prohibited");
   }

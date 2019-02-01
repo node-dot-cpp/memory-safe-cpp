@@ -45,7 +45,10 @@ void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
         diag(expr->getExprLoc(), "(S5.1) return of naked pointer may extend scope");
   }
   else if(isNakedStructType(qt, getContext())) {
-    diag(expr->getExprLoc(), "(S5.5) return of naked struct not allowed");
+    auto checker = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+
+    if(!checker.checkExpr(expr))
+        diag(expr->getExprLoc(), "(S5.1) return of naked struct may extend scope");
   }
 
 

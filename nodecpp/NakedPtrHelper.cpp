@@ -22,20 +22,6 @@ namespace nodecpp {
 
 DiagHelper NullDiagHelper;
 
-bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc) {
-
-  auto sm = context->getSourceManager();
-  auto eLoc = sm->getExpansionLoc(loc);
-
-  return (eLoc.isValid() && sm->isInSystemHeader(eLoc));
-}
-
-bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) {
-
-  auto& wl = context->getGlobalOptions().SafeTypes; 
-  return (wl.find(name) != wl.end());
-}
-
 
 bool isOwnerPtrName(const std::string& name) {
   return name == "nodecpp::safememory::owning_ptr";
@@ -60,6 +46,27 @@ bool isNakedPtrName(const std::string& name) {
 
 bool isConstNakedPtrName(const std::string& name) {
   return name == "nodecpp::safememory::const_naked_ptr";
+}
+
+bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc) {
+
+  auto sm = context->getSourceManager();
+  auto eLoc = sm->getExpansionLoc(loc);
+
+  return (eLoc.isValid() && sm->isInSystemHeader(eLoc));
+}
+
+bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) {
+
+  //hardcode some names that are really important
+  if(name == "nodecpp::safememory::make_owning")
+    return true;
+  else if(isSafePtrName(name) || isNakedPtrName(name) || isNakedPtrName(name))
+    return false;
+
+
+  auto& wl = context->getGlobalOptions().SafeTypes; 
+  return (wl.find(name) != wl.end());
 }
 
 

@@ -48,8 +48,6 @@ public:
   bool isOk() const { return checkOk; }
 };
 
-bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc);
-bool isSystemSafeName(const ClangTidyContext* context, const std::string& name);
 
 /// FIXME: Write a short description.
 ///
@@ -59,6 +57,9 @@ bool isSafePtrName(const std::string& name);
 
 bool isNakedPtrName(const std::string& name);
 bool isConstNakedPtrName(const std::string& name);
+
+bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc);
+bool isSystemSafeName(const ClangTidyContext* context, const std::string& name);
 
 bool isStdFunctionType(QualType qt);
 bool isAnyFunctorType(QualType qt);
