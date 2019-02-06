@@ -617,7 +617,6 @@ public:
 			destruct( t.getPtr() );
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
-			t.setZombie();
 		}
 		dbgCheckValidity();
 	}
