@@ -495,8 +495,8 @@ class owning_ptr
 	public:
 		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
 		void setTypedPtr( T* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
-		void* getPtr() const { return nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr(); }
-		TT* getTypedPtr() const { return reinterpret_cast<TT*>( nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr() ); }
+		void* getPtr() const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !isZombie() ); return nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr(); }
+		TT* getTypedPtr() const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !isZombie() ); return reinterpret_cast<TT*>( nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr() ); }
 		void setZombie() { setPtr( nullptr ); set_flag<0>(); }
 		bool isZombie() const { return has_flag<0>(); }
 	};
@@ -507,9 +507,6 @@ class owning_ptr
 	FirstControlBlock* getControlBlock() { return getControlBlock_(t.getPtr()); }
 	const FirstControlBlock* getControlBlock() const { return getControlBlock_(t.getPtr()); }
 	uint8_t* getAllocatedBlock() {return getAllocatedBlock_(t.getPtr()); }
-
-	T* getObjectPtr() { return t.getTypedPtr(); }
-	void setObjectPtr( T* ptr ) { t.setPtr( ptr ); }
 
 	void updatePtrForListItemsWithInvalidPtr()
 	{
