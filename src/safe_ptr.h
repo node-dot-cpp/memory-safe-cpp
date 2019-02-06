@@ -799,32 +799,53 @@ class soft_ptr
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,2>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,2>; 
 #endif
 #else
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,2>; 
 #else
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,2>; 
 #endif
 #endif // SAFE_PTR_DEBUG_MODE
-	PointersT pointers; // the only data member!
+	template<class TT>
+	struct Pointers : public PointersT {
+		T* getDereferencablePtr() const { return reinterpret_cast<T*>( get_ptr() ); }
+		void* getAllocatedPtr() const {return get_allocated_ptr(); }
+		void init( size_t data ) { PointersT::init( data ); }
+		void init( T* ptr, T* allocptr, size_t data ) { PointersT::init( ptr, allocptr, data ); }
+		template<class T1>
+		void init( T* ptr, T1* allocptr, size_t data ) { PointersT::init( ptr, allocptr, data ); }
+
+		void invalidatePtr() { setZombie(); set_ptr(nullptr); set_allocated_ptr(nullptr); set_data(PointersT::max_data); }
+		void setZombie() { unset_flag<0>(); }
+		bool isZombie() { return has_flag<0>(); }
+		void setOnStack() { set_flag<1>(); }
+		void setNotOnStack() { unset_flag<1>(); }
+		bool isOnStack() { return has_flag<1>(); }
+	};
+	Pointers<T> pointers; // the only data member!
 
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
 	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
+	void init( size_t data ) { pointers.init( data ); }
 	void init( T* ptr, T* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+	void initOnStack( T* ptr, T* allocptr ) { pointers.init( ptr, allocptr, PointersT::max_data ); setOnStack(); }
 	template<class T1>
 	void init( T* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
+	template<class T1>
+	void initOnStack( T* ptr, T1* allocptr ) { pointers.init( ptr, allocptr, PointersT::max_data ); setOnStack(); }
 
-	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
-	void setOnStack() { pointers.set_flag<0>(); }
-	void setNotOnStack() { pointers.unset_flag<0>(); }
-	bool isOnStack() { return pointers.has_flag<0>(); }
+	void invalidatePtr() { pointers.invalidatePtr(); }
+	void setOnStack() { pointers.setOnStack(); }
+	void setNotOnStack() { pointers.setNotOnStack(); }
+	bool isOnStack() { return pointers.isOnStack(); }
 
 	size_t getIdx_() const { return pointers.get_data(); }
-	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
+	void setIdx_( size_t idx ) { pointers.set_data( idx ); }
+	FirstControlBlock* getControlBlock() const { return getControlBlock_(pointers.getAllocatedPtr()); }
 	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 private:
@@ -837,8 +858,7 @@ private:
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( t, getPtrToAllocatedObjectFromControlBlock_(cb), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( t, getPtrToAllocatedObjectFromControlBlock_(cb) ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -865,7 +885,7 @@ public:
 
 	soft_ptr()
 	{
-		pointers.init( PointersT::max_data );
+		init( PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			setOnStack();
@@ -880,8 +900,7 @@ public:
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -895,8 +914,7 @@ public:
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -913,8 +931,7 @@ public:
 		reset();
 		if ( iWasOnStack )
 		{
-			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 		}
 		else
 			if ( owner.t .getPtr())
@@ -930,8 +947,7 @@ public:
 		reset();
 		if ( iWasOnStack )
 		{
-			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 		}
 		else
 			if ( owner.t .getPtr())
@@ -948,8 +964,7 @@ public:
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -968,8 +983,7 @@ public:
 		reset();
 		if ( iWasOnStack )
 		{
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 		}
 		else
 			if ( other.getAllocatedPtr() )
@@ -984,8 +998,7 @@ public:
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -1003,8 +1016,7 @@ public:
 		reset();
 		if ( iWasOnStack )
 		{
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 		}
 		else
 			if ( other.getAllocatedPtr() )
@@ -1023,12 +1035,11 @@ public:
 		bool otherOnStack = other.isOnStack();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 			if ( other.getIdx_() != PointersT::max_data )
 				other.getControlBlock()->remove(other.getIdx_());
-			other.pointers.init(PointersT::max_data);
+			other.init(PointersT::max_data);
 			if ( otherOnStack)
 				other.setOnStack();
 		}
@@ -1040,7 +1051,7 @@ public:
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 				else
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-				other.pointers.init(PointersT::max_data);
+				other.init(PointersT::max_data);
 				other.setOnStack();
 			}
 			else
@@ -1048,7 +1059,7 @@ public:
 				pointers = other.pointers;
 				if ( other.getDereferencablePtr() )
 					getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
-				other.pointers.init(PointersT::max_data);
+				other.init(PointersT::max_data);
 			}
 		}
 		other.dbgCheckMySlotConsistency();
@@ -1066,18 +1077,17 @@ public:
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
 			if ( other.isOnStack() )
 			{
-				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-				other.pointers.init( PointersT::max_data );
+				initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
+				other.init( PointersT::max_data );
 				other.setOnStack();
 			}
 			else
 			{
-				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 				if ( other.getIdx_() != PointersT::max_data )
 					other.getControlBlock()->remove(other.getIdx_());
-				other.pointers.init( PointersT::max_data );
+				other.init( PointersT::max_data );
 			}
-			setOnStack();
 		}
 		else
 		{
@@ -1087,7 +1097,7 @@ public:
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 				else
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-				other.pointers.init( PointersT::max_data );
+				other.init( PointersT::max_data );
 				other.setOnStack();
 			}
 			else
@@ -1095,7 +1105,7 @@ public:
 				pointers = other.pointers;
 				if ( getIdx_() != PointersT::max_data )
 					getControlBlock()->resetPtr(getIdx_(), this);
-				other.pointers.init( PointersT::max_data );
+				other.init( PointersT::max_data );
 			}
 		}
 		other.dbgCheckMySlotConsistency();
@@ -1110,8 +1120,7 @@ public:
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -1127,8 +1136,7 @@ public:
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -1146,8 +1154,7 @@ public:
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( t_, other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -1164,8 +1171,7 @@ public:
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-			setOnStack();
+			initOnStack( t_, other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
@@ -1221,9 +1227,9 @@ public:
 					getControlBlock()->remove(getIdx_());
 				}
 				setOnStack();
-				pointers.set_data( PointersT::max_data );
+				setIdx_( PointersT::max_data );
 				if ( other.getDereferencablePtr() )
-					other.pointers.set_data( getControlBlock(other.getAllocatedPtr())->insert(&other) );
+					other.setIdx_( getControlBlock(other.getAllocatedPtr())->insert(&other) );
 				else
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.getIdx_() == PointersT::max_data );
 				other.setNotOnStack();
@@ -1234,14 +1240,14 @@ public:
 			if ( otherWasOnStack )
 			{
 				if ( getDereferencablePtr() )
-					pointers.set_data( getControlBlock(getAllocatedPtr())->insert(this) );
+					setIdx_( getControlBlock(getAllocatedPtr())->insert(this) );
 				else
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() == PointersT::max_data );
 				setNotOnStack();
 				if ( other.getIdx_() != PointersT::max_data )
 				{
 					getControlBlock(other.getAllocatedPtr())->remove(other.getIdx_());
-					other.pointers.set_data( PointersT::max_data );
+					other.setIdx_( PointersT::max_data );
 				}
 				other.setOnStack();
 			}
@@ -1356,15 +1362,15 @@ class soft_ptr<void, true>
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,2>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,2>; 
 #endif
 #else
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,2>; 
 #else
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,2>; 
 #endif
 #endif // SAFE_PTR_DEBUG_MODE
 	PointersT pointers;
@@ -1375,9 +1381,9 @@ class soft_ptr<void, true>
 	void init( void* ptr, T1* allocptr, size_t data ) { pointers.init( ptr, allocptr, data ); }
 
 	void invalidatePtr() { pointers.set_ptr(nullptr); pointers.set_allocated_ptr(nullptr); pointers.set_data(PointersT::max_data); }
-	void setOnStack() { pointers.set_flag<0>(); }
-	void setNotOnStack() { pointers.unset_flag<0>(); }
-	bool isOnStack() { return pointers.has_flag<0>(); }
+	void setOnStack() { pointers.set_flag<1>(); }
+	void setNotOnStack() { pointers.unset_flag<1>(); }
+	bool isOnStack() { return pointers.has_flag<1>(); }
 
 	size_t getIdx_() const { return pointers.get_data(); }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(getAllocatedPtr()); }
