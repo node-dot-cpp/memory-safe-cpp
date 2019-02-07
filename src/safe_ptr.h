@@ -642,9 +642,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			updatePtrForListItemsWithInvalidPtr();
-			destruct( t.getPtr() );
+			destruct( t.getTypedPtr() );
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
+			t.setPtr( nullptr );
 		}
 		dbgCheckValidity();
 	}
