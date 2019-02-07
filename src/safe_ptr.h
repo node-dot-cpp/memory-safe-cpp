@@ -917,7 +917,7 @@ public:
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}
-	soft_ptr_core( const owning_ptr<T, isSafe>& owner )
+	/*soft_ptr_core( const owning_ptr<T, isSafe>& owner )
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -930,7 +930,7 @@ public:
 			else
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
-	}
+	}*/
 	template<class T1>
 	soft_ptr_core<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
@@ -948,7 +948,7 @@ public:
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
-	soft_ptr_core<T>& operator = ( const owning_ptr<T, isSafe>& owner )
+	/*soft_ptr_core<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
 		bool iWasOnStack = isOnStack();
 		reset();
@@ -963,7 +963,7 @@ public:
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 		return *this;
-	}
+	}*/
 
 
 	template<class T1>
@@ -985,7 +985,7 @@ public:
 	template<class T1>
 	soft_ptr_core<T>& operator = ( const soft_ptr_core<T1, isSafe>& other )
 	{
-		if ( this == &other ) return *this;
+		//if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -1137,7 +1137,7 @@ public:
 				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}
-	soft_ptr_core( const owning_ptr<T, isSafe>& owner, T* t_ )
+	/*soft_ptr_core( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1152,7 +1152,7 @@ public:
 			else
 				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
-	}
+	}*/
 
 	template<class T1>
 	soft_ptr_core( const soft_ptr_core<T1, isSafe>& other, T* t_ )
@@ -1481,20 +1481,20 @@ public:
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}*/
-	soft_ptr( const owning_ptr<T, isSafe>& owner ) : soft_ptr_core<T, isSafe>(owner) {}
-	/*{
+	soft_ptr( const owning_ptr<T, isSafe>& owner )
+	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		else
 			if ( owner.t .getPtr())
-				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
-				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		dbgCheckMySlotConsistency();
-	}*/
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_core<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
+		this->dbgCheckMySlotConsistency();
+	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
@@ -1516,21 +1516,19 @@ public:
 	}
 	soft_ptr<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
-		soft_ptr_core<T, isSafe>::operator = (owner);
-		return *this;
-		/*bool iWasOnStack = isOnStack();
+		bool iWasOnStack = this->isOnStack();
 		reset();
 		if ( iWasOnStack )
 		{
-			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 		}
 		else
 			if ( owner.t .getPtr())
-				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
-				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		dbgCheckMySlotConsistency();
-		return *this;*/
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_core<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
+		this->dbgCheckMySlotConsistency();
+		return *this;
 	}
 
 
@@ -1709,8 +1707,8 @@ public:
 				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}*/
-	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ ) : soft_ptr_core<T, isSafe>(owner, t_) {}
-	/*{
+	soft_ptr( const owning_ptr<T, isSafe>& owner, T* t_ )
+	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1723,8 +1721,8 @@ public:
 				init( t_, owner.t.getPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		dbgCheckMySlotConsistency();
-	}*/
+		this->dbgCheckMySlotConsistency();
+	}
 
 	template<class T1>
 	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ ) : soft_ptr_core<T, isSafe>(other, t_) {}
@@ -2022,7 +2020,7 @@ public:
 	template<class T1>
 	soft_ptr<void>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-		soft_ptr_core<void, isSafe>::operator = (other);
+		soft_ptr_core<void, isSafe>::operator = (owner);
 		return *this;
 		/*bool iWasOnStack = isOnStack();
 		reset();
