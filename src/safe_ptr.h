@@ -505,6 +505,7 @@ class owning_ptr
 		bool isZombie() const { return has_flag<0>(); }
 	};
 #else
+#if 0
 	struct ObjectPointer {
 		void* ptr;
 	public:
@@ -516,8 +517,18 @@ class owning_ptr
 		void setZombie() { setPtr( nullptr ); }
 		bool isZombie() const { return false; }
 	};
+#else
+	struct ObjectPointer : public nodecpp::platform::ptr_with_zombie_property {
+	public:
+		void setPtr( void* ptr_ ) { nodecpp::platform::ptr_with_zombie_property::init(ptr_); }
+		void setTypedPtr( T* ptr_ ) { nodecpp::platform::ptr_with_zombie_property::init(ptr_); }
+		void* getPtr() const { return nodecpp::platform::ptr_with_zombie_property::get_ptr(); }
+		TT* getTypedPtr() const { return reinterpret_cast<TT*>( nodecpp::platform::ptr_with_zombie_property::get_ptr() ); }
+		void setZombie() { nodecpp::platform::ptr_with_zombie_property::set_zombie(); }
+		//bool isZombie() const { return nodecpp::platform::ptr_with_zombie_property::is_sombie(); }
+	};
 #endif
-	static_assert( sizeof(ObjectPointer<void>) == sizeof(void*) );
+#endif
 
 	ObjectPointer<T> t; // the only data member!
 
