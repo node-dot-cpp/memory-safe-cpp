@@ -494,6 +494,7 @@ class owning_ptr
 	friend class soft_ptr;
 
 	template<class TT>
+#if 0
 	struct ObjectPointer : public nodecpp::platform::allocated_ptr_with_flags<1> {
 	public:
 		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
@@ -503,6 +504,19 @@ class owning_ptr
 		void setZombie() { setPtr( nullptr ); set_flag<0>(); }
 		bool isZombie() const { return has_flag<0>(); }
 	};
+#else
+	struct ObjectPointer {
+		void* ptr;
+	public:
+		void init( void* ptr_ ) { ptr = ptr_; }
+		void setPtr( void* ptr_ ) { ptr = ptr_; }
+		void setTypedPtr( T* ptr_ ) { ptr = ptr_; }
+		void* getPtr() const { return ptr; }
+		TT* getTypedPtr() const { return reinterpret_cast<TT*>( ptr ); }
+		void setZombie() { setPtr( nullptr ); }
+		bool isZombie() const { return false; }
+	};
+#endif
 	static_assert( sizeof(ObjectPointer<void>) == sizeof(void*) );
 
 	ObjectPointer<T> t; // the only data member!
@@ -890,8 +904,8 @@ public:
 	void dbgCheckMySlotConsistency() const {}
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 
-	soft_ptr_core()
-	{
+	soft_ptr_core() {}
+	/*{
 		init( PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -899,7 +913,7 @@ public:
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
 		dbgCheckMySlotConsistency();
-	}
+	}*/
 
 
 	template<class T1>
@@ -1454,16 +1468,16 @@ public:
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 #endif // 0
 
-	soft_ptr() : soft_ptr_core<T, isSafe>() {}
-	/*{
-		init( PointersT::max_data );
+	soft_ptr() : soft_ptr_core<T, isSafe>()
+	{
+		this->init( soft_ptr_core<T, isSafe>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			setOnStack();
+			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
-		dbgCheckMySlotConsistency();
-	}*/
+		this->dbgCheckMySlotConsistency();
+	}
 
 
 	template<class T1>
@@ -1989,16 +2003,16 @@ public:
 	void dbgCheckMySlotConsistency() const {}
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 #endif // 0
-	soft_ptr() : soft_ptr_core<void, isSafe>() {}
-	/*{
-		pointers.init( PointersT::max_data );
+	soft_ptr() : soft_ptr_core<void, isSafe>()
+	{
+		pointers.init( soft_ptr_core<void, isSafe>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
-			setOnStack();
+			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
 		}
-		dbgCheckMySlotConsistency();
-	}*/
+		this->dbgCheckMySlotConsistency();
+	}
 
 
 	template<class T1>
