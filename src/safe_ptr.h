@@ -1609,7 +1609,7 @@ public:
 	}
 
 
-	soft_ptr( soft_ptr<T, isSafe>&& other ) : soft_ptr_core<T, isSafe>(other) {}
+	soft_ptr( soft_ptr<T, isSafe>&& other ) : soft_ptr_core<T, isSafe>( std::move(other) ) {}
 	/*{
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
@@ -1648,7 +1648,7 @@ public:
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
-		soft_ptr_core<T, isSafe>::operator = (other);
+		soft_ptr_core<T, isSafe>::operator = ( std::move(other) );
 		return *this;
 /*		// TODO+++: revise
 		if ( this == &other ) return *this;
@@ -2126,7 +2126,7 @@ public:
 	}
 
 
-	soft_ptr( soft_ptr<void, isSafe>&& other ) : soft_ptr_core<void, isSafe>( other ) {}
+	soft_ptr( soft_ptr<void, isSafe>&& other ) : soft_ptr_core<void, isSafe>(  std::move(other)  ) {}
 	/*{
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
@@ -2166,7 +2166,7 @@ public:
 
 	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>&& other )
 	{
-		soft_ptr_core<void, isSafe>::operator = (other);
+		soft_ptr_core<void, isSafe>::operator = ( std::move(other) );
 		return *this;
 /*		// TODO+++: revise
 		if ( this == &other ) return *this;
