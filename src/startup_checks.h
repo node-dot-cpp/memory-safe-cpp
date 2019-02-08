@@ -135,9 +135,9 @@ namespace dummy_objects {
 		uint64_t sn3; 
 		soft_ptr<uint32_t> spLarge;
 		owning_ptr<uint32_t> opLarge;
-		SomeWithSafePointers() { 
+		SomeWithSafePointers( owning_ptr<uint32_t>& somePtr ) { 
 			opLarge = make_owning<uint32_t>(17);
-			spLarge = opLarge;
+			spLarge = somePtr;
 		}
 		int doSmthSome() override { return 0x4; } 
 		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); 
@@ -248,26 +248,38 @@ class StartupChecker
 		dummy_objects::PRNG rng(rngSeed);
 		uint64_t rngCheckVal = rng.rng64();
 
-		owning_ptr<T> TPtr = make_owning<T>(); // create an object
+		owning_ptr<uint32_t> someOwningPtr = make_owning<uint32_t>();
+
+		owning_ptr<T> TPtr = make_owning<T>(someOwningPtr); // create an object
 		TPtr->init(rngCheckVal);
 		typename T::MyNonPointerMembers iniData = TPtr->getMyNonPointerMembers();
 
-		T* rawTPtr = &(*TPtr);
-		soft_ptr<T> softTPtr = TPtr;
-
+		// assume that a raw pointer is somehow obtained ...
+		T* rawTPtr = &(*TPtr); 
+		// ... cause object destruction ...
 		TPtr.reset();
+		// ... and let's see, what can be done with a zombie object pointed by it:
 
+		// supposedly, the same state of memory
 		typename T::MyNonPointerMembers postDtorData = rawTPtr->getMyNonPointerMembers();
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, iniData == postDtorData );
 
-		softTPtr->doSmthSome();
-		
-		owning_ptr<uint32_t> opTarget( std::move( softTPtr->opLarge ) );
+		// safe attempt to call a virtual member function
+		rawTPtr->doSmthSome();
+
+		bool testOK = true;
+
+		// exception while trying to move a member owning pointer
+		owning_ptr<uint32_t> opTarget;
+		try { opTarget = std::move( rawTPtr->opLarge ); testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, opTarget == nullptr );
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, softTPtr->opLarge == nullptr );
-		soft_ptr<uint32_t> spTarget( std::move( softTPtr->spLarge ) );
+
+		// exception while trying to move a member soft pointer
+		soft_ptr<uint32_t> spTarget;
+		try { spTarget = std::move( rawTPtr->spLarge ); testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, spTarget == nullptr );
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, softTPtr->spLarge == nullptr );
 	}
 
 public:
