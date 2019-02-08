@@ -493,43 +493,21 @@ class owning_ptr
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_ptr_with_zombie_property_; 
+#else
+	using base_pointer_t = nodecpp::platform::ptr_with_zombie_property; 
+#endif // SAFE_PTR_DEBUG_MODE
 	template<class TT>
-#if 0
-	struct ObjectPointer : public nodecpp::platform::allocated_ptr_with_flags<1> {
+	struct ObjectPointer : base_pointer_t {
 	public:
-		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
-		void setTypedPtr( T* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<1>::init(ptr_); }
-		void* getPtr() const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !isZombie() ); return nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr(); }
-		TT* getTypedPtr() const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !isZombie() ); return reinterpret_cast<TT*>( nodecpp::platform::allocated_ptr_with_flags<1>::get_ptr() ); }
-		void setZombie() { setPtr( nullptr ); set_flag<0>(); }
-		bool isZombie() const { return has_flag<0>(); }
+		void setPtr( void* ptr_ ) { base_pointer_t::init(ptr_); }
+		void setTypedPtr( T* ptr_ ) { base_pointer_t::init(ptr_); }
+		void* getPtr() const { return base_pointer_t::get_ptr(); }
+		TT* getTypedPtr() const { return reinterpret_cast<TT*>( base_pointer_t::get_ptr() ); }
+		void setZombie() { base_pointer_t::set_zombie(); }
+		//bool isZombie() const { return base_pointer_t::is_sombie(); }
 	};
-#else
-#if 0
-	struct ObjectPointer {
-		void* ptr;
-	public:
-		void init( void* ptr_ ) { ptr = ptr_; }
-		void setPtr( void* ptr_ ) { ptr = ptr_; }
-		void setTypedPtr( T* ptr_ ) { ptr = ptr_; }
-		void* getPtr() const { return ptr; }
-		TT* getTypedPtr() const { return reinterpret_cast<TT*>( ptr ); }
-		void setZombie() { setPtr( nullptr ); }
-		bool isZombie() const { return false; }
-	};
-#else
-	struct ObjectPointer : public nodecpp::platform::ptr_with_zombie_property {
-	public:
-		void setPtr( void* ptr_ ) { nodecpp::platform::ptr_with_zombie_property::init(ptr_); }
-		void setTypedPtr( T* ptr_ ) { nodecpp::platform::ptr_with_zombie_property::init(ptr_); }
-		void* getPtr() const { return nodecpp::platform::ptr_with_zombie_property::get_ptr(); }
-		TT* getTypedPtr() const { return reinterpret_cast<TT*>( nodecpp::platform::ptr_with_zombie_property::get_ptr() ); }
-		void setZombie() { nodecpp::platform::ptr_with_zombie_property::set_zombie(); }
-		//bool isZombie() const { return nodecpp::platform::ptr_with_zombie_property::is_sombie(); }
-	};
-#endif
-#endif
-
 	ObjectPointer<T> t; // the only data member!
 
 	FirstControlBlock* getControlBlock() { return getControlBlock_(t.getPtr()); }
