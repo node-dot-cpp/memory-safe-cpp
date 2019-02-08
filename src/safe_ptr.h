@@ -173,7 +173,7 @@ void throwPointerOutOfRange()
 
 //static_assert( sizeof(void*) == 8 );
 
-template<class T, bool isSafe> class soft_ptr_core; // forward declaration
+template<class T, bool isSafe> class soft_ptr_base; // forward declaration
 template<class T, bool isSafe> class soft_ptr; // forward declaration
 template<class T, bool isSafe> class naked_ptr; // forward declaration
 class soft_this_ptr; // forward declaration
@@ -489,7 +489,7 @@ class owning_ptr
 	template<class TT, bool isSafe1>
 	friend class owning_ptr;
 	template<class TT, bool isSafe1>
-	friend class soft_ptr_core;
+	friend class soft_ptr_base;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
@@ -785,13 +785,13 @@ extern thread_local size_t onStackSafePtrDestructionCount;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
-class soft_ptr_core
+class soft_ptr_base
 {
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class owning_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class soft_ptr_core;
+	friend class soft_ptr_base;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 	/*template<class TT, class TT1, bool isSafe1>
@@ -865,7 +865,7 @@ protected:
 	template<class TT>
 	friend soft_ptr<TT> soft_ptr_in_constructor(TT* ptr);
 	friend soft_ptr<T> soft_ptr_in_constructor(T* ptr);*/
-	soft_ptr_core(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_base(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -895,7 +895,7 @@ public:
 	void dbgCheckMySlotConsistency() const {}
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 
-	soft_ptr_core() {}
+	soft_ptr_base() {}
 	/*{
 		init( PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -908,7 +908,7 @@ public:
 
 
 	template<class T1>
-	soft_ptr_core( const owning_ptr<T1, isSafe>& owner )
+	soft_ptr_base( const owning_ptr<T1, isSafe>& owner )
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -922,7 +922,7 @@ public:
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}
-	/*soft_ptr_core( const owning_ptr<T, isSafe>& owner )
+	/*soft_ptr_base( const owning_ptr<T, isSafe>& owner )
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -937,7 +937,7 @@ public:
 		dbgCheckMySlotConsistency();
 	}*/
 	template<class T1>
-	soft_ptr_core<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
+	soft_ptr_base<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
 		bool iWasOnStack = isOnStack();
 		reset();
@@ -953,7 +953,7 @@ public:
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
-	/*soft_ptr_core<T>& operator = ( const owning_ptr<T, isSafe>& owner )
+	/*soft_ptr_base<T>& operator = ( const owning_ptr<T, isSafe>& owner )
 	{
 		bool iWasOnStack = isOnStack();
 		reset();
@@ -972,7 +972,7 @@ public:
 
 
 	template<class T1>
-	soft_ptr_core( const soft_ptr_core<T1, isSafe>& other )
+	soft_ptr_base( const soft_ptr_base<T1, isSafe>& other )
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -988,7 +988,7 @@ public:
 		dbgCheckMySlotConsistency();
 	}
 	template<class T1>
-	soft_ptr_core<T>& operator = ( const soft_ptr_core<T1, isSafe>& other )
+	soft_ptr_base<T>& operator = ( const soft_ptr_base<T1, isSafe>& other )
 	{
 		//if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -1006,7 +1006,7 @@ public:
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
-	soft_ptr_core( const soft_ptr_core<T, isSafe>& other )
+	soft_ptr_base( const soft_ptr_base<T, isSafe>& other )
 	{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1021,7 +1021,7 @@ public:
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
-	soft_ptr_core<T>& operator = ( soft_ptr_core<T, isSafe>& other )
+	soft_ptr_base<T>& operator = ( soft_ptr_base<T, isSafe>& other )
 	{
 		if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -1041,7 +1041,7 @@ public:
 	}
 
 
-	soft_ptr_core( soft_ptr_core<T, isSafe>&& other )
+	soft_ptr_base( soft_ptr_base<T, isSafe>&& other )
 	{
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
@@ -1078,7 +1078,7 @@ public:
 		dbgCheckMySlotConsistency();
 	}
 
-	soft_ptr_core<T>& operator = ( soft_ptr_core<T, isSafe>&& other )
+	soft_ptr_base<T>& operator = ( soft_ptr_base<T, isSafe>&& other )
 	{
 		// TODO+++: revise
 		if ( this == &other ) return *this;
@@ -1126,7 +1126,7 @@ public:
 	}
 
 	template<class T1>
-	soft_ptr_core( const owning_ptr<T1, isSafe>& owner, T* t_ )
+	soft_ptr_base( const owning_ptr<T1, isSafe>& owner, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1142,7 +1142,7 @@ public:
 				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		dbgCheckMySlotConsistency();
 	}
-	/*soft_ptr_core( const owning_ptr<T, isSafe>& owner, T* t_ )
+	/*soft_ptr_base( const owning_ptr<T, isSafe>& owner, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1160,7 +1160,7 @@ public:
 	}*/
 
 	template<class T1>
-	soft_ptr_core( const soft_ptr_core<T1, isSafe>& other, T* t_ )
+	soft_ptr_base( const soft_ptr_base<T1, isSafe>& other, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1177,7 +1177,7 @@ public:
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
-	soft_ptr_core( const soft_ptr_core<T, isSafe>& other, T* t_ )
+	soft_ptr_base( const soft_ptr_base<T, isSafe>& other, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1216,7 +1216,7 @@ public:
 		dbgCheckMySlotConsistency();
 	}*/
 
-	void swap( soft_ptr_core<T, isSafe>& other )
+	void swap( soft_ptr_base<T, isSafe>& other )
 	{
 		bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
@@ -1316,22 +1316,22 @@ public:
 	template<class T1, bool isSafe1> 
 	bool operator == (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() == other.t.getTypedPtr(); }
 
-	bool operator == (const soft_ptr_core<T, isSafe>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+	bool operator == (const soft_ptr_base<T, isSafe>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
-	bool operator == (const soft_ptr_core<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
+	bool operator == (const soft_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
 
 	bool operator != (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1, bool isSafe1> 
 	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 
-	bool operator != (const soft_ptr_core<T, isSafe>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
+	bool operator != (const soft_ptr_base<T, isSafe>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
-	bool operator != (const soft_ptr_core<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
+	bool operator != (const soft_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() != nullptr; }
 
-	~soft_ptr_core()
+	~soft_ptr_base()
 	{
 		dbgCheckMySlotConsistency();
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
@@ -1350,7 +1350,7 @@ public:
 };
 
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
-class soft_ptr : public soft_ptr_core<T, isSafe>
+class soft_ptr : public soft_ptr_base<T, isSafe>
 {
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
@@ -1358,7 +1358,7 @@ class soft_ptr : public soft_ptr_core<T, isSafe>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 	template<class TT, bool isSafe1>
-	friend class soft_ptr_core;
+	friend class soft_ptr_base;
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
 	template<class TT, class TT1>
@@ -1427,7 +1427,7 @@ private:
 	template<class TT>
 	friend soft_ptr<TT> soft_ptr_in_constructor(TT* ptr);
 	friend soft_ptr<T> soft_ptr_in_constructor(T* ptr);
-	soft_ptr(FirstControlBlock* cb, T* t) : soft_ptr_core<T, isSafe>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr(FirstControlBlock* cb, T* t) : soft_ptr_base<T, isSafe>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 	/*{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1459,9 +1459,9 @@ public:
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 #endif // 0
 
-	soft_ptr() : soft_ptr_core<T, isSafe>()
+	soft_ptr() : soft_ptr_base<T, isSafe>()
 	{
-		this->init( soft_ptr_core<T, isSafe>::PointersT::max_data );
+		this->init( soft_ptr_base<T, isSafe>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			this->setOnStack();
@@ -1472,7 +1472,7 @@ public:
 
 
 	template<class T1>
-	soft_ptr( const owning_ptr<T1, isSafe>& owner ) : soft_ptr_core<T, isSafe>(owner) {}
+	soft_ptr( const owning_ptr<T1, isSafe>& owner ) : soft_ptr_base<T, isSafe>(owner) {}
 	/*{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1497,13 +1497,13 @@ public:
 			if ( owner.t .getPtr())
 				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_core<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
 		this->dbgCheckMySlotConsistency();
 	}
 	template<class T1>
 	soft_ptr<T>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-		soft_ptr_core<T, isSafe>::operator = (owner);
+		soft_ptr_base<T, isSafe>::operator = (owner);
 		return *this;
 		/*bool iWasOnStack = isOnStack();
 		reset();
@@ -1531,14 +1531,14 @@ public:
 			if ( owner.t .getPtr())
 				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_core<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base<T, isSafe>::PointersT::max_data ); // automatic type conversion (if at all possible)
 		this->dbgCheckMySlotConsistency();
 		return *this;
 	}
 
 
 	template<class T1>
-	soft_ptr( const soft_ptr<T1, isSafe>& other ) : soft_ptr_core<T, isSafe>(other) {}
+	soft_ptr( const soft_ptr<T1, isSafe>& other ) : soft_ptr_base<T, isSafe>(other) {}
 	/*{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1554,7 +1554,7 @@ public:
 		dbgCheckMySlotConsistency();
 	}*/
 	template<class T1>
-	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other ) : soft_ptr_core<T, isSafe>(other) {}
+	soft_ptr<T>& operator = ( const soft_ptr<T1, isSafe>& other ) : soft_ptr_base<T, isSafe>(other) {}
 	/*{
 		if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -1572,7 +1572,7 @@ public:
 		dbgCheckMySlotConsistency();
 		return *this;
 	}*/
-	soft_ptr( const soft_ptr<T, isSafe>& other ) : soft_ptr_core<T, isSafe>(other) {}
+	soft_ptr( const soft_ptr<T, isSafe>& other ) : soft_ptr_base<T, isSafe>(other) {}
 	/*{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -1589,7 +1589,7 @@ public:
 	}*/
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>& other )
 	{
-		soft_ptr_core<T, isSafe>::operator = (other);
+		soft_ptr_base<T, isSafe>::operator = (other);
 		return *this;
 		/*if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -1609,7 +1609,7 @@ public:
 	}
 
 
-	soft_ptr( soft_ptr<T, isSafe>&& other ) : soft_ptr_core<T, isSafe>( std::move(other) ) {}
+	soft_ptr( soft_ptr<T, isSafe>&& other ) : soft_ptr_base<T, isSafe>( std::move(other) ) {}
 	/*{
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
@@ -1648,7 +1648,7 @@ public:
 
 	soft_ptr<T>& operator = ( soft_ptr<T, isSafe>&& other )
 	{
-		soft_ptr_core<T, isSafe>::operator = ( std::move(other) );
+		soft_ptr_base<T, isSafe>::operator = ( std::move(other) );
 		return *this;
 /*		// TODO+++: revise
 		if ( this == &other ) return *this;
@@ -1696,7 +1696,7 @@ public:
 	}
 
 	template<class T1>
-	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ ) : soft_ptr_core<T, isSafe>(owner, t_) {}
+	soft_ptr( const owning_ptr<T1, isSafe>& owner, T* t_ ) : soft_ptr_base<T, isSafe>(owner, t_) {}
 	/*{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1730,7 +1730,7 @@ public:
 	}
 
 	template<class T1>
-	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ ) : soft_ptr_core<T, isSafe>(other, t_) {}
+	soft_ptr( const soft_ptr<T1, isSafe>& other, T* t_ ) : soft_ptr_base<T, isSafe>(other, t_) {}
 	/*{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1747,7 +1747,7 @@ public:
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}*/
-	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ ) : soft_ptr_core<T, isSafe>(other, t_) {}
+	soft_ptr( const soft_ptr<T, isSafe>& other, T* t_ ) : soft_ptr_base<T, isSafe>(other, t_) {}
 	/*{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
@@ -1788,7 +1788,7 @@ public:
 
 	void swap( soft_ptr<T, isSafe>& other )
 	{
-		soft_ptr_core<T, isSafe>::swap(other);
+		soft_ptr_base<T, isSafe>::swap(other);
 		/*bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
 		auto tmp = pointers;
@@ -1848,7 +1848,7 @@ public:
 
 	naked_ptr<T, isSafe> get() const
 	{
-		return soft_ptr_core<T, isSafe>::get();
+		return soft_ptr_base<T, isSafe>::get();
 		/*NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getDereferencablePtr() != nullptr );
 		naked_ptr<T, isSafe> ret;
 		ret.t = getDereferencablePtr();
@@ -1876,7 +1876,7 @@ public:
 
 	void reset()
 	{
-		soft_ptr_core<T, isSafe>::reset();
+		soft_ptr_base<T, isSafe>::reset();
 		/*if( getDereferencablePtr() != nullptr ) {
 			if ( getIdx_() != PointersT::max_data )
 				getControlBlock()->remove(getIdx_());
@@ -1923,7 +1923,7 @@ public:
 };
 
 template<>
-class soft_ptr<void, true> : public soft_ptr_core<void, true>
+class soft_ptr<void, true> : public soft_ptr_base<void, true>
 {
 	static constexpr bool isSafe = true;
 //	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
@@ -1931,7 +1931,7 @@ class soft_ptr<void, true> : public soft_ptr_core<void, true>
 	template<class TT, bool isSafe1>
 	friend class owning_ptr;
 	template<class TT, bool isSafe1>
-	friend class soft_ptr_core;
+	friend class soft_ptr_base;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 	template<class TT, class TT1, bool isSafe1>
@@ -1994,9 +1994,9 @@ public:
 	void dbgCheckMySlotConsistency() const {}
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 #endif // 0
-	soft_ptr() : soft_ptr_core<void, isSafe>()
+	soft_ptr() : soft_ptr_base<void, isSafe>()
 	{
-		pointers.init( soft_ptr_core<void, isSafe>::PointersT::max_data );
+		pointers.init( soft_ptr_base<void, isSafe>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
 			this->setOnStack();
@@ -2007,7 +2007,7 @@ public:
 
 
 	template<class T1>
-	soft_ptr( const owning_ptr<T1, isSafe>& owner ) : soft_ptr_core<void, isSafe>(owner) {}
+	soft_ptr( const owning_ptr<T1, isSafe>& owner ) : soft_ptr_base<void, isSafe>(owner) {}
 	/*{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -2025,7 +2025,7 @@ public:
 	template<class T1>
 	soft_ptr<void>& operator = ( const owning_ptr<T1, isSafe>& owner )
 	{
-		soft_ptr_core<void, isSafe>::operator = (owner);
+		soft_ptr_base<void, isSafe>::operator = (owner);
 		return *this;
 		/*bool iWasOnStack = isOnStack();
 		reset();
@@ -2045,7 +2045,7 @@ public:
 
 
 	template<class T1>
-	soft_ptr( const soft_ptr<T1, isSafe>& other ) : soft_ptr_core<void, isSafe>( other ) {}
+	soft_ptr( const soft_ptr<T1, isSafe>& other ) : soft_ptr_base<void, isSafe>( other ) {}
 	/*{
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
 		{
@@ -2064,7 +2064,7 @@ public:
 	template<class T1>
 	soft_ptr<void>& operator = ( const soft_ptr<T1, isSafe>& other )
 	{
-		soft_ptr_core<void, isSafe>::operator = (other);
+		soft_ptr_base<void, isSafe>::operator = (other);
 		return *this;
 		/*getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		bool iWasOnStack = isOnStack();
@@ -2084,7 +2084,7 @@ public:
 		dbgCheckMySlotConsistency();
 		return *this;*/
 	}
-	soft_ptr( const soft_ptr<void, isSafe>& other ) : soft_ptr_core<void, isSafe>( other ) {}
+	soft_ptr( const soft_ptr<void, isSafe>& other ) : soft_ptr_base<void, isSafe>( other ) {}
 	/*{
 		other.getControlBlock(other.getAllocatedPtr())->template dbgCheckValidity<void, isSafe>();
 		other.dbgCheckMySlotConsistency();
@@ -2105,7 +2105,7 @@ public:
 	}*/
 	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>& other )
 	{
-		soft_ptr_core<void, isSafe>::operator = (other);
+		soft_ptr_base<void, isSafe>::operator = (other);
 		return *this;
 		/*if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -2126,7 +2126,7 @@ public:
 	}
 
 
-	soft_ptr( soft_ptr<void, isSafe>&& other ) : soft_ptr_core<void, isSafe>(  std::move(other)  ) {}
+	soft_ptr( soft_ptr<void, isSafe>&& other ) : soft_ptr_base<void, isSafe>(  std::move(other)  ) {}
 	/*{
 		if ( this == &other ) return;
 		bool otherOnStack = other.isOnStack();
@@ -2166,7 +2166,7 @@ public:
 
 	soft_ptr<void>& operator = ( soft_ptr<void, isSafe>&& other )
 	{
-		soft_ptr_core<void, isSafe>::operator = ( std::move(other) );
+		soft_ptr_base<void, isSafe>::operator = ( std::move(other) );
 		return *this;
 /*		// TODO+++: revise
 		if ( this == &other ) return *this;
@@ -2216,7 +2216,7 @@ public:
 
 	void swap( soft_ptr<void, isSafe>& other )
 	{
-		soft_ptr_core<void, isSafe>::swap( other );
+		soft_ptr_base<void, isSafe>::swap( other );
 		/*bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
 		auto tmp = pointers;
@@ -2298,7 +2298,7 @@ public:
 
 	void reset()
 	{
-		soft_ptr_core<void, isSafe>::reset();
+		soft_ptr_base<void, isSafe>::reset();
 		/*if( getDereferencablePtr() != nullptr ) {
 			if ( getIdx_() != PointersT::max_data )
 				getControlBlock()->remove(getIdx_());
@@ -2478,9 +2478,9 @@ template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
 class naked_ptr
 {
 	friend class owning_ptr<T, isSafe>;
-	friend class soft_ptr_core<T, isSafe>;
+	friend class soft_ptr_base<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class soft_ptr_core;
+	friend class soft_ptr_base;
 	friend class soft_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class owning_ptr;
