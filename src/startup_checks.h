@@ -130,14 +130,19 @@ namespace dummy_objects {
 		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
 	};
 
+	struct JustDummyStruct {
+		uint32_t n1;
+		uint32_t n2;
+	};
+
 	class SomeWithSafePointers : public Some { 
 	public: 
 		uint64_t sn3; 
-		soft_ptr<uint32_t> spLarge;
-		owning_ptr<uint32_t> opLarge;
-		SomeWithSafePointers( owning_ptr<uint32_t>& somePtr ) { 
-			opLarge = make_owning<uint32_t>(17);
-			spLarge = somePtr;
+		soft_ptr<JustDummyStruct> spDummy;
+		owning_ptr<JustDummyStruct> opDummy;
+		SomeWithSafePointers( owning_ptr<JustDummyStruct>& somePtr ) { 
+			opDummy = make_owning<JustDummyStruct>();
+			spDummy = somePtr;
 		}
 		int doSmthSome() override { return 0x4; } 
 		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); 
@@ -161,7 +166,7 @@ namespace dummy_objects {
 			return ret;
 		}
 	};
-	static_assert( sizeof(SomeWithSafePointers::MyNonPointerMembers) + sizeof(SomeWithSafePointers::spLarge) + sizeof(SomeWithSafePointers::opLarge) + sizeof(void*) == sizeof(SomeWithSafePointers) );
+	static_assert( sizeof(SomeWithSafePointers::MyNonPointerMembers) + sizeof(SomeWithSafePointers::spDummy) + sizeof(SomeWithSafePointers::opDummy) + sizeof(void*) == sizeof(SomeWithSafePointers) );
 
 
 } // namespace dummy_objects
@@ -248,7 +253,7 @@ class StartupChecker
 		dummy_objects::PRNG rng(rngSeed);
 		uint64_t rngCheckVal = rng.rng64();
 
-		owning_ptr<uint32_t> someOwningPtr = make_owning<uint32_t>();
+		owning_ptr<dummy_objects::JustDummyStruct> someOwningPtr = make_owning<dummy_objects::JustDummyStruct>();
 
 		owning_ptr<T> TPtr = make_owning<T>(someOwningPtr); // create an object
 		TPtr->init(rngCheckVal);
@@ -270,16 +275,26 @@ class StartupChecker
 		bool testOK = true;
 
 		// exception while trying to move a member owning pointer
-		owning_ptr<uint32_t> opTarget;
-		try { opTarget = std::move( rawTPtr->opLarge ); testOK = false; } catch(...) {}
+		owning_ptr<dummy_objects::JustDummyStruct> opTarget;
+		try { opTarget = std::move( rawTPtr->opDummy ); testOK = false; } catch(...) {}
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, opTarget == nullptr );
 
 		// exception while trying to move a member soft pointer
-		soft_ptr<uint32_t> spTarget;
-		try { spTarget = std::move( rawTPtr->spLarge ); testOK = false; } catch(...) {}
+		soft_ptr<dummy_objects::JustDummyStruct> spTarget;
+		try { spTarget = std::move( rawTPtr->spDummy ); testOK = false; } catch(...) {}
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, spTarget == nullptr );
+
+		// exception while trying to dereference a soft pointer
+		try { rawTPtr->opDummy->n1 = 17; testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
+		try { (*(rawTPtr->opDummy)).n1 = 17; testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
+		try { rawTPtr->spDummy->n1 = 17; testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
+		try { (*(rawTPtr->spDummy)).n1 = 17; testOK = false; } catch(...) {}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, testOK );
 	}
 
 public:
