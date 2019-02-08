@@ -460,7 +460,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 
 	obj.init();
 
-	for ( size_t i=0; i<=nodecpp_memory_size_bits;++i )
+	for ( size_t i=4; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 
@@ -530,7 +530,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, obj.get_allocated_ptr() == 0 );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, obj.get_data() == 0 );
 
-	for ( size_t i=0; i<=nodecpp_memory_size_bits;++i )
+	for ( size_t i=4; i<=nodecpp_memory_size_bits;++i )
 	{
 		void* ptr = (void*)((size_t)1 << i);
 		obj.set_ptr(ptr);

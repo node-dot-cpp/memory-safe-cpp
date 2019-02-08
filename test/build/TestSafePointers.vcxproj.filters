@@ -68,5 +68,8 @@
     <ClInclude Include="..\dummy_test_objects.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\iibmalloc\src\foundation\include\ptr_with_data_structs_impl.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

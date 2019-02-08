@@ -826,7 +826,8 @@ class soft_ptr_core
 		template<class T1>
 		void init( T* ptr, T1* allocptr, size_t data ) { PointersT::init( ptr, allocptr, data ); }
 
-		void invalidatePtr() { set_data(PointersT::max_data); set_zombie(); }
+		void invalidatePtr() { PointersT::init(PointersT::max_data); }
+		void setPtrZombie() { set_data(PointersT::max_data); set_zombie(); }
 		//void setZombie() { unset_flag<0>(); }
 		//bool isZombie() { return has_flag<0>(); }
 		void setOnStack() { set_flag<0>(); }
@@ -849,6 +850,7 @@ protected:
 	void initOnStack( T* ptr, T1* allocptr ) { pointers.init( ptr, allocptr, PointersT::max_data ); setOnStack(); }
 
 	void invalidatePtr() { pointers.invalidatePtr(); }
+	void setPtrZombie() { pointers.setPtrZombie(); }
 	void setOnStack() { pointers.setOnStack(); }
 	void setNotOnStack() { pointers.setNotOnStack(); }
 	bool isOnStack() { return pointers.isOnStack(); }
@@ -1341,7 +1343,7 @@ public:
 				assert(!isOnStack());
 				getControlBlock()->remove(getIdx_());
 			}
-			invalidatePtr();
+			setPtrZombie();
 			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
 	}

@@ -49,6 +49,7 @@
     <ClCompile Include="..\test_safe_pointers.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="..\..\src\iibmalloc\src\foundation\include\ptr_with_data_structs_impl.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_common.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h" />
