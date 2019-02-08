@@ -806,15 +806,15 @@ class soft_ptr_core
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,2>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,2>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
 #endif
 #else
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,2>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
 #else
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,2>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
 #endif
 #endif // SAFE_PTR_DEBUG_MODE
 	template<class TT>
@@ -826,12 +826,12 @@ class soft_ptr_core
 		template<class T1>
 		void init( T* ptr, T1* allocptr, size_t data ) { PointersT::init( ptr, allocptr, data ); }
 
-		void invalidatePtr() { setZombie(); set_ptr(nullptr); set_allocated_ptr(nullptr); set_data(PointersT::max_data); }
-		void setZombie() { unset_flag<0>(); }
-		bool isZombie() { return has_flag<0>(); }
-		void setOnStack() { set_flag<1>(); }
-		void setNotOnStack() { unset_flag<1>(); }
-		bool isOnStack() { return has_flag<1>(); }
+		void invalidatePtr() { set_data(PointersT::max_data); set_zombie(); }
+		//void setZombie() { unset_flag<0>(); }
+		//bool isZombie() { return has_flag<0>(); }
+		void setOnStack() { set_flag<0>(); }
+		void setNotOnStack() { unset_flag<0>(); }
+		bool isOnStack() { return has_flag<0>(); }
 	};
 	Pointers<T> pointers; // the only data member!
 
