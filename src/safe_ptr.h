@@ -682,82 +682,13 @@ public:
 };
 
 
-#if 0
-template<class T>
-class owning_ptr<T>
-{
-	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
-	friend class soft_ptr<T>;
-	T* t;
-
-public:
-	owning_ptr()
-	{
-		t = nullptr;
-	}
-	owning_ptr( T* t_ )
-	{
-		t = t_;
-	}
-	owning_ptr( owning_ptr<T, false>& other ) = delete;
-	owning_ptr( owning_ptr<T, false>&& other )
-	{
-		t = other.t;
-		other.t = nullptr;
-	}
-	~owning_ptr()
-	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: being placed at the level of class definition, the codition may be checked whether or not this specialization is instantiated (see, for instance, https://stackoverflow.com/questions/5246049/c11-static-assert-and-template-instantiation)
-		if ( NODECPP_LIKELY(t) )
-		{
-			delete t;
-		}
-	}
-
-	owning_ptr& operator = ( owning_ptr<T, false>& other ) = delete;
-	owning_ptr& operator = ( owning_ptr<T, false>&& other )
-	{
-		t = other.t;
-		other.t = nullptr;
-		return *this;
-	}
-
-	void reset( T* t_ = t )
-	{
-		T* tmp = t;
-		t = t_;
-		// if ( NODECPP_LIKELY(tmp) ) : we do not need this check
-		delete tmp;
-	}
-
-	void swap( owning_ptr<T, false>& other )
-	{
-		T* tmp = t;
-		t = other.t;
-		other.t = tmp;
-	}
-
-	T* get() const
-	{
-		return t;
-	}
-
-	// T* release() : prhibited by safity requirements
-
-	explicit operator bool() const noexcept
-	{
-		return t != nullptr;
-	}
-};
-#endif // 0
-
 extern thread_local void* thg_stackPtrForMakeOwningCall;
 
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 	NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
-	{	// make a unique_ptr
+	{
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 	owning_ptr<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
@@ -1529,77 +1460,6 @@ public:
 	}
 };
 
-
-#if 0
-template<class T>
-class soft_ptr<T,false>
-{
-	// static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial ); // note: moved to dtor; see reasons there
-	friend class owning_ptr<T,false>;
-	T* t;
-
-public:
-	soft_ptr()
-	{
-		this->t = nullptr;
-	}
-	soft_ptr( owning_ptr<T,false>& owner )
-	{
-		this->t = owner.t;
-	}
-	soft_ptr( soft_ptr<T,false>& other )
-	{
-		this->t = other.t;
-	}
-	soft_ptr( soft_ptr<T,false>&& other )
-	{
-		this->t = other.t;
-		other.t = nullptr;
-	}
-
-	soft_ptr& operator = ( soft_ptr<T,false>& other )
-	{
-		this->t = other.t;
-		return *this;
-	}
-	soft_ptr& operator = ( soft_ptr<T,false>&& other )
-	{
-		this->t = other.t;
-		other.t = nullptr;
-		return *this;
-	}
-
-	void swap( soft_ptr<T, false>& other )
-	{
-		T* tmp = this->t;
-		this->t = other.t;
-		other.t = tmp;
-	}
-
-
-	T& operator * () const
-	{
-		return *t;
-	}
-
-	T* operator -> () const 
-	{
-		return t;
-	}
-
-	// T* release() : prhibited by safity requirements
-
-	explicit operator bool() const noexcept
-	{
-		return this->t != nullptr;
-	}
-
-	~soft_ptr()
-	{
-		static_assert( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial );
-	}
-};
-#endif // 0
 
 template<class T, class T1, bool isSafe>
 soft_ptr<T, isSafe> soft_ptr_static_cast( soft_ptr<T1, isSafe> p ) {
