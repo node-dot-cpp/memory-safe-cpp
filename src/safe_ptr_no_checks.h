@@ -28,147 +28,11 @@
 #ifndef SAFE_PTR_NO_CHECKS_H
 #define SAFE_PTR_NO_CHECKS_H
 
-#include <memory>
-#include <stdint.h>
-#include <assert.h>
+#include "safe_ptr_common.h"
 
-#include <foundation.h>
-
-#define NODECPP_USE_IIBMALLOC
-//#define NODECPP_USE_NEW_DELETE_ALLOC
-
-#if defined NODECPP_MSVC
-#define NODISCARD _NODISCARD
-#define INLINE_VAR _INLINE_VAR
-#elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
-#define NODISCARD [[nodiscard]]
-#define INLINE_VAR inline
-#else
-#define NODISCARD
-#define INLINE_VAR
-#endif
-
-#ifdef NODECPP_USE_IIBMALLOC
-
-#include <iibmalloc.h>
-using namespace nodecpp::iibmalloc;
-namespace nodecpp::safememory
-{
-NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
-NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
-NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
-NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
-NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
-inline void killAllZombies() { g_AllocManager.killAllZombies(); }
-NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
-} // namespace nodecpp::safememory
-
-#elif defined NODECPP_USE_NEW_DELETE_ALLOC
 
 namespace nodecpp::safememory
 {
-// NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
-extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
-inline void killAllZombies()
-{
-	while ( zombieList_ != nullptr )
-	{
-		void** next = reinterpret_cast<void**>( *zombieList_ );
-		delete [] zombieList_;
-		zombieList_ = next;
-	}
-}
-NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
-NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
-NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
-NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
-NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
-NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
-} //namespace nodecpp::safememory
-
-#else
-#error at least some specific allocation functionality must be selected
-#endif
-
-
-//#define NODECPP_HUGE_SIZE_OF_SAFE_PTR_LIST
-
-namespace nodecpp::safememory
-{
-enum class MemorySafety {none, partial, full};
-
-//#define NODECPP_MEMORYSAFETY_NONE
-#define NODECPP_MEMORYSAFETY_EARLY_DETECTION
-
-#ifdef NODECPP_MEMORYSAFETY_NONE
-#define NODECPP_ISSAFE_MODE MemorySafety::none
-#define NODECPP_ISSAFE_DEFAULT false
-#elif defined NODECPP_MEMORYSAFETY_PARTIAL
-#define NODECPP_ISSAFE_MODE MemorySafety::partial
-#define NODECPP_ISSAFE_DEFAULT true
-#elif defined NODECPP_MEMORYSAFETY_FULL
-#define NODECPP_ISSAFE_MODE MemorySafety::full
-#define NODECPP_ISSAFE_DEFAULT true
-#else
-#define NODECPP_ISSAFE_MODE MemorySafety::full
-#define NODECPP_ISSAFE_DEFAULT true
-#endif
-
-#ifndef NODECPP_MEMORYSAFETY_NONE
-#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
-//constexpr void* invalid_ptr = (void*)(1);
-#endif
-#endif
-
-#ifdef NODECPP_GCC
-extern void forcePreviousChangesToThisInDtor( void* p );
-#else
-#define forcePreviousChangesToThisInDtor(x)
-#endif
-
-template<class T>
-void destruct( T* t )
-{
-	if constexpr ( std::is_polymorphic<T>::value )
-	{
-		auto vpt = nodecpp::platform::backup_vmt_pointer(t);
-		t->~T();
-		nodecpp::platform::restore_vmt_pointer( t, vpt);
-	}
-	else
-		t->~T();
-}
-
-template<class T>
-void checkNotNullLargeSize( T* ptr )
-{
-	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
-	else {
-		if ( ptr == nullptr )
-			throw std::bad_alloc();
-	}
-}
-
-template<class T>
-void checkNotNullAllSizes( T* ptr )
-{
-	if ( ptr == nullptr )
-		throw std::bad_alloc();
-}
-
-inline
-void throwPointerOutOfRange()
-{
-	// TODO: actual implementation
-	throw std::bad_alloc();
-}
-
-
-//static_assert( sizeof(void*) == 8 );
-
-
 
 template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
@@ -208,7 +72,7 @@ public:
 		return *this;
 	}
 	template<class T1>
-	owning_ptr_no_checks( owning_ptr_no_checks<T1, isSafe>&& other )
+	owning_ptr_no_checks( owning_ptr_no_checks<T1>&& other )
 	{
 		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
@@ -227,6 +91,7 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
+			deallocate( t );
 		}
 	}
 
@@ -283,14 +148,13 @@ public:
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	NODISCARD owning_ptr<_Ty> make_owning_no_checks(_Types&&... _Args)
-	{
+NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
+{
 	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
-	owning_ptr<_Ty> op(make_owning_t(), (_Ty*)(data);
-	thg_stackPtrForMakeOwningCall = dataForObj;
+	owning_ptr_no_checks<_Ty> op(make_owning_t(), (_Ty*)(data);
 	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
 	return op;
-	}
+}
 
 
 
@@ -303,13 +167,13 @@ class soft_ptr_base_no_checks
 	template<class TT>
 	friend class soft_ptr_no_checks;
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_static_cast( soft_ptr_no_checks<TT11> );
+	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_static_cast( soft_ptr_no_checks<TT> );
+	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast( soft_ptr_no_checks<TT11> );
+	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast( soft_ptr_no_checks<TT> );
+	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT> );
 
 	T* t;
 
@@ -402,11 +266,11 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT11> );
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT11> );
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
 	friend struct FirstControlBlock;
@@ -660,26 +524,26 @@ public:
 };
 
 template<class T, class T1>
-soft_ptr<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p ) {
+soft_ptr_no_checks<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p ) {
 	soft_ptr_no_checks<T> ret(p,static_cast<T*>(p.t));
 	return ret;
 }
 
 template<class T, class T1>
-soft_ptr<T> soft_ptr_static_cast_no_checks( soft_ptr<T1> p ) {
-	soft_ptr<T> ret(p,static_cast<T*>(p.t));
+soft_ptr_no_checks<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p ) {
+	soft_ptr_no_checks<T> ret(p,static_cast<T*>(p.t));
 	return ret;
 }
 
 template<class T, class T1, bool isSafe>
-soft_ptr<T, isSafe> soft_ptr_reinterpret_cast( soft_ptr<T1, isSafe> p ) {
-	soft_ptr<T, isSafe> ret(p,reinterpret_cast<T*>(p.t));
+soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1> p ) {
+	soft_ptr_no_checks<T> ret(p,reinterpret_cast<T*>(p.t));
 	return ret;
 }
 
 template<class T, class T1>
-soft_ptr<T> soft_ptr_reinterpret_cast( soft_ptr<T1> p ) {
-	soft_ptr<T> ret(p,reinterpret_cast<T*>(p.t));
+soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1> p ) {
+	soft_ptr_no_checks<T> ret(p,reinterpret_cast<T*>(p.t));
 	return ret;
 }
 
