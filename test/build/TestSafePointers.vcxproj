@@ -55,6 +55,8 @@
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_common.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_page_allocator.h" />
     <ClInclude Include="..\..\src\safe_ptr.h" />
+    <ClInclude Include="..\..\src\safe_ptr_common.h" />
+    <ClInclude Include="..\..\src\safe_ptr_no_checks.h" />
     <ClInclude Include="..\..\src\startup_checks.h" />
     <ClInclude Include="..\dummy_test_objects.h" />
   </ItemGroup>

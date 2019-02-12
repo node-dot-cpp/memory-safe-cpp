@@ -74,5 +74,11 @@
     <ClInclude Include="..\..\src\iibmalloc\src\foundation\include\ptr_with_data_structs_impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\..\src\safe_ptr_no_checks.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\..\src\safe_ptr_common.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
