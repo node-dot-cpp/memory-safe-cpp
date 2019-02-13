@@ -39,29 +39,28 @@ When you double click on `build-env.bat` you will get a console, with python and
 
 First clone and checkout everything,
 
-	static-checker> git clone -b release_70 https://github.com/llvm-mirror/llvm.git
-	static-checker> cd llvm\tools
-	static-checker\llvm\tools> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang.git
-	static-checker\llvm\tools> cd clang\tools
-	static-checker\llvm\tools\clang\tools> git clone -b release_70 https://github.com/llvm-mirror/clang-tools-extra.git extra
-	static-checker\llvm\tools\clang\tools> git clone https://github.com/node-dot-cpp/clang-tools-nodecpp.git nodecpp
-	static-checker\llvm\tools\clang\tools> cd ..\..\..\..
+	checker> md 3rdparty
+	checker> cd 3rdparty
+	checker\3rdparty> git clone -b release_70 https://github.com/llvm-mirror/llvm.git
+	checker\3rdparty> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang.git
+	checker\3rdparty> git clone -b release_70 https://github.com/llvm-mirror/clang-tools-extra.git
+	checker\3rdparty> cd ..
 
 
-Now build (release with nmake):
+Now build (release with Visual Studio 2017):
 
-	static-checker> md build\release
-	static-checker> cd build\release
+	checker> md build\release
+	checker> cd build\release
 
-	static-checker\build\release> cmake -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles" ..\..\llvm
+	checker\build\release> cmake -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles" ..\..\llvm
 
-	static-checker\build\release> nmake nodecpp-checker
+	checker\build\release> nmake nodecpp-checker
 
-	static-checker\build\release> nmake nodecpp-safe-library
+	checker\build\release> nmake nodecpp-safe-library
 
-	static-checker\build\release> nmake FileCheck
+	checker\build\release> nmake FileCheck
 
-	static-checker\build\release> cd ..\..
+	checker\build\release> cd ..\..
 
 All tools should end at `build\release\bin` folder, `FileCheck` is a llvm/clang tool used in automated testing.
 You can also build with `ninja` or generate Visual Studio project files, or any of the common `cmake` options. 

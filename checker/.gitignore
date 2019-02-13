@@ -2,3 +2,7 @@
 /llvm
 /env.bat
 /*-env.bat
+/3rdparty/llvm
+/3rdparty/clang
+/3rdparty/clang-tools-extra
+
