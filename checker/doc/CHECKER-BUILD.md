@@ -41,6 +41,7 @@ First clone and checkout everything, you can use `checkout.bat` script.
 Then for release build under Visual Studio 2017, you can use `build.bat` script.
 Finally, to run the tests, you can use `test.bat`.
 
+All three scripts are very small and simple, and can be used as a reference.
 
 Build (Debug using ninja)
 -------------------------
@@ -64,23 +65,23 @@ I use a separate `test-env.bat` file to set up environmnet to run the tool and t
 	title test
 
 	set PATH=C:\Python27;C:\Python27\Scripts;%PATH%
-	set PATH=C:\node-dot-cpp\static-checker\llvm\utils\lit;%PATH%
-	set PATH=C:\node-dot-cpp\static-checker\build\release\bin;%PATH%
+	set PATH=C:\node-dot-cpp\memory-safe-cpp\checker\3rdparty\llvm\utils\lit;%PATH%
+	set PATH=C:\node-dot-cpp\memory-safe-cpp\checker\build\debug\bin;%PATH%
 
 	%ComSpec% /k ""D:\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat""
 
 
 Then, to run automated tests just use `run.bat` script
 
-	static-checker> run.bat
+	checker> llvm-lit.py test\nodecpp-checker
 
 If you are really lucky, will see a bunch of test files, with the 'PASS' legend on the left :)
 
 To run our tool on a single test file and see the output,
 
-	static-checker> nodecpp-checker llvm\tools\clang\tools\nodecpp-checker\test\nodecpp-checker\s1.cpp --
+	checker> nodecpp-checker test\nodecpp-checker\s1.cpp --
 	
-Don't forget the double hypen (`--`) at the end.
+Don't forget the double hypen (`--`) at the end. Some tests need extra arguments to run, please see the first line of each test for a reference.
 
 
 Please see file [CHECHER-RUN.md](CHECHER-RUN.md) to set up the environment to run the tool over your own files or projects.
