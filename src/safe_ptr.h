@@ -565,7 +565,7 @@ public:
 		dbgCheckValidity();
 	}
 
-	/*void reset( T* t_ ) // Q: what happens to safe ptrs?
+	/*void reset( T* t_ )
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t == nullptr );
 		reset();
@@ -606,14 +606,6 @@ public:
 	bool operator != (const soft_ptr<T, isSafe>& other ) const { return t.getTypedPtr() != other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return t.getTypedPtr() != other.getDereferencablePtr(); }
-
-	/*bool operator == (const naked_ptr<T, isSafe>& other ) const { return t.getTypedPtr() == other.t; }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return t.getTypedPtr() == other.t; }
-
-	bool operator != (const naked_ptr<T, isSafe>& other ) const { return t.getTypedPtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return t.getTypedPtr() != other.t; }*/
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() != nullptr; }
@@ -1102,10 +1094,6 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator == (const soft_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
 
-	bool operator == (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.t; }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.t; }
-
 	bool operator != (const owning_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1, bool isSafe1> 
 	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
@@ -1113,10 +1101,6 @@ public:
 	bool operator != (const soft_ptr_base<T, isSafe>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
-
-	bool operator != (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() != nullptr; }
@@ -1126,7 +1110,6 @@ public:
 		dbgCheckMySlotConsistency();
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
-			//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getIdx_() != Ptr2PtrWishData::invalidData );
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
 			if ( getIdx_() != PointersT::max_data )
 			{
@@ -1150,7 +1133,7 @@ class soft_ptr : public soft_ptr_base<T, isSafe>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base;
 
-//	friend class naked_ptr_base<T, isSafe>;
+	friend class naked_ptr_base<T, isSafe>;
 	friend class naked_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class naked_ptr;
@@ -1312,10 +1295,6 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() == other.getDereferencablePtr(); }
 
-	bool operator == (const naked_ptr<T, isSafe>& other ) const { return this->getDereferencablePtr() == other.t; }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() == other.t; }
-
 	bool operator != (const owning_ptr<T, isSafe>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1, bool isSafe1> 
 	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
@@ -1323,10 +1302,6 @@ public:
 	bool operator != (const soft_ptr<T, isSafe>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
-
-	bool operator != (const naked_ptr<T, isSafe>& other ) const { return this->getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
@@ -1429,20 +1404,12 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() == other.getDereferencablePtr(); }
 
-	/*bool operator == (const naked_ptr<void, true>& other ) const { return this->getDereferencablePtr() == other.t; }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() == other.t; }*/
-
 	template<class T1, bool isSafe1> 
 	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 
 	bool operator != (const soft_ptr<void, isSafe>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
-
-	/*bool operator != (const naked_ptr<void, true>& other ) const { return this->getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.t; }*/
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
@@ -1558,14 +1525,11 @@ class naked_ptr_base
 public:
 	naked_ptr_base() { t = nullptr; }
 
-	//naked_ptr_base(T& t_) { t = &t_; }
-
 	template<class T1>
 	naked_ptr_base( const owning_ptr<T1, isSafe>& owner ) { *this = owner.get(); }
-	//naked_ptr_base( const owning_ptr<T, isSafe>& owner ) { *this = owner.get(); }
+
 	template<class T1>
 	naked_ptr_base<T>& operator = ( const owning_ptr<T1, isSafe>& owner ) { *this = owner.get(); return *this; }
-	//naked_ptr_base<T>& operator = ( const owning_ptr<T, isSafe>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
 	naked_ptr_base( const soft_ptr<T1, isSafe>& other ) { *this = other.get(); }
@@ -1597,37 +1561,11 @@ public:
 		return t;
 	}
 
-	// T* release() : prhibited by safity requirements
-
 	explicit operator bool() const noexcept
 	{
 		return t != nullptr;
 	}
 
-
-	/*bool operator == (const owning_ptr<T, isSafe>& other ) const { return t == other.t.getTypedPtr(); }
-	template<class T1, bool isSafe1> 
-	bool operator == (const owning_ptr<T1, isSafe>& other ) const { return t == other.t.getTypedPtr(); }
-
-	bool operator == (const soft_ptr<T, isSafe>& other ) const { return t == other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return t == other.getDereferencablePtr(); }
-
-	bool operator == (const naked_ptr_base<T, isSafe>& other ) const { return getDereferencablePtr() == other.t); }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.t; }
-
-	bool operator != (const owning_ptr<T, isSafe>& other ) const { return t != other.t.getTypedPtr(); }
-	template<class T1, bool isSafe1> 
-	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return t != other.t.getTypedPtr(); }
-
-	bool operator != (const soft_ptr<T, isSafe>& other ) const { return t != other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return t != other.getDereferencablePtr(); }*/
-
-	/*bool operator != (const naked_ptr_base<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr_base<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.t; }*/
 
 	bool operator == ( const naked_ptr_base<T, isSafe>& other ) const { return t == other.t; }
 	template<class T1, bool isSafe1>
@@ -1714,37 +1652,10 @@ public:
 		return this->t;
 	}
 
-	// T* release() : prhibited by safity requirements
-
 	explicit operator bool() const noexcept
 	{
 		return this->t != nullptr;
 	}
-
-
-	/*bool operator == (const owning_ptr<T, isSafe>& other ) const { return this->t == other.t.getTypedPtr(); }
-	template<class T1, bool isSafe1> 
-	bool operator == (const owning_ptr<T1, isSafe>& other ) const { return this->t == other.t.getTypedPtr(); }
-
-	bool operator == (const soft_ptr<T, isSafe>& other ) const { return this->t == other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return this->t == other.getDereferencablePtr(); }
-
-	bool operator == (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.t); }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.t; }
-
-	bool operator != (const owning_ptr<T, isSafe>& other ) const { return this->t != other.t.getTypedPtr(); }
-	template<class T1, bool isSafe1> 
-	bool operator != (const owning_ptr<T1, isSafe>& other ) const { return this->t != other.t.getTypedPtr(); }
-
-	bool operator != (const soft_ptr<T, isSafe>& other ) const { return this->t != other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return this->t != other.getDereferencablePtr(); }*/
-
-	/*bool operator != (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.t; }*/
 
 	bool operator == ( const naked_ptr<T, isSafe>& other ) const { return this->t == other.t; }
 	template<class T1, bool isSafe1>
@@ -1789,7 +1700,7 @@ public:
 
 	template<class T1>
 	naked_ptr( const soft_ptr<T1, true>& other ) : naked_ptr_base(other) {}
-	//naked_ptr( const soft_ptr<void, true>& other ) : naked_ptr_base(other) {}
+	naked_ptr( const soft_ptr<void, true>& other ) : naked_ptr_base(other) {}
 	template<class T1>
 	naked_ptr<void>& operator = ( const soft_ptr<T1, true>& other ) { *this = other.get(); return *this; }
 	naked_ptr<void>& operator = ( const soft_ptr<void, true>& other ) { *this = other.get(); return *this; }
@@ -1815,35 +1726,10 @@ public:
 		return this->t;
 	}
 
-	// T* release() : prhibited by safity requirements
-
 	explicit operator bool() const noexcept
 	{
 		return this->t != nullptr;
 	}
-
-
-	/*template<class T1, bool isSafe1> 
-	bool operator == (const owning_ptr<T1, isSafe1>& other ) const { return this->t == other.t.getTypedPtr(); }
-
-	bool operator == (const soft_ptr<void, true>& other ) const { return this->t == other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator == (const soft_ptr<T1, isSafe1>& other ) const { return this->t == other.getDereferencablePtr(); }
-
-	bool operator == (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() == other.t); }
-	template<class T1, bool isSafe1>
-	bool operator == (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() == other.t; }
-
-	template<class T1, bool isSafe1> 
-	bool operator != (const owning_ptr<T1, isSafe1>& other ) const { return this->t != other.t.getTypedPtr(); }
-
-	bool operator != (const soft_ptr<void, true>& other ) const { return this->t != other.getDereferencablePtr(); }
-	template<class T1, bool isSafe1>
-	bool operator != (const soft_ptr<T1, isSafe1>& other ) const { return this->t != other.getDereferencablePtr(); }*/
-
-	/*bool operator != (const naked_ptr<T, isSafe>& other ) const { return getDereferencablePtr() != other.t; }
-	template<class T1, bool isSafe1>
-	bool operator != (const naked_ptr<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.t; }*/
 
 	bool operator == ( const naked_ptr<void, true>& other ) const { return this->t == other.t; }
 	template<class T1, bool isSafe1>
