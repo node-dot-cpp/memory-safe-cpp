@@ -270,6 +270,24 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT(  !(op2 == sp11) );
 					EXPECT(  !(sp11 == sp21) );
 
+					// naked with naked
+					naked_ptr<int> np1( op1 );
+					naked_ptr<int> np2( sp11 );
+					naked_ptr<int> np3( op2 );
+
+					naked_ptr<void> np1v( op1 );
+					naked_ptr<void> np2v( sp11 );
+					naked_ptr<void> np3v( op2 );
+
+					EXPECT(  np1 == np2 );
+					EXPECT(  np1 != np3 );
+					EXPECT(  !(np1 != np2) );
+					EXPECT(  !(np1 == np3) );
+
+					EXPECT(  np1 == np2v );
+					EXPECT(  np1v != np3 );
+					EXPECT(  !(np1 != np2v) );
+					EXPECT(  !(np1v == np3) );
 				}
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
