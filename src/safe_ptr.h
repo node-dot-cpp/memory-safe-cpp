@@ -82,7 +82,7 @@ void checkNotNullLargeSize( T* ptr )
 	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
 	else {
 		if ( ptr == nullptr )
-			throw std::bad_alloc();
+			throw ::nodecpp::error::zero_pointer_access;
 	}
 }
 
@@ -96,7 +96,7 @@ template<class T>
 void checkNotNullAllSizes( T* ptr )
 {
 	if ( ptr == nullptr )
-		throw std::bad_alloc();
+		throw ::nodecpp::error::zero_pointer_access;
 }
 
 inline

@@ -28,11 +28,11 @@
 #ifndef SAFE_PTR_COMMON_H
 #define SAFE_PTR_COMMON_H
 
+#include <foundation.h>
+#include <nodecpp_assert.h>
 #include <memory>
 #include <stdint.h>
-#include <assert.h>
 
-#include <foundation.h>
 
 namespace nodecpp::safememory
 {
