@@ -39,6 +39,7 @@ template<class T> class soft_ptr_no_checks; // forward declaration
 class soft_this_ptr_no_checks; // forward declaration
 
 struct make_owning_t {};
+struct fbc_ptr_t {};
 template<class T>
 class owning_ptr_no_checks
 {
@@ -177,7 +178,7 @@ class soft_ptr_base_no_checks
 
 	T* t;
 
-	soft_ptr_base_no_checks(FirstControlBlock* cb, T* t_) { t = t_; } // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_base_no_checks(fbc_ptr_t, T* t_) { t = t_; } // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
 
@@ -273,14 +274,13 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
-	friend struct FirstControlBlock;
 
 private:
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_in_constructor(TT* ptr);
 	friend soft_ptr_no_checks<T> soft_ptr_no_checks_in_constructor(T* ptr);
-	soft_ptr_no_checks(FirstControlBlock* cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_no_checks(fbc_ptr_t, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
 	soft_ptr_no_checks() : soft_ptr_base_no_checks<T>()
@@ -449,7 +449,6 @@ class soft_ptr_no_checks<void> : public soft_ptr_base_no_checks<void>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
 	template<class TT, class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
-	friend struct FirstControlBlock;
 	template<class TT, class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
 
@@ -550,17 +549,8 @@ soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1
 
 class soft_this_ptr_no_checks
 {
-	FirstControlBlock* cbPtr = nullptr;
-	uint32_t offset;
-
 public:
-	soft_this_ptr_no_checks()
-	{
-		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
-		uintptr_t delta = reinterpret_cast<uint8_t*>(this) - reinterpret_cast<uint8_t*>(cbPtr);
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, delta <= UINT32_MAX, "delta = 0x{:x}", delta );
-		offset = (uint32_t)delta;
-	}
+	soft_this_ptr_no_checks() {}
 
 	soft_this_ptr_no_checks( soft_this_ptr_no_checks& other ) {}
 	soft_this_ptr_no_checks& operator = ( soft_this_ptr_no_checks& other ) { return *this; }
@@ -570,19 +560,13 @@ public:
 
 	explicit operator bool() const noexcept
 	{
-		return cbPtr != nullptr;
+		return true;
 	}
 
 	template<class T>
 	soft_ptr_no_checks<T> getSoftPtr(T* ptr)
 	{
-		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
-		if ( allocatedPtr == nullptr )
-			throwPointerOutOfRange();
-		//return soft_ptr<T, true>( allocatedPtr, ptr );
-		//FirstControlBlock* cb = cbPtr;
-		FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
-		return soft_ptr_no_checks<T, true>( cb, ptr );
+		return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
 	}
 
 	~soft_this_ptr_no_checks()
@@ -591,14 +575,8 @@ public:
 };
 
 template<class T>
-soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
-	FirstControlBlock* cbPtr = nullptr;
-	cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
-	void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
-	if ( allocatedPtr == nullptr )
-		throwPointerOutOfRange();
-	FirstControlBlock* cb = cbPtr;
-	return soft_ptr<T, true>( cb, ptr );
+soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr) {
+	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
 }
 
 
