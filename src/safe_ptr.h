@@ -662,12 +662,12 @@ class soft_ptr_base
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
-	friend class naked_ptr_base<T, isSafe>;
+	/*friend class naked_ptr_base<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class naked_ptr_base;
 	friend class naked_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr;
+	friend class naked_ptr;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
@@ -1133,12 +1133,12 @@ class soft_ptr : public soft_ptr_base<T, isSafe>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base;
 
-	friend class naked_ptr_base<T, isSafe>;
+	/*friend class naked_ptr_base<T, isSafe>;
 	friend class naked_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class naked_ptr;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base;
+	friend class naked_ptr_base;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
@@ -1320,12 +1320,12 @@ class soft_ptr<void, true> : public soft_ptr_base<void, true>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr;
 
-	friend class naked_ptr_base<void, true>;
+	/*friend class naked_ptr_base<void, true>;
 	friend class naked_ptr<void, true>;
 	template<class TT, bool isSafe1>
 	friend class naked_ptr;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base;
+	friend class naked_ptr_base;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr<TT, isSafe1> soft_ptr_static_cast( soft_ptr<TT1, isSafe1> );
@@ -1506,11 +1506,11 @@ class naked_ptr_base
 	friend class soft_ptr_base<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base;
-	friend class soft_ptr<T, isSafe>;
+	//friend class soft_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class owning_ptr;
-	template<class TT, bool isSafe1>
-	friend class soft_ptr;
+	//template<class TT, bool isSafe1>
+	//friend class soft_ptr;
 
 	template<class TT, bool isSafe1>
 	friend class naked_ptr_base;
@@ -1592,11 +1592,11 @@ class naked_ptr : public naked_ptr_base<T, isSafe>
 	friend class soft_ptr_base<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base;
-	friend class soft_ptr<T, isSafe>;
+	//friend class soft_ptr<T, isSafe>;
 	template<class TT, bool isSafe1>
 	friend class owning_ptr;
-	template<class TT, bool isSafe1>
-	friend class soft_ptr;
+	//template<class TT, bool isSafe1>
+	//friend class soft_ptr;
 
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 
@@ -1683,9 +1683,9 @@ class naked_ptr<void, true> : public naked_ptr_base<void, true>
 	friend class soft_ptr_base<void, true>;
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base;
-	friend class soft_ptr<void, true>;
-	template<class TT, bool isSafe1>
-	friend class soft_ptr;
+	//friend class soft_ptr<void, true>;
+	//template<class TT, bool isSafe1>
+	//friend class soft_ptr;
 
 public:
 	naked_ptr() : naked_ptr_base() {}
