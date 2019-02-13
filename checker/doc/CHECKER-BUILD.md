@@ -18,7 +18,7 @@ Requirements
 I have git and cmake in my system PATH. For MSCV and Python I use a bat file to set up environment variables. This is better because it allows to have more than one version installed and have scripts to set environment for each version. Also will help if you have already installed Python 3 in your environment and don't want to break things by setting global PATH to Python 2.7
 
 
-I put all bat files at my project root that is `C:\node-dot-cpp\static-checker`, you can use any root folder but update scripts in this tutorial to match your setup.
+I put all bat files at my project root that is `C:\node-dot-cpp\memory-safe-cpp\checker`, you can use any root folder but update scripts in this tutorial to match your setup.
 
 I use `build-env.bat` with the following:
 
@@ -32,39 +32,29 @@ I use `build-env.bat` with the following:
 You will need to change paths to match your system.
 
 
-Build
------
+Build (Release under VS2017)
+----------------------------
 
 When you double click on `build-env.bat` you will get a console, with python and VC command line environmnet.
 
-First clone and checkout everything,
-
-	checker> md 3rdparty
-	checker> cd 3rdparty
-	checker\3rdparty> git clone -b release_70 https://github.com/llvm-mirror/llvm.git
-	checker\3rdparty> git clone -b node-dot-cpp_70 https://github.com/node-dot-cpp/clang.git
-	checker\3rdparty> git clone -b release_70 https://github.com/llvm-mirror/clang-tools-extra.git
-	checker\3rdparty> cd ..
+First clone and checkout everything, you can use `checkout.bat` script.
+Then for release build under Visual Studio 2017, you can use `build.bat` script.
+Finally, to run the tests, you can use `test.bat`.
 
 
-Now build (release with Visual Studio 2017):
+Build (Debug using ninja)
+-------------------------
 
-	checker> md build\release
-	checker> cd build\release
+Assuming you have ninja on your PATH
 
-	checker\build\release> cmake -DCMAKE_BUILD_TYPE=Release -G "NMake Makefiles" ..\..\llvm
+	checker> cmake-ninja-debug.bat
+	checker\build\debug> ninja nodecpp-checker
+	checker\build\debug> ninja nodecpp-safe-library
+	checker\build\debug> ninja FileCheck
 
-	checker\build\release> nmake nodecpp-checker
+	checker\build\debug> cd ..\..
 
-	checker\build\release> nmake nodecpp-safe-library
-
-	checker\build\release> nmake FileCheck
-
-	checker\build\release> cd ..\..
-
-All tools should end at `build\release\bin` folder, `FileCheck` is a llvm/clang tool used in automated testing.
-You can also build with `ninja` or generate Visual Studio project files, or any of the common `cmake` options. 
-
+All tools should end at `build\debug\bin` folder, `FileCheck` is a llvm/clang tool used in automated testing.
 
 Test
 ----
