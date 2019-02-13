@@ -1,0 +1,6 @@
+[
+{
+    "functions" : ["fmt::v5::print", "nodecpp::safememory::make_owning", ],
+    "types" : ["nodecpp::Buffer", "nodecpp::net::Socket", "nodecpp::net::Server", "nodecpp::net::Address", "nodecpp::net::SocketTBase", ]
+}
+]
