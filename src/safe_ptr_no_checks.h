@@ -37,8 +37,7 @@ namespace nodecpp::safememory
 template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 class soft_this_ptr_no_checks; // forward declaration
-//template<class T, bool isSafe> class naked_ptr; // forward declaration
-template<class T> class naked_ptr; // forward declaration
+template<class T> class naked_ptr_no_checks; // forward declaration
 
 struct make_owning_t {};
 struct fbc_ptr_t {};
@@ -100,7 +99,7 @@ public:
 
 	void reset()
 	{
-		if ( NODECPP_LIKELY(t.getTypedPtr()) )
+		if ( NODECPP_LIKELY(t) )
 			t->~T();
 		t = nullptr;
 	}
@@ -112,9 +111,9 @@ public:
 		other.t = tmp;
 	}
 
-	naked_ptr<T> get() const
+	naked_ptr_no_checks<T> get() const
 	{
-		naked_ptr<T> ret;
+		naked_ptr_no_checks<T> ret;
 		ret.t = t;
 		return ret;
 	}
@@ -129,13 +128,13 @@ public:
 		return t;
 	}
 
-	bool operator == (const soft_ptr_no_checks<T>& other ) const { return t == other; }
+	bool operator == (const soft_ptr_no_checks<T>& other ) const { return t == other.t; }
 	template<class T1>
-	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return t == other; }
+	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return t == other.t; }
 
-	bool operator != (const soft_ptr_no_checks<T>& other ) const { return t != other; }
+	bool operator != (const soft_ptr_no_checks<T>& other ) const { return t != other.t; }
 	template<class T1>
-	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return t != other; }
+	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
@@ -214,10 +213,10 @@ public:
 		t = tmp;
 	}
 
-	naked_ptr<T> get() const
+	naked_ptr_no_checks<T> get() const
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t != nullptr );
-		naked_ptr<T> ret;
+		naked_ptr_no_checks<T> ret;
 		ret.t = t;
 		return ret;
 	}
@@ -232,17 +231,17 @@ public:
 		t = nullptr;
 	}
 
-	bool operator == (const owning_ptr_no_checks<T>& other ) const { return t == other.t.getTypedPtr(); }
+	bool operator == (const owning_ptr_no_checks<T>& other ) const { return t == other.t; }
 	template<class T1> 
-	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return t == other.t.getTypedPtr(); }
+	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return t == other.t; }
 
 	bool operator == (const soft_ptr_base_no_checks<T>& other ) const { return t == other.t; }
 	template<class T1>
 	bool operator == (const soft_ptr_base_no_checks<T1>& other ) const { return t == other.t; }
 
-	bool operator != (const owning_ptr_no_checks<T>& other ) const { return t != other.t.getTypedPtr(); }
+	bool operator != (const owning_ptr_no_checks<T>& other ) const { return t != other.t; }
 	template<class T1> 
-	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return t != other.t.getTypedPtr(); }
+	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return t != other.t; }
 
 	bool operator != (const soft_ptr_base_no_checks<T>& other ) const { return t != other.t; }
 	template<class T1>
@@ -257,23 +256,21 @@ public:
 template<class T>
 class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 {
-//	static_assert( ( (!isSafe) && ( NODECPP_ISSAFE_MODE == MemorySafety::none || NODECPP_ISSAFE_MODE == MemorySafety::partial) ) || ( isSafe && ( NODECPP_ISSAFE_MODE == MemorySafety::full || NODECPP_ISSAFE_MODE == MemorySafety::partial) ));
-	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 	friend class owning_ptr_no_checks<T>;
 	template<class TT>
 	friend class soft_ptr_no_checks;
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT, class TT1>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT1> );
+	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT1> );
 	template<class TT, class TT1>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT1> );
+	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
 private:
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_in_constructor(TT* ptr);
-	friend soft_ptr_no_checks<T> soft_ptr_no_checks_in_constructor(T* ptr);
+	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor(TT* ptr);
+	friend soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr);
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -324,20 +321,20 @@ public:
 		soft_ptr_base_no_checks<T>::swap(other);
 	}
 
-	naked_ptr<T> get() const
+	naked_ptr_no_checks<T> get() const
 	{
 		return soft_ptr_base_no_checks<T>::get();
 	}
 
 	T& operator * () const
 	{
-		checkNotNullAllSizes( this->t );
+		//checkNotNullAllSizes( this->t );
 		return *(this->t);
 	}
 
 	T* operator -> () const 
 	{
-		checkNotNullLargeSize( this->t );
+		//checkNotNullLargeSize( this->t );
 		return this->t;
 	}
 
@@ -353,17 +350,17 @@ public:
 		soft_ptr_base_no_checks<T>::reset();
 	}
 
-	bool operator == (const owning_ptr_no_checks<T>& other ) const { return this->t == other.t.getTypedPtr(); }
+	bool operator == (const owning_ptr_no_checks<T>& other ) const { return this->t == other.t; }
 	template<class T1> 
-	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.t.getTypedPtr(); }
+	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
 	bool operator == (const soft_ptr_no_checks<T>& other ) const { return this->t == other.t; }
 	template<class T1>
 	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
-	bool operator != (const owning_ptr_no_checks<T>& other ) const { return this->t != other.t.getTypedPtr(); }
+	bool operator != (const owning_ptr_no_checks<T>& other ) const { return this->t != other.t; }
 	template<class T1> 
-	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.t.getTypedPtr(); }
+	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
 	bool operator != (const soft_ptr_no_checks<T>& other ) const { return this->t != other.t; }
 	template<class T1>
@@ -383,9 +380,9 @@ class soft_ptr_no_checks<void> : public soft_ptr_base_no_checks<void>
 	template<class TT>
 	friend class soft_ptr_no_checks;
 	template<class TT, class TT1>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT1> );
+	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT1> );
 	template<class TT, class TT1>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT1> );
+	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
 public:
 	soft_ptr_no_checks() : soft_ptr_base_no_checks<void>() { t = nullptr; }
@@ -435,14 +432,14 @@ public:
 	}
 
 	template<class T1> 
-	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.t.getTypedPtr(); }
+	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
 	bool operator == (const soft_ptr_no_checks<void>& other ) const { return this->t == other.t; }
 	template<class T1>
 	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
 	template<class T1> 
-	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.t.getTypedPtr(); }
+	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
 	bool operator != (const soft_ptr_no_checks<void>& other ) const { return this->t != other.t; }
 	template<class T1>
@@ -503,6 +500,247 @@ soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr) {
 }
 
 
+template<class T>
+class naked_ptr_base_no_checks
+{
+	friend class owning_ptr_no_checks<T>;
+	template<class TT>
+	friend class owning_ptr_no_checks;
+	friend class soft_ptr_base_no_checks<T>;
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+	template<class TT>
+	friend class naked_ptr_base_no_checks;
+	friend class naked_ptr_no_checks<T>;
+	template<class TT>
+	friend class naked_ptr_no_checks;
+
+	T* t;
+
+public:
+	naked_ptr_base_no_checks() { t = nullptr; }
+
+	template<class T1>
+	naked_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); }
+
+	template<class T1>
+	naked_ptr_base_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_base_no_checks( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); }
+	naked_ptr_base_no_checks( const soft_ptr_no_checks<T>& other ) { *this = other.get(); }
+	template<class T1>
+	naked_ptr_base_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); return *this; }
+	naked_ptr_base_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other ) { *this = other.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_base_no_checks( const naked_ptr_base_no_checks<T1>& other ) { t = other.t; }
+	template<class T1>
+	naked_ptr_base_no_checks<T>& operator = ( const naked_ptr_base_no_checks<T1>& other ) { t = other.t; return *this; }
+	naked_ptr_base_no_checks( const naked_ptr_base_no_checks<T>& other ) = default;
+	naked_ptr_base_no_checks<T>& operator = ( naked_ptr_base_no_checks<T>& other ) = default;
+
+	naked_ptr_base_no_checks( naked_ptr_base_no_checks<T>&& other ) = default;
+	naked_ptr_base_no_checks<T>& operator = ( naked_ptr_base_no_checks<T>&& other ) = default;
+
+	void swap( naked_ptr_base_no_checks<T>& other )
+	{
+		T* tmp = t;
+		t = other.t;
+		other.t = tmp;
+	}
+
+	T* get_dereferencable() const 
+	{
+		return t;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return t != nullptr;
+	}
+
+
+	bool operator == ( const naked_ptr_base_no_checks<T>& other ) const { return t == other.t; }
+	template<class T1>
+	bool operator == ( const naked_ptr_base_no_checks<T1>& other ) const { return t == other.t; }
+
+	bool operator != ( const naked_ptr_base_no_checks<T>& other ) const { return t != other.t; }
+	template<class T1>
+	bool operator != ( const naked_ptr_base_no_checks<T1>& other ) const { return t != other.t; }
+
+	bool operator == (std::nullptr_t nullp ) const { return t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { return t != nullptr; }
+
+	~naked_ptr_base_no_checks()
+	{
+		t = nullptr;
+	}
+};
+
+
+template<class T>
+class naked_ptr_no_checks : public naked_ptr_base_no_checks<T>
+{
+	friend class owning_ptr_no_checks<T>;
+	friend class soft_ptr_base_no_checks<T>;
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+	template<class TT>
+	friend class owning_ptr_no_checks;
+
+public:
+	naked_ptr_no_checks() : naked_ptr_base_no_checks<T>() {}
+
+	naked_ptr_no_checks(T& t_) : naked_ptr_base_no_checks(t_) { this->t = &t_; }
+
+	template<class T1>
+	naked_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : naked_ptr_base_no_checks<T>(owner) {}
+	naked_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) : naked_ptr_base_no_checks<T>() {*this = owner.get();}
+	template<class T1>
+	naked_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); return *this; }
+	naked_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { *this = owner.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_no_checks( const soft_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	naked_ptr_no_checks( const soft_ptr_no_checks<T>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	template<class T1>
+	naked_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); return *this; }
+	naked_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other ) { *this = other.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_no_checks( const naked_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	template<class T1>
+	naked_ptr_no_checks<T>& operator = ( const naked_ptr_no_checks<T1>& other ) { this->t = other.t; return *this; }
+	naked_ptr_no_checks( const naked_ptr_no_checks<T>& other ) = default;
+	naked_ptr_no_checks<T>& operator = ( naked_ptr_no_checks<T>& other ) = default;
+
+	naked_ptr_no_checks( naked_ptr_no_checks<T>&& other ) = default;
+	naked_ptr_no_checks<T>& operator = ( naked_ptr_no_checks<T>&& other ) = default;
+
+	void swap( naked_ptr_no_checks<T>& other )
+	{
+		naked_ptr_base_no_checks( other );
+	}
+
+	T& operator * () const
+	{
+		return *(this->t);
+	}
+
+	T* operator -> () const 
+	{
+		return this->t;
+	}
+
+	T* get_dereferencable() const 
+	{
+		return this->t;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return this->t != nullptr;
+	}
+
+	bool operator == ( const naked_ptr_no_checks<T>& other ) const { return this->t == other.t; }
+	template<class T1>
+	bool operator == ( const naked_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
+
+	bool operator != ( const naked_ptr_no_checks<T>& other ) const { return this->t != other.t; }
+	template<class T1>
+	bool operator != ( const naked_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
+
+	bool operator == (std::nullptr_t nullp ) const { return this->t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { return this->t != nullptr; }
+
+	~naked_ptr_no_checks()
+	{
+		this->t = nullptr;
+	}
+};
+
+
+template<>
+class naked_ptr_no_checks<void> : public naked_ptr_base_no_checks<void>
+{
+	template<class TT>
+	friend class owning_ptr_no_checks;
+	friend class soft_ptr_base_no_checks<void>;
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+
+public:
+	naked_ptr_no_checks() : naked_ptr_base_no_checks() {}
+
+	template<class T1>
+	naked_ptr_no_checks(T1& t_) : naked_ptr_base_no_checks<void>(t_) {}
+
+	template<class T1>
+	naked_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : naked_ptr_base_no_checks(owner) {}
+	template<class T1>
+	naked_ptr_no_checks<void>& operator = ( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_no_checks( const soft_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks(other) {}
+	naked_ptr_no_checks( const soft_ptr_no_checks<void>& other ) : naked_ptr_base_no_checks(other) {}
+	template<class T1>
+	naked_ptr_no_checks<void>& operator = ( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); return *this; }
+	naked_ptr_no_checks<void>& operator = ( const soft_ptr_no_checks<void>& other ) { *this = other.get(); return *this; }
+
+	template<class T1>
+	naked_ptr_no_checks( const naked_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks(other) {}
+	template<class T1>
+	naked_ptr_no_checks<void>& operator = ( const naked_ptr_no_checks<T1>& other ) { t = other.t; return *this; }
+	naked_ptr_no_checks( const naked_ptr_no_checks<void>& other ) = default;
+	naked_ptr_no_checks<void>& operator = ( naked_ptr_no_checks<void>& other ) = default;
+
+	naked_ptr_no_checks( naked_ptr_no_checks<void>&& other ) = default;
+	naked_ptr_no_checks<void>& operator = ( naked_ptr_no_checks<void>&& other ) = default;
+
+	void swap( naked_ptr_no_checks<void>& other )
+	{
+		naked_ptr_base_no_checks::swap( other );
+	}
+
+	void* get_dereferencable() const 
+	{
+		return this->t;
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return this->t != nullptr;
+	}
+
+	bool operator == ( const naked_ptr_no_checks<void>& other ) const { return this->t == other.t; }
+	template<class T1>
+	bool operator == ( const naked_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
+
+	bool operator != ( const naked_ptr_no_checks<void>& other ) const { return this->t != other.t; }
+	template<class T1>
+	bool operator != ( const naked_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
+
+	bool operator == (std::nullptr_t nullp ) const { return this->t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { return this->t != nullptr; }
+
+	~naked_ptr_no_checks()
+	{
+		this->t = nullptr;
+	}
+};
+
 } // namespace nodecpp::safememory
 
-#endif // _NO_CHECKS
+#define owning_ptr owning_ptr_no_checks
+#define soft_ptr_base soft_ptr_base_no_checks
+#define soft_ptr soft_ptr_no_checks
+#define soft_this_ptr soft_this_ptr_no_checks
+#define naked_ptr_base naked_ptr_base_no_checks
+#define naked_ptr naked_ptr_no_checks
+#define make_owning make_owning_no_checks
+#define soft_ptr_static_cast soft_ptr_static_cast_no_checks
+#define soft_ptr_reinterpret_cast soft_ptr_reinterpret_cast_no_checks
+
+
+#endif // SAFE_PTR_NO_CHECKS_H
