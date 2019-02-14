@@ -291,7 +291,11 @@ public:
 	template<class T1>
 	soft_ptr_no_checks( const soft_ptr_no_checks<T1>& other ) : soft_ptr_base_no_checks<T>(other) {}
 	template<class T1>
-	soft_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other ) : soft_ptr_base_no_checks<T>(other) {}
+	soft_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other )
+	{
+		soft_ptr_base_no_checks<T>::operator = (other);
+		return *this;
+	}
 	soft_ptr_no_checks( const soft_ptr_no_checks<T>& other ) : soft_ptr_base_no_checks<T>(other) {}
 	soft_ptr_no_checks<T>& operator = ( soft_ptr_no_checks<T>& other )
 	{
@@ -592,35 +596,35 @@ class naked_ptr_no_checks : public naked_ptr_base_no_checks<T>
 public:
 	naked_ptr_no_checks() : naked_ptr_base_no_checks<T>() {}
 
-	naked_ptr_no_checks(T& t_) : naked_ptr_base_no_checks(t_) { this->t = &t_; }
+	naked_ptr_no_checks(T& t_) : naked_ptr_base_no_checks<T>(t_) { this->t = &t_; }
 
 	template<class T1>
-	naked_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : naked_ptr_base_no_checks<T>(owner) {}
-	naked_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) : naked_ptr_base_no_checks<T>() {*this = owner.get();}
+	naked_ptr_no_checks<T>( const owning_ptr_no_checks<T1>& owner ) : naked_ptr_base_no_checks<T>(owner) {}
+	naked_ptr_no_checks<T>( const owning_ptr_no_checks<T>& owner ) : naked_ptr_base_no_checks<T>() {*this = owner.get();}
 	template<class T1>
 	naked_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); return *this; }
 	naked_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_no_checks( const soft_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
-	naked_ptr_no_checks( const soft_ptr_no_checks<T>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	naked_ptr_no_checks<T>( const soft_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	naked_ptr_no_checks<T>( const soft_ptr_no_checks<T>& other ) : naked_ptr_base_no_checks<T>(other) {}
 	template<class T1>
 	naked_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); return *this; }
 	naked_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other ) { *this = other.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_no_checks( const naked_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
+	naked_ptr_no_checks<T>( const naked_ptr_no_checks<T1>& other ) : naked_ptr_base_no_checks<T>(other) {}
 	template<class T1>
 	naked_ptr_no_checks<T>& operator = ( const naked_ptr_no_checks<T1>& other ) { this->t = other.t; return *this; }
-	naked_ptr_no_checks( const naked_ptr_no_checks<T>& other ) = default;
+	naked_ptr_no_checks<T>( const naked_ptr_no_checks<T>& other ) = default;
 	naked_ptr_no_checks<T>& operator = ( naked_ptr_no_checks<T>& other ) = default;
 
-	naked_ptr_no_checks( naked_ptr_no_checks<T>&& other ) = default;
+	naked_ptr_no_checks<T>( naked_ptr_no_checks<T>&& other ) = default;
 	naked_ptr_no_checks<T>& operator = ( naked_ptr_no_checks<T>&& other ) = default;
 
 	void swap( naked_ptr_no_checks<T>& other )
 	{
-		naked_ptr_base_no_checks( other );
+		naked_ptr_base_no_checks<T>::swap( other );
 	}
 
 	T& operator * () const
@@ -700,7 +704,7 @@ public:
 
 	void swap( naked_ptr_no_checks<void>& other )
 	{
-		naked_ptr_base_no_checks::swap( other );
+		naked_ptr_base_no_checks<void>::swap( other );
 	}
 
 	void* get_dereferencable() const 
