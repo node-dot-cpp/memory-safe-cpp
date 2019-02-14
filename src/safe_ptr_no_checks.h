@@ -65,7 +65,7 @@ public:
 	owning_ptr_no_checks() { t = nullptr; }
 	owning_ptr_no_checks( owning_ptr_no_checks<T>& other ) = delete;
 	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>& other ) = delete;
-	owning_ptr_no_checks( owning_ptr_no_checks<T>&& other ) {t = other.t; }
+	owning_ptr_no_checks( owning_ptr_no_checks<T>&& other ) {t = other.t; other.t = nullptr; }
 	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>&& other )
 	{
 		if ( this == &other ) return *this;
@@ -200,7 +200,7 @@ public:
 	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; return *this; }
 
 	template<class T1>
-	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = owner.t; }
+	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = t_; }
 
 	template<class T1>
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T1>& other, T* t_ ) { t = t_; }
@@ -460,7 +460,7 @@ soft_ptr_no_checks<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p )
 	return ret;
 }
 
-template<class T, class T1, bool isSafe>
+template<class T, class T1>
 soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1> p ) {
 	soft_ptr_no_checks<T> ret(p,reinterpret_cast<T*>(p.t));
 	return ret;
