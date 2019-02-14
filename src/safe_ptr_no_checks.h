@@ -37,6 +37,8 @@ namespace nodecpp::safememory
 template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 class soft_this_ptr_no_checks; // forward declaration
+//template<class T, bool isSafe> class naked_ptr; // forward declaration
+template<class T> class naked_ptr; // forward declaration
 
 struct make_owning_t {};
 struct fbc_ptr_t {};
@@ -47,11 +49,11 @@ class owning_ptr_no_checks
 	class... _Types,
 	enable_if_t<!is_array_v<_Ty>, int>>
 	friend owning_ptr<_Ty> make_owning(_Types&&... _Args);*/
-	template<class TT, bool isSafe1>
+	template<class TT>
 	friend class owning_ptr_no_checks;
-	template<class TT, bool isSafe1>
+	template<class TT>
 	friend class soft_ptr_base_no_checks;
-	template<class TT, bool isSafe1>
+	template<class TT>
 	friend class soft_ptr_no_checks;
 
 	T* t;
@@ -62,7 +64,7 @@ public:
 		t = t_;
 	}
 	owning_ptr_no_checks() { t = nullptr; }
-	owning_ptr( owning_ptr<T>& other ) = delete;
+	owning_ptr_no_checks( owning_ptr_no_checks<T>& other ) = delete;
 	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>& other ) = delete;
 	owning_ptr_no_checks( owning_ptr_no_checks<T>&& other ) {t = other.t; }
 	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>&& other )
@@ -128,12 +130,12 @@ public:
 	}
 
 	bool operator == (const soft_ptr_no_checks<T>& other ) const { return t == other; }
-	template<class T1, bool isSafe1>
-	bool operator == (const soft_ptr_no_checks<T1, isSafe1>& other ) const { return t == other; }
+	template<class T1>
+	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return t == other; }
 
 	bool operator != (const soft_ptr_no_checks<T>& other ) const { return t != other; }
-	template<class T1, bool isSafe1>
-	bool operator != (const soft_ptr_no_checks<T1, isSafe1>& other ) const { return t != other; }
+	template<class T1>
+	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return t != other; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
@@ -152,7 +154,7 @@ template<class _Ty,
 NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 {
 	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
-	owning_ptr_no_checks<_Ty> op(make_owning_t(), (_Ty*)(data);
+	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
 	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
 	return op;
 }
@@ -167,14 +169,10 @@ class soft_ptr_base_no_checks
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT1> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
 	T* t;
 
@@ -191,9 +189,9 @@ public:
 
 
 	template<class T1>
-	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T1>& other ) { t = owner.t; }
+	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T1>& other ) { t = other.t; }
 	template<class T1>
-	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_no_checks<T1>& other ) { t = owner.t; return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_no_checks<T1>& other ) { t = other.t; return *this; }
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other ) { t = other.t; }
 	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>& other ) { t = other.t; return *this; }
 
@@ -226,7 +224,7 @@ public:
 
 	explicit operator bool() const noexcept
 	{
-		return t) != nullptr;
+		return t != nullptr;
 	}
 
 	void reset()
@@ -240,7 +238,7 @@ public:
 
 	bool operator == (const soft_ptr_base_no_checks<T>& other ) const { return t == other.t; }
 	template<class T1>
-	bool operator == (const soft_ptr_base_no_checks<T11>& other ) const { return t == other.t; }
+	bool operator == (const soft_ptr_base_no_checks<T1>& other ) const { return t == other.t; }
 
 	bool operator != (const owning_ptr_no_checks<T>& other ) const { return t != other.t.getTypedPtr(); }
 	template<class T1> 
@@ -248,7 +246,7 @@ public:
 
 	bool operator != (const soft_ptr_base_no_checks<T>& other ) const { return t != other.t; }
 	template<class T1>
-	bool operator != (const soft_ptr_base_no_checks<T11>& other ) const { return t != other.t; }
+	bool operator != (const soft_ptr_base_no_checks<T1>& other ) const { return t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
@@ -266,73 +264,31 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	friend class soft_ptr_no_checks;
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT1> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT1> );
 
 private:
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_in_constructor(TT* ptr);
 	friend soft_ptr_no_checks<T> soft_ptr_no_checks_in_constructor(T* ptr);
-	soft_ptr_no_checks(fbc_ptr_t, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
-	soft_ptr_no_checks() : soft_ptr_base_no_checks<T>()
-	{
-		this->init( soft_ptr_base_no_checks<T>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
-		{
-			this->setOnStack();
-			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
-		}
-		this->dbgCheckMySlotConsistency();
-	}
-
+	soft_ptr_no_checks() : soft_ptr_base_no_checks<T>() { this->t = nullptr; }
 
 	template<class T1>
 	soft_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : soft_ptr_base_no_checks<T>(owner) {}
-	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner )
-	{
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
-		{
-			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
-			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
-		}
-		else
-			if ( owner.t .getPtr())
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
-			else
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_no_checks<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
-		this->dbgCheckMySlotConsistency();
-	}
+	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; }
 	template<class T1>
 	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner )
 	{
 		soft_ptr_base_no_checks<T>::operator = (owner);
 		return *this;
 	}
-	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
-	{
-		bool iWasOnStack = this->isOnStack();
-		reset();
-		if ( iWasOnStack )
-		{
-			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
-		}
-		else
-			if ( owner.t .getPtr())
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
-			else
-				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_no_checks<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
-		this->dbgCheckMySlotConsistency();
-		return *this;
-	}
+	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; return *this; }
 
 
 	template<class T1>
@@ -357,22 +313,7 @@ public:
 
 	template<class T1>
 	soft_ptr_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) : soft_ptr_base_no_checks<T>(owner, t_) {}
-	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner, T* t_ )
-	{
-		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
-			throwPointerOutOfRange();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
-		{
-			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
-			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
-		}
-		else
-			if ( owner.t .getPtr())
-				init( t_, owner.t.getPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
-			else
-				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
-		this->dbgCheckMySlotConsistency();
-	}
+	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner, T* t_ ) { this->t = t_; }
 
 	template<class T1>
 	soft_ptr_no_checks( const soft_ptr_no_checks<T1>& other, T* t_ ) : soft_ptr_base_no_checks<T>(other, t_) {}
@@ -418,7 +359,7 @@ public:
 
 	bool operator == (const soft_ptr_no_checks<T>& other ) const { return this->t == other.t; }
 	template<class T1>
-	bool operator == (const soft_ptr_no_checks<T11>& other ) const { return this->t == other.t; }
+	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
 	bool operator != (const owning_ptr_no_checks<T>& other ) const { return this->t != other.t.getTypedPtr(); }
 	template<class T1> 
@@ -426,7 +367,7 @@ public:
 
 	bool operator != (const soft_ptr_no_checks<T>& other ) const { return this->t != other.t; }
 	template<class T1>
-	bool operator != (const soft_ptr_no_checks<T11>& other ) const { return this->t != other.t; }
+	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
@@ -441,16 +382,10 @@ class soft_ptr_no_checks<void> : public soft_ptr_base_no_checks<void>
 	friend class soft_ptr_no_checks_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
-	template<class TT, class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_static_cast( soft_ptr_no_checks<TT1> );
+	template<class TT, class TT1>
+	friend soft_ptr_no_checks<TT> soft_ptr_no_checks_reinterpret_cast( soft_ptr_no_checks<TT1> );
 
 public:
 	soft_ptr_no_checks() : soft_ptr_base_no_checks<void>() { t = nullptr; }
@@ -513,8 +448,8 @@ public:
 	template<class T1>
 	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
 
 	void reset()
 	{
@@ -528,19 +463,7 @@ soft_ptr_no_checks<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p )
 	return ret;
 }
 
-template<class T, class T1>
-soft_ptr_no_checks<T> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<T1> p ) {
-	soft_ptr_no_checks<T> ret(p,static_cast<T*>(p.t));
-	return ret;
-}
-
 template<class T, class T1, bool isSafe>
-soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1> p ) {
-	soft_ptr_no_checks<T> ret(p,reinterpret_cast<T*>(p.t));
-	return ret;
-}
-
-template<class T, class T1>
 soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1> p ) {
 	soft_ptr_no_checks<T> ret(p,reinterpret_cast<T*>(p.t));
 	return ret;
