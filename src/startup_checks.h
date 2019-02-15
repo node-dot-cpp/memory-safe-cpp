@@ -29,6 +29,7 @@
 #define STARTUP_CHECKS_H
 
 #include <foundation.h>
+#include <safe_ptr.h>
 
 namespace nodecpp::safememory::testing {
 

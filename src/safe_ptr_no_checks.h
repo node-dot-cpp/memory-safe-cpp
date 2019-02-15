@@ -39,7 +39,7 @@ template<class T> class soft_ptr_no_checks; // forward declaration
 class soft_this_ptr_no_checks; // forward declaration
 template<class T> class naked_ptr_no_checks; // forward declaration
 
-struct make_owning_t {};
+//struct make_owning_t {};
 struct fbc_ptr_t {};
 template<class T>
 class owning_ptr_no_checks
@@ -736,15 +736,14 @@ public:
 
 } // namespace nodecpp::safememory
 
-#define owning_ptr owning_ptr_no_checks
-#define soft_ptr_base soft_ptr_base_no_checks
-#define soft_ptr soft_ptr_no_checks
-#define soft_this_ptr soft_this_ptr_no_checks
-#define naked_ptr_base naked_ptr_base_no_checks
-#define naked_ptr naked_ptr_no_checks
-#define make_owning make_owning_no_checks
-#define soft_ptr_static_cast soft_ptr_static_cast_no_checks
-#define soft_ptr_reinterpret_cast soft_ptr_reinterpret_cast_no_checks
+
+  //#define owning_ptr owning_ptr_no_checks
+//#define soft_ptr soft_ptr_no_checks
+//#define soft_this_ptr soft_this_ptr_no_checks
+//#define naked_ptr naked_ptr_no_checks
+//#define make_owning make_owning_no_checks
+//#define soft_ptr_static_cast soft_ptr_static_cast_no_checks
+//#define soft_ptr_reinterpret_cast soft_ptr_reinterpret_cast_no_checks
 
 
 #endif // SAFE_PTR_NO_CHECKS_H

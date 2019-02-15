@@ -95,4 +95,30 @@ NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 #endif
 
 
+namespace nodecpp::safememory
+{
+#ifdef NODECPP_GCC
+extern void forcePreviousChangesToThisInDtor( void* p );
+#else
+#define forcePreviousChangesToThisInDtor(x)
+#endif
+
+template<class T>
+void destruct( T* t )
+{
+	if constexpr ( std::is_polymorphic<T>::value )
+	{
+		auto vpt = nodecpp::platform::backup_vmt_pointer(t);
+		t->~T();
+		nodecpp::platform::restore_vmt_pointer( t, vpt);
+	}
+	else
+		t->~T();
+}
+
+struct make_owning_t {};
+
+
+} // namespace nodecpp::safememory
+
 #endif // SAFE_PTR_COMMON_H
