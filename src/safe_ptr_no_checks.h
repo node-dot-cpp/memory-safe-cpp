@@ -36,7 +36,7 @@ namespace nodecpp::safememory
 
 template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
-class soft_this_ptr_no_checks; // forward declaration
+template<class T> class soft_this_ptr_no_checks; // forward declaration
 template<class T> class naked_ptr_no_checks; // forward declaration
 
 //struct make_owning_t {};
@@ -267,10 +267,12 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
 private:
+	friend class soft_this_ptr_no_checks<T>;
+	template<class TT>
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor(TT* ptr);
-	friend soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr);
+	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_check(TT* ptr);
+	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_check(T* ptr);
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -470,7 +472,7 @@ soft_ptr_no_checks<T> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<T1
 	return ret;
 }
 
-
+template<class T>
 class soft_this_ptr_no_checks
 {
 public:
@@ -499,7 +501,7 @@ public:
 };
 
 template<class T>
-soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr) {
+soft_ptr_no_checks<T> soft_ptr_in_constructor_no_check(T* ptr) {
 	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
 }
 

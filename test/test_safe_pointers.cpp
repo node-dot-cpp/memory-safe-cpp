@@ -30,7 +30,8 @@
 
 #include <stdio.h>
 
-#include <safe_ptr.h>
+//#include <safe_ptr.h>
+//#include <safe_ptr_no_checks.h>
 #include <startup_checks.h>
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
