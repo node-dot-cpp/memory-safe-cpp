@@ -117,10 +117,10 @@ public:
 	const std::type_info& target_type() const noexcept { return stdf.target_type(); }
 
 	template< class T > 
-	T* target() noexcept { return stdf.target<T>(); }
+	T* target() noexcept { return stdf.template target<T>(); }
 
 	template< class T > 
-	const T* target() const noexcept { return stdf.target<T>(); }
+	const T* target() const noexcept { return stdf.template target<T>(); }
 };
 
 template< class R, class... Args >
