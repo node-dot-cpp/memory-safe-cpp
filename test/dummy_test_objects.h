@@ -10,7 +10,7 @@ class SomethingLarger; //forward declaration
 class Something
 {
 public:
-	soft_this_ptr myThis;
+	soft_this_ptr<Something> myThis;
 	owning_ptr<int> m;
 	soft_ptr<SomethingLarger> prtToOwner;
 	Something( int k) { m = make_owning<int>(); *m = k; }
@@ -21,7 +21,7 @@ public:
 class SomethingLarger
 {
 public:
-	soft_this_ptr myThis;
+	soft_this_ptr<SomethingLarger> myThis;
 	soft_ptr<Something> softpS;
 	owning_ptr<Something> opS;
 	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {

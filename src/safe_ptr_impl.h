@@ -114,7 +114,7 @@ template<class T, bool isSafe> class soft_ptr_base_impl; // forward declaration
 template<class T, bool isSafe> class soft_ptr_impl; // forward declaration
 template<class T, bool isSafe> class naked_ptr_base_impl; // forward declaration
 template<class T, bool isSafe> class naked_ptr_impl; // forward declaration
-class soft_this_ptr_impl; // forward declaration
+template<class T> class soft_this_ptr_impl; // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -1152,6 +1152,8 @@ class soft_ptr_impl : public soft_ptr_base_impl<T, isSafe>
 	friend struct FirstControlBlock;
 
 private:
+	friend class soft_this_ptr_impl<T>;
+	template<class TT>
 	friend class soft_this_ptr_impl;
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
@@ -1447,6 +1449,7 @@ soft_ptr_impl<T, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast_impl( soft_pt
 }
 
 
+template<class T>
 class soft_this_ptr_impl
 {
 	FirstControlBlock* cbPtr = nullptr;
