@@ -1,15 +1,14 @@
 // RUN: nodecpp-checker %s -- -std=c++11 -nostdinc++ | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
 
-
 void bad1() { 
-	size_t i = 0;
+	unsigned i = 0;
 	reinterpret_cast<void*>(i);
 // CHECK-MESSAGES: :[[@LINE-1]]:2: warning: (S1.1)
 	(void*)i;
 // CHECK-MESSAGES: :[[@LINE-1]]:2: warning: (S1.1)
 	void* p = nullptr;
 // CHECK-MESSAGES: :[[@LINE-1]]:8: warning: (S1.3)
-	static_cast<size_t*>(p);
+	static_cast<unsigned*>(p);
 // CHECK-MESSAGES: :[[@LINE-1]]:2: warning: (S1.1)
 
 }

@@ -4,9 +4,13 @@
 namespace std {
 
 typedef void* nullptr_t;
+typedef unsigned size_t;
 
 template<class T>
 T&& move(T&& t) { return t; }
+
+template<class T>
+T&& forward(T&& t) { return t; }
 
 template<class T>
 class reference_wrapper {};
