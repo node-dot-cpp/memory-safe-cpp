@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLING_JSONSAFEDATABASE_H
-#define LLVM_CLANG_TOOLING_JSONSAFEDATABASE_H
+#ifndef NODECPP_CHECKER_JSONSAFEDATABASE_H
+#define NODECPP_CHECKER_JSONSAFEDATABASE_H
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Tooling/CompilationDatabase.h"
@@ -135,7 +135,7 @@ private:
   llvm::yaml::Stream YAMLStream;
 };
 
-} // end namespace tidy
+} // end namespace tidys
 } // end namespace clang
 
-#endif
+#endif // NODECPP_CHECKER_JSONSAFEDATABASE_H

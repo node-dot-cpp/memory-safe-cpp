@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_NAKEDPTRCHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_NAKEDPTRCHECK_H
+#ifndef NODECPP_CHECKER_NODECPP_VARDECLCHECK_H
+#define NODECPP_CHECKER_NODECPP_VARDECLCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -36,4 +36,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_NAKEDPTRCHECK_H
+#endif // NODECPP_CHECKER_NODECPP_VARDECLCHECK_H

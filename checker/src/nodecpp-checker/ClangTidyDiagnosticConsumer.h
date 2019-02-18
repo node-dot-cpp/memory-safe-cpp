@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYDIAGNOSTICCONSUMER_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYDIAGNOSTICCONSUMER_H
+#ifndef NODECPP_CHECKER_CLANGTIDYDIAGNOSTICCONSUMER_H
+#define NODECPP_CHECKER_CLANGTIDYDIAGNOSTICCONSUMER_H
 
 #include "ClangTidyOptions.h"
 #include "clang/Basic/Diagnostic.h"
@@ -270,4 +270,4 @@ private:
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYDIAGNOSTICCONSUMER_H
+#endif // NODECPP_CHECKER_CLANGTIDYDIAGNOSTICCONSUMER_H

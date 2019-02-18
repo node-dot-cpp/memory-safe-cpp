@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
+#ifndef NODECPP_CHECKER_CLANGTIDYMODULE_H
+#define NODECPP_CHECKER_CLANGTIDYMODULE_H
 
 #include "ClangTidy.h"
 #include "llvm/ADT/StringRef.h"
@@ -96,4 +96,4 @@ public:
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDYMODULE_H
+#endif // NODECPP_CHECKER_CLANGTIDYMODULE_H

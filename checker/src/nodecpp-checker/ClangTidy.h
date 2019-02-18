@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H
+#ifndef NODECPP_CHECKER_CLANGTIDY_H
+#define NODECPP_CHECKER_CLANGTIDY_H
 
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyOptions.h"
@@ -249,4 +249,4 @@ void exportReplacements(StringRef MainFilePath,
 } // end namespace tidy
 } // end namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_CLANGTIDY_H
+#endif // NODECPP_CHECKER_CLANGTIDY_H

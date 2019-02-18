@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_STDFUNCTIONCHECK_H
-#define LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_STDFUNCTIONCHECK_H
+#ifndef NODECPP_CHECKER_NODECPP_STDFUNCTIONCHECK_H
+#define NODECPP_CHECKER_NODECPP_STDFUNCTIONCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -38,4 +38,4 @@ public:
 } // namespace tidy
 } // namespace clang
 
-#endif // LLVM_CLANG_TOOLS_EXTRA_CLANG_TIDY_NODECPP_STDFUNCTIONCHECK_H
+#endif // NODECPP_CHECKER_NODECPP_STDFUNCTIONCHECK_H
