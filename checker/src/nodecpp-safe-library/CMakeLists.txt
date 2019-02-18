@@ -1,10 +1,9 @@
 set( LLVM_LINK_COMPONENTS
-  ${LLVM_TARGETS_TO_BUILD}
-  Option
+  AllTargetsAsmParsers
+  AllTargetsDescs
+  AllTargetsInfos
   Support
   )
-
-set(LLVM_REQUIRES_RTTI 1)
 
 add_clang_executable(nodecpp-safe-library
   NodeCppSafeLibrary.cpp
@@ -18,8 +17,6 @@ target_link_libraries(nodecpp-safe-library
   clangBasic
   clangDriver
   clangFrontend
-  clangRewriteFrontend
-  clangStaticAnalyzerFrontend
   clangTooling
   )
 
