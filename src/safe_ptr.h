@@ -32,53 +32,44 @@
 
 #include "safe_ptr_no_checks.h"
 #include "safe_ptr_impl.h"
-/*#define owning_ptr owning_ptr_no_checks
-#define soft_ptr_base soft_ptr_base_no_checks
-#define soft_ptr soft_ptr_no_checks
-#define soft_this_ptr soft_this_ptr_no_checks
-#define naked_ptr_base naked_ptr_base_no_checks
-#define naked_ptr naked_ptr_no_checks
-#define make_owning make_owning_no_checks*/
 
 namespace nodecpp::safememory {
 
-template<class T> using owning_ptr = owning_ptr_impl<T>;
+//namespace typehelper {
+template<class T> struct owning_ptr_type { typedef owning_ptr_impl<T> type; };
+template<class T> struct soft_ptr_type { typedef soft_ptr_impl<T> type; };
+template<class T> struct soft_this_ptr_type { typedef soft_this_ptr_impl<T> type; };
+template<class T> struct naked_ptr_type { typedef naked_ptr_impl<T> type; };
+
+template<> struct owning_ptr_type<double> { typedef owning_ptr_no_checks<double> type; };
+template<> struct soft_ptr_type<double> { typedef soft_ptr_no_checks<double> type; };
+template<> struct soft_this_ptr_type<double> { typedef soft_this_ptr_no_checks<double> type; };
+template<> struct naked_ptr_type<double> { typedef naked_ptr_no_checks<double> type; };
+
+template<class T> using owning_ptr = typename owning_ptr_type<T>::type;
+template<class T> using soft_ptr = typename soft_ptr_type<T>::type;
+template<class T> using soft_this_ptr = typename soft_this_ptr_type<T>::type;
+template<class T> using naked_ptr = typename naked_ptr_type<T>::type;
+
+
+// SAFE VERSION (default case)
+/*template<class T> using owning_ptr = owning_ptr_impl<T>;
 template<class T> using soft_ptr = soft_ptr_impl<T>;
-using soft_this_ptr = soft_this_ptr_impl;
-template<class T> using naked_ptr = naked_ptr_impl<T>;
-
-/*template<class T> using owning_ptr = owning_ptr_no_checks<T>;
-template<class T> using soft_ptr = soft_ptr_no_checks<T>;
-using soft_this_ptr = soft_this_ptr_no_checks;
-template<class T> using naked_ptr = naked_ptr_no_checks<T>;
-
-template<> using owning_ptr = owning_ptr_no_checks<T>;
-template<class T> using soft_ptr = soft_ptr_no_checks<T>;
-using soft_this_ptr = soft_this_ptr_no_checks;
-template<class T> using naked_ptr = naked_ptr_no_checks<T>;*/
+template<class T> using soft_this_ptr = soft_this_ptr_impl<T>;
+template<class T> using naked_ptr = naked_ptr_impl<T>;*/
 
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 {
-//	return make_owning_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
 	return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
-	/*uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
-	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
-	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
-	return op;*/
 }
 
 template<class T>
 soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
 	return soft_ptr_in_constructor_impl<T>(ptr);
 }
-
-/*template<class T>
-soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr) {
-	return soft_ptr_in_constructor_no_check<T>( ptr );
-}*/
 
 template<class T, class T1>
 soft_ptr_impl<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
@@ -99,6 +90,77 @@ template<class T, class T1>
 soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
 	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
 }
+
+// UNSAFE (FAST) version (per-type)
+
+/*template<> using owning_ptr<int> = owning_ptr_no_checks<int>;
+template<> using soft_ptr = soft_ptr_no_checks<int>;
+template<> using soft_this_ptr = soft_this_ptr_no_checks<int>;
+template<> using naked_ptr = naked_ptr_no_checks<int>;*/
+
+template<
+	class... _Types,
+	std::enable_if_t<!std::is_array<double>::value, int> = 0>
+NODISCARD owning_ptr<double> make_owning(_Types&&... _Args)
+{
+	return make_owning_no_checks<double, _Types ...>( ::std::forward<_Types>(_Args)... );
+}
+
+/*template<>
+soft_ptr<int> soft_ptr_in_constructor(int* ptr) {
+	return soft_ptr_in_constructor_no_checks<int>(ptr);
+}
+
+template<class T, class T1>
+soft_ptr_no_checks<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_static_cast_no_checks<T, T1>( p ) ;
+}
+
+template<class T, class T1>
+soft_ptr_no_checks<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_static_cast_no_checks<T, T1>( p ) ;
+}
+
+template<class T, class T1>
+soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
+}*/
+
+template<class T>
+soft_ptr_no_checks<T> soft_ptr_static_cast( soft_ptr_no_checks<double> p ) {
+	return soft_ptr_static_cast_no_checks<T, double>( p ) ;
+}
+
+template<class T1>
+soft_ptr_no_checks<double> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_static_cast_no_checks<double, T1>( p ) ;
+}
+
+template<class T>
+soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<double> p ) {
+	return soft_ptr_reinterpret_cast_no_checks<T, double>( p );
+}
+
+template<class T1>
+soft_ptr_no_checks<double> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_reinterpret_cast_no_checks<double, T1>( p );
+}
+
+
+/*template<class T> using owning_ptr = owning_ptr_no_checks<T>;
+template<class T> using soft_ptr = soft_ptr_no_checks<T>;
+using soft_this_ptr = soft_this_ptr_no_checks;
+template<class T> using naked_ptr = naked_ptr_no_checks<T>;
+
+template<> using owning_ptr = owning_ptr_no_checks<T>;
+template<class T> using soft_ptr = soft_ptr_no_checks<T>;
+using soft_this_ptr = soft_this_ptr_no_checks;
+template<class T> using naked_ptr = naked_ptr_no_checks<T>;*/
+
+/*template<class T>
+soft_ptr_no_checks<T> soft_ptr_in_constructor(T* ptr) {
+	return soft_ptr_in_constructor_no_check<T>( ptr );
+}*/
 
 
 } // namespace nodecpp::safememory
