@@ -33,8 +33,8 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Rewrite/Frontend/FixItRewriter.h"
 #include "clang/Rewrite/Frontend/FrontendActions.h"
-#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
-#include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
+//#include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
+//#include "clang/StaticAnalyzer/Frontend/AnalysisConsumer.h"
 #include "clang/Tooling/DiagnosticsYaml.h"
 #include "clang/Tooling/Refactoring.h"
 #include "clang/Tooling/ReplacementsYaml.h"
@@ -57,35 +57,35 @@ namespace tidy {
 namespace {
 static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
-class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
-public:
-  AnalyzerDiagnosticConsumer(ClangTidyContext &Context) : Context(Context) {}
+// class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
+// public:
+//   AnalyzerDiagnosticConsumer(ClangTidyContext &Context) : Context(Context) {}
 
-  void FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
-                            FilesMade *filesMade) override {
-    for (const ento::PathDiagnostic *PD : Diags) {
-      SmallString<64> CheckName(AnalyzerCheckNamePrefix);
-      CheckName += PD->getCheckName();
-      Context.diag(CheckName, PD->getLocation().asLocation(),
-                   PD->getShortDescription())
-          << PD->path.back()->getRanges();
+//   void FlushDiagnosticsImpl(std::vector<const ento::PathDiagnostic *> &Diags,
+//                             FilesMade *filesMade) override {
+//     for (const ento::PathDiagnostic *PD : Diags) {
+//       SmallString<64> CheckName(AnalyzerCheckNamePrefix);
+//       CheckName += PD->getCheckName();
+//       Context.diag(CheckName, PD->getLocation().asLocation(),
+//                    PD->getShortDescription())
+//           << PD->path.back()->getRanges();
 
-      for (const auto &DiagPiece :
-           PD->path.flatten(/*ShouldFlattenMacros=*/true)) {
-        Context.diag(CheckName, DiagPiece->getLocation().asLocation(),
-                     DiagPiece->getString(), DiagnosticIDs::Note)
-            << DiagPiece->getRanges();
-      }
-    }
-  }
+//       for (const auto &DiagPiece :
+//            PD->path.flatten(/*ShouldFlattenMacros=*/true)) {
+//         Context.diag(CheckName, DiagPiece->getLocation().asLocation(),
+//                      DiagPiece->getString(), DiagnosticIDs::Note)
+//             << DiagPiece->getRanges();
+//       }
+//     }
+//   }
 
-  StringRef getName() const override { return "ClangTidyDiags"; }
-  bool supportsLogicalOpControlFlow() const override { return true; }
-  bool supportsCrossFileDiagnostics() const override { return true; }
+//   StringRef getName() const override { return "ClangTidyDiags"; }
+//   bool supportsLogicalOpControlFlow() const override { return true; }
+//   bool supportsCrossFileDiagnostics() const override { return true; }
 
-private:
-  ClangTidyContext &Context;
-};
+// private:
+//   ClangTidyContext &Context;
+// };
 
 class ErrorReporter {
 public:
@@ -302,35 +302,35 @@ static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
 
 typedef std::vector<std::pair<std::string, bool>> CheckersList;
 
-static CheckersList getCheckersControlList(ClangTidyContext &Context) {
-  CheckersList List;
+// static CheckersList getCheckersControlList(ClangTidyContext &Context) {
+//   CheckersList List;
 
-  const auto &RegisteredCheckers =
-      AnalyzerOptions::getRegisteredCheckers(/*IncludeExperimental=*/false);
-  bool AnalyzerChecksEnabled = false;
-  for (StringRef CheckName : RegisteredCheckers) {
-    std::string ClangTidyCheckName((AnalyzerCheckNamePrefix + CheckName).str());
-    AnalyzerChecksEnabled |= Context.isCheckEnabled(ClangTidyCheckName);
-  }
+//   const auto &RegisteredCheckers =
+//       AnalyzerOptions::getRegisteredCheckers(/*IncludeExperimental=*/false);
+//   bool AnalyzerChecksEnabled = false;
+//   for (StringRef CheckName : RegisteredCheckers) {
+//     std::string ClangTidyCheckName((AnalyzerCheckNamePrefix + CheckName).str());
+//     AnalyzerChecksEnabled |= Context.isCheckEnabled(ClangTidyCheckName);
+//   }
 
-  if (!AnalyzerChecksEnabled)
-    return List;
+//   if (!AnalyzerChecksEnabled)
+//     return List;
 
-  // List all static analyzer checkers that our filter enables.
-  //
-  // Always add all core checkers if any other static analyzer check is enabled.
-  // This is currently necessary, as other path sensitive checks rely on the
-  // core checkers.
-  for (StringRef CheckName : RegisteredCheckers) {
-    std::string ClangTidyCheckName((AnalyzerCheckNamePrefix + CheckName).str());
+//   // List all static analyzer checkers that our filter enables.
+//   //
+//   // Always add all core checkers if any other static analyzer check is enabled.
+//   // This is currently necessary, as other path sensitive checks rely on the
+//   // core checkers.
+//   for (StringRef CheckName : RegisteredCheckers) {
+//     std::string ClangTidyCheckName((AnalyzerCheckNamePrefix + CheckName).str());
 
-    if (CheckName.startswith("core") ||
-        Context.isCheckEnabled(ClangTidyCheckName)) {
-      List.emplace_back(CheckName, true);
-    }
-  }
-  return List;
-}
+//     if (CheckName.startswith("core") ||
+//         Context.isCheckEnabled(ClangTidyCheckName)) {
+//       List.emplace_back(CheckName, true);
+//     }
+//   }
+//   return List;
+// }
 
 std::unique_ptr<clang::ASTConsumer>
 ClangTidyASTConsumerFactory::CreateASTConsumer(
@@ -367,25 +367,25 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
-  AnalyzerOptionsRef AnalyzerOptions = Compiler.getAnalyzerOpts();
-  // FIXME: Remove this option once clang's cfg-temporary-dtors option defaults
-  // to true.
-  AnalyzerOptions->Config["cfg-temporary-dtors"] =
-      Context.getOptions().AnalyzeTemporaryDtors ? "true" : "false";
+  // AnalyzerOptionsRef AnalyzerOptions = Compiler.getAnalyzerOpts();
+  // // FIXME: Remove this option once clang's cfg-temporary-dtors option defaults
+  // // to true.
+  // AnalyzerOptions->Config["cfg-temporary-dtors"] =
+  //     Context.getOptions().AnalyzeTemporaryDtors ? "true" : "false";
 
-  AnalyzerOptions->CheckersControlList = getCheckersControlList(Context);
-  if (!AnalyzerOptions->CheckersControlList.empty()) {
-    setStaticAnalyzerCheckerOpts(Context.getOptions(), AnalyzerOptions);
-    AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
-    AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
-    AnalyzerOptions->AnalyzeNestedBlocks = true;
-    AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
-    std::unique_ptr<ento::AnalysisASTConsumer> AnalysisConsumer =
-        ento::CreateAnalysisConsumer(Compiler);
-    AnalysisConsumer->AddDiagnosticConsumer(
-        new AnalyzerDiagnosticConsumer(Context));
-    Consumers.push_back(std::move(AnalysisConsumer));
-  }
+  // AnalyzerOptions->CheckersControlList = getCheckersControlList(Context);
+  // if (!AnalyzerOptions->CheckersControlList.empty()) {
+  //   setStaticAnalyzerCheckerOpts(Context.getOptions(), AnalyzerOptions);
+  //   AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
+  //   AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
+  //   AnalyzerOptions->AnalyzeNestedBlocks = true;
+  //   AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
+  //   std::unique_ptr<ento::AnalysisASTConsumer> AnalysisConsumer =
+  //       ento::CreateAnalysisConsumer(Compiler);
+  //   AnalysisConsumer->AddDiagnosticConsumer(
+  //       new AnalyzerDiagnosticConsumer(Context));
+  //   Consumers.push_back(std::move(AnalysisConsumer));
+  // }
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));
 }
@@ -397,8 +397,8 @@ std::vector<std::string> ClangTidyASTConsumerFactory::getCheckNames() {
       CheckNames.push_back(CheckFactory.first);
   }
 
-  for (const auto &AnalyzerCheck : getCheckersControlList(Context))
-    CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
+  // for (const auto &AnalyzerCheck : getCheckersControlList(Context))
+  //   CheckNames.push_back(AnalyzerCheckNamePrefix + AnalyzerCheck.first);
 
   std::sort(CheckNames.begin(), CheckNames.end());
   return CheckNames;

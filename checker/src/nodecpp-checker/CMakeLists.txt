@@ -9,9 +9,6 @@ add_clang_library(nodecppChecker
   ClangTidyOptions.cpp
   JSONSafeDatabase.cpp
 
-  DEPENDS
-  ClangSACheckers
-
   LINK_LIBS
   clangAST
   clangASTMatchers
@@ -21,8 +18,6 @@ add_clang_library(nodecppChecker
   clangLex
   clangRewrite
   clangSema
-  clangStaticAnalyzerCore
-  clangStaticAnalyzerFrontend
   clangTooling
   clangToolingCore
   )
