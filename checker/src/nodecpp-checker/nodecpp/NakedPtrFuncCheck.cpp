@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void NakedPtrFuncCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -79,6 +78,5 @@ void NakedPtrFuncCheck::check(const MatchFinder::MatchResult &Result) {
   func->dumpColor();
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

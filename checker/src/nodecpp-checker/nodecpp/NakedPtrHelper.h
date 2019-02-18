@@ -15,9 +15,8 @@
 
 #include "../ClangTidy.h"
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 
 class DiagHelper {
@@ -139,12 +138,7 @@ public:
   NakedPtrScopeChecker makeParamScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext);
 };
 
-
-
-
-
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang
 
 #endif // NODECPP_CHECKER_NODECPP_NAKEDPTRHELPER_H

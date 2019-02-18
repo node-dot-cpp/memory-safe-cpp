@@ -15,9 +15,8 @@
 
 #include "../ClangTidy.h"
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 /// FIXME: Write a short description.
 ///
@@ -31,8 +30,7 @@ public:
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang
 
 #endif // NODECPP_CHECKER_NODECPP_MAYEXTENDDECLCHECK_H

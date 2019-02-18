@@ -34,9 +34,8 @@
 #include "TemporaryExprCheck.h"
 #include "VarDeclCheck.h"
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 /// A module containing checks of the Node.C++ infrastructure
 class NodeCppModule : public ClangTidyModule {
@@ -89,11 +88,10 @@ public:
 static ClangTidyModuleRegistry::Add<NodeCppModule>
     X("nodecpp-module", "Adds checks for the Node.C++ infrastructure.");
 
-} // namespace nodecpp
 
 // This anchor is used to force the linker to link in the generated object file
 // and thus register the NodeCppModule.
 volatile int NodeCppModuleAnchorSource = 0;
 
-} // namespace tidy
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp

@@ -28,8 +28,8 @@
 #include <vector>
 #include <set>
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 /// \brief A JSON based safe functions and types database.
 ///
@@ -61,41 +61,41 @@ public:
   /// are named 'compile_commands.json' in the given directory. Extend this
   /// for other build types (like ninja build files).
   static std::unique_ptr<JSONSafeDatabase>
-  loadFromDirectory(StringRef BuildDirectory, std::string &ErrorMessage);
+  loadFromDirectory(llvm::StringRef BuildDirectory, std::string &ErrorMessage);
 
   /// \brief Tries to detect a compilation database location and load it.
   ///
   /// Looks for a compilation database in all parent paths of file 'SourceFile'
   /// by calling loadFromDirectory.
   static std::unique_ptr<JSONSafeDatabase>
-  autoDetectFromSource(StringRef SourceFile, std::string &ErrorMessage);
+  autoDetectFromSource(llvm::StringRef SourceFile, std::string &ErrorMessage);
 
   /// \brief Tries to detect a compilation database location and load it.
   ///
   /// Looks for a compilation database in directory 'SourceDir' and all
   /// its parent paths by calling loadFromDirectory.
   static std::unique_ptr<JSONSafeDatabase>
-  autoDetectFromDirectory(StringRef SourceDir, std::string &ErrorMessage);
+  autoDetectFromDirectory(llvm::StringRef SourceDir, std::string &ErrorMessage);
 
   /// \brief Loads a JSON safe database from the specified file.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be
   /// loaded from the given file.
   static std::unique_ptr<JSONSafeDatabase>
-  loadFromSpecificFile(StringRef JSONDatabasePath, std::string &ErrorMessage);
+  loadFromSpecificFile(llvm::StringRef JSONDatabasePath, std::string &ErrorMessage);
 
   /// \brief Loads a JSON safe database from the specified file.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be
   /// loaded from the given file.
   static std::unique_ptr<JSONSafeDatabase>
-  loadFromFile(StringRef FilePath, std::string &ErrorMessage);
+  loadFromFile(llvm::StringRef FilePath, std::string &ErrorMessage);
 
   /// \brief Loads a JSON safe database from a data buffer.
   ///
   /// Returns NULL and sets ErrorMessage if the database could not be loaded.
   static std::unique_ptr<JSONSafeDatabase>
-  loadFromBuffer(StringRef DatabaseString, std::string &ErrorMessage);
+  loadFromBuffer(llvm::StringRef DatabaseString, std::string &ErrorMessage);
 
   /// \brief Returns the set of safe types names.
   void getTypes(std::set<std::string>& Types) const {
@@ -115,7 +115,7 @@ private:
         YAMLStream(this->Database->getBuffer(), SM) {}
 
 
-  void getValues(ArrayRef<llvm::yaml::ScalarNode*> Refs,
+  void getValues(llvm::ArrayRef<llvm::yaml::ScalarNode*> Refs,
                    std::set<std::string> &Values) const;
                    
   /// \brief Parses the database file and creates the index.
@@ -135,7 +135,7 @@ private:
   llvm::yaml::Stream YAMLStream;
 };
 
-} // end namespace tidys
-} // end namespace clang
+} // namespace checker
+} // namespace nodecpp
 
 #endif // NODECPP_CHECKER_JSONSAFEDATABASE_H

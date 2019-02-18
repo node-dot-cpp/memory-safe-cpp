@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void AsmCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -33,6 +32,5 @@ void AsmCheck::check(const MatchFinder::MatchResult &Result) {
   diag(stmt->getAsmLoc(), "(S6.1) asm is prohibited");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

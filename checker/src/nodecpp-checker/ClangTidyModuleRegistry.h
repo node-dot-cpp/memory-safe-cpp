@@ -13,12 +13,12 @@
 #include "ClangTidyModule.h"
 #include "llvm/Support/Registry.h"
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 typedef llvm::Registry<ClangTidyModule> ClangTidyModuleRegistry;
 
-} // end namespace tidy
-} // end namespace clang
+} // end namespace checker
+} // end namespace nodecpp
 
 #endif // NODECPP_CHECKER_CLANGTIDYMODULEREGISTRY_H

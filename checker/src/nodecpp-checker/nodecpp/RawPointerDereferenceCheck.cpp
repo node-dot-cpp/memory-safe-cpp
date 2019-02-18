@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void RawPointerDereferenceCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -53,6 +52,5 @@ void RawPointerDereferenceCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

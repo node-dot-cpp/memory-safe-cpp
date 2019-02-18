@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void CallExprCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(callExpr().bind("call"), this);
@@ -54,6 +53,5 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
   diag(expr->getExprLoc(), "(S8) unsafe function call is prohibited");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

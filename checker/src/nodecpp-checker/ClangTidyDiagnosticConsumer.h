@@ -30,8 +30,12 @@ class MatchFinder;
 namespace tooling {
 class CompilationDatabase;
 }
+} // namespace clang
 
-namespace tidy {
+using namespace clang;
+
+namespace nodecpp {
+namespace checker {
 
 /// \brief A detected error complete with information to display diagnostic and
 /// automatic fix.
@@ -267,7 +271,7 @@ private:
   bool LastErrorWasIgnored;
 };
 
-} // end namespace tidy
-} // end namespace clang
+} // namespace checker
+} // namespace nodecpp
 
 #endif // NODECPP_CHECKER_CLANGTIDYDIAGNOSTICCONSUMER_H

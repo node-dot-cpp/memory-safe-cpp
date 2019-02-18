@@ -29,7 +29,13 @@ namespace tooling {
 class CompilationDatabase;
 }
 
-namespace tidy {
+} // namespace clang
+
+using namespace clang;
+using namespace llvm;
+
+namespace nodecpp {
+namespace checker {
 
 /// \brief Provides access to the ``ClangTidyCheck`` options via check-local
 /// names.
@@ -226,7 +232,7 @@ ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options);
 ///
 /// \param Profile if provided, it enables check profile collection in
 /// MatchFinder, and will contain the result of the profile.
-void runClangTidy(clang::tidy::ClangTidyContext &Context,
+void runClangTidy(ClangTidyContext &Context,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> InputFiles,
                   ProfileData *Profile = nullptr);
@@ -246,7 +252,7 @@ void exportReplacements(StringRef MainFilePath,
                         const std::vector<ClangTidyError> &Errors,
                         raw_ostream &OS);
 
-} // end namespace tidy
-} // end namespace clang
+} // end namespace checker
+} // end namespace nodecpp
 
 #endif // NODECPP_CHECKER_CLANGTIDY_H

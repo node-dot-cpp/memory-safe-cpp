@@ -49,10 +49,10 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
-LLVM_INSTANTIATE_REGISTRY(clang::tidy::ClangTidyModuleRegistry)
+LLVM_INSTANTIATE_REGISTRY(nodecpp::checker::ClangTidyModuleRegistry)
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 namespace {
 static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
@@ -457,7 +457,7 @@ void OptionsView::store(ClangTidyOptions::OptionMap &Options,
 }
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
-  clang::tidy::ClangTidyContext Context(
+  nodecpp::checker::ClangTidyContext Context(
       llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
                                                 Options));
   ClangTidyASTConsumerFactory Factory(Context);
@@ -465,14 +465,14 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
 }
 
 ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options) {
-  clang::tidy::ClangTidyContext Context(
+  nodecpp::checker::ClangTidyContext Context(
       llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
                                                 Options));
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckOptions();
 }
 
-void runClangTidy(clang::tidy::ClangTidyContext &Context,
+void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
                   const CompilationDatabase &Compilations,
                   ArrayRef<std::string> InputFiles, ProfileData *Profile) {
   ClangTool Tool(Compilations, InputFiles);
@@ -584,5 +584,5 @@ void exportReplacements(const llvm::StringRef MainFilePath,
   YAML << TUD;
 }
 
-} // namespace tidy
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp

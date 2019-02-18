@@ -17,8 +17,8 @@
 #include <string>
 #include <utility>
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 /// \brief A collection of \c ClangTidyCheckFactory instances.
 ///
@@ -93,7 +93,7 @@ public:
   virtual ClangTidyOptions getModuleOptions();
 };
 
-} // end namespace tidy
-} // end namespace clang
+} // end namespace checker
+} // end namespace nodecpp
 
 #endif // NODECPP_CHECKER_CLANGTIDYMODULE_H

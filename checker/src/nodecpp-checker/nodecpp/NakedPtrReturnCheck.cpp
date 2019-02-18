@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void NakedPtrReturnCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(returnStmt().bind("stmt"), this);
@@ -55,6 +54,5 @@ void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
 
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

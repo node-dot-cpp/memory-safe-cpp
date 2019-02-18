@@ -22,8 +22,8 @@
 #include <vector>
 #include <set>
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 /// \brief Contains a list of line ranges in a single file.
 struct FileFilter {
@@ -276,7 +276,7 @@ llvm::ErrorOr<ClangTidyOptions> parseConfiguration(llvm::StringRef Config);
 /// \brief Serializes configuration to a YAML-encoded string.
 std::string configurationAsText(const ClangTidyOptions &Options);
 
-} // end namespace tidy
-} // end namespace clang
+} // end namespace checker
+} // end namespace nodecpp
 
 #endif // NODECPP_CHECKER_CLANGTIDYOPTIONS_H

@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void RawPtrCastCheck::registerMatchers(MatchFinder *Finder) {
 /*
@@ -40,6 +39,5 @@ void RawPtrCastCheck::check(const MatchFinder::MatchResult &Result) {
   diag(MatchedCast->getExprLoc(), "(S1.1) casts are prohibited");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

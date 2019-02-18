@@ -21,9 +21,9 @@
 
 #define DEBUG_TYPE "clang-tidy-options"
 
-using clang::tidy::ClangTidyOptions;
-using clang::tidy::FileFilter;
-using OptionsSource = clang::tidy::ClangTidyOptionsProvider::OptionsSource;
+using nodecpp::checker::ClangTidyOptions;
+using nodecpp::checker::FileFilter;
+using OptionsSource = nodecpp::checker::ClangTidyOptionsProvider::OptionsSource;
 
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FileFilter)
 LLVM_YAML_IS_FLOW_SEQUENCE_VECTOR(FileFilter::LineRange)
@@ -98,8 +98,8 @@ template <> struct MappingTraits<ClangTidyOptions> {
 } // namespace yaml
 } // namespace llvm
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 ClangTidyOptions ClangTidyOptions::getDefaults() {
   ClangTidyOptions Options;
@@ -310,7 +310,7 @@ FileOptionsProvider::tryReadConfigFile(StringRef Directory) {
 
 /// \brief Parses -line-filter option and stores it to the \c Options.
 std::error_code parseLineFilter(StringRef LineFilter,
-                                clang::tidy::ClangTidyGlobalOptions &Options) {
+                                nodecpp::checker::ClangTidyGlobalOptions &Options) {
   llvm::yaml::Input Input(LineFilter);
   Input >> Options.LineFilter;
   return Input.error();
@@ -336,5 +336,5 @@ std::string configurationAsText(const ClangTidyOptions &Options) {
   return Stream.str();
 }
 
-} // namespace tidy
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp

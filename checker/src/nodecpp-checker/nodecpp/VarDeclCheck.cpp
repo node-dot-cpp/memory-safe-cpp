@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void VarDeclCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -203,6 +202,5 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
   return;
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

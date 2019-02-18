@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void NewExprCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -116,6 +115,5 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
   //diag(m->getLocStart(), "new expresion must be owned by a unique_ptr");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

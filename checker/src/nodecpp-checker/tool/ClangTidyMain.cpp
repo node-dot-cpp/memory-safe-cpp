@@ -220,8 +220,8 @@ options are specified.
                            cl::init(false),
                            cl::cat(ClangTidyCategory));
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 static void printStats(const ClangTidyStats &Stats) {
   if (Stats.errorsIgnored()) {
@@ -399,7 +399,7 @@ static int clangTidyMain(int argc, const char **argv) {
 
   if (ExplainConfig) {
     // FIXME: Show other ClangTidyOptions' fields, like ExtraArg.
-    std::vector<clang::tidy::ClangTidyOptionsProvider::OptionsSource>
+    std::vector<ClangTidyOptionsProvider::OptionsSource>
         RawOptions = OptionsProvider->getRawOptions(FilePath);
     for (const std::string &Check : EnabledChecks) {
       for (auto It = RawOptions.rbegin(); It != RawOptions.rend(); ++It) {
@@ -506,9 +506,9 @@ extern volatile int NodeCppModuleAnchorSource;
 static int LLVM_ATTRIBUTE_UNUSED NodeCppModuleAnchorDestination =
     NodeCppModuleAnchorSource;
 
-} // namespace tidy
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp
 
 int main(int argc, const char **argv) {
-  return clang::tidy::clangTidyMain(argc, argv);
+  return nodecpp::checker::clangTidyMain(argc, argv);
 }

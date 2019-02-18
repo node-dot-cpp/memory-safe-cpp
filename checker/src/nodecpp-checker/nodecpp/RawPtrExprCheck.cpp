@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void RawPtrExprCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(expr(hasType(pointerType())).bind("expr"),
@@ -108,6 +107,5 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
   diag(expr->getExprLoc(), "(S1) raw pointer expression not allowed");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void MayExtendLambdaCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
@@ -337,6 +336,5 @@ void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

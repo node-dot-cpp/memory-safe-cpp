@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void StaticStorageCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -42,6 +41,5 @@ void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
       //<< FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

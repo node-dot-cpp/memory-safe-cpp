@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void ConstCheck::registerMatchers(MatchFinder *Finder) {
 
@@ -44,6 +43,5 @@ void ConstCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

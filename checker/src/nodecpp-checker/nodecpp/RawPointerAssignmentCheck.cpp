@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void RawPointerAssignmentCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(
@@ -40,6 +39,5 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
     diag(expr->getExprLoc(), "(S5.2) assignment of raw pointer may extend scope");
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

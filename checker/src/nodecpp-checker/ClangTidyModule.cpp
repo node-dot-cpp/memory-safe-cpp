@@ -13,8 +13,8 @@
 
 #include "ClangTidyModule.h"
 
-namespace clang {
-namespace tidy {
+namespace nodecpp {
+namespace checker {
 
 void ClangTidyCheckFactories::registerCheckFactory(StringRef Name,
                                                    CheckFactory Factory) {
@@ -34,5 +34,5 @@ ClangTidyOptions ClangTidyModule::getModuleOptions() {
   return ClangTidyOptions();
 }
 
-} // namespace tidy
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp

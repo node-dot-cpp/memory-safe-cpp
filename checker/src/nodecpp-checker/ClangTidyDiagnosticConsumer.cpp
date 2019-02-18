@@ -25,8 +25,9 @@
 #include "llvm/ADT/SmallString.h"
 #include <tuple>
 #include <vector>
+
 using namespace clang;
-using namespace tidy;
+using namespace nodecpp::checker;
 
 namespace {
 class ClangTidyDiagnosticRenderer : public DiagnosticRenderer {

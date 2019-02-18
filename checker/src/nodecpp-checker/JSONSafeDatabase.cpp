@@ -23,8 +23,10 @@
 #include <system_error>
 #include <sstream>
 
-namespace clang {
-namespace tidy {
+using namespace llvm;
+
+namespace nodecpp {
+namespace checker {
 
 static std::unique_ptr<JSONSafeDatabase>
 findCompilationDatabaseFromDirectory(StringRef Directory,
@@ -286,5 +288,5 @@ bool JSONSafeDatabase::parse(std::string &ErrorMessage) {
   return true;
 }
 
-} // end namespace tidy
-} // end namespace clang
+} // namespace checker
+} // namespace nodecpp

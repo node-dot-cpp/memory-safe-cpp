@@ -17,9 +17,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 void StdFunctionCheck::registerMatchers(MatchFinder *Finder) {
   // FIXME: Add matchers.
@@ -147,6 +146,5 @@ void StdFunctionCheck::check(const MatchFinder::MatchResult &Result) {
   }
 }
 
+} // namespace checker
 } // namespace nodecpp
-} // namespace tidy
-} // namespace clang

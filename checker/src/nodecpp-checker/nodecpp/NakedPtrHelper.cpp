@@ -16,9 +16,8 @@
 
 using namespace clang::ast_matchers;
 
-namespace clang {
-namespace tidy {
 namespace nodecpp {
+namespace checker {
 
 DiagHelper NullDiagHelper;
 
@@ -902,6 +901,5 @@ NakedPtrScopeChecker NakedPtrScopeChecker::makeParamScopeChecker(ClangTidyCheck 
   return NakedPtrScopeChecker(check, tidyContext, nullptr, Param, nullptr);
 }
 
-} // namespace tidy
-} // namespace clang
-} // namespace clang
+} // namespace checker
+} // namespace nodecpp
