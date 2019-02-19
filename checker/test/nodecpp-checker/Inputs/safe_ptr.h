@@ -61,9 +61,11 @@ public:
 
 template <class T>
 class naked_ptr {
-	T* ptr;
+	T* ptr = nullptr;
 public:
-	naked_ptr(T* ptr = nullptr) :ptr(ptr) {}
+	naked_ptr(T* ptr) :ptr(ptr) {} //TODO remove ctor from ptr
+	naked_ptr() {}
+	naked_ptr(T& ref) :ptr(&ref) {}
 
 	naked_ptr(const naked_ptr&) = default;
 	naked_ptr(naked_ptr&&) = default;
