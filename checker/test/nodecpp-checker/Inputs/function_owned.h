@@ -1,83 +1,9 @@
 #ifndef FUNCTION_OWNED_H
 #define FUNCTION_OWNED_H
 
-namespace std {
 
-typedef void* nullptr_t;
-typedef unsigned size_t;
-
-template<class T>
-T&& move(T&& t) { return t; }
-
-template<class T>
-T&& forward(T&& t) { return t; }
-
-template<class T>
-class reference_wrapper {};
-
-class type_info {};
-
-// mock version of std::function
-
-template <typename>
-class function; // no definition but needed
-
-template< class R, class... Args >
-class function<R(Args...)> {
-	type_info ti;
-public:
-	typedef R result_type;
-
-	function() noexcept {}
-	function( std::nullptr_t np ) noexcept {}
-
-	function( const function& other ) {}
-
-	function( function&& other ) {}
-
-	template< class F > 
-	function( F f ) {}
-
-	function& operator=( const function& other ) { return *this; }
-	function& operator=( function&& other ) { return *this; }
-	function& operator=( std::nullptr_t np ) { return *this; }
-
-	template< class F > 
-	function& operator=( F&& f ) { return *this; }
-
-	template< class F > 
-	function& operator=( std::reference_wrapper<F> f ) { return *this; }
-
-	void swap( function& other ) noexcept {}
-	explicit operator bool() const noexcept { return false; }
-	R operator()( Args... args ) const { return R(); }
-
-	const std::type_info& target_type() const noexcept { return ti; }
-
-	template< class T > 
-	T* target() noexcept { return nullptr; }
-
-	template< class T > 
-	const T* target() const noexcept { return nullptr; }
-};
-
-template< class R, class... Args >
-void swap( function<R(Args...)> &lhs, function<R(Args...)> &rhs ) {}
-
-template< class R, class... ArgTypes >
-bool operator==( const function<R(ArgTypes...)>& f, std::nullptr_t ) noexcept { return false; }
-
-template< class R, class... ArgTypes >
-bool operator==( std::nullptr_t, const function<R(ArgTypes...)>& f ) noexcept { return false; }
-
-template< class R, class... ArgTypes >
-bool operator!=( const function<R(ArgTypes...)>& f, std::nullptr_t ) noexcept { return false; }
-
-template< class R, class... ArgTypes >
-bool operator!=( std::nullptr_t, const function<R(ArgTypes...)>& f ) noexcept { return false; }
-
-}
-
+#include <functional>
+#include <utility>
 
 namespace nodecpp {
 

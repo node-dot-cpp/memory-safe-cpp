@@ -1,0 +1,10 @@
+#ifndef STD_TYPE_INFO_H
+#define STD_TYPE_INFO_H
+
+namespace std {
+
+class type_info {};
+
+}
+
+#endif //STD_TYPE_INFO_H

@@ -1,0 +1,14 @@
+#ifndef STD_UTILITY_H
+#define STD_UTILITY_H
+
+namespace std {
+
+template<class T>
+T&& move(T&& t) { return t; }
+
+template<class T>
+T&& forward(T&& t) { return t; }
+
+}
+
+#endif //STD_UTILITY_H
