@@ -35,15 +35,6 @@
 
 namespace nodecpp::safememory {
 
-template<class T>
-struct safeness_declarator {
-	static constexpr bool is_safe = true; // by default
-};
-
-/* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
-*/
-
 template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
 template<class T> struct owning_ptr_type_<T, false> { typedef owning_ptr_no_checks<T> type; };
 template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;

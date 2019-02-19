@@ -37,7 +37,8 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
+//template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
+//template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount; 

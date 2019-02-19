@@ -118,6 +118,24 @@ void destruct( T* t )
 
 struct make_owning_t {};
 
+template<class T>
+struct safeness_declarator {
+	static constexpr bool is_safe = true; // by default
+};
+
+/* Sample of user-defined exclusion:
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+*/
+
+// sample code (to be removed)
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+namespace testing::dummy_objects {
+struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
+}
+template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
+// end of sample code (to be removed)
+
+
 
 } // namespace nodecpp::safememory
 
