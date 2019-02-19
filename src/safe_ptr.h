@@ -35,21 +35,46 @@
 
 namespace nodecpp::safememory {
 
+template<class T>
+struct safeness_declarator {
+	static constexpr bool is_safe = true; // by default
+};
+
+/* Sample of user-defined exclusion:
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+*/
+
+template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
+template<class T> struct owning_ptr_type_<T, false> { typedef owning_ptr_no_checks<T> type; };
+template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class T, bool is_safe> struct soft_ptr_type_ { typedef soft_ptr_impl<T> type; };
+template<class T> struct soft_ptr_type_<T, false> { typedef soft_ptr_no_checks<T> type; };
+template<class T> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class T, bool is_safe> struct soft_this_ptr_type_ { typedef soft_this_ptr_impl<T> type; };
+template<class T> struct soft_this_ptr_type_<T, false> { typedef soft_this_ptr_no_checks<T> type; };
+template<class T> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class T, bool is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
+template<class T> struct naked_ptr_type_<T, false> { typedef naked_ptr_no_checks<T> type; };
+template<class T> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+/*
 //namespace typehelper {
-template<class T> struct owning_ptr_type { typedef owning_ptr_impl<T> type; };
+//template<class T> struct owning_ptr_type { typedef owning_ptr_impl<T> type; };
 template<class T> struct soft_ptr_type { typedef soft_ptr_impl<T> type; };
 template<class T> struct soft_this_ptr_type { typedef soft_this_ptr_impl<T> type; };
 template<class T> struct naked_ptr_type { typedef naked_ptr_impl<T> type; };
 
-template<> struct owning_ptr_type<double> { typedef owning_ptr_no_checks<double> type; };
+//template<> struct owning_ptr_type<double> { typedef owning_ptr_no_checks<double> type; };
 template<> struct soft_ptr_type<double> { typedef soft_ptr_no_checks<double> type; };
 template<> struct soft_this_ptr_type<double> { typedef soft_this_ptr_no_checks<double> type; };
 template<> struct naked_ptr_type<double> { typedef naked_ptr_no_checks<double> type; };
 
-template<class T> using owning_ptr = typename owning_ptr_type<T>::type;
-template<class T> using soft_ptr = typename soft_ptr_type<T>::type;
+//template<class T> using owning_ptr = typename owning_ptr_type<T>::type;
+//template<class T> using soft_ptr = typename soft_ptr_type<T>::type;
 template<class T> using soft_this_ptr = typename soft_this_ptr_type<T>::type;
-template<class T> using naked_ptr = typename naked_ptr_type<T>::type;
+template<class T> using naked_ptr = typename naked_ptr_type<T>::type;*/
 
 
 // SAFE VERSION (default case)
@@ -61,9 +86,20 @@ template<class T> using naked_ptr = naked_ptr_impl<T>;*/
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+//NODISCARD typename owning_ptr_type_<_Ty>::type make_owning(_Types&&... _Args)
 NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 {
-	return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	if constexpr ( safeness_declarator<_Ty>::is_safe )
+	{
+		return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+	else
+	{
+		return make_owning_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+	//return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+//	typename owning_ptr_type<_Ty>::type ret( make_owning_t(), ::std::forward<_Types>(_Args)... );
+//	return ret;
 }
 
 template<class T>
@@ -98,13 +134,17 @@ template<> using soft_ptr = soft_ptr_no_checks<int>;
 template<> using soft_this_ptr = soft_this_ptr_no_checks<int>;
 template<> using naked_ptr = naked_ptr_no_checks<int>;*/
 
-template<
+/*template<
 	class... _Types,
 	std::enable_if_t<!std::is_array<double>::value, int> = 0>
 NODISCARD owning_ptr<double> make_owning(_Types&&... _Args)
 {
 	return make_owning_no_checks<double, _Types ...>( ::std::forward<_Types>(_Args)... );
 }
+NODISCARD owning_ptr<double> make_owning(double)
+{
+	return make_owning_no_checks<double>();
+}*/
 
 /*template<>
 soft_ptr<int> soft_ptr_in_constructor(int* ptr) {

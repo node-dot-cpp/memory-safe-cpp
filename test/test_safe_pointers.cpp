@@ -37,6 +37,11 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 
+
+template<>
+struct nodecpp::safememory::safeness_declarator<double> {
+	static constexpr bool is_safe = false;
+};
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount; 
 thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount;
