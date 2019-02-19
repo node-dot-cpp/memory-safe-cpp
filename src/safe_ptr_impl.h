@@ -492,6 +492,8 @@ class owning_ptr_impl
 
 public:
 
+	static constexpr bool is_safe = true;
+
 	owning_ptr_impl( make_owning_t, T* t_ ) // make it private with a friend make_owning_impl()!
 	{
 		t.setPtr( t_ );
@@ -748,6 +750,9 @@ class soft_ptr_base_impl
 	}
 
 public:
+
+	static constexpr bool is_safe = true;
+
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckMySlotConsistency() const
 	{
@@ -1456,6 +1461,9 @@ class soft_this_ptr_impl
 	uint32_t offset;
 
 public:
+
+	static constexpr bool is_safe = true;
+
 	soft_this_ptr_impl()
 	{
 		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
@@ -1527,6 +1535,9 @@ class naked_ptr_base_impl
 	T* t;
 
 public:
+
+	static constexpr bool is_safe = true;
+
 	naked_ptr_base_impl() { t = nullptr; }
 
 	template<class T1>
