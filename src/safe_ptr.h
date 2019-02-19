@@ -67,26 +67,37 @@ NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 {
 	if constexpr ( safeness_declarator<_Ty>::is_safe )
 	{
+		static_assert( owning_ptr<_Ty>::is_safe );
 		return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
 	}
 	else
 	{
+		static_assert( !owning_ptr<_Ty>::is_safe );
 		return make_owning_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
 	}
 }
 
 template<class T>
 soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
-	return soft_ptr_in_constructor_impl<T>(ptr);
+	if constexpr ( safeness_declarator<T>::is_safe )
+	{
+		static_assert( soft_ptr<T>::is_safe );
+		return soft_ptr_in_constructor_impl<T>(ptr);
+	}
+	else
+	{
+		static_assert( !soft_ptr<T>::is_safe );
+		return soft_ptr_in_constructor_no_checks<T>(ptr);
+	}
 }
 
 template<class T, class T1>
-soft_ptr_impl<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
-	return soft_ptr_static_cast_impl<T, T1>( p ) ;
+soft_ptr<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
+	return soft_ptr_static_cast_impl<T, T1, NODECPP_ISSAFE_DEFAULT>( p ) ;
 }
 
 template<class T, class T1>
-soft_ptr_no_checks<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
+soft_ptr<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
 	return soft_ptr_static_cast_no_checks<T, T1>( p ) ;
 }
 
@@ -98,45 +109,6 @@ soft_ptr_impl<T> soft_ptr_reinterpret_cast( soft_ptr_impl<T1> p ) {
 template<class T, class T1>
 soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
 	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
-}
-
-// UNSAFE (FAST) version (per-type)
-
-/*template<> using owning_ptr<int> = owning_ptr_no_checks<int>;
-template<> using soft_ptr = soft_ptr_no_checks<int>;
-template<> using soft_this_ptr = soft_this_ptr_no_checks<int>;
-template<> using naked_ptr = naked_ptr_no_checks<int>;*/
-
-/*template<
-	class... _Types,
-	std::enable_if_t<!std::is_array<double>::value, int> = 0>
-NODISCARD owning_ptr<double> make_owning(_Types&&... _Args)
-{
-	return make_owning_no_checks<double, _Types ...>( ::std::forward<_Types>(_Args)... );
-}
-NODISCARD owning_ptr<double> make_owning(double)
-{
-	return make_owning_no_checks<double>();
-}*/
-
-template<class T>
-soft_ptr_no_checks<T> soft_ptr_static_cast( soft_ptr_no_checks<double> p ) {
-	return soft_ptr_static_cast_no_checks<T, double>( p ) ;
-}
-
-template<class T1>
-soft_ptr_no_checks<double> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
-	return soft_ptr_static_cast_no_checks<double, T1>( p ) ;
-}
-
-template<class T>
-soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<double> p ) {
-	return soft_ptr_reinterpret_cast_no_checks<T, double>( p );
-}
-
-template<class T1>
-soft_ptr_no_checks<double> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
-	return soft_ptr_reinterpret_cast_no_checks<double, T1>( p );
 }
 
 } // namespace nodecpp::safememory
