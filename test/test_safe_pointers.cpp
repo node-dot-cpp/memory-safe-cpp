@@ -37,11 +37,8 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 
-template<>
-struct nodecpp::safememory::safeness_declarator<double> {
-	static constexpr bool is_safe = false;
-};
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount; 
 thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount;
@@ -419,6 +416,28 @@ int testWithLest( int argc, char * argv[] )
 		{
 			EXPECT_NO_THROW( testing::StartupChecker::checkBasics() );
 			EXPECT_NO_THROW( testing::StartupChecker::checkSafePointers() );
+		},
+
+		CASE( "test non-safe pointers" )
+		{
+			// TODO: extend to other relevant cases
+			owning_ptr<double> op;
+			EXPECT( op == nullptr );
+			op = make_owning<double>(17);
+			EXPECT( op != nullptr );
+			soft_ptr<double> sp;
+			EXPECT( sp == nullptr );
+			sp = op;
+			EXPECT( sp != nullptr );
+			EXPECT( sp == op );
+			EXPECT( op == sp );
+			EXPECT( op == op );
+			EXPECT( sp == sp );
+			owning_ptr<double> op1 = make_owning<double>(27);
+			soft_ptr<double> sp1 = op1;
+			EXPECT( sp != sp1 );
+			EXPECT( sp != op1 );/**/
+			// ...
 		},
 	};
 
