@@ -208,8 +208,15 @@ public:
 	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = t_; }
 
 	template<class T1>
+	soft_ptr_base_no_checks( const owning_ptr_impl<T1>& owner, T* t_ ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = t_; }
+
+	template<class T1>
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T1>& other, T* t_ ) { t = t_; }
-	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other, T* t_ ) {t = t_; }
+
+	template<class T1>
+	soft_ptr_base_no_checks( const soft_ptr_base_impl<T1>& other, T* t_ ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = t_; }
+
+	//soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other, T* t_ ) {t = t_; }
 
 	void swap( soft_ptr_base_no_checks<T>& other )
 	{
