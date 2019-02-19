@@ -1,8 +1,8 @@
-// RUN: nodecpp-checker %s -- -std=c++11 | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 void f() { 
 	int i;
 
 	(&i)[2];
-// CHECK-MESSAGES: :[[@LINE-1]]:8: warning: (S1)
+// CHECK: :[[@LINE-1]]:8: warning: (S1)
 }

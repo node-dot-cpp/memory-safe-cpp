@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -isystem %S/Inputs | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 
@@ -14,8 +14,8 @@ struct [[nodecpp::naked_struct]] NakedStr {
 	naked_ptr<Safe> s2;
 
 	NakedStr& operator=(const NakedStr&) = default;
-//CHECK-MESSAGES: :[[@LINE-1]]:47: warning: (S1.2)
-//CHECK-MESSAGES: :[[@LINE-2]]:47: warning: (S5.5)
+//CHECK: :[[@LINE-1]]:47: warning: (S1.2)
+//CHECK: :[[@LINE-2]]:47: warning: (S5.5)
 	NakedStr& operator=(NakedStr&&) = default;
 };
 
@@ -28,7 +28,7 @@ void func99() {
 		naked_ptr<Safe> ptr2(&s2);
 		ptr2 = ptr1; // ok
 		ptr1 = ptr2; // bad
-//CHECK-MESSAGES: :[[@LINE-1]]:8: warning: (S5.2)
+//CHECK: :[[@LINE-1]]:8: warning: (S5.2)
 
 	}
 
@@ -38,13 +38,13 @@ void func99() {
 
 		nak2 = nak1; // ok
 		nak1 = nak2; // bad
-//CHECK-MESSAGES: :[[@LINE-1]]:8: warning: (S5.2)
+//CHECK: :[[@LINE-1]]:8: warning: (S5.2)
 
 		nak1.s1 = ptr1; // ok
 
 		naked_ptr<Safe> ptr2;
 		nak1.s2 = ptr2; // bad
-//CHECK-MESSAGES: :[[@LINE-1]]:11: warning: (S5.2)
+//CHECK: :[[@LINE-1]]:11: warning: (S5.2)
 
 		nak2.s2 = ptr2; //ok
 	}
@@ -107,7 +107,7 @@ void f1(naked_ptr<int> arg) {
 	{
 		int iBad = 0;
 		p1 = func(&iBad); //bad
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	p1 = func2(p1, &i); // both args ok
@@ -115,55 +115,55 @@ void f1(naked_ptr<int> arg) {
 	{	
 		int iBad = 0;
 		p1 = func2(p1, &iBad); // bad
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{	
 		int iBad = 0;
 		p1 = func2(&iBad, p1); //bad 
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 	{
 		int i = 0; 
 		p1 = func3(i, p1); //TODO, don't worry about value arg
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{
 		int i = 0;
 		p1 = func4(i); //bad, worry about ref arg
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{
 		Some s;
 		p1 = func5(s); //bad, assume Some can return int*
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	naked_ptr<Some> sp;
 	{
 		int i = 0;
 		sp = func6(i, sp); //TODO, don't worry about value arg
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{
 		naked_ptr<char> cp;
 		p1 = func7(p1, cp); //TODO, char* can't become int*
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	naked_ptr<char> cp1;
 	{
 		naked_ptr<const char> cp2;
 		cp1 = func8(cp1, cp2); // TODO conts char can't become char*
-// CHECK-MESSAGES: :[[@LINE-1]]:7: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:7: warning: (S5.2)
 	}
 }
 
 void f2(Some* arg) {
-// CHECK-MESSAGES: :[[@LINE-1]]:15: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:15: warning: (S1.3)
 	Some s;
 
 	s.get(); //ok
@@ -178,7 +178,7 @@ void f2(Some* arg) {
 	{
 		Some sInt;
 		p1 = sInt.get(); //bad instance goes out of scope
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	sp = s.join(sp); //ok
@@ -188,13 +188,13 @@ void f2(Some* arg) {
 	{
 		Some sInt;
 		sp = sInt.join(sp); //bad instance goes out of scope
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{
 		naked_ptr<Some> ptrInt;
 		sp = s.join(ptrInt); //bad argument goes out of scope
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 }
 
@@ -211,10 +211,10 @@ void f3() {
 		auto f = [](naked_ptr<int> p, long) { return p; };
 
 		p1 = f(p1, l); //TODO lambda goes out of scope, but captures are empty
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 		p1 = f(&i, l); // bad i goes out of scope
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 
 
@@ -222,12 +222,12 @@ void f3() {
 		p1 = (s >> p1); //ok function op
 
 		p1 = (s >> &i); // bad function op
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 		lp = s >> lp; // ok method op
 
 		lp = s >> &l; // bad method op
-// CHECK-MESSAGES: :[[@LINE-1]]:6: warning: (S5.2)
+// CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 	}
 }

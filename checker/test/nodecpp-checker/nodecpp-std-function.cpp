@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc++ -isystem %S/Inputs | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 #include <function_owned.h>
@@ -49,19 +49,19 @@ struct MyServer {
 	template<class T> 
 	void redirect_b(T t) {
 		srv.on(t);
-// CHECK-MESSAGES: :[[@LINE-1]]:10: warning: lambda with attribute
+// CHECK: :[[@LINE-1]]:10: warning: lambda with attribute
 		std::function<void(soft_ptr<Socket>)> f;
 		f = t;
-// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: lambda with attribute
+// CHECK: :[[@LINE-1]]:5: warning: lambda with attribute
 	}
 
 	template<class T> 
 	void redirect_owned_a(T t) {
 		srv.on_owned(t);
-// CHECK-MESSAGES: :[[@LINE-1]]:16: warning: lambda without attribute
+// CHECK: :[[@LINE-1]]:16: warning: lambda without attribute
 		nodecpp::function_owned_arg0<void(soft_ptr<Socket>)> f;
 		f = t;
-// CHECK-MESSAGES: :[[@LINE-1]]:5: warning: lambda without attribute
+// CHECK: :[[@LINE-1]]:5: warning: lambda without attribute
 	}
 
 	template<class T> 

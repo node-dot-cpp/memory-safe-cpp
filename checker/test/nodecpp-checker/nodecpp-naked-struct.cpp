@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc++ -isystem %S/Inputs | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 
@@ -10,7 +10,7 @@ struct [[nodecpp::naked_struct]] NakedInner {
 
 
 struct [[nodecpp::naked_struct]] Naked {
-// CHECK-MESSAGES: :[[@LINE-1]]:34: warning: unsafe naked_struct declaration
+// CHECK: :[[@LINE-1]]:34: warning: unsafe naked_struct declaration
     naked_ptr<int> i; //ok
     int* bad1; //bad
 

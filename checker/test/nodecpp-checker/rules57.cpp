@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++14 -isystem %S/Inputs | FileCheck %s -check-prefix=CHECK-MESSAGES -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <function_owned.h>
 
@@ -12,7 +12,7 @@ public:
 
         int i = 0;
         auto l = [&i]() {};
-// CHECK-MESSAGES: :[[@LINE-1]]:20: warning: unsafe capture to extend scope
+// CHECK: :[[@LINE-1]]:20: warning: unsafe capture to extend scope
         this->on(l);
     }
 
