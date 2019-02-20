@@ -825,6 +825,8 @@ bool NakedPtrScopeChecker::checkExpr(const Expr *from) {
     return checkExpr(tmp->GetTemporaryExpr());
   } else if(auto construct = dyn_cast<CXXConstructExpr>(from)) {
     return checkCXXConstructExpr(construct);
+  } else if(auto b = dyn_cast<CXXBindTemporaryExpr>(from)) {
+    return checkExpr(b->getSubExpr());
   }
 
 
