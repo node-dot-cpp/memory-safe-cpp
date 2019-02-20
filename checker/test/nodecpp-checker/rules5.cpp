@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 
@@ -11,7 +11,7 @@ class Der :public X {};
 
 naked_ptr<int> rule_S51() {
     int i = 0;
-    naked_ptr<int> np(&i);
+    naked_ptr<int> np(i);
     return np;
 // CHECK: :[[@LINE-1]]:12: warning: (S5.1)
 }

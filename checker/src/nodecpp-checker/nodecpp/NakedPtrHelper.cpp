@@ -23,7 +23,8 @@ DiagHelper NullDiagHelper;
 
 
 bool isOwnerPtrName(const std::string& name) {
-  return name == "nodecpp::safememory::owning_ptr";
+  return name == "nodecpp::safememory::owning_ptr" ||
+    name == "nodecpp::safememory::owning_ptr_impl";
 }
 
 bool isOwnerPtrDecl(const NamedDecl* decl) {
@@ -36,11 +37,14 @@ bool isOwnerPtrDecl(const NamedDecl* decl) {
 
 
 bool isSafePtrName(const std::string& name) {
-  return isOwnerPtrName(name) || name == "nodecpp::safememory::soft_ptr";
+  return isOwnerPtrName(name) || 
+    name == "nodecpp::safememory::soft_ptr" || 
+    name == "nodecpp::safememory::soft_ptr_impl";
 }
 
 bool isNakedPtrName(const std::string& name) {
-  return name == "nodecpp::safememory::naked_ptr";
+  return name == "nodecpp::safememory::naked_ptr" ||
+    name == "nodecpp::safememory::naked_ptr_impl";
 }
 
 bool isConstNakedPtrName(const std::string& name) {
@@ -60,7 +64,7 @@ bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) 
   //hardcode some names that are really important
   if(name == "nodecpp::safememory::make_owning")
     return true;
-  else if(isSafePtrName(name) || isNakedPtrName(name) || isNakedPtrName(name))
+  else if(isSafePtrName(name) || isNakedPtrName(name) || isConstNakedPtrName(name))
     return false;
 
 

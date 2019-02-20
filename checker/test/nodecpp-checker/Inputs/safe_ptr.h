@@ -1,100 +1,84 @@
+/* -------------------------------------------------------------------------------
+* Copyright (c) 2018, OLogN Technologies AG
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the OLogN Technologies AG nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL OLogN Technologies AG BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* -------------------------------------------------------------------------------*/
+
 #ifndef SAFE_PTR_H
 #define SAFE_PTR_H
 
-void* memset( void* dest, int ch, int count );
+#include "safe_ptr_common.h"
+#include "safe_ptr_impl.h"
 
+namespace nodecpp::safememory {
 
-namespace nodecpp {
-namespace safememory {
+template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
+template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class T, bool is_safe, bool can_be_safe> struct soft_ptr_type_ { typedef soft_ptr_impl<T> type; };
+template<class T> struct soft_ptr_type_<T, false, true> { typedef soft_ptr_impl<T> type; };
+template<class T, bool can_be_safe = false> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
+//template<class T> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe, true>::type;
+
+template<class T, bool is_safe> struct soft_this_ptr_type_ { typedef soft_this_ptr_impl<T> type; };
+template<class T> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class T, bool is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
+template<class T> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+
+template<class _Ty,
+	class... _Types>
+NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
+{
+	return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+}
 
 template<class T>
-class owning_ptr {
-	T* ptr;
-public:
-	owning_ptr(T* ptr = nullptr) :ptr(ptr) {}
-
-	owning_ptr(const owning_ptr&) = delete;
-	owning_ptr& operator=(const owning_ptr&) = delete;
-
-	owning_ptr(owning_ptr&&) = default;
-	owning_ptr& operator=(owning_ptr&&) = default;
-
-	void reset(T* ptr) {}
-
-	T* get() { return ptr; }
-	const T* get() const { return ptr; }
- 	T* operator->() { return ptr; }
- 	const T* operator->() const { return ptr; }
-	T& operator*() { return *ptr; }
-	const T& operator*() const { return *ptr; }
-};
-
-template<class T>
-class soft_ptr {
-	T* ptr;
-public:
-	soft_ptr(T* ptr = nullptr) :ptr(ptr) {}
-
-	soft_ptr(const soft_ptr&) = default;
-	soft_ptr& operator=(const soft_ptr&) = default;
-
-	soft_ptr(soft_ptr&&) = default;
-	soft_ptr& operator=(soft_ptr&&) = default;
-
-	soft_ptr(const owning_ptr<T>& ow) 
-		:ptr(const_cast<T*>(ow.get())) {}
-	soft_ptr& operator=(const owning_ptr<T>& ow) { 
-		reset(const_cast<T*>(ow.get()));
-		return *this;
-	};
-
-	void reset(T* ptr) {}
-
-	T* get() { return ptr; }
-	const T* get() const { return ptr; }
- 	T* operator->() { return ptr; }
- 	const T* operator->() const { return ptr; }
-	T& operator*() { return *ptr; }
-	const T& operator*() const { return *ptr; }
-};
-
-
-template <class T>
-class naked_ptr {
-	T* ptr = nullptr;
-public:
-	naked_ptr(T* ptr) :ptr(ptr) {} //TODO remove ctor from ptr
-	naked_ptr() {}
-	naked_ptr(T& ref) :ptr(&ref) {}
-
-	naked_ptr(const naked_ptr&) = default;
-	naked_ptr(naked_ptr&&) = default;
-	naked_ptr& operator=(const naked_ptr&) = default;
-	naked_ptr& operator=(naked_ptr&&) = default;
-
-	naked_ptr(const owning_ptr<T>& ow) 
-		:ptr(const_cast<T*>(ow.get())) {}
-	naked_ptr& operator=(const owning_ptr<T>& ow) { 
-		reset(const_cast<T*>(ow.get()));
-		return *this;
-	};
-
-
-	T* get() { return ptr; }
-	const T* get() const { return ptr; }
- 	T* operator->() { return ptr; }
- 	const T* operator->() const { return ptr; }
-	T& operator*() { return *ptr; }
-	const T& operator*() const { return *ptr; }
-};
-
-template<class T, typename ... ARGS>
-owning_ptr<T> make_owning(ARGS ... args) {
-	// not good, but we can't use std here
-	return owning_ptr<T>(new T(args...));
+soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
+	return soft_ptr_in_constructor_impl<T>(ptr);
 }
 
-}
+template<class T, class T1>
+soft_ptr<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
+	return soft_ptr_static_cast_impl<T, T1, NODECPP_ISSAFE_DEFAULT>( p ) ;
 }
 
-#endif //SAFE_PTR_H
+template<class T, class T1>
+soft_ptr<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_static_cast_no_checks<T, T1>( p ) ;
+}
+
+template<class T, class T1>
+soft_ptr_impl<T> soft_ptr_reinterpret_cast( soft_ptr_impl<T1> p ) {
+	return soft_ptr_reinterpret_cast_impl<T, T1>( p );
+}
+
+template<class T, class T1>
+soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
+	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
+}
+
+} // namespace nodecpp::safememory
+
+#endif

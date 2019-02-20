@@ -2,11 +2,10 @@
 #define STD_CSTDDEF_H
 
 
-namespace std {
 
-typedef void* nullptr_t;
-typedef unsigned size_t;
 
-}
+#include <stddef.h>
+
+
 
 #endif //STD_CSTDDEF_H

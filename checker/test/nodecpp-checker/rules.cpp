@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 
@@ -45,13 +45,13 @@ void func() {
     //ALLOW
     dynamic_cast<Der*>(p);
     p=p2;
-    p=np.get();
-    p=sp.get();
-    p=op.get();
+    p=np.get_dereferencable();
+    p=sp.get().get_dereferencable();
+    p=op.get().get_dereferencable();
     fp(p);
-    fp(np.get());
-    fp(sp.get());
-    fp(op.get());
+    fp(np.get_dereferencable());
+    fp(sp.get().get_dereferencable());
+    fp(op.get().get_dereferencable());
     &i;
     *np;
     *sp;

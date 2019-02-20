@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 #include <function_owned.h>
@@ -27,7 +27,7 @@ struct MyServer {
 
 	void main() {
 
-		srv.onPlain(this);
+		srv.onPlain(*this);
 
 
 		// srv.on([this](naked_ptr<Socket> sk [[nodecpp::owned_by_this]]){
@@ -39,14 +39,14 @@ struct MyServer {
 
 	void onConnect(naked_ptr<Socket> sk [[nodecpp::owned_by_this]] ) {
 
-		sk->onPlain(sk, this);
+		sk->onPlain(sk, *this);
 
 
 	}
 
 	void onBad1(naked_ptr<Socket> ow1 [[nodecpp::owned_by_this]], naked_ptr<Socket> ow2 [[nodecpp::owned_by_this]] ) {
 
-		ow1->onPlain(ow2, this); //bad
+		ow1->onPlain(ow2, *this); //bad
 // CHECK: :[[@LINE-1]]:16: warning: is not safe
 		
 	}
