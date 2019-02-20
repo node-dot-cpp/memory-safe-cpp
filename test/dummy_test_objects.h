@@ -54,9 +54,9 @@ Something::Something(bool, soft_ptr<SomethingLarger> prtToOwner_, int k) {
 	prtToOwner->doBackRegistration( sp );
 }
 
-struct StructureWithSoftIntPtr { soft_ptr<int> sp; };
-struct StructureWithSoftDoublePtr { soft_ptr<double> sp; };
-struct StructureWithSoftPtrDeclaredUnsafe { soft_ptr<int> sp; };
+struct StructureWithSoftIntPtr { soft_ptr<int> sp; int n; };
+struct StructureWithSoftDoublePtr { soft_ptr<double> sp; double d;};
+struct StructureWithSoftPtrDeclaredUnsafe { soft_ptr<int> sp; double d;};
 
 
 } // namespace nodecpp::safememory::testing::dummy_objects
