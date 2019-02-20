@@ -137,6 +137,8 @@ template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::
 
 template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class owning_ptr_impl; // forward declaration
 template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class soft_ptr_base_impl; // forward declaration
+template<class T> class soft_ptr_base_no_checks; // forward declaration
+template<class T> class soft_ptr_no_checks; // forward declaration
 
 
 

@@ -431,6 +431,11 @@ class owning_ptr_impl
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_impl;
 
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+	template<class TT>
+	friend class soft_ptr_no_checks;
+
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_ptr_with_zombie_property_; 
 #else
