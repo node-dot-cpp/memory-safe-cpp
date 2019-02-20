@@ -1,5 +1,5 @@
 // RUN: nodecpp-checker %s -- -std=c++11 -nostdinc -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers | FileCheck %s -implicit-check-not="{{warning|error}}:"
-// XFAIL: *
+
 #include <safe_ptr.h>
 
 using namespace nodecpp;
@@ -20,10 +20,10 @@ struct [[nodecpp::naked_struct]] NakedStr {
 void func99() {
 
 	Safe s1;
-	naked_ptr<Safe> ptr1(&s1);
+	naked_ptr<Safe> ptr1(s1);
 	{
 		Safe s2;
-		naked_ptr<Safe> ptr2(&s2);
+		naked_ptr<Safe> ptr2(s2);
 		ptr2 = ptr1; // ok
 		ptr1 = ptr2; // bad
 //CHECK: :[[@LINE-1]]:8: warning: (S5.2)
@@ -54,13 +54,13 @@ using namespace nodecpp;
 
 struct Some {
 	naked_ptr<int> get();
-	naked_ptr<Some> join(naked_ptr<Some> = nullptr);
+	naked_ptr<Some> join(naked_ptr<Some> = naked_ptr<Some>());
 	naked_ptr<long> operator>>(naked_ptr<long> p) { return p; }
 };
 
 naked_ptr<int> operator>>(Some& s, naked_ptr<int> a) { return a; }
 
-naked_ptr<int> func(naked_ptr<int> = nullptr);
+naked_ptr<int> func(naked_ptr<int> = naked_ptr<int>());
 naked_ptr<int> func2(naked_ptr<int> p1, naked_ptr<int> p2);
 naked_ptr<int> func3(int, naked_ptr<int>); // worry only about int*
 naked_ptr<int> func4(int&);
@@ -78,19 +78,19 @@ void f1(naked_ptr<int> arg) {
 	int i = 0;
 
 	func(p1); //ok
-	func(&i); //ok
+	func(i); //ok
 
 	naked_ptr<int> p2 = func(p1); //ok
-	naked_ptr<int> p3 = func(&i); //ok
+	naked_ptr<int> p3 = func(i); //ok
 
 	p1 = func(p1); //ok
-	p1 = func(&i); //ok
+	p1 = func(i); //ok
 
 	{	
 		p1 = func(p2); //ok p1 and p2 have same life
 	}
 
-	p1 = func(nullptr); //ok
+	p1 = func(naked_ptr<int>()); //ok
 	p1 = func(); //ok default arg used
 
 	{
@@ -104,21 +104,21 @@ void f1(naked_ptr<int> arg) {
 
 	{
 		int iBad = 0;
-		p1 = func(&iBad); //bad
+		p1 = func(iBad); //bad
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
-	p1 = func2(p1, &i); // both args ok
+	p1 = func2(p1, i); // both args ok
 
 	{	
 		int iBad = 0;
-		p1 = func2(p1, &iBad); // bad
+		p1 = func2(p1, iBad); // bad
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 
 	{	
 		int iBad = 0;
-		p1 = func2(&iBad, p1); //bad 
+		p1 = func2(iBad, p1); //bad 
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 	}
 	{
@@ -160,8 +160,8 @@ void f1(naked_ptr<int> arg) {
 	}
 }
 
-void f2(Some* arg) {
-// CHECK: :[[@LINE-1]]:15: warning: (S1.3)
+void f2(naked_ptr<Some> arg) {
+
 	Some s;
 
 	s.get(); //ok
@@ -170,7 +170,7 @@ void f2(Some* arg) {
 	naked_ptr<int> p1;
 	p1 = s.get(); //ok
 
-	naked_ptr<Some> sp = &s;
+	naked_ptr<Some> sp = s;
 	p1 = sp->get(); //ok
 
 	{
@@ -211,7 +211,7 @@ void f3() {
 		p1 = f(p1, l); //TODO lambda goes out of scope, but captures are empty
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
-		p1 = f(&i, l); // bad i goes out of scope
+		p1 = f(i, l); // bad i goes out of scope
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 
@@ -219,12 +219,12 @@ void f3() {
 
 		p1 = (s >> p1); //ok function op
 
-		p1 = (s >> &i); // bad function op
+		p1 = (s >> i); // bad function op
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 		lp = s >> lp; // ok method op
 
-		lp = s >> &l; // bad method op
+		lp = s >> l; // bad method op
 // CHECK: :[[@LINE-1]]:6: warning: (S5.2)
 
 	}
