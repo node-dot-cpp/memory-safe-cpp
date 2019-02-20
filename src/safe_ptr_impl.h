@@ -687,6 +687,11 @@ class soft_ptr_base_impl
 	friend soft_ptr_impl<TT, NODECPP_ISSAFE_DEFAULT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1, NODECPP_ISSAFE_DEFAULT> );
 	friend struct FirstControlBlock;
 
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+	template<class TT>
+	friend class soft_ptr_no_checks;
+
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
 	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 

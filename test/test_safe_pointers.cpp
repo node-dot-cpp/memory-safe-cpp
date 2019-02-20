@@ -268,6 +268,8 @@ int testWithLest( int argc, char * argv[] )
 					p5double->sp = p4double;
 					EXPECT( p5double->sp );
 					p4double.reset();
+					soft_ptr<double> y1copy(y1);
+					soft_ptr<double> y2copy(y2);
 					
 					owning_ptr<int> p14 = make_owning<int>();
 					owning_ptr<StructureWithSoftPtrDeclaredUnsafe> p15 = make_owning<StructureWithSoftPtrDeclaredUnsafe>();
