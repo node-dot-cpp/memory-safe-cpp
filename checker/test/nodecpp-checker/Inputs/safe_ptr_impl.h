@@ -721,7 +721,7 @@ public:
 	template<class T1>
 	naked_ptr_base_impl<T>& operator = ( const naked_ptr_base_impl<T1, isSafe>& other ) { t = other.t; return *this; }
 	naked_ptr_base_impl( const naked_ptr_base_impl<T, isSafe>& other ) = default;
-	naked_ptr_base_impl<T, isSafe>& operator = ( naked_ptr_base_impl<T, isSafe>& other ) = default;
+	naked_ptr_base_impl<T, isSafe>& operator = ( const naked_ptr_base_impl<T, isSafe>& other ) = default;
 
 	naked_ptr_base_impl( naked_ptr_base_impl<T, isSafe>&& other ) = default;
 	naked_ptr_base_impl<T, isSafe>& operator = ( naked_ptr_base_impl<T, isSafe>&& other ) = default;
@@ -809,7 +809,7 @@ public:
 	template<class T1>
 	naked_ptr_impl<T>& operator = ( const naked_ptr_impl<T1, isSafe>& other ) { this->t = other.t; return *this; }
 	naked_ptr_impl( const naked_ptr_impl<T, isSafe>& other ) = default;
-	naked_ptr_impl<T, isSafe>& operator = ( naked_ptr_impl<T, isSafe>& other ) = default;
+	naked_ptr_impl<T, isSafe>& operator = ( const naked_ptr_impl<T, isSafe>& other ) = default;
 
 	naked_ptr_impl( naked_ptr_impl<T, isSafe>&& other ) = default;
 	naked_ptr_impl<T, isSafe>& operator = ( naked_ptr_impl<T, isSafe>&& other ) = default;
