@@ -259,7 +259,12 @@ int testWithLest( int argc, char * argv[] )
 					owning_ptr<StructureWithSoftDoublePtr> p5double = make_owning<StructureWithSoftDoublePtr>();
 					soft_ptr<double, owning_ptr<double>::is_safe> x1(p4double);
 					soft_ptr<double> x2(p4double);
+					EXPECT( !(x1.is_safe) );
+					EXPECT( !(x2.is_safe) );
 					soft_ptr<double> y1(p5double, &(p5double->d));
+					soft_ptr<double, owning_ptr<StructureWithSoftDoublePtr>::is_safe> y2(p5double, &(p5double->d));
+					EXPECT( !(y1.is_safe) );
+					EXPECT( y2.is_safe );
 					p5double->sp = p4double;
 					EXPECT( p5double->sp );
 					p4double.reset();

@@ -293,7 +293,7 @@ public:
 	template<class T1>
 	soft_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : soft_ptr_base_no_checks<T>(owner) {}
 	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; }
-	soft_ptr_no_checks( const owning_ptr_impl<T>& owner ) { this->t = owner.t; }
+	//soft_ptr_no_checks( const owning_ptr_impl<T>& owner ) { this->t = owner.t; }
 	template<class T1>
 	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner )
 	{
@@ -301,7 +301,7 @@ public:
 		return *this;
 	}
 	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; return *this; }
-	soft_ptr_no_checks<T>& operator = ( const owning_ptr_impl<T>& owner ) { this->t = owner.t; return *this; }
+	//soft_ptr_no_checks<T>& operator = ( const owning_ptr_impl<T>& owner ) { this->t = owner.t; return *this; }
 
 
 	template<class T1>
