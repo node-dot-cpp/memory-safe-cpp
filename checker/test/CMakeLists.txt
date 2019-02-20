@@ -4,8 +4,8 @@
 # Note that currently we don't support stand-alone builds of Clang, you must
 # be building Clang from within a combined LLVM+Clang checkout..
 
-set(CLANG_TOOLS_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
-set(CLANG_TOOLS_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
+set(NODECPP_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/..")
+set(NODECPP_BINARY_DIR "${CMAKE_CURRENT_BINARY_DIR}/..")
 
 if (CMAKE_CFG_INTDIR STREQUAL ".")
   set(LLVM_BUILD_MODE ".")
@@ -13,74 +13,28 @@ else ()
   set(LLVM_BUILD_MODE "%(build_mode)s")
 endif ()
 
-string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} CLANG_TOOLS_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
-
-llvm_canonicalize_cmake_booleans(
-  CLANG_ENABLE_STATIC_ANALYZER)
+string(REPLACE ${CMAKE_CFG_INTDIR} ${LLVM_BUILD_MODE} NODECPP_TOOLS_DIR ${LLVM_RUNTIME_OUTPUT_INTDIR})
 
 configure_lit_site_cfg(
   ${CMAKE_CURRENT_SOURCE_DIR}/lit.site.cfg.in
   ${CMAKE_CURRENT_BINARY_DIR}/lit.site.cfg
   )
 
-option(CLANG_TOOLS_TEST_USE_VG "Run Clang tools' tests under Valgrind" OFF)
-if(CLANG_TOOLS_TEST_USE_VG)
-  set(CLANG_TOOLS_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
+option(NODECPP_TEST_USE_VG "Run Clang tools' tests under Valgrind" OFF)
+if(NODECPP_TEST_USE_VG)
+  set(NODECPP_TEST_EXTRA_ARGS ${CLANG_TEST_EXTRA_ARGS} "--vg")
 endif()
 
-set(CLANG_TOOLS_TEST_DEPS
-  # For the clang-apply-replacements test that uses clang-rename.
-  clang-rename
 
-  # For the clang-doc tests that emit bitcode files.
-  llvm-bcanalyzer
-
-  # Individual tools we test.
-  clang-apply-replacements
-  clang-change-namespace
-  clangd
-  clang-doc
-  clang-include-fixer
-  clang-move
-  clang-query
-  clang-reorder-fields
-  find-all-symbols
-  modularize
-  pp-trace
-
-  # These individual tools have no tests, add them here to make them compile
-  # together with check-clang-tools, so that we won't break them in the future.
-  global-symbol-builder
-
-  # Unit tests
-  ExtraToolsUnitTests
-  )
-
-if(CLANG_ENABLE_STATIC_ANALYZER)
-  list(APPEND CLANG_TOOLS_TEST_DEPS
-    # For the clang-tidy libclang integration test.
-    c-index-test
-    # clang-tidy tests require it.
-    clang-headers
-
-    clang-tidy
-    )
-endif()
-
-set(llvm_utils
-  FileCheck count not
-  )
-
-foreach(t ${llvm_utils})
-  if(TARGET ${t})
-    list(APPEND CLANG_TOOLS_TEST_DEPS ${t})
-  endif()
-endforeach()
+set(NODECPP_TEST_DEPS
+  FileCheck
+  not
+)
 
 add_lit_testsuite(check-nodecpp-checker "Running the node-dot-cpp checker tool regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
-  DEPENDS ${CLANG_TOOLS_TEST_DEPS}
-  ARGS ${CLANG_TOOLS_TEST_EXTRA_ARGS}
+  DEPENDS ${NODECPP_TEST_DEPS}
+  ARGS ${NODECPP_TEST_EXTRA_ARGS}
   )
 
 set_target_properties(check-nodecpp-checker PROPERTIES FOLDER "node-dot-cpp checker tool tests")
