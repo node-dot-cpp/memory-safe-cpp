@@ -248,14 +248,27 @@ int testWithLest( int argc, char * argv[] )
 					sS->m = 17;
 					EXPECT( sS->callSmthWithMySoftPtr(sS->m) );*/
 					
-					struct StrWithSoftPtr { soft_ptr<int> sp; };
-					owning_ptr<int> p4 = make_owning<int>();
-					owning_ptr<StrWithSoftPtr> p5 = make_owning<StrWithSoftPtr>();
-					p5->sp = p4;
-					EXPECT( p5->sp );
-					p4.reset();
-					EXPECT( !(p5->sp) );
-
+					owning_ptr<int> p4int = make_owning<int>();
+					owning_ptr<StructureWithSoftIntPtr> p5int = make_owning<StructureWithSoftIntPtr>();
+					p5int->sp = p4int;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p5int->sp );
+					p4int.reset();
+					//EXPECT( !(p5->sp) );
+					
+					owning_ptr<double> p4double = make_owning<double>();
+					owning_ptr<StructureWithSoftDoublePtr> p5double = make_owning<StructureWithSoftDoublePtr>();
+					soft_ptr<double, owning_ptr<double>::is_safe> x(p4double);
+					p5double->sp = p4double;
+					EXPECT( p5double->sp );
+					p4double.reset();
+					
+					owning_ptr<int> p14 = make_owning<int>();
+					owning_ptr<StructureWithSoftPtrDeclaredUnsafe> p15 = make_owning<StructureWithSoftPtrDeclaredUnsafe>();
+					p15->sp = p14;
+					EXPECT( p15->sp );
+					p14.reset();
+					EXPECT( !(p15->sp) );
+					
 					owning_ptr<int> op1 = make_owning<int>();
 					owning_ptr<int> op2 = make_owning<int>();
 					soft_ptr<int> sp11( op1 );
