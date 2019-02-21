@@ -59,7 +59,7 @@ class owning_ptr_no_checks
 
 public:
 
-	static constexpr bool is_safe = false;
+	static constexpr memory_safety is_safe = memory_safety::none;
 
 	owning_ptr_no_checks( make_owning_t, T* t_ ) // make it private with a friend make_owning()!
 	{
@@ -182,7 +182,7 @@ class soft_ptr_base_no_checks
 
 public:
 
-	static constexpr bool is_safe = false;
+	static constexpr memory_safety is_safe = memory_safety::none;
 
 	soft_ptr_base_no_checks() {}
 
@@ -199,8 +199,8 @@ public:
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other ) { t = other.t; }
 	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>& other ) { t = other.t; return *this; }
 
-	soft_ptr_base_no_checks( const soft_ptr_base_impl<T>& other ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = other.getDereferencablePtr(); }
-	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_impl<T>& other ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = other.getDereferencablePtr(); return *this; }
+	soft_ptr_base_no_checks( const soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); }
+	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); return *this; }
 
 	soft_ptr_base_no_checks( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; }
 
@@ -210,13 +210,13 @@ public:
 	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = t_; }
 
 	template<class T1>
-	soft_ptr_base_no_checks( const owning_ptr_impl<T1>& owner, T* t_ ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = t_; }
+	soft_ptr_base_no_checks( const owning_ptr_impl<T1>& owner, T* t_ ) { t = t_; }
 
 	template<class T1>
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T1>& other, T* t_ ) { t = t_; }
 
 	template<class T1>
-	soft_ptr_base_no_checks( const soft_ptr_base_impl<T1>& other, T* t_ ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); t = t_; }
+	soft_ptr_base_no_checks( const soft_ptr_base_impl<T1>& other, T* t_ ) { t = t_; }
 
 	//soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other, T* t_ ) {t = t_; }
 
@@ -342,7 +342,7 @@ public:
 
 	template<class T1>
 	soft_ptr_no_checks( const owning_ptr_impl<T1>& owner, T* t_ ) : soft_ptr_base_no_checks<T>(owner, t_) {}
-	soft_ptr_no_checks( const owning_ptr_impl<T>& owner, T* t_ ) { static_assert( !safeness_declarator<T>::is_safe /*is no_checks allowed for this type?*/ ); this->t = t_; }
+	soft_ptr_no_checks( const owning_ptr_impl<T>& owner, T* t_ ) { this->t = t_; }
 
 	template<class T1>
 	soft_ptr_no_checks( const soft_ptr_no_checks<T1>& other, T* t_ ) : soft_ptr_base_no_checks<T>(other, t_) {}
@@ -507,7 +507,7 @@ class soft_this_ptr_no_checks
 {
 public:
 
-	static constexpr bool is_safe = false;
+	static constexpr memory_safety is_safe = memory_safety::none;
 
 	soft_this_ptr_no_checks() {}
 
@@ -558,7 +558,7 @@ class naked_ptr_base_no_checks
 
 public:
 
-	static constexpr bool is_safe = false;
+	static constexpr memory_safety is_safe = memory_safety::none;
 
 	naked_ptr_base_no_checks() { t = nullptr; }
 

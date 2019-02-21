@@ -259,31 +259,31 @@ int testWithLest( int argc, char * argv[] )
 					owning_ptr<StructureWithSoftDoublePtr> p5double = make_owning<StructureWithSoftDoublePtr>();
 					soft_ptr<double, owning_ptr<double>::is_safe> x1(p4double);
 					soft_ptr<double> x2(p4double);
-					EXPECT( !(x1.is_safe) );
-					EXPECT( !(x2.is_safe) );
+					EXPECT( x1.is_safe == memory_safety::none );
+					EXPECT( x2.is_safe == memory_safety::none );
 					soft_ptr<double> y1(p5double, &(p5double->d));
 					soft_ptr<double, owning_ptr<StructureWithSoftDoublePtr>::is_safe> y2(p5double, &(p5double->d));
-					EXPECT( !(y1.is_safe) );
-					EXPECT( y2.is_safe );
+					EXPECT( y1.is_safe == memory_safety::none );
+					EXPECT( y2.is_safe == memory_safety::safe );
 					p5double->sp = p4double;
 					EXPECT( p5double->sp );
 					p4double.reset();
 					soft_ptr<double> y1copy(y1);
 					soft_ptr<double> y2copy(y2);
 					
-					owning_ptr<double, true> p4doubleS = make_owning_2<double, true>();
+					owning_ptr<double, memory_safety::safe> p4doubleS = make_owning_2<double, memory_safety::safe>();
 					soft_ptr<double> x0S(p4doubleS);
-					EXPECT( !(x0S.is_safe) );
+					EXPECT( x0S.is_safe == memory_safety::none );
 					soft_ptr<double, owning_ptr<double>::is_safe> x1S(p4doubleS);
-					EXPECT( !(x1S.is_safe) );
+					EXPECT( x1S.is_safe == memory_safety::none );
 					soft_ptr<double, p4doubleS.is_safe> x2S(p4doubleS);
-					EXPECT( x2S.is_safe );
+					EXPECT( x2S.is_safe == memory_safety::safe );
 					
-					owning_ptr<int, false> p4intS = make_owning_2<int, false>();
-					soft_ptr<int, false> xn1NS(p4intS);
-					EXPECT( !(xn1NS.is_safe) );
+					owning_ptr<int, memory_safety::none> p4intS = make_owning_2<int, memory_safety::none>();
+					soft_ptr<int, memory_safety::none> xn1NS(p4intS);
+					EXPECT( xn1NS.is_safe == memory_safety::none );
 					soft_ptr<int, p4intS.is_safe> xn2S(p4intS);
-					EXPECT( !xn2S.is_safe );
+					EXPECT( xn2S.is_safe == memory_safety::none );
 					
 					owning_ptr<int> p14 = make_owning<int>();
 					owning_ptr<StructureWithSoftPtrDeclaredUnsafe> p15 = make_owning<StructureWithSoftPtrDeclaredUnsafe>();

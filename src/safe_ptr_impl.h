@@ -497,7 +497,7 @@ class owning_ptr_impl
 
 public:
 
-	static constexpr bool is_safe = true;
+	static constexpr memory_safety is_safe = memory_safety::safe;
 
 	owning_ptr_impl( make_owning_t, T* t_ ) // make it private with a friend make_owning_impl()!
 	{
@@ -761,7 +761,7 @@ class soft_ptr_base_impl
 
 public:
 
-	static constexpr bool is_safe = true;
+	static constexpr memory_safety is_safe = memory_safety::safe;
 
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckMySlotConsistency() const
@@ -1472,7 +1472,7 @@ class soft_this_ptr_impl
 
 public:
 
-	static constexpr bool is_safe = true;
+	static constexpr memory_safety is_safe = memory_safety::safe;
 
 	soft_this_ptr_impl()
 	{
@@ -1546,7 +1546,7 @@ class naked_ptr_base_impl
 
 public:
 
-	static constexpr bool is_safe = true;
+	static constexpr memory_safety is_safe = memory_safety::safe;
 
 	naked_ptr_base_impl() { t = nullptr; }
 

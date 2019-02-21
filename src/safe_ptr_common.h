@@ -118,9 +118,11 @@ void destruct( T* t )
 
 struct make_owning_t {};
 
+enum class memory_safety { none, safe };
+
 template<class T>
 struct safeness_declarator {
-	static constexpr bool is_safe = true; // by default
+	static constexpr memory_safety is_safe = memory_safety::safe; // by default
 };
 
 /* Sample of user-defined exclusion:
@@ -128,11 +130,11 @@ template<> struct nodecpp::safememory::safeness_declarator<double> { static cons
 */
 
 // sample code (to be removed)
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 namespace testing::dummy_objects {
 struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
 }
-template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
+template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr memory_safety is_safe = memory_safety::none; }; // user-defined exclusion
 // end of sample code (to be removed)
 
 template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class owning_ptr_impl; // forward declaration
