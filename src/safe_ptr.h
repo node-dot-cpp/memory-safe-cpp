@@ -35,9 +35,13 @@
 
 namespace nodecpp::safememory {
 
-template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
+/*template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
 template<class T> struct owning_ptr_type_<T, false> { typedef owning_ptr_no_checks<T> type; };
-template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;*/
+template<class T, bool is_safe, bool can_be_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
+template<class T> struct owning_ptr_type_<T, false, false> { typedef owning_ptr_no_checks<T> type; };
+template<class T> struct owning_ptr_type_<T, false, true> { typedef owning_ptr_impl<T> type; };
+template<class T, bool can_be_safe = false> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
 
 template<class T, bool is_safe, bool can_be_safe> struct soft_ptr_type_ { typedef soft_ptr_impl<T> type; };
 template<class T> struct soft_ptr_type_<T, false, false> { typedef soft_ptr_no_checks<T> type; };
@@ -65,6 +69,22 @@ NODISCARD owning_ptr<_Ty> make_owning(_Types&&... _Args)
 	if constexpr ( safeness_declarator<_Ty>::is_safe )
 	{
 		static_assert( owning_ptr<_Ty>::is_safe );
+		return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+	else
+	{
+		static_assert( !owning_ptr<_Ty>::is_safe );
+		return make_owning_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+}
+
+template<class _Ty, bool is_safe,
+	class... _Types,
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+NODISCARD auto make_owning_2(_Types&&... _Args) -> owning_ptr<_Ty, is_safe>
+{
+	if constexpr ( is_safe )
+	{
 		return make_owning_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
 	}
 	else
