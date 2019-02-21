@@ -41,12 +41,16 @@ template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_decla
 template<class T, bool is_safe, bool can_be_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
 template<class T> struct owning_ptr_type_<T, false, false> { typedef owning_ptr_no_checks<T> type; };
 template<class T> struct owning_ptr_type_<T, false, true> { typedef owning_ptr_impl<T> type; };
-template<class T, bool can_be_safe = false> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
+template<class T> struct owning_ptr_type_<T, true, false> { typedef owning_ptr_no_checks<T> type; };
+template<class T> struct owning_ptr_type_<T, true, true> { typedef owning_ptr_impl<T> type; };
+template<class T, bool can_be_safe = safeness_declarator<T>::is_safe> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
 
 template<class T, bool is_safe, bool can_be_safe> struct soft_ptr_type_ { typedef soft_ptr_impl<T> type; };
 template<class T> struct soft_ptr_type_<T, false, false> { typedef soft_ptr_no_checks<T> type; };
 template<class T> struct soft_ptr_type_<T, false, true> { typedef soft_ptr_impl<T> type; };
-template<class T, bool can_be_safe = false> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
+template<class T> struct soft_ptr_type_<T, true, false> { typedef soft_ptr_no_checks<T> type; };
+template<class T> struct soft_ptr_type_<T, true, true> { typedef soft_ptr_impl<T> type; };
+template<class T, bool can_be_safe = safeness_declarator<T>::is_safe> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
 //template<class T> using soft_ptr = typename soft_ptr_type_<T, safeness_declarator<T>::is_safe, true>::type;
 
 /*template<class T, bool is_safe> struct soft_this_ptr_type_ { typedef soft_this_ptr_impl<T> type; };
@@ -55,11 +59,19 @@ template<class T> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness
 template<class T, bool is_safe, bool can_be_safe> struct soft_this_ptr_type_ { typedef soft_this_ptr_impl<T> type; };
 template<class T> struct soft_this_ptr_type_<T, false, false> { typedef soft_this_ptr_no_checks<T> type; };
 template<class T> struct soft_this_ptr_type_<T, false, true> { typedef soft_this_ptr_impl<T> type; };
-template<class T, bool can_be_safe = false> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
+template<class T> struct soft_this_ptr_type_<T, true, false> { typedef soft_this_ptr_no_checks<T> type; };
+template<class T> struct soft_this_ptr_type_<T, true, true> { typedef soft_this_ptr_impl<T> type; };
+template<class T, bool can_be_safe = safeness_declarator<T>::is_safe> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
 
-template<class T, bool is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
+/*template<class T, bool is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
 template<class T> struct naked_ptr_type_<T, false> { typedef naked_ptr_no_checks<T> type; };
-template<class T> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+template<class T> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe>::type;*/
+template<class T, bool is_safe, bool can_be_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
+template<class T> struct naked_ptr_type_<T, false, false> { typedef naked_ptr_no_checks<T> type; };
+template<class T> struct naked_ptr_type_<T, false, true> { typedef naked_ptr_impl<T> type; };
+template<class T> struct naked_ptr_type_<T, true, false> { typedef naked_ptr_no_checks<T> type; };
+template<class T> struct naked_ptr_type_<T, true, true> { typedef naked_ptr_impl<T> type; };
+template<class T, bool can_be_safe = safeness_declarator<T>::is_safe> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe, can_be_safe>::type;
 
 template<class _Ty,
 	class... _Types,
@@ -89,7 +101,6 @@ NODISCARD auto make_owning_2(_Types&&... _Args) -> owning_ptr<_Ty, is_safe>
 	}
 	else
 	{
-		static_assert( !owning_ptr<_Ty>::is_safe );
 		return make_owning_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
 	}
 }
