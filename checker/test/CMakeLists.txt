@@ -27,6 +27,7 @@ endif()
 
 
 set(NODECPP_TEST_DEPS
+  nodecpp-checker
   FileCheck
   not
 )

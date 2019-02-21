@@ -1,5 +1,7 @@
 
-set PATH=%cd%\3rdparty\llvm\utils\lit;%PATH%
-set PATH=%cd%\build\vs2017\Release\bin;%PATH%
+setlocal
+call test-env.bat
 
 llvm-lit.py test\nodecpp-checker
+
+endlocal

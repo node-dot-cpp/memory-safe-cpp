@@ -8,5 +8,7 @@ msbuild.exe -property:Configuration=Release tools\clang\tools\checker\src\nodecp
 msbuild.exe -property:Configuration=Release tools\clang\tools\checker\src\nodecpp-safe-library\nodecpp-safe-library.vcxproj
 msbuild.exe -property:Configuration=Release utils\FileCheck\FileCheck.vcxproj
 
+msbuild.exe -property:Configuration=Release tools\clang\tools\checker\test\check-nodecpp-checker.vcxproj
+
 cd ..\..
 
