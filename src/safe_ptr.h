@@ -103,7 +103,7 @@ soft_ptr<T> soft_ptr_in_constructor(T* ptr) {
 
 template<class T, class T1>
 soft_ptr<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
-	return soft_ptr_static_cast_impl<T, T1, NODECPP_ISSAFE_DEFAULT>( p ) ;
+	return soft_ptr_static_cast_impl<T, T1>( p ) ;
 }
 
 template<class T, class T1>

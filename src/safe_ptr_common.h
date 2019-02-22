@@ -137,9 +137,9 @@ struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
 template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr memory_safety is_safe = memory_safety::none; }; // user-defined exclusion
 // end of sample code (to be removed)
 
-template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class owning_ptr_impl; // forward declaration
-template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class soft_ptr_base_impl; // forward declaration
-template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/> class soft_ptr_impl; // forward declaration
+template<class T> class owning_ptr_impl; // forward declaration
+template<class T> class soft_ptr_base_impl; // forward declaration
+template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 
