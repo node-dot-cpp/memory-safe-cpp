@@ -118,11 +118,22 @@ void destruct( T* t )
 
 struct make_owning_t {};
 
+
 enum class memory_safety { none, safe };
 
 template<class T>
 struct safeness_declarator {
+#ifdef MEMORY_SAFETY
+#if MEMORY_SAFETY == SAFE
+	static constexpr memory_safety is_safe = memory_safety::safe;
+#elif MEMORY_SAFETY == NONE
+	static constexpr memory_safety is_safe = memory_safety::none;
+#else
+#error Unexpected value of MEMORY_SAFETY (expected values are SAFE and NONE)
+#endif // MEMORY_SAFETY defined
+#else
 	static constexpr memory_safety is_safe = memory_safety::safe; // by default
+#endif
 };
 
 /* Sample of user-defined exclusion:
