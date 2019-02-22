@@ -62,7 +62,7 @@ public:
 	}
 	~IIBMallocInitializer()
 	{
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+//	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 	}
 };
@@ -481,6 +481,365 @@ int testWithLest( int argc, char * argv[] )
 	int ret = lest::run( specification, argc, argv );
 	return ret;
 }
+#else
+int testWithLest( int argc, char * argv[] )
+{
+	//const lest::test specification[] =
+	{
+		//CASE( "testing pointers-with-data" )
+		{
+			//SETUP("testing pointers-with-data")
+			{
+	#if 0 // TODO: rework for new data structures
+				int* n1 = new int;
+				int* n2 = new int;
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[1] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				Ptr2PtrWishData n1D, n2D;
+				////SECTION( "initializing ptrs-with-data" )
+				{
+					n1D.init(n1,Ptr2PtrWishData::invalidData);
+					n2D.init(n2,Ptr2PtrWishData::invalidData);
+				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[2] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n1 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == Ptr2PtrWishData::invalidData );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == Ptr2PtrWishData::invalidData );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[3] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				}
+				////SECTION( "updating data" )
+				{
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[4] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+					n1D.updateData(6);
+					n2D.updateData(500000);
+				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[5] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n1 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == 500000 );
+				}
+				////SECTION( "updating pointers" )
+				{
+					n1D.updatePtr(n2);
+					n2D.updatePtr(n1);
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n1 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == 500000 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+				}
+				////SECTION( "yet updating data" )
+				{
+					n1D.updateData(500000);
+					n2D.updateData(6);
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n1 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 500000 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == 6 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+				}
+				delete n1;
+				delete n2;
+	#endif // 0
+			}
+		}
+
+		//CASE( "basic safe pointer test" )
+		{
+			//EXPECT_NO_THROW( basicSafePointerTest() );
+			//SETUP("basic safe pointer test")
+			{
+				soft_ptr<int> s01;
+				soft_ptr<int> s02;
+				//SECTION( "narrowing scope [1]" )
+				{
+					owning_ptr<int> p1 = make_owning<int>();
+					*p1 = 5;
+					owning_ptr<int> p2 = make_owning<int>();
+					*p2 = 25;
+					soft_ptr<int> s11(p1);
+					soft_ptr<int> s12(p1);
+					soft_ptr<int> s21(p2);
+					soft_ptr<int> s22(p2);
+					*s11.get() += 1;
+					*s22.get() += 1;
+
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 26 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+					s21.swap(s12);
+					//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+ 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 26 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s11 = {}", *s11.get() );
+					s01.swap(s11);
+					//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s01 = {}", *s01.get() );
+ 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s01 == 6 );
+					soft_ptr<int> s13(p1);
+					soft_ptr<int> s14(p1);
+					{
+						soft_ptr<int> s15(p1);
+ 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+						NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
+					}
+					soft_ptr<int> s15(p1);
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
+ 					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+					soft_ptr<int> s16(p1);
+					{
+						soft_ptr<int> s17(p1);
+						NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s17 == 6 );
+ 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}", *s17.get() );
+					}
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p1 == 6 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p2 == 26 );
+					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}", *p1, *p2 );
+					owning_ptr<int> p3 = make_owning<int>();
+					*p3 = 17;
+					s02 = p3;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s02 == 17 );
+
+					soft_ptr<int> s30;
+					s30 = std::move( s02 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s30 == 17 );
+
+					soft_ptr<void> sv;
+//					sv = std::move( s30 );
+					sv = soft_ptr_static_cast<int>( s30 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sv );
+
+					soft_ptr<int> s31;
+					s31 = soft_ptr_static_cast<int>( sv );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s31 == 17 );
+
+					/*class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
+					owning_ptr<S> sS = make_owning<S>();
+					sS->m = 17;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sS->callSmthWithMySoftPtr(sS->m) );*/
+					
+					owning_ptr<int> p4int = make_owning<int>();
+					owning_ptr<StructureWithSoftIntPtr> p5int = make_owning<StructureWithSoftIntPtr>();
+					p5int->sp = p4int;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p5int->sp );
+					p4int.reset();
+					//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !(p5->sp) );
+					
+					owning_ptr<double> p4double = make_owning<double>();
+					owning_ptr<StructureWithSoftDoublePtr> p5double = make_owning<StructureWithSoftDoublePtr>();
+					soft_ptr<double, owning_ptr<double>::is_safe> x(p4double);
+					p5double->sp = p4double;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p5double->sp );
+					p4double.reset();
+					
+					owning_ptr<int> p14 = make_owning<int>();
+					owning_ptr<StructureWithSoftPtrDeclaredUnsafe> p15 = make_owning<StructureWithSoftPtrDeclaredUnsafe>();
+					p15->sp = p14;
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p15->sp );
+					p14.reset();
+					//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !(p5->sp) );
+
+					owning_ptr<int> op1 = make_owning<int>();
+					owning_ptr<int> op2 = make_owning<int>();
+					soft_ptr<int> sp11( op1 );
+					soft_ptr<int> sp12( op1 );
+					soft_ptr<int> sp21( op2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 == op1 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op1 == sp11 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 == sp12 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 != op1) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(op1 != sp11) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 != sp12) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 != op2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op2 != sp11 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 != sp21 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == op2) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(op2 == sp11) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == sp21) );
+
+					// naked with naked
+					naked_ptr<int> np1( op1 );
+					naked_ptr<int> np2( sp11 );
+					naked_ptr<int> np3( op2 );
+
+					naked_ptr<void> np1v( op1 );
+					naked_ptr<void> np2v( sp11 );
+					naked_ptr<void> np3v( op2 );
+
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 == np2 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 != np3 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1 != np2) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1 == np3) );
+
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 == np2v );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1v != np3 );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1 != np2v) );
+					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1v == np3) );
+				}
+				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s01 );
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
+			}
+		}
+
+		//CASE( "basic safe pointer test" )
+		{
+			//SETUP("basic safe pointer test")
+			{
+				class Base { public: int n; virtual ~Base(){} };
+				class Derived : public Base { public: virtual ~Derived(){} };
+				owning_ptr<Derived> p = make_owning<Derived>();
+				p->n = 11;
+				soft_ptr<Base> p1 = p;
+				soft_ptr<Derived> p2 = soft_ptr_static_cast<Derived>(p1);
+				soft_ptr<Derived> p3 = soft_ptr_reinterpret_cast<Derived>(p1);
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p2->n == 11 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p3->n == 11 );
+			}
+		}
+
+		//CASE( "test Pointers-To-Members" )
+		{
+			//SETUP("basic safe pointer test")
+			{
+				class SmallNonVirtualBase { public: int sn; int sm;};
+				class SmallVirtualBase : public SmallNonVirtualBase { public: int sn1; int sm1; virtual ~SmallVirtualBase() {}};
+				class Small : public SmallVirtualBase { public: int sn2; int sm2;};
+
+				class LargeNonVirtualBase { public: int ln[0x10000]; int lm;};
+				class LargeVirtualBase : public LargeNonVirtualBase { public: int ln1; int lm1[0x10000]; virtual ~LargeVirtualBase() {}};
+				class Large : public LargeVirtualBase { public: int ln2; int lm2;};
+
+				class Multiple : public LargeVirtualBase, SmallVirtualBase { public: int mn3; int mm3;};
+
+				owning_ptr<Small> pSmall = make_owning<Small>();
+				soft_ptr<Small> spSmall(pSmall);
+				soft_ptr<SmallVirtualBase> spSmallVirtualBase = soft_ptr_reinterpret_cast<SmallVirtualBase>( spSmall );
+				soft_ptr<SmallNonVirtualBase> spSmallNonVirtualBase = soft_ptr_static_cast<SmallNonVirtualBase>( spSmall );
+				soft_ptr<int> pintSmall( pSmall, &(pSmall->sn) );
+
+				owning_ptr<Large> pLarge = make_owning<Large>();
+				soft_ptr<Large> spLarge(pLarge);
+				soft_ptr<LargeVirtualBase> spLargeVirtualBase = soft_ptr_reinterpret_cast<LargeVirtualBase>( spLarge );
+				soft_ptr<LargeNonVirtualBase> spLargeNonVirtualBase = soft_ptr_static_cast<LargeNonVirtualBase>( spLarge );
+				soft_ptr<int> pintLarge( pLarge, &(pLarge->lm) );
+
+				owning_ptr<Multiple> pMultiple = make_owning<Multiple>();
+				soft_ptr<Multiple> spMultiple(pMultiple);
+				soft_ptr<LargeVirtualBase> spMultipleViaLarge = soft_ptr_reinterpret_cast<LargeVirtualBase>( spMultiple );
+				soft_ptr<SmallVirtualBase> spMultipleViaSmall = soft_ptr_reinterpret_cast<SmallVirtualBase>( spMultiple );
+				soft_ptr<int> pintMultiple( pMultiple, &(pMultiple->mm3) );
+
+				{ bool ok = true; try{ soft_ptr<int> pintError1( pMultiple, nullptr ); ok = false; } catch ( ... ) { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ok ); } }
+
+				int * anyN = new int;
+				//EXPECT_THROWS( soft_ptr<int> pintError2( pMultiple, anyN ) );
+				{ bool ok = true; try{ soft_ptr<int> pintError2( pMultiple, anyN ); ok = false; } catch ( ... ) { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ok ); } }
+				delete anyN;
+			}
+		}
+
+		//CASE( "test is-on-stack" )
+		{
+			//SETUP("test is-on-stack")
+			{
+				// NOTE: test below may occasionally failed: 
+				//       stack var can be reported as not being such
+				//       but heap value must never be reported as guaranteed on stack
+				//int a;
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, nodecpp::platform::is_guaranteed_on_stack( &a ) );
+
+				int* pn = new int;
+				//class Large { public: int val[0x10000];};
+				//Large l;
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !nodecpp::platform::is_guaranteed_on_stack( pn ) );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !nodecpp::platform::is_guaranteed_on_stack( &g_int ) );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !nodecpp::platform::is_guaranteed_on_stack( &th_int ) );
+				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !nodecpp::platform::is_guaranteed_on_stack( &l ) );
+			}
+		}
+
+		//CASE( "test soft_this_ptr" )
+		{
+			//SETUP("test soft_this_ptr")
+			{
+				owning_ptr<SomethingLarger> opSL = make_owning<SomethingLarger>( 17 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->opS->m) == 17 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL->softpS->m) == 17 );
+				owning_ptr<SomethingLarger> opSL_1 = make_owning<SomethingLarger>( 27, false );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->opS->m) == 27 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_1->softpS->m) == 27 );
+				owning_ptr<SomethingLarger> opSL_2 = make_owning<SomethingLarger>( 37, false, false );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_2->opS->m) == 37 );
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *(opSL_2->softpS->m) == 37 );
+			}
+		}
+
+		//CASE( "test comparison operators" )
+		{
+			// TODO: extend to other relevant cases
+			owning_ptr<uint32_t> op;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == nullptr );
+			op = make_owning<uint32_t>(17);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op != nullptr );
+			soft_ptr<uint32_t> sp;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == nullptr );
+			sp = op;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != nullptr );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == op );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == sp );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == op );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == sp );
+			owning_ptr<uint32_t> op1 = make_owning<uint32_t>(27);
+			soft_ptr<uint32_t> sp1 = op1;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != sp1 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != op1 );
+			// ...
+		}
+
+		//CASE( "test destruction means" )
+		{
+			{ bool ok = false; try{ testing::StartupChecker::checkBasics(); ok = true; } catch ( ... ) { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ok ); } }
+			{ bool ok = false; try{testing::StartupChecker::checkSafePointers(); ok = true; } catch ( ... ) { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ok ); } }
+			//EXPECT_NO_THROW( testing::StartupChecker::checkBasics() );
+			//EXPECT_NO_THROW( testing::StartupChecker::checkSafePointers() );
+		}
+
+		//CASE( "test non-safe pointers" )
+		{
+			// TODO: extend to other relevant cases
+			owning_ptr<double> op;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == nullptr );
+			op = make_owning<double>(17);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op != nullptr );
+			soft_ptr<double> sp;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == nullptr );
+			sp = op;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != nullptr );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == op );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == sp );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, op == op );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp == sp );
+			owning_ptr<double> op1 = make_owning<double>(27);
+			soft_ptr<double> sp1 = op1;
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != sp1 );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sp != op1 );/**/
+			// ...
+		}
+	};
+
+	//int ret = lest::run( specification, argc, argv );
+	//return ret;
+	return 0;
+}
+
 #endif
 
 void test__allocated_ptr_and_ptr_and_data_and_flags()
@@ -731,8 +1090,118 @@ void test_zombie_objects()
 {
 }
 
+void temptest()
+{
+	soft_ptr<int> s01;
+	soft_ptr<int> s02;
+	{
+		owning_ptr<int> p1 = make_owning<int>();
+		*p1 = 5;
+		owning_ptr<int> p2 = make_owning<int>();
+		*p2 = 25;
+		soft_ptr<int> s11(p1);
+		soft_ptr<int> s12(p1);
+		soft_ptr<int> s21(p2);
+		soft_ptr<int> s22(p2);
+		*s11.get() += 1;
+		*s22.get() += 1;
+
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 6 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 26 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+		s21.swap(s12);
+		//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+ 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 26 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 6 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s11 = {}", *s11.get() );
+		s01.swap(s11);
+		//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s01 = {}", *s01.get() );
+ 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s01 == 6 );
+		soft_ptr<int> s13(p1);
+		soft_ptr<int> s14(p1);
+		{
+			soft_ptr<int> s15(p1);
+ 			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
+		}
+		soft_ptr<int> s15(p1);
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
+ 		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+		soft_ptr<int> s16(p1);
+		{
+			soft_ptr<int> s17(p1);
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s17 == 6 );
+ 			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}", *s17.get() );
+		}
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p1 == 6 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p2 == 26 );
+		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}", *p1, *p2 );
+		owning_ptr<int> p3 = make_owning<int>();
+		*p3 = 17;
+		s02 = p3;
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s02 == 17 );
+
+		soft_ptr<int> s30;
+		s30 = std::move( s02 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s30 == 17 );
+
+		/*soft_ptr<void> sv;
+//					sv = std::move( s30 );
+		sv = soft_ptr_static_cast<int>( s30 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sv );
+
+		soft_ptr<int> s31;
+		s31 = soft_ptr_static_cast<int>( sv );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s31 == 17 );*/
+
+		/*class [[nodecpp::owning_only]] S{ public: int m; static bool doSmthWithMySoftPtr(soft_ptr<S> s, int k) { return s->m == k; }  bool callSmthWithMySoftPtr(int k) {return doSmthWithMySoftPtr(soft_ptr<S>(this), k); } };
+		owning_ptr<S> sS = make_owning<S>();
+		sS->m = 17;
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, sS->callSmthWithMySoftPtr(sS->m) );*/
+					
+		struct StrWithSoftPtr { soft_ptr<int> sp; };
+		owning_ptr<int> p4 = make_owning<int>();
+		owning_ptr<StrWithSoftPtr> p5 = make_owning<StrWithSoftPtr>();
+		p5->sp = p4;
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, p5->sp );
+		p4.reset();
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !(p5->sp) );
+
+		owning_ptr<int> op1 = make_owning<int>();
+		owning_ptr<int> op2 = make_owning<int>();
+		soft_ptr<int> sp11( op1 );
+		soft_ptr<int> sp12( op1 );
+		soft_ptr<int> sp21( op2 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 == op1 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op1 == sp11 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 == sp12 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 != op1) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(op1 != sp11) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 != sp12) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 != op2 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op2 != sp11 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp11 != sp21 );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == op2) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(op2 == sp11) );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == sp21) );
+
+	}
+	//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
+	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s01 );
+	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
+}
+
+
 int main( int argc, char * argv[] )
 {
+	//temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
