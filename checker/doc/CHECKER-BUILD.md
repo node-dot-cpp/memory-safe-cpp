@@ -56,7 +56,7 @@ Assuming you have ninja on your PATH
 
 All tools should end at `build\debug\bin` folder, `FileCheck` is a llvm/clang tool used in automated testing.
 
-For testing I use a separate `test-env.bat` file to set up environmnet to run the tool and tests.
+For testing I use a separate `test-debug-env.bat` file to set up environmnet to run the tool and tests.
 
 	title test
 
@@ -92,7 +92,7 @@ Requirements
 
 
 Simple build (Release build using Make)
---------------------------------------------------------------------------
+---------------------------------------
 
 Checkout `node-dot-cpp/memory-safe-cpp`, if you haven't done it already and go to the recently checked out folder `memory-safe-cpp/checker`.
 

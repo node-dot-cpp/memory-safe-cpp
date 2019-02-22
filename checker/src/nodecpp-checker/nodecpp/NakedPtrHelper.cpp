@@ -343,7 +343,8 @@ bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, Di
     if(isSystemSafeName(context, name)) {
       return true;
     } else {
-      dh.diag(decl->getLocation(), "system library type is not safe");
+      std::string msg = "system library type '" + name + "' is not safe";
+      dh.diag(decl->getLocation(), msg);
       return false;
     }
   }
@@ -360,7 +361,8 @@ bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, Di
   for (auto It = F.begin(); It != F.end(); ++It) {
     auto ft = (*It)->getType().getCanonicalType();
     if (!isSafeType(ft, context, dh)) {
-      dh.diag((*It)->getLocation(), "member is not safe");
+      std::string msg = "member '" + std::string((*It)->getName()) + "' is not safe";
+      dh.diag((*It)->getLocation(), msg);
       return false;
     }
   }

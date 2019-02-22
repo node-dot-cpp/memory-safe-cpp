@@ -13,7 +13,15 @@ namespace safememory {
 	// class soft_ptr;
 	// class naked_ptr;
 }
+namespace log {
+	void log();
+}
+namespace assert {
+	void nodecpp_assert();
+}
+
 class Buffer;
+
 namespace net {
 	class Socket;
 	class Server;
@@ -22,5 +30,6 @@ namespace net {
 }
 }
 
-
+class NodeRegistrator;
+class NodeBase;
 
