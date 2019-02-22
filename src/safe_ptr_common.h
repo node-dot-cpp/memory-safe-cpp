@@ -117,20 +117,25 @@ void destruct( T* t )
 }
 
 struct make_owning_t {};
+template<class T> class owning_ptr_impl; // forward declaration
+template<class T> class soft_ptr_base_impl; // forward declaration
+template<class T> class soft_ptr_impl; // forward declaration
+template<class T> class soft_ptr_base_no_checks; // forward declaration
+template<class T> class soft_ptr_no_checks; // forward declaration
 
 
 enum class memory_safety { none, safe };
 
 template<class T>
 struct safeness_declarator {
-#ifdef MEMORY_SAFETY
-#if MEMORY_SAFETY == SAFE
+#ifdef NODECPP_MEMORY_SAFETY
+#if NODECPP_MEMORY_SAFETY == SAFE
 	static constexpr memory_safety is_safe = memory_safety::safe;
-#elif MEMORY_SAFETY == NONE
+#elif NODECPP_MEMORY_SAFETY == NONE
 	static constexpr memory_safety is_safe = memory_safety::none;
 #else
-#error Unexpected value of MEMORY_SAFETY (expected values are SAFE and NONE)
-#endif // MEMORY_SAFETY defined
+#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are SAFE and NONE)
+#endif // NODECPP_MEMORY_SAFETY defined
 #else
 	static constexpr memory_safety is_safe = memory_safety::safe; // by default
 #endif
@@ -141,22 +146,9 @@ struct safeness_declarator {
 #endif
 
 /* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
 
-// sample code (to be removed)
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
-namespace testing::dummy_objects {
-struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
-}
-template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr memory_safety is_safe = memory_safety::none; }; // user-defined exclusion
-// end of sample code (to be removed)
-
-template<class T> class owning_ptr_impl; // forward declaration
-template<class T> class soft_ptr_base_impl; // forward declaration
-template<class T> class soft_ptr_impl; // forward declaration
-template<class T> class soft_ptr_base_no_checks; // forward declaration
-template<class T> class soft_ptr_no_checks; // forward declaration
 
 
 

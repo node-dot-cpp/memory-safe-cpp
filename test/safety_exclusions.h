@@ -29,7 +29,7 @@
 #define SAFETY_EXCLUSIONS_H
 
 /* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
 
 
