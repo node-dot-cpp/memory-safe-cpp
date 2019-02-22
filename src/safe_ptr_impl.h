@@ -33,50 +33,6 @@
 namespace nodecpp::safememory
 {
 
-enum class MemorySafety {none, partial, full};
-
-//#define NODECPP_MEMORYSAFETY_NONE
-#define NODECPP_MEMORYSAFETY_EARLY_DETECTION
-
-#ifdef NODECPP_MEMORYSAFETY_NONE
-#define NODECPP_ISSAFE_MODE MemorySafety::none
-#define NODECPP_ISSAFE_DEFAULT false
-#elif defined NODECPP_MEMORYSAFETY_PARTIAL
-#define NODECPP_ISSAFE_MODE MemorySafety::partial
-#define NODECPP_ISSAFE_DEFAULT true
-#elif defined NODECPP_MEMORYSAFETY_FULL
-#define NODECPP_ISSAFE_MODE MemorySafety::full
-#define NODECPP_ISSAFE_DEFAULT true
-#else
-#define NODECPP_ISSAFE_MODE MemorySafety::full
-#define NODECPP_ISSAFE_DEFAULT true
-#endif
-
-#ifndef NODECPP_MEMORYSAFETY_NONE
-#ifdef NODECPP_MEMORYSAFETY_EARLY_DETECTION
-//constexpr void* invalid_ptr = (void*)(1);
-#endif
-#endif
-
-/*#ifdef NODECPP_GCC
-extern void forcePreviousChangesToThisInDtor( void* p );
-#else
-#define forcePreviousChangesToThisInDtor(x)
-#endif
-
-template<class T>
-void destruct( T* t )
-{
-	if constexpr ( std::is_polymorphic<T>::value )
-	{
-		auto vpt = nodecpp::platform::backup_vmt_pointer(t);
-		t->~T();
-		nodecpp::platform::restore_vmt_pointer( t, vpt);
-	}
-	else
-		t->~T();
-}*/
-
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
@@ -107,8 +63,6 @@ void throwPointerOutOfRange()
 	throw std::bad_alloc();
 }
 
-
-//static_assert( sizeof(void*) == 8 );
 
 template<class T> class soft_ptr_base_impl; // forward declaration
 template<class T> class soft_ptr_impl; // forward declaration
@@ -573,12 +527,6 @@ public:
 		dbgCheckValidity();
 	}
 
-	/*void reset( T* t_ )
-	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t == nullptr );
-		reset();
-	}*/
-
 	void swap( owning_ptr_impl<T>& other )
 	{
 		T* tmp = t;
@@ -667,13 +615,6 @@ class soft_ptr_base_impl
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
-
-	/*friend class naked_ptr_base_impl<T>;
-	template<class TT>
-	friend class naked_ptr_base_impl;
-	friend class naked_ptr_impl<T>;
-	template<class TT>
-	friend class naked_ptr_impl;*/
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1145,13 +1086,6 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_base_impl;
 
-	/*friend class naked_ptr_base_impl<T>;
-	friend class naked_ptr_impl<T>;
-	template<class TT>
-	friend class naked_ptr_impl;
-	template<class TT>
-	friend class naked_ptr_base_impl;*/
-
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
@@ -1330,13 +1264,6 @@ class soft_ptr_impl<void> : public soft_ptr_base_impl<void>
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
-
-	/*friend class naked_ptr_base_impl<void>;
-	friend class naked_ptr_impl<void>;
-	template<class TT>
-	friend class naked_ptr_impl;
-	template<class TT>
-	friend class naked_ptr_base_impl;*/
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1596,18 +1523,8 @@ class naked_ptr_impl : public naked_ptr_base_impl<T>
 	friend class soft_ptr_base_impl<T>;
 	template<class TT>
 	friend class soft_ptr_base_impl;
-	//friend class soft_ptr_impl<T>;
 	template<class TT>
 	friend class owning_ptr_impl;
-	//template<class TT>
-	//friend class soft_ptr_impl;
-
-	/*friend class owning_ptr_no_checks<T>;
-	template<class TT>
-	friend class owning_ptr_no_checks;
-	friend class soft_ptr_base_impl_no_checks<T>;
-	template<class TT>
-	friend class soft_ptr_base_impl_no_checks;*/
 
 public:
 	naked_ptr_impl() : naked_ptr_base_impl<T>() {}
