@@ -29,7 +29,7 @@ public:
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
 
   void checkLambda(QualType qt, bool owned, SourceLocation callLoc);
-  void checkFunctions(QualType arg0, QualType arg1, SourceLocation callLoc); 
+  void checkFunctions(QualType arg0_sugar, QualType arg1_sugar, SourceLocation callLoc); 
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 

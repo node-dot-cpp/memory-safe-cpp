@@ -60,16 +60,18 @@ bool isConstNakedPtrName(const std::string& name);
 bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc);
 bool isSystemSafeName(const ClangTidyContext* context, const std::string& name);
 
-bool isStdFunctionType(QualType qt);
-bool isAnyFunctorType(QualType qt);
-
 bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
 
 
+enum class FunctionKind { None = 0, Lambda, StdFunction, OwnedArg0 };
 
+FunctionKind getFunctionKind(QualType qt);
+
+bool isStdFunctionType(QualType qt);
 bool isLambdaType(QualType qt);
 bool isNodecppFunctionOwnedArg0Type(QualType qt);
+bool isAnyFunctorType(QualType qt);
 
 bool isRawPointerType(QualType qt);
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType qt);

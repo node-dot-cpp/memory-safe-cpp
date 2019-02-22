@@ -73,21 +73,6 @@ bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) 
 }
 
 
-bool isStdFunctionType(QualType qt) {
-  
-  assert(qt.isCanonical());
-
-  auto decl = qt->getAsCXXRecordDecl();
-  if (!decl || !decl->hasDefinition())
-    return false;
-
-  return decl->getQualifiedNameAsString() == "std::function";
-}
-
-bool isAnyFunctorType(QualType qt) {
-
-  return isStdFunctionType(qt) || isNodecppFunctionOwnedArg0Type(qt);
-}
 
 bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh) {
 
@@ -211,30 +196,53 @@ KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHe
   return KindCheck(false, false);
 }
 
-bool isLambdaType(QualType qt) {
-  
-  assert(qt.isCanonical());
- 
-  if (auto decl = qt->getAsCXXRecordDecl()) {
+FunctionKind getFunctionKind(QualType qt) {
 
-    if (!decl || !decl->hasDefinition())
-      return false;
+  if(auto ts = qt->getAs<TemplateSpecializationType>()) {
 
-    return decl->isLambda();
+    auto td = ts->getTemplateName().getAsTemplateDecl();
+    if(td) {
+       if(td->getQualifiedNameAsString() == "nodecpp::function_owned_arg0")
+         return FunctionKind::OwnedArg0;
+    }
+   
+    return getFunctionKind(ts->desugar());
+  }
+  else if(auto rc = qt->getAs<RecordType>()) {
+    auto decl = rc->getDecl();
+    assert(decl);
+
+    if(decl->isLambda())
+      return FunctionKind::Lambda;
+
+    if(decl->getQualifiedNameAsString() == "std::function")
+      return FunctionKind::StdFunction;
+    
+    return FunctionKind::None;
   }
   
-  return false;
+  qt.dump();
+  return FunctionKind::None;
+}
+
+bool isStdFunctionType(QualType qt) {
+  
+  return getFunctionKind(qt) == FunctionKind::StdFunction;
+}
+
+bool isLambdaType(QualType qt) {
+  
+  return getFunctionKind(qt) == FunctionKind::Lambda;
 }
 
 bool isNodecppFunctionOwnedArg0Type(QualType qt) {
-  assert(qt.isCanonical());
- 
-  auto decl = qt->getAsCXXRecordDecl();
 
-  if (!decl || !decl->hasDefinition())
-    return false;
+  return getFunctionKind(qt) == FunctionKind::OwnedArg0;
+}
 
-  return decl->getQualifiedNameAsString() == "nodecpp::function_owned_arg0";
+bool isAnyFunctorType(QualType qt) {
+
+  return isStdFunctionType(qt) || isNodecppFunctionOwnedArg0Type(qt);
 }
 
 bool isRawPointerType(QualType qt) {
