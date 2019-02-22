@@ -83,5 +83,8 @@
     <ClInclude Include="..\..\src\safe_ptr_impl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="..\safety_exclusions.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

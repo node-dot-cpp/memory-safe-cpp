@@ -136,6 +136,10 @@ struct safeness_declarator {
 #endif
 };
 
+#ifdef NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#include NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#endif
+
 /* Sample of user-defined exclusion:
 template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
 */

@@ -60,6 +60,7 @@
     <ClInclude Include="..\..\src\safe_ptr_no_checks.h" />
     <ClInclude Include="..\..\src\startup_checks.h" />
     <ClInclude Include="..\dummy_test_objects.h" />
+    <ClInclude Include="..\safety_exclusions.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>15.0</VCProjectVersion>
@@ -135,7 +136,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -150,7 +151,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -167,7 +168,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -186,7 +187,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>MEMORY_SAFETY=SAFE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
