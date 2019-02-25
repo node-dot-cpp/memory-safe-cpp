@@ -9,7 +9,8 @@ cmake -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=${PWD}/.
 
 make nodecpp-checker
 make nodecpp-safe-library
-make FileCheck
+
+make check-nodecpp-checker
 
 cd ../..
 

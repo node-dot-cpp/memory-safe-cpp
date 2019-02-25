@@ -6,7 +6,6 @@ cmake -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\
 
 msbuild.exe -property:Configuration=Release tools\clang\tools\checker\src\nodecpp-checker\tool\nodecpp-checker.vcxproj
 msbuild.exe -property:Configuration=Release tools\clang\tools\checker\src\nodecpp-safe-library\nodecpp-safe-library.vcxproj
-msbuild.exe -property:Configuration=Release utils\FileCheck\FileCheck.vcxproj
 
 msbuild.exe -property:Configuration=Release tools\clang\tools\checker\test\check-nodecpp-checker.vcxproj
 
