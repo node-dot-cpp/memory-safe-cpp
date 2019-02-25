@@ -221,7 +221,7 @@ FunctionKind getFunctionKind(QualType qt) {
     return FunctionKind::None;
   }
   
-  qt.dump();
+  //qt.dump();
   return FunctionKind::None;
 }
 
