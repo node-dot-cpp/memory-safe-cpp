@@ -1,7 +1,9 @@
 Running and adding automated tests
 ==================================
 
-Automated tests are runned by `llvm-lit.py`, this is a llvm/clang automated testing tool. You can run automated tests only if you built the tools from source code, since the tool is designed to work that way. If you with to run the downloaded version of the tool under some sample files, please look at [CHECKER-QUICK.md](CHECKER-QUICK.md).
+See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+
+This document covers automated tests runned by `llvm-lit.py`. This is a llvm/clang automated testing tool. You can run automated tests only if you built the tools from source code, since the tool is designed to work that way.
 
 If you look at `test.bat`, it is simple:
 

@@ -99,7 +99,7 @@ Don't forget the double hypen (`--`) at the end. Some tests need extra arguments
 
 Next
 ====
-See file [CHECHER-QUICK.md](CHECHER-QUICK.md) for a very first, very quick sample use.
+See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
 
 
 Or you can see [CHECHER-RUN.md](CHECHER-RUN.md) to set up the environment to run the tool over your own files or projects.
