@@ -1264,8 +1264,8 @@ class soft_ptr_impl<void> : public soft_ptr_base_impl<void>
 {
 	template<class TT>
 	friend class owning_ptr_impl;
-	template<class TT>
-	friend class soft_ptr_base_impl;
+	//template<class TT>
+	//friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
 
