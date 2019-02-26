@@ -522,7 +522,6 @@ public:
 		return true;
 	}
 
-	template<class T>
 	soft_ptr_no_checks<T> getSoftPtr(T* ptr)
 	{
 		return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );

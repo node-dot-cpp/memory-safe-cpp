@@ -1161,7 +1161,11 @@ public:
 	template<class T1>
 	soft_ptr_impl( const soft_ptr_impl<T1>& other ) : soft_ptr_base_impl<T>(other) {}
 	template<class T1>
-	soft_ptr_impl<T>& operator = ( const soft_ptr_impl<T1>& other ) : soft_ptr_base_impl<T>(other) {}
+	soft_ptr_impl<T>& operator = ( const soft_ptr_impl<T1>& other )
+	{
+		soft_ptr_base_impl<T>::operator = (other);
+		return *this;
+	}
 	soft_ptr_impl( const soft_ptr_impl<T>& other ) : soft_ptr_base_impl<T>(other) {}
 	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T>& other )
 	{
@@ -1193,7 +1197,7 @@ public:
 			if ( owner.t .getPtr())
 				init( t_, owner.t.getPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
-				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+				init( t_, owner.t.getPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
 		this->dbgCheckMySlotConsistency();
 	}
 
@@ -1401,7 +1405,6 @@ public:
 		return cbPtr != nullptr;
 	}
 
-	template<class T>
 	soft_ptr_impl<T> getSoftPtr(T* ptr)
 	{
 		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
@@ -1529,7 +1532,7 @@ class naked_ptr_impl : public naked_ptr_base_impl<T>
 public:
 	naked_ptr_impl() : naked_ptr_base_impl<T>() {}
 
-	naked_ptr_impl(T& t_) : naked_ptr_base_impl(t_) { this->t = &t_; }
+	naked_ptr_impl(T& t_) : naked_ptr_base_impl<T>(t_) { this->t = &t_; }
 
 	template<class T1>
 	naked_ptr_impl( const owning_ptr_impl<T1>& owner ) : naked_ptr_base_impl<T>(owner) {}
@@ -1557,7 +1560,7 @@ public:
 
 	void swap( naked_ptr_impl<T>& other )
 	{
-		naked_ptr_base_impl( other );
+		naked_ptr_base_impl<T>::swap( other );
 	}
 
 	T& operator * () const
@@ -1614,7 +1617,7 @@ class naked_ptr_impl<void> : public naked_ptr_base_impl<void>
 	//friend class soft_ptr_impl;
 
 public:
-	naked_ptr_impl() : naked_ptr_base_impl() {}
+	naked_ptr_impl() : naked_ptr_base_impl<void>() {}
 
 	template<class T1>
 	naked_ptr_impl(T1& t_) : naked_ptr_base_impl<void>(t_) {}
