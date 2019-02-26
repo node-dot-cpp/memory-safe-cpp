@@ -1,0 +1,210 @@
+diff --git a/include/clang/AST/Type.h b/include/clang/AST/Type.h
+index 9a8dd6faff..95639fcaed 100644
+--- a/include/clang/AST/Type.h
++++ b/include/clang/AST/Type.h
+@@ -3456,6 +3456,7 @@ public:
+       IsConsumed      = 0x10,
+       HasPassObjSize  = 0x20,
+       IsNoEscape      = 0x40,
++      IsMayExtend     = 0x80,
+     };
+     unsigned char Data = 0;
+ 
+@@ -3509,6 +3510,19 @@ public:
+       return Copy;
+     }
+ 
++    bool isNodeCppMayExtend() const {
++      return Data & IsMayExtend;
++    }
++
++    ExtParameterInfo withNodeCppMayExtend(bool MayExtend) const {
++      ExtParameterInfo Copy = *this;
++      if (MayExtend)
++        Copy.Data |= IsMayExtend;
++      else
++        Copy.Data &= ~IsMayExtend;
++      return Copy;
++    }
++
+     unsigned char getOpaqueValue() const { return Data; }
+     static ExtParameterInfo getFromOpaqueValue(unsigned char data) {
+       ExtParameterInfo result;
+diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
+index 1f17819dba..e1ca7b0e52 100644
+--- a/include/clang/Basic/Attr.td
++++ b/include/clang/Basic/Attr.td
+@@ -2971,3 +2971,21 @@ def InternalLinkage : InheritableAttr {
+   let Subjects = SubjectList<[Var, Function, CXXRecord]>;
+   let Documentation = [InternalLinkageDocs];
+ }
++
++def NodeCppNakedStruct : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","naked_struct">];
++  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [NodeCppNoInstanceDocs];
++}
++
++def NodeCppMayExtend : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
++  let Subjects = SubjectList<[ParmVar]>;
++  let Documentation = [NodeCppMayExtendDocs];
++}
++
++def NodeCppOwnedByThis : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","owned_by_this">];
++  let Subjects = SubjectList<[ParmVar]>;
++  let Documentation = [NodeCppMayExtendDocs];
++}
+diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
+index bb2993eab4..c06c3ac224 100644
+--- a/include/clang/Basic/AttrDocs.td
++++ b/include/clang/Basic/AttrDocs.td
+@@ -3458,3 +3458,27 @@ the resulting instructions with the call site, rather than with the
+ corresponding line within the inlined callee.
+   }];
+ }
++def DocCatNodeCpp : DocumentationCategory<"Node-dot-cpp specifics"> {
++  let Content = [{
++Node-dot-cpp specific attributes
++  }];
++}
++
++
++def NodeCppNoInstanceDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on class / struct declaration to indicate that safe code
++shouldn't be allowed to create instances of it.
++All instances are created by infraestructure only.
++}];
++}
++
++def NodeCppMayExtendDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on parameter declaration to indicate that lifetime
++of naked pointer arguments may be extended inside the function.
++Checker must add extra validations to such arguments.
++}];
++}
+diff --git a/lib/AST/TypePrinter.cpp b/lib/AST/TypePrinter.cpp
+index e032c312aa..6db41bea0a 100644
+--- a/lib/AST/TypePrinter.cpp
++++ b/lib/AST/TypePrinter.cpp
+@@ -778,6 +778,8 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
+       if (EPI.isConsumed()) OS << "__attribute__((ns_consumed)) ";
+       if (EPI.isNoEscape())
+         OS << "__attribute__((noescape)) ";
++      if (EPI.isNodeCppMayExtend())
++        OS << "[[nodecpp::may_extend_to_this]] ";
+       auto ABI = EPI.getABI();
+       if (ABI != ParameterABI::Ordinary)
+         OS << "__attribute__((" << getParameterABISpelling(ABI) << ")) ";
+diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
+index 63f8395b82..3247693879 100644
+--- a/lib/ASTMatchers/ASTMatchFinder.cpp
++++ b/lib/ASTMatchers/ASTMatchFinder.cpp
+@@ -842,6 +842,20 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
+   if (!DeclNode) {
+     return true;
+   }
++
++  //mb: we don't traverse decls in system-headers
++  if (!isa<TranslationUnitDecl>(DeclNode)) {
++
++    auto &SourceManager = getASTContext().getSourceManager();
++    auto ExpansionLoc = SourceManager.getExpansionLoc(DeclNode->getLocStart());
++    if (ExpansionLoc.isInvalid()) {
++      return true;
++    }
++    if (SourceManager.isInSystemHeader(ExpansionLoc)) {
++      return true;
++    }
++  }
++
+   match(*DeclNode);
+   return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
+ }
+diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
+index 77deed6047..251205865e 100644
+--- a/lib/Sema/SemaDeclAttr.cpp
++++ b/lib/Sema/SemaDeclAttr.cpp
+@@ -6604,6 +6604,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+   case ParsedAttr::AT_XRayLogArgs:
+     handleXRayLogArgsAttr(S, D, AL);
+     break;
++  case ParsedAttr::AT_NodeCppNakedStruct:
++    handleSimpleAttribute<NodeCppNakedStructAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppMayExtend:
++    handleSimpleAttribute<NodeCppMayExtendAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppOwnedByThis:
++    handleSimpleAttribute<NodeCppOwnedByThisAttr>(S, D, AL);
++    break;
++
+   }
+ }
+ 
+diff --git a/lib/Sema/SemaDeclCXX.cpp b/lib/Sema/SemaDeclCXX.cpp
+index 4cf3abdf57..e0d60f63c9 100644
+--- a/lib/Sema/SemaDeclCXX.cpp
++++ b/lib/Sema/SemaDeclCXX.cpp
+@@ -14551,8 +14551,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+   const auto *NewFT = New->getType()->getAs<FunctionProtoType>();
+   const auto *OldFT = Old->getType()->getAs<FunctionProtoType>();
+ 
+-  if (OldFT->hasExtParameterInfos()) {
+-    for (unsigned I = 0, E = OldFT->getNumParams(); I != E; ++I)
++  if (OldFT->hasExtParameterInfos() || NewFT->hasExtParameterInfos()) {
++    for (unsigned I = 0, E = OldFT->getNumParams(); I != E; ++I) {
+       // A parameter of the overriding method should be annotated with noescape
+       // if the corresponding parameter of the overridden method is annotated.
+       if (OldFT->getExtParameterInfo(I).isNoEscape() &&
+@@ -14562,6 +14562,18 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+         Diag(Old->getParamDecl(I)->getLocation(),
+              diag::note_overridden_marked_noescape);
+       }
++
++      if (!OldFT->getExtParameterInfo(I).isNodeCppMayExtend() &&
++          NewFT->getExtParameterInfo(I).isNodeCppMayExtend()) {
++        Diag(New->getParamDecl(I)->getLocation(),
++             diag::err_conflicting_overriding_cc_attributes)
++            << New->getDeclName() << New->getType() << Old->getType();
++        Diag(Old->getParamDecl(I)->getLocation(),
++             diag::note_overridden_virtual_function);
++
++        return true;
++      }
++    }
+   }
+ 
+   // Virtual overrides must have the same code_seg.
+diff --git a/lib/Sema/SemaType.cpp b/lib/Sema/SemaType.cpp
+index 284d34b22c..6903dba961 100644
+--- a/lib/Sema/SemaType.cpp
++++ b/lib/Sema/SemaType.cpp
+@@ -4690,6 +4690,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
+             HasAnyInterestingExtParameterInfos = true;
+           }
+ 
++          if (Param->hasAttr<NodeCppMayExtendAttr>()) {
++            ExtParameterInfos[i] = ExtParameterInfos[i].withNodeCppMayExtend(true);
++            HasAnyInterestingExtParameterInfos = true;
++          }
++
+           ParamTys.push_back(ParamTy);
+         }
+ 
+diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
+index 9f76d36dba..105215e3a5 100644
+--- a/tools/CMakeLists.txt
++++ b/tools/CMakeLists.txt
+@@ -35,3 +35,6 @@ add_llvm_external_project(clang-tools-extra extra)
+ 
+ # libclang may require clang-tidy in clang-tools-extra.
+ add_clang_subdirectory(libclang)
++
++# Add nodecpp here, because using LLVM_EXTERNAL_PROJECTS don't seem to work
++add_llvm_external_project(checker)
