@@ -12,11 +12,11 @@ Where `path/to/tool/exe` may be full path of `checker/build/vs2017/Release/bin` 
 
 Then go to folder with test cases `checker/test/nodecpp-checker` and run:
 
-	> cd checker\test\nodecpp-checker
-	> nodecpp-checker s1-1.cpp
-	> nodecpp-checker s1-4.cpp
-	> nodecpp-checker s5-3.cpp
-	> nodecpp-checker s8.cpp
+	cd checker\test\nodecpp-checker
+	nodecpp-checker s1-1.cpp
+	nodecpp-checker s1-4.cpp
+	nodecpp-checker s5-3.cpp
+	nodecpp-checker s8.cpp
 
 You can run the tool over any of the `.cpp` files on that folder. However there is one important limitation in this _simple_ mode, that tests can't access the __std__ library on your system, or the real `safe_ptr.h` library, they use a small _mock_ of them found in `Inputs` folders. This is done such way to improve test stability.
 
