@@ -5,3 +5,7 @@ test/build/x64/Debug/page_allocator_windows.obj
 test/build/x64/
 test/build/.vs/TestSafePointers/v15/ipch/AutoPCH/4f99c76cc18822cb/IIBMALLOC_WITH_ID_LINUX.ipch
 test/build/.vs/
+library/test/build/x64/
+library/test/build/.vs/
+library/test/build/TestSafePointers.vcxproj.filters
+library/test/build/TestSafePointers.vcxproj.user
