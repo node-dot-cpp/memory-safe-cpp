@@ -636,9 +636,9 @@ class soft_ptr_base_impl
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
 #endif
 #else
 #ifdef NODECPP_X64
@@ -1408,7 +1408,6 @@ public:
 		return cbPtr != nullptr;
 	}
 
-	template<class T>
 	soft_ptr_impl<T> getSoftPtr(T* ptr)
 	{
 		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
