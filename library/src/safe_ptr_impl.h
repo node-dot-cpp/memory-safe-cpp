@@ -36,18 +36,21 @@ namespace nodecpp::safememory
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
-	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
-	else {
-		if ( ptr == nullptr )
-			throw ::nodecpp::error::zero_pointer_access;
+	if constexpr ( !std::is_same<T, void>::value )
+	{
+		if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
+		else {
+			if ( ptr == nullptr )
+				throw ::nodecpp::error::zero_pointer_access;
+		}
 	}
 }
 
-template<>
+/*template<>
 void checkNotNullLargeSize<void>( void* ptr )
 {
 	// do nothing
-}
+}*/
 
 template<class T>
 void checkNotNullAllSizes( T* ptr )
@@ -426,7 +429,7 @@ class owning_ptr_impl
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckValidity() const
 	{
-		if ( t == nullptr )
+		if ( t.getPtr() == nullptr )
 			return;
 		const FirstControlBlock* cb = getControlBlock();
 		cb->dbgCheckValidity<T>();
@@ -1405,6 +1408,7 @@ public:
 		return cbPtr != nullptr;
 	}
 
+	template<class T>
 	soft_ptr_impl<T> getSoftPtr(T* ptr)
 	{
 		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
@@ -1678,7 +1682,5 @@ public:
 };
 
 } // namespace nodecpp::safememory
-
-#include "startup_checks.h"
 
 #endif // SAFE_PTR_IMPL_H
