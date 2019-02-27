@@ -27,6 +27,7 @@ public:
   NewExprCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
+  bool checkParentExpr(ASTContext *context, const Expr *expr);
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 
