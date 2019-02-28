@@ -3,7 +3,7 @@
 Running checker tools
 =====================
 
-See file [CHECKER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very quick sample use.
 
 This document covers deeper info and more complex use cases.
 
