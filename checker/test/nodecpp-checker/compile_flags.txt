@@ -1,5 +1,7 @@
 -std=c++17
 -nostdinc
+-fno-ms-compatibility
+-fno-delayed-template-parsing
 -isystem
 ./Inputs
 -isystem

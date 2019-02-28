@@ -89,7 +89,8 @@ template<class T, bool isSafe> class naked_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
 
 
-
+struct FirstControlBlock {};
+FirstControlBlock* getControlBlock_(void*);
 
 //struct make_owning_t {};
 template<class T, bool isSafe = NODECPP_ISSAFE_DEFAULT>
@@ -403,8 +404,8 @@ public:
 
 	template<class T1>
 	soft_ptr_impl( const soft_ptr_impl<T1, isSafe>& other ) : soft_ptr_base_impl<T, isSafe>(other) {}
-	template<class T1>
-	soft_ptr_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) : soft_ptr_base_impl<T, isSafe>(other) {}
+	// template<class T1>
+	// soft_ptr_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) : soft_ptr_base_impl<T, isSafe>(other) {}
 	soft_ptr_impl( const soft_ptr_impl<T, isSafe>& other ) : soft_ptr_base_impl<T, isSafe>(other) {}
 	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T, isSafe>& other )
 	{
@@ -665,12 +666,7 @@ public:
 
 template<class T>
 soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
-	FirstControlBlock* cbPtr = nullptr;
-	cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
-	void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
-	if ( allocatedPtr == nullptr )
-		throwPointerOutOfRange();
-	FirstControlBlock* cb = cbPtr;
+	FirstControlBlock* cb = nullptr;
 	return soft_ptr_impl<T, true>( cb, ptr );
 }
 
@@ -816,7 +812,7 @@ public:
 
 	void swap( naked_ptr_impl<T, isSafe>& other )
 	{
-		naked_ptr_base_impl( other );
+		naked_ptr_base_impl<T, isSafe>::swap( other );
 	}
 
 	T& operator * () const
