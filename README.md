@@ -27,7 +27,7 @@ Safety checks are two-fold:
 ## Current Status and Further Plans
 
 * We are about to release v0.1 - which is in "no known bugs" status, and is supposed to be safe. v0.1 does NOT support stuff such as arrays or collections (at all).
-  * This is **pre-alpha** version, so while all the bug reports are REALLY welcome, **please do NOT say "hey, they didn't even handle this trivial thing, so they're hopeless"** - at this point we are confident that we'll be able to fix all the bugs reported to us, but it may take quite a bit of time. 
+  * This is **pre-alpha** version, so while all the bug reports are REALLY welcome, **please do NOT say "hey, they didn't even handle <insert_trivial_thing_here>, so they're hopeless"** - at this point we are confident that we'll be able to fix all the bugs reported to us, but it will take some time. 
 * FURTHER PLANS: 
   * v0.1.x - bugfixes and more bugfixes
   * v0.2 Adding support for arrays, spans, vectors, and hash tables
