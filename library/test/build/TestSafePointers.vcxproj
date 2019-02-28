@@ -22,9 +22,9 @@
     <ClCompile Include="..\..\gcc_lto_workaround\gcc_lto_workaround.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\3rdparty\fmt\src\format.cc" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\log.cpp" />
-    <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\ptr_with_data_structs_impl.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\safe_memory_error.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\std_error.cpp" />
+    <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\tagged_ptr_impl.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc_new_linux.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>

@@ -36,6 +36,41 @@ void NewExprCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
+bool NewExprCheck::checkParentExpr(ASTContext *context, const Expr *expr) {
+
+  auto sList = context->getParents(*expr);
+
+  auto sIt = sList.begin();
+
+  if (sIt == sList.end())
+    return false;
+
+  if(auto p = sIt->get<Expr>()) {
+    if (isa<ParenExpr>(p) || isa<ImplicitCastExpr>(p) ||
+      isa<CXXBindTemporaryExpr>(p) || isa<ExprWithCleanups>(p) ||
+      isa<CXXConstructExpr>(p)) {
+      
+      return checkParentExpr(context, p);
+    }
+    else if(auto tmp = dyn_cast<MaterializeTemporaryExpr>(p)) {
+      if(tmp->isXValue()) {
+        return checkParentExpr(context, p);
+      }
+      else
+        return false;
+    }
+    else if(isa<CallExpr>(p)) {
+      return true;
+    }
+  }
+  else if(auto p = sIt->get<VarDecl>()) {
+    return true;
+  }
+
+  return false;
+}
+
+
 void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   if(auto expr = Result.Nodes.getNodeAs<CXXNewExpr>("new")) {
@@ -48,71 +83,10 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
   }
   else if(auto expr = Result.Nodes.getNodeAs<CallExpr>("make")) {
 
-    auto parent = getParentExpr(Result.Context, expr);
-    if (parent) {
-//      parent->dumpColor();
-      if (auto constructor = dyn_cast<CXXConstructExpr>(parent)) {
-        auto decl = constructor->getConstructor()->getParent();
-
-        if (isOwnerPtrDecl(decl)) {
-          // this is ok!
-          return;
-        }
-      } else if (auto member = dyn_cast<CXXMemberCallExpr>(parent)) {
-
-        auto decl = member->getMethodDecl()->getParent();
-        if(isOwnerPtrDecl(decl)) {
-          // this is ok!
-          return;
-        }
-      }
-      else if(auto op = dyn_cast<CXXOperatorCallExpr>(parent)) {
-        auto opDecl = dyn_cast<CXXMethodDecl>(op->getDirectCallee());
-        if (opDecl && isOwnerPtrDecl(opDecl->getParent())) {
-          if(opDecl->isMoveAssignmentOperator() 
-            || opDecl->isCopyAssignmentOperator()) {
-              // this is ok!
-              return;
-          }
-        }
-      }
-    }
-
-    diag(expr->getExprLoc(), "(S4.1) result of make_owning must be assigned to owning_ptr");
-  }
-
-  // if (isNoInstanceType(m->getAllocatedType())) {
-  //   diag(m->getLocStart(),
-  //        "type with attribute can be instantiated from safe code");
-  //   return;
-  // }
-
-  // type is ok, verify is owned by unique_ptr
-/*
-  auto parent = getParentExpr(Result.Context, m);
-  if (parent) {
-//    parent->dumpColor();
-    if (auto constructor = dyn_cast<CXXConstructExpr>(parent)) {
-      auto decl = constructor->getConstructor()->getParent();
-      auto name = decl->getQualifiedNameAsString();
-      if (isOwnerPtrName(name)) {
-        // this is ok!
-        return;
-      }
-    } else if (auto member = dyn_cast<CXXMemberCallExpr>(parent)) {
-
-      auto method = member->getMethodDecl();
-      auto decl = member->getMethodDecl()->getParent();
-      auto methodName = method->getNameAsString();
-      auto className = decl->getQualifiedNameAsString();
-      if (methodName == "reset" && isOwnerPtrName(className)) {
-        // this is ok!
-        return;
-      }
+    if(!checkParentExpr(Result.Context, expr)) {
+      diag(expr->getExprLoc(), "(S4.1) result of make_owning must be assigned to owning_ptr");
     }
   }
-*/
-  //diag(m->getLocStart(), "new expresion must be owned by a unique_ptr");
 }
 
 } // namespace checker

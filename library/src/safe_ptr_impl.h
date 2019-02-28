@@ -36,18 +36,21 @@ namespace nodecpp::safememory
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
-	if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
-	else {
-		if ( ptr == nullptr )
-			throw ::nodecpp::error::zero_pointer_access;
+	if constexpr ( !std::is_same<T, void>::value )
+	{
+		if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
+		else {
+			if ( ptr == nullptr )
+				throw ::nodecpp::error::zero_pointer_access;
+		}
 	}
 }
 
-template<>
+/*template<>
 void checkNotNullLargeSize<void>( void* ptr )
 {
 	// do nothing
-}
+}*/
 
 template<class T>
 void checkNotNullAllSizes( T* ptr )
@@ -426,7 +429,7 @@ class owning_ptr_impl
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckValidity() const
 	{
-		if ( t == nullptr )
+		if ( t.getPtr() == nullptr )
 			return;
 		const FirstControlBlock* cb = getControlBlock();
 		cb->dbgCheckValidity<T>();
@@ -633,9 +636,9 @@ class soft_ptr_base_impl
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_struct_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
 #endif
 #else
 #ifdef NODECPP_X64
@@ -1405,7 +1408,8 @@ public:
 		return cbPtr != nullptr;
 	}
 
-	soft_ptr_impl<T> getSoftPtr(T* ptr)
+	template<class TT>
+	soft_ptr_impl<TT> getSoftPtr(TT* ptr)
 	{
 		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
 		if ( allocatedPtr == nullptr )
@@ -1413,7 +1417,7 @@ public:
 		//return soft_ptr_impl<T>( allocatedPtr, ptr );
 		//FirstControlBlock* cb = cbPtr;
 		FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
-		return soft_ptr_impl<T>( cb, ptr );
+		return soft_ptr_impl<TT>( cb, ptr );
 	}
 
 	~soft_this_ptr_impl()
@@ -1678,7 +1682,5 @@ public:
 };
 
 } // namespace nodecpp::safememory
-
-#include "startup_checks.h"
 
 #endif // SAFE_PTR_IMPL_H

@@ -14,7 +14,7 @@ though some implementation details here are different; in particular:
 
 This project aims to provide a memory-safe C++, in a sense that:
 * **IF** you're following certain rules (="your code passes our static checker")
-* **AND** you compile your program with certain settings (such as #defining NODECPP_MEMORY_SAFETY)
+* **AND** you compile your program with certain settings (such as not #defining NODECPP_MEMORY_SAFETY=NONE)
 * **THEN we guarantee that your C++ program does not exhibit any memory-related Undefined Behaviors**
   * of course, saving for bugs in our tools, but with time we hope to make it very solid
 
