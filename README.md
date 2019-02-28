@@ -15,7 +15,7 @@ though some implementation details here are different; in particular:
 Eventually we're planning to make this a memory-safe C++, in a sense that:
 * IF you're following certain rules
   * To help with it, we're planning to include our own static analyzer, enforcing the rules outlined in the article 
-* AND compile your program with certain settings (such as #defining NODECPP_MEMORY_SAFETY)
+* AND compile your program with certain settings (such as not #defining NODECPP_MEMORY_SAFETY=NONE)
 * THEN we guarantee that your C++ program does not exhibit any memory-related Undefined Behaviors
   * of course, saving for bugs in our tools, but with time we hope to make it very solid
 
