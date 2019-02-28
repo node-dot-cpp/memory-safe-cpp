@@ -1,7 +1,7 @@
 Running and adding automated tests
 ==================================
 
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very quick sample use.
 
 This document covers automated tests runned by `llvm-lit.py`. This is a llvm/clang automated testing tool. You can run automated tests only if you built the tools from source code, since the tool is designed to work that way.
 
@@ -17,7 +17,7 @@ Sets the `PATH` and runs the tool over the `test` folder. The `test` folder has 
 
 Each `.cpp` in that folder is considered a test case. To add a new test case, simple add a new `.cpp` file under `test/nodecpp-checker` and `llvm-lit` will automatically pick it up. 
 
- You can also add a new folder under `test` to put test cases, in that case you may need to copy file `safe_library.json` and `compile_flags.txt`. Please see [CHECHER-RUN.md](CHECHER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs. Folders with name `Inputs` are treated specially, test cases are not scanned under such folders. That is the place to put headers files and mocks that may be needed by tests.
+ You can also add a new folder under `test` to put test cases, in that case you may need to copy file `safe_library.json` and `compile_flags.txt`. Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs. Folders with name `Inputs` are treated specially, test cases are not scanned under such folders. That is the place to put headers files and mocks that may be needed by tests.
 
 
 Important is to notice that automated tests don't access the __std__ library on your system, or the real `safe_ptr.h` library, they use a small _mock_ of them found in `Inputs` folders. This is done such way to improve test stability across different platforms (`llvm/clang` tests do the same thing).
@@ -42,7 +42,7 @@ For more information on `llvm-lit.py` pleasee see https://llvm.org/docs/CommandG
 Safe library and compilation database
 -------------------------------------
 Is important to notice is that `nodecpp-checker` will automatically pick `safe_library.json` and `compile_flags.txt` from the source folder.
-Please see [CHECHER-RUN.md](CHECHER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs.
+Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs.
 
 
 

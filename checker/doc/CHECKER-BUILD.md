@@ -86,25 +86,23 @@ For testing I use a separate `test-debug-env.bat` file to set up environmnet to 
 	set PATH=C:\node-dot-cpp\memory-safe-cpp\checker\build\debug\bin;%PATH%
 
 
-Then, to run automated tests:
+Then, to manually run automated tests:
 
 	checker> llvm-lit.py test
 
-To run our tool on a single test file and see the output,
+To run the tool on a single test file and see the output,
 
-	checker> nodecpp-checker test\nodecpp-checker\s1.cpp --
+	checker> nodecpp-checker test\nodecpp-checker\s1.cpp
 	
-Don't forget the double hypen (`--`) at the end. Some tests need extra arguments to run, please see the first line of each test for a reference.
-
 
 Next
 ====
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very quick sample use.
 
 
-Or you can see [CHECHER-RUN.md](CHECHER-RUN.md) to set up the environment to run the tool over your own files or projects.
+Or you can see [CHECKER-RUN.md](CHECKER-RUN.md) to set up the environment to run the tool over your own files or projects.
 
-Or take a look at [CHECKER-TEST.md](CHECKER-TEST.md) to run or add automated test cases.
+Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) to run or add automated test cases.
 
 
  

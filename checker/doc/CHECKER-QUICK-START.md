@@ -1,7 +1,7 @@
 
 
-Quick try
-=========
+Quick Start
+===========
 
 To run a very simple first sample, you only need to have `nodecpp-checker.exe` on your `PATH`.
 If you downloaded a binary file, you can just copy it into the folder `checker/test/nodecpp-checker`. If you built it from source code, or prefer to put your binaries somewhere else, just open a console and set your env:
@@ -23,13 +23,13 @@ You can run the tool over any of the `.cpp` files on that folder. However there 
 Safe library and compilation database
 -------------------------------------
 Also important to notice is that `nodecpp-checker` will automatically pick `safe_library.json` and `compile_flags.txt` from the source folder.
-Please see [CHECHER-RUN.md](CHECHER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs.
+Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them for your specific needs.
 
 Next
 ----
-See [CHECHER-RUN.md](CHECHER-RUN.md) to set up the environment to run the tool over your own files or projects.
+See [CHECKER-RUN.md](CHECKER-RUN.md) to set up the environment to run the tool over your own files or projects.
 
-Or take a look at [CHECKER-TEST.md](CHECKER-TEST.md) to run or add automated test cases.
+Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) to run or add automated test cases.
 
 
 
