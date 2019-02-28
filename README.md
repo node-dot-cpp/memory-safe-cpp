@@ -14,7 +14,7 @@ though some implementation details here are different; in particular:
 
 Eventually we're planning to make this a memory-safe C++, in a sense that:
 * IF you're following certain rules
-  * To help with it, we're planning to include our own static analyzer, enforcing the rules outlined in the article 
+  * Whether you're following the rules, can be checked with our static checker
 * AND compile your program with certain settings (such as #defining NODECPP_MEMORY_SAFETY)
 * THEN we guarantee that your C++ program does not exhibit any memory-related Undefined Behaviors
   * of course, saving for bugs in our tools, but with time we hope to make it very solid
@@ -23,8 +23,15 @@ Safety checks are two-fold:
 * compile-time checks.
 * run-time checks. run-time checks do incur performance penalty
   * due to the model chosen, they're rare, and for most of the programs we expect them not to be TOO bad
-  * in addition, there is an option to re-compile your program without safety checks. Or even with per-pointer/per-container safety checks.
+  * in addition, there is an option to re-compile your program without safety checks. Or even with per-class/per-pointer safety checks.
 
-## Current Status
+## Current Status and Further Plans
 
-We have just started, need some time to produce anything which is worth a look . Stay tuned! :-)
+* We are about to release v0.1 - which is in "no known bugs" status, and is supposed to be safe. v0.1 does NOT support stuff such as arrays or collections (at all).
+  * This is **pre-alpha** version, so while all the bug reports are REALLY welcome, **please do NOT say "hey, they didn't even handle this trivial thing, so they're hopeless"** - at this point we are confident that we'll be able to fix all the bugs reported to us. 
+* FURTHER PLANS: 
+  * v0.1.x - bugfixes and more bugfixes
+  * v0.2 Adding support for arrays, spans, vectors, and hash tables
+  * v0.5 Switching to detection mechanisms outlined in D1179 (splitting D1179's _invalid_ into _invalid_stack_ - reported as error, and _invalid_heap_ - reported only as warning as long as the runtime protection is enabled).
+  * v0.6 Adding support for other collections (deques and tree-based ones).
+  
