@@ -647,8 +647,8 @@ public:
 		return cbPtr != nullptr;
 	}
 
-	template<class T>
-	soft_ptr_impl<T> getSoftPtr(T* ptr)
+	template<class TT>
+	soft_ptr_impl<TT> getSoftPtr(TT* ptr)
 	{
 		void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
 		if ( allocatedPtr == nullptr )
@@ -656,7 +656,7 @@ public:
 		//return soft_ptr_impl<T, true>( allocatedPtr, ptr );
 		//FirstControlBlock* cb = cbPtr;
 		FirstControlBlock* cb = reinterpret_cast<FirstControlBlock*>( reinterpret_cast<uint8_t*>(this) - offset );
-		return soft_ptr_impl<T, true>( cb, ptr );
+		return soft_ptr_impl<TT, true>( cb, ptr );
 	}
 
 	~soft_this_ptr_impl()

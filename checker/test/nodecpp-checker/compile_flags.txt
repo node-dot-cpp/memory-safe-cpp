@@ -2,6 +2,7 @@
 -nostdinc
 -fno-ms-compatibility
 -fno-delayed-template-parsing
+-fno-ms-extensions
 -isystem
 ./Inputs
 -isystem
