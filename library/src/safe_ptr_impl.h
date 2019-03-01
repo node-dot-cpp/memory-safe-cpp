@@ -1536,7 +1536,7 @@ class naked_ptr_impl : public naked_ptr_base_impl<T>
 public:
 	naked_ptr_impl() : naked_ptr_base_impl<T>() {}
 
-	naked_ptr_impl(T& t_) : naked_ptr_base_impl<T>(t_) { this->t = &t_; }
+	naked_ptr_impl(T& t_) : naked_ptr_base_impl<T>() { this->t = &t_; }
 
 	template<class T1>
 	naked_ptr_impl( const owning_ptr_impl<T1>& owner ) : naked_ptr_base_impl<T>(owner) {}
