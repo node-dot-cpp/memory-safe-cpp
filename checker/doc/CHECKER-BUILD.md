@@ -1,7 +1,35 @@
 
+Linux build
+===========
+
+Requirements
+------------
+
+0. git client
+1. GCC 7
+2. Make
+3. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
+4. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
+
+
+Simple build (Release build using Make)
+---------------------------------------
+
+Checkout `node-dot-cpp/memory-safe-cpp` with recursive submodules, if you have already done it go to the folder `memory-safe-cpp/checker`.
+
+First run `./checkout.sh` script, it will clone all llvm/clang dependencies in their required locations.
+Then run `./build.sh` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
+
+Last you can run `sudo ./install.sh` to copy binaries to folder `/usr/local/bin`. If you don't have root or your system don't have a `/usr/local/bin` you can simple add the path to your env.
+
+	export PATH=full/path/to/checker/build/release/bin:$PATH
+
+
+See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+
 
 Windows build
-=================================
+=============
 
 Requirements
 ------------
@@ -20,29 +48,9 @@ Checkout `node-dot-cpp/memory-safe-cpp`, if you haven't done it already.
 Open a console from 'x64 Native Tools Command Prompt for VS 2017' (from Windows start menu, under Visual Studio 2017 folder) and go to the recently checked out folder `memory-safe-cpp/checker`
 
 First run `checkout.bat` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `build.bat` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete.
+Then run `build.bat` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete.  If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
 
-
-Linux build
-===========
-
-Requirements
-------------
-
-0. git client
-1. GCC 7
-2. Make
-3. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
-4. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
-
-
-Simple build (Release build using Make)
----------------------------------------
-
-Checkout `node-dot-cpp/memory-safe-cpp`, if you haven't done it already and go to the recently checked out folder `memory-safe-cpp/checker`.
-
-First run `checkout.sh` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `build.sh` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete.
+See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
 
 
 Other build options
