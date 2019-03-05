@@ -1,7 +1,7 @@
 Running and adding automated tests
 ==================================
 
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
+See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very quick sample use.
 
 This document covers automated tests runned by `llvm-lit.py`. This is a llvm/clang automated testing tool. You can run automated tests only if you built the tools from source code, since the tool is designed to work that way.
 
@@ -44,7 +44,7 @@ Also important to notice is that `nodecpp-checker` will automatically pick `safe
 
 To add a new folder under `test` you need to copy file `safe_library.json` and `compile_flags.txt`, and maybe modify then to suit your needs.
 
-Please see [CHECHER-RUN.md](CHECHER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them.
+Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files fit inside the process and when you may need to modify them.
 
 
 

@@ -1,69 +1,11 @@
 
-Linux build
-===========
-
-Requirements
-------------
-
-0. git client
-1. GCC 7
-2. Make
-3. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
-4. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
-
-
-Simple build (Release build using Make)
----------------------------------------
-
-Checkout `node-dot-cpp/memory-safe-cpp` with recursive submodules, if you have already done it go to the folder `memory-safe-cpp/checker`.
-
-First run `./checkout.sh` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `./build.sh` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
-
-Last you can run `sudo ./install.sh` to copy binaries to folder `/usr/local/bin`. If you don't have root or your system don't have a `/usr/local/bin` you can simple add the path to your env.
-
-	export PATH=full/path/to/checker/build/release/bin:$PATH
-
-
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
-
-
-Windows build
-=============
-
-Requirements
-------------
-
-1. git command line client 
-2. Visual Studio 2017 (C++ command line tools)
-3. Cmake (I have 3.13.2, but any recent version should work) https://cmake.org/
-4. Python 2.7 ( Version 3.x will not work, must be 2.7.x) https://www.python.org/downloads/release/python-2715/
-
-All git, Cmake and Python 2.7 must be in your `PATH` environment so scripts can call them.
-
-Simple build (Release build with VS2017 command line tools, using msbuild)
---------------------------------------------------------------------------
-
-Checkout `node-dot-cpp/memory-safe-cpp`, if you haven't done it already.
-Open a console from 'x64 Native Tools Command Prompt for VS 2017' (from Windows start menu, under Visual Studio 2017 folder) and go to the recently checked out folder `memory-safe-cpp/checker`
-
-First run `checkout.bat` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `build.bat` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete.  If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
-
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
-
-
 Other build options
 ===================
 
-Tools build is `cmake` based, and as such has lot of options and flexibility for developers.
-I normally build using 'cmake / ninja / command line VC', ninja (https://ninja-build.org/) is a lot faster on incremental builds.
+Building on Windows can get tricky sometimes.
+I normally build under Windows using 'cmake / ninja / command line VC', ninja (https://ninja-build.org/) is a lot faster on incremental builds than `msbuild`.
 
-I have git and cmake in my system `PATH`. For MSCV and Python I use a bat file to set up environment variables. This will help if you have already installed Python 3 in your environment and don't want to break things by setting global `PATH` to Python 2.7. Also if you have more than one version of Visual Studio, etc.
-
-I put all bat files at my project root that is `C:\node-dot-cpp\memory-safe-cpp\checker`, you can use any root folder but update scripts in this tutorial to match your setup.
-
-I use `build-env.bat` with the following:
+On Windows I use `build-env.bat` with the following:
 
 	title build
 
@@ -72,47 +14,33 @@ I use `build-env.bat` with the following:
 	%ComSpec% /k ""C:\Program Files (x86)\Microsoft Visual Studio\2017\Community\VC\Auxiliary\Build\vcvars64.bat""
 
 
-You will need to change paths to match your system.
-
-Assuming you have ninja on your PATH
-
-	checker> cmake-ninja-debug.bat
-	checker\build\debug> ninja nodecpp-checker
-	checker\build\debug> ninja nodecpp-safe-library
-	checker\build\debug> ninja check-nodecpp-checker
-
-	checker\build\debug> cd ..\..
-
-All tools should end at `build\debug\bin` folder.
+You will need to change paths to match your system, but using environment scripts helps a lot with having a consistent environment on Windows.
 
 For testing I use a separate `test-debug-env.bat` file to set up environmnet to run the tool and tests.
 
 	title test
 
 	set PATH=C:\Python27;C:\Python27\Scripts;%PATH%
-	set PATH=C:\node-dot-cpp\memory-safe-cpp\checker\3rdparty\llvm\utils\lit;%PATH%
-	set PATH=C:\node-dot-cpp\memory-safe-cpp\checker\build\debug\bin;%PATH%
+	set PATH=%cd%\3rdparty\llvm\utils\lit;%PATH%
+	set PATH=%cd%\build\debug\bin;%PATH%
 
 
 Then, to run automated tests:
 
-	checker> llvm-lit.py test
+	llvm-lit.py test
 
 To run our tool on a single test file and see the output,
 
-	checker> nodecpp-checker test\nodecpp-checker\s1.cpp --
+	cd test\sample
+	nodecpp-checker rules.cpp 
 	
-Don't forget the double hypen (`--`) at the end. Some tests need extra arguments to run, please see the first line of each test for a reference.
-
 
 Next
 ====
-See file [CHECHER-QUICK-START.md](CHECHER-QUICK-START.md) for a very first, very quick sample use.
 
+Or you can see [CHECKER-RUN.md](CHECKER-RUN.md) for details on set up the environment to run the tool over your own files or projects.
 
-Or you can see [CHECHER-RUN.md](CHECHER-RUN.md) to set up the environment to run the tool over your own files or projects.
-
-Or take a look at [CHECKER-TEST.md](CHECKER-TEST.md) to run or add automated test cases.
+Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) for details on run or add automated test cases.
 
 
  
