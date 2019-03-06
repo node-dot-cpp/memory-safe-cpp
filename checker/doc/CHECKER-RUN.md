@@ -7,10 +7,7 @@ See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very
 
 This document covers deeper info and more complex use cases.
 
-
-We will assume that `nodecpp-checker` and `nodecpp-safe-library` tools are already built and in the PATH.
-If not, take a look at [CHECKER-BUILD.md](CHECKER-BUILD.md).
-
+We will assume that `nodecpp-checker` and `nodecpp-safe-library` tools are already built and in the `PATH`.
 
 
 Safe library database
