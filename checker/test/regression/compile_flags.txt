@@ -6,4 +6,4 @@
 -isystem
 ./Inputs
 -isystem
-../../3rdparty/clang/lib/Headers
+../../include/clang/7/include

@@ -8,7 +8,7 @@
 -isystem
 ../../../library/src/iibmalloc/src/foundation/3rdparty/fmt/include
 -isystem
-../../3rdparty/clang/lib/Headers
+../../include/clang/7/include
 
 
 
