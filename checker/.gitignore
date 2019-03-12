@@ -2,6 +2,5 @@
 /3rdparty/llvm
 /3rdparty/clang
 /3rdparty/clang-tools-extra
-/include/clang
 .vscode
 

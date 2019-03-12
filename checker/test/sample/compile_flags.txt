@@ -3,7 +3,6 @@
 -isystem../../../library/src/iibmalloc/src
 -isystem../../../library/src/iibmalloc/src/foundation/include
 -isystem../../../library/src/iibmalloc/src/foundation/3rdparty/fmt/include
--isystem../../include/clang/7/include
 
 
 

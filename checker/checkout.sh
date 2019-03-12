@@ -10,6 +10,3 @@ cd clang
 git apply ../clang_release_70.diff
 
 cd ../..
-
-mkdir --parents include/clang/7/include
-cp --recursive 3rdparty/clang/lib/Headers/* include/clang/7/include/
