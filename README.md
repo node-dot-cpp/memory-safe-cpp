@@ -29,8 +29,8 @@ Safety checks are two-fold:
 * We are about to release v0.1 - which is in "no known bugs" status, and is supposed to be safe. v0.1 does NOT support stuff such as arrays or collections (at all).
   * This is **pre-alpha** version, so while all the bug reports are REALLY welcome, **please do NOT say "hey, they didn't even handle <insert_trivial_thing_here>, so they're hopeless"** - at this point we are confident that we'll be able to fix all the bugs reported to us, but it will take some time. 
 * FURTHER PLANS: 
-  * v0.1.x - bugfixes and more bugfixes
-  * v0.2 Adding support for arrays, spans, vectors, and hash tables
+  * v0.1.x - bugfixes and more bugfixes, support for co_await
+  * v0.2 Adding support for strings, arrays, spans, vectors, and hash tables
   * v0.5 Switching to detection mechanisms outlined in D1179 (splitting D1179's _invalid_ into _invalid_stack_ - reported as error, and _invalid_heap_ - reported only as warning as long as the runtime protection is enabled).
   * v0.6 Adding support for other collections (deques and tree-based ones).
   
