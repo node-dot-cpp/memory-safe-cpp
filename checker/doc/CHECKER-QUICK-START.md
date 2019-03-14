@@ -8,7 +8,7 @@ Build requirements
 ------------------
 
 1. git client
-2. GCC 7
+2. GCC 7 (for clang or other gcc version see below)
 3. Make
 4. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
 5. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
@@ -52,6 +52,20 @@ However there are two _special_ files (`safe_library.json` and `compile_flags.tx
 Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files fit inside the process, and how set up the environment to run the tool over your own projects.
 
 Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) to run or add automated test cases.
+
+
+Other compile options
+---------------------
+
+While `gcc-7` is the default option, tools can be built with other gcc versions or with `clang`.
+
+To do that, `build.sh` needs to be modified:
+
+	# Uncomment lines below to use clang or change to other compiler
+	export CC=clang-7
+	export CXX=clang++-7
+
+Is self explanatory, you can use just `clang` and `clang++` or version specific, or `gcc-8` and `g++-8`, etc.
 
 
 
