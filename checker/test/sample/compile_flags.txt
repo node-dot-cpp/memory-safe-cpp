@@ -1,0 +1,8 @@
+-std=c++17
+-isystem../../../library/src
+-isystem../../../library/src/iibmalloc/src
+-isystem../../../library/src/iibmalloc/src/foundation/include
+-isystem../../../library/src/iibmalloc/src/foundation/3rdparty/fmt/include
+
+
+

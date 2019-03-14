@@ -28,8 +28,8 @@
 #ifndef SAFE_PTR_COMMON_H
 #define SAFE_PTR_COMMON_H
 
-#include <stdint.h>
-#include <stddef.h>
+#include <cstdint>
+#include <cstddef>
 #include <utility>
 
 #define NODECPP_ASSERT(...)

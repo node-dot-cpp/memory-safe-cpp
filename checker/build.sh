@@ -5,7 +5,13 @@ cd build
 mkdir release
 cd release
 
-cmake -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=${PWD}/../.. -G "Unix Makefiles" ../../3rdparty/llvm
+
+# Uncomment lines below to use clang or change to other compiler
+#
+#export CC=clang-7
+#export CXX=clang++-7
+
+cmake -DLLVM_TARGETS_TO_BUILD="X86" -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=${PWD}/../.. -G "Unix Makefiles" ../../3rdparty/llvm
 
 make nodecpp-checker
 make nodecpp-safe-library

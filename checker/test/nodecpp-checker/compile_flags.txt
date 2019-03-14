@@ -1,6 +1,0 @@
--std=c++17
--nostdinc
--isystem
-./Inputs
--isystem
-../../3rdparty/clang/lib/Headers

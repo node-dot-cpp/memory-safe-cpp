@@ -65,19 +65,10 @@ soft_ptr<T> soft_ptr_static_cast( soft_ptr_impl<T1> p ) {
 }
 
 template<class T, class T1>
-soft_ptr<T> soft_ptr_static_cast( soft_ptr_no_checks<T1> p ) {
-	return soft_ptr_static_cast_no_checks<T, T1>( p ) ;
-}
-
-template<class T, class T1>
 soft_ptr_impl<T> soft_ptr_reinterpret_cast( soft_ptr_impl<T1> p ) {
 	return soft_ptr_reinterpret_cast_impl<T, T1>( p );
 }
 
-template<class T, class T1>
-soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
-	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
-}
 
 } // namespace nodecpp::safememory
 

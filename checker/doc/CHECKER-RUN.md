@@ -7,10 +7,7 @@ See file [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md) for a very first, very
 
 This document covers deeper info and more complex use cases.
 
-
-We will assume that `nodecpp-checker` and `nodecpp-safe-library` tools are already built and in the PATH.
-If not, take a look at [CHECKER-BUILD.md](CHECKER-BUILD.md).
-
+We will assume that `nodecpp-checker` and `nodecpp-safe-library` tools are already built and in the `PATH`.
 
 
 Safe library database
@@ -45,8 +42,8 @@ This will create a safe library database that has the given functions and classe
 Compilation database
 --------------------
 
-Compilation database is native to `clang` and all tools based on clang's tooling. The idea is to have all compiler flags and options stored in a format, so any tool that is runned over the code will use exactly the same set of options.
-This is important mostly for defined symbols and include paths.
+Compilation database is native to `clang` and all tools based on clang's tooling. The idea is to have all compiler flags and options stored in a single place, so any tool that is runned over the code will use exactly the same set of options.
+This is mostly important for defined symbols and include paths.
 
 When we run `nodecpp-checker` we have three ways to pass all the compiler flags and settings to correctly pre-process the source code. These tree options are common to all tools based on clang tooling.
 

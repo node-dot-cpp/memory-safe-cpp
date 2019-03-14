@@ -10,4 +10,3 @@ cd clang
 git apply ../clang_release_70.diff
 
 cd ../..
-
