@@ -8,7 +8,7 @@ Build requirements
 ------------------
 
 1. git client
-2. GCC 7 (for clang or other gcc version see below)
+2. GCC (my default is `gcc-7`, but 6 or 8 _should_ work too, for `clang` see below)
 3. Make
 4. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
 5. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
@@ -16,7 +16,7 @@ Build requirements
 On Ubuntu, the following lines will make the trick:
 
 	sudo apt update
-	sudo apt install git make cmake g++-7 python
+	sudo apt install git make cmake g++ python
 
 
 Simple build (Release build using Make)
@@ -54,10 +54,10 @@ Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files
 Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) to run or add automated test cases.
 
 
-Other compile options
----------------------
+Build with clang and other build options
+----------------------------------------
 
-While `gcc-7` is the default option, tools can be built with other gcc versions or with `clang`.
+While `gcc` is the default option, tools can be built with other gcc versions or with `clang`.
 
 To do that, `build.sh` needs to be modified:
 
@@ -65,8 +65,13 @@ To do that, `build.sh` needs to be modified:
 	export CC=clang-7
 	export CXX=clang++-7
 
-Is self explanatory, you can use just `clang` and `clang++` or version specific, or `gcc-8` and `g++-8`, etc.
+Is self explanatory, you can use just `clang` and `clang++` or be version specific, or `gcc-8` and `g++-8`, etc.
 
+When you change the value in the script (or any other `cmake` option), you need to remove the entire `build/release` folder as `cmake` has cached the options inside and will fail to run.
+
+I normally use `ninja` generator instead of `Makefiles`.
+Other common `cmake` options are also available.
+For `llvm/clang` specific options to cmake, see (https://llvm.org/docs/CMake.html)
 
 
 Windows Quick Start
