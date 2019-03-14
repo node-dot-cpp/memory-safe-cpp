@@ -19,6 +19,7 @@ Mode of check (memory safety, determinism, or both) is specified in the command 
 Legend for TEST CASES:
 * "i" - variable of integral type
 * "p" - variable of raw pointer type (T*)
+* "r" - variable of reference type (T&)
 * "np" - variable of `naked_ptr<T>` type
 * "sp" - variable of `soft_ptr<T>` type
 * "op" - variable of `owning_ptr<T>` type
@@ -82,7 +83,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
   - **[Rule S4.1]** result of `make_owning<>()` call MUST be assigned to an `owning_ptr<T>` (or passed to a function taking `owning_ptr<T>`) 
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
-* **[Rule S5]** scope of raw pointer (T*) cannot expand [[**TODO/v0.5: CHANGE Rule S5 completely to rely on Herb Sutter's D1179: https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf**]]
+* **[Rule S5]** scope of raw pointer (T*) cannot expand [[**TODO/v0.5: CHANGE Rule S5 completely to rely on Herb Sutter's D1179: https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf; NB: SOME of the rules below may still be needed on top of D1179 **]]
   + **[Rule S5.1]** each `naked_ptr<>` and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
     + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
@@ -119,6 +120,9 @@ Consistency checks always apply (regardless of the command line, and any attribu
   + **[Rule S5.7]** Lambda is considered as an implicit naked_struct, containing all the naked_ptrs which are captured by reference
       - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp:may_extend_to_this]]`) passing lambda with local vars passed by reference
       - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference, `sort()` passing lamda with local vars captured by reference
+  + **[Rule S5.8]** naked_ptr<>s and references MUST NOT survive over co_await
+      - TEST CASES/PROHIBIT: `co_await some_function(); auto x = *np;`, `co_await some_function(); auto x = r;`
+      - TEST CASES/ALLOW: `co_await some_function(); auto x = *sp;`  
 * **[Rule S6]** Prohibit inherently unsafe things
   + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with (TODO: CHECK!), so it is only GCC/Clang asm which has to be detected and thrown away
 * **[Rule S7]** Prohibit unsupported-yet things
