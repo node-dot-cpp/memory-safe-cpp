@@ -1,9 +1,8 @@
 #!/bin/sh
 
-mkdir build
-cd build
-mkdir release
-cd release
+rm -R build/release
+mkdir --parents build/release
+cd build/release
 
 
 # Uncomment lines below to use clang or change to other compiler
