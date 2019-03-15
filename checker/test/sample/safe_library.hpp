@@ -5,6 +5,11 @@ namespace v5 {
 }	
 }
 
+namespace std {
+	void move();
+	void forward();
+}
+
 namespace nodecpp {
 namespace safememory {
 	void make_owning();
