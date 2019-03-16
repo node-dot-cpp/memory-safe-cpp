@@ -40,9 +40,9 @@ Last you can run `sudo ./install.sh` to copy binaries to folder `/usr/local/bin`
 Running samples
 ---------------
 
-Go to folder with test cases `test/samples` and run:
+Go to folder with test cases `test/sample` and run:
 
-	cd test/samples
+	cd test/sample
 	nodecpp-checker rules.cpp
 
 You can run the tool over any of the `.cpp` files. You can add files with your own sample code on the same folder and run them.
