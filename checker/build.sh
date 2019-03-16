@@ -1,7 +1,7 @@
 #!/bin/sh
 
 rm -R build/release
-mkdir --parents build/release
+mkdir -p build/release
 cd build/release
 
 
