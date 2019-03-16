@@ -33,4 +33,5 @@ Safety checks are two-fold:
   * v0.2 Adding support for strings, arrays, spans, vectors, and hash tables
   * v0.5 Switching to detection mechanisms outlined in D1179 (splitting D1179's _invalid_ into _invalid_stack_ - reported as error, and _invalid_heap_ - reported only as warning as long as the runtime protection is enabled).
   * v0.6 Adding support for other collections (deques and tree-based ones).
+  * v0.8 Adding instrumentation to enable 100% run-time detection of zombie accesses. 
   
