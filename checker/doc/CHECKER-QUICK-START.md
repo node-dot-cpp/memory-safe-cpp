@@ -30,12 +30,25 @@ Then go to the folder `memory-safe-cpp/checker`:
 
 	cd memory-safe-cpp/checker
 
-First run `./checkout.sh` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `./build.sh` script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
+Then run 
 
-Last you can run `sudo ./install.sh` to copy binaries to folder `/usr/local/bin`. If you don't have root or your system don't have a `/usr/local/bin` you can simple add the path to your env. Built binaries can be found at `checker/build/release/bin`:
+	./checkout.sh
 
-	export PATH=full/path/to/checker/build/release/bin:$PATH
+script, it will clone all llvm/clang dependencies in their required locations.
+Then run
+
+	./build.sh
+
+script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
+
+Last you can run
+
+	sudo ./install.sh
+
+to copy binaries to folder `/usr/local/bin`. Alternatively, if you don't have root or your system don't have a `/usr/local/bin` you can simple add the path to your env. Built binaries can be found at `checker/build/release/bin`:
+
+	# Alternative to install.sh
+	# export PATH=full/path/to/checker/build/release/bin:$PATH
 
 Running samples
 ---------------
