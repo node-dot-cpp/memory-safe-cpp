@@ -124,7 +124,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if(isAnyFunctorType(qt))
+  if(isAnyFunctorType(var->getType())) //don't use canonical type here
     return;
 
 

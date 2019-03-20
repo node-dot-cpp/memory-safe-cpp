@@ -242,7 +242,8 @@ bool isNodecppFunctionOwnedArg0Type(QualType qt) {
 
 bool isAnyFunctorType(QualType qt) {
 
-  return isStdFunctionType(qt) || isNodecppFunctionOwnedArg0Type(qt);
+  auto kind = getFunctionKind(qt);
+  return kind == FunctionKind::StdFunction || kind == FunctionKind::OwnedArg0;
 }
 
 bool isRawPointerType(QualType qt) {
