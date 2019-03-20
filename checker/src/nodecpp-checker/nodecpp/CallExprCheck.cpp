@@ -50,7 +50,7 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
   if(s.find(name) != s.end())
     return;
 
-  diag(expr->getExprLoc(), "(S8) unsafe function call is prohibited");
+  diag(expr->getExprLoc(), "(S8) unsafe function call '" + name + "' is prohibited");
 }
 
 } // namespace checker

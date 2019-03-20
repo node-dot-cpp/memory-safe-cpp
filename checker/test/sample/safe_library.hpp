@@ -8,6 +8,12 @@ namespace v5 {
 namespace std {
 	void move();
 	void forward();
+
+	// apple gcc std lib uses namespace __1
+	namespace __1 {
+		void move();
+		void forward();
+	}
 }
 
 namespace nodecpp {
