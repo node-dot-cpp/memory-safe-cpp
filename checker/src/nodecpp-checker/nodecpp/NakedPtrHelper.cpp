@@ -215,7 +215,8 @@ FunctionKind getFunctionKind(QualType qt) {
     if(decl->isLambda())
       return FunctionKind::Lambda;
 
-    if(decl->getQualifiedNameAsString() == "std::function")
+    auto name = decl->getQualifiedNameAsString(); 
+    if(name == "std::function" || name == "std::__1::function")
       return FunctionKind::StdFunction;
     
     return FunctionKind::None;
