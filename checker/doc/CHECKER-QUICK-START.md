@@ -13,10 +13,18 @@ Build requirements
 4. Cmake (I have 3.10.2, but any recent version should work) https://cmake.org/
 5. Python 2.7 ( Version 3.x will not work, must be 2.7.x) 
 
-On Ubuntu, the following lines will make the trick:
+On Ubuntu 18.04, the following lines will make the trick:
 
 	sudo apt update
 	sudo apt install git make cmake g++ python
+
+For Fedora 29:
+
+	sudo yum install git-core make cmake gcc-c++ python
+
+And for SUSE Server 15:
+
+	sudo zypper install git-core make cmake gcc-c++ python
 
 
 Simple build (Release build using Make)
@@ -39,7 +47,7 @@ Then run
 
 	./build.sh
 
-script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
+script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests please see __Troubleshoting__
 
 Last you can run
 
@@ -67,12 +75,13 @@ Please see [CHECKER-RUN.md](CHECKER-RUN.md) to better understand how those files
 Or take a look at [CHECKER-TESTS.md](CHECKER-TESTS.md) to run or add automated test cases.
 
 
+
 Build with clang and other build options
 ----------------------------------------
 
 While `gcc` is the default option, tools can be built with other gcc versions or with `clang`.
 
-To do that, `build.sh` needs to be modified:
+To do that, `checker/build.sh` needs to be modified:
 
 	# Uncomment lines below to use clang or change to other compiler
 	export CC=clang-7
@@ -80,11 +89,65 @@ To do that, `build.sh` needs to be modified:
 
 Is self explanatory, you can use just `clang` and `clang++` or be version specific, or `gcc-8` and `g++-8`, etc.
 
-When you change the value in the script (or any other `cmake` option), you need to remove the entire `build/release` folder as `cmake` has cached the options inside and will fail to run.
+As  `cmake` has cached options inside the `build/release` folder, the script will delete it completelly on every new run.
 
 I normally use `ninja` generator instead of `Makefiles`.
 Other common `cmake` options are also available.
 For `llvm/clang` specific options to cmake, see (https://llvm.org/docs/CMake.html)
+
+
+
+MacOSX Quick Start
+==================
+
+MacOS has preinstalled most of the required dependencies, only missing is Cmake.
+
+Download cmake 'dmg' from https://cmake.org/download/
+Open downloaded file and drag into 'Applications', then open a command line console and run:
+
+	sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
+
+
+Then you have to edit file `checker/test/sample/compile_flags.txt` and add 4 lines like the following at the end:
+
+	-isystem
+	/Library/Developer/CommandLineTools/usr/include/c++/v1
+	-isysroot
+	/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
+
+Please verify those are the correct paths for the standard library includes on your system.
+After that you can follow generic __Simple build__ instrucctions for Linux.
+
+Gcc is not needed on mac, and cmake will default to `clang` automatically.
+
+
+CentOS Quick Start
+==================
+
+CentOS 7 needs some special steps to update cmake and GCC:
+
+	sudo yum install centos-release-scl
+	sudo yum install devtoolset-7-gcc-c++
+	sudo yum install epel-release
+	sudo yum install cmake3
+	sudo yum install git-core make python wget nano
+
+	scl enable devtoolset-7 bash
+
+Then you need to edit file `checker/build.sh` and update `cmake` for `cmake3`:
+
+	cmake3 -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release .......
+
+
+After that you can follow generic Linux __Simple build__.
+
+
+Keep in mind that every time you open a new console to use the tool, you will need to run:
+
+	scl enable devtoolset-7 bash
+
+To bring into the environment the updated gcc.
+
 
 
 Windows Quick Start
@@ -103,19 +166,50 @@ All git, Cmake and Python 2.7 must be in your `PATH` environment so scripts can 
 Simple build (Release build with VS2017 command line tools, using msbuild)
 --------------------------------------------------------------------------
 
-Checkout `node-dot-cpp/memory-safe-cpp`, if you haven't done it already.
-Open a console from 'x64 Native Tools Command Prompt for VS 2017' (from Windows start menu, under Visual Studio 2017 folder) and go to the recently checked out folder `memory-safe-cpp/checker`
+You most likely already cloned this repository, but just in case you didn't, checkout `node-dot-cpp/memory-safe-cpp` with recursive submodules:
 
-First run `checkout.bat` script, it will clone all llvm/clang dependencies in their required locations.
-Then run `build.bat` script, it will configure the build using `cmake` and will build the tools.
-A short automated test suite should run after the build is complete.
-If there are errors on tests on folder `samples` but not on `regression` there is most likely an environment issue, most common problem is a missing submodule of `memory-safe-cpp` repository.
+	git clone --recurse-submodules https://github.com/node-dot-cpp/memory-safe-cpp.git
+
+Then go to the folder `memory-safe-cpp/checker`:
+
+	cd memory-safe-cpp\checker
+
+Then run 
+
+	checkout.bat
+
+script, it will clone all llvm/clang dependencies in their required locations.
+Then run
+
+	build.bat
+
+script, it will configure the build using `cmake` and will build the tools. A short automated test suite should run after the build is complete. If there are errors on tests please see __Troubleshoting__
 
 To add the binaries to your path (only on your current console), run `set-path.bat` script. Keep in mind you will need to run this script on every new console.
 
+Now you can follow __Running samples__ from generic Linux section.
 
-Running samples
----------------
 
-See __Running samples__ from linux section.
+Troubleshooting
+===============
+
+There are some common causes to errors on automated test cases.
+
+Tests under the `regression` folder _should_ be self contained and not to fail. If you have errors there, then please fill a bug report.
+Tests under de `samples` tend to fail more easily, usually because of environment setup. Most of the time its easy to work around with some basic guidelines.
+
+Go to the sample folder and run the tool
+
+	cd checker/sample
+	nodecpp-checker all-good.cpp
+
+Then you may get:
+
+1. Errors about not finding C++ standard include headers (like `<vector>`). To fix this, you will need to edit `compile_flags.txt` in the same `checker/sample` foler, and manually add the path to your system C++ library include.
+
+2. Errors about not finding `foundation.h` or similar. This is most likely because there are missing submodules of the `memory-safe-cpp` repo. Please verify folders `library/src/iibmalloc` and `library/src/iibmalloc/src/foundation` are not empty. If they are please checkout repository again with `--recurse-submodules` flag set.
+
+3. Other missing includes. You may try to find the files, and add their paths to `checker/sample/compile_flags.txt`
+
+
 
