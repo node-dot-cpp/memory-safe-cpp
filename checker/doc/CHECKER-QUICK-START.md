@@ -108,15 +108,15 @@ Open downloaded file and drag into 'Applications', then open a command line cons
 	sudo /Applications/CMake.app/Contents/bin/cmake-gui --install
 
 
-Then you have to edit file `checker/test/sample/compile_flags.txt` and add 4 lines like the following at the end:
+After that you can follow generic __Simple build__ instrucctions for Linux.
+But keep in mind that on MacOS C++ standard library is not always correctly detected and besides things mentioned in __Troubleshooting__ you may need to edit file `checker/test/sample/compile_flags.txt` and add 4 lines similar to the following at the end:
 
 	-isystem
 	/Library/Developer/CommandLineTools/usr/include/c++/v1
 	-isysroot
 	/Library/Developer/CommandLineTools/SDKs/MacOSX10.14.sdk
 
-Please verify those are the correct paths for the standard library includes on your system.
-After that you can follow generic __Simple build__ instrucctions for Linux.
+Please verify those are the correct paths for the standard library includes on your system, or change them accordingly.
 
 Gcc is not needed on mac, and cmake will default to `clang` automatically.
 

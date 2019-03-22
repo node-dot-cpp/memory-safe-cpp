@@ -3,5 +3,7 @@
 -fno-ms-compatibility
 -fno-delayed-template-parsing
 -fno-ms-extensions
--isystem./Inputs
--isystem../../3rdparty/clang/lib/Headers
+-isystem
+./Inputs
+-isystem
+../../3rdparty/clang/lib/Headers
