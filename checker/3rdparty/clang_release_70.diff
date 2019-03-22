@@ -126,6 +126,22 @@ index 63f8395b82..3247693879 100644
    match(*DeclNode);
    return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
  }
+diff --git a/lib/Frontend/InitHeaderSearch.cpp b/lib/Frontend/InitHeaderSearch.cpp
+index 8a70404629..113c960c49 100644
+--- a/lib/Frontend/InitHeaderSearch.cpp
++++ b/lib/Frontend/InitHeaderSearch.cpp
+@@ -488,6 +488,11 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
+           llvm::sys::path::append(P, "include", "c++", "v1");
+           AddUnmappedPath(P, CXXSystem, false);
+         }
++
++        if(!HasSysroot) {
++            AddUnmappedPath("/Library/Developer/CommandLineTools/usr/include/c++/v1", CXXSystem, false);
++            AddUnmappedPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include", CXXSystem, false);
++        }
+       }
+       AddPath("/usr/include/c++/v1", CXXSystem, false);
+     } else {
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
 index 77deed6047..251205865e 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
