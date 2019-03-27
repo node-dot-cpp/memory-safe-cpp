@@ -27,18 +27,18 @@ void StaticStorageCheck::registerMatchers(MatchFinder *Finder) {
 
 void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
 
-  auto decl = Result.Nodes.getNodeAs<VarDecl>("decl");
-  if(decl->isConstexpr())
+  auto Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
+  if (Decl->isConstexpr())
     return;
 
-  auto qt = decl->getType().getCanonicalType();
-  if(qt.isConstQualified() && qt->isBuiltinType())
+  auto Qt = Decl->getType().getCanonicalType();
+  if (Qt.isConstQualified() && Qt->isBuiltinType())
     return;
 
-  diag(decl->getLocation(),
+  diag(Decl->getLocation(),
        "(S3) global, static or thread_local variables are prohibited");
-      //<< MatchedDecl
-      //<< FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
+  //<< MatchedDecl
+  //<< FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
 }
 
 } // namespace checker

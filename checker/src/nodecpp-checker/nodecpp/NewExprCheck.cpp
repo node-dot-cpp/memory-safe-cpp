@@ -36,55 +36,49 @@ void NewExprCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-bool NewExprCheck::checkParentExpr(ASTContext *context, const Expr *expr) {
+bool NewExprCheck::checkParentExpr(ASTContext *Context, const Expr *Ex) {
 
-  auto sList = context->getParents(*expr);
+  auto SList = Context->getParents(*Ex);
 
-  auto sIt = sList.begin();
+  auto SIt = SList.begin();
 
-  if (sIt == sList.end())
+  if (SIt == SList.end())
     return false;
 
-  if(auto p = sIt->get<Expr>()) {
-    if (isa<ParenExpr>(p) || isa<ImplicitCastExpr>(p) ||
-      isa<CXXBindTemporaryExpr>(p) || isa<ExprWithCleanups>(p) ||
-      isa<CXXConstructExpr>(p)) {
-      
-      return checkParentExpr(context, p);
-    }
-    else if(auto tmp = dyn_cast<MaterializeTemporaryExpr>(p)) {
-      if(tmp->isXValue()) {
-        return checkParentExpr(context, p);
-      }
-      else
+  if (auto P = SIt->get<Expr>()) {
+    if (isa<ParenExpr>(P) || isa<ImplicitCastExpr>(P) ||
+        isa<CXXBindTemporaryExpr>(P) || isa<ExprWithCleanups>(P) ||
+        isa<CXXConstructExpr>(P)) {
+
+      return checkParentExpr(Context, P);
+    } else if (auto Tmp = dyn_cast<MaterializeTemporaryExpr>(P)) {
+      if (Tmp->isXValue()) {
+        return checkParentExpr(Context, P);
+      } else
         return false;
-    }
-    else if(isa<CallExpr>(p)) {
+    } else if (isa<CallExpr>(P)) {
       return true;
     }
-  }
-  else if(auto p = sIt->get<VarDecl>()) {
+  } else if (auto P = SIt->get<VarDecl>()) {
     return true;
   }
 
   return false;
 }
 
-
 void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto expr = Result.Nodes.getNodeAs<CXXNewExpr>("new")) {
+  if (auto Expr = Result.Nodes.getNodeAs<CXXNewExpr>("new")) {
 
-    diag(expr->getExprLoc(), "(S4) operator new is prohibited");
-  }
-  else if(auto expr = Result.Nodes.getNodeAs<CXXDeleteExpr>("delete")) {
+    diag(Expr->getExprLoc(), "(S4) operator new is prohibited");
+  } else if (auto Expr = Result.Nodes.getNodeAs<CXXDeleteExpr>("delete")) {
 
-    diag(expr->getExprLoc(), "(S4) operator delete is prohibited");
-  }
-  else if(auto expr = Result.Nodes.getNodeAs<CallExpr>("make")) {
+    diag(Expr->getExprLoc(), "(S4) operator delete is prohibited");
+  } else if (auto Expr = Result.Nodes.getNodeAs<CallExpr>("make")) {
 
-    if(!checkParentExpr(Result.Context, expr)) {
-      diag(expr->getExprLoc(), "(S4.1) result of make_owning must be assigned to owning_ptr");
+    if (!checkParentExpr(Result.Context, Expr)) {
+      diag(Expr->getExprLoc(),
+           "(S4.1) result of make_owning must be assigned to owning_ptr");
     }
   }
 }

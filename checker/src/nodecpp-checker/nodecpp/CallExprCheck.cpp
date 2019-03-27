@@ -26,31 +26,31 @@ void CallExprCheck::registerMatchers(MatchFinder *Finder) {
 
 void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
 
-  auto expr = Result.Nodes.getNodeAs<CallExpr>("call");
+  auto Ex = Result.Nodes.getNodeAs<CallExpr>("call");
 
-  auto decl = expr->getDirectCallee();
-  if(!decl)
+  auto Decl = Ex->getDirectCallee();
+  if (!Decl)
     return;
 
-  if(isa<CXXMethodDecl>(decl))
+  if (isa<CXXMethodDecl>(Decl))
     return;
 
-  SourceManager* manager = Result.SourceManager;
-  auto eLoc = manager->getExpansionLoc(decl->getLocStart());
+  SourceManager *Manager = Result.SourceManager;
+  auto ELoc = Manager->getExpansionLoc(Decl->getLocStart());
 
-  if(eLoc.isInvalid())
+  if (ELoc.isInvalid())
     return;
 
-  if(!manager->isInSystemHeader(eLoc))
+  if (!Manager->isInSystemHeader(ELoc))
     return; // this is in safe code, then is ok
- 
 
-  std::string name = decl->getQualifiedNameAsString();
-  auto& s = getContext()->getGlobalOptions().SafeFunctions;
-  if(s.find(name) != s.end())
+  std::string Name = Decl->getQualifiedNameAsString();
+  auto &S = getContext()->getGlobalOptions().SafeFunctions;
+  if (S.find(Name) != S.end())
     return;
 
-  diag(expr->getExprLoc(), "(S8) unsafe function call '" + name + "' is prohibited");
+  diag(Ex->getExprLoc(),
+       "(S8) unsafe function call '" + Name + "' is prohibited");
 }
 
 } // namespace checker

@@ -47,35 +47,36 @@ void NakedPtrFuncCheck::registerMatchers(MatchFinder *Finder) {
 
 void NakedPtrFuncCheck::check(const MatchFinder::MatchResult &Result) {
 
-  const auto *func = Result.Nodes.getNodeAs<FunctionDecl>("func");
+  const auto *Func = Result.Nodes.getNodeAs<FunctionDecl>("func");
   // This matchers matches implicit operator new and delete without location,
   // ignore them
-  if (!func->getLocation().isValid()) {
-    func->dumpColor();
+  if (!Func->getLocation().isValid()) {
+    Func->dumpColor();
     return;
   }
-  auto t = func->getReturnType();
-  if (t->isReferenceType() || t->isPointerType()) {
-    auto pt = t->getPointeeType();
-    if (pt->isPointerType()) {
-      diag(func->getLocation(), "return type not allowed");
+  auto T = Func->getReturnType();
+  if (T->isReferenceType() || T->isPointerType()) {
+    auto Pt = T->getPointeeType();
+    if (Pt->isPointerType()) {
+      diag(Func->getLocation(), "return type not allowed");
       return;
     }
   }
 
-  auto args = func->parameters();
-  for (auto it = args.begin(); it != args.end(); ++it) {
-    auto t = (*it)->getType();
-    if (t->isPointerType() || t->isReferenceType()) {
-      auto pt = t->getPointeeType();
-      if (pt->isPointerType()) {
-        diag((*it)->getLocation(), "parameter type not allowed");
+  auto Args = Func->parameters();
+  for (auto It = Args.begin(); It != Args.end(); ++It) {
+    auto T = (*It)->getType();
+    if (T->isPointerType() || T->isReferenceType()) {
+      auto Pt = T->getPointeeType();
+      if (Pt->isPointerType()) {
+        diag((*It)->getLocation(), "parameter type not allowed");
         return;
-	  }
-	}
+      }
+    }
   }
-  diag(func->getLocation(), "there is an unknown problem with the signature of this function");
-  func->dumpColor();
+  diag(Func->getLocation(),
+       "there is an unknown problem with the signature of this function");
+  Func->dumpColor();
 }
 
 } // namespace checker
