@@ -20,18 +20,18 @@ namespace checker {
 
 
 class DiagHelper {
-  ClangTidyCheck *check = nullptr;
-  DiagnosticIDs::Level level = DiagnosticIDs::Warning;
+  ClangTidyCheck *Check = nullptr;
+  DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
 public:
   DiagHelper() {}
-  DiagHelper(ClangTidyCheck *check)
-  :check(check) {}
+  DiagHelper(ClangTidyCheck *Check)
+  :Check(Check) {}
 
-  void diag(SourceLocation loc, StringRef message) {
-    if(check) {
-      DiagnosticIDs::Level nextLevel = DiagnosticIDs::Note;
-      std::swap(level, nextLevel);
-      check->diag(loc, message, nextLevel);
+  void diag(SourceLocation Loc, StringRef Message) {
+    if(Check) {
+      DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
+      std::swap(Level, NextLevel);
+      Check->diag(Loc, Message, NextLevel);
     }
   }
 };
@@ -39,105 +39,105 @@ public:
 extern DiagHelper NullDiagHelper;
 
 class KindCheck {
-  bool isKind = false;
-  bool checkOk = false;
+  bool IsKind = false;
+  bool CheckOk = false;
 public:
-  KindCheck(bool isKind, bool checkOk) :isKind(isKind), checkOk(checkOk) {}
-  operator bool () const { return isKind; }
-  bool isOk() const { return checkOk; }
+  KindCheck(bool IsKind, bool CheckOk) :IsKind(IsKind), CheckOk(CheckOk) {}
+  operator bool () const { return IsKind; }
+  bool isOk() const { return CheckOk; }
 };
 
 
 /// FIXME: Write a short description.
 ///
-bool isOwnerPtrName(const std::string& name);
-bool isOwnerPtrDecl(const NamedDecl* decl);
-bool isSafePtrName(const std::string& name);
+bool isOwnerPtrName(const std::string& Name);
+bool isOwnerPtrDecl(const NamedDecl* Dc);
+bool isSafePtrName(const std::string& Name);
 
-bool isNakedPtrName(const std::string& name);
-bool isConstNakedPtrName(const std::string& name);
+bool isNakedPtrName(const std::string& Name);
+bool isConstNakedPtrName(const std::string& Name);
 
-bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc);
-bool isSystemSafeName(const ClangTidyContext* context, const std::string& name);
+bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
+bool isSystemSafeName(const ClangTidyContext* Context, const std::string& Name);
 
-bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
-KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
+bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 
 enum class FunctionKind { None = 0, Lambda, StdFunction, OwnedArg0 };
 
-FunctionKind getFunctionKind(QualType qt);
+FunctionKind getFunctionKind(QualType Qt);
 
-bool isStdFunctionType(QualType qt);
-bool isLambdaType(QualType qt);
-bool isNodecppFunctionOwnedArg0Type(QualType qt);
-bool isAnyFunctorType(QualType qt);
+bool isStdFunctionType(QualType Qt);
+bool isLambdaType(QualType Qt);
+bool isNodecppFunctionOwnedArg0Type(QualType Qt);
+bool isAnyFunctorType(QualType Qt);
 
-bool isRawPointerType(QualType qt);
-const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType qt);
+bool isRawPointerType(QualType Qt);
+const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
-QualType getPointeeType(QualType qt);
-KindCheck isNakedPointerType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
-bool isConstNakedPointerType(QualType qt);
-bool isSafePtrType(QualType qt);
+QualType getPointeeType(QualType Qt);
+KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool isConstNakedPointerType(QualType Qt);
+bool isSafePtrType(QualType Qt);
 
-bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
-bool isSafeType(QualType qt, const ClangTidyContext* context, DiagHelper& dh = NullDiagHelper);
+bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool isSafeType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 
-const CXXRecordDecl* isUnionType(QualType qt);
-bool checkUnion(const CXXRecordDecl *decl, DiagHelper& dh = NullDiagHelper);
+const CXXRecordDecl* isUnionType(QualType Qt);
+bool checkUnion(const CXXRecordDecl *Dc, DiagHelper& Dh = NullDiagHelper);
 
-bool isOsnPtrRecord(const CXXRecordDecl *decl);
-const Expr* getBaseIfOsnPtrDerref(const Expr* expr);
+bool isOsnPtrRecord(const CXXRecordDecl *Dc);
+const Expr* getBaseIfOsnPtrDerref(const Expr* Ex);
 
-const Expr *getParentExpr(ASTContext *context, const Expr *expr);
-const Expr *ignoreTemporaries(const Expr *expr);
-const LambdaExpr *getLambda(const Expr *expr);
+const Expr *getParentExpr(ASTContext *Context, const Expr *Ex);
+const Expr *ignoreTemporaries(const Expr *Ex);
+const LambdaExpr *getLambda(const Expr *Ex);
 
-bool isFunctionPtr(const Expr *expr);
+bool isFunctionPtr(const Expr *Ex);
 
-const Stmt *getParentStmt(ASTContext *context, const Stmt *stmt);
-const DeclStmt* getParentDeclStmt(ASTContext *context, const Decl* decl);
+const Stmt *getParentStmt(ASTContext *Context, const Stmt *St);
+const DeclStmt* getParentDeclStmt(ASTContext *Context, const Decl* Dc);
 
 class NakedPtrScopeChecker {
 
   enum OutputScope { Unknown, Stack, Param, This };
 
-  ClangTidyCheck *check; // to write diag messages
-  ClangTidyContext* tidyContext;
-  ASTContext *astContext;
+  ClangTidyCheck *Check; // to write diag messages
+  ClangTidyContext *TidyContext;
+  ASTContext *AstContext;
 
 
-  OutputScope outScope;
-  const Decl* outScopeDecl; //only when outScope == Stack
+  OutputScope OutScope;
+  const Decl *OutScopeDecl; //only when outScope == Stack
 
-  NakedPtrScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext, ASTContext *astContext, OutputScope outScope, const Decl* outScopeDecl) :
-  check(check), tidyContext(tidyContext), astContext(astContext), outScope(outScope), outScopeDecl(outScopeDecl)  {}
+  NakedPtrScopeChecker(ClangTidyCheck *Check, ClangTidyContext* TidyContext, ASTContext *AstContext, OutputScope OutScope, const Decl* OutScopeDecl) :
+  Check(Check), TidyContext(TidyContext), AstContext(AstContext), OutScope(OutScope), OutScopeDecl(OutScopeDecl)  {}
 
-  bool canArgumentGenerateOutput(QualType out, QualType arg);
-  bool checkStack2StackAssignment(const Decl* fromDecl);
+  bool canArgumentGenerateOutput(QualType Out, QualType Arg);
+  bool checkStack2StackAssignment(const Decl* FromDecl);
 
-  bool checkDeclRefExpr(const DeclRefExpr *declRef);
-  bool checkCallExpr(const CallExpr *call);
-  bool checkCXXConstructExpr(const CXXConstructExpr *construct);
+  bool checkDeclRefExpr(const DeclRefExpr *DeclRef);
+  bool checkCallExpr(const CallExpr *Call);
+  bool checkCXXConstructExpr(const CXXConstructExpr *Construct);
 
 public:
-  bool checkExpr(const Expr *from);
+  bool checkExpr(const Expr *From);
 private:
   static
-  std::pair<OutputScope, const Decl*> calculateScope(const Expr* expr);
+  std::pair<OutputScope, const Decl*> calculateScope(const Expr* Ex);
 
   // static
   // std::pair<OutputScope, const Decl*> calculateShorterScope(std::pair<OutputScope, const Decl*> l, std::pair<OutputScope, const Decl*> r);
 
 public:
   static
-  NakedPtrScopeChecker makeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext, ASTContext *astContext, const Expr* toExpr);
+  NakedPtrScopeChecker makeChecker(ClangTidyCheck *Check, ClangTidyContext* TidyContext, ASTContext *AstContext, const Expr* ToExpr);
   static
-  NakedPtrScopeChecker makeThisScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext);
+  NakedPtrScopeChecker makeThisScopeChecker(ClangTidyCheck *Check, ClangTidyContext* TidyContext);
   static
-  NakedPtrScopeChecker makeParamScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext);
+  NakedPtrScopeChecker makeParamScopeChecker(ClangTidyCheck *Check, ClangTidyContext* TidyContext);
 };
 
 } // namespace checker

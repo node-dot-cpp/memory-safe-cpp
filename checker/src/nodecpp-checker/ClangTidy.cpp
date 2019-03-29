@@ -55,7 +55,7 @@ namespace nodecpp {
 namespace checker {
 
 namespace {
-static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
+//static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
 // class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
 // public:
@@ -289,16 +289,16 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
   }
 }
 
-static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
-                                         AnalyzerOptionsRef AnalyzerOptions) {
-  StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
-  for (const auto &Opt : Opts.CheckOptions) {
-    StringRef OptName(Opt.first);
-    if (!OptName.startswith(AnalyzerPrefix))
-      continue;
-    AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
-  }
-}
+// static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
+//                                          AnalyzerOptionsRef AnalyzerOptions) {
+//   StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
+//   for (const auto &Opt : Opts.CheckOptions) {
+//     StringRef OptName(Opt.first);
+//     if (!OptName.startswith(AnalyzerPrefix))
+//       continue;
+//     AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
+//   }
+// }
 
 typedef std::vector<std::pair<std::string, bool>> CheckersList;
 
@@ -333,7 +333,8 @@ typedef std::vector<std::pair<std::string, bool>> CheckersList;
 // }
 
 std::unique_ptr<clang::ASTConsumer>
-ClangTidyASTConsumerFactory::CreateASTConsumer( //NOLINT
+// NOLINTNEXTLINE(readability-identifier-naming)
+ClangTidyASTConsumerFactory::CreateASTConsumer(
     clang::CompilerInstance &Compiler, StringRef File) {
   // FIXME: Move this to a separate method, so that CreateASTConsumer doesn't
   // modify Compiler.

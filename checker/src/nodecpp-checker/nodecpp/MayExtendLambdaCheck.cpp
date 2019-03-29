@@ -36,13 +36,13 @@ void MayExtendLambdaCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 bool MayExtendLambdaCheck::checkLambda(
-    const LambdaExpr *Lamb, std::pair<bool, const ValueDecl *> Decl) {
+    const LambdaExpr *Lamb, std::pair<bool, const ValueDecl *> Dc) {
 
   auto Caps = Lamb->captures();
   for (auto It = Caps.begin(); It != Caps.end(); ++It) {
     switch (It->getCaptureKind()) {
     case LCK_This:
-      if (Decl.first)
+      if (Dc.first)
         break;
 
       diag(It->getLocation(), "capture of 'this' unsafe to extend scope");
@@ -62,7 +62,7 @@ bool MayExtendLambdaCheck::checkLambda(
       if (D->hasAttr<NodeCppMayExtendAttr>())
         break;
 
-      if (D == Decl.second) // ok
+      if (D == Dc.second) // ok
         break;
 
       diag(It->getLocation(), "unsafe capture to extend scope");
@@ -72,9 +72,6 @@ bool MayExtendLambdaCheck::checkLambda(
       return false;
     case LCK_VLAType:
       diag(It->getLocation(), "capture by array not allowed");
-      return false;
-    default:
-      diag(It->getLocation(), "unknow capture kind not allowed");
       return false;
     }
   }
