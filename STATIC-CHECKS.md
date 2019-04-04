@@ -27,6 +27,7 @@ Legend for TEST CASES:
 * "fop()" - function taking `owning_ptr<T>`
 * NSTR - naked_struct type
 * nstr - variable of naked_struct type
+* af(), af2() - asynchronous function returning nodecpp::awaitable<>
 
 * **IMPORTANT**: whenever we're speaking of `safe_ptr<T>` or `naked_ptr<T>`, then `not_null<safe_ptr<T>>` and `not_null<naked_ptr<T>>` are ALWAYS implied (and SHOULD be included into relevant test cases)
 * **IMPORTANT**: whenever we're speaking of `owning_ptr<T>`, `safe_ptr<T>` or `naked_ptr<T>`, then their short aliases (`optr<T>`, `sptr<T>`, and `nptr<T>`) are ALWAYS implied (and SHOULD be included into relevant test cases)
@@ -135,6 +136,10 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/PROHIBIT: `memset(p,1,1)`
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
+* **[Rule S9]** Miscellaneous checks
+  + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency. For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. 
+    - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();` 
+    - TEST CASES/ALLOW: `co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`
   
 ### Determinism Checks (strictly - ensuring Same-Executable Determinism)
 
