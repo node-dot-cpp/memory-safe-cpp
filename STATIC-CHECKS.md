@@ -137,9 +137,9 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
 * **[Rule S9]** Miscellaneous checks
-  + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions
+  + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function wait_for_all())
     - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); another_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
-    - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`
+    - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`, `co_await wait_for_all(af(), af2())`
 
 ### Determinism Checks (strictly - ensuring Same-Executable Determinism)
 
