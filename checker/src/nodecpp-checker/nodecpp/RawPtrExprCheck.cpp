@@ -29,42 +29,42 @@ void RawPtrExprCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
-  auto expr = Result.Nodes.getNodeAs<Expr>("expr");
+  auto Ex = Result.Nodes.getNodeAs<Expr>("expr");
 
   //first ignore implicits and parens
 
-  if(isa<ExprWithCleanups>(expr))
+  if (isa<ExprWithCleanups>(Ex))
     return;
-  else if(isa<MaterializeTemporaryExpr>(expr))
+  else if (isa<MaterializeTemporaryExpr>(Ex))
     return;
-  else if(isa<CXXBindTemporaryExpr>(expr))
+  else if (isa<CXXBindTemporaryExpr>(Ex))
     return;
-  else if(isa<ImplicitCastExpr>(expr))
+  else if (isa<ImplicitCastExpr>(Ex))
     return;
-  else if(isa<ParenExpr>(expr))
+  else if (isa<ParenExpr>(Ex))
     return;
-  else if(isa<CXXDefaultArgExpr>(expr))
+  else if (isa<CXXDefaultArgExpr>(Ex))
     return;
 
   // now allow some explicits
-  else if(isa<CXXThisExpr>(expr))
+  else if (isa<CXXThisExpr>(Ex))
     return;
-  else if(isa<CallExpr>(expr))
+  else if (isa<CallExpr>(Ex))
     return;
-  else if(isa<CXXNullPtrLiteralExpr>(expr))
+  else if (isa<CXXNullPtrLiteralExpr>(Ex))
     return;
-  else if(isa<CXXDynamicCastExpr>(expr))
+  else if (isa<CXXDynamicCastExpr>(Ex))
     return;
 
-  else if(auto unOp = dyn_cast<UnaryOperator>(expr)) {
-    if(unOp->getOpcode() == UnaryOperatorKind::UO_AddrOf) {
+  else if (auto UnOp = dyn_cast<UnaryOperator>(Ex)) {
+    if (UnOp->getOpcode() == UnaryOperatorKind::UO_AddrOf) {
       //this is ok
       return;
     }
   }
 
-  else if(auto binOp = dyn_cast<BinaryOperator>(expr)) {
-    if(binOp->getOpcode() == BinaryOperatorKind::BO_Assign) {
+  else if (auto BinOp = dyn_cast<BinaryOperator>(Ex)) {
+    if (BinOp->getOpcode() == BinaryOperatorKind::BO_Assign) {
       //this is ok
       return;
     }
@@ -72,39 +72,36 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   // this is an error,
   // find the best error message
-  else if(isa<DeclRefExpr>(expr)) {
-      // don't report it here
-      return;
-  }
-  else if(isa<CXXNewExpr>(expr)) {
-      // don't report here
-      return;
-  }
-  else if(isa<CXXDeleteExpr>(expr)) {
-      // don't report here
-      return;
-  }
-  else if(isa<CXXConstCastExpr>(expr)) {
-      // don't report here
-      return;
-  }
-
-  else if(isa<CXXStaticCastExpr>(expr)) {
-    diag(expr->getExprLoc(), "(S1.1) static_cast not allowed");
+  else if (isa<DeclRefExpr>(Ex)) {
+    // don't report it here
+    return;
+  } else if (isa<CXXNewExpr>(Ex)) {
+    // don't report here
+    return;
+  } else if (isa<CXXDeleteExpr>(Ex)) {
+    // don't report here
+    return;
+  } else if (isa<CXXConstCastExpr>(Ex)) {
+    // don't report here
     return;
   }
 
-  else if(isa<CXXReinterpretCastExpr>(expr)) {
-    diag(expr->getExprLoc(), "(S1.1) reinterpret_cast not allowed");
+  else if (isa<CXXStaticCastExpr>(Ex)) {
+    diag(Ex->getExprLoc(), "(S1.1) static_cast not allowed");
     return;
   }
 
-  else if(isa<CStyleCastExpr>(expr)) {
-    diag(expr->getExprLoc(), "(S1.1) C style cast not allowed");
+  else if (isa<CXXReinterpretCastExpr>(Ex)) {
+    diag(Ex->getExprLoc(), "(S1.1) reinterpret_cast not allowed");
     return;
   }
 
-  diag(expr->getExprLoc(), "(S1) raw pointer expression not allowed");
+  else if (isa<CStyleCastExpr>(Ex)) {
+    diag(Ex->getExprLoc(), "(S1.1) C style cast not allowed");
+    return;
+  }
+
+  diag(Ex->getExprLoc(), "(S1) raw pointer expression not allowed");
 }
 
 } // namespace checker

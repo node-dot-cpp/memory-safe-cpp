@@ -28,22 +28,25 @@ void NakedAssignmentCheck::registerMatchers(MatchFinder *Finder) {
 
 void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
 
-  auto expr = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("expr");
+  auto Ex = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("expr");
 
-  if(expr->getNumArgs() == 2) {
-    auto left = expr->getArg(0);
-    QualType lqt = left->getType().getCanonicalType();
-    if(isNakedPointerType(lqt, getContext())) {
-        auto checker = NakedPtrScopeChecker::makeChecker(this, getContext(), Result.Context, left);
+  if (Ex->getNumArgs() == 2) {
+    auto Left = Ex->getArg(0);
+    QualType Lqt = Left->getType().getCanonicalType();
+    if (isNakedPointerType(Lqt, getContext())) {
+      auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
+                                                       Result.Context, Left);
 
-        if(!checker.checkExpr(expr->getArg(1)))
-            diag(expr->getExprLoc(), "(S5.2) assignment of naked_ptr may extend scope");
-    }
-    else if(isNakedStructType(lqt, getContext())) {
-        auto checker = NakedPtrScopeChecker::makeChecker(this, getContext(), Result.Context, left);
+      if (!Checker.checkExpr(Ex->getArg(1)))
+        diag(Ex->getExprLoc(),
+             "(S5.2) assignment of naked_ptr may extend scope");
+    } else if (isNakedStructType(Lqt, getContext())) {
+      auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
+                                                       Result.Context, Left);
 
-        if(!checker.checkExpr(expr->getArg(1)))
-            diag(expr->getExprLoc(), "(S5.2) assignment of naked_struct may extend scope");
+      if (!Checker.checkExpr(Ex->getArg(1)))
+        diag(Ex->getExprLoc(),
+             "(S5.2) assignment of naked_struct may extend scope");
     }
   }
 }

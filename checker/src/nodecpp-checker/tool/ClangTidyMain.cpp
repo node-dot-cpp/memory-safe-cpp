@@ -373,8 +373,8 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
   //                                              OverrideOptions);
 }
 
-static int clangTidyMain(int argc, const char **argv) {
-  CommonOptionsParser OptionsParser(argc, argv, ClangTidyCategory,
+static int clangTidyMain(int Argc, const char **Argv) {
+  CommonOptionsParser OptionsParser(Argc, Argv, ClangTidyCategory,
                                     cl::ZeroOrMore);
 
   StringRef FileName("dummy");
@@ -509,6 +509,6 @@ static int LLVM_ATTRIBUTE_UNUSED NodeCppModuleAnchorDestination =
 } // namespace checker
 } // namespace nodecpp
 
-int main(int argc, const char **argv) {
-  return nodecpp::checker::clangTidyMain(argc, argv);
+int main(int Argc, const char **Argv) {
+  return nodecpp::checker::clangTidyMain(Argc, Argv);
 }

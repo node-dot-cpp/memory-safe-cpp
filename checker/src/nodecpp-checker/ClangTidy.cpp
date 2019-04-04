@@ -55,7 +55,7 @@ namespace nodecpp {
 namespace checker {
 
 namespace {
-static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
+//static const char *AnalyzerCheckNamePrefix = "clang-analyzer-";
 
 // class AnalyzerDiagnosticConsumer : public ento::PathDiagnosticConsumer {
 // public:
@@ -182,7 +182,7 @@ public:
       reportNote(Note);
   }
 
-  void Finish() {
+  void finish() {
     if (ApplyFixes && TotalFixes > 0) {
       Rewriter Rewrite(SourceMgr, LangOpts);
       for (const auto &FileAndReplacements : FileReplacements) {
@@ -289,16 +289,16 @@ ClangTidyASTConsumerFactory::ClangTidyASTConsumerFactory(
   }
 }
 
-static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
-                                         AnalyzerOptionsRef AnalyzerOptions) {
-  StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
-  for (const auto &Opt : Opts.CheckOptions) {
-    StringRef OptName(Opt.first);
-    if (!OptName.startswith(AnalyzerPrefix))
-      continue;
-    AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
-  }
-}
+// static void setStaticAnalyzerCheckerOpts(const ClangTidyOptions &Opts,
+//                                          AnalyzerOptionsRef AnalyzerOptions) {
+//   StringRef AnalyzerPrefix(AnalyzerCheckNamePrefix);
+//   for (const auto &Opt : Opts.CheckOptions) {
+//     StringRef OptName(Opt.first);
+//     if (!OptName.startswith(AnalyzerPrefix))
+//       continue;
+//     AnalyzerOptions->Config[OptName.substr(AnalyzerPrefix.size())] = Opt.second;
+//   }
+// }
 
 typedef std::vector<std::pair<std::string, bool>> CheckersList;
 
@@ -333,6 +333,7 @@ typedef std::vector<std::pair<std::string, bool>> CheckersList;
 // }
 
 std::unique_ptr<clang::ASTConsumer>
+// NOLINTNEXTLINE(readability-identifier-naming)
 ClangTidyASTConsumerFactory::CreateASTConsumer(
     clang::CompilerInstance &Compiler, StringRef File) {
   // FIXME: Move this to a separate method, so that CreateASTConsumer doesn't
@@ -511,6 +512,9 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
         return AdjustedArgs;
       };
 
+
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DNODECPP_CHECKER_EXTENSIONS",
+         ArgumentInsertPosition::BEGIN));
   Tool.appendArgumentsAdjuster(PerFileExtraArgumentsInserter);
   Tool.appendArgumentsAdjuster(PluginArgumentsRemover);
   if (Profile)
@@ -566,7 +570,7 @@ void handleErrors(ClangTidyContext &Context, bool Fix,
     // Return to the initial directory to correctly resolve next Error.
     FileSystem.setCurrentWorkingDirectory(InitialWorkingDir.get());
   }
-  Reporter.Finish();
+  Reporter.finish();
   WarningsAsErrorsCount += Reporter.getWarningsAsErrorsCount();
 }
 

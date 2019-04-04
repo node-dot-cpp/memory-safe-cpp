@@ -32,13 +32,13 @@ void ArrayExprCheck::registerMatchers(MatchFinder *Finder) {
 
 void ArrayExprCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto t = Result.Nodes.getNodeAs<TypeLoc>("type")) {
-    diag(t->getLocStart(), "do not use arrays");
+  if (auto T = Result.Nodes.getNodeAs<TypeLoc>("type")) {
+    diag(T->getLocStart(), "do not use arrays");
     return;
   }
-  
-  if(auto expr = Result.Nodes.getNodeAs<ArraySubscriptExpr>("expr")) {
-    diag(expr->getRBracketLoc(), "(S1) array expression not allowed");
+
+  if (auto Ex = Result.Nodes.getNodeAs<ArraySubscriptExpr>("expr")) {
+    diag(Ex->getRBracketLoc(), "(S1) array expression not allowed");
     return;
   }
 }

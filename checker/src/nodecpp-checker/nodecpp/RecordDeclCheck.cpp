@@ -28,38 +28,37 @@ void RecordDeclCheck::registerMatchers(MatchFinder *Finder) {
 
 void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
-  auto rd = Result.Nodes.getNodeAs<CXXRecordDecl>("rd");
-  if(rd && rd->hasDefinition()) {
+  auto Rd = Result.Nodes.getNodeAs<CXXRecordDecl>("rd");
+  if (Rd && Rd->hasDefinition()) {
 
     //lambda's CXXRecordDecl is not matched here, not sure why
     // but we add the check anyway
-    if(rd->isLambda())
+    if (Rd->isLambda())
       return;
 
-    auto t = rd->getDescribedClassTemplate();
-    
-    if(t) // this is a template, don't check here
+    auto T = Rd->getDescribedClassTemplate();
+
+    if (T) // this is a template, don't check here
       return;
 
-    auto k = rd->getTemplateSpecializationKind();
-    if(k == TSK_ImplicitInstantiation)
+    auto K = Rd->getTemplateSpecializationKind();
+    if (K == TSK_ImplicitInstantiation)
       return;
 
-    if(rd->hasAttr<NodeCppNakedStructAttr>()) {
-      if(checkNakedStructRecord(rd, getContext()))
+    if (Rd->hasAttr<NodeCppNakedStructAttr>()) {
+      if (checkNakedStructRecord(Rd, getContext()))
         return;
 
-      auto dh = DiagHelper(this);
-      dh.diag(rd->getLocation(), "unsafe naked_struct declaration");
-      checkNakedStructRecord(rd, getContext(), dh);
-    }
-    else {
-      if(isSafeRecord(rd, getContext()))
+      auto Dh = DiagHelper(this);
+      Dh.diag(Rd->getLocation(), "unsafe naked_struct declaration");
+      checkNakedStructRecord(Rd, getContext(), Dh);
+    } else {
+      if (isSafeRecord(Rd, getContext()))
         return;
 
-      auto dh = DiagHelper(this);
-      dh.diag(rd->getLocation(), "unsafe type declaration");
-      isSafeRecord(rd, getContext(), dh);
+      auto Dh = DiagHelper(this);
+      Dh.diag(Rd->getLocation(), "unsafe type declaration");
+      isSafeRecord(Rd, getContext(), Dh);
     }
   }
 }

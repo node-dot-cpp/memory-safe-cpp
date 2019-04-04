@@ -26,10 +26,9 @@ void AsmCheck::registerMatchers(MatchFinder *Finder) {
 
 void AsmCheck::check(const MatchFinder::MatchResult &Result) {
 
+  auto St = Result.Nodes.getNodeAs<AsmStmt>("asm");
 
-  auto stmt = Result.Nodes.getNodeAs<AsmStmt>("asm");
-  
-  diag(stmt->getAsmLoc(), "(S6.1) asm is prohibited");
+  diag(St->getAsmLoc(), "(S6.1) asm is prohibited");
 }
 
 } // namespace checker

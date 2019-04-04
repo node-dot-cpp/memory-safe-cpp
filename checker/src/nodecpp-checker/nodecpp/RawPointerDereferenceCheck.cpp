@@ -31,24 +31,25 @@ void RawPointerDereferenceCheck::registerMatchers(MatchFinder *Finder) {
 
 void RawPointerDereferenceCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto expr = Result.Nodes.getNodeAs<MemberExpr>("arrow")) {
-    auto base = expr->getBase()->IgnoreParenImpCasts();
-    if(isa<CXXThisExpr>(base))
+  if (auto Ex = Result.Nodes.getNodeAs<MemberExpr>("arrow")) {
+    auto Base = Ex->getBase()->IgnoreParenImpCasts();
+    if (isa<CXXThisExpr>(Base))
       return;
-    else if(isa<CallExpr>(base))
+    else if (isa<CallExpr>(Base))
       return;
 
-    diag(expr->getExprLoc(), "(S1.2) dereference of raw pointers is prohibited");
+    diag(Ex->getExprLoc(),
+         "(S1.2) dereference of raw pointers is prohibited");
     return;
-  }
-  else if(auto expr = Result.Nodes.getNodeAs<UnaryOperator>("star")) {
-    auto base = expr->getSubExpr()->IgnoreParenImpCasts();
-    if(isa<CXXThisExpr>(base))
+  } else if (auto Ex = Result.Nodes.getNodeAs<UnaryOperator>("star")) {
+    auto Base = Ex->getSubExpr()->IgnoreParenImpCasts();
+    if (isa<CXXThisExpr>(Base))
       return;
-    else if(isa<CallExpr>(base))
+    else if (isa<CallExpr>(Base))
       return;
 
-    diag(expr->getExprLoc(), "(S1.2) dereference of raw pointers is prohibited");
+    diag(Ex->getExprLoc(),
+         "(S1.2) dereference of raw pointers is prohibited");
   }
 }
 

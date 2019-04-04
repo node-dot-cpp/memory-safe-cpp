@@ -32,33 +32,34 @@ void MayExtendDeclCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void MayExtendDeclCheck::check(const MatchFinder::MatchResult &Result) {
-  
-  if(auto l = Result.Nodes.getNodeAs<LambdaExpr>("lamb")) {
-    auto decl = l->getCallOperator();
-    for (unsigned i = 0; i != decl->param_size(); ++i) {
-      auto p = decl->getParamDecl(i);
-      if (p->hasAttr<NodeCppMayExtendAttr>()) {
-        diag(p->getLocation(), "attribute can't be used on lambdas");
+
+  if (auto L = Result.Nodes.getNodeAs<LambdaExpr>("lamb")) {
+    auto Decl = L->getCallOperator();
+    for (unsigned I = 0; I != Decl->param_size(); ++I) {
+      auto P = Decl->getParamDecl(I);
+      if (P->hasAttr<NodeCppMayExtendAttr>()) {
+        diag(P->getLocation(), "attribute can't be used on lambdas");
         return;
       }
     }
     //this lambda is ok
     return;
-  }
-  else if(auto d = Result.Nodes.getNodeAs<FunctionDecl>("decl")) {
+  } else if (auto D = Result.Nodes.getNodeAs<FunctionDecl>("decl")) {
 
-    auto m = dyn_cast<CXXMethodDecl>(d);
-    if(!m) {
-      diag(d->getLocation(), "attribute can only be used on non-static member methods");
+    auto M = dyn_cast<CXXMethodDecl>(D);
+    if (!M) {
+      diag(D->getLocation(),
+           "attribute can only be used on non-static member methods");
       return;
     }
 
-    if(m->isStatic()) {
-      diag(d->getLocation(), "attribute can't be used on static member methods");
+    if (M->isStatic()) {
+      diag(D->getLocation(),
+           "attribute can't be used on static member methods");
       return;
-    } else if(isLambdaCallOperator(m)) {
+    } else if (isLambdaCallOperator(M)) {
       //this is not matching anything
-      diag(d->getLocation(), "attribute can't be used on lambdas");
+      diag(D->getLocation(), "attribute can't be used on lambdas");
       return;
     }
     //this is ok

@@ -116,7 +116,7 @@ ClangTidyError::ClangTidyError(StringRef CheckName,
 
 // Returns true if GlobList starts with the negative indicator ('-'), removes it
 // from the GlobList.
-static bool ConsumeNegativeIndicator(StringRef &GlobList) {
+static bool consumeNegativeIndicator(StringRef &GlobList) {
   GlobList = GlobList.trim(" \r\n");
   if (GlobList.startswith("-")) {
     GlobList = GlobList.substr(1);
@@ -126,7 +126,7 @@ static bool ConsumeNegativeIndicator(StringRef &GlobList) {
 }
 // Converts first glob from the comma-separated list of globs to Regex and
 // removes it and the trailing comma from the GlobList.
-static llvm::Regex ConsumeGlob(StringRef &GlobList) {
+static llvm::Regex consumeGlob(StringRef &GlobList) {
   StringRef UntrimmedGlob = GlobList.substr(0, GlobList.find(','));
   StringRef Glob = UntrimmedGlob.trim(' ');
   GlobList = GlobList.substr(UntrimmedGlob.size() + 1);
@@ -144,7 +144,7 @@ static llvm::Regex ConsumeGlob(StringRef &GlobList) {
 }
 
 GlobList::GlobList(StringRef Globs)
-    : Positive(!ConsumeNegativeIndicator(Globs)), Regex(ConsumeGlob(Globs)),
+    : Positive(!consumeNegativeIndicator(Globs)), Regex(consumeGlob(Globs)),
       NextGlob(Globs.empty() ? nullptr : new GlobList(Globs)) {}
 
 bool GlobList::contains(StringRef S, bool Contains) {

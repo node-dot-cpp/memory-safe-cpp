@@ -48,7 +48,7 @@ template <> struct MappingTraits<FileFilter> {
     IO.mapRequired("name", File.Name);
     IO.mapOptional("lines", File.LineRanges);
   }
-  static StringRef validate(IO &io, FileFilter &File) {
+  static StringRef validate(IO &Io, FileFilter &File) {
     if (File.Name.empty())
       return "No file name specified";
     for (const FileFilter::LineRange &Range : File.LineRanges) {

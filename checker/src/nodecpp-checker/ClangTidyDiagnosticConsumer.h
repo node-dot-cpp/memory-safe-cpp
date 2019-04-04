@@ -233,7 +233,7 @@ private:
 //
 // FIXME: If we move away from unit-tests, this can be moved to a private
 // implementation file.
-class ClangTidyDiagnosticConsumer : public DiagnosticConsumer {
+class ClangTidyDiagnosticConsumer : public clang::DiagnosticConsumer {
 public:
   ClangTidyDiagnosticConsumer(ClangTidyContext &Ctx,
                               bool RemoveIncompatibleErrors = true);
@@ -242,7 +242,7 @@ public:
   // more generic and should be pulled out into a more useful Diagnostics
   // library.
   void HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
-                        const Diagnostic &Info) override;
+                        const clang::Diagnostic &Info) override;
 
   /// \brief Flushes the internal diagnostics buffer to the ClangTidyContext.
   void finish() override;

@@ -35,45 +35,43 @@ void MayExtendLambdaCheck::registerMatchers(MatchFinder *Finder) {
                      this);
 }
 
-bool MayExtendLambdaCheck::checkLambda(const LambdaExpr *lamb, std::pair<bool, const ValueDecl*> decl) {
-  
-  auto caps = lamb->captures();
-  for (auto it = caps.begin(); it != caps.end(); ++it) {
-    switch (it->getCaptureKind()) {
+bool MayExtendLambdaCheck::checkLambda(
+    const LambdaExpr *Lamb, std::pair<bool, const ValueDecl *> Dc) {
+
+  auto Caps = Lamb->captures();
+  for (auto It = Caps.begin(); It != Caps.end(); ++It) {
+    switch (It->getCaptureKind()) {
     case LCK_This:
-      if(decl.first)
+      if (Dc.first)
         break;
-      
-      diag(it->getLocation(), "capture of 'this' unsafe to extend scope");
+
+      diag(It->getLocation(), "capture of 'this' unsafe to extend scope");
       return false;
     case LCK_StarThis:
       // this is ok
       break;
     case LCK_ByCopy: {
-      auto d = it->getCapturedVar();
-      auto qt = d->getType().getCanonicalType();
-      if (isSafeType(qt, getContext()))
+      auto D = It->getCapturedVar();
+      auto Qt = D->getType().getCanonicalType();
+      if (isSafeType(Qt, getContext()))
         break;
 
-      if (d->hasGlobalStorage())
+      if (D->hasGlobalStorage())
         break;
 
-      if(d->hasAttr<NodeCppMayExtendAttr>())
+      if (D->hasAttr<NodeCppMayExtendAttr>())
         break;
 
-      if(d == decl.second) //ok
+      if (D == Dc.second) // ok
         break;
 
-      diag(it->getLocation(), "unsafe capture to extend scope");
+      diag(It->getLocation(), "unsafe capture to extend scope");
     } return false;
     case LCK_ByRef:
-      diag(it->getLocation(), "unsafe capture to extend scope");
+      diag(It->getLocation(), "unsafe capture to extend scope");
       return false;
     case LCK_VLAType:
-      diag(it->getLocation(), "capture by array not allowed");
-      return false;
-    default:
-      diag(it->getLocation(), "unknow capture kind not allowed");
+      diag(It->getLocation(), "capture by array not allowed");
       return false;
     }
   }
@@ -126,40 +124,40 @@ bool MayExtendLambdaCheck::checkLambda(const LambdaExpr *lamb, std::pair<bool, c
 // }
 
 //returns true if the expression was checked (either positively or negatively)
-bool MayExtendLambdaCheck::tryCheckAsLambda(const Expr *expr, std::pair<bool, const ValueDecl*> decl) {
-//const LambdaExpr *MayExtendLambdaCheck::getLambda(const Expr *expr) {
+bool MayExtendLambdaCheck::tryCheckAsLambda(
+    const Expr *Ex, std::pair<bool, const ValueDecl *> Decl) {
+  // const LambdaExpr *MayExtendLambdaCheck::getLambda(const Expr *expr) {
 
-  if (!expr)
+  if (!Ex)
     return false;
 
-  auto e = ignoreTemporaries(expr);
+  auto E = ignoreTemporaries(Ex);
 
-  if (auto lamb = dyn_cast<LambdaExpr>(e)) {
-    checkLambda(lamb, decl);
+  if (auto Lamb = dyn_cast<LambdaExpr>(E)) {
+    checkLambda(Lamb, Decl);
     return true;
-  } else if (auto ref = dyn_cast<DeclRefExpr>(e)) {
+  } else if (auto Ref = dyn_cast<DeclRefExpr>(E)) {
     // diag(e->getExprLoc(), "argument is declRef");
-    if (auto d = dyn_cast_or_null<VarDecl>(ref->getDecl())) {
-      auto init = d->getInit();
-      if(init) {
-        auto e2 = ignoreTemporaries(init);
-        if (auto lamb2 = dyn_cast<LambdaExpr>(e2)) {
-          if(!checkLambda(lamb2, decl)) {
-            diag(expr->getExprLoc(), "referenced from here", DiagnosticIDs::Note);
+    if (auto D = dyn_cast_or_null<VarDecl>(Ref->getDecl())) {
+      auto Init = D->getInit();
+      if (Init) {
+        auto E2 = ignoreTemporaries(Init);
+        if (auto Lamb2 = dyn_cast<LambdaExpr>(E2)) {
+          if (!checkLambda(Lamb2, Decl)) {
+            diag(Ex->getExprLoc(), "referenced from here",
+                 DiagnosticIDs::Note);
           }
           return true;
         }
-      }       
+      }
     }
   }
 
   return false;
 }
 
-
-
 /* static */
-bool MayExtendLambdaCheck::canMayExtendBeCalled(const Expr* expr) {
+bool MayExtendLambdaCheck::canMayExtendBeCalled(const Expr *Ex) {
   // here we allow:
 
   // this->call()
@@ -173,58 +171,57 @@ bool MayExtendLambdaCheck::canMayExtendBeCalled(const Expr* expr) {
   // [[owned_by_this]]->call()
   // [[owned_by_this]]->member.call()
 
-
-  if(!expr) {
+  if (!Ex) {
     assert(false);
     return false;
   }
 
-  auto member = dyn_cast<MemberExpr>(expr->IgnoreParenImpCasts());
-  if(!member) {
+  auto Member = dyn_cast<MemberExpr>(Ex->IgnoreParenImpCasts());
+  if (!Member) {
     return false;
   }
 
-  auto base = member->getBase()->IgnoreParenImpCasts();
-  if(isa<CXXThisExpr>(base))
+  auto Base = Member->getBase()->IgnoreParenImpCasts();
+  if (isa<CXXThisExpr>(Base))
     return true;
-  else if(auto var = dyn_cast<DeclRefExpr>(base)) {
-    auto decl = var->getDecl();
-    if (!decl) { // shouln't happend here
+  else if (auto Var = dyn_cast<DeclRefExpr>(Base)) {
+    auto Decl = Var->getDecl();
+    if (!Decl) { // shouln't happend here
       return false;
     }
 
-    if(decl->hasAttr<NodeCppMayExtendAttr>())
+    if (Decl->hasAttr<NodeCppMayExtendAttr>())
       return true;
-    else if(decl->hasAttr<NodeCppOwnedByThisAttr>())
+    else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
       return true;
     else
       return false;
-  } else if(auto osnBase = getBaseIfOsnPtrDerref(base)) {
-    if(auto var = dyn_cast<DeclRefExpr>(osnBase->IgnoreParenImpCasts())) {
-      auto decl = var->getDecl();
-      if (!decl) { // shouln't happend here
+  } else if (auto OsnBase = getBaseIfOsnPtrDerref(Base)) {
+    if (auto Var = dyn_cast<DeclRefExpr>(OsnBase->IgnoreParenImpCasts())) {
+      auto Decl = Var->getDecl();
+      if (!Decl) { // shouln't happend here
         return false;
       }
 
-      if(decl->hasAttr<NodeCppMayExtendAttr>())
+      if (Decl->hasAttr<NodeCppMayExtendAttr>())
         return true;
-      else if(decl->hasAttr<NodeCppOwnedByThisAttr>())
+      else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
         return true;
       else
         return true;
     }
   }
 
-
-  if(member->isArrow()) {
+  if (Member->isArrow()) {
     return false;
   }
-      
-  return canMayExtendBeCalled(base);
+
+  return canMayExtendBeCalled(Base);
 }
 
 /* static */
-std::pair<bool, const ValueDecl*> MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr* expr) {
+std::pair<bool, const ValueDecl *>
+MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr *Ex) {
   // here we check the base where a method with [[may_extend_to_this]] was called
   // if the base has the lifetime of 'this', then 'this' or any other member
   // with the lifetime of 'this' may be an argument
@@ -242,96 +239,96 @@ std::pair<bool, const ValueDecl*> MayExtendLambdaCheck::canMayExtendBeCalled2(co
   // [[owned_by_this]]->call()
   // [[owned_by_this]]->member.call()
 
-
-  if(!expr) {
+  if (!Ex) {
     assert(false);
     return {false, nullptr};
   }
 
-  auto member = dyn_cast<MemberExpr>(expr->IgnoreParenImpCasts());
-  if(!member) {
+  auto Member = dyn_cast<MemberExpr>(Ex->IgnoreParenImpCasts());
+  if (!Member) {
     return {false, nullptr};
   }
 
-  auto base = member->getBase()->IgnoreParenImpCasts();
-  if(isa<CXXThisExpr>(base))
+  auto Base = Member->getBase()->IgnoreParenImpCasts();
+  if (isa<CXXThisExpr>(Base))
     return {true, nullptr};
-  else if(auto var = dyn_cast<DeclRefExpr>(base)) {
-    auto decl = var->getDecl();
-    if (!decl) { // shouln't happend here
+  else if (auto Var = dyn_cast<DeclRefExpr>(Base)) {
+    auto Decl = Var->getDecl();
+    if (!Decl) { // shouln't happend here
       return {false, nullptr};
     }
 
-    if(decl->hasAttr<NodeCppMayExtendAttr>())
-      return {true, decl};
-    else if(decl->hasAttr<NodeCppOwnedByThisAttr>())
-      return {true, decl};
+    if (Decl->hasAttr<NodeCppMayExtendAttr>())
+      return {true, Decl};
+    else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+      return {true, Decl};
     else
-      return {false, decl};
-  } else if(auto osnBase = getBaseIfOsnPtrDerref(base)) {
-    if(auto var = dyn_cast<DeclRefExpr>(osnBase->IgnoreParenImpCasts())) {
-      auto decl = var->getDecl();
-      if (!decl) { // shouln't happend here
+      return {false, Decl};
+  } else if (auto OsnBase = getBaseIfOsnPtrDerref(Base)) {
+    if (auto Var = dyn_cast<DeclRefExpr>(OsnBase->IgnoreParenImpCasts())) {
+      auto Decl = Var->getDecl();
+      if (!Decl) { // shouln't happend here
         return {false, nullptr};
       }
 
-      if(decl->hasAttr<NodeCppMayExtendAttr>())
-        return {true, decl};
-      else if(decl->hasAttr<NodeCppOwnedByThisAttr>())
-        return {true, decl};
+      if (Decl->hasAttr<NodeCppMayExtendAttr>())
+        return {true, Decl};
+      else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+        return {true, Decl};
       else
-        return {false, decl};
+        return {false, Decl};
     }
   }
 
-
-  if(member->isArrow()) {
+  if (Member->isArrow()) {
     return {false, nullptr};
   }
-      
-  return canMayExtendBeCalled2(base);
-}
 
+  return canMayExtendBeCalled2(Base);
+}
 
 void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto bad = Result.Nodes.getNodeAs<CXXMemberCallExpr>("bad")) {
-    diag(bad->getExprLoc(), "calling method with [[owned_by_this]] attribute from safe code is not implemented yet");
+  if (auto Bad = Result.Nodes.getNodeAs<CXXMemberCallExpr>("bad")) {
+    diag(Bad->getExprLoc(), "calling method with [[owned_by_this]] attribute "
+                            "from safe code is not implemented yet");
     return;
   }
 
-  auto call = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
-  auto decl = call->getMethodDecl();
+  auto Call = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
+  auto Decl = Call->getMethodDecl();
 
-  auto callee = call->getCallee();
-  auto mayExtend = canMayExtendBeCalled2(callee);
+  auto Callee = Call->getCallee();
+  auto MayExtend = canMayExtendBeCalled2(Callee);
   // if(!mayExtend.first) {
   //   diag(callee->getExprLoc(), "methods with attribute can be called only on members that share the lifetime of this, or have attribute themselves");
   //   return;
   // }
 
-  for (unsigned i = 0; i != decl->param_size(); ++i) {
-    auto p = decl->getParamDecl(i);
-    if (p->hasAttr<NodeCppMayExtendAttr>()) {
+  for (unsigned I = 0; I != Decl->param_size(); ++I) {
+    auto P = Decl->getParamDecl(I);
+    if (P->hasAttr<NodeCppMayExtendAttr>()) {
 
-      auto e = call->getArg(i);
-      if(isFunctionPtr(e)) {
+      auto E = Call->getArg(I);
+      if (isFunctionPtr(E)) {
         continue;
-      } else if(tryCheckAsLambda(e, mayExtend)) {
+      } else if (tryCheckAsLambda(E, MayExtend)) {
         continue;
       } else {
-        if(mayExtend.first) {
-          auto ch = NakedPtrScopeChecker::makeThisScopeChecker(this, getContext());
-          if(ch.checkExpr(e))
+        if (MayExtend.first) {
+          auto Ch =
+              NakedPtrScopeChecker::makeThisScopeChecker(this, getContext());
+          if (Ch.checkExpr(E))
             continue;
         }
-        if(auto dr = dyn_cast<DeclRefExpr>(ignoreTemporaries(e))) {
-          if(dr->getDecl() == mayExtend.second)
+        if (auto Dr = dyn_cast<DeclRefExpr>(ignoreTemporaries(E))) {
+          if (Dr->getDecl() == MayExtend.second)
             continue;
         }
       }
-	    // e may be null?
-      diag(e->getExprLoc(), "is not safe to extend argument scope to 'this'");
+            // e may be null?
+            diag(E->getExprLoc(),
+                 "is not safe to extend argument scope to 'this'");
     }
   }
 }

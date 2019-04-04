@@ -21,120 +21,118 @@ namespace checker {
 
 DiagHelper NullDiagHelper;
 
-
-bool isOwnerPtrName(const std::string& name) {
-  return name == "nodecpp::safememory::owning_ptr" ||
-    name == "nodecpp::safememory::owning_ptr_impl";
+bool isOwnerPtrName(const std::string &Name) {
+  return Name == "nodecpp::safememory::owning_ptr" ||
+         Name == "nodecpp::safememory::owning_ptr_impl";
 }
 
-bool isOwnerPtrDecl(const NamedDecl* decl) {
-  if(!decl)
+bool isOwnerPtrDecl(const NamedDecl *Dc) {
+  if (!Dc)
     return false;
 
-  std::string name = decl->getQualifiedNameAsString();
-  return isOwnerPtrName(name);
+  std::string Name = Dc->getQualifiedNameAsString();
+  return isOwnerPtrName(Name);
 }
 
-
-bool isSafePtrName(const std::string& name) {
-  return isOwnerPtrName(name) || 
-    name == "nodecpp::safememory::soft_ptr" || 
-    name == "nodecpp::safememory::soft_ptr_impl";
+bool isSafePtrName(const std::string &Name) {
+  return isOwnerPtrName(Name) || Name == "nodecpp::safememory::soft_ptr" ||
+         Name == "nodecpp::safememory::soft_ptr_impl";
 }
 
-bool isNakedPtrName(const std::string& name) {
-  return name == "nodecpp::safememory::naked_ptr" ||
-    name == "nodecpp::safememory::naked_ptr_impl";
+bool isNakedPtrName(const std::string &Name) {
+  return Name == "nodecpp::safememory::naked_ptr" ||
+         Name == "nodecpp::safememory::naked_ptr_impl";
 }
 
-bool isConstNakedPtrName(const std::string& name) {
-  return name == "nodecpp::safememory::const_naked_ptr";
+bool isConstNakedPtrName(const std::string &Name) {
+  return Name == "nodecpp::safememory::const_naked_ptr";
 }
 
-bool isSystemLocation(const ClangTidyContext* context, SourceLocation loc) {
+bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
-  auto sm = context->getSourceManager();
-  auto eLoc = sm->getExpansionLoc(loc);
+  auto Sm = Context->getSourceManager();
+  auto ELoc = Sm->getExpansionLoc(Loc);
 
-  return (eLoc.isValid() && sm->isInSystemHeader(eLoc));
+  return (ELoc.isValid() && Sm->isInSystemHeader(ELoc));
 }
 
-bool isSystemSafeName(const ClangTidyContext* context, const std::string& name) {
+bool isSystemSafeName(const ClangTidyContext *Context,
+                      const std::string &Name) {
 
   //hardcode some names that are really important
-  if(name == "nodecpp::safememory::make_owning")
+  if (Name == "nodecpp::safememory::make_owning")
     return true;
-  else if(isSafePtrName(name) || isNakedPtrName(name) || isConstNakedPtrName(name))
+  else if (isSafePtrName(Name) || isNakedPtrName(Name) ||
+           isConstNakedPtrName(Name))
     return false;
 
-
-  auto& wl = context->getGlobalOptions().SafeTypes; 
-  return (wl.find(name) != wl.end());
+  auto &Wl = Context->getGlobalOptions().SafeTypes;
+  return (Wl.find(Name) != Wl.end());
 }
 
-
-
-bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh) {
+bool checkNakedStructRecord(const CXXRecordDecl *Dc,
+                            const ClangTidyContext *Context, DiagHelper &Dh) {
 
   //on debug break here
-  assert(decl);
-  assert(decl->hasDefinition());
+  assert(Dc);
+  assert(Dc->hasDefinition());
 
-  if (!decl || !decl->hasDefinition()) {
+  if (!Dc || !Dc->hasDefinition()) {
     return false;
   }
 
   //we check explicit and implicit here
-  bool hasAttr = decl->hasAttr<NodeCppNakedStructAttr>();
+  bool HasAttr = Dc->hasAttr<NodeCppNakedStructAttr>();
 
   // bool checkInits = false;
   // std::list<const FieldDecl*> missingInitializers;
-  auto f = decl->fields();
-  for (auto it = f.begin(); it != f.end(); ++it) {
+  auto F = Dc->fields();
+  for (auto It = F.begin(); It != F.end(); ++It) {
 
-    auto qt = (*it)->getType().getCanonicalType(); 
-    if(isSafeType(qt, context))
+    auto Qt = (*It)->getType().getCanonicalType();
+    if (isSafeType(Qt, Context))
       continue;
 
-    if(auto np = isNakedPointerType(qt, context)) {
-      if(np.isOk())
+    if (auto Np = isNakedPointerType(Qt, Context)) {
+      if (Np.isOk())
         continue;
 
-      isNakedPointerType(qt, context, dh); //for report
-      dh.diag((*it)->getLocation(), "unsafe type at naked_ptr declaration");
+      isNakedPointerType(Qt, Context, Dh); // for report
+      Dh.diag((*It)->getLocation(), "unsafe type at naked_ptr declaration");
       return false;
     }
 
-    if(auto ns = isNakedStructType(qt, context)) {
-      if(ns.isOk())
+    if (auto Ns = isNakedStructType(Qt, Context)) {
+      if (Ns.isOk())
         continue;
 
-      isNakedStructType(qt, context, dh); //for report
-      dh.diag((*it)->getLocation(), "unsafe type at naked_struct declaration");
+      isNakedStructType(Qt, Context, Dh); // for report
+      Dh.diag((*It)->getLocation(), "unsafe type at naked_struct declaration");
       return false;
     }
 
     //if none of the above, then is an error
-    isSafeType(qt, context, dh);
-    dh.diag((*it)->getLocation(), "member not allowed at naked struct");
+    isSafeType(Qt, Context, Dh);
+    Dh.diag((*It)->getLocation(), "member not allowed at naked struct");
     return false;
   }
 
-  auto b = decl->bases();
-  if(b.begin() != b.end()) {
-    dh.diag(b.begin()->getLocStart(), "inheritance not allowed at naked struct");
+  auto B = Dc->bases();
+  if (B.begin() != B.end()) {
+    Dh.diag(B.begin()->getLocStart(),
+            "inheritance not allowed at naked struct");
     return false;//don't allow any bases yet
   }
 
-  auto m = decl->methods();
-  for(auto it = m.begin(); it != m.end(); ++it) {
+  auto M = Dc->methods();
+  for (auto It = M.begin(); It != M.end(); ++It) {
 
-    auto method = *it;
+    auto Method = *It;
 
-    if(isa<CXXDestructorDecl>(method))
+    if (isa<CXXDestructorDecl>(Method))
       continue;
 
-    if(auto ctr = dyn_cast<CXXConstructorDecl>(method)) {
+    if (auto Ctr = dyn_cast<CXXConstructorDecl>(Method)) {
       // if(!missingInitializers.empty()) {
       //   auto inits = ctr->inits();
       //   std::list<const FieldDecl*> decls(missingInitializers);
@@ -153,33 +151,34 @@ bool checkNakedStructRecord(const CXXRecordDecl *decl, const ClangTidyContext* c
       continue;
     }
 
-    if(method->isConst())
+    if (Method->isConst())
       continue;
 
-    if(method->isMoveAssignmentOperator() || method->isCopyAssignmentOperator()) {
-      if(method->isDeleted())
+    if (Method->isMoveAssignmentOperator() ||
+        Method->isCopyAssignmentOperator()) {
+      if (Method->isDeleted())
         continue;
 
-      if(hasAttr && method->isDefaulted())
+      if (HasAttr && Method->isDefaulted())
         continue;
     }
-    
-    dh.diag(method->getLocation(), "method not allowed at naked struct");
+
+    Dh.diag(Method->getLocation(), "method not allowed at naked struct");
     return false;
   }
-  
+
   // finally we are safe!
   return true;
 }
 
+KindCheck isNakedStructType(QualType Qt, const ClangTidyContext *Context,
+                            DiagHelper &Dh) {
 
-KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHelper& dh) {
+  assert(Qt.isCanonical());
 
-  assert(qt.isCanonical());
- 
-  auto decl = qt->getAsCXXRecordDecl();
+  auto Dc = Qt->getAsCXXRecordDecl();
 
-  if (!decl || !decl->hasDefinition())
+  if (!Dc || !Dc->hasDefinition())
     return KindCheck(false, false);
 
   // // first verify if is a well known class,
@@ -189,200 +188,202 @@ KindCheck isNakedStructType(QualType qt, const ClangTidyContext* context, DiagHe
   
   //if it has attribute, the some other rule
   // must have verified it
-  if(decl->hasAttr<NodeCppNakedStructAttr>())
-    return KindCheck(true, checkNakedStructRecord(decl, context));
+  if (Dc->hasAttr<NodeCppNakedStructAttr>())
+    return KindCheck(true, checkNakedStructRecord(Dc, Context));
 
   //t->dump();
   return KindCheck(false, false);
 }
 
-FunctionKind getFunctionKind(QualType qt) {
+FunctionKind getFunctionKind(QualType Qt) {
 
-  if(auto ts = qt->getAs<TemplateSpecializationType>()) {
+  if (auto Ts = Qt->getAs<TemplateSpecializationType>()) {
 
-    auto td = ts->getTemplateName().getAsTemplateDecl();
-    if(td) {
-       if(td->getQualifiedNameAsString() == "nodecpp::function_owned_arg0")
-         return FunctionKind::OwnedArg0;
+    auto Td = Ts->getTemplateName().getAsTemplateDecl();
+    if (Td) {
+      if (Td->getQualifiedNameAsString() == "nodecpp::function_owned_arg0")
+        return FunctionKind::OwnedArg0;
     }
-   
-    return getFunctionKind(ts->desugar());
-  }
-  else if(auto rc = qt->getAs<RecordType>()) {
-    auto decl = rc->getDecl();
-    assert(decl);
 
-    if(decl->isLambda())
+    return getFunctionKind(Ts->desugar());
+  } else if (auto Rc = Qt->getAs<RecordType>()) {
+    auto Dc = Rc->getDecl();
+    assert(Dc);
+
+    if (Dc->isLambda())
       return FunctionKind::Lambda;
 
-    auto name = decl->getQualifiedNameAsString(); 
-    if(name == "std::function" || name == "std::__1::function")
+    auto Name = Dc->getQualifiedNameAsString();
+    if (Name == "std::function" || Name == "std::__1::function")
       return FunctionKind::StdFunction;
     
     return FunctionKind::None;
   }
-  
+
   //qt.dump();
   return FunctionKind::None;
 }
 
-bool isStdFunctionType(QualType qt) {
-  
-  return getFunctionKind(qt) == FunctionKind::StdFunction;
+bool isStdFunctionType(QualType Qt) {
+
+  return getFunctionKind(Qt) == FunctionKind::StdFunction;
 }
 
-bool isLambdaType(QualType qt) {
-  
-  return getFunctionKind(qt) == FunctionKind::Lambda;
+bool isLambdaType(QualType Qt) {
+
+  return getFunctionKind(Qt) == FunctionKind::Lambda;
 }
 
-bool isNodecppFunctionOwnedArg0Type(QualType qt) {
+bool isNodecppFunctionOwnedArg0Type(QualType Qt) {
 
-  return getFunctionKind(qt) == FunctionKind::OwnedArg0;
+  return getFunctionKind(Qt) == FunctionKind::OwnedArg0;
 }
 
-bool isAnyFunctorType(QualType qt) {
+bool isAnyFunctorType(QualType Qt) {
 
-  auto kind = getFunctionKind(qt);
-  return kind == FunctionKind::StdFunction || kind == FunctionKind::OwnedArg0;
+  auto Kind = getFunctionKind(Qt);
+  return Kind == FunctionKind::StdFunction || Kind == FunctionKind::OwnedArg0;
 }
 
-bool isRawPointerType(QualType qt) {
-  assert(qt.isCanonical());
+bool isRawPointerType(QualType Qt) {
+  assert(Qt.isCanonical());
 
-  return qt->isPointerType();
+  return Qt->isPointerType();
 }
 
-const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType qt) {
-  
-  assert(qt.isCanonical());
+const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
 
-  auto decl = dyn_cast_or_null<ClassTemplateSpecializationDecl>(qt->getAsCXXRecordDecl());
-  if(!decl)
+  assert(Qt.isCanonical());
+
+  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
+      Qt->getAsCXXRecordDecl());
+  if (!Dc)
     return nullptr;
 
-  if(!decl->hasDefinition())
+  if (!Dc->hasDefinition())
     return nullptr;
 
-  auto& args = decl->getTemplateArgs();
-  
-  if(args.size() < 1)
+  auto &Args = Dc->getTemplateArgs();
+
+  if (Args.size() < 1)
     return nullptr;
 
-  auto& arg0 = args.get(0);
-  
-  if(arg0.getKind() != TemplateArgument::Type)
+  auto &Arg0 = Args.get(0);
+
+  if (Arg0.getKind() != TemplateArgument::Type)
     return nullptr;
 
-  return decl;
+  return Dc;
 }
 
-QualType getPointeeType(QualType qt) {
+QualType getPointeeType(QualType Qt) {
 
-  assert(qt.isCanonical());
+  assert(Qt.isCanonical());
 
-  if(qt->isPointerType())
-    return qt->getPointeeType().getCanonicalType();
+  if (Qt->isPointerType())
+    return Qt->getPointeeType().getCanonicalType();
 
-  auto decl = getTemplatePtrDecl(qt);
+  auto Dc = getTemplatePtrDecl(Qt);
 
-  assert(decl);
-  assert(decl->hasDefinition());
+  assert(Dc);
+  assert(Dc->hasDefinition());
 
-  auto& args = decl->getTemplateArgs();
-  
-  assert(args.size() >= 1);
+  auto &Args = Dc->getTemplateArgs();
 
-  auto& arg0 = args.get(0);
-  
-  assert(arg0.getKind() == TemplateArgument::Type);
+  assert(Args.size() >= 1);
 
-  return arg0.getAsType().getCanonicalType();
+  auto &Arg0 = Args.get(0);
+
+  assert(Arg0.getKind() == TemplateArgument::Type);
+
+  return Arg0.getAsType().getCanonicalType();
 }
 
-KindCheck isNakedPointerType(QualType qt, const ClangTidyContext* context, DiagHelper& dh) {
-  
-  assert(qt.isCanonical());
-  auto decl = getTemplatePtrDecl(qt);
-  if(!decl)
+KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
+                             DiagHelper &Dh) {
+
+  assert(Qt.isCanonical());
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
     return KindCheck(false, false);
 
-  std::string name = decl->getQualifiedNameAsString();
-  if(isNakedPtrName(name) || isConstNakedPtrName(name)) {
-    QualType pointee = getPointeeType(qt);
-    return KindCheck(true, isSafeType(pointee, context, dh));
+  std::string Name = Dc->getQualifiedNameAsString();
+  if (isNakedPtrName(Name) || isConstNakedPtrName(Name)) {
+    QualType Pointee = getPointeeType(Qt);
+    return KindCheck(true, isSafeType(Pointee, Context, Dh));
   }
 
   return KindCheck(false, false);
 }
 
-bool isConstNakedPointerType(QualType qt) {
-  
-  assert(qt.isCanonical());
+bool isConstNakedPointerType(QualType Qt) {
 
-  auto decl = getTemplatePtrDecl(qt);
-  if(!decl)
+  assert(Qt.isCanonical());
+
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
     return false;
 
-  std::string name = decl->getQualifiedNameAsString();
-  return isConstNakedPtrName(name);
+  std::string Name = Dc->getQualifiedNameAsString();
+  return isConstNakedPtrName(Name);
 }
 
+bool isSafePtrType(QualType Qt) {
 
-bool isSafePtrType(QualType qt) {
+  assert(Qt.isCanonical());
 
-  assert(qt.isCanonical());
-
-  auto decl = getTemplatePtrDecl(qt);
-  if(!decl)
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
     return false;
 
-  std::string name = decl->getQualifiedNameAsString();
-  return isSafePtrName(name);
+  std::string Name = Dc->getQualifiedNameAsString();
+  return isSafePtrName(Name);
 }
 
-bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, DiagHelper& dh) {
+bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
+                  DiagHelper &Dh) {
 
-  if (!decl) {
+  if (!Dc) {
     return false;
   }
 
-  if(isSystemLocation(context, decl->getLocation())) {
-    // if record is in system header, fate is decided by white list 
-    std::string name = decl->getQualifiedNameAsString();
-    if(isSystemSafeName(context, name)) {
+  if (isSystemLocation(Context, Dc->getLocation())) {
+    // if record is in system header, fate is decided by white list
+    std::string Name = Dc->getQualifiedNameAsString();
+    if (isSystemSafeName(Context, Name)) {
       return true;
     } else {
-      std::string msg = "system library type '" + name + "' is not safe";
-      dh.diag(decl->getLocation(), msg);
+      std::string Msg = "system library type '" + Name + "' is not safe";
+      Dh.diag(Dc->getLocation(), Msg);
       return false;
     }
   }
 
   // if we don't have a definition, we can't check
-  if(!decl->hasDefinition())
+  if (!Dc->hasDefinition())
     return false;
 
-  if(decl->isUnion()) {
-    return checkUnion(decl, dh);
+  if (Dc->isUnion()) {
+    return checkUnion(Dc, Dh);
   }
 
-  auto F = decl->fields();
+  auto F = Dc->fields();
   for (auto It = F.begin(); It != F.end(); ++It) {
-    auto ft = (*It)->getType().getCanonicalType();
-    if (!isSafeType(ft, context, dh)) {
-      std::string msg = "member '" + std::string((*It)->getName()) + "' is not safe";
-      dh.diag((*It)->getLocation(), msg);
+    auto Ft = (*It)->getType().getCanonicalType();
+    if (!isSafeType(Ft, Context, Dh)) {
+      std::string Msg =
+          "member '" + std::string((*It)->getName()) + "' is not safe";
+      Dh.diag((*It)->getLocation(), Msg);
       return false;
     }
   }
 
-  auto B = decl->bases();
+  auto B = Dc->bases();
   for (auto It = B.begin(); It != B.end(); ++It) {
 
-    auto bt = It->getType().getCanonicalType();
-    if (!isSafeType(bt, context, dh)) {
-      dh.diag((*It).getBaseTypeLoc(), "base class is not safe");
+    auto Bt = It->getType().getCanonicalType();
+    if (!isSafeType(Bt, Context, Dh)) {
+      Dh.diag((*It).getBaseTypeLoc(), "base class is not safe");
       return false;
     }
   }
@@ -391,22 +392,21 @@ bool isSafeRecord(const CXXRecordDecl *decl, const ClangTidyContext* context, Di
   return true;
 }
 
+bool isSafeType(QualType Qt, const ClangTidyContext *Context, DiagHelper &Dh) {
 
-bool isSafeType(QualType qt, const ClangTidyContext* context, DiagHelper& dh) {
+  assert(Qt.isCanonical());
 
-  assert(qt.isCanonical());
-
-  if (qt->isReferenceType()) {
+  if (Qt->isReferenceType()) {
     return false;
-  } else if(qt->isPointerType()) {
+  } else if (Qt->isPointerType()) {
     return false;
-  } else if (qt->isBuiltinType()) {
+  } else if (Qt->isBuiltinType()) {
     return true;
-  } else if(isSafePtrType(qt)) {
-    return isSafeType(getPointeeType(qt), context, dh);
-  } else if (auto rd = qt->getAsCXXRecordDecl()) {
-    return isSafeRecord(rd, context, dh);
-  } else if (qt->isTemplateTypeParmType()) {
+  } else if (isSafePtrType(Qt)) {
+    return isSafeType(getPointeeType(Qt), Context, Dh);
+  } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
+    return isSafeRecord(Rd, Context, Dh);
+  } else if (Qt->isTemplateTypeParmType()) {
     // we will take care at instantiation
     return true;
   } else {
@@ -415,65 +415,66 @@ bool isSafeType(QualType qt, const ClangTidyContext* context, DiagHelper& dh) {
   }
 }
 
-const CXXRecordDecl* isUnionType(QualType qt) {
+const CXXRecordDecl *isUnionType(QualType Qt) {
 
-  assert(qt.isCanonical());
+  assert(Qt.isCanonical());
 
-  auto rd = qt->getAsCXXRecordDecl();
-  return (rd && rd->hasDefinition() && rd->isUnion()) ? rd : nullptr;
+  auto Rd = Qt->getAsCXXRecordDecl();
+  return (Rd && Rd->hasDefinition() && Rd->isUnion()) ? Rd : nullptr;
 }
 
-bool checkUnion(const CXXRecordDecl *decl, DiagHelper& dh) {
+bool checkUnion(const CXXRecordDecl *Dc, DiagHelper &Dh) {
 
-  assert(decl);
-  assert(decl->hasDefinition());
-  assert(decl->isUnion());
+  assert(Dc);
+  assert(Dc->hasDefinition());
+  assert(Dc->isUnion());
 
+  auto F = Dc->fields();
+  for (auto It = F.begin(); It != F.end(); ++It) {
 
-  auto f = decl->fields();
-  for (auto it = f.begin(); it != f.end(); ++it) {
+    auto Qt = (*It)->getType().getCanonicalType();
+    if (isRawPointerType(Qt)) {
 
-      auto qt = (*it)->getType().getCanonicalType();
-      if(isRawPointerType(qt)) {
+      Dh.diag((*It)->getLocation(),
+              "(S1.4) raw pointers inside unions are prohibited");
+      return false;
+    } else if (!Qt->isBuiltinType() && !Qt->isTemplateTypeParmType()) {
 
-        dh.diag((*it)->getLocation(), "(S1.4) raw pointers inside unions are prohibited");
-        return false;
-      }
-      else if(!qt->isBuiltinType() && !qt->isTemplateTypeParmType()) {
-
-        dh.diag((*it)->getLocation(), "(S1.4) non-primitives inside unions are prohibited");
-        return false;
-      }
+      Dh.diag((*It)->getLocation(),
+              "(S1.4) non-primitives inside unions are prohibited");
+      return false;
+    }
   }
 
   // finally we are safe!
   return true;
 }
 
-bool isOsnPtrRecord(const CXXRecordDecl *decl) {
+bool isOsnPtrRecord(const CXXRecordDecl *Dc) {
 
-  if(!decl)
+  if (!Dc)
     return false;
 
-  std::string name = decl->getQualifiedNameAsString();
+  std::string Name = Dc->getQualifiedNameAsString();
 
-  return isSafePtrName(name) || isNakedPtrName(name) || isConstNakedPtrName(name);
+  return isSafePtrName(Name) || isNakedPtrName(Name) ||
+         isConstNakedPtrName(Name);
 }
 
-const Expr* getBaseIfOsnPtrDerref(const Expr* expr) {
+const Expr *getBaseIfOsnPtrDerref(const Expr *Ex) {
 
-  if(!expr)
+  if (!Ex)
     return nullptr;
 
-  if(auto opCall = dyn_cast<CXXOperatorCallExpr>(expr)) {
-    if(auto opDecl = dyn_cast<CXXMethodDecl>(opCall->getDirectCallee())) {
-      if(isOsnPtrRecord(opDecl->getParent())) {
-        auto name = opDecl->getDeclName();
-        if(name.getNameKind() == DeclarationName::CXXOperatorName) {
-          auto op = name.getCXXOverloadedOperator();
-          if(op == OO_Star || op == OO_Arrow) {
-            assert(opCall->getNumArgs() > 0);
-            return opCall->getArg(0);
+  if (auto OpCall = dyn_cast<CXXOperatorCallExpr>(Ex)) {
+    if (auto OpDecl = dyn_cast<CXXMethodDecl>(OpCall->getDirectCallee())) {
+      if (isOsnPtrRecord(OpDecl->getParent())) {
+        auto Name = OpDecl->getDeclName();
+        if (Name.getNameKind() == DeclarationName::CXXOperatorName) {
+          auto Op = Name.getCXXOverloadedOperator();
+          if (Op == OO_Star || Op == OO_Arrow) {
+            assert(OpCall->getNumArgs() > 0);
+            return OpCall->getArg(0);
           }
         }
       }
@@ -483,111 +484,109 @@ const Expr* getBaseIfOsnPtrDerref(const Expr* expr) {
   return nullptr;
 }
 
-const Expr *getParentExpr(ASTContext *context, const Expr *expr) {
+const Expr *getParentExpr(ASTContext *Context, const Expr *Ex) {
 
-  auto sList = context->getParents(*expr);
+  auto SList = Context->getParents(*Ex);
 
-  auto sIt = sList.begin();
+  auto SIt = SList.begin();
 
-  if (sIt == sList.end())
+  if (SIt == SList.end())
     return nullptr;
 
-  auto p = sIt->get<Expr>();
-  if(!p)
+  auto P = SIt->get<Expr>();
+  if (!P)
     return nullptr;
-    
-  if (isa<ParenExpr>(p) || isa<ImplicitCastExpr>(p) 
-    || isa<MaterializeTemporaryExpr>(p) || isa<CXXBindTemporaryExpr>(p))
-    return getParentExpr(context, p);
+
+  if (isa<ParenExpr>(P) || isa<ImplicitCastExpr>(P) ||
+      isa<MaterializeTemporaryExpr>(P) || isa<CXXBindTemporaryExpr>(P))
+    return getParentExpr(Context, P);
   else
-    return p;
+    return P;
 }
 
-const Expr *ignoreTemporaries(const Expr *expr) {
-  if (auto b = dyn_cast<CXXBindTemporaryExpr>(expr)) {
-    return ignoreTemporaries(b->getSubExpr());
-  }else if (auto c = dyn_cast<CXXConstructExpr>(expr)) {
-    return ignoreTemporaries(c->getArg(0));
-  } else if (auto t = dyn_cast<MaterializeTemporaryExpr>(expr)) {
-    return ignoreTemporaries(t->GetTemporaryExpr());
-  } else if (auto i = dyn_cast<ImplicitCastExpr>(expr)) {
-    return ignoreTemporaries(i->getSubExpr());
-  } else if (auto cl = dyn_cast<ExprWithCleanups>(expr)) {
-    return ignoreTemporaries(cl->getSubExpr());
+const Expr *ignoreTemporaries(const Expr *Ex) {
+  if (auto B = dyn_cast<CXXBindTemporaryExpr>(Ex)) {
+    return ignoreTemporaries(B->getSubExpr());
+  } else if (auto C = dyn_cast<CXXConstructExpr>(Ex)) {
+    return ignoreTemporaries(C->getArg(0));
+  } else if (auto T = dyn_cast<MaterializeTemporaryExpr>(Ex)) {
+    return ignoreTemporaries(T->GetTemporaryExpr());
+  } else if (auto I = dyn_cast<ImplicitCastExpr>(Ex)) {
+    return ignoreTemporaries(I->getSubExpr());
+  } else if (auto Cl = dyn_cast<ExprWithCleanups>(Ex)) {
+    return ignoreTemporaries(Cl->getSubExpr());
   } else {
-	  return expr;
+    return Ex;
   }
 } // namespace nodecpp
 
-bool isFunctionPtr(const Expr *expr) {
+bool isFunctionPtr(const Expr *Ex) {
 
-  if (!expr)
+  if (!Ex)
     return false;
 
-  auto e = ignoreTemporaries(expr);
+  auto E = ignoreTemporaries(Ex);
 
-  if (auto op = dyn_cast<UnaryOperator>(e)) {
-    if (op->getOpcode() != UnaryOperatorKind::UO_AddrOf)
+  if (auto Op = dyn_cast<UnaryOperator>(E)) {
+    if (Op->getOpcode() != UnaryOperatorKind::UO_AddrOf)
       return false;
 
-    e = op->getSubExpr();
+    E = Op->getSubExpr();
   }
 
-  if (auto ref = dyn_cast<DeclRefExpr>(e)) {
-    return isa<FunctionDecl>(ref->getDecl());
+  if (auto Ref = dyn_cast<DeclRefExpr>(E)) {
+    return isa<FunctionDecl>(Ref->getDecl());
   }
 
   return false;
 }
 
+const Stmt *getParentStmt(ASTContext *Context, const Stmt *St) {
 
+  auto SList = Context->getParents(*St);
 
-const Stmt *getParentStmt(ASTContext *context, const Stmt *stmt) {
+  auto SIt = SList.begin();
 
-  auto sList = context->getParents(*stmt);
-
-  auto sIt = sList.begin();
-
-  if (sIt != sList.end())
-    return sIt->get<Stmt>();
+  if (SIt != SList.end())
+    return SIt->get<Stmt>();
   else
     return nullptr;
 }
 
+const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
 
-const DeclStmt* getParentDeclStmt(ASTContext *context, const Decl* decl) {
-
-  if(!decl)
+  if (!Dc)
     return nullptr;
 
-  auto l = context->getParents(*decl);
+  auto L = Context->getParents(*Dc);
 
-  if(l.begin() != l.end())
-    return l.begin()->get<DeclStmt>();
+  if (L.begin() != L.end())
+    return L.begin()->get<DeclStmt>();
   else
     return nullptr;
 }
 
-bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType out, QualType arg) {
+bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
+                                                     QualType Arg) {
 
   //until properly updated for naked_ptr template
   return true;
   // out.dump();
   // arg.dump();
 
-  if(isSafeType(arg, tidyContext))
+  if (isSafeType(Arg, TidyContext))
     return false;
 
-  if(isNakedPointerType(arg, tidyContext))
-    return true;
-  
-  if(isNakedStructType(arg, tidyContext))
-    return true;
-    
-  if(arg->isReferenceType())
+  if (isNakedPointerType(Arg, TidyContext))
     return true;
 
-  if(arg->isPointerType())
+  if (isNakedStructType(Arg, TidyContext))
+    return true;
+
+  if (Arg->isReferenceType())
+    return true;
+
+  if (Arg->isPointerType())
     return true;
 
   return false;
@@ -623,65 +622,65 @@ bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType out, QualType arg)
   // }
 }
 
-bool NakedPtrScopeChecker::checkStack2StackAssignment(const Decl *fromDecl) {
+bool NakedPtrScopeChecker::checkStack2StackAssignment(const Decl *FromDecl) {
 
-  if(!astContext || !outScopeDecl) {
-    check->diag(fromDecl->getLocStart(), "Internal checker error, please report", DiagnosticIDs::Error);
+  if(!AstContext || !OutScopeDecl) {
+    Check->diag(FromDecl->getLocStart(),
+                "Internal checker error, please report", DiagnosticIDs::Error);
     return false;
   }
-  
-  auto fromStmt = getParentDeclStmt(astContext, fromDecl);
-  if (!fromStmt)
+
+  auto FromStmt = getParentDeclStmt(AstContext, FromDecl);
+  if (!FromStmt)
     return false;
 
-  auto toStmt = getParentDeclStmt(astContext, outScopeDecl);
-  if (!toStmt)
+  auto ToStmt = getParentDeclStmt(AstContext, OutScopeDecl);
+  if (!ToStmt)
     return false;
 
-  auto from = getParentStmt(astContext, fromStmt);
-  if (!from)
+  auto From = getParentStmt(AstContext, FromStmt);
+  if (!From)
     return false;
 
-  auto to = getParentStmt(astContext, toStmt);
-  while (to) {
-    if (to == from)
+  auto To = getParentStmt(AstContext, ToStmt);
+  while (To) {
+    if (To == From)
       return true;
 
-    to = getParentStmt(astContext, to);
+    To = getParentStmt(AstContext, To);
   }
 
   // we couldn't verify this is ok, assume the worst
   return false;
 }
 
-bool NakedPtrScopeChecker::checkDeclRefExpr(const DeclRefExpr *declRef) {
-  auto fromDecl = declRef->getDecl();
-  if (!fromDecl) { // shouln't happend here
+bool NakedPtrScopeChecker::checkDeclRefExpr(const DeclRefExpr *DeclRef) {
+  auto FromDecl = DeclRef->getDecl();
+  if (!FromDecl) { // shouln't happend here
     return false;
   }
 
-  if (isa<FieldDecl>(fromDecl)) {
-    fromDecl->dumpColor();
+  if (isa<FieldDecl>(FromDecl)) {
+    FromDecl->dumpColor();
     assert(false);
-  } else if (auto paramVar = dyn_cast<ParmVarDecl>(fromDecl)) {
-    switch (outScope) {
+  } else if (auto ParamVar = dyn_cast<ParmVarDecl>(FromDecl)) {
+    switch (OutScope) {
     case Stack:
     case Param:
       return true;
     case This:
-      return paramVar->hasAttr<NodeCppMayExtendAttr>();
+      return ParamVar->hasAttr<NodeCppMayExtendAttr>();
     default:
       assert(false);
     }
-  } else if (auto var = dyn_cast<VarDecl>(fromDecl)) {
-    if (var->hasGlobalStorage())
+  } else if (auto Var = dyn_cast<VarDecl>(FromDecl)) {
+    if (Var->hasGlobalStorage())
       return true;
-    else if(var->hasAttr<NodeCppMayExtendAttr>()) {
+    else if (Var->hasAttr<NodeCppMayExtendAttr>()) {
       return true;
-    }
-    else {
-      if (outScope == Stack) {
-        return checkStack2StackAssignment(fromDecl);
+    } else {
+      if (OutScope == Stack) {
+        return checkStack2StackAssignment(FromDecl);
       }
       return false;
     }
@@ -690,73 +689,73 @@ bool NakedPtrScopeChecker::checkDeclRefExpr(const DeclRefExpr *declRef) {
   return false;
 }
 
-bool NakedPtrScopeChecker::checkCallExpr(const CallExpr *call) {
+bool NakedPtrScopeChecker::checkCallExpr(const CallExpr *Call) {
 
-  if(!call) { // shouln't happend here
+  if (!Call) { // shouln't happend here
     assert(false);
     return false;
   }
-    
-  auto callDecl = call->getDirectCallee();
-  if (!callDecl) {
+
+  auto CallDecl = Call->getDirectCallee();
+  if (!CallDecl) {
     return false;
   }
 
-  if(isa<CXXMemberCallExpr>(call)) {
-    auto callee = dyn_cast<MemberExpr>(call->getCallee());
+  if (isa<CXXMemberCallExpr>(Call)) {
+    auto Callee = dyn_cast<MemberExpr>(Call->getCallee());
 
-    if(!callee) {
+    if (!Callee) {
       //can this happend?
       return false;
     }
 
-    if(isSafePtrType(callee->getBase()->getType().getCanonicalType()))
+    if (isSafePtrType(Callee->getBase()->getType().getCanonicalType()))
       return true;
 
-    if(!checkExpr(callee->getBase())) {
-        return false;
+    if (!checkExpr(Callee->getBase())) {
+      return false;
     }
   }
   // TODO check if callee is not the first argument
 
-  auto params = callDecl->parameters();
-  auto ret = callDecl->getReturnType().getCanonicalType();
-  auto args = call->arguments();
+  auto Params = CallDecl->parameters();
+  auto Ret = CallDecl->getReturnType().getCanonicalType();
+  auto Args = Call->arguments();
 
-  auto it = args.begin();
-  auto jt = params.begin();
+  auto It = Args.begin();
+  auto Jt = Params.begin();
 
-  if(isa<CXXOperatorCallExpr>(call) && isa<CXXMethodDecl>(callDecl)) {
+  if (isa<CXXOperatorCallExpr>(Call) && isa<CXXMethodDecl>(CallDecl)) {
     // this is an instance method operator call
     // then first argument is actually the instance
-    if (it == args.end()) {
+    if (It == Args.end()) {
       assert(false);
       return false;
     }
 
-    if(isSafePtrType((*it)->getType().getCanonicalType()))
+    if (isSafePtrType((*It)->getType().getCanonicalType()))
       return true;
 
-    if (!checkExpr(*it)) {
+    if (!checkExpr(*It)) {
       return false;
     }
-    ++it;
+    ++It;
   }
 
-  while (it != args.end() && jt != params.end()) {
-    auto arg = (*jt)->getType().getCanonicalType();
-    if (canArgumentGenerateOutput(ret, arg)) {
+  while (It != Args.end() && Jt != Params.end()) {
+    auto Arg = (*Jt)->getType().getCanonicalType();
+    if (canArgumentGenerateOutput(Ret, Arg)) {
       // diag((*it)->getExprLoc(),
       //     "check this argument");
 
-      if (!checkExpr(*it)) {
+      if (!checkExpr(*It)) {
         return false;
       }
     }
-    ++it;
-    ++jt;
+    ++It;
+    ++Jt;
   }
-  if (it != args.end() || jt != params.end()) {
+  if (It != Args.end() || Jt != Params.end()) {
     //TODO diag
     return false;
   }
@@ -765,37 +764,36 @@ bool NakedPtrScopeChecker::checkCallExpr(const CallExpr *call) {
   return true;
 }
 
-bool NakedPtrScopeChecker::checkCXXConstructExpr(const CXXConstructExpr *construct) {
+bool NakedPtrScopeChecker::checkCXXConstructExpr(
+    const CXXConstructExpr *Construct) {
 
-  auto args = construct->arguments();
+  auto Args = Construct->arguments();
 
-  for(auto it = args.begin(); it != args.end(); ++it) {
+  for (auto It = Args.begin(); It != Args.end(); ++It) {
 
-    if (!checkExpr(*it)) {
+    if (!checkExpr(*It)) {
       return false;
     }
   }
 
   // this is ok!
   return true;
-
 }
 
+bool NakedPtrScopeChecker::checkExpr(const Expr *From) {
 
-bool NakedPtrScopeChecker::checkExpr(const Expr *from) {
-
-  if(outScope == Unknown) {
+  if(OutScope == Unknown) {
     return false;
   }
 
-  if(!from) { // shouln't happend here
+  if (!From) { // shouln't happend here
     assert(false);
     return false;
   }
 
-  from = from->IgnoreParenImpCasts();
-  if (isa<CXXThisExpr>(from)) {
-    switch (outScope) {
+  From = From->IgnoreParenImpCasts();
+  if (isa<CXXThisExpr>(From)) {
+    switch (OutScope) {
     case Stack:
     case Param:
     case This:
@@ -804,119 +802,123 @@ bool NakedPtrScopeChecker::checkExpr(const Expr *from) {
       assert(false);
       return false;
     }
-  } else if (isa<CXXNullPtrLiteralExpr>(from)) {
+  } else if (isa<CXXNullPtrLiteralExpr>(From)) {
     return true;
-  } else if (isa<IntegerLiteral>(from)) {
+  } else if (isa<IntegerLiteral>(From)) {
     return true;
-  } else if (auto declRef = dyn_cast<DeclRefExpr>(from)) {
-    return checkDeclRefExpr(declRef);
-  } else if (auto callExpr = dyn_cast<CallExpr>(from)) {
+  } else if (auto DeclRef = dyn_cast<DeclRefExpr>(From)) {
+    return checkDeclRefExpr(DeclRef);
+  } else if (auto Call = dyn_cast<CallExpr>(From)) {
     // this will check functions, members and both operators
-    return checkCallExpr(callExpr);
-  } else if (auto member = dyn_cast<MemberExpr>(from)) {
+    return checkCallExpr(Call);
+  } else if (auto Member = dyn_cast<MemberExpr>(From)) {
     // TODO verify only members and not methods will get in here
-    return checkExpr(member->getBase());
-  } else if (auto op = dyn_cast<UnaryOperator>(from)) {
-    return checkExpr(op->getSubExpr());
-  } else if (auto op = dyn_cast<BinaryOperator>(from)) {
-    if(checkExpr(op->getLHS()))
-      return checkExpr(op->getRHS());
+    return checkExpr(Member->getBase());
+  } else if (auto Op = dyn_cast<UnaryOperator>(From)) {
+    return checkExpr(Op->getSubExpr());
+  } else if (auto Op = dyn_cast<BinaryOperator>(From)) {
+    if (checkExpr(Op->getLHS()))
+      return checkExpr(Op->getRHS());
     else    
       return false;
-  } else if (auto defArg = dyn_cast<CXXDefaultArgExpr>(from)) {
-    return checkExpr(defArg->getExpr());
-  } else if (auto op = dyn_cast<ConditionalOperator>(from)) {
+  } else if (auto DefArg = dyn_cast<CXXDefaultArgExpr>(From)) {
+    return checkExpr(DefArg->getExpr());
+  } else if (auto Op = dyn_cast<ConditionalOperator>(From)) {
     //check both branches
-    if(checkExpr(op->getTrueExpr()))
-      return checkExpr(op->getFalseExpr());
+    if (checkExpr(Op->getTrueExpr()))
+      return checkExpr(Op->getFalseExpr());
     else    
       return false;
-  } else if(auto cast = dyn_cast<CastExpr>(from)) {
-    return checkExpr(cast->getSubExpr());
-  } else if(auto tmp = dyn_cast<MaterializeTemporaryExpr>(from)) {
-    return checkExpr(tmp->GetTemporaryExpr());
-  } else if(auto construct = dyn_cast<CXXConstructExpr>(from)) {
-    return checkCXXConstructExpr(construct);
-  } else if(auto b = dyn_cast<CXXBindTemporaryExpr>(from)) {
-    return checkExpr(b->getSubExpr());
+  } else if (auto Cast = dyn_cast<CastExpr>(From)) {
+    return checkExpr(Cast->getSubExpr());
+  } else if (auto Tmp = dyn_cast<MaterializeTemporaryExpr>(From)) {
+    return checkExpr(Tmp->GetTemporaryExpr());
+  } else if (auto Construct = dyn_cast<CXXConstructExpr>(From)) {
+    return checkCXXConstructExpr(Construct);
+  } else if (auto B = dyn_cast<CXXBindTemporaryExpr>(From)) {
+    return checkExpr(B->getSubExpr());
   }
 
-
   //just in case
-  from->dumpColor();
+  From->dumpColor();
   return false;
 }
 
-
 /* static */
-std::pair<NakedPtrScopeChecker::OutputScope, const Decl*>
-NakedPtrScopeChecker::calculateScope(const Expr *expr) {
+std::pair<NakedPtrScopeChecker::OutputScope, const Decl *>
+NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
 
   // Scope is only calculated for the expression acting as lhs
   // all other expressions are checked againt them
-  if(!expr) {
-    assert(expr);
+  if (!Ex) {
+    assert(Ex);
     return std::make_pair(Unknown, nullptr);
   }
 
-  expr = expr->IgnoreParenImpCasts();
-  if (auto declRef = dyn_cast<DeclRefExpr>(expr)) {
-    auto decl = declRef->getDecl();
-    if (!decl) { // shouldn't happend here
+  Ex = Ex->IgnoreParenImpCasts();
+  if (auto DeclRef = dyn_cast<DeclRefExpr>(Ex)) {
+    auto Dc = DeclRef->getDecl();
+    if (!Dc) { // shouldn't happend here
       return std::make_pair(Unknown, nullptr);
     }
 
-    if (auto parmVar = dyn_cast<ParmVarDecl>(decl)) {
+    if (auto ParmVar = dyn_cast<ParmVarDecl>(Dc)) {
 
-      if (parmVar->hasAttr<NodeCppMayExtendAttr>())
+      if (ParmVar->hasAttr<NodeCppMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Param, nullptr);
-    } else if (auto field = dyn_cast<FieldDecl>(decl)) {
+    } else if (auto Field = dyn_cast<FieldDecl>(Dc)) {
 
-      expr->dumpColor();
+      Ex->dumpColor();
       assert(false);
       return std::make_pair(Unknown, nullptr);
-    } else if (auto var = dyn_cast<VarDecl>(decl)) {
-      if (var->hasGlobalStorage()) //globals can't be changed
+    } else if (auto Var = dyn_cast<VarDecl>(Dc)) {
+      if (Var->hasGlobalStorage()) // globals can't be changed
         return std::make_pair(Unknown, nullptr);
-      else if(var->hasAttr<NodeCppMayExtendAttr>())
+      else if (Var->hasAttr<NodeCppMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
-        return std::make_pair(Stack, decl);
+        return std::make_pair(Stack, Dc);
     }
-  } else if (auto member = dyn_cast<MemberExpr>(expr)) {
+  } else if (auto Member = dyn_cast<MemberExpr>(Ex)) {
     // TODO verify only members and not methods will get in here
     // TODO also verify is a hard member and not a pointer / unique_ptr
-    return calculateScope(member->getBase());
-  } else if (isa<CXXThisExpr>(expr)) {
+    return calculateScope(Member->getBase());
+  } else if (isa<CXXThisExpr>(Ex)) {
     return std::make_pair(This, nullptr);
   }
 
   llvm::errs() << "NakedPtrScopeChecker::calculateScope > Unknown\n";
-  expr->dumpColor();
+  Ex->dumpColor();
   return std::make_pair(Unknown, nullptr);
 }
 
 /* static */
-NakedPtrScopeChecker NakedPtrScopeChecker::makeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext,
-                                                       ASTContext *astContext,
-                                                       const Expr *toExpr) {
+NakedPtrScopeChecker
+NakedPtrScopeChecker::makeChecker(ClangTidyCheck *Check,
+                                  ClangTidyContext *TidyContext,
+                                  ASTContext *AstContext, const Expr *ToExpr) {
 
-  auto sc = NakedPtrScopeChecker::calculateScope(toExpr);
+  auto Sc = NakedPtrScopeChecker::calculateScope(ToExpr);
 
-  return NakedPtrScopeChecker(check, tidyContext, astContext, sc.first, sc.second);
+  return NakedPtrScopeChecker(Check, TidyContext, AstContext, Sc.first,
+                              Sc.second);
 }
 
 /* static */
-NakedPtrScopeChecker NakedPtrScopeChecker::makeThisScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext) {
+NakedPtrScopeChecker
+NakedPtrScopeChecker::makeThisScopeChecker(ClangTidyCheck *Check,
+                                           ClangTidyContext *TidyContext) {
 
-  return NakedPtrScopeChecker(check, tidyContext, nullptr, This, nullptr);
+  return NakedPtrScopeChecker(Check, TidyContext, nullptr, This, nullptr);
 }
 /* static */
-NakedPtrScopeChecker NakedPtrScopeChecker::makeParamScopeChecker(ClangTidyCheck *check, ClangTidyContext* tidyContext) {
+NakedPtrScopeChecker
+NakedPtrScopeChecker::makeParamScopeChecker(ClangTidyCheck *Check,
+                                            ClangTidyContext *TidyContext) {
 
-  return NakedPtrScopeChecker(check, tidyContext, nullptr, Param, nullptr);
+  return NakedPtrScopeChecker(Check, TidyContext, nullptr, Param, nullptr);
 }
 
 } // namespace checker

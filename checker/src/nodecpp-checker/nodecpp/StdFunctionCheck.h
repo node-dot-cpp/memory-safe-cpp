@@ -28,8 +28,8 @@ public:
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
 
-  void checkLambda(QualType qt, bool owned, SourceLocation callLoc);
-  void checkFunctions(QualType arg0_sugar, QualType arg1_sugar, SourceLocation callLoc); 
+  void checkLambda(QualType Qt, bool Owned, SourceLocation CallLoc);
+  void checkFunctions(QualType Arg0Sugar, QualType Arg1Sugar, SourceLocation CallLoc); 
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };
 

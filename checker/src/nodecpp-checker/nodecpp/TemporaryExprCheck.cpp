@@ -26,45 +26,45 @@ void TemporaryExprCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
- 
-  if(auto tmp = Result.Nodes.getNodeAs<CXXTemporaryObjectExpr>("tmp")) {
 
-    QualType qt = tmp->getType().getCanonicalType();
-    if (isSafeType(qt, getContext()))
+  if (auto Tmp = Result.Nodes.getNodeAs<CXXTemporaryObjectExpr>("tmp")) {
+
+    QualType Qt = Tmp->getType().getCanonicalType();
+    if (isSafeType(Qt, getContext()))
       return;
-    if(isAnyFunctorType(tmp->getType())) //don't use cannonical type here
+    if (isAnyFunctorType(Tmp->getType())) // don't use cannonical type here
       return;
 
-    if(isRawPointerType(qt))
+    if (isRawPointerType(Qt))
       return;
-    
-    if(auto np = isNakedPointerType(qt, getContext())) {
-      if(np.isOk())
+
+    if (auto Np = isNakedPointerType(Qt, getContext())) {
+      if (Np.isOk())
         return;
 
-      auto dh = DiagHelper(this);
-      dh.diag(tmp->getExprLoc(), "unsafe type at temporary expression");
-      isNakedPointerType(qt, getContext(), dh); //for report
-      return;
-    }
-    
-    if(auto ns = isNakedStructType(qt, getContext())) {
-      if(ns.isOk())
-        return;
-
-      auto dh = DiagHelper(this);
-      dh.diag(tmp->getExprLoc(), "unsafe type at temporary expression");
-      isNakedStructType(qt, getContext(), dh); //for report
+      auto Dh = DiagHelper(this);
+      Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
+      isNakedPointerType(Qt, getContext(), Dh); // for report
       return;
     }
 
-    if(isLambdaType(qt))
+    if (auto Ns = isNakedStructType(Qt, getContext())) {
+      if (Ns.isOk())
+        return;
+
+      auto Dh = DiagHelper(this);
+      Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
+      isNakedStructType(Qt, getContext(), Dh); // for report
+      return;
+    }
+
+    if (isLambdaType(Qt))
       return;
 
 //    tmp->dump();
-    auto dh = DiagHelper(this);
-    dh.diag(tmp->getExprLoc(), "unsafe type at temporary expression");
-    isSafeType(qt, getContext(), dh);
+auto Dh = DiagHelper(this);
+Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
+isSafeType(Qt, getContext(), Dh);
   }
 }
 

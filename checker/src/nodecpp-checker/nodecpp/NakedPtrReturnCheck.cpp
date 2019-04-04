@@ -25,33 +25,32 @@ void NakedPtrReturnCheck::registerMatchers(MatchFinder *Finder) {
 }
 
 void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
-  auto stmt = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
+  auto St = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
 
-  auto expr = stmt->getRetValue();
-  if(!expr)
+  auto Ex = St->getRetValue();
+  if (!Ex)
     return;
 
-  QualType qt = expr->getType().getCanonicalType();
-  if(isRawPointerType(qt)) {
-    auto ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-    if(!ch.checkExpr(expr)) 
-        diag(expr->getExprLoc(), "(S5.1) return of raw pointer may extend scope");
+  QualType Qt = Ex->getType().getCanonicalType();
+  if (isRawPointerType(Qt)) {
+    auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+    if (!Ch.checkExpr(Ex))
+      diag(Ex->getExprLoc(), "(S5.1) return of raw pointer may extend scope");
+  } else if (isNakedPointerType(Qt, getContext())) {
+    auto Checker =
+        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+
+    if (!Checker.checkExpr(Ex))
+      diag(Ex->getExprLoc(),
+           "(S5.1) return of naked pointer may extend scope");
+  } else if (isNakedStructType(Qt, getContext())) {
+    auto Checker =
+        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
+
+    if (!Checker.checkExpr(Ex))
+      diag(Ex->getExprLoc(),
+           "(S5.1) return of naked struct may extend scope");
   }
-  else if(isNakedPointerType(qt, getContext())) {
-    auto checker = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if(!checker.checkExpr(expr))
-        diag(expr->getExprLoc(), "(S5.1) return of naked pointer may extend scope");
-  }
-  else if(isNakedStructType(qt, getContext())) {
-    auto checker = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if(!checker.checkExpr(expr))
-        diag(expr->getExprLoc(), "(S5.1) return of naked struct may extend scope");
-  }
-
-
-
 }
 
 } // namespace checker

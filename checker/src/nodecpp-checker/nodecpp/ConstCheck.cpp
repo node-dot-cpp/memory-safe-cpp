@@ -28,17 +28,15 @@ void ConstCheck::registerMatchers(MatchFinder *Finder) {
 
 void ConstCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto cE = Result.Nodes.getNodeAs<CXXConstCastExpr>("cE")) {
-    diag(cE->getExprLoc(), "(S2.1) const_cast is prohibited");
-  }
-  else if(auto fD = Result.Nodes.getNodeAs<FieldDecl>("fD")) {
-    if(fD->isMutable()) {
-      diag(fD->getLocation(), "(S2.2) mutable members are prohibited");
+  if (auto CE = Result.Nodes.getNodeAs<CXXConstCastExpr>("cE")) {
+    diag(CE->getExprLoc(), "(S2.1) const_cast is prohibited");
+  } else if (auto FD = Result.Nodes.getNodeAs<FieldDecl>("fD")) {
+    if (FD->isMutable()) {
+      diag(FD->getLocation(), "(S2.2) mutable members are prohibited");
     }
-  }
-  else if(auto lE = Result.Nodes.getNodeAs<LambdaExpr>("lE")) {
-    if(lE->isMutable()) {
-      diag(lE->getExprLoc(), "(S2) mutable lambdas are prohibited");
+  } else if (auto LE = Result.Nodes.getNodeAs<LambdaExpr>("lE")) {
+    if (LE->isMutable()) {
+      diag(LE->getExprLoc(), "(S2) mutable lambdas are prohibited");
     }
   }
 }

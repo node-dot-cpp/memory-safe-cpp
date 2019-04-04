@@ -38,74 +38,75 @@ void StdFunctionCheck::registerMatchers(MatchFinder *Finder) {
       this);
 }
 
-void StdFunctionCheck::checkLambda(QualType qt, bool ownedArg0, SourceLocation callLoc) {
+void StdFunctionCheck::checkLambda(QualType Qt, bool OwnedArg0,
+                                   SourceLocation CallLoc) {
 
-  assert(qt.isCanonical());
-  auto decl = qt->getAsCXXRecordDecl();
-  assert(decl);
-  assert(decl->hasDefinition());
-  assert(decl->isLambda());
-  auto m = decl->getLambdaCallOperator();
+  assert(Qt.isCanonical());
+  auto Decl = Qt->getAsCXXRecordDecl();
+  assert(Decl);
+  assert(Decl->hasDefinition());
+  assert(Decl->isLambda());
+  auto M = Decl->getLambdaCallOperator();
 
-  for (unsigned i = 0; i != m->param_size(); ++i) {
-    auto p = m->getParamDecl(i);
-    if (p->hasAttr<NodeCppMayExtendAttr>()) {
-      diag(callLoc, "lambda with attribute [[may_extend_to_this]] can't be used to initialize object");
-      diag(p->getLocation(), "declared here", DiagnosticIDs::Note);
+  for (unsigned I = 0; I != M->param_size(); ++I) {
+    auto P = M->getParamDecl(I);
+    if (P->hasAttr<NodeCppMayExtendAttr>()) {
+      diag(CallLoc, "lambda with attribute [[may_extend_to_this]] can't be "
+                    "used to initialize object");
+      diag(P->getLocation(), "declared here", DiagnosticIDs::Note);
       return;
     }
-    
-    if(ownedArg0 && i == 0) {
-      if(!p->hasAttr<NodeCppOwnedByThisAttr>()) {
-        diag(callLoc, "lambda without attribute [[owned_by_this]] can't be used to initialize object");
-        diag(p->getLocation(), "referenced from here", DiagnosticIDs::Note);
+
+    if (OwnedArg0 && I == 0) {
+      if (!P->hasAttr<NodeCppOwnedByThisAttr>()) {
+        diag(CallLoc, "lambda without attribute [[owned_by_this]] can't be "
+                      "used to initialize object");
+        diag(P->getLocation(), "referenced from here", DiagnosticIDs::Note);
         return;
       }
-    }
-    else {
-        if(p->hasAttr<NodeCppOwnedByThisAttr>()) {
-        diag(callLoc, "lambda with attribute [[owned_by_this]] can't be used to initialize object");
-        diag(p->getLocation(), "declared here", DiagnosticIDs::Note);
+    } else {
+      if (P->hasAttr<NodeCppOwnedByThisAttr>()) {
+        diag(CallLoc, "lambda with attribute [[owned_by_this]] can't be used "
+                      "to initialize object");
+        diag(P->getLocation(), "declared here", DiagnosticIDs::Note);
         return;
       }
     }
   }
 }
 
-void StdFunctionCheck::checkFunctions(QualType arg0_sugar, QualType arg1_sugar, SourceLocation callLoc) {
-  
-  QualType arg0 = arg0_sugar.getCanonicalType();
-  QualType arg1 = arg1_sugar.getCanonicalType();
-  
+void StdFunctionCheck::checkFunctions(QualType Arg0Sugar, QualType Arg1Sugar,
+                                      SourceLocation CallLoc) {
+
+//  QualType Arg0 = Arg0Sugar.getCanonicalType();
+  QualType Arg1 = Arg1Sugar.getCanonicalType();
+
   //first check the alias
-  if(isNodecppFunctionOwnedArg0Type(arg0_sugar)) {
-    if(isNodecppFunctionOwnedArg0Type(arg1_sugar)) {
+  if (isNodecppFunctionOwnedArg0Type(Arg0Sugar)) {
+    if (isNodecppFunctionOwnedArg0Type(Arg1Sugar)) {
       // this is ok
       return;
-    }
-    else if(isLambdaType(arg1_sugar)) {
+    } else if (isLambdaType(Arg1Sugar)) {
       // check it does have attributes
-      checkLambda(arg1, true, callLoc);
-    }
-    else {
+      checkLambda(Arg1, true, CallLoc);
+    } else {
       // this is forbidden
-      diag(callLoc, "nodecpp::function_with_owned can be assigned from lambda or from other nodecpp::function_with_owned");
+      diag(CallLoc, "nodecpp::function_with_owned can be assigned from lambda "
+                    "or from other nodecpp::function_with_owned");
       return;
     }
-  }
-  else if(isStdFunctionType(arg0_sugar)) {
-    if(isStdFunctionType(arg1_sugar)) {
+  } else if (isStdFunctionType(Arg0Sugar)) {
+    if (isStdFunctionType(Arg1Sugar)) {
       // this is ok
       return;
-    }
-    else if(isLambdaType(arg1_sugar)) {
+    } else if (isLambdaType(Arg1Sugar)) {
       // check it doesn't have attributes
-      checkLambda(arg1, false, callLoc);
+      checkLambda(Arg1, false, CallLoc);
       //is ok!
-    }
-    else {
+    } else {
       // this is forbidden
-      diag(callLoc, "std::function can be assigned from lambda or from other std::function");
+      diag(CallLoc, "std::function can be assigned from lambda or from other "
+                    "std::function");
       return;
     }
   }
@@ -113,36 +114,35 @@ void StdFunctionCheck::checkFunctions(QualType arg0_sugar, QualType arg1_sugar, 
 
 void StdFunctionCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto opAsgn = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op")) {
-    if(opAsgn->getNumArgs() >= 2) {
-      QualType arg0 = opAsgn->getArg(0)->getType();
-      QualType arg1 = opAsgn->getArg(1)->getType();
+  if (auto OpAsgn = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op")) {
+    if (OpAsgn->getNumArgs() >= 2) {
+      QualType Arg0 = OpAsgn->getArg(0)->getType();
+      QualType Arg1 = OpAsgn->getArg(1)->getType();
 
-      checkFunctions(arg0, arg1, opAsgn->getExprLoc());
+      checkFunctions(Arg0, Arg1, OpAsgn->getExprLoc());
     }
-  }
-  else if(auto ctor = Result.Nodes.getNodeAs<CXXConstructExpr>("ctor")) {
-    if(ctor->getNumArgs() >= 1) {
-      QualType arg0 = ctor->getType();
-      QualType arg1 = ctor->getArg(0)->getType();
+  } else if (auto Ctor = Result.Nodes.getNodeAs<CXXConstructExpr>("ctor")) {
+    if (Ctor->getNumArgs() >= 1) {
+      QualType Arg0 = Ctor->getType();
+      QualType Arg1 = Ctor->getArg(0)->getType();
 
-      checkFunctions(arg0, arg1, ctor->getExprLoc());
+      checkFunctions(Arg0, Arg1, Ctor->getExprLoc());
     }
-  }
-  else if(auto opCall = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("call")) {
-    if(opCall->getNumArgs() >= 1) {
-      QualType arg0 = opCall->getArg(0)->getType();
-      if(isNodecppFunctionOwnedArg0Type(arg0)) {
-        diag(opCall->getExprLoc(), "function with attribute [[owned_by_this]] can't called from safe code");
+  } else if (auto OpCall =
+                 Result.Nodes.getNodeAs<CXXOperatorCallExpr>("call")) {
+    if (OpCall->getNumArgs() >= 1) {
+      QualType Arg0 = OpCall->getArg(0)->getType();
+      if (isNodecppFunctionOwnedArg0Type(Arg0)) {
+        diag(OpCall->getExprLoc(), "function with attribute [[owned_by_this]] "
+                                   "can't called from safe code");
       }
     }
-  }
-  else if(auto mAssign = Result.Nodes.getNodeAs<CXXMemberCallExpr>("assg")) {
-    if(mAssign->getNumArgs() >= 1) {
-      QualType arg0 = mAssign->getImplicitObjectArgument()->getType();
-      QualType arg1 = mAssign->getArg(0)->getType();
+  } else if (auto MAssign = Result.Nodes.getNodeAs<CXXMemberCallExpr>("assg")) {
+    if (MAssign->getNumArgs() >= 1) {
+      QualType Arg0 = MAssign->getImplicitObjectArgument()->getType();
+      QualType Arg1 = MAssign->getArg(0)->getType();
 
-      checkFunctions(arg0, arg1, mAssign->getExprLoc());
+      checkFunctions(Arg0, Arg1, MAssign->getExprLoc());
     }
   }
 }
