@@ -512,6 +512,9 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
         return AdjustedArgs;
       };
 
+
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DNODECPP_CHECKER_EXTENSIONS",
+         ArgumentInsertPosition::BEGIN));
   Tool.appendArgumentsAdjuster(PerFileExtraArgumentsInserter);
   Tool.appendArgumentsAdjuster(PluginArgumentsRemover);
   if (Profile)
