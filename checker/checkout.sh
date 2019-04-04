@@ -2,9 +2,9 @@
 
 cd 3rdparty
 
-rm -R llvm
-rm -R clang
-rm -R clang-tools-extra
+rm -Rf llvm
+rm -Rf clang
+rm -Rf clang-tools-extra
 
 git clone --depth 10 -b release_70 https://github.com/llvm-mirror/llvm.git
 git clone --depth 10 -b release_70 https://github.com/llvm-mirror/clang.git
