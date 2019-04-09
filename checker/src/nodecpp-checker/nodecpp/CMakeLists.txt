@@ -5,6 +5,7 @@ add_clang_library(clangTidyNodeCppModule
   AsmCheck.cpp
   CallExprCheck.cpp
   ConstCheck.cpp
+  CoroutineCheck.cpp
   MayExtendDeclCheck.cpp
   MayExtendLambdaCheck.cpp
   NakedAssignmentCheck.cpp

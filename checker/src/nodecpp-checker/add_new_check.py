@@ -331,10 +331,10 @@ documentation files."""
   write_header(module_path, module, check_name, check_name_camel)
   write_implementation(module_path, module, check_name_camel)
   adapt_module(module_path, module, check_name, check_name_camel)
-  add_release_notes(module_path, module, check_name)
-  write_test(module_path, module, check_name)
-  write_docs(module_path, module, check_name)
-  update_checks_list(clang_tidy_path)
+#  add_release_notes(module_path, module, check_name)
+#  write_test(module_path, module, check_name)
+#  write_docs(module_path, module, check_name)
+#  update_checks_list(clang_tidy_path)
   print('Done. Now it\'s your turn!')
 
 

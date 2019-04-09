@@ -17,6 +17,7 @@
 #include "AsmCheck.h"
 #include "CallExprCheck.h"
 #include "ConstCheck.h"
+#include "CoroutineCheck.h"
 #include "MayExtendDeclCheck.h"
 #include "MayExtendLambdaCheck.h"
 #include "NakedAssignmentCheck.h"
@@ -49,6 +50,8 @@ public:
         "nodecpp-call-expr");
     CheckFactories.registerCheck<ConstCheck>(
         "nodecpp-const");
+    CheckFactories.registerCheck<CoroutineCheck>(
+        "nodecpp-coroutine");
     CheckFactories.registerCheck<MayExtendDeclCheck>(
         "nodecpp-may-extend-decl");
     CheckFactories.registerCheck<MayExtendLambdaCheck>(

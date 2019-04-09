@@ -30,6 +30,29 @@ index 9a8dd6faff..95639fcaed 100644
      unsigned char getOpaqueValue() const { return Data; }
      static ExtParameterInfo getFromOpaqueValue(unsigned char data) {
        ExtParameterInfo result;
+diff --git a/include/clang/ASTMatchers/ASTMatchers.h b/include/clang/ASTMatchers/ASTMatchers.h
+index 51f2ce2af7..b13de573a8 100644
+--- a/include/clang/ASTMatchers/ASTMatchers.h
++++ b/include/clang/ASTMatchers/ASTMatchers.h
+@@ -6111,6 +6111,18 @@ AST_MATCHER(FunctionDecl, hasTrailingReturn) {
+   return false;
+ }
+ 
++
++/// Matches coroutine body  statements.
++extern const internal::VariadicDynCastAllOfMatcher<Stmt, CoroutineBodyStmt>
++    coroutineBodyStmt;
++
++/// Matches a coroutine that has a given body.
++AST_MATCHER_P(CoroutineBodyStmt, hasCoroutineBody, internal::Matcher<Stmt>, InnerMatcher) {
++  const Stmt *const Statement = internal::GetBodyMatcher<CoroutineBodyStmt>::get(Node);
++  return (Statement != nullptr &&
++          InnerMatcher.matches(*Statement, Finder, Builder));
++}
++
+ } // namespace ast_matchers
+ } // namespace clang
+ 
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
 index 1f17819dba..e1ca7b0e52 100644
 --- a/include/clang/Basic/Attr.td
@@ -102,10 +125,18 @@ index e032c312aa..6db41bea0a 100644
        if (ABI != ParameterABI::Ordinary)
          OS << "__attribute__((" << getParameterABISpelling(ABI) << ")) ";
 diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index 63f8395b82..3247693879 100644
+index 63f8395b82..5635cbd8e1 100644
 --- a/lib/ASTMatchers/ASTMatchFinder.cpp
 +++ b/lib/ASTMatchers/ASTMatchFinder.cpp
-@@ -842,6 +842,20 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
+@@ -389,6 +389,7 @@ public:
+   bool TraverseNestedNameSpecifier(NestedNameSpecifier *NNS);
+   bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS);
+   bool TraverseConstructorInitializer(CXXCtorInitializer *CtorInit);
++  bool TraverseCoroutineBodyStmt(CoroutineBodyStmt *CoroBody);
+ 
+   // Matches children or descendants of 'Node' with 'BaseMatcher'.
+   bool memoizedMatchesRecursively(const ast_type_traits::DynTypedNode &Node,
+@@ -842,6 +843,20 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
    if (!DeclNode) {
      return true;
    }
@@ -126,6 +157,49 @@ index 63f8395b82..3247693879 100644
    match(*DeclNode);
    return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
  }
+@@ -901,6 +916,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
+       CtorInit);
+ }
+ 
++bool MatchASTVisitor::TraverseCoroutineBodyStmt(CoroutineBodyStmt *CoroBody) {
++  if (!CoroBody)
++    return true;
++
++  match(*CoroBody);
++
++  //mb:don't go into automatic coro stuff, only traverse the body
++  return RecursiveASTVisitor<MatchASTVisitor>::TraverseStmt(CoroBody->getBody());
++}
++
+ class MatchASTConsumer : public ASTConsumer {
+ public:
+   MatchASTConsumer(MatchFinder *Finder,
+diff --git a/lib/ASTMatchers/ASTMatchersInternal.cpp b/lib/ASTMatchers/ASTMatchersInternal.cpp
+index 9cea2f5efc..3318647348 100644
+--- a/lib/ASTMatchers/ASTMatchersInternal.cpp
++++ b/lib/ASTMatchers/ASTMatchersInternal.cpp
+@@ -833,5 +833,7 @@ AST_TYPELOC_TRAVERSE_MATCHER_DEF(
+     AST_POLYMORPHIC_SUPPORTED_TYPES(BlockPointerType, MemberPointerType,
+                                     PointerType, ReferenceType));
+ 
++const internal::VariadicDynCastAllOfMatcher<Stmt, CoroutineBodyStmt> coroutineBodyStmt;
++
+ } // end namespace ast_matchers
+ } // end namespace clang
+diff --git a/lib/ASTMatchers/Dynamic/Registry.cpp b/lib/ASTMatchers/Dynamic/Registry.cpp
+index 4d2d76f6a7..456463533e 100644
+--- a/lib/ASTMatchers/Dynamic/Registry.cpp
++++ b/lib/ASTMatchers/Dynamic/Registry.cpp
+@@ -486,6 +486,9 @@ RegistryMaps::RegistryMaps() {
+   REGISTER_MATCHER(voidType);
+   REGISTER_MATCHER(whileStmt);
+   REGISTER_MATCHER(withInitializer);
++
++  REGISTER_MATCHER(coroutineBodyStmt);
++  REGISTER_MATCHER(hasCoroutineBody);
+ }
+ 
+ RegistryMaps::~RegistryMaps() = default;
 diff --git a/lib/Frontend/InitHeaderSearch.cpp b/lib/Frontend/InitHeaderSearch.cpp
 index 8a70404629..113c960c49 100644
 --- a/lib/Frontend/InitHeaderSearch.cpp
