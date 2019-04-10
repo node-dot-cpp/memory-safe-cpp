@@ -35,8 +35,13 @@ bool isOwnerPtrDecl(const NamedDecl *Dc) {
 }
 
 bool isSafePtrName(const std::string &Name) {
-  return isOwnerPtrName(Name) || Name == "nodecpp::safememory::soft_ptr" ||
-         Name == "nodecpp::safememory::soft_ptr_impl";
+  return isOwnerPtrName(Name) || isAwaitableName(Name) ||
+    Name == "nodecpp::safememory::soft_ptr" ||
+    Name == "nodecpp::safememory::soft_ptr_impl";
+}
+
+bool isAwaitableName(const std::string &Name) {
+  return Name == "nodecpp::awaitable";
 }
 
 bool isNakedPtrName(const std::string &Name) {
@@ -338,6 +343,18 @@ bool isSafePtrType(QualType Qt) {
 
   std::string Name = Dc->getQualifiedNameAsString();
   return isSafePtrName(Name);
+}
+
+bool isAwaitableType(QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
+    return false;
+
+  std::string Name = Dc->getQualifiedNameAsString();
+  return isAwaitableName(Name);
+
 }
 
 bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,

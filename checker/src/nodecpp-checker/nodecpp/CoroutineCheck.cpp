@@ -22,12 +22,30 @@ namespace checker {
 
 void CoroutineCheck::registerMatchers(MatchFinder *Finder) {
 
+  Finder->addMatcher(coroutineBodyStmt().bind("coro"), this);
+
   Finder->addMatcher(coroutineBodyStmt(hasCoroutineBody(forEachDescendant(declRefExpr().bind("dref")))), this);
 }
 
 void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {
+  if(auto Co = Result.Nodes.getNodeAs<CoroutineBodyStmt>("coro")) {
+
+    auto L = Result.Context->getParents(*Co);
+
+    if (L.begin() == L.end())
+      return;
+    
+    auto Fd = L.begin()->get<FunctionDecl>();
+    if(!Fd)
+      return;
+
+    auto Qt = Fd->getReturnType();
+    if(!isAwaitableType(Qt)) {
+      diag(Fd->getLocStart(), "(S9.1) coroutines must return nodecpp::awaitable");
+    }
+  }
+  else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {
     auto Qt = Dr->getDecl()->getType();
     if(isNakedPointerType(Qt.getCanonicalType(), getContext())) {
       diag(Dr->getExprLoc(), "(S5.8) naked pointer types not allowed inside coroutines");

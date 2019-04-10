@@ -53,6 +53,7 @@ public:
 bool isOwnerPtrName(const std::string& Name);
 bool isOwnerPtrDecl(const NamedDecl* Dc);
 bool isSafePtrName(const std::string& Name);
+bool isAwaitableName(const std::string &Name);
 
 bool isNakedPtrName(const std::string& Name);
 bool isConstNakedPtrName(const std::string& Name);
@@ -80,6 +81,8 @@ QualType getPointeeType(QualType Qt);
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 bool isConstNakedPointerType(QualType Qt);
 bool isSafePtrType(QualType Qt);
+bool isAwaitableType(QualType Qt);
+
 
 bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 bool isSafeType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
