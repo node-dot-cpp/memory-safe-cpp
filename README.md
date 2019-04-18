@@ -35,3 +35,7 @@ Safety checks are two-fold:
   * v0.6 Adding support for other collections (deques and tree-based ones).
   * v0.8 Adding instrumentation to enable 100% run-time detection of zombie accesses. 
   
+## Usage
+
+Please see USEME.md
+  
