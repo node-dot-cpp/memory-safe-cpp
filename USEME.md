@@ -27,6 +27,7 @@ C++17 is required.
   - [MEMORY-SAFE-CPP]/library/src/iibmalloc/src/foundation/src/log.cpp 
   - [MEMORY-SAFE-CPP]/library/src/iibmalloc/src/foundation/src/tagged_ptr_impl.cpp 
   - [MEMORY-SAFE-CPP]/library/src/iibmalloc/src/foundation/src/cpu_exceptions_translator.cpp
+  - [MEMORY-SAFE-CPP]/library/src/iibmalloc/src/safe_ptr.cpp
   
   Also, on Linux:
   
@@ -39,10 +40,7 @@ C++17 is required.
   - [MEMORY-SAFE-CPP]/library/src/iibmalloc/src/iibmalloc_windows.cpp
   
 3. Add the following #include directives to code:
-  - #include <fmt/format.h>
-  - #include <foundation.h>
-  - #include <nodecpp_assert.h>
-  - #include <iibmalloc.h>
+
   - #include <safe_ptr.h>
   
 4. Build with a compiler (in case of compiler errors like missing include files or unresolved calls, etc check above steps first, especially step 0) 
