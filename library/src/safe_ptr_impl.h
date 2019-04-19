@@ -1160,21 +1160,6 @@ public:
 		return *this;
 	}
 
-	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
-	{
-		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
-		{
-			this->setOnStack();
-			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
-		}
-		this->dbgCheckMySlotConsistency();
-	}
-	soft_ptr_impl& operator = ( nullptr_t nulp )
-	{
-		soft_ptr_base_impl<T>::operator = (nulp);
-		return *this;
-	}
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T>& owner )
 	{
 		bool iWasOnStack = this->isOnStack();
@@ -1239,6 +1224,22 @@ public:
 	template<class T1>
 	soft_ptr_impl( const soft_ptr_impl<T1>& other, T* t_ ) : soft_ptr_base_impl<T>(other, t_) {}
 	soft_ptr_impl( const soft_ptr_impl<T>& other, T* t_ ) : soft_ptr_base_impl<T>(other, t_) {}
+
+	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
+	{
+		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			this->setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		this->dbgCheckMySlotConsistency();
+	}
+	soft_ptr_impl& operator = ( nullptr_t nulp )
+	{
+		soft_ptr_base_impl<T>::operator = (nulp);
+		return *this;
+	}
 
 	void swap( soft_ptr_impl<T>& other )
 	{
