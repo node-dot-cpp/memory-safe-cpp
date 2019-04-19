@@ -502,6 +502,15 @@ public:
 		dbgCheckValidity();
 		return *this;
 	}
+	owning_ptr_impl( nullptr_t nulp )
+	{
+		t.setPtr( nullptr );
+	}
+	owning_ptr_impl& operator = ( nullptr_t nulp )
+	{
+		reset();
+		return *this;
+	}
 	~owning_ptr_impl()
 	{
 		//dbgValidateList();
@@ -962,6 +971,13 @@ public:
 		dbgCheckMySlotConsistency();
 	}
 
+	soft_ptr_base_impl( nullptr_t nulp ) {}
+	soft_ptr_base_impl& operator = ( nullptr_t nulp )
+	{
+		reset();
+		return *this;
+	}
+
 	void swap( soft_ptr_base_impl<T>& other )
 	{
 		bool iWasOnStack = isOnStack();
@@ -1143,6 +1159,22 @@ public:
 		soft_ptr_base_impl<T>::operator = (owner);
 		return *this;
 	}
+
+	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
+	{
+		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			this->setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		this->dbgCheckMySlotConsistency();
+	}
+	soft_ptr_impl& operator = ( nullptr_t nulp )
+	{
+		soft_ptr_base_impl<T>::operator = (nulp);
+		return *this;
+	}
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T>& owner )
 	{
 		bool iWasOnStack = this->isOnStack();
@@ -1316,6 +1348,22 @@ public:
 		soft_ptr_base_impl<void>::operator = (other);
 		return *this;
 	}
+
+	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<void>( nulp )
+	{
+		pointers.init( soft_ptr_base_impl<void>::PointersT::max_data );
+		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		{
+			this->setOnStack();
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		this->dbgCheckMySlotConsistency();
+	}
+	soft_ptr_impl& operator = ( nullptr_t nulp )
+	{
+		soft_ptr_base_impl<void>::operator = (nulp);
+		return *this;
+	}
 	soft_ptr_impl( const soft_ptr_impl<void>& other ) : soft_ptr_base_impl<void>( other ) {}
 	soft_ptr_impl<void>& operator = ( soft_ptr_impl<void>& other )
 	{
@@ -1475,7 +1523,6 @@ public:
 	template<class T1>
 	naked_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T1>& other ) { *this = other.get(); return *this; }
 	naked_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T>& other ) { *this = other.get(); return *this; }
-
 	template<class T1>
 	naked_ptr_base_impl( const naked_ptr_base_impl<T1>& other ) { t = other.t; }
 	template<class T1>
@@ -1485,6 +1532,9 @@ public:
 
 	naked_ptr_base_impl( naked_ptr_base_impl<T>&& other ) = default;
 	naked_ptr_base_impl<T>& operator = ( naked_ptr_base_impl<T>&& other ) = default;
+
+	naked_ptr_base_impl( nullptr_t nulp ) { t = nullptr; }
+	naked_ptr_base_impl& operator = ( nullptr_t nulp ) { t = nullptr; return *this; }
 
 	void swap( naked_ptr_base_impl<T>& other )
 	{
@@ -1561,6 +1611,9 @@ public:
 
 	naked_ptr_impl( naked_ptr_impl<T>&& other ) = default;
 	naked_ptr_impl<T>& operator = ( naked_ptr_impl<T>&& other ) = default;
+
+	naked_ptr_impl( nullptr_t nulp ) : naked_ptr_base_impl<T>(nulp) {}
+	naked_ptr_impl& operator = ( nullptr_t nulp ) { naked_ptr_base_impl<T>::operator = (nulp); 	return *this; }
 
 	void swap( naked_ptr_impl<T>& other )
 	{
@@ -1647,6 +1700,9 @@ public:
 
 	naked_ptr_impl( naked_ptr_impl<void>&& other ) = default;
 	naked_ptr_impl<void>& operator = ( naked_ptr_impl<void>&& other ) = default;
+
+	naked_ptr_impl( nullptr_t nulp ) : naked_ptr_base_impl(nulp) {}
+	naked_ptr_impl& operator = ( nullptr_t nulp ) { naked_ptr_base_impl<void>::operator = (nulp); return *this; }
 
 	void swap( naked_ptr_impl<void>& other )
 	{
