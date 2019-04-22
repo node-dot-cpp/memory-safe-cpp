@@ -18,6 +18,7 @@
 #include "ClangTidy.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
+#include "NodecppASTVisitor.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -368,25 +369,8 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
-  // AnalyzerOptionsRef AnalyzerOptions = Compiler.getAnalyzerOpts();
-  // // FIXME: Remove this option once clang's cfg-temporary-dtors option defaults
-  // // to true.
-  // AnalyzerOptions->Config["cfg-temporary-dtors"] =
-  //     Context.getOptions().AnalyzeTemporaryDtors ? "true" : "false";
+  Consumers.push_back(llvm::make_unique<NodecppASTConsumer>(&Compiler.getASTContext()));
 
-  // AnalyzerOptions->CheckersControlList = getCheckersControlList(Context);
-  // if (!AnalyzerOptions->CheckersControlList.empty()) {
-  //   setStaticAnalyzerCheckerOpts(Context.getOptions(), AnalyzerOptions);
-  //   AnalyzerOptions->AnalysisStoreOpt = RegionStoreModel;
-  //   AnalyzerOptions->AnalysisDiagOpt = PD_NONE;
-  //   AnalyzerOptions->AnalyzeNestedBlocks = true;
-  //   AnalyzerOptions->eagerlyAssumeBinOpBifurcation = true;
-  //   std::unique_ptr<ento::AnalysisASTConsumer> AnalysisConsumer =
-  //       ento::CreateAnalysisConsumer(Compiler);
-  //   AnalysisConsumer->AddDiagnosticConsumer(
-  //       new AnalyzerDiagnosticConsumer(Context));
-  //   Consumers.push_back(std::move(AnalysisConsumer));
-  // }
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));
 }
