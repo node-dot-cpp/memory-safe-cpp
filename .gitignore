@@ -9,3 +9,5 @@ library/test/build/x64/
 library/test/build/.vs/
 library/test/build/TestSafePointers.vcxproj.filters
 library/test/build/TestSafePointers.vcxproj.user
+library/samples/basic_sample/build/x64/
+library/samples/basic_sample/build/.vs/
