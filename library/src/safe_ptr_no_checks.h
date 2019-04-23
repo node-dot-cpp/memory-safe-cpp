@@ -284,6 +284,11 @@ public:
 };
 
 template<class T>
+soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr) {
+	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
+}
+
+template<class T>
 class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 {
 	friend class owning_ptr_no_checks<T>;
@@ -301,8 +306,8 @@ private:
 	template<class TT>
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT* ptr);
-	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr);
+	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
+	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -562,11 +567,6 @@ public:
 	{
 	}
 };
-
-template<class T>
-soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr) {
-	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
-}
 
 
 template<class T>

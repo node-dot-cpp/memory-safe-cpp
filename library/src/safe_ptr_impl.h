@@ -1097,6 +1097,17 @@ public:
 };
 
 template<class T>
+soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
+	FirstControlBlock* cbPtr = nullptr;
+	cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
+	void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
+	if ( allocatedPtr == nullptr )
+		throwPointerOutOfRange();
+	FirstControlBlock* cb = cbPtr;
+	return soft_ptr_impl<T>( cb, ptr );
+}
+
+template<class T>
 class soft_ptr_impl : public soft_ptr_base_impl<T>
 {
 	friend class owning_ptr_impl<T>;
@@ -1473,17 +1484,6 @@ public:
 	{
 	}
 };
-
-template<class T>
-soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
-	FirstControlBlock* cbPtr = nullptr;
-	cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
-	void* allocatedPtr = getAllocatedBlockFromControlBlock_( getAllocatedBlock_(cbPtr) );
-	if ( allocatedPtr == nullptr )
-		throwPointerOutOfRange();
-	FirstControlBlock* cb = cbPtr;
-	return soft_ptr_impl<T>( cb, ptr );
-}
 
 template<class T>
 class naked_ptr_base_impl
