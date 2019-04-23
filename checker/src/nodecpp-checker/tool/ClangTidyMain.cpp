@@ -17,6 +17,8 @@
 
 #include "../ClangTidy.h"
 #include "../JSONSafeDatabase.h"
+#include "clang/AST/ASTConsumer.h"
+#include "clang/Driver/Options.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/TargetSelect.h"
@@ -219,6 +221,24 @@ options are specified.
 )"),
                            cl::init(false),
                            cl::cat(ClangTidyCategory));
+
+static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
+
+static cl::opt<bool>
+ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
+        cl::cat(ClangTidyCategory));
+static cl::opt<bool>
+ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
+        cl::cat(ClangTidyCategory));
+static cl::opt<bool>
+ASTPrint("ast-print",
+         cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
+         cl::cat(ClangTidyCategory));
+static cl::opt<std::string> ASTDumpFilter(
+    "ast-dump-filter",
+    cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)),
+    cl::cat(ClangTidyCategory));
+
 
 namespace nodecpp {
 namespace checker {
@@ -454,7 +474,9 @@ static int clangTidyMain(int Argc, const char **Argv) {
 
   ClangTidyContext Context(std::move(OwningOptionsProvider));
   runClangTidy(Context, OptionsParser.getCompilations(), PathList,
-               EnableCheckProfile ? &Profile : nullptr);
+               EnableCheckProfile ? &Profile : nullptr,
+               ASTDump, ASTList, ASTPrint, ASTDumpFilter);
+               
   ArrayRef<ClangTidyError> Errors = Context.getErrors();
   bool FoundErrors =
       std::find_if(Errors.begin(), Errors.end(), [](const ClangTidyError &E) {

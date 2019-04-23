@@ -459,7 +459,9 @@ ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options) {
 
 void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
                   const CompilationDatabase &Compilations,
-                  ArrayRef<std::string> InputFiles, ProfileData *Profile) {
+                  ArrayRef<std::string> InputFiles, ProfileData *Profile,
+                  const cl::opt<bool>& ASTDump, const cl::opt<bool>& ASTList,
+                  const cl::opt<bool>& ASTPrint, const cl::opt<std::string>& ASTDumpFilter) {
   ClangTool Tool(Compilations, InputFiles);
 
   // Add extra arguments passed by the clang-tidy command-line.
@@ -529,8 +531,53 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
     ClangTidyASTConsumerFactory ConsumerFactory;
   };
 
-  ActionFactory Factory(Context);
-  Tool.run(&Factory);
+
+  class ClangASTListActionFactory {
+  public:
+    std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
+      return clang::CreateASTDeclNodeLister();
+    }
+  };
+
+  class ClangASTDumpActionFactory {
+    StringRef FilterString;
+  public:
+    ClangASTDumpActionFactory(StringRef FilterString) :FilterString(FilterString) {}
+    std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
+        return clang::CreateASTDumper(nullptr /*Dump to stdout.*/,
+                                      FilterString,
+                                      /*DumpDecls=*/true,
+                                      /*Deserialize=*/false,
+                                      /*DumpLookups=*/false);
+    }
+  };
+
+  class ClangASTPrintActionFactory {
+    StringRef FilterString;
+  public:
+    ClangASTPrintActionFactory(StringRef FilterString) :FilterString(FilterString) {}
+    std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
+      return clang::CreateASTPrinter(nullptr, FilterString);
+    }
+  };
+
+  ClangASTListActionFactory ListFactory;
+  ClangASTDumpActionFactory DumpFactory(ASTDumpFilter);
+  ClangASTPrintActionFactory PrintFactory(ASTDumpFilter);
+  std::unique_ptr<FrontendActionFactory> FrontendFactory;
+
+
+  if (ASTList)
+    FrontendFactory = newFrontendActionFactory(&ListFactory);
+  else if (ASTDump) 
+    FrontendFactory = newFrontendActionFactory(&DumpFactory);
+  else if (ASTPrint) 
+    FrontendFactory = newFrontendActionFactory(&PrintFactory);
+  else
+    FrontendFactory = make_unique<ActionFactory>(Context);
+
+
+  Tool.run(FrontendFactory.get());
 }
 
 void handleErrors(ClangTidyContext &Context, bool Fix,
