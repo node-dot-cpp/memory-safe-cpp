@@ -502,11 +502,11 @@ public:
 		dbgCheckValidity();
 		return *this;
 	}
-	owning_ptr_impl( nullptr_t nulp )
+	owning_ptr_impl( std::nullptr_t nulp )
 	{
 		t.setPtr( nullptr );
 	}
-	owning_ptr_impl& operator = ( nullptr_t nulp )
+	owning_ptr_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
 		return *this;
@@ -971,8 +971,8 @@ public:
 		dbgCheckMySlotConsistency();
 	}
 
-	soft_ptr_base_impl( nullptr_t nulp ) {}
-	soft_ptr_base_impl& operator = ( nullptr_t nulp )
+	soft_ptr_base_impl( std::nullptr_t nulp ) {}
+	soft_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
 		return *this;
@@ -1225,7 +1225,7 @@ public:
 	soft_ptr_impl( const soft_ptr_impl<T1>& other, T* t_ ) : soft_ptr_base_impl<T>(other, t_) {}
 	soft_ptr_impl( const soft_ptr_impl<T>& other, T* t_ ) : soft_ptr_base_impl<T>(other, t_) {}
 
-	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
+	soft_ptr_impl( std::nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
 	{
 		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1235,7 +1235,7 @@ public:
 		}
 		this->dbgCheckMySlotConsistency();
 	}
-	soft_ptr_impl& operator = ( nullptr_t nulp )
+	soft_ptr_impl& operator = ( std::nullptr_t nulp )
 	{
 		soft_ptr_base_impl<T>::operator = (nulp);
 		return *this;
@@ -1350,7 +1350,7 @@ public:
 		return *this;
 	}
 
-	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<void>( nulp )
+	soft_ptr_impl( std::nullptr_t nulp ) : soft_ptr_base_impl<void>( nulp )
 	{
 		pointers.init( soft_ptr_base_impl<void>::PointersT::max_data );
 		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
@@ -1360,7 +1360,7 @@ public:
 		}
 		this->dbgCheckMySlotConsistency();
 	}
-	soft_ptr_impl& operator = ( nullptr_t nulp )
+	soft_ptr_impl& operator = ( std::nullptr_t nulp )
 	{
 		soft_ptr_base_impl<void>::operator = (nulp);
 		return *this;
@@ -1534,8 +1534,8 @@ public:
 	naked_ptr_base_impl( naked_ptr_base_impl<T>&& other ) = default;
 	naked_ptr_base_impl<T>& operator = ( naked_ptr_base_impl<T>&& other ) = default;
 
-	naked_ptr_base_impl( nullptr_t nulp ) { t = nullptr; }
-	naked_ptr_base_impl& operator = ( nullptr_t nulp ) { t = nullptr; return *this; }
+	naked_ptr_base_impl( std::nullptr_t nulp ) { t = nullptr; }
+	naked_ptr_base_impl& operator = ( std::nullptr_t nulp ) { t = nullptr; return *this; }
 
 	void swap( naked_ptr_base_impl<T>& other )
 	{
@@ -1613,8 +1613,8 @@ public:
 	naked_ptr_impl( naked_ptr_impl<T>&& other ) = default;
 	naked_ptr_impl<T>& operator = ( naked_ptr_impl<T>&& other ) = default;
 
-	naked_ptr_impl( nullptr_t nulp ) : naked_ptr_base_impl<T>(nulp) {}
-	naked_ptr_impl& operator = ( nullptr_t nulp ) { naked_ptr_base_impl<T>::operator = (nulp); 	return *this; }
+	naked_ptr_impl( std::nullptr_t nulp ) : naked_ptr_base_impl<T>(nulp) {}
+	naked_ptr_impl& operator = ( std::nullptr_t nulp ) { naked_ptr_base_impl<T>::operator = (nulp); 	return *this; }
 
 	void swap( naked_ptr_impl<T>& other )
 	{
@@ -1702,8 +1702,8 @@ public:
 	naked_ptr_impl( naked_ptr_impl<void>&& other ) = default;
 	naked_ptr_impl<void>& operator = ( naked_ptr_impl<void>&& other ) = default;
 
-	naked_ptr_impl( nullptr_t nulp ) : naked_ptr_base_impl(nulp) {}
-	naked_ptr_impl& operator = ( nullptr_t nulp ) { naked_ptr_base_impl<void>::operator = (nulp); return *this; }
+	naked_ptr_impl( std::nullptr_t nulp ) : naked_ptr_base_impl(nulp) {}
+	naked_ptr_impl& operator = ( std::nullptr_t nulp ) { naked_ptr_base_impl<void>::operator = (nulp); return *this; }
 
 	void swap( naked_ptr_impl<void>& other )
 	{
