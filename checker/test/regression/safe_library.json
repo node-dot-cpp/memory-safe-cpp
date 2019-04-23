@@ -1,6 +1,7 @@
 [
 {
-    "functions" : ["fmt::v5::print", "nodecpp::safememory::make_owning", "nodecpp::log::log", "nodecpp::assert::nodecpp_assert", ],
+    "functions" : ["fmt::v5::print", "std::move", "std::forward", "std::__1::move", "std::__1::forward", "nodecpp::safememory::make_owning", "nodecpp::log::log", "nodecpp::assert::nodecpp_assert", ],
     "types" : ["nodecpp::Buffer", "nodecpp::net::Socket", "nodecpp::net::Server", "nodecpp::net::Address", "nodecpp::net::SocketTBase", "NodeRegistrator", "NodeBase", ]
 }
 ]
+    

@@ -48,13 +48,17 @@ public:
 
 
   bool VisitExpr(clang::Expr *E) {
-    if(isAwaitableType(E->getType())) {
+    if(E) {
+      auto Qt = E->getType();
+
+ 
+      if(!Qt.isNull() && isAwaitableType(Qt)) {
 
 
-      
-      E->dumpColor();
-    }
-    
+
+        E->dumpColor();
+      }
+    }   
     return true;
   }
 

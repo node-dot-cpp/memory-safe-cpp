@@ -3,6 +3,7 @@
 -fno-ms-compatibility
 -fno-delayed-template-parsing
 -fno-ms-extensions
+-fcoroutines-ts
 -isystem
 ./Inputs
 -isystem
