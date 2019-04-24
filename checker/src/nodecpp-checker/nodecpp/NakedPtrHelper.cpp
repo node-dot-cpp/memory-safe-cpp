@@ -23,7 +23,8 @@ DiagHelper NullDiagHelper;
 
 bool isOwnerPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::owning_ptr" ||
-         Name == "nodecpp::safememory::owning_ptr_impl";
+         Name == "nodecpp::safememory::owning_ptr_impl" ||
+         Name == "nodecpp::safememory::owning_ptr_no_checks";
 }
 
 bool isOwnerPtrDecl(const NamedDecl *Dc) {
@@ -35,9 +36,13 @@ bool isOwnerPtrDecl(const NamedDecl *Dc) {
 }
 
 bool isSafePtrName(const std::string &Name) {
-  return isOwnerPtrName(Name) || isAwaitableName(Name) ||
+  return isOwnerPtrName(Name) ||
     Name == "nodecpp::safememory::soft_ptr" ||
-    Name == "nodecpp::safememory::soft_ptr_impl";
+    Name == "nodecpp::safememory::soft_ptr_impl" ||
+    Name == "nodecpp::safememory::soft_ptr_no_checks" ||
+    Name == "nodecpp::safememory::soft_this_ptr" ||
+    Name == "nodecpp::safememory::soft_this_ptr_impl" ||
+    Name == "nodecpp::safememory::soft_this_ptr_no_checks";
 }
 
 bool isAwaitableName(const std::string &Name) {
@@ -46,7 +51,8 @@ bool isAwaitableName(const std::string &Name) {
 
 bool isNakedPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::naked_ptr" ||
-         Name == "nodecpp::safememory::naked_ptr_impl";
+         Name == "nodecpp::safememory::naked_ptr_impl" ||
+         Name == "nodecpp::safememory::naked_ptr_no_checks";
 }
 
 bool isConstNakedPtrName(const std::string &Name) {
@@ -68,7 +74,7 @@ bool isSystemSafeName(const ClangTidyContext *Context,
   if (Name == "nodecpp::safememory::make_owning")
     return true;
   else if (isSafePtrName(Name) || isNakedPtrName(Name) ||
-           isConstNakedPtrName(Name))
+           isConstNakedPtrName(Name) || isAwaitableName(Name))
     return false;
 
   auto &Wl = Context->getGlobalOptions().SafeTypes;
