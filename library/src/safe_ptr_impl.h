@@ -606,8 +606,18 @@ template<class _Ty,
 	}
 
 
+#define NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
+//NODECPP_FORCEINLINE
+//bool is_guaranteed_on_stack(void* p) { return nodecpp::platform::is_guaranteed_on_stack( p ); }
+#define IF_IS_GUARANTEED_ON_STACK( ptr ) if ( nodecpp::platform::is_guaranteed_on_stack( (ptr) ) )
 #define NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+#else
+//constexpr bool is_guaranteed_on_stack(void*) { return false; }
+#define IF_IS_GUARANTEED_ON_STACK( ptr ) if constexpr ( false )
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
+
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 extern thread_local size_t onStackSafePtrCreationCount; 
@@ -667,9 +677,11 @@ class soft_ptr_base_impl
 
 		void invalidatePtr() { PointersT::init(PointersT::max_data); }
 		void setPtrZombie() { set_data(PointersT::max_data); set_zombie(); }
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		void setOnStack() { set_flag<0>(); }
 		void setNotOnStack() { unset_flag<0>(); }
 		bool isOnStack() { return has_flag<0>(); }
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 	};
 	Pointers<T> pointers; // the only data member!
 
@@ -685,10 +697,14 @@ class soft_ptr_base_impl
 
 	void invalidatePtr() { pointers.invalidatePtr(); }
 	void setPtrZombie() { pointers.setPtrZombie(); }
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 	void setOnStack() { pointers.setOnStack(); }
 	void setNotOnStack() { pointers.setNotOnStack(); }
 	bool isOnStack() { return pointers.isOnStack(); }
-
+#else
+	void setOnStack() {}
+	void setNotOnStack() {}
+#endif
 	size_t getIdx_() const { return pointers.get_data(); }
 	void setIdx_( size_t idx ) { pointers.set_data( idx ); }
 	FirstControlBlock* getControlBlock() const { return getControlBlock_(pointers.getAllocatedPtr()); }
@@ -697,7 +713,7 @@ class soft_ptr_base_impl
 	soft_ptr_base_impl(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( t, getPtrToAllocatedObjectFromControlBlock_(cb) ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -732,7 +748,7 @@ public:
 	template<class T1>
 	soft_ptr_base_impl( const owning_ptr_impl<T1>& owner )
 	{
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -747,6 +763,7 @@ public:
 	template<class T1>
 	soft_ptr_base_impl<T>& operator = ( const owning_ptr_impl<T1>& owner )
 	{
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -758,6 +775,13 @@ public:
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#else
+		reset();
+		if ( owner.t .getPtr())
+			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+		else
+			init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
@@ -766,7 +790,7 @@ public:
 	template<class T1>
 	soft_ptr_base_impl( const soft_ptr_base_impl<T1>& other )
 	{
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -783,6 +807,7 @@ public:
 	soft_ptr_base_impl<T>& operator = ( const soft_ptr_base_impl<T1>& other )
 	{
 		//if ( this == &other ) return *this;
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -794,13 +819,20 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#else
+		reset();
+		if ( other.getAllocatedPtr() )
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+		else
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 		return *this;
 	}
 	soft_ptr_base_impl( const soft_ptr_base_impl<T>& other )
 	{
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -816,6 +848,7 @@ public:
 	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>& other )
 	{
 		if ( this == &other ) return *this;
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool iWasOnStack = isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -827,6 +860,13 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#else
+		reset();
+		if ( other.getAllocatedPtr() )
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+		else
+			init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 		return *this;
@@ -836,8 +876,9 @@ public:
 	soft_ptr_base_impl( soft_ptr_base_impl<T>&& other )
 	{
 		if ( this == &other ) return;
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool otherOnStack = other.isOnStack();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -866,6 +907,12 @@ public:
 				other.init(PointersT::max_data);
 			}
 		}
+#else
+		pointers = other.pointers;
+		if ( other.getDereferencablePtr() )
+			getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
+		other.init(PointersT::max_data);
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
@@ -874,6 +921,7 @@ public:
 	{
 		// TODO+++: revise
 		if ( this == &other ) return *this;
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool wasOnStack = isOnStack();
 		reset();
 		if ( wasOnStack )
@@ -912,6 +960,13 @@ public:
 				other.init( PointersT::max_data );
 			}
 		}
+#else
+		reset();
+		pointers = other.pointers;
+		if ( getIdx_() != PointersT::max_data )
+			getControlBlock()->resetPtr(getIdx_(), this);
+		other.init( PointersT::max_data );
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 		return *this;
@@ -922,7 +977,7 @@ public:
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -940,7 +995,7 @@ public:
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( t_, other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -957,7 +1012,7 @@ public:
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(other.getAllocatedPtr()), t_ ) )
 			throwPointerOutOfRange();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( t_, other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -980,11 +1035,14 @@ public:
 
 	void swap( soft_ptr_base_impl<T>& other )
 	{
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		auto tmp = pointers;
 		pointers = other.pointers;
 		other.pointers = tmp;
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		if ( iWasOnStack )
 		{
 			if ( otherWasOnStack )
@@ -1033,6 +1091,12 @@ public:
 					other.getControlBlock()->resetPtr(other.getIdx_(), &other);
 			}
 		}
+#else
+		if ( getDereferencablePtr() && getIdx_() != PointersT::max_data )
+			getControlBlock()->resetPtr(getIdx_(), this);
+		if ( other.getDereferencablePtr() && other.getIdx_() != PointersT::max_data)
+			other.getControlBlock()->resetPtr(other.getIdx_(), &other);
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 	}
@@ -1087,7 +1151,9 @@ public:
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
 			if ( getIdx_() != PointersT::max_data )
 			{
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 				assert(!isOnStack());
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 				getControlBlock()->remove(getIdx_());
 			}
 			setPtrZombie();
@@ -1128,7 +1194,7 @@ public:
 	soft_ptr_impl() : soft_ptr_base_impl<T>()
 	{
 		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1141,7 +1207,7 @@ public:
 	soft_ptr_impl( const owning_ptr_impl<T1>& owner ) : soft_ptr_base_impl<T>(owner) {}
 	soft_ptr_impl( const owning_ptr_impl<T>& owner )
 	{
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1162,6 +1228,7 @@ public:
 
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T>& owner )
 	{
+#ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		bool iWasOnStack = this->isOnStack();
 		reset();
 		if ( iWasOnStack )
@@ -1173,6 +1240,13 @@ public:
 				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
 			else
 				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+#else
+		reset();
+		if ( owner.t .getPtr())
+			this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+		else
+			this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+#endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		this->dbgCheckMySlotConsistency();
 		return *this;
 	}
@@ -1208,7 +1282,7 @@ public:
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
 			throwPointerOutOfRange();
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1228,7 +1302,7 @@ public:
 	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<T>( nulp )
 	{
 		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1322,7 +1396,7 @@ public:
 	soft_ptr_impl() : soft_ptr_base_impl<void>()
 	{
 		pointers.init( soft_ptr_base_impl<void>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
@@ -1353,7 +1427,7 @@ public:
 	soft_ptr_impl( nullptr_t nulp ) : soft_ptr_base_impl<void>( nulp )
 	{
 		pointers.init( soft_ptr_base_impl<void>::PointersT::max_data );
-		if ( nodecpp::platform::is_guaranteed_on_stack( this ) )
+		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->setOnStack();
 			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
