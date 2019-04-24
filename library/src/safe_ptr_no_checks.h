@@ -90,11 +90,11 @@ public:
 		other.t = nullptr;
 		return *this;
 	}
-	owning_ptr_no_checks( nullptr_t nulp )
+	owning_ptr_no_checks( std::nullptr_t nulp )
 	{
-		t.setPtr( nullptr );
+		t = nullptr;
 	}
-	owning_ptr_no_checks& operator = ( nullptr_t nulp )
+	owning_ptr_no_checks& operator = ( std::nullptr_t nulp )
 	{
 		reset();
 		return *this;
@@ -229,8 +229,8 @@ public:
 
 	//soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other, T* t_ ) {t = t_; }
 
-	soft_ptr_base_no_checks( nullptr_t nulp ) {}
-	soft_ptr_base_no_checks& operator = ( nullptr_t nulp )
+	soft_ptr_base_no_checks( std::nullptr_t nulp ) {}
+	soft_ptr_base_no_checks& operator = ( std::nullptr_t nulp )
 	{
 		reset();
 		return *this;
@@ -284,6 +284,11 @@ public:
 };
 
 template<class T>
+soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr) {
+	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
+}
+
+template<class T>
 class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 {
 	friend class owning_ptr_no_checks<T>;
@@ -301,8 +306,8 @@ private:
 	template<class TT>
 	friend class soft_this_ptr_no_checks;
 	template<class TT>
-	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT* ptr);
-	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr);
+	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
+	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -368,8 +373,8 @@ public:
 	soft_ptr_no_checks( const soft_ptr_impl<T1>& other, T* t_ ) : soft_ptr_base_no_checks<T>(other, t_) {}
 	soft_ptr_no_checks( const soft_ptr_impl<T>& other, T* t_ ) : soft_ptr_base_no_checks<T>(other, t_) {}
 
-	soft_ptr_no_checks( nullptr_t nulp ) : soft_ptr_base_no_checks<T>( nulp ) { this->t = nullptr; }
-	soft_ptr_no_checks& operator = ( nullptr_t nulp )
+	soft_ptr_no_checks( std::nullptr_t nulp ) : soft_ptr_base_no_checks<T>( nulp ) { this->t = nullptr; }
+	soft_ptr_no_checks& operator = ( std::nullptr_t nulp )
 	{
 		soft_ptr_base_no_checks<T>::operator = (nulp);
 		return *this;
@@ -480,8 +485,8 @@ public:
 		return *this;
 	}
 
-	soft_ptr_no_checks( nullptr_t nulp ) : soft_ptr_base_no_checks<void>( nulp ) { this->t = nullptr; }
-	soft_ptr_no_checks& operator = ( nullptr_t nulp )
+	soft_ptr_no_checks( std::nullptr_t nulp ) : soft_ptr_base_no_checks<void>( nulp ) { this->t = nullptr; }
+	soft_ptr_no_checks& operator = ( std::nullptr_t nulp )
 	{
 		soft_ptr_base_no_checks<void>::operator = (nulp);
 		return *this;
@@ -563,11 +568,6 @@ public:
 	}
 };
 
-template<class T>
-soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks(T* ptr) {
-	return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
-}
-
 
 template<class T>
 class naked_ptr_base_no_checks
@@ -615,8 +615,8 @@ public:
 	naked_ptr_base_no_checks( naked_ptr_base_no_checks<T>&& other ) = default;
 	naked_ptr_base_no_checks<T>& operator = ( naked_ptr_base_no_checks<T>&& other ) = default;
 
-	naked_ptr_base_no_checks( nullptr_t nulp ) { t = nullptr; }
-	naked_ptr_base_no_checks& operator = ( nullptr_t nulp ) { t = nullptr; return *this; }
+	naked_ptr_base_no_checks( std::nullptr_t nulp ) { t = nullptr; }
+	naked_ptr_base_no_checks& operator = ( std::nullptr_t nulp ) { t = nullptr; return *this; }
 
 	void swap( naked_ptr_base_no_checks<T>& other )
 	{
@@ -693,8 +693,8 @@ public:
 	naked_ptr_no_checks<T>( naked_ptr_no_checks<T>&& other ) = default;
 	naked_ptr_no_checks<T>& operator = ( naked_ptr_no_checks<T>&& other ) = default;
 
-	naked_ptr_no_checks( nullptr_t nulp ) : naked_ptr_base_no_checks<T>(nulp) {}
-	naked_ptr_no_checks& operator = ( nullptr_t nulp ) { naked_ptr_base_no_checks<T>::operator = (nulp); return *this; }
+	naked_ptr_no_checks( std::nullptr_t nulp ) : naked_ptr_base_no_checks<T>(nulp) {}
+	naked_ptr_no_checks& operator = ( std::nullptr_t nulp ) { naked_ptr_base_no_checks<T>::operator = (nulp); return *this; }
 
 	void swap( naked_ptr_no_checks<T>& other )
 	{
@@ -776,8 +776,8 @@ public:
 	naked_ptr_no_checks( naked_ptr_no_checks<void>&& other ) = default;
 	naked_ptr_no_checks<void>& operator = ( naked_ptr_no_checks<void>&& other ) = default;
 
-	naked_ptr_no_checks( nullptr_t nulp ) : naked_ptr_base_no_checks<void>(nulp) {}
-	naked_ptr_no_checks& operator = ( nullptr_t nulp ) { naked_ptr_base_no_checks<void>::operator = (nulp); return *this; }
+	naked_ptr_no_checks( std::nullptr_t nulp ) : naked_ptr_base_no_checks<void>(nulp) {}
+	naked_ptr_no_checks& operator = ( std::nullptr_t nulp ) { naked_ptr_base_no_checks<void>::operator = (nulp); return *this; }
 
 	void swap( naked_ptr_no_checks<void>& other )
 	{
