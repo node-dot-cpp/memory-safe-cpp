@@ -1,0 +1,2 @@
+rm ./sample.bin 
+g++ ../src/main.cpp ../../../3rdparty/fmt/src/format.cc ../../../src/log.cpp ../../../src/cpu_exceptions_translator.cpp ../../../src/std_error.cpp ../../../src/safe_memory_error.cpp ../../../src/tagged_ptr_impl.cpp -I../../../include -I../../../3rdparty/fmt/include -Wall -fexceptions -fnon-call-exceptions -std=c++17 -o sample.bin
