@@ -94,6 +94,7 @@ bool checkUnion(const CXXRecordDecl *Dc, DiagHelper& Dh = NullDiagHelper);
 bool isOsnPtrRecord(const CXXRecordDecl *Dc);
 const Expr* getBaseIfOsnPtrDerref(const Expr* Ex);
 
+bool isImplicitExpr(const Expr *Ex);
 const Expr *getParentExpr(ASTContext *Context, const Expr *Ex);
 const Expr *ignoreTemporaries(const Expr *Ex);
 const LambdaExpr *getLambda(const Expr *Ex);

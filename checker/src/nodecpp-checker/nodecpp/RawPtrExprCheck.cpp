@@ -33,15 +33,7 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   //first ignore implicits and parens
 
-  if (isa<ExprWithCleanups>(Ex))
-    return;
-  else if (isa<MaterializeTemporaryExpr>(Ex))
-    return;
-  else if (isa<CXXBindTemporaryExpr>(Ex))
-    return;
-  else if (isa<ImplicitCastExpr>(Ex))
-    return;
-  else if (isa<ParenExpr>(Ex))
+  if (isImplicitExpr(Ex))
     return;
   else if (isa<CXXDefaultArgExpr>(Ex))
     return;

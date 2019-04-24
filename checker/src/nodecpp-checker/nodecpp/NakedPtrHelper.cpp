@@ -507,6 +507,14 @@ const Expr *getBaseIfOsnPtrDerref(const Expr *Ex) {
   return nullptr;
 }
 
+bool isImplicitExpr(const Expr *Ex) {
+  return isa<ExprWithCleanups>(Ex) ||
+    isa<MaterializeTemporaryExpr>(Ex) ||
+    isa<CXXBindTemporaryExpr>(Ex) ||
+    isa<ImplicitCastExpr>(Ex) ||
+    isa<ParenExpr>(Ex);
+}
+
 const Expr *getParentExpr(ASTContext *Context, const Expr *Ex) {
 
   auto SList = Context->getParents(*Ex);
@@ -520,8 +528,7 @@ const Expr *getParentExpr(ASTContext *Context, const Expr *Ex) {
   if (!P)
     return nullptr;
 
-  if (isa<ParenExpr>(P) || isa<ImplicitCastExpr>(P) ||
-      isa<MaterializeTemporaryExpr>(P) || isa<CXXBindTemporaryExpr>(P))
+  if (isImplicitExpr(P))
     return getParentExpr(Context, P);
   else
     return P;

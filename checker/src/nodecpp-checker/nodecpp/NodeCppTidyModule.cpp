@@ -15,6 +15,7 @@
 #include "../ClangTidyModuleRegistry.h"
 #include "ArrayExprCheck.h"
 #include "AsmCheck.h"
+#include "AwaitableCheck.h"
 #include "CallExprCheck.h"
 #include "ConstCheck.h"
 #include "CoroutineCheck.h"
@@ -46,6 +47,8 @@ public:
         "nodecpp-array-expr");
     CheckFactories.registerCheck<AsmCheck>(
         "nodecpp-asm");
+    CheckFactories.registerCheck<AwaitableCheck>(
+        "nodecpp-Awaitable");
     CheckFactories.registerCheck<CallExprCheck>(
         "nodecpp-call-expr");
     CheckFactories.registerCheck<ConstCheck>(

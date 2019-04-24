@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS support)
 add_clang_library(clangTidyNodeCppModule
   ArrayExprCheck.cpp
   AsmCheck.cpp
+  AwaitableCheck.cpp
   CallExprCheck.cpp
   ConstCheck.cpp
   CoroutineCheck.cpp
