@@ -28,7 +28,6 @@
 #include "PtrArithmeticCheck.h"
 #include "RawPointerAssignmentCheck.h"
 #include "RawPointerDereferenceCheck.h"
-#include "RawPtrCastCheck.h"
 #include "RawPtrExprCheck.h"
 #include "RecordDeclCheck.h"
 #include "StaticStorageCheck.h"
@@ -73,8 +72,6 @@ public:
         "nodecpp-raw-pointer-assignment");
     CheckFactories.registerCheck<RawPointerDereferenceCheck>(
         "nodecpp-raw-pointer-dereference");
-    CheckFactories.registerCheck<RawPtrCastCheck>(
-        "nodecpp-raw-ptr-cast");
     CheckFactories.registerCheck<RawPtrExprCheck>(
         "nodecpp-raw-ptr-expr");
     CheckFactories.registerCheck<RecordDeclCheck>(

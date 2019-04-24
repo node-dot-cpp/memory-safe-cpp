@@ -18,7 +18,6 @@ add_clang_library(clangTidyNodeCppModule
   PtrArithmeticCheck.cpp
   RawPointerAssignmentCheck.cpp
   RawPointerDereferenceCheck.cpp
-  RawPtrCastCheck.cpp
   RawPtrExprCheck.cpp
   RecordDeclCheck.cpp
   StaticStorageCheck.cpp
