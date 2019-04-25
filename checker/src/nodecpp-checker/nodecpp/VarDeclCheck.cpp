@@ -127,6 +127,15 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
   if (isAnyFunctorType(Var->getType())) // don't use canonical type here
     return;
 
+  if (isAwaitableType(Qt)) {
+    if(IsParam)
+      diag(Var->getLocation(), "(S9.1) awaitable parameter not allowed");
+    else
+      diag(Var->getLocation(), "(S9.1) awaitable variable not allowed (yet)");
+
+    return;
+  }
+
   if (isRawPointerType(Qt)) {
     //getContext()->getGlobalOptions().SafeFunctions;
     bool Allow = false;

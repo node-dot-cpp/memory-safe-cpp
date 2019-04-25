@@ -64,10 +64,10 @@ bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
   auto Sm = Context->getSourceManager();
   auto ELoc = Sm->getExpansionLoc(Loc);
 
-  return (ELoc.isValid() && Sm->isInSystemHeader(ELoc));
+  return (ELoc.isInvalid() || Sm->isInSystemHeader(ELoc));
 }
 
-bool isSystemSafeName(const ClangTidyContext *Context,
+bool isSystemSafeTypeName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
   //hardcode some names that are really important
@@ -78,6 +78,18 @@ bool isSystemSafeName(const ClangTidyContext *Context,
     return false;
 
   auto &Wl = Context->getGlobalOptions().SafeTypes;
+  return (Wl.find(Name) != Wl.end());
+}
+
+bool isSystemSafeFunctionName(const ClangTidyContext *Context,
+                      const std::string &Name) {
+
+  //hardcode some names that are really important
+  if (Name == "nodecpp::safememory::make_owning" ||
+      Name == "nodecpp::wait_for_all")
+    return true;
+
+  auto &Wl = Context->getGlobalOptions().SafeFunctions;
   return (Wl.find(Name) != Wl.end());
 }
 
@@ -373,7 +385,7 @@ bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
   if (isSystemLocation(Context, Dc->getLocation())) {
     // if record is in system header, fate is decided by white list
     std::string Name = Dc->getQualifiedNameAsString();
-    if (isSystemSafeName(Context, Name)) {
+    if (isSystemSafeTypeName(Context, Name)) {
       return true;
     } else {
       std::string Msg = "system library type '" + Name + "' is not safe";

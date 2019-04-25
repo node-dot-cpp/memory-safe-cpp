@@ -163,6 +163,15 @@ auto promise_type_struct<T>::get_return_object() {
 		return awaitable<T>{};
 }
 
+template<typename T>
+T wait_for_all(T t, T t2) { return t; }
+
+template<typename T>
+T wait_for_all(T t, T t2, T t3) { return t; }
+
+template<typename T>
+T wait_for_all(T t, T t2, T t3, T t4) { return t; }
+
 } // namespace nodecpp::awaitable
 
 

@@ -38,17 +38,23 @@ void AwaitableCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Pex = getParentExpr(Result.Context, Ex);
 
-  if(!Pex)
-    return;
-  else if(isa<CoawaitExpr>(Pex))
-    return;
-  else if(auto Mex = dyn_cast<MemberExpr>(Pex)) {
-    if(Mex->getMemberDecl()->getNameAsString() == "await_ready")
+  if(Pex) {
+    if(isa<CoawaitExpr>(Pex))
       return;
-  } 
+    else if(auto Mex = dyn_cast<MemberExpr>(Pex)) {
+      if(Mex->getMemberDecl()->getNameAsString() == "await_ready")
+        return;
+    }
+    else if(isa<DeclRefExpr>(Pex))
+      return; //The error goes to the declaration initializer, not here
+    else if(auto Cex = dyn_cast<CallExpr>(Pex) ) {
+      auto Fdecl = Cex->getDirectCallee();
+      if(Fdecl && Fdecl->getQualifiedNameAsString() == "nodecpp::wait_for_all")
+        return;
+    }
+  }
 
   diag(Ex->getExprLoc(), "(S9.1) awaitable expression must be used with co_await");
-  Pex->dumpColor();
 
 //      << FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
 }

@@ -59,7 +59,8 @@ bool isNakedPtrName(const std::string& Name);
 bool isConstNakedPtrName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
-bool isSystemSafeName(const ClangTidyContext* Context, const std::string& Name);
+bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
+bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);

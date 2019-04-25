@@ -36,17 +36,13 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   SourceManager *Manager = Result.SourceManager;
-  auto ELoc = Manager->getExpansionLoc(Decl->getLocStart());
+  auto ELoc = Manager->getExpansionLoc(Decl->getLocation());
 
-  if (ELoc.isInvalid())
-    return;
-
-  if (!Manager->isInSystemHeader(ELoc))
+  if(!isSystemLocation(getContext(), ELoc))
     return; // this is in safe code, then is ok
 
   std::string Name = Decl->getQualifiedNameAsString();
-  auto &S = getContext()->getGlobalOptions().SafeFunctions;
-  if (S.find(Name) != S.end())
+  if(isSystemSafeFunctionName(getContext(), Name))
     return;
 
   diag(Ex->getExprLoc(),
