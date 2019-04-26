@@ -901,14 +901,14 @@ public:
 			}
 			else
 			{
-				pointers = other.pointers;
+				pointers.copy_from( other.pointers );
 				if ( other.getDereferencablePtr() )
 					getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
 				other.init(PointersT::max_data);
 			}
 		}
 #else
-		pointers = other.pointers;
+		pointers.copy_from( other.pointers );
 		if ( other.getDereferencablePtr() )
 			getControlBlock(getAllocatedPtr())->resetPtr(getIdx_(), this);
 		other.init(PointersT::max_data);
@@ -954,7 +954,7 @@ public:
 			}
 			else
 			{
-				pointers = other.pointers;
+				pointers.copy_from( other.pointers );
 				if ( getIdx_() != PointersT::max_data )
 					getControlBlock()->resetPtr(getIdx_(), this);
 				other.init( PointersT::max_data );
@@ -962,7 +962,7 @@ public:
 		}
 #else
 		reset();
-		pointers = other.pointers;
+		pointers.copy_from( other.pointers );
 		if ( getIdx_() != PointersT::max_data )
 			getControlBlock()->resetPtr(getIdx_(), this);
 		other.init( PointersT::max_data );
@@ -1039,9 +1039,7 @@ public:
 		bool iWasOnStack = isOnStack();
 		bool otherWasOnStack = other.isOnStack();
 #endif // NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
-		auto tmp = pointers;
-		pointers = other.pointers;
-		other.pointers = tmp;
+		pointers.swap( other.pointers );
 #ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 		if ( iWasOnStack )
 		{
