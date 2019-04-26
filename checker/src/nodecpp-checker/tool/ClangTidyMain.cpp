@@ -28,31 +28,31 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
-static cl::OptionCategory ClangTidyCategory("clang-tidy options");
+static cl::OptionCategory NodecppCheckerCategory("nodecpp-checker options");
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
-static cl::extrahelp ClangTidyHelp(R"(
-Configuration files:
-  clang-tidy attempts to read configuration for each source file from a
-  .clang-tidy file located in the closest parent directory of the source
-  file. If any configuration options have a corresponding command-line
-  option, command-line option takes precedence. The effective
-  configuration can be inspected using -dump-config:
+// static cl::extrahelp ClangTidyHelp(R"(
+// Configuration files:
+//   clang-tidy attempts to read configuration for each source file from a
+//   .clang-tidy file located in the closest parent directory of the source
+//   file. If any configuration options have a corresponding command-line
+//   option, command-line option takes precedence. The effective
+//   configuration can be inspected using -dump-config:
 
-    $ clang-tidy -dump-config
-    ---
-    Checks:          '-*,some-check'
-    WarningsAsErrors: ''
-    HeaderFilterRegex: ''
-    AnalyzeTemporaryDtors: false
-    FormatStyle:     none
-    User:            user
-    CheckOptions:
-      - key:             some-check.SomeOption
-        value:           'some value'
-    ...
+//     $ clang-tidy -dump-config
+//     ---
+//     Checks:          '-*,some-check'
+//     WarningsAsErrors: ''
+//     HeaderFilterRegex: ''
+//     AnalyzeTemporaryDtors: false
+//     FormatStyle:     none
+//     User:            user
+//     CheckOptions:
+//       - key:             some-check.SomeOption
+//         value:           'some value'
+//     ...
 
-)");
+// )");
 
 static cl::opt<std::string> SafeLibraryDb("safe-library-db", cl::desc(R"(
 Specifies a safe library dababase file
@@ -60,219 +60,219 @@ When the value is empty, nodecpp-checker will
 attempt to find a file named safe_library.json
 in the source and its parent directories.
 )"),
-                                   cl::init(""), cl::cat(ClangTidyCategory));
+                                   cl::init(""), cl::cat(NodecppCheckerCategory));
 
 
-const char DefaultChecks[] = // Enable these checks by default:
-//    "clang-diagnostic-*,"    //   * compiler diagnostics
-//    "clang-analyzer-*,"      //   * Static Analyzer checks
-    "nodecpp-*";			 //   * Node.Cpp checks
+// const char DefaultChecks[] = // Enable these checks by default:
+// //    "clang-diagnostic-*,"    //   * compiler diagnostics
+// //    "clang-analyzer-*,"      //   * Static Analyzer checks
+//     "nodecpp-*";			 //   * Node.Cpp checks
 
-static cl::opt<std::string> Checks("checks", cl::desc(R"(
-Comma-separated list of globs with optional '-'
-prefix. Globs are processed in order of
-appearance in the list. Globs without '-'
-prefix add checks with matching names to the
-set, globs with the '-' prefix remove checks
-with matching names from the set of enabled
-checks. This option's value is appended to the
-value of the 'Checks' option in .clang-tidy
-file, if any.
-)"),
-                                   cl::init(""), cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> Checks("checks", cl::desc(R"(
+// Comma-separated list of globs with optional '-'
+// prefix. Globs are processed in order of
+// appearance in the list. Globs without '-'
+// prefix add checks with matching names to the
+// set, globs with the '-' prefix remove checks
+// with matching names from the set of enabled
+// checks. This option's value is appended to the
+// value of the 'Checks' option in .clang-tidy
+// file, if any.
+// )"),
+//                                    cl::init(""), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<std::string> WarningsAsErrors("warnings-as-errors", cl::desc(R"(
-Upgrades warnings to errors. Same format as
-'-checks'.
-This option's value is appended to the value of
-the 'WarningsAsErrors' option in .clang-tidy
-file, if any.
-)"),
-                                             cl::init(""),
-                                             cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> WarningsAsErrors("warnings-as-errors", cl::desc(R"(
+// Upgrades warnings to errors. Same format as
+// '-checks'.
+// This option's value is appended to the value of
+// the 'WarningsAsErrors' option in .clang-tidy
+// file, if any.
+// )"),
+//                                              cl::init(""),
+//                                              cl::cat(NodecppCheckerCategory));
 
-static cl::opt<std::string> HeaderFilter("header-filter", cl::desc(R"(
-Regular expression matching the names of the
-headers to output diagnostics from. Diagnostics
-from the main file of each translation unit are
-always displayed.
-Can be used together with -line-filter.
-This option overrides the 'HeaderFilter' option
-in .clang-tidy file, if any.
-)"),
-                                         cl::init(".*"),
-                                         cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> HeaderFilter("header-filter", cl::desc(R"(
+// Regular expression matching the names of the
+// headers to output diagnostics from. Diagnostics
+// from the main file of each translation unit are
+// always displayed.
+// Can be used together with -line-filter.
+// This option overrides the 'HeaderFilter' option
+// in .clang-tidy file, if any.
+// )"),
+//                                          cl::init(".*"),
+//                                          cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool>
-    SystemHeaders("system-headers",
-                  cl::desc("Display the errors from system headers."),
-                  cl::init(false), cl::cat(ClangTidyCategory));
-static cl::opt<std::string> LineFilter("line-filter", cl::desc(R"(
-List of files with line ranges to filter the
-warnings. Can be used together with
--header-filter. The format of the list is a
-JSON array of objects:
-  [
-    {"name":"file1.cpp","lines":[[1,3],[5,7]]},
-    {"name":"file2.h"}
-  ]
-)"),
-                                       cl::init(""),
-                                       cl::cat(ClangTidyCategory));
+// static cl::opt<bool>
+//     SystemHeaders("system-headers",
+//                   cl::desc("Display the errors from system headers."),
+//                   cl::init(false), cl::cat(NodecppCheckerCategory));
+// static cl::opt<std::string> LineFilter("line-filter", cl::desc(R"(
+// List of files with line ranges to filter the
+// warnings. Can be used together with
+// -header-filter. The format of the list is a
+// JSON array of objects:
+//   [
+//     {"name":"file1.cpp","lines":[[1,3],[5,7]]},
+//     {"name":"file2.h"}
+//   ]
+// )"),
+//                                        cl::init(""),
+//                                        cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> Fix("fix", cl::desc(R"(
-Apply suggested fixes. Without -fix-errors
-clang-tidy will bail out if any compilation
-errors were found.
-)"),
-                         cl::init(false), cl::cat(ClangTidyCategory));
+// static cl::opt<bool> Fix("fix", cl::desc(R"(
+// Apply suggested fixes. Without -fix-errors
+// clang-tidy will bail out if any compilation
+// errors were found.
+// )"),
+//                          cl::init(false), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> FixErrors("fix-errors", cl::desc(R"(
-Apply suggested fixes even if compilation
-errors were found. If compiler errors have
-attached fix-its, clang-tidy will apply them as
-well.
-)"),
-                               cl::init(false), cl::cat(ClangTidyCategory));
+// static cl::opt<bool> FixErrors("fix-errors", cl::desc(R"(
+// Apply suggested fixes even if compilation
+// errors were found. If compiler errors have
+// attached fix-its, clang-tidy will apply them as
+// well.
+// )"),
+//                                cl::init(false), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<std::string> FormatStyle("format-style", cl::desc(R"(
-Style for formatting code around applied fixes:
-  - 'none' (default) turns off formatting
-  - 'file' (literally 'file', not a placeholder)
-    uses .clang-format file in the closest parent
-    directory
-  - '{ <json> }' specifies options inline, e.g.
-    -format-style='{BasedOnStyle: llvm, IndentWidth: 8}'
-  - 'llvm', 'google', 'webkit', 'mozilla'
-See clang-format documentation for the up-to-date
-information about formatting styles and options.
-This option overrides the 'FormatStyle` option in
-.clang-tidy file, if any.
-)"),
-                                   cl::init("none"),
-                                   cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> FormatStyle("format-style", cl::desc(R"(
+// Style for formatting code around applied fixes:
+//   - 'none' (default) turns off formatting
+//   - 'file' (literally 'file', not a placeholder)
+//     uses .clang-format file in the closest parent
+//     directory
+//   - '{ <json> }' specifies options inline, e.g.
+//     -format-style='{BasedOnStyle: llvm, IndentWidth: 8}'
+//   - 'llvm', 'google', 'webkit', 'mozilla'
+// See clang-format documentation for the up-to-date
+// information about formatting styles and options.
+// This option overrides the 'FormatStyle` option in
+// .clang-tidy file, if any.
+// )"),
+//                                    cl::init("none"),
+//                                    cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> ListChecks("list-checks", cl::desc(R"(
-List all enabled checks and exit. Use with
--checks=* to list all available checks.
-)"),
-                                cl::init(false), cl::cat(ClangTidyCategory));
+// static cl::opt<bool> ListChecks("list-checks", cl::desc(R"(
+// List all enabled checks and exit. Use with
+// -checks=* to list all available checks.
+// )"),
+//                                 cl::init(false), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> ExplainConfig("explain-config", cl::desc(R"(
-For each enabled check explains, where it is
-enabled, i.e. in clang-tidy binary, command
-line or a specific configuration file.
-)"),
-                                   cl::init(false), cl::cat(ClangTidyCategory));
+// static cl::opt<bool> ExplainConfig("explain-config", cl::desc(R"(
+// For each enabled check explains, where it is
+// enabled, i.e. in clang-tidy binary, command
+// line or a specific configuration file.
+// )"),
+//                                    cl::init(false), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<std::string> Config("config", cl::desc(R"(
-Specifies a configuration in YAML/JSON format:
-  -config="{Checks: '*',
-            CheckOptions: [{key: x,
-                            value: y}]}"
-When the value is empty, clang-tidy will
-attempt to find a file named .clang-tidy for
-each source file in its parent directories.
-)"),
-                                   cl::init(""), cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> Config("config", cl::desc(R"(
+// Specifies a configuration in YAML/JSON format:
+//   -config="{Checks: '*',
+//             CheckOptions: [{key: x,
+//                             value: y}]}"
+// When the value is empty, clang-tidy will
+// attempt to find a file named .clang-tidy for
+// each source file in its parent directories.
+// )"),
+//                                    cl::init(""), cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> DumpConfig("dump-config", cl::desc(R"(
-Dumps configuration in the YAML format to
-stdout. This option can be used along with a
-file name (and '--' if the file is outside of a
-project with configured compilation database).
-The configuration used for this file will be
-printed.
-Use along with -checks=* to include
-configuration of all checks.
-)"),
-                                cl::init(false), cl::cat(ClangTidyCategory));
+// static cl::opt<bool> DumpConfig("dump-config", cl::desc(R"(
+// Dumps configuration in the YAML format to
+// stdout. This option can be used along with a
+// file name (and '--' if the file is outside of a
+// project with configured compilation database).
+// The configuration used for this file will be
+// printed.
+// Use along with -checks=* to include
+// configuration of all checks.
+// )"),
+//                                 cl::init(false), cl::cat(NodecppCheckerCategory));
 
 static cl::opt<bool> EnableCheckProfile("enable-check-profile", cl::desc(R"(
 Enable per-check timing profiles, and print a
 report to stderr.
 )"),
                                         cl::init(false),
-                                        cl::cat(ClangTidyCategory));
+                                        cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> AnalyzeTemporaryDtors("analyze-temporary-dtors",
-                                           cl::desc(R"(
-Enable temporary destructor-aware analysis in
-clang-analyzer- checks.
-This option overrides the value read from a
-.clang-tidy file.
-)"),
-                                           cl::init(false),
-                                           cl::cat(ClangTidyCategory));
+// static cl::opt<bool> AnalyzeTemporaryDtors("analyze-temporary-dtors",
+//                                            cl::desc(R"(
+// Enable temporary destructor-aware analysis in
+// clang-analyzer- checks.
+// This option overrides the value read from a
+// .clang-tidy file.
+// )"),
+//                                            cl::init(false),
+//                                            cl::cat(NodecppCheckerCategory));
 
-static cl::opt<std::string> ExportFixes("export-fixes", cl::desc(R"(
-YAML file to store suggested fixes in. The
-stored fixes can be applied to the input source
-code with clang-apply-replacements.
-)"),
-                                        cl::value_desc("filename"),
-                                        cl::cat(ClangTidyCategory));
+// static cl::opt<std::string> ExportFixes("export-fixes", cl::desc(R"(
+// YAML file to store suggested fixes in. The
+// stored fixes can be applied to the input source
+// code with clang-apply-replacements.
+// )"),
+//                                         cl::value_desc("filename"),
+//                                         cl::cat(NodecppCheckerCategory));
 
-static cl::opt<bool> Quiet("quiet", cl::desc(R"(
-Run clang-tidy in quiet mode. This suppresses
-printing statistics about ignored warnings and
-warnings treated as errors if the respective
-options are specified.
-)"),
-                           cl::init(false),
-                           cl::cat(ClangTidyCategory));
+// static cl::opt<bool> Quiet("quiet", cl::desc(R"(
+// Run clang-tidy in quiet mode. This suppresses
+// printing statistics about ignored warnings and
+// warnings treated as errors if the respective
+// options are specified.
+// )"),
+//                            cl::init(false),
+//                            cl::cat(NodecppCheckerCategory));
 
 static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
 
 static cl::opt<bool>
 ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
-        cl::cat(ClangTidyCategory));
+        cl::cat(NodecppCheckerCategory));
 static cl::opt<bool>
 ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
-        cl::cat(ClangTidyCategory));
+        cl::cat(NodecppCheckerCategory));
 static cl::opt<bool>
 ASTPrint("ast-print",
          cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
-         cl::cat(ClangTidyCategory));
+         cl::cat(NodecppCheckerCategory));
 static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
     cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)),
-    cl::cat(ClangTidyCategory));
+    cl::cat(NodecppCheckerCategory));
 
 
 namespace nodecpp {
 namespace checker {
 
-static void printStats(const ClangTidyStats &Stats) {
-  if (Stats.errorsIgnored()) {
-    llvm::errs() << "Suppressed " << Stats.errorsIgnored() << " warnings (";
-    StringRef Separator = "";
-  //   if (Stats.ErrorsIgnoredNonUserCode) {
-  //     llvm::errs() << Stats.ErrorsIgnoredNonUserCode << " in non-user code";
-  //     Separator = ", ";
-  //   }
-    if (Stats.ErrorsIgnoredLineFilter) {
-      llvm::errs() << Separator << Stats.ErrorsIgnoredLineFilter
-                   << " due to line filter";
-      Separator = ", ";
-    }
-    if (Stats.ErrorsIgnoredNOLINT) {
-      llvm::errs() << Separator << Stats.ErrorsIgnoredNOLINT << " NOLINT";
-      Separator = ", ";
-    }
-    if (Stats.ErrorsIgnoredCheckFilter)
-      llvm::errs() << Separator << Stats.ErrorsIgnoredCheckFilter
-                   << " with check filters";
-    llvm::errs() << ").\n";
-  //   if (Stats.ErrorsIgnoredNonUserCode)
-  //     llvm::errs() << "Use -header-filter=.* to display errors from all "
-  //                     "non-system headers. Use -system-headers to display "
-  //                     "errors from system headers as well.\n";
-  } 
-  else {
-    llvm::errs() << "No warnings suppressed.\n";
-  } 
-}
+// static void printStats(const ClangTidyStats &Stats) {
+//   if (Stats.errorsIgnored()) {
+//     llvm::errs() << "Suppressed " << Stats.errorsIgnored() << " warnings (";
+//     StringRef Separator = "";
+//   //   if (Stats.ErrorsIgnoredNonUserCode) {
+//   //     llvm::errs() << Stats.ErrorsIgnoredNonUserCode << " in non-user code";
+//   //     Separator = ", ";
+//   //   }
+//     if (Stats.ErrorsIgnoredLineFilter) {
+//       llvm::errs() << Separator << Stats.ErrorsIgnoredLineFilter
+//                    << " due to line filter";
+//       Separator = ", ";
+//     }
+//     if (Stats.ErrorsIgnoredNOLINT) {
+//       llvm::errs() << Separator << Stats.ErrorsIgnoredNOLINT << " NOLINT";
+//       Separator = ", ";
+//     }
+//     if (Stats.ErrorsIgnoredCheckFilter)
+//       llvm::errs() << Separator << Stats.ErrorsIgnoredCheckFilter
+//                    << " with check filters";
+//     llvm::errs() << ").\n";
+//   //   if (Stats.ErrorsIgnoredNonUserCode)
+//   //     llvm::errs() << "Use -header-filter=.* to display errors from all "
+//   //                     "non-system headers. Use -system-headers to display "
+//   //                     "errors from system headers as well.\n";
+//   } 
+//   else {
+//     llvm::errs() << "No warnings suppressed.\n";
+//   } 
+// }
 
 static void printProfileData(const ProfileData &Profile,
                              llvm::raw_ostream &OS) {
@@ -315,11 +315,11 @@ static void printProfileData(const ProfileData &Profile,
 
 static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef FilePath) {
   ClangTidyGlobalOptions GlobalOptions;
-  if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
-    llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
-    llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
-    return nullptr;
-  }
+  // if (std::error_code Err = parseLineFilter(LineFilter, GlobalOptions)) {
+  //   llvm::errs() << "Invalid LineFilter: " << Err.message() << "\n\nUsage:\n";
+  //   llvm::cl::PrintHelpMessage(/*Hidden=*/false, /*Categorized=*/true);
+  //   return nullptr;
+  // }
 
   std::string ErrorMessage;
   std::unique_ptr<JSONSafeDatabase> Safes;
@@ -345,30 +345,30 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
   }
 
   ClangTidyOptions DefaultOptions;
-  DefaultOptions.Checks = DefaultChecks;
+  DefaultOptions.Checks = "nodecpp-*";
   DefaultOptions.WarningsAsErrors = "";
-  DefaultOptions.HeaderFilterRegex = HeaderFilter;
-  DefaultOptions.SystemHeaders = SystemHeaders;
-  DefaultOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
-  DefaultOptions.FormatStyle = FormatStyle;
+  DefaultOptions.HeaderFilterRegex = ".*";
+  DefaultOptions.SystemHeaders = false;
+  DefaultOptions.AnalyzeTemporaryDtors = false;
+  DefaultOptions.FormatStyle = "none";
   DefaultOptions.User = llvm::sys::Process::GetEnv("USER");
   // USERNAME is used on Windows.
   if (!DefaultOptions.User)
     DefaultOptions.User = llvm::sys::Process::GetEnv("USERNAME");
 
   ClangTidyOptions OverrideOptions;
-  if (Checks.getNumOccurrences() > 0)
-    OverrideOptions.Checks = Checks;
-  if (WarningsAsErrors.getNumOccurrences() > 0)
-    OverrideOptions.WarningsAsErrors = WarningsAsErrors;
-  if (HeaderFilter.getNumOccurrences() > 0)
-    OverrideOptions.HeaderFilterRegex = HeaderFilter;
-  if (SystemHeaders.getNumOccurrences() > 0)
-    OverrideOptions.SystemHeaders = SystemHeaders;
-  if (AnalyzeTemporaryDtors.getNumOccurrences() > 0)
-    OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
-  if (FormatStyle.getNumOccurrences() > 0)
-    OverrideOptions.FormatStyle = FormatStyle;
+  // if (Checks.getNumOccurrences() > 0)
+  //   OverrideOptions.Checks = Checks;
+  // if (WarningsAsErrors.getNumOccurrences() > 0)
+  //   OverrideOptions.WarningsAsErrors = WarningsAsErrors;
+  // if (HeaderFilter.getNumOccurrences() > 0)
+  //   OverrideOptions.HeaderFilterRegex = HeaderFilter;
+  // if (SystemHeaders.getNumOccurrences() > 0)
+  //   OverrideOptions.SystemHeaders = SystemHeaders;
+  // if (AnalyzeTemporaryDtors.getNumOccurrences() > 0)
+  //   OverrideOptions.AnalyzeTemporaryDtors = AnalyzeTemporaryDtors;
+  // if (FormatStyle.getNumOccurrences() > 0)
+  //   OverrideOptions.FormatStyle = FormatStyle;
 
   ClangTidyOptions Options;
   llvm::ErrorOr<ClangTidyOptions> ParsedConfig(Options);
@@ -394,7 +394,7 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
 }
 
 static int clangTidyMain(int Argc, const char **Argv) {
-  CommonOptionsParser OptionsParser(Argc, Argv, ClangTidyCategory,
+  CommonOptionsParser OptionsParser(Argc, Argv, NodecppCheckerCategory,
                                     cl::ZeroOrMore);
 
   StringRef FileName("dummy");
@@ -417,42 +417,42 @@ static int clangTidyMain(int Argc, const char **Argv) {
   ClangTidyOptions EffectiveOptions = OptionsProvider->getOptions(FilePath);
   std::vector<std::string> EnabledChecks = getCheckNames(EffectiveOptions);
 
-  if (ExplainConfig) {
-    // FIXME: Show other ClangTidyOptions' fields, like ExtraArg.
-    std::vector<ClangTidyOptionsProvider::OptionsSource>
-        RawOptions = OptionsProvider->getRawOptions(FilePath);
-    for (const std::string &Check : EnabledChecks) {
-      for (auto It = RawOptions.rbegin(); It != RawOptions.rend(); ++It) {
-        if (It->first.Checks && GlobList(*It->first.Checks).contains(Check)) {
-          llvm::outs() << "'" << Check << "' is enabled in the " << It->second
-                       << ".\n";
-          break;
-        }
-      }
-    }
-    return 0;
-  }
+  // if (ExplainConfig) {
+  //   // FIXME: Show other ClangTidyOptions' fields, like ExtraArg.
+  //   std::vector<ClangTidyOptionsProvider::OptionsSource>
+  //       RawOptions = OptionsProvider->getRawOptions(FilePath);
+  //   for (const std::string &Check : EnabledChecks) {
+  //     for (auto It = RawOptions.rbegin(); It != RawOptions.rend(); ++It) {
+  //       if (It->first.Checks && GlobList(*It->first.Checks).contains(Check)) {
+  //         llvm::outs() << "'" << Check << "' is enabled in the " << It->second
+  //                      << ".\n";
+  //         break;
+  //       }
+  //     }
+  //   }
+  //   return 0;
+  // }
 
-  if (ListChecks) {
-    if (EnabledChecks.empty()) {
-      llvm::errs() << "No checks enabled.\n";
-      return 1;
-    }
-    llvm::outs() << "Enabled checks:";
-    for (const auto &CheckName : EnabledChecks)
-      llvm::outs() << "\n    " << CheckName;
-    llvm::outs() << "\n\n";
-    return 0;
-  }
+  // if (ListChecks) {
+  //   if (EnabledChecks.empty()) {
+  //     llvm::errs() << "No checks enabled.\n";
+  //     return 1;
+  //   }
+  //   llvm::outs() << "Enabled checks:";
+  //   for (const auto &CheckName : EnabledChecks)
+  //     llvm::outs() << "\n    " << CheckName;
+  //   llvm::outs() << "\n\n";
+  //   return 0;
+  // }
 
-  if (DumpConfig) {
-    EffectiveOptions.CheckOptions = getCheckOptions(EffectiveOptions);
-    llvm::outs() << configurationAsText(
-                        ClangTidyOptions::getDefaults().mergeWith(
-                            EffectiveOptions))
-                 << "\n";
-    return 0;
-  }
+  // if (DumpConfig) {
+  //   EffectiveOptions.CheckOptions = getCheckOptions(EffectiveOptions);
+  //   llvm::outs() << configurationAsText(
+  //                       ClangTidyOptions::getDefaults().mergeWith(
+  //                           EffectiveOptions))
+  //                << "\n";
+  //   return 0;
+  // }
 
   if (EnabledChecks.empty()) {
     llvm::errs() << "Error: no checks enabled.\n";
@@ -483,6 +483,9 @@ static int clangTidyMain(int Argc, const char **Argv) {
         return E.DiagLevel == ClangTidyError::Error;
       }) != Errors.end();
 
+  bool Fix = true;
+  bool FixErrors = false;
+
   const bool DisableFixes = Fix && FoundErrors && !FixErrors;
 
   unsigned WErrorCount = 0;
@@ -490,33 +493,33 @@ static int clangTidyMain(int Argc, const char **Argv) {
   // -fix-errors implies -fix.
   handleErrors(Context, (FixErrors || Fix) && !DisableFixes, WErrorCount);
 
-  if (!ExportFixes.empty() && !Errors.empty()) {
-    std::error_code EC;
-    llvm::raw_fd_ostream OS(ExportFixes, EC, llvm::sys::fs::F_None);
-    if (EC) {
-      llvm::errs() << "Error opening output file: " << EC.message() << '\n';
-      return 1;
-    }
-    exportReplacements(FilePath.str(), Errors, OS);
-  }
+  // if (!ExportFixes.empty() && !Errors.empty()) {
+  //   std::error_code EC;
+  //   llvm::raw_fd_ostream OS(ExportFixes, EC, llvm::sys::fs::F_None);
+  //   if (EC) {
+  //     llvm::errs() << "Error opening output file: " << EC.message() << '\n';
+  //     return 1;
+  //   }
+  //   exportReplacements(FilePath.str(), Errors, OS);
+  // }
 
-  if (!Quiet) {
-    printStats(Context.getStats());
+//  if (!Quiet) {
+//    printStats(Context.getStats());
     if (DisableFixes)
       llvm::errs()
           << "Found compiler errors, but -fix-errors was not specified.\n"
              "Fixes have NOT been applied.\n\n";
-  }
+//  }
 
   if (EnableCheckProfile)
     printProfileData(Profile, llvm::errs());
 
   if (WErrorCount) {
-    if (!Quiet) {
+//    if (!Quiet) {
       StringRef Plural = WErrorCount == 1 ? "" : "s";
       llvm::errs() << WErrorCount << " warning" << Plural << " treated as error"
                    << Plural << "\n";
-    }
+//    }
     return WErrorCount;
   }
 

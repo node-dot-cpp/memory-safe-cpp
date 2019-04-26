@@ -251,9 +251,9 @@ void handleErrors(ClangTidyContext &Context, bool Fix,
 
 /// \brief Serializes replacements into YAML and writes them to the specified
 /// output stream.
-void exportReplacements(StringRef MainFilePath,
-                        const std::vector<ClangTidyError> &Errors,
-                        raw_ostream &OS);
+// void exportReplacements(StringRef MainFilePath,
+//                         const std::vector<ClangTidyError> &Errors,
+//                         raw_ostream &OS);
 
 } // end namespace checker
 } // end namespace nodecpp

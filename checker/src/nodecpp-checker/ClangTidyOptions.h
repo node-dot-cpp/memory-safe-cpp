@@ -266,8 +266,8 @@ protected:
 };
 
 /// \brief Parses LineFilter from JSON and stores it to the \p Options.
-std::error_code parseLineFilter(llvm::StringRef LineFilter,
-                                ClangTidyGlobalOptions &Options);
+// std::error_code parseLineFilter(llvm::StringRef LineFilter,
+//                                 ClangTidyGlobalOptions &Options);
 
 /// \brief Parses configuration from JSON and returns \c ClangTidyOptions or an
 /// error.

@@ -605,19 +605,19 @@ void handleErrors(ClangTidyContext &Context, bool Fix,
   WarningsAsErrorsCount += Reporter.getWarningsAsErrorsCount();
 }
 
-void exportReplacements(const llvm::StringRef MainFilePath,
-                        const std::vector<ClangTidyError> &Errors,
-                        raw_ostream &OS) {
-  TranslationUnitDiagnostics TUD;
-  TUD.MainSourceFile = MainFilePath;
-  for (const auto &Error : Errors) {
-    tooling::Diagnostic Diag = Error;
-    TUD.Diagnostics.insert(TUD.Diagnostics.end(), Diag);
-  }
+// void exportReplacements(const llvm::StringRef MainFilePath,
+//                         const std::vector<ClangTidyError> &Errors,
+//                         raw_ostream &OS) {
+//   TranslationUnitDiagnostics TUD;
+//   TUD.MainSourceFile = MainFilePath;
+//   for (const auto &Error : Errors) {
+//     tooling::Diagnostic Diag = Error;
+//     TUD.Diagnostics.insert(TUD.Diagnostics.end(), Diag);
+//   }
 
-  yaml::Output YAML(OS);
-  YAML << TUD;
-}
+//   yaml::Output YAML(OS);
+//   YAML << TUD;
+// }
 
 } // namespace checker
 } // namespace nodecpp

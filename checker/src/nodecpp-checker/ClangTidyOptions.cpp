@@ -309,12 +309,12 @@ FileOptionsProvider::tryReadConfigFile(StringRef Directory) {
 }
 
 /// \brief Parses -line-filter option and stores it to the \c Options.
-std::error_code parseLineFilter(StringRef LineFilter,
-                                nodecpp::checker::ClangTidyGlobalOptions &Options) {
-  llvm::yaml::Input Input(LineFilter);
-  Input >> Options.LineFilter;
-  return Input.error();
-}
+// std::error_code parseLineFilter(StringRef LineFilter,
+//                                 nodecpp::checker::ClangTidyGlobalOptions &Options) {
+//   llvm::yaml::Input Input(LineFilter);
+//   Input >> Options.LineFilter;
+//   return Input.error();
+// }
 
 llvm::ErrorOr<ClangTidyOptions> parseConfiguration(StringRef Config) {
   llvm::yaml::Input Input(Config);
