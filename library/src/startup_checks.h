@@ -50,32 +50,43 @@ namespace dummy_objects {
 		NODECPP_FORCEINLINE uint32_t rng32() { uint64_t ret = seedVal * 0xd989bcacc137dcd5ull; seedVal ^= seedVal >> 11; seedVal ^= seedVal << 31; seedVal ^= seedVal >> 18; return uint32_t(ret >> 32ull); }
 		NODECPP_FORCEINLINE uint64_t rng64() { uint64_t ret = rng32(); ret <<= 32; return ret + rng32(); }
 		NODECPP_FORCEINLINE uint64_t rng64NoNull() { uint64_t ret; do { ret = rng32(); ret <<= 32; ret += rng32(); } while (ret == 0); return ret; }
+#ifdef NODECPP_X64
+		NODECPP_FORCEINLINE size_t rng() { return rng64(); }
+		NODECPP_FORCEINLINE size_t rngNoNull() { return rng64NoNull(); }
+#elif ( defined NODECPP_X86 )
+		NODECPP_FORCEINLINE size_t rng() { return rng32(); }
+		NODECPP_FORCEINLINE size_t rngNoNull() { uint32_t ret; do { ret = rng32(); } while (ret == 0); return ret; }
+#else
+		// well, you will have no problems, if you do not use the above calls at all...
+		NODECPP_FORCEINLINE size_t rng() { return (size_t)(rng64()); }
+		NODECPP_FORCEINLINE size_t rngNoNull() { return (size_t)(rng64NoNull()); }
+#endif
 	};
 
 	class SmallBase { 
 	public: 
 		uint64_t sn; 
 		virtual int doSmthSmall() { return 0x1;} 
-		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NoNull();}
+		void init(size_t seed) {PRNG rng(seed); sn = rng.rngNoNull();}
 		virtual ~SmallBase() { sn = 0;forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64();}
+		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng();}
 	};
 	class SmallDerived : public SmallBase { 
 	public: 
 		uint64_t sn1; 
 		int doSmthSmall() override {return 0x2;} 
-		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NoNull(); SmallBase::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rngNoNull(); SmallBase::init(rng.rng());} 
 		virtual ~SmallDerived() {sn1 = 0; forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64() && SmallBase::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng() && SmallBase::check(rng.rng());}
 	};
 	class Small : public SmallDerived { 
 	public: 
 		uint64_t sn2; 
 		int doSmthSmall() override { return 0x3; } 
-		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rng64NoNull(); 
-		SmallDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rngNoNull(); 
+		SmallDerived::init(rng.rng());} 
 		virtual ~Small() {sn2 = 0; forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SmallDerived::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng() && SmallDerived::check(rng.rng());}
 	};
 
 	static constexpr size_t SZ = 0x200;
@@ -84,51 +95,51 @@ namespace dummy_objects {
 	public: 
 		uint64_t ln[SZ]; 
 		virtual int doSmthLarge() { return 0x100;} 
-		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln[i] = rng.rng64NoNull();}
+		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln[i] = rng.rngNoNull();}
 		virtual ~LargeBase() { ln[0] = 0; forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); bool ret = true; for ( size_t i=0; i<SZ;++i) ret = ret && ln[i] == rng.rng64(); return ret;}
+		bool check(size_t seed) {PRNG rng(seed); bool ret = true; for ( size_t i=0; i<SZ;++i) ret = ret && ln[i] == rng.rng(); return ret;}
 	};
 	class LargeDerived : public LargeBase { 
 	public: 
 		uint64_t ln1[SZ]; 
 		int doSmthLarge() override { return 0x200;} 
-		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln1[i] = rng.rng64NoNull(); LargeBase::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); for ( size_t i=0; i<SZ;++i) ln1[i] = rng.rngNoNull(); LargeBase::init(rng.rng());} 
 		virtual ~LargeDerived() {ln1[0] = 0; forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); bool ret = ln1[0] == rng.rng64(); for ( size_t i=1; i<SZ;++i) ret = ret && ln1[i] == rng.rng64(); return ret && LargeBase::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); bool ret = ln1[0] == rng.rng(); for ( size_t i=1; i<SZ;++i) ret = ret && ln1[i] == rng.rng(); return ret && LargeBase::check(rng.rng());}
 	};
 	class Large : public LargeDerived { 
 	public: 
 		uint64_t ln2; 
 		int doSmthLarge() override { return 0x3; } 
-		void init(size_t seed) {PRNG rng(seed); ln2 = rng.rng64NoNull(); LargeDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); ln2 = rng.rngNoNull(); LargeDerived::init(rng.rng());} 
 		virtual ~Large() {ln2 = 0; forcePreviousChangesToThisInDtor(this);}
-		bool check(size_t seed) {PRNG rng(seed); return ln2 == rng.rng64() && LargeDerived::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return ln2 == rng.rng() && LargeDerived::check(rng.rng());}
 	};
 
 	class SomeBase { 
 	public: 
 		uint64_t sn; 
 		virtual int doSmthSome() { return 0x1;} 
-		void init(size_t seed) {PRNG rng(seed); sn = rng.rng64NoNull();}
+		void init(size_t seed) {PRNG rng(seed); sn = rng.rngNoNull();}
 		virtual ~SomeBase() {}
-		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng64();}
+		bool check(size_t seed) {PRNG rng(seed); return sn == rng.rng();}
 	};
 	class SomeDerived : public SomeBase { 
 	public: 
 		uint64_t sn1; 
 		int doSmthSome() override {return 0x2;} 
-		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rng64NoNull(); SomeBase::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn1 = rng.rngNoNull(); SomeBase::init(rng.rng());} 
 		virtual ~SomeDerived() {}
-		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng64() && SomeBase::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return sn1 == rng.rng() && SomeBase::check(rng.rng());}
 	};
 	class Some : public SomeDerived { 
 	public: 
 		uint64_t sn2; 
 		int doSmthSome() override { return 0x3; } 
-		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rng64NoNull(); 
-		SomeDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn2 = rng.rngNoNull(); 
+		SomeDerived::init(rng.rng());} 
 		virtual ~Some() {}
-		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng() && SomeDerived::check(rng.rng());}
 	};
 
 	struct JustDummyStruct {
@@ -146,9 +157,9 @@ namespace dummy_objects {
 			spDummy = somePtr;
 		}
 		int doSmthSome() override { return 0x4; } 
-		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); SomeDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rngNoNull(); SomeDerived::init(rng.rng());} 
 		virtual ~SomeWithSafePointers() {}
-		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
+		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng() && SomeDerived::check(rng.rng());}
 		struct MyNonPointerMembers
 		{
 			uint64_t sn; 
@@ -203,7 +214,7 @@ class StartupChecker
 		dummy_objects::PRNG rng(rngSeed);
 		uint64_t rngCheckVal;
 
-		rngCheckVal = rng.rng64();
+		rngCheckVal = rng.rng();
 
 #ifdef NODECPP_USE_IIBMALLOC
 		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
@@ -258,7 +269,7 @@ class StartupChecker
 
 		size_t rngSeed = 155;
 		dummy_objects::PRNG rng(rngSeed);
-		uint64_t rngCheckVal = rng.rng64();
+		size_t rngCheckVal = rng.rng();
 
 		owning_ptr<dummy_objects::JustDummyStruct> someOwningPtr = make_owning<dummy_objects::JustDummyStruct>();
 
