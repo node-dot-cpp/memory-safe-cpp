@@ -39,9 +39,6 @@ namespace nodecpp::safememory
 	constexpr uint64_t module_id = 2;
 } // namespace nodecpp::safememory
 
-#define NODECPP_USE_IIBMALLOC
-//#define NODECPP_USE_NEW_DELETE_ALLOC
-
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
@@ -57,6 +54,9 @@ namespace nodecpp::safememory
 #define  NODECPP_OWNED_BY_THIS
 #endif
 
+
+//#define NODECPP_USE_IIBMALLOC
+//#define NODECPP_USE_NEW_DELETE_ALLOC
 
 
 #ifdef NODECPP_USE_IIBMALLOC

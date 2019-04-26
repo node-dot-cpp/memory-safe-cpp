@@ -61,7 +61,7 @@ public:
 };
 static IIBMallocInitializer iibmallocinitializer;
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
-thread_local void** zombieList_ = nullptr;
+thread_local void** nodecpp::safememory::zombieList_ = nullptr;
 #endif // NODECPP_USE_xxx_ALLOC
 
 // testing on-stack ptr detection

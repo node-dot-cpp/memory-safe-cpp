@@ -146,8 +146,7 @@ namespace dummy_objects {
 			spDummy = somePtr;
 		}
 		int doSmthSome() override { return 0x4; } 
-		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); 
-		SomeDerived::init(rng.rng64());} 
+		void init(size_t seed) {PRNG rng(seed); sn3 = rng.rng64NoNull(); SomeDerived::init(rng.rng64());} 
 		virtual ~SomeWithSafePointers() {}
 		bool check(size_t seed) {PRNG rng(seed); return sn2 == rng.rng64() && SomeDerived::check(rng.rng64());}
 		struct MyNonPointerMembers
@@ -166,8 +165,15 @@ namespace dummy_objects {
 			ret.sn3 = sn3;
 			return ret;
 		}
+		struct AllMyDataStruct // added to ensure layout understanding
+		{
+			void* ptr;
+			MyNonPointerMembers mm;
+			soft_ptr<JustDummyStruct> spDummy;
+			owning_ptr<JustDummyStruct> opDummy;
+		};
 	};
-	static_assert( sizeof(SomeWithSafePointers::MyNonPointerMembers) + sizeof(SomeWithSafePointers::spDummy) + sizeof(SomeWithSafePointers::opDummy) + sizeof(void*) == sizeof(SomeWithSafePointers) );
+	static_assert( sizeof(SomeWithSafePointers::AllMyDataStruct) == sizeof(SomeWithSafePointers) );
 
 
 } // namespace dummy_objects
