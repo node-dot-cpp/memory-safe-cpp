@@ -55,8 +55,11 @@ namespace nodecpp::safememory
 #endif
 
 
-//#define NODECPP_USE_IIBMALLOC
-//#define NODECPP_USE_NEW_DELETE_ALLOC
+#ifdef NODECPP_X64
+#define NODECPP_USE_IIBMALLOC
+#else
+#define NODECPP_USE_NEW_DELETE_ALLOC
+#endif
 
 
 #ifdef NODECPP_USE_IIBMALLOC
