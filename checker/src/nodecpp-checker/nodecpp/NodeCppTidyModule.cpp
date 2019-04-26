@@ -47,7 +47,7 @@ public:
     CheckFactories.registerCheck<AsmCheck>(
         "nodecpp-asm");
     CheckFactories.registerCheck<AwaitableCheck>(
-        "nodecpp-Awaitable");
+        "nodecpp-awaitable");
     CheckFactories.registerCheck<CallExprCheck>(
         "nodecpp-call-expr");
     CheckFactories.registerCheck<ConstCheck>(

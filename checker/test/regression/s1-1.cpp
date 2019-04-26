@@ -3,13 +3,13 @@
 void bad1() { 
 	unsigned i = 0;
 	reinterpret_cast<void*>(i);
-// CHECK: :[[@LINE-1]]:2: warning: (S1.1)
+// CHECK: :[[@LINE-1]]:2: error: (S1.1)
 	(void*)i;
-// CHECK: :[[@LINE-1]]:2: warning: (S1.1)
+// CHECK: :[[@LINE-1]]:2: error: (S1.1)
 	void* p = nullptr;
-// CHECK: :[[@LINE-1]]:8: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:8: error: (S1.3)
 	static_cast<unsigned*>(p);
-// CHECK: :[[@LINE-1]]:2: warning: (S1.1)
+// CHECK: :[[@LINE-1]]:2: error: (S1.1)
 
 }
 

@@ -12,7 +12,7 @@ public:
 
         int i = 0;
         auto l = [&i]() {};
-// CHECK: :[[@LINE-1]]:20: warning: unsafe capture to extend scope
+// CHECK: :[[@LINE-1]]:20: error: unsafe capture to extend scope
         this->on(l);
     }
 

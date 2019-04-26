@@ -4,7 +4,7 @@
 
 class Bad {
 	mutable int i;
-// CHECK: :[[@LINE-1]]:14: warning: (S2.2)
+// CHECK: :[[@LINE-1]]:14: error: (S2.2)
 };
 
 void bad() { 
@@ -12,9 +12,9 @@ void bad() {
 	const int i = 0;
 
 	int& j = const_cast<int&>(i);
-// CHECK: :[[@LINE-1]]:11: warning: (S2.1)
+// CHECK: :[[@LINE-1]]:11: error: (S2.1)
 
 	auto l = []() mutable {};
-// CHECK: :[[@LINE-1]]:11: warning: (S2)
+// CHECK: :[[@LINE-1]]:11: error: (S2)
 
 }

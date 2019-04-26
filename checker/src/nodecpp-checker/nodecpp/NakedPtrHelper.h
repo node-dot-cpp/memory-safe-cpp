@@ -23,9 +23,9 @@ class DiagHelper {
   ClangTidyCheck *Check = nullptr;
   DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
 public:
-  DiagHelper() {}
-  DiagHelper(ClangTidyCheck *Check)
-  :Check(Check) {}
+
+  DiagHelper(ClangTidyCheck *Check, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
+  :Check(Check), Level(Level) {}
 
   void diag(SourceLocation Loc, StringRef Message) {
     if(Check) {

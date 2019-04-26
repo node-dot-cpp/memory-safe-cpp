@@ -6,7 +6,7 @@ void func() {
 	
 	int i = 0;
 	memset(&i,0,sizeof(i));
-// CHECK: :[[@LINE-1]]:2: warning: (S8)
+// CHECK: :[[@LINE-1]]:2: error: (S8)
 
 
 	func(); // ok, defined in safe code

@@ -3,8 +3,8 @@
 
 void func() {
 	asm("mov al, 2");
-// CHECK: :[[@LINE-1]]:2: warning: (S6.1)
+// CHECK: :[[@LINE-1]]:2: error: (S6.1)
 	__asm("mov al, 2");
-// CHECK: :[[@LINE-1]]:2: warning: (S6.1)
+// CHECK: :[[@LINE-1]]:2: error: (S6.1)
 }
 

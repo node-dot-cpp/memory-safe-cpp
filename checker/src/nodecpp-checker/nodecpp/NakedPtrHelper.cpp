@@ -19,7 +19,7 @@ using namespace clang::ast_matchers;
 namespace nodecpp {
 namespace checker {
 
-DiagHelper NullDiagHelper;
+DiagHelper NullDiagHelper(nullptr);
 
 bool isOwnerPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::owning_ptr" ||

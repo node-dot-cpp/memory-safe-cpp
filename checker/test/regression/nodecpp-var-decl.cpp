@@ -40,41 +40,41 @@ struct [[nodecpp::naked_struct]] NakedStr {
 void nakedFunc() {
 	
 	int* i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:7: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:7: error: (S1.3)
 
 	NakedStr naked; //ok
 }
 
 struct Bad1 {
-// CHECK: :[[@LINE-1]]:8: warning: unsafe type declaration
+// CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 	int* ptr;
 };
 
 struct Bad2 : public NakedStr {
-// CHECK: :[[@LINE-1]]:8: warning: unsafe type declaration
+// CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 };
 
 struct Bad3 {
-// CHECK: :[[@LINE-1]]:8: warning: unsafe type declaration
+// CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 	int* ptr;
 
 	void set(int* ptr);
-// CHECK: :[[@LINE-1]]:16: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:16: error: (S1.3)
 };
 
 void badFunc() {
 	int** i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:8: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:8: error: (S1.3)
 	NakedStr* nakedPtr = nullptr; // bad
-// CHECK: :[[@LINE-1]]:12: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:12: error: (S1.3)
 	Bad1 b1; //bad
-// CHECK: :[[@LINE-1]]:7: warning: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
 
 	Bad2 b2; //bad
-// CHECK: :[[@LINE-1]]:7: warning: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
 
 	Bad3 b3; //bad
-// CHECK: :[[@LINE-1]]:7: warning: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
 }
 
 class Sock {};
@@ -82,12 +82,12 @@ class Sock {};
 class Safe {
 
 	void mayExtendCallback(Sock* dontExtend, Sock* sock [[nodecpp::may_extend_to_this]]) {
-// CHECK: :[[@LINE-1]]:31: warning: (S1.3)
-// CHECK: :[[@LINE-2]]:49: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:31: error: (S1.3)
+// CHECK: :[[@LINE-2]]:49: error: (S1.3)
 		Sock* other [[nodecpp::may_extend_to_this]] = sock;
-// CHECK: :[[@LINE-1]]:9: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:9: error: (S1.3)
 		Sock* other2 [[nodecpp::may_extend_to_this]] = dontExtend; //bad donExtend is not valid initializer
-// CHECK: :[[@LINE-1]]:9: warning: (S1.3)
+// CHECK: :[[@LINE-1]]:9: error: (S1.3)
 	}
 
 };

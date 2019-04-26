@@ -170,7 +170,7 @@ public:
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Description,
-                         DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
+                         DiagnosticIDs::Level Level = DiagnosticIDs::Error);
 
   /// \brief Should store all options supported by this check with their
   /// current values or default values for options that haven't been overridden.

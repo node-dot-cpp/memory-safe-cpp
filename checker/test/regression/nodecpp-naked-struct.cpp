@@ -10,7 +10,7 @@ struct [[nodecpp::naked_struct]] NakedInner {
 
 
 struct [[nodecpp::naked_struct]] Naked {
-// CHECK: :[[@LINE-1]]:34: warning: unsafe naked_struct declaration
+// CHECK: :[[@LINE-1]]:34: error: unsafe naked_struct declaration
     naked_ptr<int> i; //ok
     int* bad1; //bad
 

@@ -2,14 +2,14 @@
 
 
 union Bad {
-// CHECK: :[[@LINE-1]]:7: warning: unsafe type declaration
+// CHECK: :[[@LINE-1]]:7: error: unsafe type declaration
 	int i;
 	int* ptr;
 };
 
 void func1() { 
 	Bad bad;
-// CHECK: :[[@LINE-1]]:6: warning: unsafe union at variable declaration
+// CHECK: :[[@LINE-1]]:6: error: unsafe union at variable declaration
 }
 
 
@@ -23,21 +23,21 @@ void func2() {
 
 	MayBeBad<long> good; //ok
 	MayBeBad<long*> bad;
-// CHECK: :[[@LINE-1]]:18: warning: unsafe union at variable declaration
+// CHECK: :[[@LINE-1]]:18: error: unsafe union at variable declaration
 }
 
 class UsesUnion {
-// CHECK: :[[@LINE-1]]:7: warning: unsafe type declaration
+// CHECK: :[[@LINE-1]]:7: error: unsafe type declaration
 	MayBeBad<int*> pt;
 };
 
 void func3() { 
 
 	UsesUnion uu;
-// CHECK: :[[@LINE-1]]:12: warning: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:12: error: unsafe type at variable declaration [nodecpp-var-decl]
 
 	UsesUnion();
-// CHECK: :[[@LINE-1]]:2: warning: unsafe type at temporary expression
+// CHECK: :[[@LINE-1]]:2: error: unsafe type at temporary expression
 }
 
 

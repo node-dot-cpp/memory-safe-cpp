@@ -47,7 +47,7 @@ struct MyServer {
 	void onBad1(naked_ptr<Socket> ow1 [[nodecpp::owned_by_this]], naked_ptr<Socket> ow2 [[nodecpp::owned_by_this]] ) {
 
 		ow1->onPlain(ow2, *this); //bad
-// CHECK: :[[@LINE-1]]:16: warning: is not safe
+// CHECK: :[[@LINE-1]]:16: error: is not safe
 		
 	}
 
@@ -55,26 +55,26 @@ struct MyServer {
 		sock->on([this, sock]() { }); // ok, now 'sock is safe
 
 		sock->on([this, dontExtend]() { }); //bad
-// CHECK: :[[@LINE-1]]:19: warning: unsafe capture to extend
+// CHECK: :[[@LINE-1]]:19: error: unsafe capture to extend
 
 		dontExtend->on([dontExtend]() { }); //good, as long as we don't have other captures
 
 		dontExtend->on([this]() { }); //bad
-// CHECK: :[[@LINE-1]]:19: warning: capture of 'this' unsafe to extend scope
+// CHECK: :[[@LINE-1]]:19: error: capture of 'this' unsafe to extend scope
 	}
 
 
 	void bad2() {
 		int i;
 		auto l = [this, &i](naked_ptr<Socket> sock) {};
-// CHECK: :[[@LINE-1]]:20: warning: unsafe capture to extend scope
+// CHECK: :[[@LINE-1]]:20: error: unsafe capture to extend scope
 		srv.on(l);
 // CHECK: :[[@LINE-1]]:10: note: referenced from here
 	} 
 
 	void bad3(naked_ptr<Socket> sock) {
 		sock->on([this]() { });// bad, sock is not a member
-// CHECK: :[[@LINE-1]]:13: warning: capture of 'this' unsafe to extend scope
+// CHECK: :[[@LINE-1]]:13: error: capture of 'this' unsafe to extend scope
 	}
 
 };
