@@ -468,6 +468,18 @@ int testWithLest( int argc, char * argv[] )
 			EXPECT( sp != op1 );/**/
 			// ...
 		},
+
+		CASE( "test early zombie detaction" )
+		{
+			SETUP("early zombie detaction")
+			{
+				owning_ptr<StructureWithSoftIntPtr> opS = make_owning<StructureWithSoftIntPtr>();
+				auto ptr = &(opS->n);
+				EXPECT_NO_THROW( *(dezombiefy(ptr)) = 17 );
+				opS = nullptr;
+				EXPECT_THROWS( *(dezombiefy(ptr)) = 27 );
+			}
+		},
 	};
 
 	int ret = lest::run( specification, argc, argv );
