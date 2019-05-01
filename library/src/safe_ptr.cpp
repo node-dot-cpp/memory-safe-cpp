@@ -36,4 +36,5 @@ thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
 
 #if defined NODECPP_USE_NEW_DELETE_ALLOC
 thread_local void** nodecpp::safememory::zombieList_ = nullptr;
+thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> nodecpp::safememory::zombieMap;
 #endif // NODECPP_USE_xxx_ALLOC

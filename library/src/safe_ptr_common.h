@@ -82,10 +82,13 @@ NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
 
+#include <map>
 namespace nodecpp::safememory
 {
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
+extern thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> zombieMap;
+
 inline void killAllZombies()
 {
 	while ( zombieList_ != nullptr )
@@ -97,9 +100,28 @@ inline void killAllZombies()
 }
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
-NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { uint8_t* ret = new uint8_t[ sizeof(uint64_t) + sz ]; *reinterpret_cast<uint64_t*>(ret) = sz; return ret + sizeof(uint64_t);}
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - sizeof(uint64_t)); *blockStart = zombieList_;zombieList_ = blockStart; }
-NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 1) > reinterpret_cast<uint8_t*>(ptr); }
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { 
+	uint8_t* ret = new uint8_t[ 2 * sizeof(uint64_t) + sz ]; 
+	*reinterpret_cast<uint64_t*>(ret) = sz; 
+//	printf( "saved  alloc sz: 0x%zx <- %zd\n", (size_t)(ret), sz );
+	return ret + 2 * sizeof(uint64_t);
+}
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { 
+	void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - 2 * sizeof(uint64_t)); 
+	size_t allocSize = *reinterpret_cast<uint64_t*>(blockStart);
+	zombieMap.insert( std::make_pair( reinterpret_cast<uint8_t*>(blockStart), 2 * sizeof(uint64_t) + allocSize ) );
+//	printf( "Inserted to map: (0x%zx, %zd)\n", (size_t)(blockStart), 2 * sizeof(uint64_t) + allocSize );
+	*blockStart = zombieList_; 
+	zombieList_ = blockStart;
+}
+NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 2) > reinterpret_cast<uint8_t*>(ptr); }
+NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) { 
+	auto iter = zombieMap.lower_bound( reinterpret_cast<uint8_t*>( ptr ) );
+	if ( iter != zombieMap.end() )
+		return reinterpret_cast<uint8_t*>( ptr ) >= iter->first + iter->second;
+	else
+		return true;
+}
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 } //namespace nodecpp::safememory
