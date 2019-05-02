@@ -1205,7 +1205,11 @@ void temptest()
 
 int main( int argc, char * argv[] )
 {
-	//temptest(); return 0;
+#ifdef NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+	doZombieEarlyDetection( true );
+#endif // NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+
+//temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
