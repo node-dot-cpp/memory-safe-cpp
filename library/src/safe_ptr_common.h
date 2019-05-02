@@ -73,7 +73,11 @@ NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( pt
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
+#ifdef NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) { return g_AllocManager.isPointerNotZombie( ptr ); }
+#else
+constexpr bool isPointerNotZombie(void* ptr ) { return true; }
+#endif // NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
@@ -187,6 +191,7 @@ template<> struct nodecpp::safememory::safeness_declarator<double> { static cons
 
 
 
+#ifdef NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 template<class T>
 T* dezombiefy(T* x) {
 	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
@@ -218,6 +223,9 @@ const T& dezombiefy(const T& x) {
 	else
 		throw nodecpp::error::early_detected_zombie_pointer_access; 
 }
+#else
+#define dezombiefy( x ) (x)
+#endif // NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
 
 
