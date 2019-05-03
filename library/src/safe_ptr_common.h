@@ -108,6 +108,7 @@ inline void killAllZombies()
 		zombieList_ = next;
 	}
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection_ || ( !doZombieEarlyDetection_ && zombieMap.empty() ) );
 	zombieMap.clear();
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 }
