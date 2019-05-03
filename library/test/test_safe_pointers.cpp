@@ -51,7 +51,7 @@ public:
 	IIBMallocInitializer()
 	{
 		g_AllocManager.initialize();
-		g_AllocManager.enable();
+//		g_AllocManager.enable();
 	}
 	~IIBMallocInitializer()
 	{
@@ -1205,9 +1205,9 @@ void temptest()
 
 int main( int argc, char * argv[] )
 {
-#ifdef NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+#ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	doZombieEarlyDetection( true );
-#endif // NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+#endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;

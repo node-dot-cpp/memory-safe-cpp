@@ -36,8 +36,8 @@ thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
 
 #if defined NODECPP_USE_NEW_DELETE_ALLOC
 thread_local void** nodecpp::safememory::zombieList_ = nullptr;
-#ifdef NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+#ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> nodecpp::safememory::zombieMap;
-thread_local bool nodecpp::safememory::doZombieEarlyDetection_ = false;
-#endif // NODECPP_ENABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+thread_local bool nodecpp::safememory::doZombieEarlyDetection_ = true;
+#endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #endif // NODECPP_USE_xxx_ALLOC
