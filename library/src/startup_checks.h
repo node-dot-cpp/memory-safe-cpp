@@ -320,10 +320,12 @@ public:
 	{
 		checkBasicsT<dummy_objects::Small>();
 		checkBasicsT<dummy_objects::Large>();
+		killAllZombies();
 	}
 	static void checkSafePointers()
 	{
 		checkSafePointers_();
+		killAllZombies();
 	}
 };
 

@@ -325,6 +325,7 @@ int testWithLest( int argc, char * argv[] )
 				//EXPECT( !s01 );
 				//EXPECT( !s02 );
 			}
+			killAllZombies();
 		},
 
 		CASE( "basic safe pointer test" )
@@ -341,6 +342,7 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT( p2->n == 11 );
 				EXPECT( p3->n == 11 );
 			}
+			killAllZombies();
 		},
 
 		CASE( "test Pointers-To-Members" )
@@ -381,6 +383,7 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT_THROWS( soft_ptr<int> pintError2( pMultiple, anyN ) );
 				delete anyN;
 			}
+			killAllZombies();
 		},
 
 		CASE( "test is-on-stack" )
@@ -401,6 +404,7 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &th_int ) );
 				//EXPECT( !nodecpp::platform::is_guaranteed_on_stack( &l ) );
 			}
+			killAllZombies();
 		},
 
 		CASE( "test soft_this_ptr" )
@@ -417,56 +421,69 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT( *(opSL_2->opS->m) == 37 );
 				EXPECT( *(opSL_2->softpS->m) == 37 );
 			}
+			killAllZombies();
 		},
 
 		CASE( "test comparison operators" )
 		{
-			// TODO: extend to other relevant cases
-			owning_ptr<uint32_t> op;
-			EXPECT( op == nullptr );
-			op = make_owning<uint32_t>(17);
-			EXPECT( op != nullptr );
-			soft_ptr<uint32_t> sp;
-			EXPECT( sp == nullptr );
-			sp = op;
-			EXPECT( sp != nullptr );
-			EXPECT( sp == op );
-			EXPECT( op == sp );
-			EXPECT( op == op );
-			EXPECT( sp == sp );
-			owning_ptr<uint32_t> op1 = make_owning<uint32_t>(27);
-			soft_ptr<uint32_t> sp1 = op1;
-			EXPECT( sp != sp1 );
-			EXPECT( sp != op1 );
-			// ...
+			SETUP("comparison operators")
+			{
+				// TODO: extend to other relevant cases
+				owning_ptr<uint32_t> op;
+				EXPECT( op == nullptr );
+				op = make_owning<uint32_t>(17);
+				EXPECT( op != nullptr );
+				soft_ptr<uint32_t> sp;
+				EXPECT( sp == nullptr );
+				sp = op;
+				EXPECT( sp != nullptr );
+				EXPECT( sp == op );
+				EXPECT( op == sp );
+				EXPECT( op == op );
+				EXPECT( sp == sp );
+				owning_ptr<uint32_t> op1 = make_owning<uint32_t>(27);
+				soft_ptr<uint32_t> sp1 = op1;
+				EXPECT( sp != sp1 );
+				EXPECT( sp != op1 );
+				// ...
+			}
+			killAllZombies();
 		},
 
 		CASE( "test destruction means" )
 		{
-			EXPECT_NO_THROW( testing::StartupChecker::checkBasics() );
-			EXPECT_NO_THROW( testing::StartupChecker::checkSafePointers() );
+			SETUP("destruction means")
+			{
+				EXPECT_NO_THROW( testing::StartupChecker::checkBasics() );
+				EXPECT_NO_THROW( testing::StartupChecker::checkSafePointers() );
+			}
+			killAllZombies();
 		},
 
 		CASE( "test non-safe pointers" )
 		{
-			// TODO: extend to other relevant cases
-			owning_ptr<double> op;
-			EXPECT( op == nullptr );
-			op = make_owning<double>(17);
-			EXPECT( op != nullptr );
-			soft_ptr<double> sp;
-			EXPECT( sp == nullptr );
-			sp = op;
-			EXPECT( sp != nullptr );
-			EXPECT( sp == op );
-			EXPECT( op == sp );
-			EXPECT( op == op );
-			EXPECT( sp == sp );
-			owning_ptr<double> op1 = make_owning<double>(27);
-			soft_ptr<double> sp1 = op1;
-			EXPECT( sp != sp1 );
-			EXPECT( sp != op1 );/**/
-			// ...
+			SETUP("non-safe pointers")
+			{
+				// TODO: extend to other relevant cases
+				owning_ptr<double> op;
+				EXPECT( op == nullptr );
+				op = make_owning<double>(17);
+				EXPECT( op != nullptr );
+				soft_ptr<double> sp;
+				EXPECT( sp == nullptr );
+				sp = op;
+				EXPECT( sp != nullptr );
+				EXPECT( sp == op );
+				EXPECT( op == sp );
+				EXPECT( op == op );
+				EXPECT( sp == sp );
+				owning_ptr<double> op1 = make_owning<double>(27);
+				soft_ptr<double> sp1 = op1;
+				EXPECT( sp != sp1 );
+				EXPECT( sp != op1 );/**/
+				// ...
+			}
+			killAllZombies();
 		},
 
 		CASE( "test early zombie detaction" )
@@ -1206,7 +1223,7 @@ void temptest()
 int main( int argc, char * argv[] )
 {
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-	doZombieEarlyDetection( true );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
 //temptest(); return 0;
