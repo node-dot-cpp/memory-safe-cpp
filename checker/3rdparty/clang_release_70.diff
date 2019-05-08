@@ -1,3 +1,52 @@
+diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
+index e7e32b9fe1..67a73161ae 100644
+--- a/include/clang/AST/Expr.h
++++ b/include/clang/AST/Expr.h
+@@ -1186,6 +1186,31 @@ public:
+     return DeclRefExprBits.RefersToEnclosingVariableOrCapture;
+   }
+ 
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that may need to be dezombified.
++  void setIsDezombifyCandidate(bool V = true) {
++    DeclRefExprBits.IsDezombifyCandidate = V;
++  }
++
++  /// Does this DeclRefExpr refer to a varialbe that may need
++  /// to be dezombified
++  bool isDezombifyCandidate() const {
++    return DeclRefExprBits.IsDezombifyCandidate;
++  }
++
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that may need to be dezombified,
++  /// but a deeper flow analysis prove dezombified not really needed.
++  void setIsDezombifyNotReallyNeeded(bool V = true) {
++    DeclRefExprBits.IsDezombifyNotReallyNeeded = V;
++  }
++
++  /// Does this DeclRefExpr refer to a varialbe that really
++  /// needs to be dezombified after all analysis stages.
++  bool isDezombifyReallyNeeded() const {
++    return DeclRefExprBits.IsDezombifyCandidate && !DeclRefExprBits.IsDezombifyNotReallyNeeded;
++  }
++
+   static bool classof(const Stmt *T) {
+     return T->getStmtClass() == DeclRefExprClass;
+   }
+diff --git a/include/clang/AST/Stmt.h b/include/clang/AST/Stmt.h
+index c957cccfe2..a75eee9c5e 100644
+--- a/include/clang/AST/Stmt.h
++++ b/include/clang/AST/Stmt.h
+@@ -194,6 +194,8 @@ protected:
+     unsigned HasFoundDecl : 1;
+     unsigned HadMultipleCandidates : 1;
+     unsigned RefersToEnclosingVariableOrCapture : 1;
++    unsigned IsDezombifyCandidate : 1;
++    unsigned IsDezombifyNotReallyNeeded : 1;
+   };
+ 
+   class CastExprBitfields {
 diff --git a/include/clang/AST/Type.h b/include/clang/AST/Type.h
 index 9a8dd6faff..95639fcaed 100644
 --- a/include/clang/AST/Type.h
