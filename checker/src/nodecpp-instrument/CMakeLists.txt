@@ -5,12 +5,12 @@ set( LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_executable(nodecpp-dezombify
+add_clang_executable(nodecpp-instrument
   NodeCppDezombify.cpp
   )
 
 
-target_link_libraries(nodecpp-dezombify
+target_link_libraries(nodecpp-instrument
   PRIVATE
   clangAST
   clangBasic
@@ -19,5 +19,5 @@ target_link_libraries(nodecpp-dezombify
   clangTooling
   )
 
-install(TARGETS nodecpp-dezombify
+install(TARGETS nodecpp-instrument
   RUNTIME DESTINATION bin)
