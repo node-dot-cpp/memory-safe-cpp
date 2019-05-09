@@ -34,6 +34,9 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Tooling/Core/Replacement.h"
 #include "clang/Basic/Diagnostic.h"
+#include "clang/Rewrite/Core/Rewriter.h"
+#include "clang/Format/Format.h"
+
 
 using namespace clang;
 
@@ -44,10 +47,10 @@ class Dezombify2ASTVisitor
 
   clang::ASTContext &Context;
   /// Fixes to apply, grouped by file path.
-  llvm::StringMap<tooling::Replacements> Fix;  
+  llvm::StringMap<tooling::Replacements> FileReplacements;  
 
 
-  void addFix(const SourceManager& Manager, const FixItHint& FixIt) {
+  void addFix(const FixItHint& FixIt) {
 
     CharSourceRange Range = FixIt.RemoveRange;
     assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
@@ -55,9 +58,9 @@ class Dezombify2ASTVisitor
     assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
             "Only file locations supported in fix-it hints.");
 
-    tooling::Replacement Replacement(Manager, Range,
+    tooling::Replacement Replacement(Context.getSourceManager(), Range,
                                       FixIt.CodeToInsert);
-    llvm::Error Err = Fix[Replacement.getFilePath()].add(Replacement);
+    llvm::Error Err = FileReplacements[Replacement.getFilePath()].add(Replacement);
     // FIXME: better error handling (at least, don't let other replacements be
     // applied).
     if (Err) {
@@ -69,14 +72,66 @@ class Dezombify2ASTVisitor
 
 public:
 
+  void overwriteChangedFiles() {
+
+    if(!FileReplacements.empty()) {
+      Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
+      for (const auto &FileAndReplacements : FileReplacements) {
+        StringRef File = FileAndReplacements.first();
+        llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
+            Context.getSourceManager().getFileManager().getBufferForFile(File);
+        if (!Buffer) {
+          llvm::errs() << "Can't get buffer for file " << File << ": "
+                        << Buffer.getError().message() << "\n";
+          // FIXME: Maybe don't apply fixes for other files as well.
+          continue;
+        }
+        StringRef Code = Buffer.get()->getBuffer();
+        // auto Style = format::getStyle(
+        //     *Context.getOptionsForFile(File).FormatStyle, File, "none");
+        auto Style = format::getStyle("none", File, "none");
+        if (!Style) {
+          llvm::errs() << llvm::toString(Style.takeError()) << "\n";
+          continue;
+        }
+        llvm::Expected<tooling::Replacements> Replacements =
+            format::cleanupAroundReplacements(Code, FileAndReplacements.second,
+                                              *Style);
+        if (!Replacements) {
+          llvm::errs() << llvm::toString(Replacements.takeError()) << "\n";
+          continue;
+        }
+        if (llvm::Expected<tooling::Replacements> FormattedReplacements =
+                format::formatReplacements(Code, *Replacements, *Style)) {
+          Replacements = std::move(FormattedReplacements);
+          if (!Replacements)
+            llvm_unreachable("!Replacements");
+        } else {
+          llvm::errs() << llvm::toString(FormattedReplacements.takeError())
+                        << ". Skipping formatting.\n";
+        }
+        if (!tooling::applyAllReplacements(Replacements.get(), Rewrite)) {
+          llvm::errs() << "Can't apply replacements for file " << File << "\n";
+        }
+      }
+      if (Rewrite.overwriteChangedFiles()) {
+        llvm::errs() << "clang-tidy failed to apply suggested fixes.\n";
+      } else {
+        llvm::errs() << "clang-tidy applied suggested fixes.\n";
+      }
+    }
+  }
+
+
+
   explicit Dezombify2ASTVisitor(clang::ASTContext &Context): Context(Context) {}
 
 
   bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(E && E->isDezombifyReallyNeeded()) {
+    if(E && E->isDezombifyCandidate()) {
 
       std::string fix = "dezombify( " + E->getNameInfo().getAsString() + " )";
-      addFix(Context.getSourceManager(), FixItHint::CreateReplacement(E->getSourceRange(), fix));
+      addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));
 
     }   
     return true;

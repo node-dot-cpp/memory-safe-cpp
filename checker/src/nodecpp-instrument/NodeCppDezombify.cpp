@@ -62,6 +62,8 @@ public:
 
        Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
        Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
+
+       Visitor2.overwriteChangedFiles();
     }
 };
 
