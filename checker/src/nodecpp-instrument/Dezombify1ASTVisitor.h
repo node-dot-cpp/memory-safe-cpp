@@ -45,8 +45,8 @@ public:
 
 
   bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(E) {
-      auto Qt = E->getType().getCanonicalType();
+    if(E && E->getDecl()) {
+      auto Qt = E->getDecl()->getType().getCanonicalType();
       if(Qt->isReferenceType() || Qt->isPointerType()) {
         E->setIsDezombifyCandidate();
       }

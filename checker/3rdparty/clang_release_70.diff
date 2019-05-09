@@ -1,8 +1,18 @@
 diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
-index e7e32b9fe1..67a73161ae 100644
+index e7e32b9fe1..643f5fece2 100644
 --- a/include/clang/AST/Expr.h
 +++ b/include/clang/AST/Expr.h
-@@ -1186,6 +1186,31 @@ public:
+@@ -1031,6 +1031,9 @@ public:
+     DeclRefExprBits.HadMultipleCandidates = 0;
+     DeclRefExprBits.RefersToEnclosingVariableOrCapture =
+         RefersToEnclosingVariableOrCapture;
++    DeclRefExprBits.IsDezombifyCandidate = 0;
++    DeclRefExprBits.IsDezombifyNotReallyNeeded = 0;
++
+     computeDependence(D->getASTContext());
+   }
+ 
+@@ -1186,6 +1189,31 @@ public:
      return DeclRefExprBits.RefersToEnclosingVariableOrCapture;
    }
  
@@ -160,6 +170,19 @@ index bb2993eab4..c06c3ac224 100644
 +Checker must add extra validations to such arguments.
 +}];
 +}
+diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
+index 50cff156d2..113f9aadc6 100644
+--- a/lib/AST/Expr.cpp
++++ b/lib/AST/Expr.cpp
+@@ -384,6 +384,8 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
+         TemplateKWLoc);
+   }
+   DeclRefExprBits.HadMultipleCandidates = 0;
++  DeclRefExprBits.IsDezombifyCandidate = 0;
++  DeclRefExprBits.IsDezombifyNotReallyNeeded = 0;
+ 
+   computeDependence(Ctx);
+ }
 diff --git a/lib/AST/TypePrinter.cpp b/lib/AST/TypePrinter.cpp
 index e032c312aa..6db41bea0a 100644
 --- a/lib/AST/TypePrinter.cpp
