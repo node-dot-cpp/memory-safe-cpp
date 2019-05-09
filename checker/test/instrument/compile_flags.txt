@@ -1,0 +1,6 @@
+-std=c++17
+-nostdinc
+-fno-ms-compatibility
+-fno-delayed-template-parsing
+-fno-ms-extensions
+-fcoroutines-ts
