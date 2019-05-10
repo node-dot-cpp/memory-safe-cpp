@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2019, OLogN Technologies AG
+* Copyright (c) 2018, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,73 +25,17 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
-#define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
-
-
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-
-using namespace clang;
+#ifndef NODECPP_DEZOMBIFY_H
+#define NODECPP_DEZOMBIFY_H
 
 namespace nodecpp {
 
-class Dezombify1ASTVisitor
-  : public RecursiveASTVisitor<Dezombify1ASTVisitor> {
-
-  ASTContext &Context;
-
-  const Expr *getParentExpr(const Expr *Ex) {
-
-    auto SList = Context.getParents(*Ex);
-
-    auto SIt = SList.begin();
-
-    if (SIt == SList.end())
-      return nullptr;
-
-    auto P = SIt->get<Expr>();
-    if (!P)
-      return nullptr;
-    else
-      return P->IgnoreImplicit();
-  }
-
-  bool hasDezombifyParent(const Expr *E) {
-    auto P = getParentExpr(E);
-    if(P && isa<CallExpr>(P)) {
-      auto Decl = dyn_cast<CallExpr>(P)->getDirectCallee();
-      if (Decl && Decl->getNameAsString() == "nodecpp::dezombify") {
-        return true;
-      }
-    }
-    return false;
-  }
-
-public:
-
-  explicit Dezombify1ASTVisitor(ASTContext &Context): Context(Context) {}
-
-
-  bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if(E && E->getDecl()) {
-      auto Qt = E->getDecl()->getType().getCanonicalType();
-      if(Qt->isReferenceType() || Qt->isPointerType()) {
-
-        if(hasDezombifyParent(E))
-          E->setIsDezombifyCandidate();//TODO
-        else
-          E->setIsDezombifyCandidate();
-
-      }
-    }   
-    return true;
-  }
-};
-
+template <class T>
+auto dezombify(T&& t) {
+	return t;
+}
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 
+#endif // NODECPP_DEZOMBIFY_H
