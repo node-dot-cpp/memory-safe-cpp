@@ -100,9 +100,9 @@ public:
       if(Qt->isReferenceType() || Qt->isPointerType()) {
 
         if(hasDezombifyParent(E))
-          E->setIsDezombifyCandidate();//TODO
+          E->setDezombifyAlreadyPresent();//TODO
         else
-          E->setIsDezombifyCandidate();
+          E->setDezombifyCandidate();
 
       }
     }   

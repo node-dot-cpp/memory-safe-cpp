@@ -128,7 +128,7 @@ public:
 
 
   bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(E && E->isDezombifyReallyNeeded()) {
+    if(E && E->needsDezombifyInstrumentation()) {
 
       std::string fix = "nodecpp::dezombify( " + E->getNameInfo().getAsString() + " )";
       addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));

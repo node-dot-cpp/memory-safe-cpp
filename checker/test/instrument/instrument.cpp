@@ -16,7 +16,9 @@ void func(int* ip, int& ir) {
     i = ir2;
 // CHECK-FIXES: i = nodecpp::dezombify( ir2 );
 
-    i = i;
+//when dezombify is already there, don't instrument, 
+    int i = *nodecpp::dezombify(ip2); 
 
+    i = i;
 }
 

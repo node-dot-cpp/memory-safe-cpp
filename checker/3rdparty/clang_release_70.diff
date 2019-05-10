@@ -1,59 +1,72 @@
 diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
-index e7e32b9fe1..643f5fece2 100644
+index e7e32b9fe1..6827f08213 100644
 --- a/include/clang/AST/Expr.h
 +++ b/include/clang/AST/Expr.h
-@@ -1031,6 +1031,9 @@ public:
+@@ -1031,6 +1031,8 @@ public:
      DeclRefExprBits.HadMultipleCandidates = 0;
      DeclRefExprBits.RefersToEnclosingVariableOrCapture =
          RefersToEnclosingVariableOrCapture;
-+    DeclRefExprBits.IsDezombifyCandidate = 0;
-+    DeclRefExprBits.IsDezombifyNotReallyNeeded = 0;
++    DeclRefExprBits.DezombifyFlags = 0;
 +
      computeDependence(D->getASTContext());
    }
  
-@@ -1186,6 +1189,31 @@ public:
+@@ -1186,6 +1188,31 @@ public:
      return DeclRefExprBits.RefersToEnclosingVariableOrCapture;
    }
  
 +  /// Sets the flag telling whether this expression refers to
-+  /// a variable of a type that may need to be dezombified.
-+  void setIsDezombifyCandidate(bool V = true) {
-+    DeclRefExprBits.IsDezombifyCandidate = V;
++  /// a variable of a type that has explicit dezombified.
++  void setDezombifyAlreadyPresent() {
++    DeclRefExprBits.DezombifyFlags = DezombifyAlreadyPresent;
 +  }
 +
-+  /// Does this DeclRefExpr refer to a varialbe that may need
-+  /// to be dezombified
-+  bool isDezombifyCandidate() const {
-+    return DeclRefExprBits.IsDezombifyCandidate;
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that may need to be dezombified.
++  void setDezombifyCandidate() {
++    DeclRefExprBits.DezombifyFlags = DezombifyCandidate;
 +  }
 +
 +  /// Sets the flag telling whether this expression refers to
 +  /// a variable of a type that may need to be dezombified,
 +  /// but a deeper flow analysis prove dezombified not really needed.
-+  void setIsDezombifyNotReallyNeeded(bool V = true) {
-+    DeclRefExprBits.IsDezombifyNotReallyNeeded = V;
++  void setDezombifyCandidateButRelaxed() {
++    DeclRefExprBits.DezombifyFlags = DezombifyCandidateButRelaxed;
 +  }
 +
 +  /// Does this DeclRefExpr refer to a varialbe that really
 +  /// needs to be dezombified after all analysis stages.
-+  bool isDezombifyReallyNeeded() const {
-+    return DeclRefExprBits.IsDezombifyCandidate && !DeclRefExprBits.IsDezombifyNotReallyNeeded;
++  bool needsDezombifyInstrumentation() const {
++    return DeclRefExprBits.DezombifyFlags == DezombifyCandidate;
 +  }
 +
    static bool classof(const Stmt *T) {
      return T->getStmtClass() == DeclRefExprClass;
    }
 diff --git a/include/clang/AST/Stmt.h b/include/clang/AST/Stmt.h
-index c957cccfe2..a75eee9c5e 100644
+index c957cccfe2..94a780252b 100644
 --- a/include/clang/AST/Stmt.h
 +++ b/include/clang/AST/Stmt.h
-@@ -194,6 +194,8 @@ protected:
+@@ -183,6 +183,14 @@ protected:
+     unsigned IsType : 1; // true if operand is a type, false if an expression.
+   };
+ 
++  enum DREDezombifyFlags {
++    NoDezombify = 0,
++    DezombifyAlreadyPresent,
++    DezombifyCandidate,
++    DezombifyCandidateButRelaxed
++  };
++
++
+   class DeclRefExprBitfields {
+     friend class ASTStmtReader; // deserialization
+     friend class DeclRefExpr;
+@@ -194,6 +202,7 @@ protected:
      unsigned HasFoundDecl : 1;
      unsigned HadMultipleCandidates : 1;
      unsigned RefersToEnclosingVariableOrCapture : 1;
-+    unsigned IsDezombifyCandidate : 1;
-+    unsigned IsDezombifyNotReallyNeeded : 1;
++    unsigned DezombifyFlags : 2;
    };
  
    class CastExprBitfields {
@@ -171,15 +184,14 @@ index bb2993eab4..c06c3ac224 100644
 +}];
 +}
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
-index 50cff156d2..113f9aadc6 100644
+index 50cff156d2..43048e1161 100644
 --- a/lib/AST/Expr.cpp
 +++ b/lib/AST/Expr.cpp
-@@ -384,6 +384,8 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
+@@ -384,6 +384,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
          TemplateKWLoc);
    }
    DeclRefExprBits.HadMultipleCandidates = 0;
-+  DeclRefExprBits.IsDezombifyCandidate = 0;
-+  DeclRefExprBits.IsDezombifyNotReallyNeeded = 0;
++  DeclRefExprBits.DezombifyFlags = 0;
  
    computeDependence(Ctx);
  }
