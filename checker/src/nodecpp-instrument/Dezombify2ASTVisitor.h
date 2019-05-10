@@ -115,9 +115,9 @@ public:
         }
       }
       if (Rewrite.overwriteChangedFiles()) {
-        llvm::errs() << "clang-tidy failed to apply suggested fixes.\n";
+        llvm::errs() << "nodecpp-instrument failed to apply suggested fixes.\n";
       } else {
-        llvm::errs() << "clang-tidy applied suggested fixes.\n";
+        llvm::errs() << "nodecpp-instrument applied suggested fixes.\n";
       }
     }
   }

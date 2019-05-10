@@ -73,6 +73,26 @@ public:
 
   explicit Dezombify1ASTVisitor(ASTContext &Context): Context(Context) {}
 
+  bool TraverseDecl(Decl *DeclNode) {
+    if (!DeclNode) {
+      return true;
+    }
+
+    //mb: we don't traverse decls in system-headers
+    if (!isa<TranslationUnitDecl>(DeclNode)) {
+
+      auto &SourceManager = Context.getSourceManager();
+      auto ExpansionLoc = SourceManager.getExpansionLoc(DeclNode->getLocStart());
+      if (ExpansionLoc.isInvalid()) {
+        return true;
+      }
+      if (SourceManager.isInSystemHeader(ExpansionLoc)) {
+        return true;
+      }
+    }
+
+    return RecursiveASTVisitor<Dezombify1ASTVisitor>::TraverseDecl(DeclNode);
+  }
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
     if(E && E->getDecl()) {
