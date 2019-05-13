@@ -1,4 +1,4 @@
-// RUN: %check_nodecpp_instrument %s %t -- -- -isystem %S/Inputs
+// RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -isystem %S/Inputs
 
 #include <dezombify.h>
 
