@@ -68,13 +68,13 @@ void badFunc() {
 	NakedStr* nakedPtr = nullptr; // bad
 // CHECK: :[[@LINE-1]]:12: error: (S1.3)
 	Bad1 b1; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 
 	Bad2 b2; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 
 	Bad3 b3; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }
 
 class Sock {};

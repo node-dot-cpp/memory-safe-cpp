@@ -34,7 +34,7 @@ class UsesUnion {
 void func3() { 
 
 	UsesUnion uu;
-// CHECK: :[[@LINE-1]]:12: error: unsafe type at variable declaration [nodecpp-var-decl]
+// CHECK: :[[@LINE-1]]:12: error: unsafe type at variable declaration
 
 	UsesUnion();
 // CHECK: :[[@LINE-1]]:2: error: unsafe type at temporary expression
