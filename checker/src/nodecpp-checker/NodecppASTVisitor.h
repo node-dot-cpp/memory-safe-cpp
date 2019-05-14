@@ -30,6 +30,7 @@
 
 
 #include "nodecpp/NakedPtrHelper.h"
+#include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -37,41 +38,109 @@
 namespace nodecpp {
 namespace checker {
 
+struct MyStack {
+  std::vector<std::vector<const clang::VarDecl*>> Vds;
+
+  void enter() {Vds.push_back({});}
+  void exit() {Vds.pop_back();}
+
+  void add(const clang::VarDecl* D) {
+    if(!Vds.empty())
+      Vds.back().push_back(D);
+  }
+
+  class Riia {
+    MyStack& St;
+    public:
+    Riia(MyStack& St) :St(St) {St.enter();}
+    ~Riia() {St.exit();}
+  }; 
+
+};
 
 class NodecppASTVisitor
   : public clang::RecursiveASTVisitor<NodecppASTVisitor> {
 
-  clang::ASTContext *Context;
+  ClangTidyContext &Context;
+  MyStack St;
+
+  /// \brief Add a diagnostic with the check's name.
+  DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
+                         DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
+    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+  }
+
 public:
 
-  explicit NodecppASTVisitor(clang::ASTContext *Context): Context(Context) {}
+  explicit NodecppASTVisitor(ClangTidyContext &Context): Context(Context) {}
 
 
-  bool VisitExpr(clang::Expr *E) {
-    if(E) {
-      auto Qt = E->getType();
+  bool TraverseDecl(Decl *D) {
+    //mb: we don't traverse decls in system-headers
+    //TranslationUnitDecl has an invalid location, but needs traversing anyway
 
- 
-      // if(!Qt.isNull() && isAwaitableType(Qt)) {
+    if (!isa<TranslationUnitDecl>(D)) {
+      if(isSystemLocation(&Context, D->getLocation()))
+        return true;
+    }
 
+    return RecursiveASTVisitor<NodecppASTVisitor>::TraverseDecl(D);
+  }
 
+  bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 
-      //   E->dumpColor();
-      // }
-    }   
-    return true;
+    MyStack::Riia Riia(St);
+    return clang::RecursiveASTVisitor<NodecppASTVisitor>::TraverseFunctionDecl(D);;
+  }
+
+  bool TraverseCompoundStmt(clang::CompoundStmt *S) {
+
+    MyStack::Riia Riia(St);
+    return clang::RecursiveASTVisitor<NodecppASTVisitor>::TraverseCompoundStmt(S);;
+  }
+
+  bool VisitVarDecl(clang::VarDecl *D) {
+    auto Qt = D->getType().getCanonicalType();
+    if(isNakedPointerType(Qt, &Context)) {
+      St.add(D);
+    }
+    else if(Qt->isReferenceType()) {
+      St.add(D);
+    }
+
+    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitVarDecl(D);
+  }
+
+  bool VisitCoawaitExpr(clang::CoawaitExpr *E) {
+    for(auto &Outer : St.Vds) {
+      for(auto &Inner : Outer) {
+        diag(Inner->getLocation(), "(S5.8) variable gets invalidated in coroutine");
+        diag(E->getExprLoc(), "Invalidated here", DiagnosticIDs::Note);
+      }
+    }
+    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitCoawaitExpr(E);
+  }
+
+  bool VisitCoyieldExpr(clang::CoyieldExpr *E) {
+    diag(E->getExprLoc(), "Invalidated here");
+
+    for(auto &Outer : St.Vds) {
+      for(auto &Inner : Outer) {
+        diag(Inner->getLocation(), "(S5.8) variable gets invalidated in coroutine");
+        diag(E->getExprLoc(), "Invalidated here", DiagnosticIDs::Note);
+      }
+    }
+    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitCoyieldExpr(E);
   }
 
 };
 
 class NodecppASTConsumer : public clang::ASTConsumer {
+
   NodecppASTVisitor Visitor;
 
-
 public:
-  NodecppASTConsumer(clang::ASTContext *Context): Visitor(Context) {}
-
-private:
+  NodecppASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());

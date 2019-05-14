@@ -19,6 +19,7 @@
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
 #include "NodecppASTVisitor.h"
+#include "nodecpp/NakedPtrHelper.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
@@ -369,7 +370,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
-  Consumers.push_back(llvm::make_unique<NodecppASTConsumer>(&Compiler.getASTContext()));
+  Consumers.push_back(llvm::make_unique<NodecppASTConsumer>(Context));
 
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));

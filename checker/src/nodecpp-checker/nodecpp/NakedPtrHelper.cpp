@@ -19,6 +19,8 @@ using namespace clang::ast_matchers;
 namespace nodecpp {
 namespace checker {
 
+const char *DiagMsgSrc = "memory-safe-cpp";
+
 DiagHelper NullDiagHelper(nullptr);
 
 bool isOwnerPtrName(const std::string &Name) {

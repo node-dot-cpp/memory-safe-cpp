@@ -18,6 +18,7 @@
 namespace nodecpp {
 namespace checker {
 
+extern const char *DiagMsgSrc;
 
 class DiagHelper {
   ClangTidyCheck *Check = nullptr;

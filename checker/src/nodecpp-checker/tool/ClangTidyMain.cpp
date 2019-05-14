@@ -477,21 +477,19 @@ static int clangTidyMain(int Argc, const char **Argv) {
                EnableCheckProfile ? &Profile : nullptr,
                ASTDump, ASTList, ASTPrint, ASTDumpFilter);
                
-  ArrayRef<ClangTidyError> Errors = Context.getErrors();
-  bool FoundErrors =
-      std::find_if(Errors.begin(), Errors.end(), [](const ClangTidyError &E) {
-        return E.DiagLevel == ClangTidyError::Error;
-      }) != Errors.end();
+//  ArrayRef<ClangTidyError> Errors = Context.getErrors();
+  // bool FoundErrors =
+  //     std::find_if(Errors.begin(), Errors.end(), [](const ClangTidyError &E) {
+  //       return E.DiagLevel == ClangTidyError::Error;
+  //     }) != Errors.end();
 
-  bool Fix = true;
-  bool FixErrors = false;
+//  bool Fix = true;
+//  bool FixErrors = false;
 
-  const bool DisableFixes = Fix && FoundErrors && !FixErrors;
+//  const bool DisableFixes = Fix && FoundErrors && !FixErrors;
 
   unsigned WErrorCount = 0;
-
-  // -fix-errors implies -fix.
-  handleErrors(Context, (FixErrors || Fix) && !DisableFixes, WErrorCount);
+  handleErrors(Context, false, WErrorCount);
 
   // if (!ExportFixes.empty() && !Errors.empty()) {
   //   std::error_code EC;
@@ -505,10 +503,10 @@ static int clangTidyMain(int Argc, const char **Argv) {
 
 //  if (!Quiet) {
 //    printStats(Context.getStats());
-    if (DisableFixes)
-      llvm::errs()
-          << "Found compiler errors, but -fix-errors was not specified.\n"
-             "Fixes have NOT been applied.\n\n";
+    // if (DisableFixes)
+    //   llvm::errs()
+    //       << "Found compiler errors, but -fix-errors was not specified.\n"
+    //          "Fixes have NOT been applied.\n\n";
 //  }
 
   if (EnableCheckProfile)
