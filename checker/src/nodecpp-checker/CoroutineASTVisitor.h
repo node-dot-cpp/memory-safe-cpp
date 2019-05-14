@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_NODECPPASTVISITOR_H
-#define NODECPP_CHECKER_NODECPPASTVISITOR_H
+#ifndef NODECPP_CHECKER_COROUTINEASTVISITOR_H
+#define NODECPP_CHECKER_COROUTINEASTVISITOR_H
 
 
 #include "nodecpp/NakedPtrHelper.h"
@@ -58,8 +58,8 @@ struct MyStack {
 
 };
 
-class NodecppASTVisitor
-  : public clang::RecursiveASTVisitor<NodecppASTVisitor> {
+class CoroutineASTVisitor
+  : public clang::RecursiveASTVisitor<CoroutineASTVisitor> {
 
   ClangTidyContext &Context;
   MyStack St;
@@ -72,8 +72,7 @@ class NodecppASTVisitor
 
 public:
 
-  explicit NodecppASTVisitor(ClangTidyContext &Context): Context(Context) {}
-
+  explicit CoroutineASTVisitor(ClangTidyContext &Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -84,19 +83,19 @@ public:
         return true;
     }
 
-    return RecursiveASTVisitor<NodecppASTVisitor>::TraverseDecl(D);
+    return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
   }
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 
     MyStack::Riia Riia(St);
-    return clang::RecursiveASTVisitor<NodecppASTVisitor>::TraverseFunctionDecl(D);;
+    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::TraverseFunctionDecl(D);;
   }
 
   bool TraverseCompoundStmt(clang::CompoundStmt *S) {
 
     MyStack::Riia Riia(St);
-    return clang::RecursiveASTVisitor<NodecppASTVisitor>::TraverseCompoundStmt(S);;
+    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::TraverseCompoundStmt(S);;
   }
 
   bool VisitVarDecl(clang::VarDecl *D) {
@@ -108,39 +107,37 @@ public:
       St.add(D);
     }
 
-    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitVarDecl(D);
+    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitVarDecl(D);
   }
 
   bool VisitCoawaitExpr(clang::CoawaitExpr *E) {
     for(auto &Outer : St.Vds) {
       for(auto &Inner : Outer) {
-        diag(Inner->getLocation(), "(S5.8) variable gets invalidated in coroutine");
-        diag(E->getExprLoc(), "Invalidated here", DiagnosticIDs::Note);
+        diag(Inner->getLocation(), "(S5.8) variable has 'co_await' in its scope");
+        diag(E->getExprLoc(), "'co_await' here", DiagnosticIDs::Note);
       }
     }
-    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitCoawaitExpr(E);
+    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitCoawaitExpr(E);
   }
 
   bool VisitCoyieldExpr(clang::CoyieldExpr *E) {
-    diag(E->getExprLoc(), "Invalidated here");
-
     for(auto &Outer : St.Vds) {
       for(auto &Inner : Outer) {
-        diag(Inner->getLocation(), "(S5.8) variable gets invalidated in coroutine");
-        diag(E->getExprLoc(), "Invalidated here", DiagnosticIDs::Note);
+        diag(Inner->getLocation(), "(S5.8) variable has 'co_yield' in its scope");
+        diag(E->getExprLoc(), "'co_yield' here", DiagnosticIDs::Note);
       }
     }
-    return clang::RecursiveASTVisitor<NodecppASTVisitor>::VisitCoyieldExpr(E);
+    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitCoyieldExpr(E);
   }
 
 };
 
-class NodecppASTConsumer : public clang::ASTConsumer {
+class CoroutineASTConsumer : public clang::ASTConsumer {
 
-  NodecppASTVisitor Visitor;
+  CoroutineASTVisitor Visitor;
 
 public:
-  NodecppASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  CoroutineASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -151,5 +148,5 @@ public:
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_NODECPPASTVISITOR_H
+#endif // NODECPP_CHECKER_COROUTINEASTVISITOR_H
 

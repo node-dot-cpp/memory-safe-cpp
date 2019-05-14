@@ -8,7 +8,7 @@ using namespace nodecpp::safememory;
 
 nodecpp::awaitable<void> af();
 
-nodecpp::awaitable<int> func() {
+nodecpp::awaitable<void> func() {
 
 	int i = 0;
 	{
@@ -36,3 +36,14 @@ nodecpp::awaitable<int> func() {
 	}
 }
 
+nodecpp::awaitable<int> func2() {
+
+	int i = 0;
+	{
+		int& ir = i;
+// CHECK: :[[@LINE-1]]:8: error: (S5.8)
+		naked_ptr<int> np(i);
+// CHECK: :[[@LINE-1]]:18: error: (S5.8)
+		co_yield i;
+	}
+}

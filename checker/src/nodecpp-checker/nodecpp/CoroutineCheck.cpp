@@ -24,7 +24,7 @@ void CoroutineCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(coroutineBodyStmt().bind("coro"), this);
 
-  Finder->addMatcher(coroutineBodyStmt(hasCoroutineBody(forEachDescendant(declRefExpr().bind("dref")))), this);
+//  Finder->addMatcher(coroutineBodyStmt(hasCoroutineBody(forEachDescendant(declRefExpr().bind("dref")))), this);
 }
 
 void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
@@ -45,17 +45,17 @@ void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
       diag(Fd->getLocStart(), "(S9.1) coroutines must return nodecpp::awaitable");
     }
   }
-  else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {
-    auto Qt = Dr->getDecl()->getType();
-    if(isNakedPointerType(Qt.getCanonicalType(), getContext())) {
-      diag(Dr->getExprLoc(), "(S5.8) naked pointer types not allowed inside coroutines");
-      return;
-    }
-    else if(Qt->isReferenceType()) {
-      diag(Dr->getExprLoc(), "(S5.8) references types not allowed inside coroutines");
-      return;
-    }
-  }
+  // else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {
+  //   auto Qt = Dr->getDecl()->getType();
+  //   if(isNakedPointerType(Qt.getCanonicalType(), getContext())) {
+  //     diag(Dr->getExprLoc(), "(S5.8) naked pointer types not allowed inside coroutines");
+  //     return;
+  //   }
+  //   else if(Qt->isReferenceType()) {
+  //     diag(Dr->getExprLoc(), "(S5.8) references types not allowed inside coroutines");
+  //     return;
+  //   }
+  // }
 }
 
 } // namespace checker

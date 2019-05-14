@@ -106,6 +106,9 @@ struct promise_type_struct : public promise_type_struct_base {
     auto return_value(T v) {
         return std::experimental::suspend_never{};
     }
+    auto yield_value(T v) {
+        return std::experimental::suspend_never{};
+    }
 };
 
 template<>
