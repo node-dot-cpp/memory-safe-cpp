@@ -1222,6 +1222,9 @@ void temptest()
 
 int main( int argc, char * argv[] )
 {
+	::nodecpp::log::touch_log();
+	interceptNewDeleteOperators( true );
+
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -1266,5 +1269,9 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to exit main()..." );
+
+	killAllZombies();
+	interceptNewDeleteOperators( false );
+
 	return 0;
 }
