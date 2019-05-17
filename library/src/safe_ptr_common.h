@@ -82,6 +82,7 @@ constexpr bool isPointerNotZombie(void* ptr ) { return true; }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
+inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNewDeleteOperators( doIntercept ? &g_AllocManager : nullptr ) != nullptr;}
 
 } // namespace nodecpp::safememory
 
@@ -150,6 +151,7 @@ constexpr bool isPointerNotZombie(void* ptr ) { return true; }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 } //namespace nodecpp::safememory
+inline bool interceptNewDeleteOperators( bool doIntercept ) { return true;}
 
 #else
 #error at least some specific allocation functionality must be selected
