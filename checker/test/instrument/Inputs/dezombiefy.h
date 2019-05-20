@@ -25,17 +25,32 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_DEZOMBIFY_H
-#define NODECPP_DEZOMBIFY_H
+#ifndef NODECPP_DEZOMBIEFY_H
+#define NODECPP_DEZOMBIEFY_H
 
-namespace nodecpp {
+namespace nodecpp::safememory {
 
-template <class T>
-auto dezombify(T&& t) {
-	return t;
+template<class T>
+T* dezombiefy(T* x) {
+	return x;
 }
 
-} // namespace nodecpp
+template<class T>
+const T* dezombiefy(const T* x) {
+	return x;
+}
+
+template<class T>
+T& dezombiefy(T& x) {
+	return x;
+}
+
+template<class T>
+const T& dezombiefy(const T& x) {
+	return x;
+}
+
+} // namespace nodecpp::safememory
 
 
-#endif // NODECPP_DEZOMBIFY_H
+#endif // NODECPP_DEZOMBIEFY_H

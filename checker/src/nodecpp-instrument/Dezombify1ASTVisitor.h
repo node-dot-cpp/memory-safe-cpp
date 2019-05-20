@@ -62,7 +62,7 @@ class Dezombify1ASTVisitor
     auto P = getParentExpr(E);
     if(P && isa<CallExpr>(P)) {
       auto Decl = dyn_cast<CallExpr>(P)->getDirectCallee();
-      if (Decl && Decl->getNameAsString() == "nodecpp::dezombify") {
+      if (Decl && Decl->getNameAsString() == "nodecpp::safememory::dezombiefy") {
         return true;
       }
     }
