@@ -42,6 +42,15 @@ class Dezombify1ASTVisitor
 
   ASTContext &Context;
 
+  static
+  bool isParenImplicitExpr(const Expr *Ex) {
+    return isa<ExprWithCleanups>(Ex) ||
+      isa<MaterializeTemporaryExpr>(Ex) ||
+      isa<CXXBindTemporaryExpr>(Ex) ||
+      isa<ImplicitCastExpr>(Ex) ||
+      isa<ParenExpr>(Ex);
+  }
+
   const Expr *getParentExpr(const Expr *Ex) {
 
     auto SList = Context.getParents(*Ex);
@@ -54,15 +63,17 @@ class Dezombify1ASTVisitor
     auto P = SIt->get<Expr>();
     if (!P)
       return nullptr;
+    else if(isParenImplicitExpr(P))
+      return getParentExpr(P);
     else
-      return P->IgnoreImplicit();
+      return P;
   }
 
   bool hasDezombifyParent(const Expr *E) {
     auto P = getParentExpr(E);
     if(P && isa<CallExpr>(P)) {
       auto Decl = dyn_cast<CallExpr>(P)->getDirectCallee();
-      if (Decl && Decl->getNameAsString() == "nodecpp::safememory::dezombiefy") {
+      if (Decl && Decl->getQualifiedNameAsString() == "nodecpp::safememory::dezombiefy") {
         return true;
       }
     }
