@@ -27,3 +27,17 @@ void func(int* ip, int& ir) {
     i = i;
 }
 
+class Class {
+
+    int attribute = 0;
+
+    void method() {
+
+        int i = attribute + this->attribute;
+
+        method();
+        this->method();
+
+    }
+
+};
