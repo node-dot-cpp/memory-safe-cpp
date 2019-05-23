@@ -126,15 +126,31 @@ public:
 
   explicit Dezombify2ASTVisitor(clang::ASTContext &Context): Context(Context) {}
 
+  bool VisitCXXThisExpr(CXXThisExpr *E) {
+
+    if(E->needsDezombiefyInstrumentation()) {
+      if(E->isImplicit()) {
+        std::string fix = "nodecpp::safememory::dezombiefy( this )->";
+        addFix(FixItHint::CreateInsertion(E->getBeginLoc(), fix));
+      }
+      else {
+        std::string fix = "nodecpp::safememory::dezombiefy( this )";
+        addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));
+      }
+
+    }   
+    return RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitCXXThisExpr(E);
+  }
+
 
   bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(E && E->needsDezombifyInstrumentation()) {
+    if(E->needsDezombiefyInstrumentation()) {
 
       std::string fix = "nodecpp::safememory::dezombiefy( " + E->getNameInfo().getAsString() + " )";
       addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));
 
     }   
-    return true;
+    return RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitDeclRefExpr(E);
   }
 
 };

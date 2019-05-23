@@ -41,7 +41,9 @@ class Dezombify1ASTVisitor
   : public RecursiveASTVisitor<Dezombify1ASTVisitor> {
 
   ASTContext &Context;
-
+public:
+  bool shouldVisitTemplateInstantiations() const { return true; }
+private:
   static
   bool isParenImplicitExpr(const Expr *Ex) {
     return isa<ExprWithCleanups>(Ex) ||
@@ -69,13 +71,14 @@ class Dezombify1ASTVisitor
       return P;
   }
 
-  bool hasDezombifyParent(const Expr *E) {
+  bool hasDezombiefyParent(const Expr *E) {
     auto P = getParentExpr(E);
-    if(P && isa<CallExpr>(P)) {
-      auto Decl = dyn_cast<CallExpr>(P)->getDirectCallee();
-      if (Decl && Decl->getQualifiedNameAsString() == "nodecpp::safememory::dezombiefy") {
-        return true;
+    if(auto Ce = dyn_cast_or_null<CallExpr>(P)) {
+      if(auto Callee = dyn_cast_or_null<UnresolvedLookupExpr>(Ce->getCallee())) {
+        auto str = Callee->getNameInfo().getAsString();
       }
+      else if (auto Decl = Ce->getDirectCallee()) 
+        return Decl->getQualifiedNameAsString() == "nodecpp::safememory::dezombiefy";
     }
     return false;
   }
@@ -105,19 +108,34 @@ public:
     return RecursiveASTVisitor<Dezombify1ASTVisitor>::TraverseDecl(DeclNode);
   }
 
+  bool VisitParmVarDecl(ParmVarDecl *D) {
+//    D->dumpColor();
+    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitParmVarDecl(D);
+  }
+
+  bool VisitCXXThisExpr(CXXThisExpr *E) {
+    if(hasDezombiefyParent(E))
+      E->setDezombiefyAlreadyPresent();//TODO
+    else
+      E->setDezombiefyCandidate();
+
+    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitCXXThisExpr(E);
+  }
+
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if(E && E->getDecl()) {
-      auto Qt = E->getDecl()->getType().getCanonicalType();
+    if(auto D = E->getDecl()) {
+      auto Qt = D->getType().getCanonicalType();
+      auto T = Qt.getTypePtr();
       if(Qt->isReferenceType() || Qt->isPointerType()) {
 
-        if(hasDezombifyParent(E))
-          E->setDezombifyAlreadyPresent();//TODO
+        if(hasDezombiefyParent(E))
+          E->setDezombiefyAlreadyPresent();//TODO
         else
-          E->setDezombifyCandidate();
+          E->setDezombiefyCandidate();
 
       }
     }   
-    return true;
+    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitDeclRefExpr(E);
   }
 };
 

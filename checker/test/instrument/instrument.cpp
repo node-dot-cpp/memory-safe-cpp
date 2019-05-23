@@ -33,10 +33,16 @@ class Class {
 
     void method() {
 
-        int i = attribute + this->attribute;
+        int i = 0;
+        i = attribute;
+// CHECK-FIXES: i = nodecpp::safememory::dezombiefy( this )->attribute;
+        i = this->attribute;
+// CHECK-FIXES: i = nodecpp::safememory::dezombiefy( this )->attribute;
 
         method();
+// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method();
         this->method();
+// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method();
 
     }
 
