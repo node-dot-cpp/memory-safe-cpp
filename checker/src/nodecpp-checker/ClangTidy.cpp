@@ -540,19 +540,6 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
     }
   };
 
-  class ClangASTDumpActionFactory {
-    StringRef FilterString;
-  public:
-    ClangASTDumpActionFactory(StringRef FilterString) :FilterString(FilterString) {}
-    std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
-        return clang::CreateASTDumper(nullptr /*Dump to stdout.*/,
-                                      FilterString,
-                                      /*DumpDecls=*/true,
-                                      /*Deserialize=*/false,
-                                      /*DumpLookups=*/false);
-    }
-  };
-
   class ClangASTPrintActionFactory {
     StringRef FilterString;
   public:
@@ -563,7 +550,6 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
   };
 
   ClangASTListActionFactory ListFactory;
-  ClangASTDumpActionFactory DumpFactory(ASTDumpFilter);
   ClangASTPrintActionFactory PrintFactory(ASTDumpFilter);
   std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
@@ -571,7 +557,7 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
   if (ASTList)
     FrontendFactory = newFrontendActionFactory(&ListFactory);
   else if (ASTDump) 
-    FrontendFactory = newFrontendActionFactory(&DumpFactory);
+    FrontendFactory = newFrontendActionFactory<ASTDumpAction>();
   else if (ASTPrint) 
     FrontendFactory = newFrontendActionFactory(&PrintFactory);
   else

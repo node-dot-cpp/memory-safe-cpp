@@ -7,6 +7,8 @@ set( LLVM_LINK_COMPONENTS
 
 add_clang_executable(nodecpp-instrument
   NodeCppDezombify.cpp
+  ExpandUserIncludesAction.cpp
+  InclusionRewriter.cpp
   )
 
 
@@ -17,6 +19,7 @@ target_link_libraries(nodecpp-instrument
   clangDriver
   clangFrontend
   clangTooling
+  clangRewriteFrontend
   )
 
 install(TARGETS nodecpp-instrument
