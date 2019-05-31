@@ -52,27 +52,31 @@
 using namespace clang;
 using namespace nodecpp;
 
+
 bool ExpandUserIncludesAction::BeginSourceFileAction(CompilerInstance &CI) {
+
+
+
   if (!OutputStream) {
     OutputStream = CI.createDefaultOutputFile(true, getCurrentFile());
     if (!OutputStream)
       return false;
   }
 
-  auto &OS = *OutputStream;
+  // auto &OS = *OutputStream;
 
   // If we're preprocessing a module map, start by dumping the contents of the
   // module itself before switching to the input buffer.
-  auto &Input = getCurrentInput();
-  if (Input.getKind().getFormat() == InputKind::ModuleMap) {
-    if (Input.isFile()) {
-      OS << "# 1 \"";
-      OS.write_escaped(Input.getFile());
-      OS << "\"\n";
-    }
-    getCurrentModule()->print(OS);
-    OS << "#pragma clang module contents\n";
-  }
+  // auto &Input = getCurrentInput();
+  // if (Input.getKind().getFormat() == InputKind::ModuleMap) {
+  //   if (Input.isFile()) {
+  //     OS << "# 1 \"";
+  //     OS.write_escaped(Input.getFile());
+  //     OS << "\"\n";
+  //   }
+  //   getCurrentModule()->print(OS);
+  //   OS << "#pragma clang module contents\n";
+  // }
 
   // If we're rewriting imports, set up a listener to track when we import
   // module files.
@@ -91,18 +95,120 @@ void ExpandUserIncludesAction::ExecuteAction() {
   CI.getPreprocessorOutputOpts().UseLineDirectives = 1;
   // If we're rewriting imports, emit the module build output first rather
   // than switching back and forth (potentially in the middle of a line).
-  if (CI.getPreprocessorOutputOpts().RewriteImports) {
-    std::string Buffer;
-    llvm::raw_string_ostream OS(Buffer);
+  // if (CI.getPreprocessorOutputOpts().RewriteImports) {
+  //   std::string Buffer;
+  //   llvm::raw_string_ostream OS(Buffer);
 
-    RewriteUserIncludesInInput(CI.getPreprocessor(), &OS,
-                           CI.getPreprocessorOutputOpts());
+  //   RewriteUserIncludesInInput(CI.getPreprocessor(), &OS,
+  //                          CI.getPreprocessorOutputOpts());
 
-    (*OutputStream) << OS.str();
-  } else {
-    RewriteUserIncludesInInput(CI.getPreprocessor(), OutputStream.get(),
+  //   (*OutputStream) << OS.str();
+  // } else {
+  RewriteUserIncludesInInput(CI.getPreprocessor(), OutputStream.get(),
                            CI.getPreprocessorOutputOpts());
-  }
+  // }
 
   OutputStream.reset();
 }
+
+
+bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
+
+  // std::vector<std::pair<std::string, std::string> > RewrittenFiles;
+//  std::string Filename = RewriteFilename(getCurrentFile(), ".instrument");
+
+  const FrontendOptions &FEOpts = CI.getFrontendOpts();
+  std::string Filename = RewriteFilename(FEOpts.Inputs[0].getFile(), ".instrument");
+
+  std::error_code EC;
+  std::unique_ptr<llvm::raw_fd_ostream> OutputStream;
+  OutputStream.reset(new llvm::raw_fd_ostream(Filename, EC, llvm::sys::fs::F_None));
+  if (EC) {
+    CI.getDiagnostics().Report(
+      clang::diag::err_fe_unable_to_open_output) << Filename << EC.message();
+    return false;
+  }
+
+  std::unique_ptr<FrontendAction> FixAction(new ExpandUserIncludesAction(std::move(OutputStream)));
+  if (!FixAction->BeginSourceFile(CI, FEOpts.Inputs[0]))
+    return false;
+    
+  FixAction->Execute();
+  FixAction->EndSourceFile();
+  CI.setSourceManager(nullptr);
+  CI.setFileManager(nullptr);
+
+  CI.getDiagnosticClient().clear();
+  CI.getDiagnostics().Reset();
+
+  PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+  // PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),
+  //                              RewrittenFiles.begin(), RewrittenFiles.end());
+  PPOpts.RemappedFiles.emplace_back(FEOpts.Inputs[0].getFile().str(), Filename);
+  PPOpts.RemappedFilesKeepOriginalName = false;
+
+  // bool err = false;
+  // {
+  //   const FrontendOptions &FEOpts = CI.getFrontendOpts();
+
+  //   std::string OrigName = FEOpts.Inputs[0].getFile().str();
+
+  //     std::string Filename = RewriteFilename(OrigName, ".instrument");
+
+  //   int fd;
+  //   std::error_code EC;
+  //   std::unique_ptr<llvm::raw_fd_ostream> OS;
+  //   OS.reset(new llvm::raw_fd_ostream(Filename, EC, llvm::sys::fs::F_None));
+  //   if (EC) {
+  //     // Diags.Report(clang::diag::err_fe_unable_to_open_output) << Filename
+  //     //                                                         << EC.message();
+  //     return false;
+  //   }
+  //   RewriteBuffer &RewriteBuf = I->second;
+  //   RewriteBuf.write(*OS);
+  //   OS->flush();
+
+  //   RewrittenFiles.push_back(std::make_pair(OrigName, Filename));
+  // }
+
+
+  //     std::unique_ptr<FixItOptions> FixItOpts;
+  //     // if (FEOpts.FixToTemporaries)
+  //     //   FixItOpts.reset(new FixItRewriteToTemp());
+  //     // else
+  //     //   FixItOpts.reset(new FixItRewriteInPlace());
+  //     // FixItOpts->Silent = true;
+  //     // FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
+  //     // FixItOpts->FixOnlyWarnings = FEOpts.FixOnlyWarnings;
+  //     FixItRewriter Rewriter(CI.getDiagnostics(), CI.getSourceManager(),
+  //                             CI.getLangOpts(), FixItOpts.get());
+  //     FixAction->Execute();
+
+  //     err = Rewriter.WriteFixedFiles(&RewrittenFiles);
+
+  //     
+ 
+  //   } else {
+  //     err = true;
+  //   }
+  // }
+  // if (err)
+  //   return false;
+  // CI.getDiagnosticClient().clear();
+  // CI.getDiagnostics().Reset();
+
+  // PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+  // PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),
+  //                             RewrittenFiles.begin(), RewrittenFiles.end());
+  // PPOpts.RemappedFilesKeepOriginalName = false;
+
+  return true;
+}
+
+std::string nodecpp::RewriteFilename(llvm::StringRef Filename, const std::string& NewSuffix) {
+  SmallString<128> Path(Filename);
+  llvm::sys::path::replace_extension(Path,
+    NewSuffix + llvm::sys::path::extension(Path));
+  return Path.str();
+}
+

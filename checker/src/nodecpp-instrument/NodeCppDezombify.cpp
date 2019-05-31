@@ -140,17 +140,25 @@ int main(int argc, const char **argv) {
     //     return 1;
     // }
 
-    class DezombifyActionFactory {
-    public:
-        std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
-        return llvm::make_unique<nodecpp::DezombifyConsumer>();
-        }
-    };
+  class DezombiefyAction : public ASTFrontendAction {
+  protected:
+    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                  StringRef InFile) override {
+      return llvm::make_unique<nodecpp::DezombifyConsumer>();
+    }
+  };
 
-  DezombifyActionFactory Factory;
+  class DezombiefyActionFactory : public FrontendActionFactory {
+  public:
+    FrontendAction *create() override {
+      std::unique_ptr<FrontendAction> WrappedAction(new DezombiefyAction());
+      return new nodecpp::ExpandRecompileAction(std::move(WrappedAction));
+    }
+  };
 
-//  auto FrontendFactory = newFrontendActionFactory(&Factory);
-  auto FrontendFactory = newFrontendActionFactory<nodecpp::ExpandUserIncludesAction>();
+  DezombiefyActionFactory Factory;
 
-  Tool.run(FrontendFactory.get());
+//  auto FrontendFactory = newFrontendActionFactory<nodecpp::ExpandRecompileAction>();
+
+  Tool.run(&Factory);
 }
