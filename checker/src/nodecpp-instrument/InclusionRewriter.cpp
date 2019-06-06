@@ -335,12 +335,13 @@ void InclusionRewriter::CommentOutDirective(Lexer &DirectiveLex,
     // OutputContentUpTo() would not output anything anyway.
     return;
   }
-  OS << "#if 0 /* expanded */" << MainEOL;
+
+  OS << "#if 0 /* expanded below */" << MainEOL;
   OutputContentUpTo(FromFile, NextToWrite,
                     SM.getFileOffset(DirectiveToken.getLocation()) +
                         DirectiveToken.getLength(),
                     LocalEOL, Line, true);
-  OS << "#endif /* expanded */" << MainEOL;
+  OS << "#endif /* expanded below */" << MainEOL;
 }
 
 /// Find the next identifier in the pragma directive specified by \p RawToken.
@@ -482,8 +483,8 @@ void InclusionRewriter::Process(FileID FileId,
               if(!isSystem(Inc->FileType)) {
                 CommentOutDirective(RawLex, HashToken, FromFile, LocalEOL, NextToWrite,
                   Line);
-                if (FileId != PP.getPredefinesFileID())
-                  WriteLineInfo(FileName, Line - 1, FileType, "");
+                // if (FileId != PP.getPredefinesFileID())
+                //   WriteLineInfo(FileName, Line - 1, FileType, "");
 
                 Process(Inc->Id, Inc->FileType, Inc->DirLookup);
 
@@ -629,6 +630,10 @@ void nodecpp::RewriteUserIncludesInInput(Preprocessor &PP, raw_ostream *OS,
   } while (Tok.isNot(tok::eof));
   Rewrite->setPredefinesBuffer(SM.getBuffer(PP.getPredefinesFileID()));
   Rewrite->Process(PP.getPredefinesFileID(), SrcMgr::C_User, nullptr);
+
+  // always include <dezombiefy.h> here, just in case. TODO improve
+  (*OS) << "#include <dezombiefy.h>\n";
+
   Rewrite->Process(SM.getMainFileID(), SrcMgr::C_User, nullptr);
   OS->flush();
 }
