@@ -33,10 +33,10 @@ set(NODECPP_TEST_DEPS
   not
 )
 
-add_lit_testsuite(check-nodecpp-checker "Running the node-dot-cpp checker tool regression tests"
+add_lit_testsuite(check-nodecpp-tools "Running the node-dot-cpp tools regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${NODECPP_TEST_DEPS}
   ARGS ${NODECPP_TEST_EXTRA_ARGS}
   )
 
-set_target_properties(check-nodecpp-checker PROPERTIES FOLDER "node-dot-cpp checker tool tests")
+set_target_properties(check-nodecpp-tools PROPERTIES FOLDER "node-dot-cpp tools tests")
