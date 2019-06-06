@@ -58,8 +58,8 @@ static cl::extrahelp MoreHelp("\nMore help text...");
 
 //static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
-// static cl::opt<std::string>
-// OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(myToolCategory));
+static cl::opt<std::string>
+OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(MyToolCategory));
 
 // static cl::opt<bool>
 // Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
@@ -152,7 +152,7 @@ int main(int argc, const char **argv) {
   public:
     FrontendAction *create() override {
       std::unique_ptr<FrontendAction> WrappedAction(new DezombiefyAction());
-      return new nodecpp::ExpandRecompileAction(std::move(WrappedAction));
+      return new nodecpp::ExpandRecompileAction(std::move(WrappedAction), OutputFilename);
     }
   };
 

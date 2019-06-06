@@ -58,8 +58,8 @@ bool ExpandUserIncludesAction::BeginSourceFileAction(CompilerInstance &CI) {
 
 
   if (!OutputStream) {
-    OutputStream = CI.createDefaultOutputFile(true, getCurrentFile());
-    if (!OutputStream)
+    // OutputStream = CI.createDefaultOutputFile(true, getCurrentFile());
+    // if (!OutputStream)
       return false;
   }
 
@@ -104,21 +104,21 @@ void ExpandUserIncludesAction::ExecuteAction() {
 
   //   (*OutputStream) << OS.str();
   // } else {
-  RewriteUserIncludesInInput(CI.getPreprocessor(), OutputStream.get(),
+  RewriteUserIncludesInInput(CI.getPreprocessor(), OutputStream,
                            CI.getPreprocessorOutputOpts());
   // }
 
-  OutputStream.reset();
+//  OutputStream->close();
+//  OutputStream.reset();
+  
 }
 
 
 bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
 
-  // std::vector<std::pair<std::string, std::string> > RewrittenFiles;
-//  std::string Filename = RewriteFilename(getCurrentFile(), ".instrument");
-
   const FrontendOptions &FEOpts = CI.getFrontendOpts();
-  std::string Filename = RewriteFilename(FEOpts.Inputs[0].getFile(), ".instrument");
+  if(Filename.empty())
+    Filename = RewriteFilename(FEOpts.Inputs[0].getFile(), ".instrument");
 
   std::error_code EC;
   std::unique_ptr<llvm::raw_fd_ostream> OutputStream;
@@ -129,12 +129,15 @@ bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
     return false;
   }
 
-  std::unique_ptr<FrontendAction> FixAction(new ExpandUserIncludesAction(std::move(OutputStream)));
+  std::unique_ptr<FrontendAction> FixAction(new ExpandUserIncludesAction(OutputStream.get()));
   if (!FixAction->BeginSourceFile(CI, FEOpts.Inputs[0]))
     return false;
     
   FixAction->Execute();
   FixAction->EndSourceFile();
+
+  OutputStream.reset();
+
   CI.setSourceManager(nullptr);
   CI.setFileManager(nullptr);
 

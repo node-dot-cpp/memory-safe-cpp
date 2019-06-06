@@ -48,6 +48,8 @@ def main():
   _, extension = os.path.splitext(input_file_name)
   if extension not in ['.c', '.hpp', '.m', '.mm']:
     extension = '.cpp'
+
+  cleaned_file_name = temp_file_name + ".clean" + extension
   temp_file_name = temp_file_name + extension
 
   check_fixes_prefix = 'CHECK-FIXES'
@@ -68,12 +70,12 @@ def main():
   # checks.
   cleaned_test = re.sub('// *CHECK-[A-Z0-9\-]*:[^\r\n]*', '//', input_text)
 
-  write_file(temp_file_name, cleaned_test)
+#  write_file(temp_file_name, cleaned_test)
 
-  original_file_name = temp_file_name + ".orig"
-  write_file(original_file_name, cleaned_test)
+#  cleaned_file_name = temp_file_name + ".orig"
+  write_file(cleaned_file_name, cleaned_test)
 
-  args = ['nodecpp-instrument', temp_file_name] + \
+  args = ['nodecpp-instrument', '-o', temp_file_name, cleaned_file_name] + \
         extra_args
 
   print('Running ' + repr(args) + '...')
@@ -103,7 +105,7 @@ def main():
     try:
       subprocess.check_output(
           ['FileCheck', '-input-file=' + temp_file_name, input_file_name,
-           '-check-prefix=' + check_fixes_prefix, '-strict-whitespace'],
+           '-check-prefix=' + check_fixes_prefix],
           stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
       print('FileCheck failed:\n' + e.output.decode())

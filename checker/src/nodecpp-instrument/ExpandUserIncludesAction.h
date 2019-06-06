@@ -41,22 +41,24 @@ namespace clang {
 namespace nodecpp {
 
 class ExpandUserIncludesAction : public PreprocessorFrontendAction {
-  std::shared_ptr<llvm::raw_ostream> OutputStream;
+  llvm::raw_ostream *OutputStream;
 //  class RewriteImportsListener;
 protected:
   bool BeginSourceFileAction(clang::CompilerInstance &CI) override;
   void ExecuteAction() override;
 
 public:
-  ExpandUserIncludesAction(std::unique_ptr<llvm::raw_ostream> OutputStream)
-    : OutputStream(std::move(OutputStream)) {}
-  ExpandUserIncludesAction() {}
+  ExpandUserIncludesAction(llvm::raw_ostream *OutputStream)
+    : OutputStream(OutputStream) {}
+  ExpandUserIncludesAction(): OutputStream(nullptr) {}
 };
 
 class ExpandRecompileAction : public WrapperFrontendAction {
+  std::string Filename;
 public:
-  ExpandRecompileAction(std::unique_ptr<FrontendAction> WrappedAction)
-    : WrapperFrontendAction(std::move(WrappedAction)) {}
+
+  ExpandRecompileAction(std::unique_ptr<FrontendAction> WrappedAction, const std::string& Filename)
+    : WrapperFrontendAction(std::move(WrappedAction)), Filename(Filename) {}
 
 protected:
   bool BeginInvocation(CompilerInstance &CI) override;

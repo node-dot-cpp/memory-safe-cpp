@@ -1,15 +1,19 @@
-// RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -isystem %S/Inputs
+// RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs
 
 #include <dezombiefy.h>
-
-#include "include.h"
+#include "user_include.h"
 
 template <class T>
-T&& some_func(T&& t) {
+T* some_func(T* t) {
     return t;
 // CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
 }
 
+template <class T>
+T& some_func(T& t) {
+    return t;
+// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+}
 
 void func(int* ip, int& ir) {
 
