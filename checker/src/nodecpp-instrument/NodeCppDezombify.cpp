@@ -46,7 +46,7 @@ using namespace std;
 
 // Apply a custom category to all command-line options so that they are the
 // only ones displayed.
-static cl::OptionCategory MyToolCategory("nodecpp-instrument options");
+static cl::OptionCategory NodecppInstrumentCategory("nodecpp-instrument options");
 
 // CommonOptionsParser declares HelpMessage with a description of the common
 // command-line options related to the compilation database and input files.
@@ -59,11 +59,11 @@ static cl::extrahelp MoreHelp("\nMore help text...");
 //static cl::opt<bool> Help("h", cl::desc("Alias for -help"), cl::Hidden);
 
 static cl::opt<std::string>
-OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(MyToolCategory));
+OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(NodecppInstrumentCategory));
 
 // static cl::opt<bool>
 // Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
-//     cl::cat(myToolCategory));
+//     cl::cat(NodecppInstrumentCategory));
 
 namespace nodecpp {
 
@@ -102,7 +102,7 @@ int main(int argc, const char **argv) {
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
 
-    CommonOptionsParser optionsParser(argc, argv, MyToolCategory);
+    CommonOptionsParser optionsParser(argc, argv, NodecppInstrumentCategory, cl::ZeroOrMore);
 
     ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
