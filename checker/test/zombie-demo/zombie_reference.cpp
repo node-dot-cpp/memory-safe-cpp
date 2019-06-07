@@ -49,6 +49,7 @@ struct TestOut {
     }
 
     void getOut() {
+        // here we create the zombie
         inner2.reset();
     }
 };
