@@ -136,6 +136,7 @@ bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
   FixAction->Execute();
   FixAction->EndSourceFile();
 
+  OutputStream->close();
   OutputStream.reset();
 
   CI.setSourceManager(nullptr);

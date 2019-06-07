@@ -1,9 +1,4 @@
-// RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -isystem %S/Inputs
-
-#include <dezombiefy.h>
-
-using namespace nodecpp;
-using namespace nodecpp::safememory;
+// RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc
 
 void func(int* ip, int& ir) {
 
@@ -19,12 +14,6 @@ void func(int* ip, int& ir) {
     i = ir2;
 // CHECK-FIXES: i = nodecpp::safememory::dezombiefy( ir2 );
 
-//when dezombiefy is already there, don't instrument, 
-    i = *nodecpp::safememory::dezombiefy(ip2); 
-    i = *safememory::dezombiefy(ip2); 
-    i = *dezombiefy(ip2); 
-
-    i = i;
 }
 
 class Class {

@@ -41,7 +41,7 @@ namespace clang {
 namespace nodecpp {
 
 class ExpandUserIncludesAction : public PreprocessorFrontendAction {
-  llvm::raw_ostream *OutputStream;
+  llvm::raw_ostream *OutputStream = nullptr;
 //  class RewriteImportsListener;
 protected:
   bool BeginSourceFileAction(clang::CompilerInstance &CI) override;
@@ -50,7 +50,7 @@ protected:
 public:
   ExpandUserIncludesAction(llvm::raw_ostream *OutputStream)
     : OutputStream(OutputStream) {}
-  ExpandUserIncludesAction(): OutputStream(nullptr) {}
+  ExpandUserIncludesAction() {}
 };
 
 class ExpandRecompileAction : public WrapperFrontendAction {
