@@ -143,7 +143,15 @@ bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
   CI.setFileManager(nullptr);
 
   CI.getDiagnosticClient().clear();
-  CI.getDiagnostics().Reset();
+
+  //Create a new diagnostics
+  auto& Diags = CI.getDiagnostics();
+  if(Diags.ownsClient()) {
+    auto Owner = Diags.takeClient();
+    CI.createDiagnostics(Owner.get(), true);
+  } else {
+    CI.createDiagnostics(Diags.getClient(), false);
+  }
 
   PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
   // PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),
@@ -151,60 +159,6 @@ bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
   PPOpts.RemappedFiles.emplace_back(FEOpts.Inputs[0].getFile().str(), Filename);
   PPOpts.RemappedFilesKeepOriginalName = false;
 
-  // bool err = false;
-  // {
-  //   const FrontendOptions &FEOpts = CI.getFrontendOpts();
-
-  //   std::string OrigName = FEOpts.Inputs[0].getFile().str();
-
-  //     std::string Filename = RewriteFilename(OrigName, ".instrument");
-
-  //   int fd;
-  //   std::error_code EC;
-  //   std::unique_ptr<llvm::raw_fd_ostream> OS;
-  //   OS.reset(new llvm::raw_fd_ostream(Filename, EC, llvm::sys::fs::F_None));
-  //   if (EC) {
-  //     // Diags.Report(clang::diag::err_fe_unable_to_open_output) << Filename
-  //     //                                                         << EC.message();
-  //     return false;
-  //   }
-  //   RewriteBuffer &RewriteBuf = I->second;
-  //   RewriteBuf.write(*OS);
-  //   OS->flush();
-
-  //   RewrittenFiles.push_back(std::make_pair(OrigName, Filename));
-  // }
-
-
-  //     std::unique_ptr<FixItOptions> FixItOpts;
-  //     // if (FEOpts.FixToTemporaries)
-  //     //   FixItOpts.reset(new FixItRewriteToTemp());
-  //     // else
-  //     //   FixItOpts.reset(new FixItRewriteInPlace());
-  //     // FixItOpts->Silent = true;
-  //     // FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
-  //     // FixItOpts->FixOnlyWarnings = FEOpts.FixOnlyWarnings;
-  //     FixItRewriter Rewriter(CI.getDiagnostics(), CI.getSourceManager(),
-  //                             CI.getLangOpts(), FixItOpts.get());
-  //     FixAction->Execute();
-
-  //     err = Rewriter.WriteFixedFiles(&RewrittenFiles);
-
-  //     
- 
-  //   } else {
-  //     err = true;
-  //   }
-  // }
-  // if (err)
-  //   return false;
-  // CI.getDiagnosticClient().clear();
-  // CI.getDiagnostics().Reset();
-
-  // PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
-  // PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),
-  //                             RewrittenFiles.begin(), RewrittenFiles.end());
-  // PPOpts.RemappedFilesKeepOriginalName = false;
 
   return true;
 }
