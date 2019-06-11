@@ -1,5 +1,5 @@
 diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
-index e7e32b9fe1..6827f08213 100644
+index e7e32b9fe1..8cff8c7ca2 100644
 --- a/include/clang/AST/Expr.h
 +++ b/include/clang/AST/Expr.h
 @@ -1031,6 +1031,8 @@ public:
@@ -17,31 +17,84 @@ index e7e32b9fe1..6827f08213 100644
  
 +  /// Sets the flag telling whether this expression refers to
 +  /// a variable of a type that has explicit dezombified.
-+  void setDezombifyAlreadyPresent() {
++  void setDezombiefyAlreadyPresent() {
 +    DeclRefExprBits.DezombifyFlags = DezombifyAlreadyPresent;
 +  }
 +
 +  /// Sets the flag telling whether this expression refers to
 +  /// a variable of a type that may need to be dezombified.
-+  void setDezombifyCandidate() {
++  void setDezombiefyCandidate() {
 +    DeclRefExprBits.DezombifyFlags = DezombifyCandidate;
 +  }
 +
 +  /// Sets the flag telling whether this expression refers to
 +  /// a variable of a type that may need to be dezombified,
 +  /// but a deeper flow analysis prove dezombified not really needed.
-+  void setDezombifyCandidateButRelaxed() {
++  void setDezombiefyCandidateButRelaxed() {
 +    DeclRefExprBits.DezombifyFlags = DezombifyCandidateButRelaxed;
 +  }
 +
 +  /// Does this DeclRefExpr refer to a varialbe that really
 +  /// needs to be dezombified after all analysis stages.
-+  bool needsDezombifyInstrumentation() const {
++  bool needsDezombiefyInstrumentation() const {
 +    return DeclRefExprBits.DezombifyFlags == DezombifyCandidate;
 +  }
 +
    static bool classof(const Stmt *T) {
      return T->getStmtClass() == DeclRefExprClass;
+   }
+diff --git a/include/clang/AST/ExprCXX.h b/include/clang/AST/ExprCXX.h
+index 5ce55bde37..4421f3a783 100644
+--- a/include/clang/AST/ExprCXX.h
++++ b/include/clang/AST/ExprCXX.h
+@@ -986,6 +986,7 @@ public:
+ class CXXThisExpr : public Expr {
+   SourceLocation Loc;
+   bool Implicit : 1;
++  unsigned DezombiefyFlags :2;
+ 
+ public:
+   CXXThisExpr(SourceLocation L, QualType Type, bool isImplicit)
+@@ -995,7 +996,7 @@ public:
+              Type->isDependentType(), Type->isDependentType(),
+              Type->isInstantiationDependentType(),
+              /*ContainsUnexpandedParameterPack=*/false),
+-        Loc(L), Implicit(isImplicit) {}
++        Loc(L), Implicit(isImplicit), DezombiefyFlags(0) {}
+ 
+   CXXThisExpr(EmptyShell Empty) : Expr(CXXThisExprClass, Empty) {}
+ 
+@@ -1010,6 +1011,31 @@ public:
+   bool isImplicit() const { return Implicit; }
+   void setImplicit(bool I) { Implicit = I; }
+ 
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that has explicit dezombified.
++  void setDezombiefyAlreadyPresent() {
++    DezombiefyFlags = DezombifyAlreadyPresent;
++  }
++
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that may need to be dezombified.
++  void setDezombiefyCandidate() {
++    DezombiefyFlags = DezombifyCandidate;
++  }
++
++  /// Sets the flag telling whether this expression refers to
++  /// a variable of a type that may need to be dezombified,
++  /// but a deeper flow analysis prove dezombified not really needed.
++  void setDezombiefyCandidateButRelaxed() {
++    DezombiefyFlags = DezombifyCandidateButRelaxed;
++  }
++
++  /// Does this DeclRefExpr refer to a varialbe that really
++  /// needs to be dezombified after all analysis stages.
++  bool needsDezombiefyInstrumentation() const {
++    return DezombiefyFlags == DezombifyCandidate;
++  }
++
+   static bool classof(const Stmt *T) {
+     return T->getStmtClass() == CXXThisExprClass;
    }
 diff --git a/include/clang/AST/Stmt.h b/include/clang/AST/Stmt.h
 index c957cccfe2..94a780252b 100644

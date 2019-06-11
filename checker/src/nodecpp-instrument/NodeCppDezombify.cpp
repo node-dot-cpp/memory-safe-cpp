@@ -102,43 +102,9 @@ int main(int argc, const char **argv) {
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
 
-    CommonOptionsParser optionsParser(argc, argv, NodecppInstrumentCategory, cl::ZeroOrMore);
+  CommonOptionsParser optionsParser(argc, argv, NodecppInstrumentCategory, cl::ZeroOrMore);
 
-    ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
-
-    // StringRef FileName("dummy");
-    // auto PathList = optionsParser.getSourcePathList();
-    // if (!PathList.empty()) {
-    //     FileName = PathList.front();
-    // }
-
-    // SmallString<256> FilePath(FileName);
-//   if (std::error_code EC = llvm::sys::fs::make_absolute(FilePath)) {
-//     llvm::errs() << "Can't make absolute path from " << FileName << ": "
-//                  << EC.message() << "\n";
-//     return 1;
-//   }
-
-    // SmallString<1024> AbsolutePath(clang::tooling::getAbsolutePath(FilePath));
-    // StringRef Directory = llvm::sys::path::parent_path(AbsolutePath);
-
-
-
-//    vector<string> extraArgs = { "-DHAREIDL_USE_CXX11_ATTRIBUTE" };
-
-    // tool.appendArgumentsAdjuster(getInsertArgumentAdjuster(extraArgs,
-    //     ArgumentInsertPosition::BEGIN));
-
-    // const char* fname = !OutputFilename.empty() ? OutputFilename.c_str() : "safe_library.json";
-
-    // SmallString<1024> JSONDatabasePath(Directory);
-    // llvm::sys::path::append(JSONDatabasePath, fname);
-
-    // RaiiStdioFile f(fopen(JSONDatabasePath.c_str(), "wb"));
-    // if (!OutputFilename.empty() && !f.get()) {
-    //     errs() << "Failed to open output file '" << OutputFilename.c_str() << "'\n";
-    //     return 1;
-    // }
+  ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
   class DezombiefyAction : public ASTFrontendAction {
   protected:
