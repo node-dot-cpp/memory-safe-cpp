@@ -371,6 +371,20 @@ index 284d34b22c..6903dba961 100644
            ParamTys.push_back(ParamTy);
          }
  
+diff --git a/lib/Tooling/CompilationDatabase.cpp b/lib/Tooling/CompilationDatabase.cpp
+index 31a769fa21..6bdcd8a0e2 100644
+--- a/lib/Tooling/CompilationDatabase.cpp
++++ b/lib/Tooling/CompilationDatabase.cpp
+@@ -294,7 +294,8 @@ static bool stripPositionalArgs(std::vector<const char *> Args,
+     // Collect only for Assemble and Compile jobs. If we do all jobs we get
+     // duplicates since Link jobs point to Assemble jobs as inputs.
+     if (Cmd.getSource().getKind() == driver::Action::AssembleJobClass ||
+-        Cmd.getSource().getKind() == driver::Action::CompileJobClass) {
++        Cmd.getSource().getKind() == driver::Action::CompileJobClass ||
++        Cmd.getSource().getKind() == driver::Action::BackendJobClass) {
+       CompileAnalyzer.run(&Cmd.getSource());
+     }
+   }
 diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
 index 9f76d36dba..105215e3a5 100644
 --- a/tools/CMakeLists.txt
