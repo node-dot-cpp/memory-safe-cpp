@@ -28,6 +28,7 @@
 #include "Dezombify1ASTVisitor.h"
 #include "Dezombify2ASTVisitor.h"
 #include "ExpandUserIncludesAction.h"
+#include "DezombiefyRelaxASTVisitor.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -69,21 +70,18 @@ namespace nodecpp {
 
 class DezombifyConsumer : public ASTConsumer {
 private:
-//    MappingData md;
+//  CompilerInstance &CI;
 
-//    FindNamedClassVisitor visitor1;
-
-//    FILE* os;
 public:
-    // explicit DezombifyConsumer(ASTContext *context, FILE* os)
-    //     : visitor1(context, md), os(os)
-    // {}
+//    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
     void HandleTranslationUnit(ASTContext &Context) override {
        Dezombify1ASTVisitor Visitor1(Context);
+       DezombiefyRelaxASTVisitor VisitorRelax(Context);
        Dezombify2ASTVisitor Visitor2(Context);
 
        Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
+       VisitorRelax.TraverseDecl(Context.getTranslationUnitDecl());
        Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
 
        Visitor2.overwriteChangedFiles();

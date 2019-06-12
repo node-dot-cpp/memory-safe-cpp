@@ -145,13 +145,14 @@ bool ExpandRecompileAction::BeginInvocation(CompilerInstance &CI) {
   CI.getDiagnosticClient().clear();
 
   //Create a new diagnostics
-  auto& Diags = CI.getDiagnostics();
-  if(Diags.ownsClient()) {
-    auto Owner = Diags.takeClient();
-    CI.createDiagnostics(Owner.get(), true);
-  } else {
-    CI.createDiagnostics(Diags.getClient(), false);
-  }
+  CI.createDiagnostics();
+  // auto& Diags = CI.getDiagnostics();
+  // if(Diags.ownsClient()) {
+  //   auto Owner = Diags.takeClient();
+  //   CI.createDiagnostics(Owner.get(), true);
+  // } else {
+  //   CI.createDiagnostics(Diags.getClient(), false);
+  // }
 
   PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
   // PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),

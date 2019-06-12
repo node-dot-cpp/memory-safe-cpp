@@ -77,7 +77,7 @@ private:
       if(auto Callee = dyn_cast_or_null<UnresolvedLookupExpr>(Ce->getCallee())) {
         auto str = Callee->getNameInfo().getAsString();
       }
-      else if (auto Decl = Ce->getDirectCallee()) 
+      else if (auto Decl = Ce->getDirectCallee())
         return Decl->getQualifiedNameAsString() == "nodecpp::safememory::dezombiefy";
     }
     return false;
@@ -125,7 +125,7 @@ public:
   bool VisitDeclRefExpr(DeclRefExpr *E) {
     if(auto D = E->getDecl()) {
       auto Qt = D->getType().getCanonicalType();
-      auto T = Qt.getTypePtr();
+//      auto T = Qt.getTypePtr();
       if(Qt->isReferenceType() || Qt->isPointerType()) {
 
         if(hasDezombiefyParent(E))
