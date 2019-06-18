@@ -13,7 +13,6 @@ add_subdirectory(${PROJECT_SOURCE_DIR}/library/src/iibmalloc build)
 
 if(MSVC OR MSYS OR MINGW)
 	option(CMAKE_USE_WIN32_THREADS_INIT "using WIN32 threads" ON)
-	set(SOURCE_LIB src/page_allocator_windows.cpp src/iibmalloc_windows.cpp )
 	add_definitions(/W3)
 	add_definitions(/EHa)
 	add_definitions(/MD)
@@ -57,19 +56,30 @@ add_executable(${TEST_BIN_NAME_WITH_LTO_WORKAROUND} ${SOURCE_EXE})
 
 add_library( ${LIB_NAME} SHARED ${SOURCE_LIB})
 
-target_link_libraries( ${TEST_BIN_NAME} iibmalloc pthread)
-target_link_libraries( ${TEST_BIN_NAME_WITH_LTO} iibmalloc pthread)
-target_link_libraries( ${TEST_BIN_NAME_WITH_LTO_WORKAROUND} iibmalloc ${LIB_NAME} pthread)
+target_link_libraries( ${TEST_BIN_NAME} iibmalloc )
+target_link_libraries( ${TEST_BIN_NAME_WITH_LTO} iibmalloc )
+target_link_libraries( ${TEST_BIN_NAME_WITH_LTO_WORKAROUND} iibmalloc ${LIB_NAME} )
 
 if (UNIX)
+
+	target_link_libraries( ${TEST_BIN_NAME}  pthread)
+	target_link_libraries( ${TEST_BIN_NAME_WITH_LTO}  pthread)
+	target_link_libraries( ${TEST_BIN_NAME_WITH_LTO_WORKAROUND}  ${LIB_NAME} pthread)
+
 	set_target_properties ( ${LIB_NAME} PROPERTIES COMPILE_FLAGS  "-fpic ")
 	set_target_properties ( ${TEST_BIN_NAME} PROPERTIES COMPILE_FLAGS   ${CMAKE_CXX_FLAGS_RELEASE} )
 	set_target_properties ( ${TEST_BIN_NAME_WITH_LTO} PROPERTIES COMPILE_FLAGS  "${CMAKE_CXX_FLAGS_RELEASE} -flto")
 	set_target_properties ( ${TEST_BIN_NAME_WITH_LTO_WORKAROUND} PROPERTIES COMPILE_FLAGS  "${CMAKE_CXX_FLAGS_RELEASE} -flto")
+
 endif (UNIX)
 
 target_compile_options(${TEST_BIN_NAME} PRIVATE -pthread)
 target_link_libraries(${TEST_BIN_NAME} ${LIB_NAME})
+
+if(MSVC OR MSYS OR MINGW)
+	set_target_properties(${TEST_BIN_NAME} PROPERTIES EXCLUDE_FROM_ALL TRUE)
+	set_target_properties(${TEST_BIN_NAME_WITH_LTO_WORKAROUND}  PROPERTIES EXCLUDE_FROM_ALL TRUE)
+endif(MSVC OR MSYS OR MINGW)
 
 if(UNIX)
 	add_test( safe_memory_test "${CMAKE_BINARY_DIR}/build/bin/${TEST_BIN_NAME}" )
