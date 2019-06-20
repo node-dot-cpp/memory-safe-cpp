@@ -28,6 +28,7 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 
+#include "DezombiefyRelaxASTVisitor.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -38,27 +39,27 @@
 #include "clang/Format/Format.h"
 
 
-using namespace clang;
-
 namespace nodecpp {
 
 class Dezombify2ASTVisitor
   : public clang::RecursiveASTVisitor<Dezombify2ASTVisitor> {
 
   clang::ASTContext &Context;
+  DzHelper &DzData;
+
   /// Fixes to apply, grouped by file path.
-  llvm::StringMap<tooling::Replacements> FileReplacements;  
+  llvm::StringMap<clang::tooling::Replacements> FileReplacements;  
 
 
-  void addFix(const FixItHint& FixIt) {
+  void addFix(const clang::FixItHint& FixIt) {
 
-    CharSourceRange Range = FixIt.RemoveRange;
+    clang::CharSourceRange Range = FixIt.RemoveRange;
     assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
             "Invalid range in the fix-it hint.");
     assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
             "Only file locations supported in fix-it hints.");
 
-    tooling::Replacement Replacement(Context.getSourceManager(), Range,
+    clang::tooling::Replacement Replacement(Context.getSourceManager(), Range,
                                       FixIt.CodeToInsert);
     llvm::Error Err = FileReplacements[Replacement.getFilePath()].add(Replacement);
     // FIXME: better error handling (at least, don't let other replacements be
@@ -75,9 +76,9 @@ public:
   void overwriteChangedFiles() {
 
     if(!FileReplacements.empty()) {
-      Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
+      clang::Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
       for (const auto &FileAndReplacements : FileReplacements) {
-        StringRef File = FileAndReplacements.first();
+        llvm::StringRef File = FileAndReplacements.first();
         llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
             Context.getSourceManager().getFileManager().getBufferForFile(File);
         if (!Buffer) {
@@ -86,23 +87,23 @@ public:
           // FIXME: Maybe don't apply fixes for other files as well.
           continue;
         }
-        StringRef Code = Buffer.get()->getBuffer();
+        llvm::StringRef Code = Buffer.get()->getBuffer();
         // auto Style = format::getStyle(
         //     *Context.getOptionsForFile(File).FormatStyle, File, "none");
-        auto Style = format::getStyle("none", File, "none");
+        auto Style = clang::format::getStyle("none", File, "none");
         if (!Style) {
           llvm::errs() << llvm::toString(Style.takeError()) << "\n";
           continue;
         }
-        llvm::Expected<tooling::Replacements> Replacements =
-            format::cleanupAroundReplacements(Code, FileAndReplacements.second,
+        llvm::Expected<clang::tooling::Replacements> Replacements =
+            clang::format::cleanupAroundReplacements(Code, FileAndReplacements.second,
                                               *Style);
         if (!Replacements) {
           llvm::errs() << llvm::toString(Replacements.takeError()) << "\n";
           continue;
         }
-        if (llvm::Expected<tooling::Replacements> FormattedReplacements =
-                format::formatReplacements(Code, *Replacements, *Style)) {
+        if (llvm::Expected<clang::tooling::Replacements> FormattedReplacements =
+                clang::format::formatReplacements(Code, *Replacements, *Style)) {
           Replacements = std::move(FormattedReplacements);
           if (!Replacements)
             llvm_unreachable("!Replacements");
@@ -110,7 +111,7 @@ public:
           llvm::errs() << llvm::toString(FormattedReplacements.takeError())
                         << ". Skipping formatting.\n";
         }
-        if (!tooling::applyAllReplacements(Replacements.get(), Rewrite)) {
+        if (!clang::tooling::applyAllReplacements(Replacements.get(), Rewrite)) {
           llvm::errs() << "Can't apply replacements for file " << File << "\n";
         }
       }
@@ -122,24 +123,23 @@ public:
     }
   }
 
+  explicit Dezombify2ASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
+    Context(Context), DzData(DzData) {}
 
-
-  explicit Dezombify2ASTVisitor(clang::ASTContext &Context): Context(Context) {}
-
-  bool VisitCXXThisExpr(CXXThisExpr *E) {
+  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
 
     if(E->needsDezombiefyInstrumentation()) {
       if(E->isImplicit()) {
         std::string fix = "nodecpp::safememory::dezombiefy( this )->";
-        addFix(FixItHint::CreateInsertion(E->getBeginLoc(), fix));
+        addFix(clang::FixItHint::CreateInsertion(E->getBeginLoc(), fix));
       }
       else {
         std::string fix = "nodecpp::safememory::dezombiefy( this )";
-        addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));
+        addFix(clang::FixItHint::CreateReplacement(E->getSourceRange(), fix));
       }
 
     }   
-    return RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitCXXThisExpr(E);
+    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitCXXThisExpr(E);
   }
 
 
@@ -147,12 +147,21 @@ public:
     if(E->needsDezombiefyInstrumentation()) {
 
       std::string fix = "nodecpp::safememory::dezombiefy( " + E->getNameInfo().getAsString() + " )";
-      addFix(FixItHint::CreateReplacement(E->getSourceRange(), fix));
+      addFix(clang::FixItHint::CreateReplacement(E->getSourceRange(), fix));
 
     }   
-    return RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitDeclRefExpr(E);
+    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitDeclRefExpr(E);
   }
 
+
+  bool VisitStmt(clang::Stmt *St) {
+
+    // auto Fix = DzData.makeFixIfNeeded(St);
+    // if(Fix.hasValue())
+    //   addFix(Fix.getValue());
+
+    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitStmt(St);
+  }
 };
 
 } // namespace nodecpp

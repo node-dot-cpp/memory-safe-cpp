@@ -38,16 +38,36 @@ using namespace std;
 using namespace nodecpp;
 
 
+Optional<FixItHint> DzHelper::makeFixIfNeeded(const Stmt* St) {
+  auto It = DzMap.find(St);
+  if(It == DzMap.end())
+    return {};
+
+//  llvm::Twine fix;
+  string Text;
+  if(It->second.ThisToDZ)
+    Text += "nodecpp::safememory::dezombiefy( this ); ";
+
+  for(auto Each : It->second.VariablesToDZ) {
+    Text += "nodecpp::safememory::dezombiefy( " + Each->getNameAsString() + " ); ";
+  }
+
+//  addFix(clang::FixItHint::CreateInsertion(E->getBeginLoc(), fix));
+  return FixItHint::CreateInsertion(St->getBeginLoc(), Text);
+}
+
+
 
 bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
   D->dumpColor();
 
   // For code in dependent contexts, we'll do this at instantiation time.
-  if (cast<DeclContext>(D)->isDependentContext())
+  if (D->isDependentContext())
     return true;
 
   const Stmt *Body = D->getBody();
-  assert(Body);
+  if(!Body)
+    return true;
 
   // Construct the analysis context with the specified CFG build options.
   AnalysisDeclContext AC(/* AnalysisDeclContextManager */ nullptr, D);
@@ -68,7 +88,9 @@ bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
     UninitVariablesHandler reporter;
     UninitVariablesAnalysisStats stats;
 
-    runDezombiefyRelaxAnalysis(*cast<DeclContext>(D), *cfg, AC,
+    cfg->dump(Context.getLangOpts(), true);
+
+    runDezombiefyRelaxAnalysis(*D, *cfg, AC,
                                       reporter, stats);
 
     // if (S.CollectStats && stats.NumVariablesAnalyzed > 0) {

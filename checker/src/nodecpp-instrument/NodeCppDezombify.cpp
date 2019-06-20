@@ -76,15 +76,16 @@ public:
 //    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
     void HandleTranslationUnit(ASTContext &Context) override {
-       Dezombify1ASTVisitor Visitor1(Context);
-       DezombiefyRelaxASTVisitor VisitorRelax(Context);
-       Dezombify2ASTVisitor Visitor2(Context);
+      DzHelper Data;
+      Dezombify1ASTVisitor Visitor1(Context, Data);
+      DezombiefyRelaxASTVisitor VisitorRelax(Context, Data);
+      Dezombify2ASTVisitor Visitor2(Context, Data);
 
-       Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
-       VisitorRelax.TraverseDecl(Context.getTranslationUnitDecl());
-       Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
+      Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
+      VisitorRelax.TraverseDecl(Context.getTranslationUnitDecl());
+      Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
 
-       Visitor2.overwriteChangedFiles();
+      Visitor2.overwriteChangedFiles();
     }
 };
 

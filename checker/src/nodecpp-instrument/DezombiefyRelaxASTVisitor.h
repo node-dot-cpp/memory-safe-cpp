@@ -33,19 +33,58 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 
-using namespace clang;
-
 namespace nodecpp {
 
-class DezombiefyRelaxASTVisitor
-  : public RecursiveASTVisitor<DezombiefyRelaxASTVisitor> {
 
-  ASTContext &Context;
+class DzHelper {
+  struct ToBeDezombiefied {
+      llvm::SmallVector<const clang::ValueDecl*, 2> VariablesToDZ;
+      bool ThisToDZ = false;
+
+      ToBeDezombiefied(const clang::ValueDecl* Dc) :VariablesToDZ({Dc}) {}
+
+      ToBeDezombiefied(bool Th) :ThisToDZ(Th) {}
+
+  };
+
+  llvm::DenseMap<const clang::Stmt*, ToBeDezombiefied> DzMap;
+
+  public:
+
+  void addVariable(const clang::Stmt *St, const clang::ValueDecl *Dc) {
+    auto R = DzMap.try_emplace(St, Dc);
+    if(!R.second) {
+      auto& Vec = R.first->second.VariablesToDZ;
+      for(auto Each : Vec) {
+        if(Each == Dc) //already here
+          return;
+      }
+      Vec.push_back(Dc);
+    }
+  }
+
+  void addThis(const clang::Stmt* St) {
+    auto R = DzMap.try_emplace(St, true);
+    if(!R.second) {
+      R.first->second.ThisToDZ = true;
+    }
+  }
+
+  llvm::Optional<clang::FixItHint> makeFixIfNeeded(const clang::Stmt* St);
+
+};
+
+class DezombiefyRelaxASTVisitor
+  : public clang::RecursiveASTVisitor<DezombiefyRelaxASTVisitor> {
+
+  clang::ASTContext &Context;
+  DzHelper &DzData;
 public:
 
-  explicit DezombiefyRelaxASTVisitor(ASTContext &Context): Context(Context) {}
+  explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
+    Context(Context), DzData(DzData) {}
 
-  bool VisitFunctionDecl(FunctionDecl *D);
+  bool VisitFunctionDecl(clang::FunctionDecl *D);
 
 };
 

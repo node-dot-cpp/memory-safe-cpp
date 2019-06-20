@@ -110,7 +110,8 @@ Optional<unsigned> DeclToIndex::getValueIndex(const VarDecl *d) const {
 enum Value { Unknown = 0x0,         /* 00 */
              Initialized = 0x1,     /* 01 */
              Uninitialized = 0x2,   /* 10 */
-             MayUninitialized = 0x3 /* 11 */ };
+             MayUninitialized = 0x3,/* 11 */
+             MayBeZoombie = 0x4    /* 100 */ };
 
 static bool isUninitialized(const Value v) {
   return v >= Uninitialized;
@@ -122,104 +123,168 @@ static bool isAlwaysUninit(const Value v) {
 
 namespace {
 
-using ValueVector = llvm::PackedVector<Value, 2, llvm::SmallBitVector>;
+  struct Scratch {
+    //TODO change to Set 
+    llvm::SmallVector<const clang::ValueDecl*, 4> VariablesToDZ;
+    bool ThisToDZ = false;
+    bool IsInitialized = false;
+
+    Scratch() {}
+    Scratch(const Scratch&) = default;
+    
+    explicit Scratch(const clang::ValueDecl* Dc) :VariablesToDZ({Dc}) {}
+    explicit Scratch(bool Th) :ThisToDZ(Th) {}
+
+    bool hasDecl(const clang::ValueDecl *Vd) const {
+      for(auto Each : VariablesToDZ) {
+        if(Each == Vd) //already here
+          return true;
+      }
+
+      return false;
+    }
+
+    bool addDecl(const clang::ValueDecl *Vd) {
+
+      if(hasDecl(Vd))
+        return false;
+
+      VariablesToDZ.push_back(Vd);
+      return true;
+    }
+
+    bool addThis() {
+      bool Tmp = ThisToDZ;
+      ThisToDZ = true;
+      return !Tmp;
+    }
+
+    void clear() {
+      VariablesToDZ.clear();
+      ThisToDZ = false;
+      IsInitialized = false;
+    }
+
+    bool intersection(const Scratch& other) {
+
+      if(!IsInitialized) {
+        *this = other;
+        IsInitialized = true;
+        return ThisToDZ || VariablesToDZ.size() != 0;
+      }
+
+      bool Changed = ThisToDZ && !other.ThisToDZ;
+      ThisToDZ = ThisToDZ && other.ThisToDZ;
+
+      llvm::SmallVector<const clang::ValueDecl*, 4> Tmp;
+      for(auto Each : other.VariablesToDZ) {
+        if(hasDecl(Each))
+          Tmp.push_back(Each);
+      }
+
+      Changed = Changed || VariablesToDZ.size() != Tmp.size();
+      VariablesToDZ = std::move(Tmp);
+
+      return Changed;
+    }
+  };
+
 
 class CFGBlockValues {
+
+
+
   const CFG &cfg;
-  SmallVector<ValueVector, 8> vals;
-  ValueVector scratch;
+  SmallVector<Scratch, 8> Vals;
+//  Scratch scratch;
   DeclToIndex declToIndex;
 
 public:
-  CFGBlockValues(const CFG &cfg);
+  CFGBlockValues(const CFG &cfg) : cfg(cfg), Vals(cfg.getNumBlockIDs()) {}
 
   unsigned getNumEntries() const { return declToIndex.size(); }
 
-  void computeSetOfDeclarations(const DeclContext &dc);
+  // void computeSetOfDeclarations(const DeclContext &dc);
 
-  ValueVector &getValueVector(const CFGBlock *block) {
-    return vals[block->getBlockID()];
+  const Scratch &getScratch(unsigned int Id) {
+    return Vals[Id];
   }
 
-  void setAllScratchValues(Value V);
-  void mergeIntoScratch(ValueVector const &source, bool isFirst);
-  bool updateValueVectorWithScratch(const CFGBlock *block);
+  // void setAllScratchValues(Value V);
+  // void mergeIntoScratch(ValueVector const &source, bool isFirst);
+   bool updateValueVectorWithScratch(unsigned int Id, const Scratch& Scr) {
+      return Vals[Id].intersection(Scr);
+    }
 
-  bool hasNoDeclarations() const {
-    return declToIndex.size() == 0;
-  }
+  // bool hasNoDeclarations() const {
+  //   return declToIndex.size() == 0;
+  // }
 
-  void resetScratch();
+  // void resetScratch() {
+  //   scratch.clear();
+  // }
 
-  ValueVector::reference operator[](const VarDecl *vd);
-
-  Value getValue(const CFGBlock *block, const CFGBlock *dstBlock,
-                 const VarDecl *vd) {
-    const Optional<unsigned> &idx = declToIndex.getValueIndex(vd);
-    assert(idx.hasValue());
-    return getValueVector(block)[idx.getValue()];
-  }
+  // // trys to add a VarDecl, returns true if success,
+  // // returns false if was already here 
+  // bool tryAddToScratch(const ValueDecl *Vd) {
+  //   return scratch.addDecl(Vd);
+  // }
 };
 
 } // namespace
 
-CFGBlockValues::CFGBlockValues(const CFG &c) : cfg(c), vals(0) {}
+// void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
+//   declToIndex.computeMap(dc);
+//   unsigned decls = declToIndex.size();
+//   scratch.resize(decls);
+//   unsigned n = cfg.getNumBlockIDs();
+//   if (!n)
+//     return;
+//   vals.resize(n);
+//   for (auto &val : vals)
+//     val.resize(decls);
+// }
 
-void CFGBlockValues::computeSetOfDeclarations(const DeclContext &dc) {
-  declToIndex.computeMap(dc);
-  unsigned decls = declToIndex.size();
-  scratch.resize(decls);
-  unsigned n = cfg.getNumBlockIDs();
-  if (!n)
-    return;
-  vals.resize(n);
-  for (auto &val : vals)
-    val.resize(decls);
-}
+// #if DEBUG_LOGGING
+// static void printVector(const CFGBlock *block, ValueVector &bv,
+//                         unsigned num) {
+//   llvm::errs() << block->getBlockID() << " :";
+//   for (const auto &i : bv)
+//     llvm::errs() << ' ' << i;
+//   llvm::errs() << " : " << num << '\n';
+// }
+// #endif
 
-#if DEBUG_LOGGING
-static void printVector(const CFGBlock *block, ValueVector &bv,
-                        unsigned num) {
-  llvm::errs() << block->getBlockID() << " :";
-  for (const auto &i : bv)
-    llvm::errs() << ' ' << i;
-  llvm::errs() << " : " << num << '\n';
-}
-#endif
+// void CFGBlockValues::setAllScratchValues(Value V) {
+//   for (unsigned I = 0, E = scratch.size(); I != E; ++I)
+//     scratch[I] = V;
+// }
 
-void CFGBlockValues::setAllScratchValues(Value V) {
-  for (unsigned I = 0, E = scratch.size(); I != E; ++I)
-    scratch[I] = V;
-}
+// void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
+//                                       bool isFirst) {
+//   if (isFirst)
+//     scratch = source;
+//   else
+//     scratch |= source;
+// }
 
-void CFGBlockValues::mergeIntoScratch(ValueVector const &source,
-                                      bool isFirst) {
-  if (isFirst)
-    scratch = source;
-  else
-    scratch |= source;
-}
+// bool CFGBlockValues::updateValueVectorWithScratch(const CFGBlock *block) {
+//   ValueVector &dst = getValueVector(block);
+//   bool changed = (dst != scratch);
+//   if (changed)
+//     dst = scratch;
+// #if DEBUG_LOGGING
+//   printVector(block, scratch, 0);
+// #endif
+//   return changed;
+// }
 
-bool CFGBlockValues::updateValueVectorWithScratch(const CFGBlock *block) {
-  ValueVector &dst = getValueVector(block);
-  bool changed = (dst != scratch);
-  if (changed)
-    dst = scratch;
-#if DEBUG_LOGGING
-  printVector(block, scratch, 0);
-#endif
-  return changed;
-}
 
-void CFGBlockValues::resetScratch() {
-  scratch.reset();
-}
-
-ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
-  const Optional<unsigned> &idx = declToIndex.getValueIndex(vd);
-  assert(idx.hasValue());
-  return scratch[idx.getValue()];
-}
+// ValueVector::reference CFGBlockValues::operator[](const VarDecl *vd) {
+//   const Optional<unsigned> &idx = declToIndex.getValueIndex(vd);
+//   assert(idx.hasValue());
+//   return scratch[idx.getValue()];
+// }
 
 //------------------------------------------------------------------------====//
 // Worklist: worklist for dataflow analysis.
@@ -239,12 +304,14 @@ public:
     // Treat the first block as already analyzed.
     if (PO_I != PO_E) {
       assert(*PO_I == &cfg.getEntry());
-      enqueuedBlocks[(*PO_I)->getBlockID()] = false;
-      ++PO_I;
+      // enqueuedBlocks[(*PO_I)->getBlockID()] = false;
+      // ++PO_I;
+//      enqueueSuccessors(dequeue());
     }
   }
 
   void enqueueSuccessors(const CFGBlock *block);
+  void enqueue(const CFGBlock *block);
   const CFGBlock *dequeue();
 };
 
@@ -259,6 +326,13 @@ void DataflowWorklist::enqueueSuccessors(const CFGBlock *block) {
     worklist.push_back(Successor);
     enqueuedBlocks[Successor->getBlockID()] = true;
   }
+}
+
+void DataflowWorklist::enqueue(const CFGBlock *Block) {
+  if (!Block || enqueuedBlocks[Block->getBlockID()])
+    return;
+  worklist.push_back(Block);
+  enqueuedBlocks[Block->getBlockID()] = true;
 }
 
 const CFGBlock *DataflowWorklist::dequeue() {
@@ -515,7 +589,9 @@ void ClassifyRefs::VisitCastExpr(CastExpr *CE) {
 namespace {
 
 class TransferFunctions : public StmtVisitor<TransferFunctions> {
+  
   CFGBlockValues &vals;
+  Scratch& InOut;
   const CFG &cfg;
   const CFGBlock *block;
   AnalysisDeclContext &ac;
@@ -524,371 +600,78 @@ class TransferFunctions : public StmtVisitor<TransferFunctions> {
   UninitVariablesHandler &handler;
 
 public:
-  TransferFunctions(CFGBlockValues &vals, const CFG &cfg,
+  TransferFunctions(CFGBlockValues &vals, Scratch& InOut, const CFG &cfg,
                     const CFGBlock *block, AnalysisDeclContext &ac,
                     const ClassifyRefs &classification,
                     UninitVariablesHandler &handler)
-      : vals(vals), cfg(cfg), block(block), ac(ac),
+      : vals(vals), InOut(InOut), cfg(cfg), block(block), ac(ac),
         classification(classification), objCNoRet(ac.getASTContext()),
         handler(handler) {}
 
-  void reportUse(const Expr *ex, const VarDecl *vd);
-
-  void VisitBinaryOperator(BinaryOperator *bo);
-  void VisitBlockExpr(BlockExpr *be);
-  void VisitCallExpr(CallExpr *ce);
-  void VisitDeclRefExpr(DeclRefExpr *dr);
-  void VisitDeclStmt(DeclStmt *ds);
-  void VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS);
-  void VisitObjCMessageExpr(ObjCMessageExpr *ME);
-
-  bool isTrackedVar(const VarDecl *vd) {
-    return ::isTrackedVar(vd, cast<DeclContext>(ac.getDecl()));
+  void VisitCallExpr(CallExpr *Ce) {
+    if (Decl *Callee = Ce->getCalleeDecl()) {
+      InOut.clear();
+    }
   }
 
-  FindVarResult findVar(const Expr *ex) {
-    return ::findVar(ex, cast<DeclContext>(ac.getDecl()));
-  }
-
-  UninitUse getUninitUse(const Expr *ex, const VarDecl *vd, Value v) {
-    UninitUse Use(ex, isAlwaysUninit(v));
-
-    assert(isUninitialized(v));
-    if (Use.getKind() == UninitUse::Always)
-      return Use;
-
-    // If an edge which leads unconditionally to this use did not initialize
-    // the variable, we can say something stronger than 'may be uninitialized':
-    // we can say 'either it's used uninitialized or you have dead code'.
-    //
-    // We track the number of successors of a node which have been visited, and
-    // visit a node once we have visited all of its successors. Only edges where
-    // the variable might still be uninitialized are followed. Since a variable
-    // can't transfer from being initialized to being uninitialized, this will
-    // trace out the subgraph which inevitably leads to the use and does not
-    // initialize the variable. We do not want to skip past loops, since their
-    // non-termination might be correlated with the initialization condition.
-    //
-    // For example:
-    //
-    //         void f(bool a, bool b) {
-    // block1:   int n;
-    //           if (a) {
-    // block2:     if (b)
-    // block3:       n = 1;
-    // block4:   } else if (b) {
-    // block5:     while (!a) {
-    // block6:       do_work(&a);
-    //               n = 2;
-    //             }
-    //           }
-    // block7:   if (a)
-    // block8:     g();
-    // block9:   return n;
-    //         }
-    //
-    // Starting from the maybe-uninitialized use in block 9:
-    //  * Block 7 is not visited because we have only visited one of its two
-    //    successors.
-    //  * Block 8 is visited because we've visited its only successor.
-    // From block 8:
-    //  * Block 7 is visited because we've now visited both of its successors.
-    // From block 7:
-    //  * Blocks 1, 2, 4, 5, and 6 are not visited because we didn't visit all
-    //    of their successors (we didn't visit 4, 3, 5, 6, and 5, respectively).
-    //  * Block 3 is not visited because it initializes 'n'.
-    // Now the algorithm terminates, having visited blocks 7 and 8, and having
-    // found the frontier is blocks 2, 4, and 5.
-    //
-    // 'n' is definitely uninitialized for two edges into block 7 (from blocks 2
-    // and 4), so we report that any time either of those edges is taken (in
-    // each case when 'b == false'), 'n' is used uninitialized.
-    SmallVector<const CFGBlock*, 32> Queue;
-    SmallVector<unsigned, 32> SuccsVisited(cfg.getNumBlockIDs(), 0);
-    Queue.push_back(block);
-    // Specify that we've already visited all successors of the starting block.
-    // This has the dual purpose of ensuring we never add it to the queue, and
-    // of marking it as not being a candidate element of the frontier.
-    SuccsVisited[block->getBlockID()] = block->succ_size();
-    while (!Queue.empty()) {
-      const CFGBlock *B = Queue.pop_back_val();
-
-      // If the use is always reached from the entry block, make a note of that.
-      if (B == &cfg.getEntry())
-        Use.setUninitAfterCall();
-
-      for (CFGBlock::const_pred_iterator I = B->pred_begin(), E = B->pred_end();
-           I != E; ++I) {
-        const CFGBlock *Pred = *I;
-        if (!Pred)
-          continue;
-
-        Value AtPredExit = vals.getValue(Pred, B, vd);
-        if (AtPredExit == Initialized)
-          // This block initializes the variable.
-          continue;
-        if (AtPredExit == MayUninitialized &&
-            vals.getValue(B, nullptr, vd) == Uninitialized) {
-          // This block declares the variable (uninitialized), and is reachable
-          // from a block that initializes the variable. We can't guarantee to
-          // give an earlier location for the diagnostic (and it appears that
-          // this code is intended to be reachable) so give a diagnostic here
-          // and go no further down this path.
-          Use.setUninitAfterDecl();
-          continue;
-        }
-
-        unsigned &SV = SuccsVisited[Pred->getBlockID()];
-        if (!SV) {
-          // When visiting the first successor of a block, mark all NULL
-          // successors as having been visited.
-          for (CFGBlock::const_succ_iterator SI = Pred->succ_begin(),
-                                             SE = Pred->succ_end();
-               SI != SE; ++SI)
-            if (!*SI)
-              ++SV;
-        }
-
-        if (++SV == Pred->succ_size())
-          // All paths from this block lead to the use and don't initialize the
-          // variable.
-          Queue.push_back(Pred);
+  void VisitDeclRefExpr(DeclRefExpr *Dre) {
+    if(Dre->isDezombiefyCandidate()) {
+      if(!InOut.addDecl(Dre->getDecl())) {
+        //it was already there
+        Dre->setDezombiefyCandidateButRelaxed();
       }
     }
+  }
 
-    // Scan the frontier, looking for blocks where the variable was
-    // uninitialized.
-    for (const auto *Block : cfg) {
-      unsigned BlockID = Block->getBlockID();
-      const Stmt *Term = Block->getTerminator();
-      if (SuccsVisited[BlockID] && SuccsVisited[BlockID] < Block->succ_size() &&
-          Term) {
-        // This block inevitably leads to the use. If we have an edge from here
-        // to a post-dominator block, and the variable is uninitialized on that
-        // edge, we have found a bug.
-        for (CFGBlock::const_succ_iterator I = Block->succ_begin(),
-             E = Block->succ_end(); I != E; ++I) {
-          const CFGBlock *Succ = *I;
-          if (Succ && SuccsVisited[Succ->getBlockID()] >= Succ->succ_size() &&
-              vals.getValue(Block, Succ, vd) == Uninitialized) {
-            // Switch cases are a special case: report the label to the caller
-            // as the 'terminator', not the switch statement itself. Suppress
-            // situations where no label matched: we can't be sure that's
-            // possible.
-            if (isa<SwitchStmt>(Term)) {
-              const Stmt *Label = Succ->getLabel();
-              if (!Label || !isa<SwitchCase>(Label))
-                // Might not be possible.
-                continue;
-              UninitUse::Branch Branch;
-              Branch.Terminator = Label;
-              Branch.Output = 0; // Ignored.
-              Use.addUninitBranch(Branch);
-            } else {
-              UninitUse::Branch Branch;
-              Branch.Terminator = Term;
-              Branch.Output = I - Block->succ_begin();
-              Use.addUninitBranch(Branch);
-            }
-          }
-        }
+  void VisitCXXThisExpr(CXXThisExpr *E) {
+    if(E->isDezombiefyCandidate()) {
+      if(!InOut.addThis()) {
+        //it was already there
+        E->setDezombiefyCandidateButRelaxed();
       }
     }
-
-    return Use;
   }
+
 };
 
 } // namespace
 
-void TransferFunctions::reportUse(const Expr *ex, const VarDecl *vd) {
-  Value v = vals[vd];
-  if (isUninitialized(v))
-    handler.handleUseOfUninitVariable(vd, getUninitUse(ex, vd, v));
-}
-
-void TransferFunctions::VisitObjCForCollectionStmt(ObjCForCollectionStmt *FS) {
-  // This represents an initialization of the 'element' value.
-  if (const auto *DS = dyn_cast<DeclStmt>(FS->getElement())) {
-    const auto *VD = cast<VarDecl>(DS->getSingleDecl());
-    if (isTrackedVar(VD))
-      vals[VD] = Initialized;
-  }
-}
-
-void TransferFunctions::VisitBlockExpr(BlockExpr *be) {
-  const BlockDecl *bd = be->getBlockDecl();
-  for (const auto &I : bd->captures()) {
-    const VarDecl *vd = I.getVariable();
-    if (!isTrackedVar(vd))
-      continue;
-    if (I.isByRef()) {
-      vals[vd] = Initialized;
-      continue;
-    }
-    reportUse(be, vd);
-  }
-}
-
-void TransferFunctions::VisitCallExpr(CallExpr *ce) {
-  if (Decl *Callee = ce->getCalleeDecl()) {
-    if (Callee->hasAttr<ReturnsTwiceAttr>()) {
-      // After a call to a function like setjmp or vfork, any variable which is
-      // initialized anywhere within this function may now be initialized. For
-      // now, just assume such a call initializes all variables.  FIXME: Only
-      // mark variables as initialized if they have an initializer which is
-      // reachable from here.
-      vals.setAllScratchValues(Initialized);
-    }
-    else if (Callee->hasAttr<AnalyzerNoReturnAttr>()) {
-      // Functions labeled like "analyzer_noreturn" are often used to denote
-      // "panic" functions that in special debug situations can still return,
-      // but for the most part should not be treated as returning.  This is a
-      // useful annotation borrowed from the static analyzer that is useful for
-      // suppressing branch-specific false positives when we call one of these
-      // functions but keep pretending the path continues (when in reality the
-      // user doesn't care).
-      vals.setAllScratchValues(Unknown);
-    }
-  }
-}
-
-void TransferFunctions::VisitDeclRefExpr(DeclRefExpr *dr) {
-  switch (classification.get(dr)) {
-  case ClassifyRefs::Ignore:
-    break;
-  case ClassifyRefs::Use:
-    reportUse(dr, cast<VarDecl>(dr->getDecl()));
-    break;
-  case ClassifyRefs::Init:
-    vals[cast<VarDecl>(dr->getDecl())] = Initialized;
-    break;
-  case ClassifyRefs::SelfInit:
-      handler.handleSelfInit(cast<VarDecl>(dr->getDecl()));
-    break;
-  }
-}
-
-void TransferFunctions::VisitBinaryOperator(BinaryOperator *BO) {
-  if (BO->getOpcode() == BO_Assign) {
-    FindVarResult Var = findVar(BO->getLHS());
-    if (const VarDecl *VD = Var.getDecl())
-      vals[VD] = Initialized;
-  }
-}
-
-void TransferFunctions::VisitDeclStmt(DeclStmt *DS) {
-  for (auto *DI : DS->decls()) {
-    auto *VD = dyn_cast<VarDecl>(DI);
-    if (VD && isTrackedVar(VD)) {
-      if (getSelfInitExpr(VD)) {
-        // If the initializer consists solely of a reference to itself, we
-        // explicitly mark the variable as uninitialized. This allows code
-        // like the following:
-        //
-        //   int x = x;
-        //
-        // to deliberately leave a variable uninitialized. Different analysis
-        // clients can detect this pattern and adjust their reporting
-        // appropriately, but we need to continue to analyze subsequent uses
-        // of the variable.
-        vals[VD] = Uninitialized;
-      } else if (VD->getInit()) {
-        // Treat the new variable as initialized.
-        vals[VD] = Initialized;
-      } else {
-        // No initializer: the variable is now uninitialized. This matters
-        // for cases like:
-        //   while (...) {
-        //     int n;
-        //     use(n);
-        //     n = 0;
-        //   }
-        // FIXME: Mark the variable as uninitialized whenever its scope is
-        // left, since its scope could be re-entered by a jump over the
-        // declaration.
-        vals[VD] = Uninitialized;
-      }
-    }
-  }
-}
-
-void TransferFunctions::VisitObjCMessageExpr(ObjCMessageExpr *ME) {
-  // If the Objective-C message expression is an implicit no-return that
-  // is not modeled in the CFG, set the tracked dataflow values to Unknown.
-  if (objCNoRet.isImplicitNoReturn(ME)) {
-    vals.setAllScratchValues(Unknown);
-  }
-}
 
 //------------------------------------------------------------------------====//
 // High-level "driver" logic for uninitialized values analysis.
 //====------------------------------------------------------------------------//
 
-static bool runOnBlock(const CFGBlock *block, const CFG &cfg,
+static void runOnBlock(const CFGBlock *block, const CFG &cfg,
                        AnalysisDeclContext &ac, CFGBlockValues &vals,
+                       Scratch &InOut,
                        const ClassifyRefs &classification,
                        llvm::BitVector &wasAnalyzed,
                        UninitVariablesHandler &handler) {
-  wasAnalyzed[block->getBlockID()] = true;
-  vals.resetScratch();
+
+  // auto Id = block->getBlockID();
+  // wasAnalyzed[block->getBlockID()] = true;
+//  vals.resetScratch();
   // Merge in values of predecessor blocks.
-  bool isFirst = true;
-  for (CFGBlock::const_pred_iterator I = block->pred_begin(),
-       E = block->pred_end(); I != E; ++I) {
-    const CFGBlock *pred = *I;
-    if (!pred)
-      continue;
-    if (wasAnalyzed[pred->getBlockID()]) {
-      vals.mergeIntoScratch(vals.getValueVector(pred), isFirst);
-      isFirst = false;
-    }
-  }
+  // bool isFirst = true;
+  // for (CFGBlock::const_pred_iterator I = block->pred_begin(),
+  //      E = block->pred_end(); I != E; ++I) {
+  //   const CFGBlock *pred = *I;
+  //   if (!pred)
+  //     continue;
+  //   if (wasAnalyzed[pred->getBlockID()]) {
+  //     vals.mergeIntoScratch(vals.getValueVector(pred), isFirst);
+  //     isFirst = false;
+  //   }
+  // }
   // Apply the transfer function.
-  TransferFunctions tf(vals, cfg, block, ac, classification, handler);
+  TransferFunctions tf(vals, InOut, cfg, block, ac, classification, handler);
   for (const auto &I : *block) {
     if (Optional<CFGStmt> cs = I.getAs<CFGStmt>())
+
       tf.Visit(const_cast<Stmt *>(cs->getStmt()));
   }
-  return vals.updateValueVectorWithScratch(block);
 }
 
-namespace {
-
-/// PruneBlocksHandler is a special UninitVariablesHandler that is used
-/// to detect when a CFGBlock has any *potential* use of an uninitialized
-/// variable.  It is mainly used to prune out work during the final
-/// reporting pass.
-struct PruneBlocksHandler : public UninitVariablesHandler {
-  /// Records if a CFGBlock had a potential use of an uninitialized variable.
-  llvm::BitVector hadUse;
-
-  /// Records if any CFGBlock had a potential use of an uninitialized variable.
-  bool hadAnyUse = false;
-
-  /// The current block to scribble use information.
-  unsigned currentBlock = 0;
-
-  PruneBlocksHandler(unsigned numBlocks) : hadUse(numBlocks, false) {}
-
-  ~PruneBlocksHandler() override = default;
-
-  void handleUseOfUninitVariable(const VarDecl *vd,
-                                 const UninitUse &use) override {
-    hadUse[currentBlock] = true;
-    hadAnyUse = true;
-  }
-
-  /// Called when the uninitialized variable analysis detects the
-  /// idiom 'int x = x'.  All other uses of 'x' within the initializer
-  /// are handled by handleUseOfUninitVariable.
-  void handleSelfInit(const VarDecl *vd) override {
-    hadUse[currentBlock] = true;
-    hadAnyUse = true;
-  }
-};
-
-} // namespace
 
 void nodecpp::runDezombiefyRelaxAnalysis(
     const DeclContext &dc,
@@ -897,9 +680,9 @@ void nodecpp::runDezombiefyRelaxAnalysis(
     UninitVariablesHandler &handler,
     UninitVariablesAnalysisStats &stats) {
   CFGBlockValues vals(cfg);
-  vals.computeSetOfDeclarations(dc);
-  if (vals.hasNoDeclarations())
-    return;
+  // vals.computeSetOfDeclarations(dc);
+  // if (vals.hasNoDeclarations())
+  //   return;
 
   stats.NumVariablesAnalyzed = vals.getNumEntries();
 
@@ -907,13 +690,13 @@ void nodecpp::runDezombiefyRelaxAnalysis(
   ClassifyRefs classification(ac);
   cfg.VisitBlockStmts(classification);
 
-  // Mark all variables uninitialized at the entry.
-  const CFGBlock &entry = cfg.getEntry();
-  ValueVector &vec = vals.getValueVector(&entry);
-  const unsigned n = vals.getNumEntries();
-  for (unsigned j = 0; j < n; ++j) {
-    vec[j] = Uninitialized;
-  }
+  // // Mark all variables uninitialized at the entry.
+  // const CFGBlock &entry = cfg.getEntry();
+  // ValueVector &vec = vals.getValueVector(&entry);
+  // const unsigned n = vals.getNumEntries();
+  // for (unsigned j = 0; j < n; ++j) {
+  //   vec[j] = Uninitialized;
+  // }
 
   // Proceed with the workist.
   DataflowWorklist worklist(cfg, *ac.getAnalysis<PostOrderCFGView>());
@@ -921,29 +704,46 @@ void nodecpp::runDezombiefyRelaxAnalysis(
   worklist.enqueueSuccessors(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
   wasAnalyzed[cfg.getEntry().getBlockID()] = true;
-  PruneBlocksHandler PBH(cfg.getNumBlockIDs());
+//  PruneBlocksHandler PBH(cfg.getNumBlockIDs());
 
-  while (const CFGBlock *block = worklist.dequeue()) {
-    PBH.currentBlock = block->getBlockID();
+  while (const CFGBlock *Block = worklist.dequeue()) {
 
-    // Did the block change?
-    bool changed = runOnBlock(block, cfg, ac, vals,
-                              classification, wasAnalyzed, PBH);
-    ++stats.NumBlockVisits;
-    if (changed || !previouslyVisited[block->getBlockID()])
-      worklist.enqueueSuccessors(block);
-    previouslyVisited[block->getBlockID()] = true;
+    auto Id =  Block->getBlockID();
+    Scratch InOut = vals.getScratch(Id);//make a copy
+    runOnBlock(Block, cfg, ac, vals, InOut, classification, wasAnalyzed, handler);
+    
+    //Update all successors
+    for(auto S : Block->succs()) {
+      if(S.isReachable()) {
+        bool Changed = vals.updateValueVectorWithScratch(S->getBlockID(), InOut);
+        if(Changed) {
+          worklist.enqueue(S.getReachableBlock());
+        }
+      }
+    }
   }
 
-  if (!PBH.hadAnyUse)
-    return;
+  //   PBH.currentBlock =
+
+  //   // Did the block change?
+  //   bool changed = runOnBlock(block, cfg, ac, vals,
+  //                             classification, wasAnalyzed, PBH);
+  //   ++stats.NumBlockVisits;
+  //   if (changed || !previouslyVisited[block->getBlockID()])
+  //     worklist.enqueueSuccessors(block);
+  //   previouslyVisited[block->getBlockID()] = true;
+  // }
+
+  // if (!PBH.hadAnyUse)
+  //   return;
 
   // Run through the blocks one more time, and report uninitialized variables.
-  for (const auto *block : cfg)
-    if (PBH.hadUse[block->getBlockID()]) {
-      runOnBlock(block, cfg, ac, vals, classification, wasAnalyzed, handler);
-      ++stats.NumBlockVisits;
-    }
+//   for (const auto *Block : cfg) {
+// //    if (PBH.hadUse[block->getBlockID()]) {
+//   }
+
+//       ++stats.NumBlockVisits;
+//    }
 }
 
 UninitVariablesHandler::~UninitVariablesHandler() = default;

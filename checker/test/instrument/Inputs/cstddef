@@ -1,0 +1,13 @@
+#ifndef STD_CSTDDEF_H
+#define STD_CSTDDEF_H
+
+
+
+
+#include <stddef.h>
+
+namespace std { typedef decltype(nullptr) nullptr_t; }
+using ::std::nullptr_t;
+
+
+#endif //STD_CSTDDEF_H

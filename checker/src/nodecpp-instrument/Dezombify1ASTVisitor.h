@@ -28,32 +28,91 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 
-
+#include "DezombiefyRelaxASTVisitor.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
 
-using namespace clang;
-
 namespace nodecpp {
 
-class Dezombify1ASTVisitor
-  : public RecursiveASTVisitor<Dezombify1ASTVisitor> {
 
-  ASTContext &Context;
+const clang::Stmt *getIntrumentationPoint(clang::ASTContext &Context, const clang::Stmt *Ex);
+
+const clang::Stmt *getIntrumentationPoint(clang::ASTContext &Context, const clang::VarDecl *Vd) {
+
+  auto SList = Context.getParents(*Vd);
+
+  auto SIt = SList.begin();
+
+  if (SIt == SList.end()) {
+    assert(false);
+    return nullptr;
+  }
+  else if(auto D = SIt->get<clang::Stmt>())
+    return getIntrumentationPoint(Context, D);
+  else {
+    assert(false);
+    return nullptr;
+  }
+}
+
+
+
+const clang::Stmt *getIntrumentationPoint(clang::ASTContext &Context, const clang::Stmt *Ex) {
+
+  auto SList = Context.getParents(*Ex);
+
+  auto SIt = SList.begin();
+
+  if (SIt == SList.end()) {
+
+    Ex->dump();
+    assert(false);
+    return nullptr;
+  }
+
+  if(SIt->get<clang::CompoundStmt>()) {
+    //if parent is a CompoundStmt, then this node is the instrumentation point
+    return Ex;
+  }
+  else if(auto D = SIt->get<clang::VarDecl>()) {
+    //if parent is a VarDecl, keep walking up
+    return getIntrumentationPoint(Context, D);
+  }
+  else if(auto E = SIt->get<clang::Expr>()) {
+    //still an expression, keep walking up
+    return getIntrumentationPoint(Context, E);
+  }
+  else if(auto E = SIt->get<clang::Stmt>()) {
+    // now just keep walking up
+    return getIntrumentationPoint(Context, E);
+  }
+  else {
+    assert(false);
+    return nullptr;
+
+  }
+}
+
+
+class Dezombify1ASTVisitor
+  : public clang::RecursiveASTVisitor<Dezombify1ASTVisitor> {
+
+  clang::ASTContext &Context;
+  DzHelper &DzData;
 public:
   bool shouldVisitTemplateInstantiations() const { return true; }
 private:
   static
-  bool isParenImplicitExpr(const Expr *Ex) {
-    return isa<ExprWithCleanups>(Ex) ||
-      isa<MaterializeTemporaryExpr>(Ex) ||
-      isa<CXXBindTemporaryExpr>(Ex) ||
-      isa<ImplicitCastExpr>(Ex) ||
-      isa<ParenExpr>(Ex);
+  bool isParenImplicitExpr(const clang::Expr *Ex) {
+    return llvm::isa<clang::ExprWithCleanups>(Ex) ||
+      llvm::isa<clang::MaterializeTemporaryExpr>(Ex) ||
+      llvm::isa<clang::CXXBindTemporaryExpr>(Ex) ||
+      llvm::isa<clang::ImplicitCastExpr>(Ex) ||
+      llvm::isa<clang::ParenExpr>(Ex);
   }
 
-  const Expr *getParentExpr(const Expr *Ex) {
+  const clang::Expr *getParentExpr(const clang::Expr *Ex) {
 
     auto SList = Context.getParents(*Ex);
 
@@ -62,7 +121,7 @@ private:
     if (SIt == SList.end())
       return nullptr;
 
-    auto P = SIt->get<Expr>();
+    auto P = SIt->get<clang::Expr>();
     if (!P)
       return nullptr;
     else if(isParenImplicitExpr(P))
@@ -71,10 +130,10 @@ private:
       return P;
   }
 
-  bool hasDezombiefyParent(const Expr *E) {
+  bool hasDezombiefyParent(const clang::Expr *E) {
     auto P = getParentExpr(E);
-    if(auto Ce = dyn_cast_or_null<CallExpr>(P)) {
-      if(auto Callee = dyn_cast_or_null<UnresolvedLookupExpr>(Ce->getCallee())) {
+    if(auto Ce = llvm::dyn_cast_or_null<clang::CallExpr>(P)) {
+      if(auto Callee = llvm::dyn_cast_or_null<clang::UnresolvedLookupExpr>(Ce->getCallee())) {
         auto str = Callee->getNameInfo().getAsString();
       }
       else if (auto Decl = Ce->getDirectCallee())
@@ -85,15 +144,16 @@ private:
 
 public:
 
-  explicit Dezombify1ASTVisitor(ASTContext &Context): Context(Context) {}
+  explicit Dezombify1ASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
+    Context(Context), DzData(DzData) {}
 
-  bool TraverseDecl(Decl *DeclNode) {
+  bool TraverseDecl(clang::Decl *DeclNode) {
     if (!DeclNode) {
       return true;
     }
 
     //mb: we don't traverse decls in system-headers
-    if (!isa<TranslationUnitDecl>(DeclNode)) {
+    if (!llvm::isa<clang::TranslationUnitDecl>(DeclNode)) {
 
       auto &SourceManager = Context.getSourceManager();
       auto ExpansionLoc = SourceManager.getExpansionLoc(DeclNode->getLocStart());
@@ -105,24 +165,27 @@ public:
       }
     }
 
-    return RecursiveASTVisitor<Dezombify1ASTVisitor>::TraverseDecl(DeclNode);
+    return clang::RecursiveASTVisitor<Dezombify1ASTVisitor>::TraverseDecl(DeclNode);
   }
 
-  bool VisitParmVarDecl(ParmVarDecl *D) {
+  bool VisitParmVarDecl(clang::ParmVarDecl *D) {
 //    D->dumpColor();
-    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitParmVarDecl(D);
+    return clang::RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitParmVarDecl(D);
   }
 
-  bool VisitCXXThisExpr(CXXThisExpr *E) {
+  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
     if(hasDezombiefyParent(E))
       E->setDezombiefyAlreadyPresent();//TODO
     else
       E->setDezombiefyCandidate();
 
-    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitCXXThisExpr(E);
+    const clang::Stmt *S = getIntrumentationPoint(Context, E);
+    DzData.addThis(S);
+
+    return clang::RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitCXXThisExpr(E);
   }
 
-  bool VisitDeclRefExpr(DeclRefExpr *E) {
+  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
     if(auto D = E->getDecl()) {
       auto Qt = D->getType().getCanonicalType();
 //      auto T = Qt.getTypePtr();
@@ -133,9 +196,11 @@ public:
         else
           E->setDezombiefyCandidate();
 
+        const clang::Stmt *S = getIntrumentationPoint(Context, E);
+        DzData.addVariable(S, D);
       }
     }   
-    return RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitDeclRefExpr(E);
+    return clang::RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitDeclRefExpr(E);
   }
 };
 
