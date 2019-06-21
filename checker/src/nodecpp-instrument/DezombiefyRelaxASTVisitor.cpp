@@ -59,6 +59,7 @@ Optional<FixItHint> DzHelper::makeFixIfNeeded(const Stmt* St) {
 
 
 bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
+  
   D->dumpColor();
 
   // For code in dependent contexts, we'll do this at instantiation time.
@@ -85,13 +86,11 @@ bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
   AC.getCFGBuildOptions().setAllAlwaysAdd();
 
   if (CFG *cfg = AC.getCFG()) {
-    UninitVariablesHandler reporter;
-    UninitVariablesAnalysisStats stats;
+    DezombiefyRelaxAnalysisStats stats;
 
     cfg->dump(Context.getLangOpts(), true);
 
-    runDezombiefyRelaxAnalysis(*D, *cfg, AC,
-                                      reporter, stats);
+    runDezombiefyRelaxAnalysis(D, cfg, stats);
 
     // if (S.CollectStats && stats.NumVariablesAnalyzed > 0) {
     //   ++NumUninitAnalysisFunctions;
