@@ -170,7 +170,7 @@ namespace {
       if(!IsInitialized) {
         *this = other;
         IsInitialized = true;
-        return ThisToDZ || VariablesToDZ.size() != 0;
+        return true;
       }
 
       bool Changed = ThisToDZ && !other.ThisToDZ;
@@ -625,7 +625,11 @@ public:
 
   void VisitCXXThisExpr(CXXThisExpr *E) {
     if(E->isDezombiefyCandidate()) {
-      if(!InOut.addThis()) {
+      if(InOut.addThis()) {
+        //It may be relaxed by previous path,
+        // but need to make it explicit now
+        E->setDezombiefyCandidate();
+      } else {
         //it was already there
         E->setDezombiefyCandidateButRelaxed();
       }
