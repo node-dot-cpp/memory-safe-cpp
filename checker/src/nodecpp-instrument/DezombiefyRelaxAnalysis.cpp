@@ -212,7 +212,7 @@ public:
 
   // void setAllScratchValues(Value V);
   // void mergeIntoScratch(ValueVector const &source, bool isFirst);
-   bool updateValueVectorWithScratch(unsigned int Id, const Scratch& Scr) {
+   bool updateWithScratch(unsigned int Id, const Scratch& Scr) {
       return Vals[Id].intersection(Scr);
     }
 
@@ -292,70 +292,36 @@ public:
 
 namespace {
 
-class DataflowWorklist {
-  PostOrderCFGView::iterator PO_I, PO_E;
+class Worklist {
+//  PostOrderCFGView::iterator PO_I, PO_E;
   SmallVector<const CFGBlock *, 20> worklist;
   llvm::BitVector enqueuedBlocks;
 
 public:
-  DataflowWorklist(const CFG &cfg, PostOrderCFGView &view)
-      : PO_I(view.begin()), PO_E(view.end()),
-        enqueuedBlocks(cfg.getNumBlockIDs(), true) {
-    // Treat the first block as already analyzed.
-    if (PO_I != PO_E) {
-      assert(*PO_I == &cfg.getEntry());
-      // enqueuedBlocks[(*PO_I)->getBlockID()] = false;
-      // ++PO_I;
-//      enqueueSuccessors(dequeue());
-    }
+  Worklist(unsigned long NumBlockIDs) :
+        enqueuedBlocks(NumBlockIDs, false) {}
+
+  void enqueue(const CFGBlock *Block) {
+    if (!Block || enqueuedBlocks[Block->getBlockID()])
+      return;
+
+    worklist.push_back(Block);
+    enqueuedBlocks[Block->getBlockID()] = true;
   }
 
-  void enqueueSuccessors(const CFGBlock *block);
-  void enqueue(const CFGBlock *block);
-  const CFGBlock *dequeue();
+  const CFGBlock *dequeue() {
+    if (worklist.empty())
+      return nullptr;
+
+    auto B = worklist.pop_back_val();
+    assert(enqueuedBlocks[B->getBlockID()] == true);
+    enqueuedBlocks[B->getBlockID()] = false;
+    return B;
+  }
 };
 
 } // namespace
 
-void DataflowWorklist::enqueueSuccessors(const CFGBlock *block) {
-  for (CFGBlock::const_succ_iterator I = block->succ_begin(),
-       E = block->succ_end(); I != E; ++I) {
-    const CFGBlock *Successor = *I;
-    if (!Successor || enqueuedBlocks[Successor->getBlockID()])
-      continue;
-    worklist.push_back(Successor);
-    enqueuedBlocks[Successor->getBlockID()] = true;
-  }
-}
-
-void DataflowWorklist::enqueue(const CFGBlock *Block) {
-  if (!Block || enqueuedBlocks[Block->getBlockID()])
-    return;
-  worklist.push_back(Block);
-  enqueuedBlocks[Block->getBlockID()] = true;
-}
-
-const CFGBlock *DataflowWorklist::dequeue() {
-  const CFGBlock *B = nullptr;
-
-  // First dequeue from the worklist.  This can represent
-  // updates along backedges that we want propagated as quickly as possible.
-  if (!worklist.empty())
-    B = worklist.pop_back_val();
-
-  // Next dequeue from the initial reverse post order.  This is the
-  // theoretical ideal in the presence of no back edges.
-  else if (PO_I != PO_E) {
-    B = *PO_I;
-    ++PO_I;
-  }
-  else
-    return nullptr;
-
-  assert(enqueuedBlocks[B->getBlockID()] == true);
-  enqueuedBlocks[B->getBlockID()] = false;
-  return B;
-}
 
 //------------------------------------------------------------------------====//
 // Classification of DeclRefExprs as use or initialization.
@@ -588,25 +554,12 @@ void ClassifyRefs::VisitCastExpr(CastExpr *CE) {
 
 namespace {
 
-class TransferFunctions : public StmtVisitor<TransferFunctions> {
+class ScratchCalculator : public StmtVisitor<ScratchCalculator> {
   
-  CFGBlockValues &vals;
   Scratch& InOut;
-  const CFG &cfg;
-  const CFGBlock *block;
-  AnalysisDeclContext &ac;
-  const ClassifyRefs &classification;
-  ObjCNoReturn objCNoRet;
-  UninitVariablesHandler &handler;
 
 public:
-  TransferFunctions(CFGBlockValues &vals, Scratch& InOut, const CFG &cfg,
-                    const CFGBlock *block, AnalysisDeclContext &ac,
-                    const ClassifyRefs &classification,
-                    UninitVariablesHandler &handler)
-      : vals(vals), InOut(InOut), cfg(cfg), block(block), ac(ac),
-        classification(classification), objCNoRet(ac.getASTContext()),
-        handler(handler) {}
+  ScratchCalculator(Scratch& InOut): InOut(InOut) {}
 
   void VisitCallExpr(CallExpr *Ce) {
     if (Decl *Callee = Ce->getCalleeDecl()) {
@@ -645,34 +598,14 @@ public:
 // High-level "driver" logic for uninitialized values analysis.
 //====------------------------------------------------------------------------//
 
-static void runOnBlock(const CFGBlock *block, const CFG &cfg,
-                       AnalysisDeclContext &ac, CFGBlockValues &vals,
-                       Scratch &InOut,
-                       const ClassifyRefs &classification,
-                       llvm::BitVector &wasAnalyzed,
-                       UninitVariablesHandler &handler) {
+static void runOnBlock(const CFGBlock *block,
+                       Scratch &InOut) {
 
-  // auto Id = block->getBlockID();
-  // wasAnalyzed[block->getBlockID()] = true;
-//  vals.resetScratch();
-  // Merge in values of predecessor blocks.
-  // bool isFirst = true;
-  // for (CFGBlock::const_pred_iterator I = block->pred_begin(),
-  //      E = block->pred_end(); I != E; ++I) {
-  //   const CFGBlock *pred = *I;
-  //   if (!pred)
-  //     continue;
-  //   if (wasAnalyzed[pred->getBlockID()]) {
-  //     vals.mergeIntoScratch(vals.getValueVector(pred), isFirst);
-  //     isFirst = false;
-  //   }
-  // }
-  // Apply the transfer function.
-  TransferFunctions tf(vals, InOut, cfg, block, ac, classification, handler);
+  ScratchCalculator Sc(InOut);
   for (const auto &I : *block) {
     if (Optional<CFGStmt> cs = I.getAs<CFGStmt>())
 
-      tf.Visit(const_cast<Stmt *>(cs->getStmt()));
+      Sc.Visit(const_cast<Stmt *>(cs->getStmt()));
   }
 }
 
@@ -703,25 +636,27 @@ void nodecpp::runDezombiefyRelaxAnalysis(
   // }
 
   // Proceed with the workist.
-  DataflowWorklist worklist(cfg, *ac.getAnalysis<PostOrderCFGView>());
+  Worklist Wl(cfg.getNumBlockIDs());
   llvm::BitVector previouslyVisited(cfg.getNumBlockIDs());
-  worklist.enqueueSuccessors(&cfg.getEntry());
+  Wl.enqueue(&cfg.getEntry());
   llvm::BitVector wasAnalyzed(cfg.getNumBlockIDs(), false);
   wasAnalyzed[cfg.getEntry().getBlockID()] = true;
 //  PruneBlocksHandler PBH(cfg.getNumBlockIDs());
 
-  while (const CFGBlock *Block = worklist.dequeue()) {
-
+  while (const CFGBlock *Block = Wl.dequeue()) {
+    
     auto Id =  Block->getBlockID();
     Scratch InOut = vals.getScratch(Id);//make a copy
-    runOnBlock(Block, cfg, ac, vals, InOut, classification, wasAnalyzed, handler);
-    
+    runOnBlock(Block, InOut);
+
+    ++stats.NumBlockVisits;
+
     //Update all successors
     for(auto S : Block->succs()) {
       if(S.isReachable()) {
-        bool Changed = vals.updateValueVectorWithScratch(S->getBlockID(), InOut);
+        bool Changed = vals.updateWithScratch(S->getBlockID(), InOut);
         if(Changed) {
-          worklist.enqueue(S.getReachableBlock());
+          Wl.enqueue(S.getReachableBlock());
         }
       }
     }
