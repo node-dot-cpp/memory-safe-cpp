@@ -73,6 +73,7 @@ namespace {
 
     bool addDecl(const clang::ValueDecl *Vd) {
 
+      IsInitialized = true;
       if(hasDecl(Vd))
         return false;
 
@@ -81,6 +82,8 @@ namespace {
     }
 
     bool addThis() {
+      IsInitialized = true;
+
       bool Tmp = ThisToDZ;
       ThisToDZ = true;
       return !Tmp;
@@ -89,16 +92,21 @@ namespace {
     void clear() {
       VariablesToDZ.clear();
       ThisToDZ = false;
-      IsInitialized = false;
+      IsInitialized = true;
     }
 
     bool intersection(const Scratch& other) {
 
-      if(!IsInitialized) {
+      if(!other.IsInitialized) {
+        return false;
+      }
+      else if(!IsInitialized) {
         *this = other;
-        IsInitialized = true;
+//        IsInitialized = true;
         return true;
       }
+
+
 
       bool Changed = ThisToDZ && !other.ThisToDZ;
       ThisToDZ = ThisToDZ && other.ThisToDZ;
@@ -231,14 +239,20 @@ public:
   ScratchCalculator(Scratch& InOut): InOut(InOut) {}
 
   void VisitCallExpr(CallExpr *Ce) {
+    Ce->dumpColor();
     if (Decl *Callee = Ce->getCalleeDecl()) {
       InOut.clear();
     }
   }
 
   void VisitDeclRefExpr(DeclRefExpr *Dre) {
-    if(Dre->isDezombiefyCandidate()) {
-      if(!InOut.addDecl(Dre->getDecl())) {
+    if(Dre->isDezombiefyCandidateOrRelaxed()) {
+      if(InOut.addDecl(Dre->getDecl())) {
+        //It may be relaxed by previous path,
+        // but need to make it explicit now
+        Dre->setDezombiefyCandidate();
+      }
+      else {
         //it was already there
         Dre->setDezombiefyCandidateButRelaxed();
       }
@@ -246,7 +260,7 @@ public:
   }
 
   void VisitCXXThisExpr(CXXThisExpr *E) {
-    if(E->isDezombiefyCandidate()) {
+    if(E->isDezombiefyCandidateOrRelaxed()) {
       if(InOut.addThis()) {
         //It may be relaxed by previous path,
         // but need to make it explicit now
@@ -272,9 +286,11 @@ static void runOnBlock(const CFGBlock *block,
 
   ScratchCalculator Sc(InOut);
   for (const auto &I : *block) {
-    if (Optional<CFGStmt> cs = I.getAs<CFGStmt>())
+    if (Optional<CFGStmt> cs = I.getAs<CFGStmt>()) {
 
       Sc.Visit(const_cast<Stmt *>(cs->getStmt()));
+      cs->getStmt()->dumpColor();
+    }
   }
 }
 

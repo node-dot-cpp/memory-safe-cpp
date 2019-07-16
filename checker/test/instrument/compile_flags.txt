@@ -2,3 +2,5 @@
 -nostdinc
 -isystem
 ./Inputs
+-isystem
+../../3rdparty/clang/lib/Headers
