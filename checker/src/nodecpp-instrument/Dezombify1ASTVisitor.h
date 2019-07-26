@@ -28,6 +28,7 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 
+#include "DezombiefyHelper.h"
 #include "DezombiefyRelaxASTVisitor.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -186,19 +187,14 @@ public:
   }
 
   bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(auto D = E->getDecl()) {
-      auto Qt = D->getType().getCanonicalType();
-//      auto T = Qt.getTypePtr();
-      if(Qt->isReferenceType() || Qt->isPointerType()) {
+    if(IsDezombiefyCandidate(E)) {
+      if(hasDezombiefyParent(E))
+        E->setDezombiefyAlreadyPresent();//TODO
+      else
+        E->setDezombiefyCandidate();
 
-        if(hasDezombiefyParent(E))
-          E->setDezombiefyAlreadyPresent();//TODO
-        else
-          E->setDezombiefyCandidate();
-
-        const clang::Stmt *S = getIntrumentationPoint(Context, E);
-        DzData.addVariable(S, D);
-      }
+      const clang::Stmt *S = getIntrumentationPoint(Context, E);
+      DzData.addVariable(S, E->getDecl());
     }   
     return clang::RecursiveASTVisitor<Dezombify1ASTVisitor>::VisitDeclRefExpr(E);
   }

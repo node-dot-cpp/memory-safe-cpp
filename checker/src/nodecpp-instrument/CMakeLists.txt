@@ -11,6 +11,7 @@ add_clang_executable(nodecpp-instrument
   ExpandUserIncludesAction.cpp
   InclusionRewriter.cpp
   NodeCppDezombify.cpp
+  SequenceCheck.cpp
   )
 
 

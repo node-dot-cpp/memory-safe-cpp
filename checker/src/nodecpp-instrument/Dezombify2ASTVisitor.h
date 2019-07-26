@@ -48,7 +48,7 @@ class Dezombify2ASTVisitor
   DzHelper &DzData;
 
   /// Fixes to apply, grouped by file path.
-  llvm::StringMap<clang::tooling::Replacements> FileReplacements;  
+  llvm::StringMap<clang::tooling::Replacements> FileReplacements;
 
 
   void addFix(const clang::FixItHint& FixIt) {
@@ -72,56 +72,7 @@ class Dezombify2ASTVisitor
   }
 
 public:
-
-  void overwriteChangedFiles() {
-
-    if(!FileReplacements.empty()) {
-      clang::Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
-      for (const auto &FileAndReplacements : FileReplacements) {
-        llvm::StringRef File = FileAndReplacements.first();
-        llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
-            Context.getSourceManager().getFileManager().getBufferForFile(File);
-        if (!Buffer) {
-          llvm::errs() << "Can't get buffer for file " << File << ": "
-                        << Buffer.getError().message() << "\n";
-          // FIXME: Maybe don't apply fixes for other files as well.
-          continue;
-        }
-        llvm::StringRef Code = Buffer.get()->getBuffer();
-        // auto Style = format::getStyle(
-        //     *Context.getOptionsForFile(File).FormatStyle, File, "none");
-        auto Style = clang::format::getStyle("none", File, "none");
-        if (!Style) {
-          llvm::errs() << llvm::toString(Style.takeError()) << "\n";
-          continue;
-        }
-        llvm::Expected<clang::tooling::Replacements> Replacements =
-            clang::format::cleanupAroundReplacements(Code, FileAndReplacements.second,
-                                              *Style);
-        if (!Replacements) {
-          llvm::errs() << llvm::toString(Replacements.takeError()) << "\n";
-          continue;
-        }
-        if (llvm::Expected<clang::tooling::Replacements> FormattedReplacements =
-                clang::format::formatReplacements(Code, *Replacements, *Style)) {
-          Replacements = std::move(FormattedReplacements);
-          if (!Replacements)
-            llvm_unreachable("!Replacements");
-        } else {
-          llvm::errs() << llvm::toString(FormattedReplacements.takeError())
-                        << ". Skipping formatting.\n";
-        }
-        if (!clang::tooling::applyAllReplacements(Replacements.get(), Rewrite)) {
-          llvm::errs() << "Can't apply replacements for file " << File << "\n";
-        }
-      }
-      if (Rewrite.overwriteChangedFiles()) {
-        llvm::errs() << "nodecpp-instrument failed to apply suggested fixes.\n";
-      } else {
-        llvm::errs() << "nodecpp-instrument applied suggested fixes.\n";
-      }
-    }
-  }
+  const auto& getReplacements() const { return FileReplacements; }
 
   explicit Dezombify2ASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
     Context(Context), DzData(DzData) {}
