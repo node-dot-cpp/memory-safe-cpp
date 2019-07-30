@@ -105,10 +105,10 @@ auto ne(T1&& t1, T2&& t2) {
 	return t1 != t2;
 }
 
-template<class T1, class T2>
-auto cmp(T1&& t1, T2&& t2) {
-	return t1 <=> t2;
-}
+// template<class T1, class T2>
+// auto cmp(T1&& t1, T2&& t2) {
+// 	return t1 <=> t2;
+// }
 
 template<class T1, class T2>
 auto and(T1&& t1, T2&& t2) {

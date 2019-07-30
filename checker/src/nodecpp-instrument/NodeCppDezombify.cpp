@@ -69,55 +69,6 @@ OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl:
 
 namespace nodecpp {
 
-void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &FileReplacements) {
-
-  if(!FileReplacements.empty()) {
-    clang::Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
-    for (const auto &FileAndReplacements : FileReplacements) {
-      llvm::StringRef File = FileAndReplacements.first();
-      llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> Buffer =
-          Context.getSourceManager().getFileManager().getBufferForFile(File);
-      if (!Buffer) {
-        llvm::errs() << "Can't get buffer for file " << File << ": "
-                      << Buffer.getError().message() << "\n";
-        // FIXME: Maybe don't apply fixes for other files as well.
-        continue;
-      }
-      llvm::StringRef Code = Buffer.get()->getBuffer();
-      // auto Style = format::getStyle(
-      //     *Context.getOptionsForFile(File).FormatStyle, File, "none");
-      auto Style = clang::format::getStyle("none", File, "none");
-      if (!Style) {
-        llvm::errs() << llvm::toString(Style.takeError()) << "\n";
-        continue;
-      }
-      llvm::Expected<clang::tooling::Replacements> Replacements =
-          clang::format::cleanupAroundReplacements(Code, FileAndReplacements.second,
-                                            *Style);
-      if (!Replacements) {
-        llvm::errs() << llvm::toString(Replacements.takeError()) << "\n";
-        continue;
-      }
-      if (llvm::Expected<clang::tooling::Replacements> FormattedReplacements =
-              clang::format::formatReplacements(Code, *Replacements, *Style)) {
-        Replacements = std::move(FormattedReplacements);
-        if (!Replacements)
-          llvm_unreachable("!Replacements");
-      } else {
-        llvm::errs() << llvm::toString(FormattedReplacements.takeError())
-                      << ". Skipping formatting.\n";
-      }
-      if (!clang::tooling::applyAllReplacements(Replacements.get(), Rewrite)) {
-        llvm::errs() << "Can't apply replacements for file " << File << "\n";
-      }
-    }
-    if (Rewrite.overwriteChangedFiles()) {
-      llvm::errs() << "nodecpp-instrument failed to apply suggested fixes.\n";
-    } else {
-      llvm::errs() << "nodecpp-instrument applied suggested fixes.\n";
-    }
-  }
-}
 
 
 
@@ -150,6 +101,7 @@ public:
 //    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
     void HandleTranslationUnit(ASTContext &Context) override {
+      
       Deunsequence2ASTVisitor Visitor1(Context);
 
       Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
@@ -158,6 +110,12 @@ public:
     }
 };
 
+class DezombiefySequenceConsumer : public ASTConsumer {
+public:
+    void HandleTranslationUnit(ASTContext &Context) override {
+      dezombiefySequenceCheckAndFix(Context, Context.getTranslationUnitDecl());
+    }
+};
 
 } //namespace nodecpp
 
@@ -179,7 +137,7 @@ int main(int argc, const char **argv) {
   protected:
     std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                   StringRef InFile) override {
-      return llvm::make_unique<nodecpp::UnwrapperConsumer>();
+      return llvm::make_unique<nodecpp::DezombiefySequenceConsumer>();
     }
   };
 

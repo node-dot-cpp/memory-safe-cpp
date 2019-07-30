@@ -28,9 +28,13 @@
 #ifndef NODECPP_CHECKER_SEQUENCECHECK_H
 #define NODECPP_CHECKER_SEQUENCECHECK_H
 
+
+#include "clang/AST/ASTContext.h"
+#include "llvm/ADT/StringMap.h"
+#include "clang/Tooling/Core/Replacement.h"
+
 namespace clang {
-  class ASTContext;
-  class Expr;
+  class TranslationUnitDecl;
 }
 
 namespace nodecpp {
@@ -39,7 +43,10 @@ namespace nodecpp {
   /// an object unsequenced with any function call that can potencially
   /// rezombiefy it as a side-effect
 
-bool checkUnsequencedDezombiefy(ASTContext &Context, Expr *E, bool ReportDiagnostics);
+void overwriteChangedFiles(clang::ASTContext &Context, const llvm::StringMap<clang::tooling::Replacements> &FileReplacements);
+void overwriteChangedFiles(clang::ASTContext &Context, const clang::tooling::Replacements &FileReplacements);
+
+void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, clang::TranslationUnitDecl *D);
 
 } // namespace nodecpp
 

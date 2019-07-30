@@ -233,7 +233,7 @@ public:
       return true;
 
     if(Expr *E = dyn_cast<Expr>(St)) {
-      checkUnsequencedDezombiefy(Context, E, true);
+//      checkUnsequencedDezombiefy(Context, E, true);
       return true;
     }
     else
