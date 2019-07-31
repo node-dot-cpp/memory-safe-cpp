@@ -25,24 +25,17 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_INSTRUMENT_EXPANDUSERINCLUDESACTION_H
-#define NODECPP_INSTRUMENT_EXPANDUSERINCLUDESACTION_H
+#ifndef NODECPP_INSTRUMENT_INCLUSIONREWRITER_H
+#define NODECPP_INSTRUMENT_INCLUSIONREWRITER_H
 
 #include "clang/Frontend/FrontendAction.h"
 #include "llvm/Support/raw_ostream.h"
 
-using namespace clang;
-
-namespace clang {
-    class Preprocessor;
-    class PreprocessorOutputOptions;
-}
-
 namespace nodecpp {
 
-class ExpandUserIncludesAction : public PreprocessorFrontendAction {
+class ExpandUserIncludesAction : public clang::PreprocessorFrontendAction {
   llvm::raw_ostream *OutputStream = nullptr;
-//  class RewriteImportsListener;
+
 protected:
   bool BeginSourceFileAction(clang::CompilerInstance &CI) override;
   void ExecuteAction() override;
@@ -53,24 +46,6 @@ public:
   ExpandUserIncludesAction() {}
 };
 
-class ExpandRecompileAction : public WrapperFrontendAction {
-  std::string Filename;
-public:
-
-  ExpandRecompileAction(std::unique_ptr<FrontendAction> WrappedAction, const std::string& Filename)
-    : WrapperFrontendAction(std::move(WrappedAction)), Filename(Filename) {}
-
-protected:
-  bool BeginInvocation(CompilerInstance &CI) override;
-};
-
-void RewriteUserIncludesInInput(clang::Preprocessor &PP, llvm::raw_ostream *OS,
-                            const clang::PreprocessorOutputOptions &Opts);
-
-std::string RewriteFilename(llvm::StringRef Filename, const std::string& NewSuffix);
-
 } // namespace nodecpp
 
-
-
-#endif // NODECPP_INSTRUMENT_EXPANDUSERINCLUDESACTION_H
+#endif // NODECPP_INSTRUMENT_INCLUSIONREWRITER_H

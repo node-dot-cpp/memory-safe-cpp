@@ -46,7 +46,7 @@ namespace nodecpp {
 void overwriteChangedFiles(clang::ASTContext &Context, const llvm::StringMap<clang::tooling::Replacements> &FileReplacements);
 void overwriteChangedFiles(clang::ASTContext &Context, const clang::tooling::Replacements &FileReplacements);
 
-void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, clang::TranslationUnitDecl *D);
+void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, clang::TranslationUnitDecl *D, bool FixAll);
 
 } // namespace nodecpp
 

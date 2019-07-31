@@ -8,7 +8,6 @@ set( LLVM_LINK_COMPONENTS
 add_clang_executable(nodecpp-instrument
   DezombiefyRelaxAnalysis.cpp
   DezombiefyRelaxASTVisitor.cpp
-  ExpandUserIncludesAction.cpp
   InclusionRewriter.cpp
   NodeCppDezombify.cpp
   SequenceCheck.cpp

@@ -27,7 +27,7 @@
 
 #include "Dezombify1ASTVisitor.h"
 #include "Dezombify2ASTVisitor.h"
-#include "ExpandUserIncludesAction.h"
+#include "InclusionRewriter.h"
 #include "DezombiefyRelaxASTVisitor.h"
 #include "DeunsequenceASTVisitor.h"
 
@@ -35,6 +35,9 @@
 #include "clang/AST/RecursiveASTVisitor.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendAction.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Lex/Preprocessor.h"
+#include "clang/Lex/PreprocessorOptions.h"
 #include "clang/Tooling/Tooling.h"
 #include "clang/Tooling/CommonOptionsParser.h"
 #include "llvm/Support/CommandLine.h"
@@ -44,6 +47,7 @@
 using namespace clang;
 using namespace clang::tooling;
 using namespace llvm;
+using namespace llvm::sys::path;
 using namespace std;
 
 // Apply a custom category to all command-line options so that they are the
@@ -63,14 +67,44 @@ static cl::extrahelp MoreHelp("\nMore help text...");
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(NodecppInstrumentCategory));
 
+// mb: until I figure out how to handle templates, always fix everything
 // static cl::opt<bool>
-// Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
+// FixAllUnsequenced("fix-all-unsequenced", cl::desc("Rewrite all unsequenced expressions.\n"),
 //     cl::cat(NodecppInstrumentCategory));
 
 namespace nodecpp {
 
 
+string rewriteFilename(StringRef Filename, const string& NewSuffix) {
+  SmallString<128> Path(Filename);
+  replace_extension(Path, NewSuffix + extension(Path));
+  return Path.str();
+}
 
+bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendInputFile &Input) {
+
+  if (!Action->BeginSourceFile(CI, Input))
+    return false;
+    
+  Action->Execute();
+  Action->EndSourceFile();
+
+  CI.setSourceManager(nullptr);
+  CI.setFileManager(nullptr);
+
+  CI.getDiagnosticClient().clear();
+  //Create a new diagnostics
+  CI.createDiagnostics();
+  // auto& Diags = CI.getDiagnostics();
+  // if(Diags.ownsClient()) {
+  //   auto Owner = Diags.takeClient();
+  //   CI.createDiagnostics(Owner.get(), true);
+  // } else {
+  //   CI.createDiagnostics(Diags.getClient(), false);
+  // }
+
+  return true;
+}
 
 class DezombifyConsumer : public ASTConsumer {
 private:
@@ -109,13 +143,90 @@ public:
       overwriteChangedFiles(Context, Visitor1.getReplacements());
     }
 };
+class DezombiefyAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) override {
+    return llvm::make_unique<nodecpp::DezombifyConsumer>();
+  }
+};
 
-class DezombiefySequenceConsumer : public ASTConsumer {
+class SequenceConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      dezombiefySequenceCheckAndFix(Context, Context.getTranslationUnitDecl());
+      dezombiefySequenceCheckAndFix(Context,
+        Context.getTranslationUnitDecl(), true);
     }
 };
+
+class SequenceAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) override {
+    return llvm::make_unique<nodecpp::SequenceConsumer>();
+  }
+};
+
+
+class ExpandRecompileAction : public PreprocessorFrontendAction {
+  std::string Filename;
+public:
+
+  ExpandRecompileAction(const std::string& Filename)
+    : Filename(Filename) {}
+
+protected:
+  void ExecuteAction() override {}
+
+
+  bool BeginInvocation(CompilerInstance &CI) override {
+
+    const FrontendOptions &FEOpts = CI.getFrontendOpts();
+    auto &File = FEOpts.Inputs[0];
+    if(Filename.empty())
+      Filename = rewriteFilename(File.getFile(), ".instrument");
+
+    error_code EC;
+    unique_ptr<raw_fd_ostream> OutputStream;
+    OutputStream.reset(new raw_fd_ostream(Filename, EC, sys::fs::F_None));
+    if (EC) {
+      CI.getDiagnostics().Report(
+        diag::err_fe_unable_to_open_output) << Filename << EC.message();
+      return false;
+    }
+
+    unique_ptr<FrontendAction> ExpandIncludes(new ExpandUserIncludesAction(OutputStream.get()));
+    if(!executeAction(ExpandIncludes.get(),  CI, File))
+      return false;
+
+    OutputStream->close();
+    OutputStream = nullptr;
+
+    PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+    PPOpts.RemappedFiles.emplace_back(File.getFile().str(), Filename);
+    PPOpts.RemappedFilesKeepOriginalName = false;
+
+    std::unique_ptr<FrontendAction> FixSequence(new SequenceAction());
+    if(!executeAction(FixSequence.get(), CI, File))
+      return false;
+
+    unique_ptr<FrontendAction> Dezombiefy(new DezombiefyAction());
+    if(!executeAction(Dezombiefy.get(), CI, File))
+      return false;
+    
+
+    return true;
+  }
+
+};
+
+class DezombiefyActionFactory : public FrontendActionFactory {
+public:
+  FrontendAction *create() override {
+    return new ExpandRecompileAction(OutputFilename);
+  }
+};
+
 
 } //namespace nodecpp
 
@@ -133,23 +244,8 @@ int main(int argc, const char **argv) {
 
   ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
-  class DezombiefyAction : public ASTFrontendAction {
-  protected:
-    std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                  StringRef InFile) override {
-      return llvm::make_unique<nodecpp::DezombiefySequenceConsumer>();
-    }
-  };
 
-  class DezombiefyActionFactory : public FrontendActionFactory {
-  public:
-    FrontendAction *create() override {
-      std::unique_ptr<FrontendAction> WrappedAction(new DezombiefyAction());
-      return new nodecpp::ExpandRecompileAction(std::move(WrappedAction), OutputFilename);
-    }
-  };
-
-  DezombiefyActionFactory Factory;
+  nodecpp::DezombiefyActionFactory Factory;
 
 //  auto FrontendFactory = newFrontendActionFactory<nodecpp::ExpandRecompileAction>();
 

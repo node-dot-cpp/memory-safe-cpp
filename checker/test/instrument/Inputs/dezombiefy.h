@@ -51,77 +51,77 @@ const T& dezombiefy(const T& x) {
 }
 
 template<class T1, class T2>
-auto mul(T1&& t1, T2&& t2) {
+auto star(T1&& t1, T2&& t2) {
 	return t1 * t2;
 }
 
 template<class T1, class T2>
-auto div(T1&& t1, T2&& t2) {
+auto slash(T1&& t1, T2&& t2) {
 	return t1 / t2;
 }
 
 template<class T1, class T2>
-auto rem(T1&& t1, T2&& t2) {
+auto percent(T1&& t1, T2&& t2) {
 	return t1 % t2;
 }
 
 template<class T1, class T2>
-auto add(T1&& t1, T2&& t2) {
+auto plus(T1&& t1, T2&& t2) {
 	return t1 + t2;
 }
 
 template<class T1, class T2>
-auto sub(T1&& t1, T2&& t2) {
+auto minus(T1&& t1, T2&& t2) {
 	return t1 - t2;
 }
 /// logical
 
 template<class T1, class T2>
-auto lt(T1&& t1, T2&& t2) {
+auto less(T1&& t1, T2&& t2) {
 	return t1 < t2;
 }
 
 template<class T1, class T2>
-auto gt(T1&& t1, T2&& t2) {
+auto greater(T1&& t1, T2&& t2) {
 	return t1 > t2;
 }
 
 template<class T1, class T2>
-auto le(T1&& t1, T2&& t2) {
+auto lessequal(T1&& t1, T2&& t2) {
 	return t1 <= t2;
 }
 template<class T1, class T2>
-auto ge(T1&& t1, T2&& t2) {
+auto greaterequal(T1&& t1, T2&& t2) {
 	return t1 >= t2;
 }
 
 template<class T1, class T2>
-auto eq(T1&& t1, T2&& t2) {
+auto equalequal(T1&& t1, T2&& t2) {
 	return t1 == t2;
 }
 
 template<class T1, class T2>
-auto ne(T1&& t1, T2&& t2) {
+auto exclaimequal(T1&& t1, T2&& t2) {
 	return t1 != t2;
 }
 
 // template<class T1, class T2>
-// auto cmp(T1&& t1, T2&& t2) {
+// auto spaceship(T1&& t1, T2&& t2) {
 // 	return t1 <=> t2;
 // }
 
 template<class T1, class T2>
-auto and(T1&& t1, T2&& t2) {
+auto amp(T1&& t1, T2&& t2) {
 	return t1 & t2;
 }
 
 template<class T1, class T2>
-auto xor(T1&& t1, T2&& t2) {
+auto caret(T1&& t1, T2&& t2) {
 	return t1 ^ t2;
 }
 
 template<class T1, class T2>
-auto or(T1&& t1, T2&& t2) {
+auto pipe(T1&& t1, T2&& t2) {
 	return t1 | t2;
 }
 

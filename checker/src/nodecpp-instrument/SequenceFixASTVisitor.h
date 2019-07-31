@@ -70,7 +70,7 @@ class SequenceFixASTVisitor
 
   /// function names usually overlap, we keep them in order
   /// here, and merge them as needed
-  void addReplacement2(const Replacement& R) {
+  void addConflictingReplacement(const Replacement& R) {
     if(!MoreReplacements.empty()) {
       auto &Last = MoreReplacements.back();
       if(Last.getFilePath() == R.getFilePath() &&
@@ -93,7 +93,41 @@ class SequenceFixASTVisitor
     MoreReplacements.push_back(R);
   }
 
+  void refactorOperator(SourceRange Sr, SourceLocation OpLoc,
+    unsigned OpSize, StringRef Text) {
+
+    SmallString<24> Ss;
+    Ss += "nodecpp::safememory::";
+    Ss += Text;
+    Ss += "(";
+    Replacement R0(Context.getSourceManager(), Sr.getBegin(), 0, Ss);
+
+    Replacement R1(Context.getSourceManager(), OpLoc, OpSize, ",");
+
+    Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
+    // move one char to the left, to insert after EndLoc
+    Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, ")");
+
+    /// the operator and the closing paren are never conflicting.
+    addConflictingReplacement(R0);
+    addReplacement(R1);
+    addReplacement(R3);
+  }
+
+  void refactorBinaryOperator(BinaryOperator *E, unsigned OpSize, StringRef Text) {
+    refactorOperator(E->getSourceRange(), E->getOperatorLoc(), OpSize, Text);
+  }
+
+  void refactorOverloadedOperator(CXXOperatorCallExpr *E, unsigned OpSize, StringRef Text) {
+    refactorOperator(E->getSourceRange(), E->getOperatorLoc(), OpSize, Text);
+  }
+
 public:
+
+  explicit SequenceFixASTVisitor(clang::ASTContext &Context):
+    Base(Context), Context(Context) {}
+
+
   auto& finishReplacements() { 
     
     for(auto& Each : MoreReplacements) {
@@ -102,105 +136,116 @@ public:
     return FileReplacements;
   }
 
-  explicit SequenceFixASTVisitor(clang::ASTContext &Context):
-    Base(Context), Context(Context) {}
-
-
-  void refactorBinaryOperator(BinaryOperator *E, StringRef Text) {
-
-    
-    SmallString<24> Ss;
-    Ss += "nodecpp::safememory::";
-    Ss += Text;
-    Ss += "(";
-    Replacement R0(Context.getSourceManager(), E->getBeginLoc(), 0, Ss);
-
-    size_t Sz = E->getOpcodeStr().size();
-    Replacement R1(Context.getSourceManager(), E->getOperatorLoc(), Sz, ",");
-
-    Replacement R2(Context.getSourceManager(), E->getEndLoc(), 0, ")");
-    // move one char to the left, to insert after EndLoc
-    Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, ")");
-
-    /// the operator and the closing paren are never conflicting.
-    addReplacement2(R0);
-    addReplacement(R1);
-    addReplacement(R3);
-  }
-
   void VisitBinaryOperator(BinaryOperator *E) {
+
     switch (E->getOpcode()) {
-      case BO_PtrMemD:
-      case BO_PtrMemI:
-        break;
       case BO_Mul:
-        refactorBinaryOperator(E, "mul");
+        refactorBinaryOperator(E, 1, "star");
         break;
       case BO_Div:
-        refactorBinaryOperator(E, "div");
+        refactorBinaryOperator(E, 1, "slash");
         break;
       case BO_Rem:
-        refactorBinaryOperator(E, "rem");
+        refactorBinaryOperator(E, 1, "percent");
         break;
       case BO_Add:
-        refactorBinaryOperator(E, "add");
+        refactorBinaryOperator(E, 1, "plus");
         break;
       case BO_Sub:
-        refactorBinaryOperator(E, "sub");
-        break;
-      case BO_Shl:
-      case BO_Shr:
+        refactorBinaryOperator(E, 1, "minus");
         break;
       case BO_LT:
-        refactorBinaryOperator(E, "lt");
+        refactorBinaryOperator(E, 1, "less");
         break;
       case BO_GT:
-        refactorBinaryOperator(E, "gt");
+        refactorBinaryOperator(E, 1, "greater");
         break;
       case BO_LE:
-        refactorBinaryOperator(E, "le");
+        refactorBinaryOperator(E, 2, "lessequal");
         break;
       case BO_GE:
-        refactorBinaryOperator(E, "ge");
+        refactorBinaryOperator(E, 2, "greaterequal");
         break;
       case BO_EQ:
-        refactorBinaryOperator(E, "eq");
+        refactorBinaryOperator(E, 2, "equalequal");
         break;
       case BO_NE:
-        refactorBinaryOperator(E, "ne");
+        refactorBinaryOperator(E, 2, "exclaimequal");
         break;
-
       case BO_Cmp:
-        refactorBinaryOperator(E, "cmp");
+        refactorBinaryOperator(E, 3, "spaceship");
         break;
       case BO_And:
-        refactorBinaryOperator(E, "and");
+        refactorBinaryOperator(E, 1, "amp");
         break;
       case BO_Xor:
-        refactorBinaryOperator(E, "xor");
+        refactorBinaryOperator(E, 1, "caret");
         break;
       case BO_Or :
-        refactorBinaryOperator(E, "or");
+        refactorBinaryOperator(E, 1, "pipe");
         break;
-      case BO_LAnd:
-      case BO_LOr :
-      case BO_Assign:
-      case BO_MulAssign:
-      case BO_DivAssign:
-      case BO_RemAssign:
-      case BO_AddAssign:
-      case BO_SubAssign:
-      case BO_ShlAssign:
-      case BO_ShrAssign:
-      case BO_AndAssign:
-      case BO_OrAssign:
-      case BO_XorAssign:
-      case BO_Comma:
+      default:
         break;
     }
 
     Base::VisitBinaryOperator(E);
   }
+
+  void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+
+    switch (E->getOperator()) {
+      case OO_Plus:
+        refactorOverloadedOperator(E, 1, "plus");
+        break;
+      case OO_Minus:
+        refactorOverloadedOperator(E, 1, "minus");
+        break;
+      case OO_Star:
+        refactorOverloadedOperator(E, 1, "star");
+        break;
+      case OO_Slash:
+        refactorOverloadedOperator(E, 1, "slash");
+        break;
+      case OO_Percent:
+        refactorOverloadedOperator(E, 1, "percent");
+        break;
+      case OO_Caret:
+        refactorOverloadedOperator(E, 1, "caret");
+        break;
+      case OO_Amp:
+        refactorOverloadedOperator(E, 1, "amp");
+        break;
+      case OO_Pipe:
+        refactorOverloadedOperator(E, 1, "pipe");
+        break;
+      case OO_Less:
+        refactorOverloadedOperator(E, 1, "less");
+        break;
+      case OO_Greater:
+        refactorOverloadedOperator(E, 1, "greater");
+        break;
+      case OO_EqualEqual:
+        refactorOverloadedOperator(E, 2, "equalequal");
+        break;
+      case OO_ExclaimEqual:
+        refactorOverloadedOperator(E, 2, "exclaimequal");
+        break;
+      case OO_LessEqual:
+        refactorOverloadedOperator(E, 2, "lessequal");
+        break;
+      case OO_GreaterEqual:
+        refactorOverloadedOperator(E, 2, "greaterequal");
+        break;
+      case OO_Spaceship:
+        refactorOverloadedOperator(E, 3, "spaceship");
+        break;
+      default:
+        break;
+    }
+
+    Base::VisitCXXOperatorCallExpr(E);
+  }
+
 };
 
 } // namespace nodecpp

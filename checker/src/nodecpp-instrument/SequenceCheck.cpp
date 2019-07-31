@@ -47,6 +47,7 @@ class SequenceCheck2ASTVisitor
   using Base = clang::RecursiveASTVisitor<SequenceCheck2ASTVisitor>;
 
   ASTContext &Context;
+  bool FixAll;
 
   /// Fixes to apply.
   Replacements FileReplacements;
@@ -62,8 +63,8 @@ class SequenceCheck2ASTVisitor
 
 
 public:
-  explicit SequenceCheck2ASTVisitor(ASTContext &Context):
-    Context(Context) {}
+  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
+    Context(Context), FixAll(FixAll) {}
 
   const auto& getReplacements() const { return FileReplacements; }
 
@@ -83,14 +84,14 @@ public:
 //      E->dumpColor();
       SequenceCheckASTVisitor V(Context, false);
       V.Visit(E);
-//      if(V.foundIssues()) {
+      if(FixAll || V.foundIssues()) {
         SequenceFixASTVisitor V2(Context);
         V2.Visit(E);
         for(auto& Each : V2.finishReplacements())
           addReplacement(Each);
 
 //        overwriteChangedFiles(Context, V2.getReplacements());
-//      }
+     }
 
       return true;
     }
@@ -128,9 +129,9 @@ void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &F
   }
 }
 
-void dezombiefySequenceCheckAndFix(ASTContext &Context, TranslationUnitDecl *D) {
+void dezombiefySequenceCheckAndFix(ASTContext &Context, TranslationUnitDecl *D, bool FixAll) {
       
-  SequenceCheck2ASTVisitor Visitor1(Context);
+  SequenceCheck2ASTVisitor Visitor1(Context, FixAll);
 
   Visitor1.TraverseDecl(D);
 

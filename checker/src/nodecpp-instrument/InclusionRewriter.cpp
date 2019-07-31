@@ -20,8 +20,9 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "ExpandUserIncludesAction.h"
+#include "InclusionRewriter.h"
 #include "clang/Basic/SourceManager.h"
+#include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/PreprocessorOutputOptions.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Pragma.h"
@@ -31,7 +32,7 @@
 
 using namespace clang;
 
-namespace {
+namespace nodecpp {
 
 class InclusionRewriter : public PPCallbacks {
   /// Information about which #includes were actually performed,
@@ -105,8 +106,6 @@ private:
   const Module *FindEnteredModule(SourceLocation Loc) const;
   StringRef NextIdentifierName(Lexer &RawLex, Token &RawToken);
 };
-
-}  // end anonymous namespace
 
 /// Initializes an InclusionRewriter with a \p PP source and \p OS destination.
 InclusionRewriter::InclusionRewriter(Preprocessor &PP, raw_ostream &OS,
@@ -603,7 +602,7 @@ void InclusionRewriter::Process(FileID FileId,
 }
 
 /// InclusionRewriterInInput - Implement -frewrite-includes mode.
-void nodecpp::RewriteUserIncludesInInput(Preprocessor &PP, raw_ostream *OS,
+void RewriteUserIncludesInInput(Preprocessor &PP, raw_ostream *OS,
                                    const PreprocessorOutputOptions &Opts) {
   SourceManager &SM = PP.getSourceManager();
   InclusionRewriter *Rewrite = new InclusionRewriter(
@@ -637,3 +636,25 @@ void nodecpp::RewriteUserIncludesInInput(Preprocessor &PP, raw_ostream *OS,
   Rewrite->Process(SM.getMainFileID(), SrcMgr::C_User, nullptr);
   OS->flush();
 }
+
+
+bool ExpandUserIncludesAction::BeginSourceFileAction(CompilerInstance &CI) {
+
+  if (!OutputStream) {
+      return false;
+  }
+
+  return true;
+}
+
+void ExpandUserIncludesAction::ExecuteAction() {
+  
+  CompilerInstance &CI = getCompilerInstance();
+
+  CI.getPreprocessorOutputOpts().UseLineDirectives = 1;
+
+  RewriteUserIncludesInInput(CI.getPreprocessor(), OutputStream,
+                           CI.getPreprocessorOutputOpts());
+}
+
+}  // end anonymous namespace
