@@ -1222,7 +1222,8 @@ void temptest()
 
 int main( int argc, char * argv[] )
 {
-	::nodecpp::log::touch_log();
+	::nodecpp::log::init_log();
+
 	interceptNewDeleteOperators( true );
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
