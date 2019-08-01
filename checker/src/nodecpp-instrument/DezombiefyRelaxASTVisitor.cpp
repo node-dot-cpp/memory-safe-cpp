@@ -60,7 +60,7 @@ Optional<FixItHint> DzHelper::makeFixIfNeeded(const Stmt* St) {
 
 bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
   
-  D->dumpColor();
+//  D->dumpColor();
 
   // For code in dependent contexts, we'll do this at instantiation time.
   if (D->isDependentContext())
@@ -88,7 +88,7 @@ bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
   if (CFG *cfg = AC.getCFG()) {
     DezombiefyRelaxAnalysisStats stats;
 
-    cfg->dump(Context.getLangOpts(), true);
+//    cfg->dump(Context.getLangOpts(), true);
 
     runDezombiefyRelaxAnalysis(D, cfg, stats);
 
@@ -110,3 +110,9 @@ bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
   return RecursiveASTVisitor<DezombiefyRelaxASTVisitor>::VisitFunctionDecl(D);
 }
 
+void nodecpp::dezombiefyRelax(clang::ASTContext &Context) {
+
+  DzHelper Data;
+  DezombiefyRelaxASTVisitor VisitorRelax(Context, Data);
+  VisitorRelax.TraverseDecl(Context.getTranslationUnitDecl());
+}

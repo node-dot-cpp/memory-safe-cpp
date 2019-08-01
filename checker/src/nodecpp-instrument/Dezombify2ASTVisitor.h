@@ -28,8 +28,6 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 
-#include "DezombiefyRelaxASTVisitor.h"
-
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -41,29 +39,22 @@
 
 namespace nodecpp {
 
+using namespace std;
+using namespace llvm;
+using namespace clang;
+using namespace clang::tooling;
+
 class Dezombify2ASTVisitor
-  : public clang::RecursiveASTVisitor<Dezombify2ASTVisitor> {
+  : public RecursiveASTVisitor<Dezombify2ASTVisitor> {
 
-  clang::ASTContext &Context;
-  DzHelper &DzData;
+  using Base = RecursiveASTVisitor<Dezombify2ASTVisitor>;
 
-  /// Fixes to apply, grouped by file path.
-  llvm::StringMap<clang::tooling::Replacements> FileReplacements;
+  ASTContext &Context;
+  /// Fixes to apply.
+  Replacements FileReplacements;
 
-
-  void addFix(const clang::FixItHint& FixIt) {
-
-    clang::CharSourceRange Range = FixIt.RemoveRange;
-    assert(Range.getBegin().isValid() && Range.getEnd().isValid() &&
-            "Invalid range in the fix-it hint.");
-    assert(Range.getBegin().isFileID() && Range.getEnd().isFileID() &&
-            "Only file locations supported in fix-it hints.");
-
-    clang::tooling::Replacement Replacement(Context.getSourceManager(), Range,
-                                      FixIt.CodeToInsert);
-    llvm::Error Err = FileReplacements[Replacement.getFilePath()].add(Replacement);
-    // FIXME: better error handling (at least, don't let other replacements be
-    // applied).
+  void addReplacement(const Replacement& Replacement) {
+    auto Err = FileReplacements.add(Replacement);
     if (Err) {
       llvm::errs() << "Fix conflicts with existing fix! "
                     << llvm::toString(std::move(Err)) << "\n";
@@ -74,44 +65,40 @@ class Dezombify2ASTVisitor
 public:
   const auto& getReplacements() const { return FileReplacements; }
 
-  explicit Dezombify2ASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
-    Context(Context), DzData(DzData) {}
+  explicit Dezombify2ASTVisitor(ASTContext &Context):
+    Context(Context) {}
 
-  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
+  bool VisitCXXThisExpr(CXXThisExpr *E) {
 
     if(E->needsDezombiefyInstrumentation()) {
       if(E->isImplicit()) {
-        std::string fix = "nodecpp::safememory::dezombiefy( this )->";
-        addFix(clang::FixItHint::CreateInsertion(E->getBeginLoc(), fix));
+        const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
+        Replacement R(Context.getSourceManager(), E->getBeginLoc(), 0, Fix);
+        addReplacement(R);
       }
       else {
-        std::string fix = "nodecpp::safememory::dezombiefy( this )";
-        addFix(clang::FixItHint::CreateReplacement(E->getSourceRange(), fix));
+        const char *Fix = "nodecpp::safememory::dezombiefy( this )";
+        Replacement R(Context.getSourceManager(), E, Fix);
+        addReplacement(R);
       }
 
     }   
-    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitCXXThisExpr(E);
+    return Base::VisitCXXThisExpr(E);
   }
 
 
-  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
+  bool VisitDeclRefExpr(DeclRefExpr *E) {
     if(E->needsDezombiefyInstrumentation()) {
 
-      std::string fix = "nodecpp::safememory::dezombiefy( " + E->getNameInfo().getAsString() + " )";
-      addFix(clang::FixItHint::CreateReplacement(E->getSourceRange(), fix));
+      SmallString<64> Fix;
+      Fix += "nodecpp::safememory::dezombiefy( ";
+      Fix += E->getNameInfo().getAsString();
+      Fix += " )";
 
+      Replacement R(Context.getSourceManager(), E, Fix);
+      addReplacement(R);
     }   
-    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitDeclRefExpr(E);
-  }
-
-
-  bool VisitStmt(clang::Stmt *St) {
-
-    // auto Fix = DzData.makeFixIfNeeded(St);
-    // if(Fix.hasValue())
-    //   addFix(Fix.getValue());
-
-    return clang::RecursiveASTVisitor<Dezombify2ASTVisitor>::VisitStmt(St);
+    return Base::VisitDeclRefExpr(E);
   }
 };
 

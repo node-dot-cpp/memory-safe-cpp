@@ -34,7 +34,7 @@
 namespace nodecpp {
 
 inline
-bool IsDezombiefyCandidate(clang::DeclRefExpr *E) {
+bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
   if(auto D = E->getDecl()) {
     auto Qt = D->getType().getCanonicalType();
     if(Qt->isReferenceType() || Qt->isPointerType()) {

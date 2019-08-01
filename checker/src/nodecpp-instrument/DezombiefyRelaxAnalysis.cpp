@@ -239,7 +239,7 @@ public:
   ScratchCalculator(Scratch& InOut): InOut(InOut) {}
 
   void VisitCallExpr(CallExpr *Ce) {
-    Ce->dumpColor();
+//    Ce->dumpColor();
     if (Decl *Callee = Ce->getCalleeDecl()) {
       InOut.clear();
     }
@@ -277,10 +277,6 @@ public:
 } // namespace
 
 
-//------------------------------------------------------------------------====//
-// High-level "driver" logic for uninitialized values analysis.
-//====------------------------------------------------------------------------//
-
 static void runOnBlock(const CFGBlock *block,
                        Scratch &InOut) {
 
@@ -289,7 +285,7 @@ static void runOnBlock(const CFGBlock *block,
     if (Optional<CFGStmt> cs = I.getAs<CFGStmt>()) {
 
       Sc.Visit(const_cast<Stmt *>(cs->getStmt()));
-      cs->getStmt()->dumpColor();
+//      cs->getStmt()->dumpColor();
     }
   }
 }

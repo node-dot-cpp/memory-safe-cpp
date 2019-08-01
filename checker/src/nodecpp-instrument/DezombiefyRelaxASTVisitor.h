@@ -88,6 +88,7 @@ public:
 
 };
 
+void dezombiefyRelax(clang::ASTContext &Context);
 
 } // namespace nodecpp
 

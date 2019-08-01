@@ -254,7 +254,7 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   }
 
   void VisitDeclRefExpr(DeclRefExpr *E) {
-    if(IsDezombiefyCandidate(E))
+    if(isDezombiefyCandidate(E))
       notePotencialZombie(E);
   }
 
