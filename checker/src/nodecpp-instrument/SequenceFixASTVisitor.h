@@ -140,49 +140,49 @@ public:
 
     switch (E->getOpcode()) {
       case BO_Mul:
-        refactorBinaryOperator(E, 1, "star");
+        refactorBinaryOperator(E, 1, "mul");
         break;
       case BO_Div:
-        refactorBinaryOperator(E, 1, "slash");
+        refactorBinaryOperator(E, 1, "div");
         break;
       case BO_Rem:
-        refactorBinaryOperator(E, 1, "percent");
+        refactorBinaryOperator(E, 1, "rem");
         break;
       case BO_Add:
-        refactorBinaryOperator(E, 1, "plus");
+        refactorBinaryOperator(E, 1, "add");
         break;
       case BO_Sub:
-        refactorBinaryOperator(E, 1, "minus");
+        refactorBinaryOperator(E, 1, "sub");
         break;
       case BO_LT:
-        refactorBinaryOperator(E, 1, "less");
+        refactorBinaryOperator(E, 1, "lt");
         break;
       case BO_GT:
-        refactorBinaryOperator(E, 1, "greater");
+        refactorBinaryOperator(E, 1, "gt");
         break;
       case BO_LE:
-        refactorBinaryOperator(E, 2, "lessequal");
+        refactorBinaryOperator(E, 2, "le");
         break;
       case BO_GE:
-        refactorBinaryOperator(E, 2, "greaterequal");
+        refactorBinaryOperator(E, 2, "ge");
         break;
       case BO_EQ:
-        refactorBinaryOperator(E, 2, "equalequal");
+        refactorBinaryOperator(E, 2, "eq");
         break;
       case BO_NE:
-        refactorBinaryOperator(E, 2, "exclaimequal");
+        refactorBinaryOperator(E, 2, "ne");
         break;
       case BO_Cmp:
-        refactorBinaryOperator(E, 3, "spaceship");
+        refactorBinaryOperator(E, 3, "cmp");
         break;
       case BO_And:
-        refactorBinaryOperator(E, 1, "amp");
+        refactorBinaryOperator(E, 1, "and");
         break;
       case BO_Xor:
-        refactorBinaryOperator(E, 1, "caret");
+        refactorBinaryOperator(E, 1, "xor");
         break;
       case BO_Or :
-        refactorBinaryOperator(E, 1, "pipe");
+        refactorBinaryOperator(E, 1, "or");
         break;
       default:
         break;
@@ -195,49 +195,49 @@ public:
 
     switch (E->getOperator()) {
       case OO_Plus:
-        refactorOverloadedOperator(E, 1, "plus");
+        refactorOverloadedOperator(E, 1, "add");
         break;
       case OO_Minus:
-        refactorOverloadedOperator(E, 1, "minus");
+        refactorOverloadedOperator(E, 1, "sub");
         break;
       case OO_Star:
-        refactorOverloadedOperator(E, 1, "star");
+        refactorOverloadedOperator(E, 1, "mul");
         break;
       case OO_Slash:
-        refactorOverloadedOperator(E, 1, "slash");
+        refactorOverloadedOperator(E, 1, "div");
         break;
       case OO_Percent:
-        refactorOverloadedOperator(E, 1, "percent");
+        refactorOverloadedOperator(E, 1, "rem");
         break;
       case OO_Caret:
-        refactorOverloadedOperator(E, 1, "caret");
+        refactorOverloadedOperator(E, 1, "xor");
         break;
       case OO_Amp:
-        refactorOverloadedOperator(E, 1, "amp");
+        refactorOverloadedOperator(E, 1, "and");
         break;
       case OO_Pipe:
-        refactorOverloadedOperator(E, 1, "pipe");
+        refactorOverloadedOperator(E, 1, "or");
         break;
       case OO_Less:
-        refactorOverloadedOperator(E, 1, "less");
+        refactorOverloadedOperator(E, 1, "lt");
         break;
       case OO_Greater:
-        refactorOverloadedOperator(E, 1, "greater");
+        refactorOverloadedOperator(E, 1, "gt");
         break;
       case OO_EqualEqual:
-        refactorOverloadedOperator(E, 2, "equalequal");
+        refactorOverloadedOperator(E, 2, "eq");
         break;
       case OO_ExclaimEqual:
-        refactorOverloadedOperator(E, 2, "exclaimequal");
+        refactorOverloadedOperator(E, 2, "ne");
         break;
       case OO_LessEqual:
-        refactorOverloadedOperator(E, 2, "lessequal");
+        refactorOverloadedOperator(E, 2, "le");
         break;
       case OO_GreaterEqual:
-        refactorOverloadedOperator(E, 2, "greaterequal");
+        refactorOverloadedOperator(E, 2, "ge");
         break;
       case OO_Spaceship:
-        refactorOverloadedOperator(E, 3, "spaceship");
+        refactorOverloadedOperator(E, 3, "cmp");
         break;
       default:
         break;
