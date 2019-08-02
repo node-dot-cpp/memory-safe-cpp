@@ -36,27 +36,13 @@
 namespace nodecpp {
 
 class Dezombify1ASTVisitor
-  : public clang::RecursiveASTVisitor<Dezombify1ASTVisitor> {
+  : public BaseASTVisitor<Dezombify1ASTVisitor> {
   
-  using Base = clang::RecursiveASTVisitor<Dezombify1ASTVisitor>;
-  clang::ASTContext &Context;
-
+  using Base = BaseASTVisitor<Dezombify1ASTVisitor>;
 public:
-  bool shouldVisitTemplateInstantiations() const { return true; }
 
   explicit Dezombify1ASTVisitor(clang::ASTContext &Context):
-    Context(Context) {}
-
-  bool TraverseDecl(clang::Decl *DeclNode) {
-    if (!DeclNode)
-      return true;
-
-    //mb: we don't traverse decls in system-headers
-    if(isInSystemHeader(Context, DeclNode))
-      return true;
-
-    return Base::TraverseDecl(DeclNode);
-  }
+    Base(Context) {}
 
   bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
     E->setDezombiefyCandidate();

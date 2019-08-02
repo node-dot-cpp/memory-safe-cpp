@@ -28,6 +28,8 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 
+#include "DezombiefyHelper.h"
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -45,11 +47,10 @@ using namespace clang;
 using namespace clang::tooling;
 
 class Dezombify2ASTVisitor
-  : public RecursiveASTVisitor<Dezombify2ASTVisitor> {
+  : public BaseASTVisitor<Dezombify2ASTVisitor> {
 
-  using Base = RecursiveASTVisitor<Dezombify2ASTVisitor>;
+  using Base = BaseASTVisitor<Dezombify2ASTVisitor>;
 
-  ASTContext &Context;
   /// Fixes to apply.
   Replacements FileReplacements;
   
@@ -71,10 +72,8 @@ class Dezombify2ASTVisitor
   }
 
 public:
-  bool shouldVisitTemplateInstantiations() const { return true; }
-  
   explicit Dezombify2ASTVisitor(ASTContext &Context):
-    Context(Context) {}
+    Base(Context) {}
 
   auto& finishReplacements() { 
     

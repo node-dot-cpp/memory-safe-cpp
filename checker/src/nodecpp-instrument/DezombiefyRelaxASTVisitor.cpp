@@ -107,7 +107,7 @@ bool DezombiefyRelaxASTVisitor::VisitFunctionDecl(FunctionDecl *D) {
 
 
 
-  return RecursiveASTVisitor<DezombiefyRelaxASTVisitor>::VisitFunctionDecl(D);
+  return Base::VisitFunctionDecl(D);
 }
 
 void nodecpp::dezombiefyRelax(clang::ASTContext &Context) {

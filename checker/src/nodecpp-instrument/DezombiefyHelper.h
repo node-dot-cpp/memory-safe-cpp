@@ -30,6 +30,8 @@
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/RecursiveASTVisitor.h"
+
 
 namespace nodecpp {
 
@@ -73,6 +75,31 @@ bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
   }
   return false;
 }
+
+template<class T>
+class BaseASTVisitor
+  : public clang::RecursiveASTVisitor<T> {
+  
+protected:
+  clang::ASTContext &Context;
+
+public:
+  bool shouldVisitTemplateInstantiations() const { return true; }
+
+  explicit BaseASTVisitor(clang::ASTContext &Context):
+    Context(Context) {}
+
+  bool TraverseDecl(clang::Decl *DeclNode) {
+    if (!DeclNode)
+      return true;
+
+    //mb: we don't traverse decls in system-headers
+    if(isInSystemHeader(Context, DeclNode))
+      return true;
+
+    return clang::RecursiveASTVisitor<T>::TraverseDecl(DeclNode);
+  }
+};
 
 } // namespace nodecpp
 

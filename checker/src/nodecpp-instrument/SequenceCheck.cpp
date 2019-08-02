@@ -42,17 +42,23 @@ using namespace std;
 
 
 class SequenceCheck2ASTVisitor
-  : public clang::RecursiveASTVisitor<SequenceCheck2ASTVisitor> {
+  : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
 
-  using Base = clang::RecursiveASTVisitor<SequenceCheck2ASTVisitor>;
+  using Base = BaseASTVisitor<SequenceCheck2ASTVisitor>;
 
-  ASTContext &Context;
   bool FixAll;
 
   /// Fixes to apply.
   Replacements FileReplacements;
+  /// To work with template instantiations,
+  /// we allow to apply several times the same replacement
+  set<Replacement> TmpReplacements;
 
-    void addReplacement(const Replacement& Replacement) {
+  void addTmpReplacement(const Replacement& Replacement) {
+    TmpReplacements.insert(Replacement);
+  }
+
+  void addReplacement(const Replacement& Replacement) {
     Error Err = FileReplacements.add(Replacement);
     if (Err) {
       errs() << "Fix conflicts with existing fix! "
@@ -61,20 +67,19 @@ class SequenceCheck2ASTVisitor
     }
   }
 
-
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
-    Context(Context), FixAll(FixAll) {}
+    Base(Context), FixAll(FixAll) {}
+
+  auto& finishReplacements() { 
+    
+    for(auto& Each : TmpReplacements) {
+      addReplacement(Each);
+    }
+    return FileReplacements;
+  }
 
   const auto& getReplacements() const { return FileReplacements; }
-
-  bool TraverseDecl(Decl* D) {
-    //mb: we don't traverse decls in system-headers
-    if(isInSystemHeader(Context, D))
-      return true;
-    else
-      return Base::TraverseDecl(D);
-  }
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
@@ -88,10 +93,8 @@ public:
         SequenceFixASTVisitor V2(Context);
         V2.Visit(E);
         for(auto& Each : V2.finishReplacements())
-          addReplacement(Each);
-
-//        overwriteChangedFiles(Context, V2.getReplacements());
-     }
+          addTmpReplacement(Each);
+      }
 
       return true;
     }

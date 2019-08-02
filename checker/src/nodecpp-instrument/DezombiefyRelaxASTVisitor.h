@@ -28,6 +28,7 @@
 #ifndef NODECPP_CHECKER_DEZOMBIEFYRELAXASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIEFYRELAXASTVISITOR_H
 
+#include "DezombiefyHelper.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -75,15 +76,14 @@ class DzHelper {
 };
 
 class DezombiefyRelaxASTVisitor
-  : public clang::RecursiveASTVisitor<DezombiefyRelaxASTVisitor> {
+  : public BaseASTVisitor<DezombiefyRelaxASTVisitor> {
 
-  clang::ASTContext &Context;
+  using Base = BaseASTVisitor<DezombiefyRelaxASTVisitor>;
+
   DzHelper &DzData;
 public:
-  bool shouldVisitTemplateInstantiations() const { return true; }
-
   explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
-    Context(Context), DzData(DzData) {}
+    Base(Context), DzData(DzData) {}
 
   bool VisitFunctionDecl(clang::FunctionDecl *D);
 
