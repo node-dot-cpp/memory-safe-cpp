@@ -35,20 +35,20 @@ T* dezombiefy(T* x) {
 	return x;
 }
 
-template<class T>
-const T* dezombiefy(const T* x) {
-	return x;
-}
+// template<class T>
+// const T* dezombiefy(const T* x) {
+// 	return x;
+// }
 
 template<class T>
 T& dezombiefy(T& x) {
 	return x;
 }
 
-template<class T>
-const T& dezombiefy(const T& x) {
-	return x;
-}
+// template<class T>
+// const T& dezombiefy(const T& x) {
+// 	return x;
+// }
 
 template<class T1, class T2>
 auto mul(T1&& t1, T2&& t2) {

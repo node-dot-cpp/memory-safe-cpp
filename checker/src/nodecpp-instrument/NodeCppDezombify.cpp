@@ -107,24 +107,27 @@ bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendI
 }
 
 class DezombifyConsumer : public ASTConsumer {
-private:
-//  CompilerInstance &CI;
-
 public:
-//    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
-
     void HandleTranslationUnit(ASTContext &Context) override {
 
       Dezombify1ASTVisitor Visitor1(Context);
       Dezombify2ASTVisitor Visitor2(Context);
-
+      Context.getTranslationUnitDecl()->dumpColor();
       Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
       dezombiefyRelax(Context);
       Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
 
-      overwriteChangedFiles(Context, Visitor2.getReplacements());
+      overwriteChangedFiles(Context, Visitor2.finishReplacements(), "nodecpp-dezombiefy");
     }
 };
+
+class SequenceConsumer : public ASTConsumer {
+public:
+    void HandleTranslationUnit(ASTContext &Context) override {
+      dezombiefySequenceCheckAndFix(Context, false);
+    }
+};
+
 
 class UnwrapperConsumer : public ASTConsumer {
 private:
@@ -139,7 +142,7 @@ public:
 
       Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
 
-      overwriteChangedFiles(Context, Visitor1.getReplacements());
+      overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unwrapper");
     }
 };
 class DezombiefyAction : public ASTFrontendAction {
@@ -148,14 +151,6 @@ protected:
                                                 StringRef InFile) override {
     return llvm::make_unique<nodecpp::DezombifyConsumer>();
   }
-};
-
-class SequenceConsumer : public ASTConsumer {
-public:
-    void HandleTranslationUnit(ASTContext &Context) override {
-      dezombiefySequenceCheckAndFix(Context,
-        Context.getTranslationUnitDecl(), true);
-    }
 };
 
 class SequenceAction : public ASTFrontendAction {

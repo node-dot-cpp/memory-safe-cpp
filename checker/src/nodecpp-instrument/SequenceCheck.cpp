@@ -101,7 +101,7 @@ public:
 };
 
 
-void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces) {
+void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces, StringRef Name) {
 
   if(!Replaces.empty()) {
     Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
@@ -111,31 +111,31 @@ void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces) {
       << Replaces.begin()->getFilePath() << "\n";
     }
     if (Rewrite.overwriteChangedFiles()) {
-      llvm::errs() << "nodecpp-instrument failed to apply suggested fixes to file " 
+      llvm::errs() << Name << " failed to apply suggested fixes to file " 
       << Replaces.begin()->getFilePath() << "\n";
     } else {
-      llvm::errs() << "nodecpp-instrument applied suggested fixes.\n";
+      llvm::errs() << Name << " applied suggested fixes.\n";
     }
   }
 }
 
 
-void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &FileReplacements) {
+void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &FileReplacements, StringRef Name) {
 
   if(!FileReplacements.empty()) {
     for (const auto &FileAndReplacements : FileReplacements) {
-      overwriteChangedFiles(Context, FileAndReplacements.second);
+      overwriteChangedFiles(Context, FileAndReplacements.second, Name);
     }
   }
 }
 
-void dezombiefySequenceCheckAndFix(ASTContext &Context, TranslationUnitDecl *D, bool FixAll) {
+void dezombiefySequenceCheckAndFix(ASTContext &Context, bool FixAll) {
       
   SequenceCheck2ASTVisitor Visitor1(Context, FixAll);
 
-  Visitor1.TraverseDecl(D);
+  Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
 
-  overwriteChangedFiles(Context, Visitor1.getReplacements());
+  overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unsequenced");
 }
 
 

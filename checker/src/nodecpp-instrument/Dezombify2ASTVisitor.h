@@ -52,6 +52,14 @@ class Dezombify2ASTVisitor
   ASTContext &Context;
   /// Fixes to apply.
   Replacements FileReplacements;
+  
+  /// To work with template instantiations,
+  /// we allow to apply several times the same replacement
+  set<Replacement> TmpReplacements;
+
+  void addTmpReplacement(const Replacement& Replacement) {
+    TmpReplacements.insert(Replacement);
+  }
 
   void addReplacement(const Replacement& Replacement) {
     auto Err = FileReplacements.add(Replacement);
@@ -63,10 +71,19 @@ class Dezombify2ASTVisitor
   }
 
 public:
-  const auto& getReplacements() const { return FileReplacements; }
-
+  bool shouldVisitTemplateInstantiations() const { return true; }
+  
   explicit Dezombify2ASTVisitor(ASTContext &Context):
     Context(Context) {}
+
+  auto& finishReplacements() { 
+    
+    for(auto& Each : TmpReplacements) {
+      addReplacement(Each);
+    }
+    return FileReplacements;
+  }
+
 
   bool VisitCXXThisExpr(CXXThisExpr *E) {
 
@@ -74,12 +91,12 @@ public:
       if(E->isImplicit()) {
         const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
         Replacement R(Context.getSourceManager(), E->getBeginLoc(), 0, Fix);
-        addReplacement(R);
+        addTmpReplacement(R);
       }
       else {
         const char *Fix = "nodecpp::safememory::dezombiefy( this )";
         Replacement R(Context.getSourceManager(), E, Fix);
-        addReplacement(R);
+        addTmpReplacement(R);
       }
 
     }   
@@ -96,7 +113,7 @@ public:
       Fix += " )";
 
       Replacement R(Context.getSourceManager(), E, Fix);
-      addReplacement(R);
+      addTmpReplacement(R);
     }   
     return Base::VisitDeclRefExpr(E);
   }

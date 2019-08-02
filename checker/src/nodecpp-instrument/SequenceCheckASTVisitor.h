@@ -237,10 +237,11 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
       return;
     }
 
-    //debug
+    //shouldn't reach here
     const Expr *P = getParentExpr(Context, E);
-    if(!P || !isa<MemberExpr>(P))
-        P->dumpColor();
+    P->dumpColor();
+    errs() << "Unexpected implicit 'this'!\n";
+    assert(false && "Unexpected implicit 'this'!");
   }
 
   void VisitMemberExpr(MemberExpr *E) {

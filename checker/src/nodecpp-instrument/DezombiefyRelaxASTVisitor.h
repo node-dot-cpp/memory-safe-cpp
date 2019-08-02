@@ -80,6 +80,7 @@ class DezombiefyRelaxASTVisitor
   clang::ASTContext &Context;
   DzHelper &DzData;
 public:
+  bool shouldVisitTemplateInstantiations() const { return true; }
 
   explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
     Context(Context), DzData(DzData) {}
