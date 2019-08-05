@@ -46,6 +46,62 @@ using namespace llvm;
 using namespace clang;
 using namespace clang::tooling;
 
+
+struct TemplateInstantiationReplacements {
+  Decl* FirstInstantiation = nullptr;
+  size_t Count = 0;
+  bool hasError = false;
+  set<Replacement> Reps;
+
+  void add(Decl* Inst, const set<Replacement> &InstReps) {
+    assert(Inst);
+    if(!FirstInstantiation) {
+      assert(Count == 0);
+      assert(Reps.empty());
+
+      FirstInstantiation = Inst;
+      ++Count;
+      Reps = InstReps;
+    }
+    else if(Reps == InstReps) {
+      ++Count;
+    }
+    else if(!hasError) {
+      llvm::errs() << 
+        "Dezombiefy on template instantiation conflicts with previous instantiation!\n";
+      FirstInstantiation->print(llvm::errs());
+      Inst->print(llvm::errs());
+      hasError = true;
+    }
+
+  }
+};
+
+struct TemplateInstantiationRiia {
+  using StoreType = map<FunctionTemplateDecl *, map<FunctionDecl *,set<Replacement>>>;
+  set<Replacement> Internal;
+  set<Replacement> &External;
+  StoreType &Store;
+  FunctionTemplateDecl *CurrentTempl;
+  FunctionDecl *CurrentInst;
+
+  TemplateInstantiationRiia(set<Replacement> &Previous,
+    StoreType &Store,
+    FunctionTemplateDecl *CurrentTempl, FunctionDecl *CurrentInst)
+    :External(Previous), Store(Store),
+    CurrentTempl(CurrentTempl), CurrentInst(CurrentInst) {
+    std::swap(External, Internal);
+  }
+
+  ~TemplateInstantiationRiia() {
+    if(!External.empty()) {
+      Store[CurrentTempl][CurrentInst] = External;
+    }
+    std::swap(Internal, External);
+  }
+};
+
+
 class Dezombify2ASTVisitor
   : public BaseASTVisitor<Dezombify2ASTVisitor> {
 
@@ -57,6 +113,9 @@ class Dezombify2ASTVisitor
   /// To work with template instantiations,
   /// we allow to apply several times the same replacement
   set<Replacement> TmpReplacements;
+
+  /// To work with template instantiations
+  map<FunctionTemplateDecl *, map<FunctionDecl *,set<Replacement>>> InstantiationsStore;
 
   void addTmpReplacement(const Replacement& Replacement) {
     TmpReplacements.insert(Replacement);
@@ -75,14 +134,91 @@ public:
   explicit Dezombify2ASTVisitor(ASTContext &Context):
     Base(Context) {}
 
+  static
+  pair<bool, set<Replacement>> verifyReplacements(FunctionTemplateDecl *D, const map<FunctionDecl *,set<Replacement>>& Reps) {
+    pair<FunctionDecl *, set<Replacement>> Prev{false, set<Replacement>()};
+    for(auto EachSpec : D->specializations()) {
+      for(auto EachRed : EachSpec->redecls()) {
+        if(EachRed->isTemplateInstantiation()) {
+          auto ThisReps = Reps.find(EachRed);
+          if(ThisReps == Reps.end()) {
+            llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+            return {false, set<Replacement>()};
+          }
+
+          if(Prev.first && Prev.second != ThisReps->second) {
+            llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+            return {false, set<Replacement>()};
+          }
+
+          assert(ThisReps->first);
+          if(!Prev.first) {
+            Prev = *ThisReps;
+          }
+        }
+      }
+    }
+    return {true, Prev.second};
+  }
+
   auto& finishReplacements() { 
     
-    for(auto& Each : TmpReplacements) {
-      addReplacement(Each);
+    llvm::errs() <<
+      "Dezombiefy finishReplacements!\n";
+    // for each template in InstantiationsStore,
+    // we must have a hit for each instantiation of such template
+    // and all instantiations must have the same set of Replacements
+    for(auto &EachTemp : InstantiationsStore) {
+      auto R = verifyReplacements(EachTemp.first, EachTemp.second);
+      if(R.first) {
+        for(auto &Each : R.second)
+          addReplacement(Each);
+      }
     }
+
+    for(auto &Each : TmpReplacements)
+      addReplacement(Each);
+
+
     return FileReplacements;
   }
 
+  // bool TraverseTemplateInstantiations(FunctionTemplateDecl *D) {
+  //   TemplateInstantiationRiia Riia(TmpReplacements,
+  //     InstantiationsStore, D, D);
+
+  //   return Base::TraverseTemplateInstantiations(D);
+  // }
+
+  // bool TraverseTemplateInstantiations(ClassTemplateDecl *D) {
+  //   TemplateInstantiationRiia Riia(TmpReplacements,
+  //     InstantiationsStore, D, D);
+
+  //   return Base::TraverseTemplateInstantiations(D);
+  // }
+
+  bool TraverseDecl(clang::Decl *D) {
+    if (!D)
+      return true;
+
+    //mb: we don't traverse decls in system-headers
+    if(isInSystemHeader(Context, D))
+      return true;
+
+    if(FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
+      if(F->isTemplateInstantiation()) {
+        TemplateInstantiationRiia Riia(TmpReplacements,
+          InstantiationsStore, F->getPrimaryTemplate(), F);
+
+        return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+      }
+      else if(F->getDescribedFunctionTemplate()) {
+        //mb: we don't traverse templates, only instantiations
+        return true;
+      }
+    }
+    return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+  }
 
   bool VisitCXXThisExpr(CXXThisExpr *E) {
 

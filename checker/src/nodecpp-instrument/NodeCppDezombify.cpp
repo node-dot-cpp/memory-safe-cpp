@@ -112,7 +112,7 @@ public:
 
       Dezombify1ASTVisitor Visitor1(Context);
       Dezombify2ASTVisitor Visitor2(Context);
-      Context.getTranslationUnitDecl()->dumpColor();
+//      Context.getTranslationUnitDecl()->dumpColor();
       Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
       dezombiefyRelax(Context);
       Visitor2.TraverseDecl(Context.getTranslationUnitDecl());

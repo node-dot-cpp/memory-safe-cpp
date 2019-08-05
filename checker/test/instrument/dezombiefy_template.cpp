@@ -46,7 +46,7 @@ void func(int* ip, int& ir) {
     templ_val_func(ir);
 // CHECK-FIXES: templ_val_func(nodecpp::safememory::dezombiefy( ir ));
 
-    templ_val_func2(int(5));
+    templ_val_func2<const int&>(int(5));
 
     templ_val_func3(ip);
 // CHECK-FIXES: templ_val_func3(nodecpp::safememory::dezombiefy( ip ));
