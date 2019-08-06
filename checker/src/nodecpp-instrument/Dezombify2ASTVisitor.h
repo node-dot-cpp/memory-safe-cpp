@@ -77,7 +77,7 @@ struct TemplateInstantiationReplacements {
   }
 };
 
-struct TemplateInstantiationRiia {
+struct TiRiia {
   using StoreType = map<FunctionTemplateDecl *, map<FunctionDecl *,set<Replacement>>>;
   set<Replacement> Internal;
   set<Replacement> &External;
@@ -85,15 +85,17 @@ struct TemplateInstantiationRiia {
   FunctionTemplateDecl *CurrentTempl;
   FunctionDecl *CurrentInst;
 
-  TemplateInstantiationRiia(set<Replacement> &Previous,
+  TiRiia(set<Replacement> &Previous,
     StoreType &Store,
     FunctionTemplateDecl *CurrentTempl, FunctionDecl *CurrentInst)
     :External(Previous), Store(Store),
     CurrentTempl(CurrentTempl), CurrentInst(CurrentInst) {
     std::swap(External, Internal);
+    assert(CurrentTempl);
+    assert(CurrentInst);
   }
 
-  ~TemplateInstantiationRiia() {
+  ~TiRiia() {
     if(!External.empty()) {
       Store[CurrentTempl][CurrentInst] = External;
     }
@@ -137,6 +139,8 @@ public:
   static
   pair<bool, set<Replacement>> verifyReplacements(FunctionTemplateDecl *D, const map<FunctionDecl *,set<Replacement>>& Reps) {
     pair<FunctionDecl *, set<Replacement>> Prev{false, set<Replacement>()};
+
+    assert(D);
     for(auto EachSpec : D->specializations()) {
       for(auto EachRed : EachSpec->redecls()) {
         if(EachRed->isTemplateInstantiation()) {
@@ -184,14 +188,14 @@ public:
   }
 
   // bool TraverseTemplateInstantiations(FunctionTemplateDecl *D) {
-  //   TemplateInstantiationRiia Riia(TmpReplacements,
+  //   TiRiia Riia(TmpReplacements,
   //     InstantiationsStore, D, D);
 
   //   return Base::TraverseTemplateInstantiations(D);
   // }
 
   // bool TraverseTemplateInstantiations(ClassTemplateDecl *D) {
-  //   TemplateInstantiationRiia Riia(TmpReplacements,
+  //   TiRiia Riia(TmpReplacements,
   //     InstantiationsStore, D, D);
 
   //   return Base::TraverseTemplateInstantiations(D);
@@ -207,16 +211,36 @@ public:
 
     if(FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
       if(F->isTemplateInstantiation()) {
-        TemplateInstantiationRiia Riia(TmpReplacements,
-          InstantiationsStore, F->getPrimaryTemplate(), F);
+        if(F->getPrimaryTemplate()) {
 
-        return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+          auto P = F->getPrimaryTemplate()->getTemplatedDecl();
+
+          TiRiia Riia(TmpReplacements,
+            InstantiationsStore, F->getPrimaryTemplate(), F);
+
+          return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+        }
+        else if(F->getInstantiatedFromMemberFunction()) {
+          F->dumpColor();
+          F->getInstantiatedFromMemberFunction()->dumpColor();
+          
+
+        }
+        else
+          F->dumpColor();
+
       }
       else if(F->getDescribedFunctionTemplate()) {
+//        F->dumpColor();
         //mb: we don't traverse templates, only instantiations
         return true;
       }
+//      F->dumpColor();
     }
+    else if(ClassTemplateSpecializationDecl *C = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+//      C->dumpColor();
+    }
+
     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
   }
 
@@ -241,6 +265,7 @@ public:
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
     if(E->needsDezombiefyInstrumentation()) {
+//      E->dumpColor();
 
       SmallString<64> Fix;
       Fix += "nodecpp::safememory::dezombiefy( ";
