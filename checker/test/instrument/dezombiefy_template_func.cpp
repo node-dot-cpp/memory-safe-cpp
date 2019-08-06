@@ -43,7 +43,7 @@ auto templRefAndPtr(T t) {
 // CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
 }
 
-//This template is specialized for reference
+//This template is has explicit specialization for ptr
 template <class T>
 auto templWithSpecialization(T t) {
     return t;
@@ -55,10 +55,11 @@ auto templWithSpecialization(TestObj* t) {
 // CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
 }
 
-void func(TestObj* ptr, TestObj val) {
+void func() {
 
-    templPtrAtDecl(ptr);
-// CHECK-FIXES: templPtrAtDecl(nodecpp::safememory::dezombiefy( ptr ));
+    TestObj val;
+
+    templPtrAtDecl(&val);
 
     templRefAtDecl(val);
 
@@ -66,16 +67,13 @@ void func(TestObj* ptr, TestObj val) {
 
     templRefOnly<const TestObj&>(val);
 
-    templPtrOnly(ptr);
-// CHECK-FIXES: templPtrOnly(nodecpp::safememory::dezombiefy( ptr ));
+    templPtrOnly(&val);
 
     templRefAndPtr<const TestObj&>(val);
-    templRefAndPtr(ptr);
-// CHECK-FIXES: templRefAndPtr(nodecpp::safememory::dezombiefy( ptr ));
+    templRefAndPtr(&val);
 
     templWithSpecialization(val);
-    templWithSpecialization(ptr);
-// CHECK-FIXES: templWithSpecialization(nodecpp::safememory::dezombiefy( ptr ));
+    templWithSpecialization(&val);
 }
 
 

@@ -78,16 +78,16 @@ struct TemplateInstantiationReplacements {
 };
 
 struct TiRiia {
-  using StoreType = map<FunctionTemplateDecl *, map<FunctionDecl *,set<Replacement>>>;
+  using StoreType = map<FunctionDecl *, map<FunctionDecl *,set<Replacement>>>;
   set<Replacement> Internal;
   set<Replacement> &External;
   StoreType &Store;
-  FunctionTemplateDecl *CurrentTempl;
+  FunctionDecl *CurrentTempl;
   FunctionDecl *CurrentInst;
 
   TiRiia(set<Replacement> &Previous,
     StoreType &Store,
-    FunctionTemplateDecl *CurrentTempl, FunctionDecl *CurrentInst)
+    FunctionDecl *CurrentTempl, FunctionDecl *CurrentInst)
     :External(Previous), Store(Store),
     CurrentTempl(CurrentTempl), CurrentInst(CurrentInst) {
     std::swap(External, Internal);
@@ -96,9 +96,7 @@ struct TiRiia {
   }
 
   ~TiRiia() {
-    if(!External.empty()) {
-      Store[CurrentTempl][CurrentInst] = External;
-    }
+    Store[CurrentTempl][CurrentInst] = External;
     std::swap(Internal, External);
   }
 };
@@ -117,7 +115,7 @@ class Dezombify2ASTVisitor
   set<Replacement> TmpReplacements;
 
   /// To work with template instantiations
-  map<FunctionTemplateDecl *, map<FunctionDecl *,set<Replacement>>> InstantiationsStore;
+  TiRiia::StoreType InstantiationsStore;
 
   void addTmpReplacement(const Replacement& Replacement) {
     TmpReplacements.insert(Replacement);
@@ -137,29 +135,22 @@ public:
     Base(Context) {}
 
   static
-  pair<bool, set<Replacement>> verifyReplacements(FunctionTemplateDecl *D, const map<FunctionDecl *,set<Replacement>>& Reps) {
+  pair<bool, set<Replacement>> verifyReplacements(FunctionDecl *D, 
+  const map<FunctionDecl *,set<Replacement>>& Insts) {
+    
     pair<FunctionDecl *, set<Replacement>> Prev{false, set<Replacement>()};
-
     assert(D);
-    for(auto EachSpec : D->specializations()) {
-      for(auto EachRed : EachSpec->redecls()) {
-        if(EachRed->isTemplateInstantiation()) {
-          auto ThisReps = Reps.find(EachRed);
-          if(ThisReps == Reps.end()) {
-            llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
-            return {false, set<Replacement>()};
-          }
 
-          if(Prev.first && Prev.second != ThisReps->second) {
-            llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
-            return {false, set<Replacement>()};
-          }
+    for(auto EachInst : Insts) {
+      assert(EachInst.first);
+      if(!Prev.first) {
+        Prev = EachInst;
+        continue;
+      }
 
-          assert(ThisReps->first);
-          if(!Prev.first) {
-            Prev = *ThisReps;
-          }
-        }
+      if(Prev.second != EachInst.second) {
+        llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+        return {false, set<Replacement>()};
       }
     }
     return {true, Prev.second};
@@ -213,17 +204,17 @@ public:
       if(F->isTemplateInstantiation()) {
         if(F->getPrimaryTemplate()) {
 
-          auto P = F->getPrimaryTemplate()->getTemplatedDecl();
-
-          TiRiia Riia(TmpReplacements,
-            InstantiationsStore, F->getPrimaryTemplate(), F);
+          auto T = F->getPrimaryTemplate()->getTemplatedDecl();
+          TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
 
           return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
         }
         else if(F->getInstantiatedFromMemberFunction()) {
-          F->dumpColor();
-          F->getInstantiatedFromMemberFunction()->dumpColor();
+
+          auto T = F->getInstantiatedFromMemberFunction();
+          TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
           
+          return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
 
         }
         else
@@ -237,9 +228,9 @@ public:
       }
 //      F->dumpColor();
     }
-    else if(ClassTemplateSpecializationDecl *C = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
-//      C->dumpColor();
-    }
+//     else if(ClassTemplateSpecializationDecl *C = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+// //      C->dumpColor();
+//     }
 
     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
   }
