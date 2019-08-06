@@ -136,35 +136,68 @@ public:
 
   static
   pair<bool, set<Replacement>> verifyReplacements(FunctionDecl *D, 
-  const map<FunctionDecl *,set<Replacement>>& Insts) {
+    const map<FunctionDecl *,set<Replacement>>& Insts,
+    DiagnosticsEngine &DE, const LangOptions &Lang) {
     
     pair<FunctionDecl *, set<Replacement>> Prev{false, set<Replacement>()};
     assert(D);
 
     for(auto EachInst : Insts) {
       assert(EachInst.first);
+
+      if(D == EachInst.first) {
+        //this is the template itself, not an instantitation.
+        //we just discard this one, as we care only about instantiations
+        continue;
+      }
+
       if(!Prev.first) {
         Prev = EachInst;
         continue;
       }
 
       if(Prev.second != EachInst.second) {
-        llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+
+        unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
+          DiagnosticIDs::Error,
+          "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
+
+        DE.Report(D->getLocation(), ID) << D->getName();
+
+        unsigned ID2 = DE.getDiagnosticIDs()->getCustomDiagID(
+          DiagnosticIDs::Note,
+          "Intantiated as '%0' here");
+
+
+        string Str;
+        raw_string_ostream Os(Str);
+        // llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+        // LangOptions L;
+        PrintingPolicy P(Lang);
+        Prev.first->getNameForDiagnostic(Os, P, true);
+
+        DE.Report(Prev.first->getPointOfInstantiation(), ID2) << Os.str();
+
+        Os.str().clear();
+
+        EachInst.first->getNameForDiagnostic(Os, P, true);
+        DE.Report(EachInst.first->getPointOfInstantiation(), ID2) << Os.str();
+
         return {false, set<Replacement>()};
       }
     }
     return {true, Prev.second};
   }
 
-  auto& finishReplacements() { 
+  auto& finishReplacements(DiagnosticsEngine &DE, const LangOptions &Lang) { 
     
     llvm::errs() <<
       "Dezombiefy finishReplacements!\n";
     // for each template in InstantiationsStore,
-    // we must have a hit for each instantiation of such template
+    // we must have check all instantiation of such template
     // and all instantiations must have the same set of Replacements
     for(auto &EachTemp : InstantiationsStore) {
-      auto R = verifyReplacements(EachTemp.first, EachTemp.second);
+      auto R = verifyReplacements(EachTemp.first, EachTemp.second, DE, Lang);
       if(R.first) {
         for(auto &Each : R.second)
           addReplacement(Each);
@@ -221,16 +254,7 @@ public:
           F->dumpColor();
 
       }
-      else if(F->getDescribedFunctionTemplate()) {
-//        F->dumpColor();
-        //mb: we don't traverse templates, only instantiations
-        return true;
-      }
-//      F->dumpColor();
     }
-//     else if(ClassTemplateSpecializationDecl *C = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
-// //      C->dumpColor();
-//     }
 
     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
   }

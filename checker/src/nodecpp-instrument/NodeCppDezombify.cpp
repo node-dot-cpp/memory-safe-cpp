@@ -107,8 +107,13 @@ bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendI
 }
 
 class DezombifyConsumer : public ASTConsumer {
+  
+  CompilerInstance &CI;
+
 public:
-    void HandleTranslationUnit(ASTContext &Context) override {
+  explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
+
+  void HandleTranslationUnit(ASTContext &Context) override {
 
       Dezombify1ASTVisitor Visitor1(Context);
       Dezombify2ASTVisitor Visitor2(Context);
@@ -117,7 +122,8 @@ public:
       dezombiefyRelax(Context);
       Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
 
-      overwriteChangedFiles(Context, Visitor2.finishReplacements(), "nodecpp-dezombiefy");
+      auto &Reps = Visitor2.finishReplacements(CI.getDiagnostics(), CI.getLangOpts());
+      overwriteChangedFiles(Context, Reps, "nodecpp-dezombiefy");
     }
 };
 
@@ -149,7 +155,7 @@ class DezombiefyAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::DezombifyConsumer>();
+    return llvm::make_unique<nodecpp::DezombifyConsumer>(CI);
   }
 };
 
