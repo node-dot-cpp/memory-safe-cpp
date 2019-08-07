@@ -174,13 +174,15 @@ public:
         // llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
         // LangOptions L;
         PrintingPolicy P(Lang);
-        Prev.first->getNameForDiagnostic(Os, P, true);
+        P.TerseOutput = true;
+        P.FullyQualifiedName = true;
+        Prev.first->print(Os, P, 0, true);
 
         DE.Report(Prev.first->getPointOfInstantiation(), ID2) << Os.str();
 
         Os.str().clear();
 
-        EachInst.first->getNameForDiagnostic(Os, P, true);
+        EachInst.first->print(Os, P, 0, true);
         DE.Report(EachInst.first->getPointOfInstantiation(), ID2) << Os.str();
 
         return {false, set<Replacement>()};
@@ -191,8 +193,8 @@ public:
 
   auto& finishReplacements(DiagnosticsEngine &DE, const LangOptions &Lang) { 
     
-    llvm::errs() <<
-      "Dezombiefy finishReplacements!\n";
+    // llvm::errs() <<
+    //   "Dezombiefy finishReplacements!\n";
     // for each template in InstantiationsStore,
     // we must have check all instantiation of such template
     // and all instantiations must have the same set of Replacements
@@ -233,27 +235,32 @@ public:
     if(isInSystemHeader(Context, D))
       return true;
 
-    if(FunctionDecl *F = dyn_cast<FunctionDecl>(D)) {
-      if(F->isTemplateInstantiation()) {
-        if(F->getPrimaryTemplate()) {
+    if(auto F = dyn_cast<FunctionDecl>(D)) {
+      if(auto T = F->getTemplateInstantiationPattern()) {
+        TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
 
-          auto T = F->getPrimaryTemplate()->getTemplatedDecl();
-          TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
-
-          return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
-        }
-        else if(F->getInstantiatedFromMemberFunction()) {
-
-          auto T = F->getInstantiatedFromMemberFunction();
-          TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
-          
-          return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
-
-        }
-        else
-          F->dumpColor();
-
+        return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
       }
+      // if(F->isTemplateInstantiation()) {
+      //   if(F->getPrimaryTemplate()) {
+
+      //     auto T = F->getTemplateInstantiationPattern();
+      //     TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
+
+      //     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+      //   }
+      //   else if(F->getInstantiatedFromMemberFunction()) {
+
+      //     auto T = F->getInstantiatedFromMemberFunction();
+      //     TiRiia Riia(TmpReplacements, InstantiationsStore, T, F);
+          
+      //     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
+
+      //   }
+      //   else
+      //     F->dumpColor();
+
+      // }
     }
 
     return RecursiveASTVisitor<Dezombify2ASTVisitor>::TraverseDecl(D);
