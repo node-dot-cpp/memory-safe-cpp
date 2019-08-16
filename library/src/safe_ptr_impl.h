@@ -46,11 +46,11 @@ void checkNotNullLargeSize( T* ptr )
 	}
 }
 
-/*template<>
-void checkNotNullLargeSize<void>( void* ptr )
+inline
+void checkNotNullLargeSize( void* )
 {
 	// do nothing
-}*/
+}
 
 template<class T>
 void checkNotNullAllSizes( T* ptr )

@@ -24,7 +24,7 @@ public:
 	soft_this_ptr<SomethingLarger> myThis;
 	soft_ptr<Something> softpS;
 	owning_ptr<Something> opS;
-	SomethingLarger(int k) : opS( std::move( make_owning<Something>( k ) ) ) {
+	SomethingLarger(int k) : opS( make_owning<Something>( k ) ) {
 		soft_ptr<SomethingLarger> sp = myThis.getSoftPtr( this );		
 		opS->setOwner( sp );
 		softpS = opS;
