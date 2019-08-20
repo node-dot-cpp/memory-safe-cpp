@@ -167,6 +167,14 @@ protected:
   }
 };
 
+class UnwrapperAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) override {
+    return llvm::make_unique<nodecpp::UnwrapperConsumer>();
+  }
+};
+
 
 class ExpandRecompileAction : public PreprocessorFrontendAction {
   std::string Filename;
@@ -206,7 +214,7 @@ protected:
     PPOpts.RemappedFiles.emplace_back(File.getFile().str(), Filename);
     PPOpts.RemappedFilesKeepOriginalName = false;
 
-    std::unique_ptr<FrontendAction> FixSequence(new SequenceAction());
+    std::unique_ptr<FrontendAction> FixSequence(new UnwrapperAction());
     if(!executeAction(FixSequence.get(), CI, File))
       return false;
 

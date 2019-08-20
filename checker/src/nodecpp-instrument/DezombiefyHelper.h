@@ -81,6 +81,7 @@ class BaseASTVisitor
   : public clang::RecursiveASTVisitor<T> {
   
 protected:
+  using Base = clang::RecursiveASTVisitor<T>;
   clang::ASTContext &Context;
 
 public:

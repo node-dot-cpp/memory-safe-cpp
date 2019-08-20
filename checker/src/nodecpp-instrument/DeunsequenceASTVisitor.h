@@ -57,74 +57,114 @@ class RecursivePostOrderASTVisitor : public RecursiveASTVisitor<T> {
 
 class ExpressionUnwrapperVisitor : public RecursivePostOrderASTVisitor<ExpressionUnwrapperVisitor>{
 
+  using Base = RecursiveASTVisitor<ExpressionUnwrapperVisitor>;
   const ASTContext *Context = nullptr;
+  
+  string StmtText;
+  Range StmtRange;
+  SourceRange StmtSourceRange;
   string Buffer;
   int Index = 0;
-  vector<pair<string, SourceRange>> Reps;
+  list<pair<string, Range>> Reps;
 public:
 
-  ExpressionUnwrapperVisitor(const ASTContext *Context) :Context(Context) {}
+  ExpressionUnwrapperVisitor(const ASTContext *Context, Stmt *St)
+    :Context(Context) {
+      auto R = printExprAsWritten(St, Context);
+      if(R.first)
+        StmtText = R.second;
+
+      StmtSourceRange = St->getSourceRange();
+      StmtRange = calcRange(StmtSourceRange);
+    }
 
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
-  static pair<bool, StringRef> printExprAsWritten(Expr *E,
+  static pair<bool, StringRef> printExprAsWritten(Stmt *St,
                                 const ASTContext *Context) {
     if (!Context)
       return {false, ""};
     bool Invalid = false;
     StringRef Source = Lexer::getSourceText(
-        CharSourceRange::getTokenRange(E->getSourceRange()),
+        CharSourceRange::getTokenRange(St->getSourceRange()),
         Context->getSourceManager(), Context->getLangOpts(), &Invalid);
     return {!Invalid, Source};
   }
 
   void unwrap(Expr *E) {
 
-    vector<pair<string, SourceRange>> Tmp;
-    swap(Reps, Tmp);
-
-    auto R = printExprAsWritten(E, Context);
-    if(!R.first)
+    if(StmtText.empty())
       return;
+    // vector<pair<string, SourceRange>> Tmp;
+    // swap(Reps, Tmp);
 
+    // auto R = printExprAsWritten(E, Context);
+    // if(!R.first)
+    //   return;
+
+    Range R = calcRange(E->getSourceRange());
     string Name = generateName();
+
     Buffer += "auto ";
     Buffer += Name;
     Buffer += " = ";
+
     //here do magic to replace existing replacemnts
-    Buffer += R.second;
+    string B = StmtText;
+    for(auto It = Reps.crbegin(); It != Reps.crend(); ++It) {
+      B.replace(It->second.getOffset(), It->second.getLength(), It->first);
+    }
+    Buffer += B.substr(R.getOffset(), R.getLength());
+
     Buffer += ";";
 
-    addReplacement(Name, E->getSourceRange());
+    addReplacement(move(Name), R);
   }
 
-  void addReplacement(string text, SourceRange Sr) {
-    Reps.emplace_back(text, Sr);
+  Range calcRange(SourceRange Sr) {
+    return Range{};
   }
+
+  void addReplacement(string Text, Range R) {
+    assert(StmtRange.contains(R));
+    auto It = Reps.begin();
+    while(It != Reps.end()) {
+      if(R.overlapsWith(It->second)) {
+        assert(R.contains(It->second));
+        It = Reps.erase(It);
+      }
+      else
+        ++It;
+    }
+
+    auto Jt = Reps.begin();
+    while(Jt != Reps.end()) {
+      if(R.getOffset() < Jt->second.getOffset()) {
+        Reps.insert(Jt, {Text, R});
+        return;
+      }
+      else
+        ++Jt;
+    }
+    Reps.push_back({Text, R});
+  }
+
 
   bool hasReplacement() const {
-    return !Reps.empty();
-  }
-
-  bool hasInsertion() const {
     return !Buffer.empty();
   }
 
   tooling::Replacement makeInsert(SourceLocation Where) {
 
-    auto Sr = CharSourceRange::getCharRange(Where, Where);
-    tooling::Replacement R(Context->getSourceManager(), Sr,
-                                      Buffer);
-    return R;
+    // auto Sr = CharSourceRange::getCharRange(Where, Where);
+    // tooling::Replacement R(Context->getSourceManager(), Sr,
+    //                                   Buffer);
+    return tooling::Replacement{};
   } 
 
   tooling::Replacement makeFix() {
-    auto Sr = CharSourceRange::getTokenRange(Reps.back().second);
-    tooling::Replacement R(Context->getSourceManager(), Sr,
-                                      Reps.back().first);
-                                   
-    Reps.pop_back();
-    assert(Reps.empty());
-    return R;
+    auto CharSr = CharSourceRange::getTokenRange(StmtSourceRange);
+    
+    return Replacement(Context->getSourceManager(), CharSr, Buffer);
   }
 
   string generateName() {
@@ -142,17 +182,17 @@ public:
 
   bool VisitCallExpr(CallExpr *E) {
     unwrap(E);
-    return RecursiveASTVisitor<ExpressionUnwrapperVisitor>::VisitCallExpr(E);
+    return Base::VisitCallExpr(E);
   }
 
   bool VisitBinaryOperator(BinaryOperator *E) {
     unwrap(E);
-    return RecursiveASTVisitor<ExpressionUnwrapperVisitor>::VisitBinaryOperator(E);
+    return Base::VisitBinaryOperator(E);
   }
 
   bool VisitUnaryOperator(UnaryOperator *E) {
     unwrap(E);
-    return RecursiveASTVisitor<ExpressionUnwrapperVisitor>::VisitUnaryOperator(E);
+    return Base::VisitUnaryOperator(E);
   }
 
 };
@@ -161,10 +201,10 @@ public:
 
 
 class Deunsequence2ASTVisitor
-  : public clang::RecursiveASTVisitor<Deunsequence2ASTVisitor> {
+  : public BaseASTVisitor<Deunsequence2ASTVisitor> {
 
-    using Base = clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>;
-  clang::ASTContext &Context;
+//    using Base = clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>;
+//  clang::ASTContext &Context;
 //  DzHelper &DzData;
 
   /// Fixes to apply, grouped by file path.
@@ -183,13 +223,10 @@ class Deunsequence2ASTVisitor
 
   void unwrapExpression(Stmt* St, Expr* E) {
 
-    ExpressionUnwrapperVisitor V(&Context);
+    ExpressionUnwrapperVisitor V(&Context, St);
     V.TraverseStmt(E);
     if(V.hasReplacement()) {
       addFix(V.makeFix());
-    }
-    if(V.hasInsertion()) {
-      addFix(V.makeInsert(St->getBeginLoc()));
     }
   }
 
@@ -197,48 +234,49 @@ public:
   const auto& getReplacements() const { return FileReplacements; }
 
   explicit Deunsequence2ASTVisitor(clang::ASTContext &Context):
-    Context(Context) {}
+    BaseASTVisitor<Deunsequence2ASTVisitor>(Context) {}
 
-
-  // bool TraverseStmt(Stmt *St) {
-
-  //   if(Expr* E = dyn_cast_or_null<Expr>(St)) {
-  //     unwrapExpression(St, E);
-  //     return true;
-  //   }
-  //   else
-  //     return clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>::TraverseStmt(St);
-  // }
-
-  // bool TraverseDeclStmt(DeclStmt *St) {
-    
-  //   if(St->isSingleDecl()) {
-  //     if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
-  //       if(Expr *E = D->getInit()) {
-  //         unwrapExpression(St, E);
-  //       }
-  //     }
-  //   }
-  //   return RecursiveASTVisitor<Deunsequence2ASTVisitor>::TraverseDeclStmt(St);
-  // }
-
-  // bool TraverseWhileStmt(WhileStmt *St) {
-  //   unwrapExpression(St, St->getCond());
-  //   return RecursiveASTVisitor<Deunsequence2ASTVisitor>::TraverseWhileStmt(St);
-  // }
 
   bool TraverseStmt(Stmt *St) {
-    // For every root expr, sent it to check and don't traverse it here
-    if(!St)
-      return true;
 
-    if(Expr *E = dyn_cast<Expr>(St)) {
-//      checkUnsequencedDezombiefy(Context, E, true);
+    if(Expr* E = dyn_cast_or_null<Expr>(St)) {
+      unwrapExpression(St, E);
       return true;
     }
     else
       return Base::TraverseStmt(St);
   }
+
+  bool TraverseDeclStmt(DeclStmt *St) {
+    
+    if(St->isSingleDecl()) {
+      if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
+        if(Expr *E = D->getInit()) {
+          unwrapExpression(St, E);
+        }
+      }
+    }
+    return Base::TraverseDeclStmt(St);
+  }
+
+//  need to traverse while body, but not condition expression
+  // bool TraverseWhileStmt(WhileStmt *St) {
+  //   unwrapExpression(St, St->getCond());
+  //   return Base::TraverseWhileStmt(St);
+  // }
+
+//   bool TraverseStmt(Stmt *St) {
+//     // For every root expr, sent it to check and don't traverse it here
+//     if(!St)
+//       return true;
+
+//     if(Expr *E = dyn_cast<Expr>(St)) {
+// //      checkUnsequencedDezombiefy(Context, E, true);
+//       return true;
+//     }
+//     else
+//       return Base::TraverseStmt(St);
+//   }
 
   // bool VisitStmt(Stmt *St) {
 
