@@ -39,7 +39,7 @@ inline
 bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
   if(auto D = E->getDecl()) {
     auto Qt = D->getType().getCanonicalType();
-    if(Qt->isReferenceType() || Qt->isPointerType()) {
+    if(Qt->isLValueReferenceType() || Qt->isPointerType()) {
       return true;
     }
   }   
