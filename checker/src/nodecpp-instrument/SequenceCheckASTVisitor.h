@@ -196,7 +196,7 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   }
 
   void diag(Expr *E1, Expr *E2) {
-      IssuesFound = true;
+    IssuesFound = true;
     if(ReportDiagnostics) {
         diag("Dezombiefy", E1->getExprLoc(), 
         "Potencially zombie object and potencial zombie creator call are unsequenced, dezombiefication will not be realiable", 

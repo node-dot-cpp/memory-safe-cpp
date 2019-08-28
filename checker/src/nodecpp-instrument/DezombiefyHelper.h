@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIEFYHELPER_H
-#define NODECPP_CHECKER_DEZOMBIEFYHELPER_H
+#ifndef NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
+#define NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
@@ -104,5 +104,5 @@ public:
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEZOMBIEFYHELPER_H
+#endif // NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
 
