@@ -26,6 +26,8 @@
 * -------------------------------------------------------------------------------*/
 
 #include "SequenceCheck.h"
+#include "BaseASTVisitor.h"
+#include "CodeChange.h"
 #include "DezombiefyHelper.h"
 #include "SequenceCheckASTVisitor.h"
 #include "SequenceFixASTVisitor.h"
@@ -104,33 +106,6 @@ public:
 };
 
 
-void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces, StringRef Name) {
-
-  if(!Replaces.empty()) {
-    Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
-
-    if (!applyAllReplacements(Replaces, Rewrite)) {
-      llvm::errs() << "Can't apply replacements for file " 
-      << Replaces.begin()->getFilePath() << "\n";
-    }
-    if (Rewrite.overwriteChangedFiles()) {
-      llvm::errs() << Name << " failed to apply suggested fixes to file " 
-      << Replaces.begin()->getFilePath() << "\n";
-    } else {
-      llvm::errs() << Name << " applied suggested fixes.\n";
-    }
-  }
-}
-
-
-void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &FileReplacements, StringRef Name) {
-
-  if(!FileReplacements.empty()) {
-    for (const auto &FileAndReplacements : FileReplacements) {
-      overwriteChangedFiles(Context, FileAndReplacements.second, Name);
-    }
-  }
-}
 
 void dezombiefySequenceCheckAndFix(ASTContext &Context, bool FixAll) {
       

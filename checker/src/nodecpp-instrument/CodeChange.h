@@ -195,7 +195,7 @@ public:
     return Replaces == RHS.Replaces;
   }
 
-  void applyAll(clang::Rewriter &Rewrite);
+  void applyAll(clang::Rewriter &Rewrite) const;
 private:
   // Replacements(const_iterator Begin, const_iterator End)
   //     : Replaces(Begin, End) {}
@@ -218,7 +218,17 @@ private:
 
 };
 
+bool overwriteChangedFiles(clang::ASTContext &Context,
+  const FileChanges &Changes, llvm::StringRef ToolName);
+bool overwriteChangedFiles(clang::ASTContext &Context,
+  const std::map<clang::FileID, FileChanges> &Changes, llvm::StringRef ToolName);
 
+void overwriteChangedFiles(clang::ASTContext &Context,
+  const llvm::StringMap<clang::tooling::Replacements> &FileReplacements,
+  llvm::StringRef Name);
+void overwriteChangedFiles(clang::ASTContext &Context, 
+  const clang::tooling::Replacements &FileReplacements,
+  llvm::StringRef Name);
 
 
 } // namespace nodecpp

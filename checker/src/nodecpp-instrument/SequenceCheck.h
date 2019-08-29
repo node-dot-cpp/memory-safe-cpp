@@ -43,12 +43,6 @@ namespace nodecpp {
   /// an object unsequenced with any function call that can potencially
   /// rezombiefy it as a side-effect
 
-void overwriteChangedFiles(clang::ASTContext &Context,
-  const llvm::StringMap<clang::tooling::Replacements> &FileReplacements,
-  llvm::StringRef Name);
-void overwriteChangedFiles(clang::ASTContext &Context, 
-  const clang::tooling::Replacements &FileReplacements,
-  llvm::StringRef Name);
 
 void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, bool FixAll);
 

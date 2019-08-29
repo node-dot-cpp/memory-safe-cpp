@@ -218,7 +218,7 @@ llvm::Error FileChanges::add(const CodeChange &R) {
 }
 
 
-void FileChanges::applyAll(Rewriter &Rewrite) {
+void FileChanges::applyAll(Rewriter &Rewrite) const {
 
   if(Replaces.empty())
     return;
@@ -237,6 +237,65 @@ void FileChanges::applyAll(Rewriter &Rewrite) {
   }
 }
 
+bool overwriteChangedFiles(ASTContext &Context,
+  const FileChanges &Changes, StringRef ToolName) {
+
+  if(!Changes.empty()) {
+    Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
+
+    Changes.applyAll(Rewrite);
+    if (Rewrite.overwriteChangedFiles()) {
+      const FileEntry *F = Context.getSourceManager().getFileEntryForID(
+        Changes.begin()->getFile());
+      StringRef FileName = F ? F->getName() : "<unknown>";
+
+      llvm::errs() << ToolName << " failed to apply suggested fixes to file " 
+      << FileName << "\n";
+      return false;
+    } else {
+      llvm::errs() << ToolName << " applied suggested fixes.\n";
+    }
+  }
+  return true;
+}
+
+
+bool overwriteChangedFiles(ASTContext &Context,
+  const std::map<FileID, FileChanges> &Changes, StringRef ToolName) {
+
+  bool Result = true;
+  for (auto &FileAndChanges : Changes) {
+    Result = overwriteChangedFiles(Context, FileAndChanges.second, ToolName) && Result;
+  }
+  return Result;
+}
+
+void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces, StringRef Name) {
+
+  if(!Replaces.empty()) {
+    Rewriter Rewrite(Context.getSourceManager(), Context.getLangOpts());
+
+    if (!applyAllReplacements(Replaces, Rewrite)) {
+      llvm::errs() << "Can't apply replacements for file " 
+      << Replaces.begin()->getFilePath() << "\n";
+    }
+    if (Rewrite.overwriteChangedFiles()) {
+      llvm::errs() << Name << " failed to apply suggested fixes to file " 
+      << Replaces.begin()->getFilePath() << "\n";
+    } else {
+      llvm::errs() << Name << " applied suggested fixes.\n";
+    }
+  }
+}
+
+void overwriteChangedFiles(ASTContext &Context, const StringMap<Replacements> &FileReplacements, StringRef Name) {
+
+  if(!FileReplacements.empty()) {
+    for (const auto &FileAndReplacements : FileReplacements) {
+      overwriteChangedFiles(Context, FileAndReplacements.second, Name);
+    }
+  }
+}
 
 
 } // namespace nodecpp

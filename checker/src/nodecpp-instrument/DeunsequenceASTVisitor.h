@@ -30,6 +30,9 @@
 
 #include "SequenceCheck.h"
 
+#include "CodeChange.h"
+#include "BaseASTVisitor.h"
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -218,7 +221,7 @@ public:
   //   return tooling::Replacement{};
   // } 
 
-  tooling::Replacement makeFix() {
+  CodeChange makeFix() {
 
     Buffer += subStmtWithReplaces(Range(0, StmtText.size()));
     if(ExtraBraces) {
@@ -226,9 +229,7 @@ public:
       Buffer.insert(0, "{ ");
     }
 
-
-    auto CharSr = CharSourceRange::getTokenRange(StmtSourceRange);
-    return Replacement(Context->getSourceManager(), CharSr, Buffer);
+    return CodeChange::makeReplace(Context->getSourceManager(), StmtSourceRange, Buffer);
   }
 
   string generateName() {
@@ -288,10 +289,10 @@ class Deunsequence2ASTVisitor
 //  DzHelper &DzData;
   int Index = 0;
   /// Fixes to apply, grouped by file path.
-  StringMap<Replacements> FileReplacements;
+  std::map<FileID, FileChanges> FileReplacements;
 
-  void addFix(const Replacement& Replacement) {
-    llvm::Error Err = FileReplacements[Replacement.getFilePath()].add(Replacement);
+  void addFix(const CodeChange& Ch) {
+    llvm::Error Err = FileReplacements[Ch.getFile()].add(Ch);
     // FIXME: better error handling (at least, don't let other replacements be
     // applied).
     if (Err) {
@@ -350,35 +351,6 @@ public:
     }
     return Base::TraverseDeclStmt(St);
   }
-
-//  need to traverse while body, but not condition expression
-  // bool TraverseWhileStmt(WhileStmt *St) {
-  //   unwrapExpression(St, St->getCond());
-  //   return Base::TraverseWhileStmt(St);
-  // }
-
-//   bool TraverseStmt(Stmt *St) {
-//     // For every root expr, sent it to check and don't traverse it here
-//     if(!St)
-//       return true;
-
-//     if(Expr *E = dyn_cast<Expr>(St)) {
-// //      checkUnsequencedDezombiefy(Context, E, true);
-//       return true;
-//     }
-//     else
-//       return Base::TraverseStmt(St);
-//   }
-
-  // bool VisitStmt(Stmt *St) {
-
-  //   // if(Expr* E = dyn_cast_or_null<Expr>(St)) {
-  //   //   unwrapExpression(E, E);
-  //   //   return true;
-  //   // }
-  //   // else
-  //     return clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>::VisitStmt(St);
-  // }
 };
 
 } // namespace nodecpp
