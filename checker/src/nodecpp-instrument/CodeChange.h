@@ -218,10 +218,46 @@ private:
 
 };
 
+
+class TUChanges {
+private:
+  std::map<clang::FileID, FileChanges> Replaces;
+
+public:
+
+  using const_iterator = std::map<clang::FileID, FileChanges>::const_iterator;
+  using const_reverse_iterator = std::map<clang::FileID, FileChanges>::const_reverse_iterator;
+
+  TUChanges() = default;
+
+  llvm::Error add(const CodeChange &R);
+
+
+  unsigned size() const { return Replaces.size(); }
+
+  void clear() { Replaces.clear(); }
+
+  bool empty() const { return Replaces.empty(); }
+
+  const_iterator begin() const { return Replaces.begin(); }
+
+  const_iterator end() const { return Replaces.end(); }
+
+  const_reverse_iterator rbegin() const  { return Replaces.rbegin(); }
+
+  const_reverse_iterator rend() const { return Replaces.rend(); }
+
+  bool operator==(const TUChanges &RHS) const {
+    return Replaces == RHS.Replaces;
+  }
+};
+
 bool overwriteChangedFiles(clang::ASTContext &Context,
   const FileChanges &Changes, llvm::StringRef ToolName);
 bool overwriteChangedFiles(clang::ASTContext &Context,
   const std::map<clang::FileID, FileChanges> &Changes, llvm::StringRef ToolName);
+bool overwriteChangedFiles(clang::ASTContext &Context,
+  const TUChanges &Changes, llvm::StringRef ToolName);
 
 void overwriteChangedFiles(clang::ASTContext &Context,
   const llvm::StringMap<clang::tooling::Replacements> &FileReplacements,

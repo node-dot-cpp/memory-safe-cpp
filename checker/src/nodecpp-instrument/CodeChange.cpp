@@ -237,6 +237,16 @@ void FileChanges::applyAll(Rewriter &Rewrite) const {
   }
 }
 
+llvm::Error TUChanges::add(const CodeChange &R) {
+  if(R.isValid()) {
+    return Replaces[R.getFile()].add(R);
+  }
+  else
+    return llvm::make_error<ReplacementError>(
+      replacement_error::wrong_file_path); 
+}
+
+
 bool overwriteChangedFiles(ASTContext &Context,
   const FileChanges &Changes, StringRef ToolName) {
 
@@ -269,6 +279,17 @@ bool overwriteChangedFiles(ASTContext &Context,
   }
   return Result;
 }
+
+bool overwriteChangedFiles(clang::ASTContext &Context,
+  const TUChanges &Changes, llvm::StringRef ToolName) {
+
+  bool Result = true;
+  for (auto &FileCh : Changes) {
+    Result = overwriteChangedFiles(Context, FileCh.second, ToolName) && Result;
+  }
+  return Result;
+}
+
 
 void overwriteChangedFiles(ASTContext &Context, const Replacements &Replaces, StringRef Name) {
 
