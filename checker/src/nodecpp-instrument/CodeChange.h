@@ -143,7 +143,7 @@ CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS);
 
 class FileChanges {
 private:
-  clang::FileID File;
+//  clang::FileID File;
   std::set<CodeChange> Replaces;
 
 public:
@@ -153,29 +153,14 @@ public:
 
   FileChanges() = default;
 
-//  explicit Replacements(const Replacement &R) { Replaces.insert(R); }
-
   /// Adds a new replacement \p R to the current set of replacements.
   /// \p R must have the same file path as all existing replacements.
   /// Returns `success` if the replacement is successfully inserted; otherwise,
   /// it returns an llvm::Error, i.e. there is a conflict between R and the
-  /// existing replacements (i.e. they overlap or R's file path is
-  /// different from the filepath of existing replacements). Callers must
+  /// existing replacements. Callers must
   /// explicitly check the Error returned, and the returned error can be
   /// converted to a string message with `llvm::toString()`.
   llvm::Error add(const CodeChange &R);
-
-  /// Merges \p Replaces into the current replacements. \p Replaces
-  /// refers to code after applying the current replacements.
-  // LLVM_NODISCARD Replacements merge(const Replacements &Replaces) const;
-
-  // Returns the affected ranges in the changed code.
-  // std::vector<Range> getAffectedRanges() const;
-
-  // Returns the new offset in the code after replacements being applied.
-  // Note that if there is an insertion at Offset in the current replacements,
-  // \p Offset will be shifted to Offset + Length in inserted text.
-//  unsigned getShiftedCodePosition(unsigned Position) const;
 
   unsigned size() const { return Replaces.size(); }
 
@@ -196,26 +181,6 @@ public:
   }
 
   void applyAll(clang::Rewriter &Rewrite) const;
-private:
-  // Replacements(const_iterator Begin, const_iterator End)
-  //     : Replaces(Begin, End) {}
-
-  // Returns `R` with new range that refers to code after `Replaces` being
-  // applied.
-  // Replacement getReplacementInChangedCode(const Replacement &R) const;
-
-  // Returns a set of replacements that is equivalent to the current
-  // replacements by merging all adjacent replacements. Two sets of replacements
-  // are considered equivalent if they have the same effect when they are
-  // applied.
-  // Replacements getCanonicalReplacements() const;
-
-  // If `R` and all existing replacements are order-indepedent, then merge it
-  // with `Replaces` and returns the merged replacements; otherwise, returns an
-  // error.
-  // llvm::Expected<Replacements>
-  // mergeIfOrderIndependent(const Replacement &R) const;
-
 };
 
 

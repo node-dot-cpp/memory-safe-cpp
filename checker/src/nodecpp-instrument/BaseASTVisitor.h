@@ -184,6 +184,10 @@ public:
     TmpReplacements.insert(Replacement);
   }
 
+  auto& finishReplacements() {
+    return finishReplacements(Context.getDiagnostics(), Context.getLangOpts());
+  } 
+
   auto& finishReplacements(clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) { 
     
     // llvm::errs() <<

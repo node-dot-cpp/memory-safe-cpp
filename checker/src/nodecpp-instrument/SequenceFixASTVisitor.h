@@ -28,7 +28,7 @@
 #ifndef NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
 #define NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
 
-#include "SequenceCheck.h"
+#include "SequenceFix.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"

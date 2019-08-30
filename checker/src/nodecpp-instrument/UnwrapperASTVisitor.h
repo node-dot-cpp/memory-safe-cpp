@@ -25,10 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEUNSEQUENCEASTVISITOR_H
-#define NODECPP_CHECKER_DEUNSEQUENCEASTVISITOR_H
-
-#include "SequenceCheck.h"
+#ifndef NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
+#define NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
 
 #include "CodeChange.h"
 #include "BaseASTVisitor.h"
@@ -62,7 +60,7 @@ class RecursivePostOrderASTVisitor : public RecursiveASTVisitor<T> {
 class ExpressionUnwrapperVisitor : public RecursivePostOrderASTVisitor<ExpressionUnwrapperVisitor>{
 
   using Base = RecursiveASTVisitor<ExpressionUnwrapperVisitor>;
-  const ASTContext *Context = nullptr;
+  const ASTContext &Context;
   
   string StmtText;
   Range StmtRange;
@@ -73,7 +71,7 @@ class ExpressionUnwrapperVisitor : public RecursivePostOrderASTVisitor<Expressio
   list<pair<string, Range>> Reps;
 public:
 
-  ExpressionUnwrapperVisitor(const ASTContext *Context, int &Index)
+  ExpressionUnwrapperVisitor(const ASTContext &Context, int &Index)
     :Context(Context), Index(Index) {}
 
   bool unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
@@ -91,13 +89,13 @@ public:
   }
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
   static pair<bool, StringRef> printExprAsWritten(Stmt *St,
-                                const ASTContext *Context) {
-    if (!Context)
-      return {false, ""};
+                                const ASTContext &Context) {
+    // if (!Context)
+    //   return {false, ""};
     bool Invalid = false;
     StringRef Source = Lexer::getSourceText(
         CharSourceRange::getTokenRange(St->getSourceRange()),
-        Context->getSourceManager(), Context->getLangOpts(), &Invalid);
+        Context.getSourceManager(), Context.getLangOpts(), &Invalid);
     return {!Invalid, Source};
   }
 
@@ -161,7 +159,7 @@ public:
 
   Range calcRange(const SourceRange &Sr) {
 
-    auto& Sm = Context->getSourceManager();
+    auto& Sm = Context.getSourceManager();
     SourceLocation SpellingBegin = Sm.getSpellingLoc(Sr.getBegin());
     SourceLocation SpellingEnd = Sm.getSpellingLoc(Sr.getEnd());
     
@@ -171,7 +169,7 @@ public:
     if (Start.first != End.first) return Range();
 
     //SourceRange is always in token
-    End.second += Lexer::MeasureTokenLength(SpellingEnd, Sm, Context->getLangOpts());
+    End.second += Lexer::MeasureTokenLength(SpellingEnd, Sm, Context.getLangOpts());
 
     // const FileEntry *Entry = Sm.getFileEntryForID(Start.first);
     // this->FilePath = Entry ? Entry->getName() : InvalidLocation;
@@ -221,7 +219,7 @@ public:
   //   return tooling::Replacement{};
   // } 
 
-  CodeChange makeFix() {
+  auto makeFix() {
 
     Buffer += subStmtWithReplaces(Range(0, StmtText.size()));
     if(ExtraBraces) {
@@ -229,7 +227,9 @@ public:
       Buffer.insert(0, "{ ");
     }
 
-    return CodeChange::makeReplace(Context->getSourceManager(), StmtSourceRange, Buffer);
+//    return CodeChange::makeReplace(Context->getSourceManager(), StmtSourceRange, Buffer);
+    return Replacement(Context.getSourceManager(), 
+      CharSourceRange::getTokenRange(StmtSourceRange), Buffer, Context.getLangOpts());
   }
 
   string generateName() {
@@ -281,79 +281,79 @@ public:
 
 
 
-class Deunsequence2ASTVisitor
-  : public BaseASTVisitor<Deunsequence2ASTVisitor> {
+// class Deunsequence2ASTVisitor
+//   : public BaseASTVisitor<Deunsequence2ASTVisitor> {
 
-//    using Base = clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>;
-//  clang::ASTContext &Context;
-//  DzHelper &DzData;
-  int Index = 0;
-  /// Fixes to apply, grouped by file path.
-  std::map<FileID, FileChanges> FileReplacements;
+// //    using Base = clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>;
+// //  clang::ASTContext &Context;
+// //  DzHelper &DzData;
+//   int Index = 0;
+//   /// Fixes to apply, grouped by file path.
+//   std::map<FileID, FileChanges> FileReplacements;
 
-  void addFix(const CodeChange& Ch) {
-    llvm::Error Err = FileReplacements[Ch.getFile()].add(Ch);
-    // FIXME: better error handling (at least, don't let other replacements be
-    // applied).
-    if (Err) {
-      llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
-    }
-  }
+//   void addFix(const Replacement& Ch) {
+//     // llvm::Error Err = FileReplacements[Ch.getFile()].add(Ch);
+//     // // FIXME: better error handling (at least, don't let other replacements be
+//     // // applied).
+//     // if (Err) {
+//     //   llvm::errs() << "Fix conflicts with existing fix! "
+//     //                 << llvm::toString(std::move(Err)) << "\n";
+//     //   assert(false && "Fix conflicts with existing fix!");
+//     // }
+//   }
 
-  bool needExtraBraces(Stmt *St) {
+//   bool needExtraBraces(Stmt *St) {
 
-    auto SList = Context.getParents(*St);
+//     auto SList = Context.getParents(*St);
 
-    auto SIt = SList.begin();
+//     auto SIt = SList.begin();
 
-    if (SIt == SList.end())
-      return true;
+//     if (SIt == SList.end())
+//       return true;
 
-    return SIt->get<CompoundStmt>() == nullptr;
-  }
+//     return SIt->get<CompoundStmt>() == nullptr;
+//   }
 
-  bool unwrapExpression(Stmt* St, Expr* E) {
+//   bool unwrapExpression(Stmt* St, Expr* E) {
 
-    ExpressionUnwrapperVisitor V(&Context, Index);
-    if(V.unwrapExpression(St, E, needExtraBraces(St))) {
-      addFix(V.makeFix());
-    }
+//     ExpressionUnwrapperVisitor V(Context, Index);
+//     if(V.unwrapExpression(St, E, needExtraBraces(St))) {
+//       addFix(V.makeFix());
+//     }
     
-    return true;
-  }
+//     return true;
+//   }
 
-public:
-  const auto& getReplacements() const { return FileReplacements; }
+// public:
+//   const auto& getReplacements() const { return FileReplacements; }
 
-  explicit Deunsequence2ASTVisitor(ASTContext &Context):
-    BaseASTVisitor<Deunsequence2ASTVisitor>(Context) {}
+//   explicit Deunsequence2ASTVisitor(ASTContext &Context):
+//     BaseASTVisitor<Deunsequence2ASTVisitor>(Context) {}
 
 
-  bool TraverseStmt(Stmt *St) {
+//   bool TraverseStmt(Stmt *St) {
 
-    if(Expr* E = dyn_cast_or_null<Expr>(St)) {
-      return unwrapExpression(St, E);
-    }
-    else
-      return Base::TraverseStmt(St);
-  }
+//     if(Expr* E = dyn_cast_or_null<Expr>(St)) {
+//       return unwrapExpression(St, E);
+//     }
+//     else
+//       return Base::TraverseStmt(St);
+//   }
 
-  bool TraverseDeclStmt(DeclStmt *St) {
+//   bool TraverseDeclStmt(DeclStmt *St) {
     
-    if(St->isSingleDecl()) {
-      if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
-        if(Expr *E = D->getInit()) {
-          return unwrapExpression(St, E);
-        }
-      }
-    }
-    return Base::TraverseDeclStmt(St);
-  }
-};
+//     if(St->isSingleDecl()) {
+//       if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
+//         if(Expr *E = D->getInit()) {
+//           return unwrapExpression(St, E);
+//         }
+//       }
+//     }
+//     return Base::TraverseDeclStmt(St);
+//   }
+// };
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEUNSEQUENCEASTVISITOR_H
+#endif // NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
 

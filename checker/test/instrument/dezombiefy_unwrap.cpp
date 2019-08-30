@@ -15,7 +15,8 @@ void func(SomeClass* l, SomeClass* r) {
     int p = getValue(l) + getValue(r);
 // CHECK-FIXES: auto&& nodecpp_2 = getValue(nodecpp::safememory::dezombiefy( l )); auto&& nodecpp_3 = getValue(nodecpp::safememory::dezombiefy( r )); int p = nodecpp_2 + nodecpp_3;
    
-    if(true)
+    if(getValue(l) + getValue(r) != 0)
+// CHECK-FIXES: if(nodecpp::safememory::ne(nodecpp::safememory::add(getValue(nodecpp::safememory::dezombiefy( l )) , getValue(nodecpp::safememory::dezombiefy( r ))) , 0))
         int i = getValue(l) + getValue(r);
 // CHECK-FIXES: { auto&& nodecpp_4 = getValue(nodecpp::safememory::dezombiefy( l )); auto&& nodecpp_5 = getValue(nodecpp::safememory::dezombiefy( r )); int i = nodecpp_4 + nodecpp_5; };
 }

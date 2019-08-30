@@ -25,28 +25,36 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCECHECK_H
-#define NODECPP_CHECKER_SEQUENCECHECK_H
+#include "Dezombiefy.h"
 
+#include "CodeChange.h"
+#include "Dezombify1ASTVisitor.h"
+#include "Dezombify2ASTVisitor.h"
+#include "DezombiefyRelaxASTVisitor.h"
 
-#include "clang/AST/ASTContext.h"
-#include "llvm/ADT/StringMap.h"
-#include "clang/Tooling/Core/Replacement.h"
-
-namespace clang {
-  class TranslationUnitDecl;
-}
 
 namespace nodecpp {
 
-  /// Check for expressions to find attempts to dezombiefy
-  /// an object unsequenced with any function call that can potencially
-  /// rezombiefy it as a side-effect
+using namespace clang;
+using namespace clang::tooling;
+using namespace llvm;
+using namespace std;
 
 
-void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, bool FixAll);
 
-} // namespace nodecpp
 
-#endif // NODECPP_CHECKER_SEQUENCECHECK_H
+void dezombiefy(ASTContext &Ctx) {
+      
+  Dezombify1ASTVisitor Visitor1(Ctx);
+  Dezombify2ASTVisitor Visitor2(Ctx);
+//      Context.getTranslationUnitDecl()->dumpColor();
+  Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
+  dezombiefyRelax(Ctx);
+  Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());
 
+  auto &Reps = Visitor2.finishReplacements();
+  overwriteChangedFiles(Ctx, Reps, "nodecpp-dezombiefy");
+}
+
+
+} //namespace nodecpp

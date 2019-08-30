@@ -25,11 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#include "Dezombify1ASTVisitor.h"
-#include "Dezombify2ASTVisitor.h"
+#include "Dezombiefy.h"
+#include "SequenceFix.h"
 #include "InclusionRewriter.h"
-#include "DezombiefyRelaxASTVisitor.h"
-#include "DeunsequenceASTVisitor.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -108,54 +106,46 @@ bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendI
 
 class DezombifyConsumer : public ASTConsumer {
   
-  CompilerInstance &CI;
+  // CompilerInstance &CI;
 
 public:
-  explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
+  // explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
   void HandleTranslationUnit(ASTContext &Context) override {
 
-      Dezombify1ASTVisitor Visitor1(Context);
-      Dezombify2ASTVisitor Visitor2(Context);
-//      Context.getTranslationUnitDecl()->dumpColor();
-      Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
-      dezombiefyRelax(Context);
-      Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
-
-      auto &Reps = Visitor2.finishReplacements(CI.getDiagnostics(), CI.getLangOpts());
-      overwriteChangedFiles(Context, Reps, "nodecpp-dezombiefy");
+      dezombiefy(Context);
     }
 };
 
 class SequenceConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      dezombiefySequenceCheckAndFix(Context, false);
+      sequenceFix(Context, false);
     }
 };
 
 
-class UnwrapperConsumer : public ASTConsumer {
-private:
-//  CompilerInstance &CI;
+// class UnwrapperConsumer : public ASTConsumer {
+// private:
+// //  CompilerInstance &CI;
 
-public:
-//    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
+// public:
+// //    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
-    void HandleTranslationUnit(ASTContext &Context) override {
+//     void HandleTranslationUnit(ASTContext &Context) override {
       
-      Deunsequence2ASTVisitor Visitor1(Context);
+//       // Deunsequence2ASTVisitor Visitor1(Context);
 
-      Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
+//       // Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
 
-      overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unwrapper");
-    }
-};
+//       // overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unwrapper");
+//     }
+// };
 class DezombiefyAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::DezombifyConsumer>(CI);
+    return llvm::make_unique<nodecpp::DezombifyConsumer>();
   }
 };
 
@@ -167,13 +157,13 @@ protected:
   }
 };
 
-class UnwrapperAction : public ASTFrontendAction {
-protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                StringRef InFile) override {
-    return llvm::make_unique<nodecpp::UnwrapperConsumer>();
-  }
-};
+// class UnwrapperAction : public ASTFrontendAction {
+// protected:
+//   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+//                                                 StringRef InFile) override {
+//     return llvm::make_unique<nodecpp::UnwrapperConsumer>();
+//   }
+// };
 
 
 class ExpandRecompileAction : public PreprocessorFrontendAction {
@@ -214,7 +204,7 @@ protected:
     PPOpts.RemappedFiles.emplace_back(File.getFile().str(), Filename);
     PPOpts.RemappedFilesKeepOriginalName = false;
 
-    std::unique_ptr<FrontendAction> FixSequence(new UnwrapperAction());
+    std::unique_ptr<FrontendAction> FixSequence(new SequenceAction());
     if(!executeAction(FixSequence.get(), CI, File))
       return false;
 

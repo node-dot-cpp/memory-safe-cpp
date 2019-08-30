@@ -25,12 +25,13 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#include "SequenceCheck.h"
+#include "SequenceFix.h"
 #include "BaseASTVisitor.h"
 #include "CodeChange.h"
 #include "DezombiefyHelper.h"
 #include "SequenceCheckASTVisitor.h"
 #include "SequenceFixASTVisitor.h"
+#include "UnwrapperASTVisitor.h"
 
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/Sema/Sema.h"
@@ -46,42 +47,44 @@ using namespace std;
 class SequenceCheck2ASTVisitor
   : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
 
-  using Base = BaseASTVisitor<SequenceCheck2ASTVisitor>;
+  bool FixAll = false;
+  int Index = 0;
 
-  bool FixAll;
+  bool needExtraBraces(Stmt *St) {
 
-  /// Fixes to apply.
-  Replacements FileReplacements;
-  /// To work with template instantiations,
-  /// we allow to apply several times the same replacement
-  set<Replacement> TmpReplacements;
+    auto SList = Context.getParents(*St);
 
-  void addTmpReplacement(const Replacement& Replacement) {
-    TmpReplacements.insert(Replacement);
+    auto SIt = SList.begin();
+
+    if (SIt == SList.end())
+      return true;
+
+    return SIt->get<CompoundStmt>() == nullptr;
   }
 
-  void addReplacement(const Replacement& Replacement) {
-    Error Err = FileReplacements.add(Replacement);
-    if (Err) {
-      errs() << "Fix conflicts with existing fix! "
-                    << toString(move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
+  bool unwrapExpression(Stmt* St, Expr* E) {
+
+    ExpressionUnwrapperVisitor V(Context, Index);
+    if(V.unwrapExpression(St, E, needExtraBraces(St))) {
+      addTmpReplacement(V.makeFix());
     }
+    
+    return true;
   }
 
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
-    Base(Context), FixAll(FixAll) {}
+    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context), FixAll(FixAll) {}
 
-  auto& finishReplacements() { 
+  // auto& finishReplacements() { 
     
-    for(auto& Each : TmpReplacements) {
-      addReplacement(Each);
-    }
-    return FileReplacements;
-  }
+  //   for(auto& Each : TmpReplacements) {
+  //     addReplacement(Each);
+  //   }
+  //   return FileReplacements;
+  // }
 
-  const auto& getReplacements() const { return FileReplacements; }
+  // const auto& getReplacements() const { return FileReplacements; }
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
@@ -103,17 +106,39 @@ public:
     else
       return Base::TraverseStmt(St);
   }
+
+  // bool TraverseStmt(Stmt *St) {
+
+  //   if(Expr* E = dyn_cast_or_null<Expr>(St)) {
+  //     return unwrapExpression(St, E);
+  //   }
+  //   else
+  //     return Base::TraverseStmt(St);
+  // }
+
+  bool TraverseDeclStmt(DeclStmt *St) {
+    
+    if(St->isSingleDecl()) {
+      if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
+        if(Expr *E = D->getInit()) {
+          return unwrapExpression(St, E);
+        }
+      }
+    }
+    return Base::TraverseDeclStmt(St);
+  }
+
 };
 
 
 
-void dezombiefySequenceCheckAndFix(ASTContext &Context, bool FixAll) {
+void sequenceFix(ASTContext &Ctx, bool FixAll) {
       
-  SequenceCheck2ASTVisitor Visitor1(Context, FixAll);
+  SequenceCheck2ASTVisitor V1(Ctx, FixAll);
 
-  Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
+  V1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-  overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unsequenced");
+  overwriteChangedFiles(Ctx, V1.finishReplacements(), "nodecpp-unsequenced");
 }
 
 
