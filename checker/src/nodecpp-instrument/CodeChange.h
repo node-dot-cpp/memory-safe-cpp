@@ -135,6 +135,9 @@ public:
           ReplacementText == RHS.ReplacementText &&
           ToTheLeft == RHS.ToTheLeft;
   }
+  bool operator!=(const CodeChange &RHS) const {
+    return !(this->operator==(RHS));
+  }
 };
 
 CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS);
@@ -179,6 +182,9 @@ public:
   bool operator==(const FileChanges &RHS) const {
     return Replaces == RHS.Replaces;
   }
+  bool operator!=(const FileChanges &RHS) const {
+    return !(this->operator==(RHS));
+  }
 
   void applyAll(clang::Rewriter &Rewrite) const;
 };
@@ -193,7 +199,7 @@ public:
   using const_iterator = std::map<clang::FileID, FileChanges>::const_iterator;
   using const_reverse_iterator = std::map<clang::FileID, FileChanges>::const_reverse_iterator;
 
-  TUChanges() = default;
+//  TUChanges() = default;
 
   llvm::Error add(const CodeChange &R);
 
@@ -215,6 +221,10 @@ public:
   bool operator==(const TUChanges &RHS) const {
     return Replaces == RHS.Replaces;
   }
+  bool operator!=(const TUChanges &RHS) const {
+    return !(this->operator==(RHS));
+  }
+
 };
 
 bool overwriteChangedFiles(clang::ASTContext &Context,

@@ -30,10 +30,11 @@
 
 #include "DezombiefyHelper.h"
 
+#include "CodeChange.h"
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Tooling/Core/Replacement.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Format/Format.h"
@@ -48,14 +49,14 @@ using namespace clang::tooling;
 
 
 struct TiRiia {
-  using StoreType = map<FunctionDecl *, map<FunctionDecl *,set<Replacement>>>;
-  set<Replacement> Internal;
-  set<Replacement> &External;
+  using StoreType = std::map<FunctionDecl *, std::map<FunctionDecl *, TUChanges>>;
+  TUChanges Internal;
+  TUChanges &External;
   StoreType &Store;
   FunctionDecl *CurrentTempl;
   FunctionDecl *CurrentInst;
 
-  TiRiia(set<Replacement> &Previous,
+  TiRiia(TUChanges &Previous,
     StoreType &Store,
     FunctionDecl *CurrentTempl, FunctionDecl *CurrentInst)
     :External(Previous), Store(Store),
@@ -96,16 +97,16 @@ protected:
   clang::ASTContext &Context;
 private:
   /// Fixes to apply.
-  clang::tooling::Replacements FileReplacements;
+  TUChanges FileReplacements;
   
   /// To work with template instantiations,
   /// we allow to apply several times the same replacement
-  std::set<clang::tooling::Replacement> TmpReplacements;
+  TUChanges TmpReplacements;
 
   /// To work with template instantiations
   TiRiia::StoreType InstantiationsStore;
 
-  void addReplacement(const clang::tooling::Replacement& Replacement) {
+  void addReplacement(const CodeChange& Replacement) {
     auto Err = FileReplacements.add(Replacement);
     if (Err) {
       llvm::errs() << "Fix conflicts with existing fix! "
@@ -115,11 +116,11 @@ private:
   }
 
   static
-  std::pair<bool, set<clang::tooling::Replacement>> verifyReplacements(clang::FunctionDecl *D, 
-    const std::map<clang::FunctionDecl *,std::set<clang::tooling::Replacement>>& Insts,
+  std::pair<bool, TUChanges> verifyReplacements(clang::FunctionDecl *D, 
+    const std::map<clang::FunctionDecl *, TUChanges>& Insts,
     clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) {
     
-    std::pair<clang::FunctionDecl *, std::set<clang::tooling::Replacement>> Prev{false, std::set<clang::tooling::Replacement>()};
+    std::pair<clang::FunctionDecl *, TUChanges> Prev{nullptr, TUChanges{}};
     assert(D);
 
     for(auto EachInst : Insts) {
@@ -165,7 +166,7 @@ private:
         EachInst.first->print(Os, P, 0, true);
         DE.Report(EachInst.first->getPointOfInstantiation(), ID2) << Os.str();
 
-        return {false, std::set<clang::tooling::Replacement>()};
+        return {false, TUChanges{}};
       }
     }
     return {true, Prev.second};
@@ -179,9 +180,8 @@ public:
 
   bool shouldVisitTemplateInstantiations() const { return true; }
 
-
-  void addTmpReplacement(const clang::tooling::Replacement& Replacement) {
-    TmpReplacements.insert(Replacement);
+  void addTmpReplacement(const CodeChange& Replacement) {
+    TmpReplacements.add(Replacement);
   }
 
   auto& finishReplacements() {
@@ -199,12 +199,17 @@ public:
       auto R = verifyReplacements(EachTemp.first, EachTemp.second, DE, Lang);
       if(R.first) {
         for(auto &Each : R.second)
-          addReplacement(Each);
+          for(auto &Each2 : Each.second) {
+            addReplacement(Each2);
+          }
       }
     }
 
-    for(auto &Each : TmpReplacements)
-      addReplacement(Each);
+    for(auto &Each : TmpReplacements) {
+      for(auto &Each2 : Each.second) {
+        addReplacement(Each2);
+      }
+    }
 
 
     return FileReplacements;

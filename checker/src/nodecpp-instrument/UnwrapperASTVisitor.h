@@ -227,9 +227,9 @@ public:
       Buffer.insert(0, "{ ");
     }
 
-//    return CodeChange::makeReplace(Context->getSourceManager(), StmtSourceRange, Buffer);
-    return Replacement(Context.getSourceManager(), 
-      CharSourceRange::getTokenRange(StmtSourceRange), Buffer, Context.getLangOpts());
+    return CodeChange::makeReplace(Context.getSourceManager(), StmtSourceRange, Buffer);
+    // return Replacement(Context.getSourceManager(), 
+    //   CharSourceRange::getTokenRange(StmtSourceRange), Buffer, Context.getLangOpts());
   }
 
   string generateName() {
