@@ -87,7 +87,9 @@ struct FirstControlBlock // not reallocatable
 		bool is1stBlock() const { return has_flag<1>(); }
 		static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
 	};
+#ifdef NODECPP_DECLARE_PTR_STRUCTS_AS_OPTIMIZED
 	static_assert( sizeof(PtrWishFlagsForSoftPtrList) == 8 );
+#endif
 
 	struct SecondCBHeader
 	{
