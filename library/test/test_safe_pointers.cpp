@@ -502,11 +502,14 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("massive referencing")
 			{
-				const size_t maxPtrs = 1000000;
+				const size_t maxPtrs = 0x1000000;
 				soft_ptr<int>* sptrs = new soft_ptr<int>[maxPtrs];
 				owning_ptr<int> op = make_owning<int>();
 				for ( size_t i=0; i<maxPtrs; ++i )
 					sptrs[i] = op;
+				op = nullptr;
+				for ( size_t i=0; i<maxPtrs; ++i )
+					EXPECT( sptrs[i] == nullptr );
 				delete [] sptrs;
 			}
 		},
