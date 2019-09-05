@@ -151,9 +151,9 @@ struct FirstControlBlock // not reallocatable
 				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
 				//PtrWishFlagsForSoftPtrList* newOtherAllockedSlots = 
 				memcpy( ret->slots, present->slots, sizeof(PtrWishFlagsForSoftPtrList) * present->otherAllockedCnt );
-				deallocate( present );
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
+				deallocate( present );
 				ret->otherAllockedCnt = newSize;
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
