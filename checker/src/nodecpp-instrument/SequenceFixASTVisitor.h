@@ -51,46 +51,59 @@ using namespace std;
 
 
 class SequenceFixASTVisitor
-  : public EvaluatedExprVisitor<SequenceFixASTVisitor> {
+  : public clang::EvaluatedExprVisitor<SequenceFixASTVisitor> {
 
-  using Base = EvaluatedExprVisitor<SequenceFixASTVisitor>;
-  ASTContext &Context;
-  /// Fixes to apply
-  Replacements FileReplacements;
-  SmallVector<Replacement, 6> MoreReplacements;
+  using Base = clang::EvaluatedExprVisitor<SequenceFixASTVisitor>;
 
-  void addReplacement(const Replacement& Replacement) {
-    Error Err = FileReplacements.add(Replacement);
+  /// Fixes to apply.
+  FileChanges FileReplacements;
+
+//  ASTContext &Context;
+  // /// Fixes to apply
+  // FileChanges FileReplacements;
+  // SmallVector<Replacement, 6> MoreReplacements;
+
+  // void addReplacement(const CodeChange& Replacement) {
+  //   Error Err = FileReplacements.add(Context.getSourceManager(), Replacement);
+  //   if (Err) {
+  //     errs() << "Fix conflicts with existing fix! "
+  //                   << toString(move(Err)) << "\n";
+  //     assert(false && "Fix conflicts with existing fix!");
+  //   }
+  // }
+
+  // /// function names usually overlap, we keep them in order
+  // /// here, and merge them as needed
+  // void addConflictingReplacement(const Replacement& R) {
+  //   if(!MoreReplacements.empty()) {
+  //     auto &Last = MoreReplacements.back();
+  //     if(Last.getFilePath() == R.getFilePath() &&
+  //       Last.getOffset() == R.getOffset() &&
+  //       Last.getLength() == 0 && R.getLength() == 0) {
+
+  //       //merge them
+  //       SmallString<48> Buffer;
+  //       Buffer += Last.getReplacementText();
+  //       Buffer += R.getReplacementText();
+
+  //       Replacement N(Last.getFilePath(), Last.getOffset(),
+  //         Last.getLength(), Buffer);
+
+  //       MoreReplacements.pop_back();
+  //       MoreReplacements.push_back(N);
+  //       return;
+  //     }
+  //   }
+  //   MoreReplacements.push_back(R);
+  // }
+
+  void addReplacement(const CodeChange& Replacement) {
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
-      errs() << "Fix conflicts with existing fix! "
-                    << toString(move(Err)) << "\n";
+      llvm::errs() << "Fix conflicts with existing fix! "
+                    << llvm::toString(std::move(Err)) << "\n";
       assert(false && "Fix conflicts with existing fix!");
     }
-  }
-
-  /// function names usually overlap, we keep them in order
-  /// here, and merge them as needed
-  void addConflictingReplacement(const Replacement& R) {
-    if(!MoreReplacements.empty()) {
-      auto &Last = MoreReplacements.back();
-      if(Last.getFilePath() == R.getFilePath() &&
-        Last.getOffset() == R.getOffset() &&
-        Last.getLength() == 0 && R.getLength() == 0) {
-
-        //merge them
-        SmallString<48> Buffer;
-        Buffer += Last.getReplacementText();
-        Buffer += R.getReplacementText();
-
-        Replacement N(Last.getFilePath(), Last.getOffset(),
-          Last.getLength(), Buffer);
-
-        MoreReplacements.pop_back();
-        MoreReplacements.push_back(N);
-        return;
-      }
-    }
-    MoreReplacements.push_back(R);
   }
 
   void refactorOperator(SourceRange Sr, SourceLocation OpLoc,
@@ -100,16 +113,20 @@ class SequenceFixASTVisitor
     Ss += "nodecpp::safememory::";
     Ss += Text;
     Ss += "(";
-    Replacement R0(Context.getSourceManager(), Sr.getBegin(), 0, Ss);
+    auto R0 = CodeChange::makeInsertLeft(
+      Context.getSourceManager(), Sr.getBegin(), Ss);
 
-    Replacement R1(Context.getSourceManager(), OpLoc, OpSize, ",");
+    auto R1 = CodeChange::makeReplace(
+      Context.getSourceManager(), {OpLoc, OpLoc.getLocWithOffset(OpSize)}, ",");
 
-    Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
-    // move one char to the left, to insert after EndLoc
-    Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, ")");
+    // Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
+    // // move one char to the left, to insert after EndLoc
+    // Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, );
+    auto R3 = CodeChange::makeInsertRight(
+      Context.getSourceManager(), Sr.getEnd(), ")");
 
     /// the operator and the closing paren are never conflicting.
-    addConflictingReplacement(R0);
+    addReplacement(R0);
     addReplacement(R1);
     addReplacement(R3);
   }
@@ -124,17 +141,29 @@ class SequenceFixASTVisitor
 
 public:
 
-  explicit SequenceFixASTVisitor(clang::ASTContext &Context):
-    Base(Context), Context(Context) {}
+  explicit SequenceFixASTVisitor(const clang::ASTContext &Context):
+    Base(Context) {}
 
 
-  auto& finishReplacements() { 
-    
-    for(auto& Each : MoreReplacements) {
-      addReplacement(Each);
-    }
+  FileChanges& fixExpression(clang::Stmt* St) {
+    FileReplacements.clear();
+    Visit(St);
     return FileReplacements;
   }
+
+  // bool unwrapExpression(Expr *E) {
+
+  //   return this->TraverseStmt(E);
+  // }
+
+
+  // auto& finishReplacements() { 
+    
+  //   for(auto& Each : MoreReplacements) {
+  //     addReplacement(Each);
+  //   }
+  //   return FileReplacements;
+  // }
 
   void VisitBinaryOperator(BinaryOperator *E) {
 

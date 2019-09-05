@@ -45,7 +45,7 @@
 namespace nodecpp {
 
 using namespace clang;
-using namespace clang::tooling;
+//using namespace clang::tooling;
 using namespace llvm;
 using namespace std;
 
@@ -57,11 +57,13 @@ class RecursivePostOrderASTVisitor : public RecursiveASTVisitor<T> {
   bool shouldTraversePostOrder() const { return true; }
 };
 
-class ExpressionUnwrapperVisitor : public RecursivePostOrderASTVisitor<ExpressionUnwrapperVisitor>{
+class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor> {
 
-  using Base = RecursiveASTVisitor<ExpressionUnwrapperVisitor>;
-  const ASTContext &Context;
+  using Base = clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor>;
+//  const ASTContext &Context;
   
+  FileChanges FileReplacements;
+
   string StmtText;
   Range StmtRange;
   SourceRange StmtSourceRange;
@@ -69,23 +71,41 @@ class ExpressionUnwrapperVisitor : public RecursivePostOrderASTVisitor<Expressio
   int &Index;
   bool ExtraBraces = false;
   list<pair<string, Range>> Reps;
+
+  void addReplacement(const CodeChange& Replacement) {
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
+    if (Err) {
+      llvm::errs() << "Fix conflicts with existing fix! "
+                    << llvm::toString(std::move(Err)) << "\n";
+      assert(false && "Fix conflicts with existing fix!");
+    }
+  }
+
 public:
 
-  ExpressionUnwrapperVisitor(const ASTContext &Context, int &Index)
-    :Context(Context), Index(Index) {}
+  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
+    :Base(Context), Index(Index) {}
 
-  bool unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
+  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
+    
+    this->FileReplacements.clear();
+    this->Buffer.clear();
+    this->Reps.clear();
+
     auto R = printExprAsWritten(St, Context);
     if(!R.first)
-      return false;
+      return FileReplacements;
 
-    StmtText = R.second;
-    StmtSourceRange = St->getSourceRange();
-    StmtRange = calcRange(StmtSourceRange);
+    this->StmtText = R.second;
+    this->StmtSourceRange = St->getSourceRange();
+    this->StmtRange = calcRange(StmtSourceRange);
     this->ExtraBraces = ExtraBraces;
 
-    this->TraverseStmt(E);
-    return hasReplacement();
+    Visit(E);
+    if(!Buffer.empty()) {
+      makeFix();
+    }
+    return FileReplacements;
   }
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
   static pair<bool, StringRef> printExprAsWritten(Stmt *St,
@@ -154,7 +174,7 @@ public:
     Buffer += subStmtWithReplaces(RangeInStmtText);
     Buffer += "; ";
 
-    addReplacement(move(Name), RangeInStmtText);
+    addTextReplacement(move(Name), RangeInStmtText);
   }
 
   Range calcRange(const SourceRange &Sr) {
@@ -182,7 +202,7 @@ public:
     return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
   }
 
-  void addReplacement(string Text, Range R) {
+  void addTextReplacement(string Text, Range R) {
 
     auto It = Reps.begin();
     while(It != Reps.end()) {
@@ -219,7 +239,7 @@ public:
   //   return tooling::Replacement{};
   // } 
 
-  auto makeFix() {
+  void makeFix() {
 
     Buffer += subStmtWithReplaces(Range(0, StmtText.size()));
     if(ExtraBraces) {
@@ -227,7 +247,8 @@ public:
       Buffer.insert(0, "{ ");
     }
 
-    return CodeChange::makeReplace(Context.getSourceManager(), StmtSourceRange, Buffer);
+    addReplacement(CodeChange::makeReplace(
+      Context.getSourceManager(), StmtSourceRange, Buffer));
     // return Replacement(Context.getSourceManager(), 
     //   CharSourceRange::getTokenRange(StmtSourceRange), Buffer, Context.getLangOpts());
   }
@@ -245,7 +266,7 @@ public:
   // bool VisitCXXThisExpr(CXXThisExpr *E) {
   // }
 
-  bool VisitCallExpr(CallExpr *E) {
+  void VisitCallExpr(CallExpr *E) {
 
 
     if(E->getNumArgs() > 1) {
@@ -253,10 +274,10 @@ public:
         unwrap(Each);
       }
     }
-    return true;
+//    return true;
   }
 
-  bool VisitBinaryOperator(BinaryOperator *E) {
+  void VisitBinaryOperator(BinaryOperator *E) {
 
     if(E->isAdditiveOp() || E->isMultiplicativeOp() ||
       E->isBitwiseOp() || E->isComparisonOp() ||
@@ -265,15 +286,15 @@ public:
         unwrap(E->getRHS());
       }
 
-    return true;
+//    return true;
   }
 
-  bool VisitUnaryOperator(UnaryOperator *E) {
+  void VisitUnaryOperator(UnaryOperator *E) {
     
     if(E->isPostfix()) {
       unwrap(E->getSubExpr());
     }
-    return true;
+//    return true;
   }
 
 };

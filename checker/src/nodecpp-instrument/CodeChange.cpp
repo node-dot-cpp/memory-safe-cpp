@@ -171,14 +171,37 @@ CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS) {
     return mergeHelper(RHS, LHS);
 }
 
+//  static
+char CodeChangeError::ID = 0;
 
-llvm::Error FileChanges::add(const CodeChange &R) {
+CodeChangeError::CodeChangeError(ErrorCode Err, const clang::SourceManager &Sm,
+    const CodeChange &ExistingChange, const CodeChange &NewChange) : Err(Err) {
+      switch (Err) {
+      case ErrorCode::fail_to_apply:
+        Message = "Failed to apply a replacement.";
+        break;
+      case ErrorCode::wrong_file_path:
+        Message = "The new replacement's file path is different from the file path of "
+              "existing replacements";
+        break;
+      case ErrorCode::overlap_conflict:
+        Message = "The new replacement overlaps with an existing replacement.";
+        break;
+      default:
+        llvm_unreachable("A value of replacement_error has no message.");
+      }
+
+      Message += "\nNew: " + NewChange.toString(Sm);
+      Message += "\nExisting: " + ExistingChange.toString(Sm);
+}
+
+llvm::Error FileChanges::add(const SourceManager &Sm, const CodeChange &R) {
   // Check the file path.
   if (!Replaces.empty() && R.getFile() != Replaces.begin()->getFile())
-    return llvm::make_error<ReplacementError>(
-        replacement_error::wrong_file_path);
+    return llvm::make_error<CodeChangeError>(
+        CodeChangeError::wrong_file_path);
 
-  // We know that there currently are no overlapping replacements.
+  // We know that there currently no overlapping replacements.
   
   if(Replaces.empty()) {
     Replaces.insert(R);
@@ -212,8 +235,8 @@ llvm::Error FileChanges::add(const CodeChange &R) {
   }
   else {
     //error
-    return llvm::make_error<ReplacementError>(
-      replacement_error::overlap_conflict);    
+    return llvm::make_error<CodeChangeError>(
+      CodeChangeError::overlap_conflict, Sm, *I, R);    
   }
 }
 
@@ -237,9 +260,9 @@ void FileChanges::applyAll(Rewriter &Rewrite) const {
   }
 }
 
-llvm::Error TUChanges::add(const CodeChange &R) {
+llvm::Error TUChanges::add(const SourceManager &Sm, const CodeChange &R) {
   if(R.isValid()) {
-    return Replaces[R.getFile()].add(R);
+    return Replaces[R.getFile()].add(Sm, R);
   }
   else
     return llvm::make_error<ReplacementError>(

@@ -107,7 +107,7 @@ private:
   TiRiia::StoreType InstantiationsStore;
 
   void addReplacement(const CodeChange& Replacement) {
-    auto Err = FileReplacements.add(Replacement);
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
       llvm::errs() << "Fix conflicts with existing fix! "
                     << llvm::toString(std::move(Err)) << "\n";
@@ -175,15 +175,27 @@ private:
 public:
   using Base = clang::RecursiveASTVisitor<T>;
 
-  explicit BaseASTVisitor(ASTContext &Context):
+  explicit BaseASTVisitor(clang::ASTContext &Context):
     Context(Context) {}
 
   bool shouldVisitTemplateInstantiations() const { return true; }
 
   void addTmpReplacement(const CodeChange& Replacement) {
-    TmpReplacements.add(Replacement);
+    auto Err = TmpReplacements.add(Context.getSourceManager(), Replacement);
+    if (Err) {
+      llvm::errs() << "Fix conflicts with existing fix! "
+                    << llvm::toString(std::move(Err)) << "\n";
+      assert(false && "Fix conflicts with existing fix!");
+    }
+
   }
 
+  void addTmpReplacement(const FileChanges& Replacements) {
+    for(auto& Each : Replacements) {
+        addTmpReplacement(Each);
+    }
+  }
+  
   auto& finishReplacements() {
     return finishReplacements(Context.getDiagnostics(), Context.getLangOpts());
   } 
@@ -198,10 +210,11 @@ public:
     for(auto &EachTemp : InstantiationsStore) {
       auto R = verifyReplacements(EachTemp.first, EachTemp.second, DE, Lang);
       if(R.first) {
-        for(auto &Each : R.second)
+        for(auto &Each : R.second) {
           for(auto &Each2 : Each.second) {
             addReplacement(Each2);
           }
+        }
       }
     }
 

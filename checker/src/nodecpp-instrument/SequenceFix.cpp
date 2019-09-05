@@ -62,15 +62,15 @@ class SequenceCheck2ASTVisitor
     return SIt->get<CompoundStmt>() == nullptr;
   }
 
-  bool unwrapExpression(Stmt* St, Expr* E) {
+  // bool unwrapExpression(Stmt* St, Expr* E) {
 
-    ExpressionUnwrapperVisitor V(Context, Index);
-    if(V.unwrapExpression(St, E, needExtraBraces(St))) {
-      addTmpReplacement(V.makeFix());
-    }
+  //   ExpressionUnwrapperVisitor V(Context, Index);
+  //   if(V.unwrapExpression(St, E, needExtraBraces(St))) {
+  //     addTmpReplacement(V.makeFix());
+  //   }
     
-    return true;
-  }
+  //   return true;
+  // }
 
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
@@ -94,11 +94,14 @@ public:
 //      E->dumpColor();
       SequenceCheckASTVisitor V(Context, false);
       V.Visit(E);
-      if(FixAll || V.foundIssues()) {
+//      if(FixAll || V.foundIssues()) {
+      if(true) {
         SequenceFixASTVisitor V2(Context);
-        V2.Visit(E);
-        for(auto& Each : V2.finishReplacements())
-          addTmpReplacement(Each);
+        auto &R = V2.fixExpression(E);
+//        V2.Visit(E);
+//        for(auto& Each : V2.finishReplacements()) {
+            addTmpReplacement(R);
+//        }
       }
 
       return true;
@@ -119,9 +122,13 @@ public:
   bool TraverseDeclStmt(DeclStmt *St) {
     
     if(St->isSingleDecl()) {
-      if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
+      if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          return unwrapExpression(St, E);
+          ExpressionUnwrapperVisitor V(Context, Index);
+          auto &R = V.unwrapExpression(St, E, needExtraBraces(St));
+          addTmpReplacement(R);
+
+          return true;
         }
       }
     }
@@ -138,7 +145,8 @@ void sequenceFix(ASTContext &Ctx, bool FixAll) {
 
   V1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-  overwriteChangedFiles(Ctx, V1.finishReplacements(), "nodecpp-unsequenced");
+  auto &Reps = V1.finishReplacements();
+  overwriteChangedFiles(Ctx, Reps, "nodecpp-unsequenced");
 }
 
 

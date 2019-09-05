@@ -142,6 +142,69 @@ public:
 
 CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS);
 
+enum class code_change_error {
+  fail_to_apply = 0,
+  wrong_file_path,
+  overlap_conflict,
+  insert_conflict,
+};
+
+/// Carries extra error information in replacement-related llvm::Error,
+/// e.g. fail applying replacements and replacements conflict.
+class CodeChangeError : public llvm::ErrorInfo<CodeChangeError> {
+
+public:
+  enum ErrorCode {
+    fail_to_apply = 0,
+    wrong_file_path,
+    overlap_conflict,
+    insert_conflict,
+  };
+private:
+  ErrorCode Err;
+  std::string Message;
+public:
+  static char ID;
+
+  CodeChangeError(ErrorCode Err) : Err(Err) {}
+
+  /// Constructs an error related to an existing replacement.
+  CodeChangeError(ErrorCode Err, std::string Message)
+      : Err(Err), Message(std::move(Message)) {}
+
+  CodeChangeError(ErrorCode Err, const clang::SourceManager &Sm,
+    const CodeChange &ExistingChange, const CodeChange &NewChange);
+  
+
+  std::string message() const override { return Message; }
+
+  void log(llvm::raw_ostream &OS) const override { OS << message(); }
+
+  ErrorCode get() const { return Err; }
+
+
+  // const llvm::Optional<Replacement> &getNewReplacement() const {
+  //   return NewReplacement;
+  // }
+
+  // const llvm::Optional<Replacement> &getExistingReplacement() const {
+  //   return ExistingReplacement;
+  // }
+
+private:
+  // Users are not expected to use error_code.
+  std::error_code convertToErrorCode() const override {
+    return llvm::inconvertibleErrorCode();
+  }
+
+
+  // // A new replacement, which is to expected be added into a set of
+  // // replacements, that is causing problem.
+  // llvm::Optional<Replacement> NewReplacement;
+
+  // // An existing replacement in a replacements set that is causing problem.
+  // llvm::Optional<Replacement> ExistingReplacement;
+};
 
 
 class FileChanges {
@@ -163,7 +226,7 @@ public:
   /// existing replacements. Callers must
   /// explicitly check the Error returned, and the returned error can be
   /// converted to a string message with `llvm::toString()`.
-  llvm::Error add(const CodeChange &R);
+  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R);
 
   unsigned size() const { return Replaces.size(); }
 
@@ -201,7 +264,7 @@ public:
 
 //  TUChanges() = default;
 
-  llvm::Error add(const CodeChange &R);
+  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R);
 
 
   unsigned size() const { return Replaces.size(); }
