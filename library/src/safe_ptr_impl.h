@@ -46,11 +46,11 @@ void checkNotNullLargeSize( T* ptr )
 	}
 }
 
-/*template<>
-void checkNotNullLargeSize<void>( void* ptr )
+inline
+void checkNotNullLargeSize( void* )
 {
 	// do nothing
-}*/
+}
 
 template<class T>
 void checkNotNullAllSizes( T* ptr )
@@ -87,7 +87,9 @@ struct FirstControlBlock // not reallocatable
 		bool is1stBlock() const { return has_flag<1>(); }
 		static bool is1stBlock( uintptr_t ptr ) { return (ptr & 2)>>1; }
 	};
+#ifdef NODECPP_DECLARE_PTR_STRUCTS_AS_OPTIMIZED
 	static_assert( sizeof(PtrWishFlagsForSoftPtrList) == 8 );
+#endif
 
 	struct SecondCBHeader
 	{
@@ -118,7 +120,7 @@ struct FirstControlBlock // not reallocatable
 			firstFree = tmp;
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
-			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
+//			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
 			return idx;
 		}
@@ -149,9 +151,9 @@ struct FirstControlBlock // not reallocatable
 				SecondCBHeader* ret = reinterpret_cast<SecondCBHeader*>( allocate( (newSize + 2) * sizeof(PtrWishFlagsForSoftPtrList) ) );
 				//PtrWishFlagsForSoftPtrList* newOtherAllockedSlots = 
 				memcpy( ret->slots, present->slots, sizeof(PtrWishFlagsForSoftPtrList) * present->otherAllockedCnt );
-				deallocate( present );
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
+				deallocate( present );
 				ret->otherAllockedCnt = newSize;
 				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;

@@ -497,6 +497,22 @@ int testWithLest( int argc, char * argv[] )
 				EXPECT_THROWS( *(dezombiefy(ptr)) = 27 );
 			}
 		},
+
+		CASE( "massive referencing" )
+		{
+			SETUP("massive referencing")
+			{
+				const size_t maxPtrs = 0x1000000;
+				soft_ptr<int>* sptrs = new soft_ptr<int>[maxPtrs];
+				owning_ptr<int> op = make_owning<int>();
+				for ( size_t i=0; i<maxPtrs; ++i )
+					sptrs[i] = op;
+				op = nullptr;
+				for ( size_t i=0; i<maxPtrs; ++i )
+					EXPECT( sptrs[i] == nullptr );
+				delete [] sptrs;
+			}
+		},
 	};
 
 	int ret = lest::run( specification, argc, argv );
