@@ -47,7 +47,7 @@ void dezombiefy(ASTContext &Ctx) {
       
   Dezombify1ASTVisitor Visitor1(Ctx);
   Dezombify2ASTVisitor Visitor2(Ctx);
-//      Context.getTranslationUnitDecl()->dumpColor();
+  // Ctx.getTranslationUnitDecl()->dumpColor();
   Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
   dezombiefyRelax(Ctx);
   Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());

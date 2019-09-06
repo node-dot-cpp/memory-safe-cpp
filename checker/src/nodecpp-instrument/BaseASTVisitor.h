@@ -49,25 +49,25 @@ using namespace clang::tooling;
 
 
 struct TiRiia {
-  using StoreType = std::map<FunctionDecl *, std::map<FunctionDecl *, TUChanges>>;
+  using StoreType = std::map<FunctionDecl *, TUChanges>;
+//  using StoreType = std::map<FunctionDecl *, std::map<FunctionDecl *, TUChanges>>;
   TUChanges Internal;
   TUChanges &External;
   StoreType &Store;
-  FunctionDecl *CurrentTempl;
+//  FunctionDecl *CurrentTempl;
   FunctionDecl *CurrentInst;
 
   TiRiia(TUChanges &Previous,
-    StoreType &Store,
-    FunctionDecl *CurrentTempl, FunctionDecl *CurrentInst)
+    StoreType &Store, FunctionDecl *CurrentInst)
     :External(Previous), Store(Store),
-    CurrentTempl(CurrentTempl), CurrentInst(CurrentInst) {
+     CurrentInst(CurrentInst) {
     std::swap(External, Internal);
-    assert(CurrentTempl);
+//    assert(CurrentTempl);
     assert(CurrentInst);
   }
 
   ~TiRiia() {
-    Store[CurrentTempl][CurrentInst] = External;
+    Store[CurrentInst] = External;
     std::swap(Internal, External);
   }
 };
@@ -106,6 +106,10 @@ private:
   /// To work with template instantiations
   TiRiia::StoreType InstantiationsStore;
 
+  // instantiations to template pattern map 
+  // don't use map, so order is fixed
+  std::vector<std::pair<FunctionDecl *, FunctionDecl *>> Inst2Templ;
+
   void addReplacement(const CodeChange& Replacement) {
     auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
@@ -116,60 +120,42 @@ private:
   }
 
   static
-  std::pair<bool, TUChanges> verifyReplacements(clang::FunctionDecl *D, 
-    const std::map<clang::FunctionDecl *, TUChanges>& Insts,
+  bool verifyReplacements2(clang::FunctionDecl *D, clang::FunctionDecl *I1, 
+    const TUChanges& Changes1, clang::FunctionDecl *I2, const TUChanges& Changes2,
     clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) {
     
-    std::pair<clang::FunctionDecl *, TUChanges> Prev{nullptr, TUChanges{}};
-    assert(D);
-
-    for(auto EachInst : Insts) {
-      assert(EachInst.first);
-
-      if(D == EachInst.first) {
-        //this is the template itself, not an instantitation.
-        //we just discard this one, as we care only about instantiations
-        continue;
-      }
-
-      if(!Prev.first) {
-        Prev = EachInst;
-        continue;
-      }
-
-      if(Prev.second != EachInst.second) {
-
-        unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
-          clang::DiagnosticIDs::Error,
-          "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
-
-        DE.Report(D->getLocation(), ID) << D->getName();
-
-        unsigned ID2 = DE.getDiagnosticIDs()->getCustomDiagID(
-          clang::DiagnosticIDs::Note,
-          "Intantiated as '%0' here");
+      if(Changes1 == Changes2)
+        return true;
 
 
-        std::string Str;
-        llvm::raw_string_ostream Os(Str);
-        // llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
-        // LangOptions L;
-        clang::PrintingPolicy P(Lang);
-        P.TerseOutput = true;
-        P.FullyQualifiedName = true;
-        Prev.first->print(Os, P, 0, true);
+    unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
+      clang::DiagnosticIDs::Error,
+      "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
 
-        DE.Report(Prev.first->getPointOfInstantiation(), ID2) << Os.str();
+    DE.Report(D->getLocation(), ID) << D->getName();
 
-        Os.str().clear();
+    unsigned ID2 = DE.getDiagnosticIDs()->getCustomDiagID(
+      clang::DiagnosticIDs::Note,
+      "Intantiated as '%0' here");
 
-        EachInst.first->print(Os, P, 0, true);
-        DE.Report(EachInst.first->getPointOfInstantiation(), ID2) << Os.str();
 
-        return {false, TUChanges{}};
-      }
-    }
-    return {true, Prev.second};
+    std::string Str;
+    llvm::raw_string_ostream Os(Str);
+    // llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
+    // LangOptions L;
+    clang::PrintingPolicy P(Lang);
+    P.TerseOutput = true;
+    P.FullyQualifiedName = true;
+    I1->print(Os, P, 0, true);
+
+    DE.Report(I1->getPointOfInstantiation(), ID2) << Os.str();
+
+    Os.str().clear();
+
+    I2->print(Os, P, 0, true);
+    DE.Report(I2->getPointOfInstantiation(), ID2) << Os.str();
+
+    return false;
   }
 
 public:
@@ -178,6 +164,7 @@ public:
   explicit BaseASTVisitor(clang::ASTContext &Context):
     Context(Context) {}
 
+  //template inst are implicits, so we actually need both
   bool shouldVisitTemplateInstantiations() const { return true; }
 
   void addTmpReplacement(const CodeChange& Replacement) {
@@ -207,26 +194,92 @@ public:
     // for each template in InstantiationsStore,
     // we must have check all instantiation of such template
     // and they must have the same set of Replacements
-    for(auto &EachTemp : InstantiationsStore) {
-      auto R = verifyReplacements(EachTemp.first, EachTemp.second, DE, Lang);
-      if(R.first) {
-        for(auto &Each : R.second) {
-          for(auto &Each2 : Each.second) {
-            addReplacement(Each2);
-          }
+    TiRiia::StoreType Result;
+    std::map<FunctionDecl *, FunctionDecl *> ResultInst;
+
+    for(auto& Each : Inst2Templ) {
+      //first, the second is the template pattern,
+      //if we have it in the set, we drop it
+      //since instantiations put the rules
+      auto ItPatt = InstantiationsStore.find(Each.second);
+      if(ItPatt != InstantiationsStore.end()) {
+        InstantiationsStore.erase(ItPatt);
+      }
+
+      //now we look up the instantiation
+      auto It = InstantiationsStore.find(Each.first);
+      assert(It != InstantiationsStore.end());
+      auto It2 = Result.find(Each.second);
+      if(It2 == Result.end()) {
+        // is the first time we hit this pattern, just add it.
+        Result[Each.second] = It->second;
+        ResultInst[Each.second] = Each.first;
+      }
+      else {
+        auto D = Each.second;
+        auto I1 = ResultInst[Each.second];
+        auto &Changes1 = Result[Each.second];
+        auto I2 = Each.first;
+        auto &Changes2 = It->second;
+        //verify it is equal
+        verifyReplacements2(D, I1, Changes1, I2, Changes2, DE, Lang);
+      }
+
+      //now we remove it from instantiation store
+      InstantiationsStore.erase(It);
+    }
+
+
+    //Now things in Result are clean, and only one time for each template
+    for(auto &Each : Result) {
+      for(auto &Each2 : Each.second) {
+        for(auto &Each3 : Each2.second) {
+          addReplacement(Each3);
         }
       }
     }
 
-    for(auto &Each : TmpReplacements) {
+    //anything left in instantiation store, is not template related
+    //just add
+    for(auto &Each : InstantiationsStore) {
       for(auto &Each2 : Each.second) {
-        addReplacement(Each2);
+        for(auto &Each3 : Each2.second) {
+          addReplacement(Each3);
+        }
       }
     }
 
-
     return FileReplacements;
   }
+
+
+  // auto& finishReplacements(clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) { 
+    
+  //   // llvm::errs() <<
+  //   //   "Dezombiefy finishReplacements!\n";
+  //   // for each template in InstantiationsStore,
+  //   // we must have check all instantiation of such template
+  //   // and they must have the same set of Replacements
+  //   for(auto &EachTemp : InstantiationsStore) {
+  //     auto R = verifyReplacements(EachTemp.first, EachTemp.second, DE, Lang);
+  //     if(R.first) {
+  //       for(auto &Each : R.second) {
+  //         for(auto &Each2 : Each.second) {
+  //           addReplacement(Each2);
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   for(auto &Each : TmpReplacements) {
+  //     for(auto &Each2 : Each.second) {
+  //       addReplacement(Each2);
+  //     }
+  //   }
+
+
+  //   return FileReplacements;
+  // }
 
   bool TraverseDecl(clang::Decl *D) {
     if (!D)
@@ -236,16 +289,50 @@ public:
     if(isInSystemHeader(Context, D))
       return true;
 
+
+    // Traverse* are type specific and don't
+    // walk up, like Visit* do, so we check it here
     if(auto F = dyn_cast<clang::FunctionDecl>(D)) {
       if(auto P = F->getTemplateInstantiationPattern()) {
-        TiRiia Riia(TmpReplacements, InstantiationsStore, P, F);
-
-        return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
+        Inst2Templ.emplace_back(F, P);
       }
+
+      TiRiia Riia(TmpReplacements, InstantiationsStore, F);
+
+      return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
     }
 
     return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
   }
+
+  // bool TraverseFunctionTemplateDecl(clang::FunctionTemplateDecl *D) {
+  
+  //   return clang::RecursiveASTVisitor<T>::TraverseFunctionTemplateDecl(D);
+  // }
+
+  // bool TraverseCXXMethodDecl(clang::CXXMethodDecl *D) {
+
+  //   return clang::RecursiveASTVisitor<T>::TraverseCXXMethodDecl(D);
+  // }
+
+  // bool TraverseFunctionDecl(clang::FunctionDecl *D) {
+    
+  //   //checks at TraverseDecl are already executed
+  //   assert(D);
+  //   assert(!isInSystemHeader(Context, D));
+
+  //   if(D->getDescribedFunctionTemplate()) {
+  //     return true;//template itself is not analyzed, only its intantatiations
+  //   }
+  //   else if(auto P = D->getTemplateInstantiationPattern()) {
+  //     TiRiia Riia(TmpReplacements, InstantiationsStore, P, D);
+
+  //     return clang::RecursiveASTVisitor<T>::TraverseFunctionDecl(D);
+  //   }
+  //   else {
+  //     return clang::RecursiveASTVisitor<T>::TraverseFunctionDecl(D);
+  //   }
+  // }
 
 };
 

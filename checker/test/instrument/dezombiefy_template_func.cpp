@@ -55,6 +55,12 @@ auto templWithSpecialization(TestObj* t) {
 // CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
 }
 
+//This template is never instantiated
+template <class T>
+T* templNoInstance(T* t) {
+    return t;
+}
+
 void func() {
 
     TestObj val;

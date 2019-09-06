@@ -58,45 +58,6 @@ class SequenceFixASTVisitor
   /// Fixes to apply.
   FileChanges FileReplacements;
 
-//  ASTContext &Context;
-  // /// Fixes to apply
-  // FileChanges FileReplacements;
-  // SmallVector<Replacement, 6> MoreReplacements;
-
-  // void addReplacement(const CodeChange& Replacement) {
-  //   Error Err = FileReplacements.add(Context.getSourceManager(), Replacement);
-  //   if (Err) {
-  //     errs() << "Fix conflicts with existing fix! "
-  //                   << toString(move(Err)) << "\n";
-  //     assert(false && "Fix conflicts with existing fix!");
-  //   }
-  // }
-
-  // /// function names usually overlap, we keep them in order
-  // /// here, and merge them as needed
-  // void addConflictingReplacement(const Replacement& R) {
-  //   if(!MoreReplacements.empty()) {
-  //     auto &Last = MoreReplacements.back();
-  //     if(Last.getFilePath() == R.getFilePath() &&
-  //       Last.getOffset() == R.getOffset() &&
-  //       Last.getLength() == 0 && R.getLength() == 0) {
-
-  //       //merge them
-  //       SmallString<48> Buffer;
-  //       Buffer += Last.getReplacementText();
-  //       Buffer += R.getReplacementText();
-
-  //       Replacement N(Last.getFilePath(), Last.getOffset(),
-  //         Last.getLength(), Buffer);
-
-  //       MoreReplacements.pop_back();
-  //       MoreReplacements.push_back(N);
-  //       return;
-  //     }
-  //   }
-  //   MoreReplacements.push_back(R);
-  // }
-
   void addReplacement(const CodeChange& Replacement) {
     auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
@@ -150,20 +111,6 @@ public:
     Visit(St);
     return FileReplacements;
   }
-
-  // bool unwrapExpression(Expr *E) {
-
-  //   return this->TraverseStmt(E);
-  // }
-
-
-  // auto& finishReplacements() { 
-    
-  //   for(auto& Each : MoreReplacements) {
-  //     addReplacement(Each);
-  //   }
-  //   return FileReplacements;
-  // }
 
   void VisitBinaryOperator(BinaryOperator *E) {
 

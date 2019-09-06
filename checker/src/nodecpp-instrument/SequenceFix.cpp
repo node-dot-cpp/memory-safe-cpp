@@ -62,29 +62,9 @@ class SequenceCheck2ASTVisitor
     return SIt->get<CompoundStmt>() == nullptr;
   }
 
-  // bool unwrapExpression(Stmt* St, Expr* E) {
-
-  //   ExpressionUnwrapperVisitor V(Context, Index);
-  //   if(V.unwrapExpression(St, E, needExtraBraces(St))) {
-  //     addTmpReplacement(V.makeFix());
-  //   }
-    
-  //   return true;
-  // }
-
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
     BaseASTVisitor<SequenceCheck2ASTVisitor>(Context), FixAll(FixAll) {}
-
-  // auto& finishReplacements() { 
-    
-  //   for(auto& Each : TmpReplacements) {
-  //     addReplacement(Each);
-  //   }
-  //   return FileReplacements;
-  // }
-
-  // const auto& getReplacements() const { return FileReplacements; }
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
@@ -98,10 +78,7 @@ public:
       if(true) {
         SequenceFixASTVisitor V2(Context);
         auto &R = V2.fixExpression(E);
-//        V2.Visit(E);
-//        for(auto& Each : V2.finishReplacements()) {
-            addTmpReplacement(R);
-//        }
+        addTmpReplacement(R);
       }
 
       return true;
@@ -109,15 +86,6 @@ public:
     else
       return Base::TraverseStmt(St);
   }
-
-  // bool TraverseStmt(Stmt *St) {
-
-  //   if(Expr* E = dyn_cast_or_null<Expr>(St)) {
-  //     return unwrapExpression(St, E);
-  //   }
-  //   else
-  //     return Base::TraverseStmt(St);
-  // }
 
   bool TraverseDeclStmt(DeclStmt *St) {
     

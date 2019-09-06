@@ -50,12 +50,12 @@ using namespace llvm;
 using namespace std;
 
 
-template<class T>
-class RecursivePostOrderASTVisitor : public RecursiveASTVisitor<T> {
-  public:
-    /// Return whether this visitor should traverse post-order.
-  bool shouldTraversePostOrder() const { return true; }
-};
+// template<class T>
+// class RecursivePostOrderASTVisitor : public RecursiveASTVisitor<T> {
+//   public:
+//     /// Return whether this visitor should traverse post-order.
+//   bool shouldTraversePostOrder() const { return true; }
+// };
 
 class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor> {
 
@@ -81,32 +81,6 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
     }
   }
 
-public:
-
-  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
-    :Base(Context), Index(Index) {}
-
-  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
-    
-    this->FileReplacements.clear();
-    this->Buffer.clear();
-    this->Reps.clear();
-
-    auto R = printExprAsWritten(St, Context);
-    if(!R.first)
-      return FileReplacements;
-
-    this->StmtText = R.second;
-    this->StmtSourceRange = St->getSourceRange();
-    this->StmtRange = calcRange(StmtSourceRange);
-    this->ExtraBraces = ExtraBraces;
-
-    Visit(E);
-    if(!Buffer.empty()) {
-      makeFix();
-    }
-    return FileReplacements;
-  }
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
   static pair<bool, StringRef> printExprAsWritten(Stmt *St,
                                 const ASTContext &Context) {
@@ -226,19 +200,6 @@ public:
     Reps.push_back({Text, R});
   }
 
-
-  bool hasReplacement() const {
-    return !Buffer.empty();
-  }
-
-  // tooling::Replacement makeInsert(SourceLocation Where) {
-
-  //   // auto Sr = CharSourceRange::getCharRange(Where, Where);
-  //   // tooling::Replacement R(Context->getSourceManager(), Sr,
-  //   //                                   Buffer);
-  //   return tooling::Replacement{};
-  // } 
-
   void makeFix() {
 
     Buffer += subStmtWithReplaces(Range(0, StmtText.size()));
@@ -249,8 +210,6 @@ public:
 
     addReplacement(CodeChange::makeReplace(
       Context.getSourceManager(), StmtSourceRange, Buffer));
-    // return Replacement(Context.getSourceManager(), 
-    //   CharSourceRange::getTokenRange(StmtSourceRange), Buffer, Context.getLangOpts());
   }
 
   string generateName() {
@@ -259,22 +218,41 @@ public:
     return Name;
   }
 
-  // bool VisitDeclRefExpr(DeclRefExpr *Dre) {
-    
-  // }
+public:
 
-  // bool VisitCXXThisExpr(CXXThisExpr *E) {
-  // }
+  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
+    :Base(Context), Index(Index) {}
+
+  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
+    
+    this->FileReplacements.clear();
+    this->Buffer.clear();
+    this->Reps.clear();
+
+    auto R = printExprAsWritten(St, Context);
+    if(!R.first)
+      return FileReplacements;
+
+    this->StmtText = R.second;
+    this->StmtSourceRange = St->getSourceRange();
+    this->StmtRange = calcRange(StmtSourceRange);
+    this->ExtraBraces = ExtraBraces;
+
+    Visit(E);
+    if(!Buffer.empty()) {
+      makeFix();
+    }
+    return FileReplacements;
+  }
+
 
   void VisitCallExpr(CallExpr *E) {
-
 
     if(E->getNumArgs() > 1) {
       for(auto Each : E->arguments()) {
         unwrap(Each);
       }
     }
-//    return true;
   }
 
   void VisitBinaryOperator(BinaryOperator *E) {
@@ -285,8 +263,6 @@ public:
         unwrap(E->getLHS());
         unwrap(E->getRHS());
       }
-
-//    return true;
   }
 
   void VisitUnaryOperator(UnaryOperator *E) {
@@ -294,85 +270,11 @@ public:
     if(E->isPostfix()) {
       unwrap(E->getSubExpr());
     }
-//    return true;
   }
 
 };
 
 
-
-
-// class Deunsequence2ASTVisitor
-//   : public BaseASTVisitor<Deunsequence2ASTVisitor> {
-
-// //    using Base = clang::RecursiveASTVisitor<Deunsequence2ASTVisitor>;
-// //  clang::ASTContext &Context;
-// //  DzHelper &DzData;
-//   int Index = 0;
-//   /// Fixes to apply, grouped by file path.
-//   std::map<FileID, FileChanges> FileReplacements;
-
-//   void addFix(const Replacement& Ch) {
-//     // llvm::Error Err = FileReplacements[Ch.getFile()].add(Ch);
-//     // // FIXME: better error handling (at least, don't let other replacements be
-//     // // applied).
-//     // if (Err) {
-//     //   llvm::errs() << "Fix conflicts with existing fix! "
-//     //                 << llvm::toString(std::move(Err)) << "\n";
-//     //   assert(false && "Fix conflicts with existing fix!");
-//     // }
-//   }
-
-//   bool needExtraBraces(Stmt *St) {
-
-//     auto SList = Context.getParents(*St);
-
-//     auto SIt = SList.begin();
-
-//     if (SIt == SList.end())
-//       return true;
-
-//     return SIt->get<CompoundStmt>() == nullptr;
-//   }
-
-//   bool unwrapExpression(Stmt* St, Expr* E) {
-
-//     ExpressionUnwrapperVisitor V(Context, Index);
-//     if(V.unwrapExpression(St, E, needExtraBraces(St))) {
-//       addFix(V.makeFix());
-//     }
-    
-//     return true;
-//   }
-
-// public:
-//   const auto& getReplacements() const { return FileReplacements; }
-
-//   explicit Deunsequence2ASTVisitor(ASTContext &Context):
-//     BaseASTVisitor<Deunsequence2ASTVisitor>(Context) {}
-
-
-//   bool TraverseStmt(Stmt *St) {
-
-//     if(Expr* E = dyn_cast_or_null<Expr>(St)) {
-//       return unwrapExpression(St, E);
-//     }
-//     else
-//       return Base::TraverseStmt(St);
-//   }
-
-//   bool TraverseDeclStmt(DeclStmt *St) {
-    
-//     if(St->isSingleDecl()) {
-//       if(VarDecl* D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
-//         if(Expr *E = D->getInit()) {
-//           return unwrapExpression(St, E);
-//         }
-//       }
-//     }
-//     return Base::TraverseDeclStmt(St);
-//   }
-// };
 
 } // namespace nodecpp
 
