@@ -62,6 +62,29 @@ class SequenceCheck2ASTVisitor
     return SIt->get<CompoundStmt>() == nullptr;
   }
 
+  bool isStandAloneExpr(Stmt *St) {
+
+    auto SList = Context.getParents(*St);
+
+    auto SIt = SList.begin();
+
+    if (SIt == SList.end())
+      return false;
+
+    if(SIt->get<CompoundStmt>())
+      return true;
+    else if(auto P = SIt->get<IfStmt>())
+      return P->getThen() == St || P->getElse() == St;
+    else if(auto P = SIt->get<WhileStmt>())
+      return P->getBody() == St;
+    else if(auto P = SIt->get<ForStmt>())
+      return P->getBody() == St;
+    else if(auto P = SIt->get<DoStmt>())
+      return P->getBody() == St;
+    else
+      return false;      
+  }
+
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
     BaseASTVisitor<SequenceCheck2ASTVisitor>(Context), FixAll(FixAll) {}
@@ -71,13 +94,24 @@ public:
     if(!St)
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
-//      E->dumpColor();
-      SequenceCheckASTVisitor V(Context, false);
-    //  V.Visit(E);
-      if(V.checkExpression(E)) {
-        SequenceFixASTVisitor V2(Context);
-        auto &R = V2.fixExpression(V.getRoot());
-        addReplacement(R);
+      if(isStandAloneExpr(St)) {
+        SequenceCheckASTVisitor V(Context, true);
+        
+        if(V.checkExpression(E)) {
+          ExpressionUnwrapperVisitor V2(Context, Index);
+          auto &R = V2.unwrapExpression(St, V.getRoot(), true, true);
+          addReplacement(R);
+        }
+
+
+      }
+      else {
+        SequenceCheckASTVisitor V(Context, false);
+        if(V.checkExpression(E)) {
+          SequenceFixASTVisitor V2(Context);
+          auto &R = V2.fixExpression(V.getRoot());
+          addReplacement(R);
+        }
       }
 
       return true;
@@ -95,7 +129,7 @@ public:
           
           if(V.checkExpression(E)) {
             ExpressionUnwrapperVisitor V2(Context, Index);
-            auto &R = V2.unwrapExpression(St, V.getRoot(), needExtraBraces(St));
+            auto &R = V2.unwrapExpression(St, V.getRoot(), needExtraBraces(St), false);
             addReplacement(R);
           }
 

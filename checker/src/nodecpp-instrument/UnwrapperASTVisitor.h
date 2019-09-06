@@ -60,8 +60,7 @@ using namespace std;
 class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor> {
 
   using Base = clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor>;
-//  const ASTContext &Context;
-  
+
   FileChanges FileReplacements;
 
   string StmtText;
@@ -69,7 +68,9 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
   SourceRange StmtSourceRange;
   string Buffer; //TODO change to ostream or similar
   int &Index;
+  bool ExtraSemicolon = false;
   bool ExtraBraces = false;
+  
   list<pair<string, Range>> Reps;
 
   void addReplacement(const CodeChange& Replacement) {
@@ -204,8 +205,11 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
     Buffer += subStmtWithReplaces(Range(0, StmtText.size()));
     if(ExtraBraces) {
-      Buffer += " };";
       Buffer.insert(0, "{ ");
+      if(ExtraSemicolon)
+        Buffer += ";";
+
+      Buffer += " }";
     }
 
     addReplacement(CodeChange::makeReplace(
@@ -223,7 +227,7 @@ public:
   ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
     :Base(Context), Index(Index) {}
 
-  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces) {
+  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
     
     this->FileReplacements.clear();
     this->Buffer.clear();
@@ -237,6 +241,7 @@ public:
     this->StmtSourceRange = St->getSourceRange();
     this->StmtRange = calcRange(StmtSourceRange);
     this->ExtraBraces = ExtraBraces;
+    this->ExtraSemicolon = ExtraSemicolon;
 
     Visit(E);
     if(!Buffer.empty()) {
