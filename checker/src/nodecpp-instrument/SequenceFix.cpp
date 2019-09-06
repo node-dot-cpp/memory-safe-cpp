@@ -78,7 +78,7 @@ public:
       if(true) {
         SequenceFixASTVisitor V2(Context);
         auto &R = V2.fixExpression(E);
-        addTmpReplacement(R);
+        addReplacement(R);
       }
 
       return true;
@@ -94,7 +94,7 @@ public:
         if(Expr *E = D->getInit()) {
           ExpressionUnwrapperVisitor V(Context, Index);
           auto &R = V.unwrapExpression(St, E, needExtraBraces(St));
-          addTmpReplacement(R);
+          addReplacement(R);
 
           return true;
         }
