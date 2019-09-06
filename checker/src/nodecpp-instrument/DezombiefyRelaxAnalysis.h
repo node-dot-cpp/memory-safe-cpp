@@ -31,6 +31,7 @@ namespace clang {
 class AnalysisDeclContext;
 class CFG;
 class DeclContext;
+class FunctionDecl;
 
 } // namespace clang
 
@@ -40,6 +41,8 @@ struct DezombiefyRelaxAnalysisStats {
 //  unsigned NumVariablesAnalyzed = 0;
   unsigned NumBlockVisits = 0;
 };
+
+void runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D);
 
 void runDezombiefyRelaxAnalysis(const clang::DeclContext *dc, const clang::CFG *cfg,
                                        DezombiefyRelaxAnalysisStats &stats);

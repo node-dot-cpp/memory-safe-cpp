@@ -31,6 +31,7 @@
 #include "DezombiefyHelper.h"
 
 #include "BaseASTVisitor.h"
+#include "DezombiefyRelaxAnalysis.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -73,8 +74,6 @@ class DzHelper {
     }
   }
 
-  llvm::Optional<clang::FixItHint> makeFixIfNeeded(const clang::Stmt* St);
-
 };
 
 class DezombiefyRelaxASTVisitor
@@ -87,11 +86,22 @@ public:
   explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context, DzHelper &DzData):
     Base(Context), DzData(DzData) {}
 
-  bool VisitFunctionDecl(clang::FunctionDecl *D);
+  bool VisitFunctionDecl(clang::FunctionDecl *D) {
 
+    // For code in dependent contexts, we'll do this at instantiation time.
+    if (D->isDependentContext())
+      return true;
+
+    if(!D->getBody())
+      return true;
+
+    runDezombiefyRelaxAnalysis(D);
+
+    return Base::VisitFunctionDecl(D);
+  }
 };
 
-void dezombiefyRelax(clang::ASTContext &Context);
+//void dezombiefyRelax(clang::ASTContext &Context);
 
 } // namespace nodecpp
 

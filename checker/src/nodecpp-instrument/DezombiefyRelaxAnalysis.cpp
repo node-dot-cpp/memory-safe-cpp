@@ -320,3 +320,42 @@ void nodecpp::runDezombiefyRelaxAnalysis(
     }
   }
 }
+
+
+void nodecpp::runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
+
+  // Construct the analysis context with the specified CFG build options.
+  AnalysisDeclContext AC(/* AnalysisDeclContextManager */ nullptr, D);
+
+  // Don't generate EH edges for CallExprs as we'd like to avoid the n^2
+  // explosion for destructors that can result and the compile time hit.
+  AC.getCFGBuildOptions().PruneTriviallyFalseEdges = true;
+  AC.getCFGBuildOptions().AddEHEdges = false;
+  AC.getCFGBuildOptions().AddInitializers = true;
+  AC.getCFGBuildOptions().AddImplicitDtors = true;
+  AC.getCFGBuildOptions().AddTemporaryDtors = true;
+  AC.getCFGBuildOptions().AddCXXNewAllocator = false;
+  AC.getCFGBuildOptions().AddCXXDefaultInitExprInCtors = true;
+
+  AC.getCFGBuildOptions().setAllAlwaysAdd();
+
+  if (CFG *cfg = AC.getCFG()) {
+    DezombiefyRelaxAnalysisStats stats;
+
+//    cfg->dump(Context.getLangOpts(), true);
+
+    runDezombiefyRelaxAnalysis(D, cfg, stats);
+
+    // if (S.CollectStats && stats.NumVariablesAnalyzed > 0) {
+    //   ++NumUninitAnalysisFunctions;
+    //   NumUninitAnalysisVariables += stats.NumVariablesAnalyzed;
+    //   NumUninitAnalysisBlockVisits += stats.NumBlockVisits;
+    //   MaxUninitAnalysisVariablesPerFunction =
+    //       std::max(MaxUninitAnalysisVariablesPerFunction,
+    //                 stats.NumVariablesAnalyzed);
+    //   MaxUninitAnalysisBlockVisitsPerFunction =
+    //       std::max(MaxUninitAnalysisBlockVisitsPerFunction,
+    //                 stats.NumBlockVisits);
+    // }
+  }
+}

@@ -176,6 +176,8 @@ private:
   // don't use map, so order is fixed
   std::vector<std::pair<FunctionDecl *, FunctionDecl *>> Inst2Templ;
 
+  bool IsTemplate = false;
+
 
 public:
   using Base = clang::RecursiveASTVisitor<T>;

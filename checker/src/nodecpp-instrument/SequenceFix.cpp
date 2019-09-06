@@ -73,11 +73,10 @@ public:
     else if(Expr *E = dyn_cast<Expr>(St)) {
 //      E->dumpColor();
       SequenceCheckASTVisitor V(Context, false);
-      V.Visit(E);
-//      if(FixAll || V.foundIssues()) {
-      if(true) {
+    //  V.Visit(E);
+      if(V.checkExpression(E)) {
         SequenceFixASTVisitor V2(Context);
-        auto &R = V2.fixExpression(E);
+        auto &R = V2.fixExpression(V.getRoot());
         addReplacement(R);
       }
 
@@ -92,9 +91,13 @@ public:
     if(St->isSingleDecl()) {
       if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          ExpressionUnwrapperVisitor V(Context, Index);
-          auto &R = V.unwrapExpression(St, E, needExtraBraces(St));
-          addReplacement(R);
+          SequenceCheckASTVisitor V(Context, true);
+          
+          if(V.checkExpression(E)) {
+            ExpressionUnwrapperVisitor V2(Context, Index);
+            auto &R = V2.unwrapExpression(St, V.getRoot(), needExtraBraces(St));
+            addReplacement(R);
+          }
 
           return true;
         }

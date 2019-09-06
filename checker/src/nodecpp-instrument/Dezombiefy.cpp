@@ -49,7 +49,12 @@ void dezombiefy(ASTContext &Ctx) {
   Dezombify2ASTVisitor Visitor2(Ctx);
   // Ctx.getTranslationUnitDecl()->dumpColor();
   Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
-  dezombiefyRelax(Ctx);
+  {
+    DzHelper Data;
+    DezombiefyRelaxASTVisitor VisitorRelax(Ctx, Data);
+    VisitorRelax.TraverseDecl(Ctx.getTranslationUnitDecl());
+  }
+//  dezombiefyRelax(Ctx);
   Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());
 
   auto &Reps = Visitor2.finishReplacements();

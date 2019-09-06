@@ -160,11 +160,13 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   /// The region we are currently within.
   SequenceTree::Seq Region;
 
-  /// Should we report diagnose, or this is only a pre-check
-  bool ReportDiagnostics = false;
+  /// Should we allow indeterminately sequence?
+  bool HardSequence = false;
 
   /// Did we find any issues
   bool IssuesFound = false;
+
+  clang::Expr *Root = nullptr;
 
 
     enum EvaluatedCond {False = false, True = true, Unknown};
@@ -197,11 +199,11 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 
   void diag(Expr *E1, Expr *E2) {
     IssuesFound = true;
-    if(ReportDiagnostics) {
-        diag("Dezombiefy", E1->getExprLoc(), 
-        "Potencially zombie object and potencial zombie creator call are unsequenced, dezombiefication will not be realiable", 
-        DiagnosticIDs::Error) << E2->getExprLoc();
-    }
+    // if(ReportDiagnostics) {
+    //     diag("Dezombiefy", E1->getExprLoc(), 
+    //     "Potencially zombie object and potencial zombie creator call are unsequenced, dezombiefication will not be realiable", 
+    //     DiagnosticIDs::Error) << E2->getExprLoc();
+    // }
   }
 
   DiagnosticBuilder diag(
@@ -215,11 +217,17 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   }
 
   public:
-  SequenceCheckASTVisitor(ASTContext &Context, bool ReportDiagnostics)
-      : Base(Context), Context(Context), Region(Tree.root()), ReportDiagnostics(ReportDiagnostics) {
+  SequenceCheckASTVisitor(ASTContext &Context, bool HardSequence)
+      : Base(Context), Context(Context), Region(Tree.root()), HardSequence(HardSequence) {
   }
 
-  bool foundIssues() const { return IssuesFound; }
+  bool checkExpression(Expr *E) {
+    Root = E;
+    Visit(E);
+    return IssuesFound;
+  }
+
+  Expr *getRoot() const { return Root; }
 
   void VisitStmt(Stmt *S) {
     // Skip all statements which aren't expressions for now.
@@ -418,7 +426,8 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 
     for (auto Begin = E->arg_begin(), End = E->arg_end();
          Begin != End; ++Begin) {
-        RR.beginNewRegion();
+        if(!HardSequence)
+          RR.beginNewRegion();
         Visit(*Begin);
     }
   }
