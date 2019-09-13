@@ -50,23 +50,20 @@ using namespace llvm;
 using namespace std;
 
 
+enum class ZombieSequence {NONE, Z1, Z2 };
+
 /// Visitor for expressions which looks for unsequenced access to potencially
 /// zombie objects and calls to functions that may zombie them as side-effects
 /// When this two things happend in an unsequenced region, dezombiefy can't
 /// be used reliably.
-class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisitor> {
-  using Base = EvaluatedExprVisitor<SequenceCheckASTVisitor>;
+class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVisitor2> {
+  using Base = EvaluatedExprVisitor<SequenceCheckASTVisitor2>;
 
-  /// A tree of sequenced regions within an expression. Two regions are
-  /// unsequenced if one is an ancestor or a descendent of the other. When we
-  /// finish processing an expression with sequencing, such as a comma
-  /// expression, we fold its tree nodes into its parent, since they are
-  /// unsequenced with respect to nodes we will visit later.
   class SequenceTree {
     struct Value {
-      explicit Value(unsigned Parent) : Parent(Parent), Merged(false) {}
+      explicit Value(unsigned Parent, bool Sequenced) : Parent(Parent), Sequenced(Sequenced) {}
       unsigned Parent : 31;
-      unsigned Merged : 1;
+      unsigned Sequenced : 1;
     };
     SmallVector<Value, 8> Values;
 
@@ -82,75 +79,69 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 
     public:
       Seq() = default;
+      bool operator==(Seq O) const { return Index == O.Index; }
+      bool operator!=(Seq O) const { return !this->operator==(O); }
     };
 
-    SequenceTree() { Values.push_back(Value(0)); }
+    SequenceTree() { Values.push_back(Value(0, false)); }
     Seq root() const { return Seq(0); }
 
     /// Create a new sequence of operations, which is an unsequenced
     /// subset of \p Parent. This sequence of operations is sequenced with
     /// respect to other children of \p Parent.
-    Seq allocate(Seq Parent) {
-      Values.push_back(Value(Parent.Index));
+    Seq allocate(Seq Parent, bool Sequenced) {
+      Values.push_back(Value(Parent.Index, Sequenced));
       return Seq(Values.size() - 1);
     }
 
-    /// Merge a sequence of operations into its parent.
-    void merge(Seq S) {
-      Values[S.Index].Merged = true;
-    }
-
-    /// Determine whether two operations are unsequenced. This operation
-    /// is asymmetric: \p Cur should be the more recent sequence, and \p Old
-    /// should have been merged into its parent as appropriate.
-    bool isUnsequenced(Seq Cur, Seq Old) {
-      unsigned C = representative(Cur.Index);
-      unsigned Target = representative(Old.Index);
-      while (C >= Target) {
-        if (C == Target)
-          return true;
-        C = Values[C].Parent;
+    unsigned commonAncestor(Seq Left, Seq Right) {
+      unsigned L = Left.Index;
+      unsigned R = Right.Index;
+      while (L != R) {
+        if (L < R)
+          R = Values[R].Parent;
+        else
+          L = Values[L].Parent;
       }
-      return false;
+      return L;
     }
 
-  private:
-    /// Pick a representative for a sequence.
-    unsigned representative(unsigned K) {
-      if (Values[K].Merged)
-        // Perform path compression as we go.
-        return Values[K].Parent = representative(Values[K].Parent);
-      return K;
+    bool isZ1(Seq Cur, Seq Old) {
+      //this should return true if the common parent
+      // is an unsequenced node.
+      return  !(Values[commonAncestor(Cur, Old)].Sequenced);
+    }
+
+    bool isZ2(Seq Cur, Seq Old) {
+      //this should return true if Old is a parent or Cur
+      return  commonAncestor(Cur, Old) == Old.Index;
+    }
+
+    Seq beginUnsequensed(Seq Cur) { return allocate(Cur, false); }
+    Seq beginSequensed(Seq Cur) { return allocate(Cur, true); }
+  };
+
+  class RegionRaii {
+    SequenceTree& Tree;
+    SequenceTree::Seq& Current;
+    SequenceTree::Seq Parent;
+
+  public:
+    RegionRaii(SequenceTree& Tree, SequenceTree::Seq& Region, bool Sequenced) 
+    :Tree(Tree), Current(Region), Parent(Region) {
+      Current = Tree.allocate(Parent, Sequenced);
+    }
+
+    ~RegionRaii() {
+      Current = Parent;
     }
   };
 
-    class RegionRaii {
-        SequenceTree& Tree;
-        SequenceTree::Seq& Current;
-        SequenceTree::Seq Parent;
-        SmallVector<SequenceTree::Seq, 32> Elts;
-    public:
-        RegionRaii(SequenceTree& Tree, SequenceTree::Seq& Region) 
-        :Tree(Tree), Current(Region), Parent(Region) {}
 
-        void beginNewRegion() {
-            Current = Tree.allocate(Parent);
-            Elts.push_back(Current);
-        }
-
-        void restoreParentRegion() {
-            Current = Parent;
-        }
-
-        ~RegionRaii() {
-            restoreParentRegion(); //just in case
-            for (unsigned I = 0; I < Elts.size(); ++I)
-              Tree.merge(Elts[I]);
-        }
-    };
-
-  llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> UsageInfoMapThisOrRef;
-  llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> UsageInfoMapCall;
+  llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> Z1Refs;
+  llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> ZCalls;
+  llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> Z2Refs;
+  
 
   ASTContext &Context;
 
@@ -160,50 +151,75 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   /// The region we are currently within.
   SequenceTree::Seq Region;
 
-  /// Should we allow indeterminately sequence?
-  bool HardSequence = false;
+  /// The kind of issue we need to fix for this expression
+  ZombieSequence Issue = ZombieSequence::NONE;
 
-  /// Did we find any issues
-  bool IssuesFound = false;
+  /// Where we should report a warning because
+  /// we won't be able to fix the expression
+  ZombieSequence MaxIssue = ZombieSequence::NONE;
 
-  clang::Expr *Root = nullptr;
 
+  RegionRaii beginSequenced() {
+    return RegionRaii(Tree, Region, true);
+  }
 
-    enum EvaluatedCond {False = false, True = true, Unknown};
-    EvaluatedCond evaluate(const Expr *E) const {
-        bool R;
-      bool Ok = E->EvaluateAsBooleanCondition(R, Context);
-        return Ok ? static_cast<EvaluatedCond>(R) : Unknown;
-    }
+  RegionRaii beginUnsequenced() {
+    return RegionRaii(Tree, Region, false);
+  }
 
-  void notePotencialZombie(Expr *E) {
-    UsageInfoMapThisOrRef[E] = Region;
+  void noteZ2Ref(Expr *E) {
+    Z2Refs[E] = Region;
+  }
 
-    for(auto& Each : UsageInfoMapCall)
-      if(Tree.isUnsequenced(Region, Each.second)) {
-        //report error
-        diag(E, Each.first);
+  void removeZ2Ref(Expr *E) {
+    Z2Refs.erase(E);
+  }
+
+  void noteZ1Ref(Expr *E) {
+    Z1Refs[E] = Region;
+
+    for(auto& Each : ZCalls) {
+      if(Tree.isZ1(Each.second, Region)) {
+        if(updateIssue(ZombieSequence::Z1))
+          diag("nodecpp-dezombiefy", E, Each.first);
       }
+    }
   }
 
   /// a call can rezombiefy objects in unsequenced zones
   void noteCall(Expr *E) {
-    UsageInfoMapCall[E] = Region;
+    ZCalls[E] = Region;
 
-    for(auto& Each : UsageInfoMapThisOrRef)
-      if(Tree.isUnsequenced(Region, Each.second)) {
+    for(auto& Each : Z1Refs) {
+      if(Tree.isZ1(Region, Each.second)) {
         //report error
-        diag(Each.first, E);
+        if(updateIssue(ZombieSequence::Z1))
+          diag("nodecpp-dezombiefy", Each.first, E);
       }
+    }
+    for(auto& Each : Z2Refs) {
+      if(Tree.isZ2(Region, Each.second)) {
+        if(updateIssue(ZombieSequence::Z2))
+          diag("nodecpp-dezombiefy", Each.first, E);
+      }
+    }
   }
 
-  void diag(Expr *E1, Expr *E2) {
-    IssuesFound = true;
-    // if(ReportDiagnostics) {
-    //     diag("Dezombiefy", E1->getExprLoc(), 
-    //     "Potencially zombie object and potencial zombie creator call are unsequenced, dezombiefication will not be realiable", 
-    //     DiagnosticIDs::Error) << E2->getExprLoc();
-    // }
+  bool updateIssue(ZombieSequence Value) {
+    if(Value > Issue) {
+      Issue = Value;
+      return Issue > MaxIssue;
+    }
+    return false;
+  }
+
+
+  void diag(StringRef Name, Expr *E1, Expr *E2) {
+    if(true) {
+        diag(Name, E1->getExprLoc(), 
+        "Dezombiefication not fully realiable", 
+        DiagnosticIDs::Error) << E2->getExprLoc();
+    }
   }
 
   DiagnosticBuilder diag(
@@ -217,17 +233,13 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   }
 
   public:
-  SequenceCheckASTVisitor(ASTContext &Context, bool HardSequence)
-      : Base(Context), Context(Context), Region(Tree.root()), HardSequence(HardSequence) {
+  SequenceCheckASTVisitor2(ASTContext &Context, ZombieSequence MaxIssue)
+      : Base(Context), Context(Context), Region(Tree.root()), MaxIssue(MaxIssue) {
   }
 
-  bool checkExpression(Expr *E) {
-    Root = E;
-    Visit(E);
-    return IssuesFound;
+  ZombieSequence getIssue() const {
+    return Issue;
   }
-
-  Expr *getRoot() const { return Root; }
 
   void VisitStmt(Stmt *S) {
     // Skip all statements which aren't expressions for now.
@@ -241,7 +253,7 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 
   void VisitCXXThisExpr(CXXThisExpr *E) {
     if(!E->isImplicit()) {
-      notePotencialZombie(E);
+      noteZ1Ref(E);
       return;
     }
 
@@ -255,7 +267,7 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
   void VisitMemberExpr(MemberExpr *E) {
     if(CXXThisExpr *Te = dyn_cast_or_null<CXXThisExpr>(E->getBase())) {
       if(Te->isImplicit()) {
-          notePotencialZombie(E);
+          noteZ1Ref(E);
           return;
       }
     }
@@ -264,7 +276,7 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 
   void VisitDeclRefExpr(DeclRefExpr *E) {
     if(isDezombiefyCandidate(E))
-      notePotencialZombie(E);
+      noteZ1Ref(E);
   }
 
 //   void VisitCastExpr(CastExpr *E) {
@@ -279,40 +291,84 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 //       notePostUse(O, E);
 //   }
 
-  void VisitBinComma(BinaryOperator *BO) {
-    // C++11 [expr.comma]p1:
-    //   Every value computation and side effect associated with the left
-    //   expression is sequenced before every value computation and side
-    //   effect associated with the right expression.
+  // void VisitBinComma(clang::BinaryOperator *E) {
+  //   // C++11 [expr.comma]p1:
+  //   //   Every value computation and side effect associated with the left
+  //   //   expression is sequenced before every value computation and side
+  //   //   effect associated with the right expression.
 
-    RegionRaii RR(Tree, Region);
+  //   auto Raii = beginSequenced();
+  //   Base::VisitBinComma(E);
+  // }
 
-    RR.beginNewRegion();
-    Visit(BO->getLHS());
-
-    RR.beginNewRegion();
-    Visit(BO->getRHS());
-
+  void VisitBinaryOperator(clang::BinaryOperator *E) {
+    switch(E->getOpcode()) {
+      case BO_Mul:
+      case BO_Div:
+      case BO_Rem:
+      case BO_Add:
+      case BO_Sub:
+      case BO_LT:
+      case BO_GT:
+      case BO_LE:
+      case BO_GE:
+      case BO_EQ:
+      case BO_NE:
+      case BO_Cmp:
+      case BO_And:
+      case BO_Xor:
+      case BO_Or:
+        {
+          auto Raii = beginUnsequenced();
+          Base::VisitBinaryOperator(E);
+        }
+        break;
+      case BO_PtrMemD:
+      case BO_PtrMemI:
+      case BO_Shl:
+      case BO_Shr:
+      case BO_LAnd:
+      case BO_LOr :
+      case BO_Assign:
+      case BO_MulAssign:
+      case BO_DivAssign:
+      case BO_RemAssign:
+      case BO_AddAssign:
+      case BO_SubAssign:
+      case BO_ShlAssign:
+      case BO_ShrAssign:
+      case BO_AndAssign:
+      case BO_OrAssign:
+      case BO_XorAssign:
+      case BO_Comma:
+        {
+          auto Raii = beginSequenced();
+          Base::VisitBinaryOperator(E);
+        }
+        break;
+      default:
+        assert(false);
+    }
   }
 
-  void VisitBinAssign(BinaryOperator *E) {
-      //C++17
-    // In every simple assignment expression E1=E2 and
-    // every compound assignment expression E1@=E2,
-    // every value computation and side-effect of E2
-    // is sequenced before every value computation and side effect of E1
-    RegionRaii RR(Tree, Region);
+  // void VisitBinAssign(clang::BinaryOperator *E) {
+  //     //C++17
+  //   // In every simple assignment expression E1=E2 and
+  //   // every compound assignment expression E1@=E2,
+  //   // every value computation and side-effect of E2
+  //   // is sequenced before every value computation and side effect of E1
+  //   RegionRaii RR(Tree, Region);
 
-    RR.beginNewRegion();
-    Visit(E->getLHS());
+  //   RR.beginNewRegion();
+  //   Visit(E->getLHS());
 
-    RR.beginNewRegion();
-    Visit(E->getRHS());
-  }
+  //   RR.beginNewRegion();
+  //   Visit(E->getRHS());
+  // }
 
-  void VisitCompoundAssignOperator(CompoundAssignOperator *CAO) {
-    VisitBinAssign(CAO);
-  }
+  // void VisitCompoundAssignOperator(CompoundAssignOperator *CAO) {
+  //   VisitBinAssign(CAO);
+  // }
 
 //   void VisitUnaryPreInc(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
 //   void VisitUnaryPreDec(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
@@ -341,63 +397,78 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
 //   }
 
   /// Don't visit the RHS of '&&' or '||' if it might not be evaluated.
-  void VisitBinLOr(BinaryOperator *E) {
-    // The side-effects of the LHS of an '&&' are sequenced before the
-    // value computation of the RHS, and hence before the value computation
-    // of the '&&' itself, unless the LHS evaluates to zero. We treat them
-    // as if they were unconditionally sequenced.
-    RegionRaii RR(Tree, Region);
+  // void VisitBinLOr(BinaryOperator *E) {
+  //   // The side-effects of the LHS of an '&&' are sequenced before the
+  //   // value computation of the RHS, and hence before the value computation
+  //   // of the '&&' itself, unless the LHS evaluates to zero. We treat them
+  //   // as if they were unconditionally sequenced.
+  //   RegionRaii RR(Tree, Region);
 
-    RR.beginNewRegion();
-    Visit(E->getLHS());
+  //   RR.beginNewRegion();
+  //   Visit(E->getLHS());
 
 
-    // if it will short-circuit, don't go into RHS
-    auto R = evaluate(E->getLHS());
-    if(R == True)
-        return;
+  //   // if it will short-circuit, don't go into RHS
+  //   auto R = evaluate(E->getLHS());
+  //   if(R == True)
+  //       return;
 
-    RR.beginNewRegion();
-    Visit(E->getRHS());
-  }
-  void VisitBinLAnd(BinaryOperator *E) {
+  //   RR.beginNewRegion();
+  //   Visit(E->getRHS());
+  // }
+  // void VisitBinLAnd(BinaryOperator *E) {
           
           
-    RegionRaii RR(Tree, Region);
+  //   RegionRaii RR(Tree, Region);
     
-    RR.beginNewRegion();
-    Visit(E->getLHS());
+  //   RR.beginNewRegion();
+  //   Visit(E->getLHS());
 
-    // if it will short-circuit, don't go into RHS
-     auto R = evaluate(E->getLHS());
-      if (R == False)
-        return;
+  //   // if it will short-circuit, don't go into RHS
+  //    auto R = evaluate(E->getLHS());
+  //     if (R == False)
+  //       return;
 
-    RR.beginNewRegion();
-    Visit(E->getRHS());
-  }
+  //   RR.beginNewRegion();
+  //   Visit(E->getRHS());
+  // }
 
-  void VisitAbstractConditionalOperator(AbstractConditionalOperator *E) {
+  // void VisitAbstractConditionalOperator(AbstractConditionalOperator *E) {
 
-    RegionRaii RR(Tree, Region);
+  //   RegionRaii RR(Tree, Region);
 
-    RR.beginNewRegion();
-    Visit(E->getCond());
+  //   RR.beginNewRegion();
+  //   Visit(E->getCond());
 
-    // if we know only one branck will be evaluated, don't visit the other
-     auto R = evaluate(E->getCond());
+  //   // if we know only one branck will be evaluated, don't visit the other
+  //    auto R = evaluate(E->getCond());
 
-    if(R == True || R == Unknown) {
-        RR.beginNewRegion();
-        Visit(E->getTrueExpr());
+  //   if(R == True || R == Unknown) {
+  //       RR.beginNewRegion();
+  //       Visit(E->getTrueExpr());
+  //   }
+
+  //   if(R == False || R == Unknown) {
+  //       RR.beginNewRegion();
+  //       Visit(E->getFalseExpr());
+
+  //   }
+  // }
+
+  static
+  bool calculateOthers(const vector<bool>& Args, unsigned I) {
+
+    for(unsigned J = 0; J != Args.size(); ++J) {
+      if(I != J) {
+        if(Args[J]) {
+          return true;
+        } 
+      }
     }
 
-    if(R == False || R == Unknown) {
-        RR.beginNewRegion();
-        Visit(E->getFalseExpr());
-
-    }
+    return false;
   }
+
 
   void VisitCallExpr(CallExpr *E) {
     // C++11 [intro.execution]p15:
@@ -413,57 +484,77 @@ class SequenceCheckASTVisitor : public EvaluatedExprVisitor<SequenceCheckASTVisi
     //   including every associated value computation and side effect, is
     //   indeterminately sequenced with respect to that of any other parameter. 
     
-    RegionRaii RR(Tree, Region);
-
-    //call body is sequenced respect to its own arguments
-    RR.beginNewRegion();
+//    RegionRaii RR(Tree, Region);
+    auto Raii = beginSequenced();
+    //this call is noted in parents region
     noteCall(E);
 
-    if(E->getCallee()) {
-        RR.beginNewRegion();
-        Visit(E->getCallee());
-    }
+    if(auto D = E->getDirectCallee()) {
+      vector<bool> P;
+      unsigned Count = E->getNumArgs();
+      assert(D->getNumParams() == Count);
 
-    for (auto Begin = E->arg_begin(), End = E->arg_end();
-         Begin != End; ++Begin) {
-        if(!HardSequence)
-          RR.beginNewRegion();
-        Visit(*Begin);
-    }
-  }
+      for(unsigned I = 0; I != Count; ++I) {
+        auto Each = D->getParamDecl(I);
+        if(mayZombie(Each->getType())) {
+          P.push_back(true);
+          noteZ1Ref(E->getArg(I));
+        }
+        else
+          P.push_back(false);
+      }
 
-  void VisitCXXConstructExpr(CXXConstructExpr *E) {
+      for(unsigned I = 0; I != Count; ++I) {
+        auto Each = E->getArg(I);
+        bool B = calculateOthers(P, I);
+        if(B)
+          noteZ2Ref(E);
 
-    // In C++11, list initializations are sequenced.
-    // In C++17, other constructor as function call
+        Visit(Each);
 
-    RegionRaii RR(Tree, Region);
-
-    //call body is sequenced respect to its own arguments
-    RR.beginNewRegion();
-    noteCall(E);
-
-    for (auto Begin = E->arg_begin(), End = E->arg_end();
-         Begin != End; ++Begin) {
-        RR.beginNewRegion();
-        Visit(*Begin);
+        if(B)
+          removeZ2Ref(E);
+      }
     }
   }
 
-  void VisitInitListExpr(InitListExpr *E) {
+  // void VisitCXXConstructExpr(CXXConstructExpr *E) {
 
-    // In C++11, list initializations are sequenced.
-    RegionRaii RR(Tree, Region);
-    for (auto Begin = E->begin(), End = E->end();
-         Begin != End; ++Begin) {
-        RR.beginNewRegion();
-        Visit(*Begin);
-    }
-  }
+  //   // In C++11, list initializations are sequenced.
+  //   // In C++17, other constructor as function call
+
+  //   RegionRaii RR(Tree, Region);
+
+  //   //call body is sequenced respect to its own arguments
+  //   RR.beginNewRegion();
+  //   noteCall(E);
+
+  //   for (auto Begin = E->arg_begin(), End = E->arg_end();
+  //        Begin != End; ++Begin) {
+  //       RR.beginNewRegion();
+  //       Visit(*Begin);
+  //   }
+  // }
+
+  // void VisitInitListExpr(InitListExpr *E) {
+
+  //   // In C++11, list initializations are sequenced.
+  //   RegionRaii RR(Tree, Region);
+  //   for (auto Begin = E->begin(), End = E->end();
+  //        Begin != End; ++Begin) {
+  //       RR.beginNewRegion();
+  //       Visit(*Begin);
+  //   }
+  // }
 };
 
 
+ZombieSequence checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax) {
 
+  SequenceCheckASTVisitor2 V(Context, ZqMax);
+  V.Visit(E);
+  return V.getIssue();
+}
 
 } // namespace nodecpp
 

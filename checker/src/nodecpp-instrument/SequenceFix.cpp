@@ -95,21 +95,18 @@ public:
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
       if(isStandAloneExpr(St)) {
-        SequenceCheckASTVisitor V(Context, true);
-        
-        if(V.checkExpression(E)) {
+        auto P = checkSequence(Context, E, ZombieSequence::Z2);
+        if(P != ZombieSequence::NONE) {
           ExpressionUnwrapperVisitor V2(Context, Index);
-          auto &R = V2.unwrapExpression(St, V.getRoot(), true, true);
+          auto &R = V2.unwrapExpression(St, E, true, true);
           addReplacement(R);
         }
-
-
       }
       else {
-        SequenceCheckASTVisitor V(Context, false);
-        if(V.checkExpression(E)) {
+        auto P = checkSequence(Context, E, ZombieSequence::Z1);
+        if(P != ZombieSequence::NONE) {
           SequenceFixASTVisitor V2(Context);
-          auto &R = V2.fixExpression(V.getRoot());
+          auto &R = V2.fixExpression(E);
           addReplacement(R);
         }
       }
@@ -125,11 +122,10 @@ public:
     if(St->isSingleDecl()) {
       if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          SequenceCheckASTVisitor V(Context, true);
-          
-          if(V.checkExpression(E)) {
+          auto P = checkSequence(Context, E, ZombieSequence::Z2);
+          if(P != ZombieSequence::NONE) {
             ExpressionUnwrapperVisitor V2(Context, Index);
-            auto &R = V2.unwrapExpression(St, V.getRoot(), needExtraBraces(St), false);
+            auto &R = V2.unwrapExpression(St, E, needExtraBraces(St), false);
             addReplacement(R);
           }
 

@@ -36,13 +36,16 @@
 namespace nodecpp {
 
 inline
+bool mayZombie(clang::QualType Qt) {
+  Qt = Qt.getCanonicalType();
+  return Qt->isLValueReferenceType() || Qt->isPointerType();
+}
+
+inline
 bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
-  if(auto D = E->getDecl()) {
-    auto Qt = D->getType().getCanonicalType();
-    if(Qt->isLValueReferenceType() || Qt->isPointerType()) {
-      return true;
-    }
-  }   
+  if(auto D = E->getDecl())
+    return mayZombie(D->getType());
+
   return false;
 }
 
