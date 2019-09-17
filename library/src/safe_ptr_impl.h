@@ -518,8 +518,8 @@ public:
 		//dbgValidateList();
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
-			updatePtrForListItemsWithInvalidPtr();
 			destruct( t.getTypedPtr() );
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setZombie();
@@ -532,8 +532,8 @@ public:
 	{
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
-			updatePtrForListItemsWithInvalidPtr();
 			destruct( t.getTypedPtr() );
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setPtr( nullptr );
