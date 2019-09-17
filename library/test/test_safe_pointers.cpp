@@ -513,6 +513,17 @@ int testWithLest( int argc, char * argv[] )
 				delete [] sptrs;
 			}
 		},
+
+		CASE( "soft ptrs to me are valid in dtor" )
+		{
+			SETUP("soft ptrs to me are valid in dtor")
+			{
+				owning_ptr<StructWithSoftPtr> op1 = make_owning<StructWithSoftPtr>(1);
+				owning_ptr<StructWithDtorRequiringValidSoftPtrsToItself> op2 = make_owning<StructWithDtorRequiringValidSoftPtrsToItself>(0, op1);
+				op2 = nullptr;
+				EXPECT( op1->dummy == 0 );
+			}
+		},
 	};
 
 	int ret = lest::run( specification, argc, argv );
