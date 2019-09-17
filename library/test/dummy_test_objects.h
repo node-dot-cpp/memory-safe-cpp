@@ -58,6 +58,27 @@ struct StructureWithSoftIntPtr { soft_ptr<int> sp; int n; };
 struct StructureWithSoftDoublePtr { soft_ptr<double> sp; double d;};
 struct StructureWithSoftPtrDeclaredUnsafe { soft_ptr<int> sp; double d;};
 
+struct StructWithDtorRequiringValidSoftPtrsToItself; // forward declaration
+struct StructWithSoftPtr
+{
+	int dummy;
+	soft_ptr<StructWithDtorRequiringValidSoftPtrsToItself> sp;
+	StructWithSoftPtr( int val ) { dummy = val; }
+};
+struct StructWithDtorRequiringValidSoftPtrsToItself
+{
+	nodecpp::safememory::soft_this_ptr<StructWithDtorRequiringValidSoftPtrsToItself> myThis;
+	int dummy = 0;
+	soft_ptr<StructWithSoftPtr> sp;
+	StructWithDtorRequiringValidSoftPtrsToItself( int val, soft_ptr<StructWithSoftPtr> sp_ ) : sp( sp_ ) { 
+		dummy = val;
+		sp->sp = myThis.getSoftPtr<StructWithDtorRequiringValidSoftPtrsToItself>(this); 
+	}
+	~StructWithDtorRequiringValidSoftPtrsToItself() {
+		if ( sp != nullptr && sp->sp != nullptr )
+			sp->dummy = sp->sp->dummy;
+	}
+};
 
 } // namespace nodecpp::safememory::testing::dummy_objects
 
