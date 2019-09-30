@@ -38,7 +38,7 @@ namespace nodecpp {
   /// rezombiefy it as a side-effect
 
 
-void sequenceFix(clang::ASTContext &Context, bool FixAll);
+void sequenceFix(clang::ASTContext &Context, bool ReportOnlyDontFix);
 
 } // namespace nodecpp
 

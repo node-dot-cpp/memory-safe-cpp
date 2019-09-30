@@ -138,23 +138,6 @@ struct DeduplicateHelper {
 };
 
 
-inline
-bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
-  
-  if (!llvm::isa<clang::TranslationUnitDecl>(D)) {
-
-    auto &SourceManager = Context.getSourceManager();
-    auto ExpansionLoc = SourceManager.getExpansionLoc(D->getLocStart());
-    if (ExpansionLoc.isInvalid()) {
-      return true;
-    }
-    if (SourceManager.isInSystemHeader(ExpansionLoc)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 template<class T>
 class BaseASTVisitor
   : public clang::RecursiveASTVisitor<T> {

@@ -253,11 +253,12 @@ public:
 
   void VisitCallExpr(CallExpr *E) {
 
-    if(E->getNumArgs() > 1) {
+//      unwrap(E->getCallee());
+//    if(E->getNumArgs() > 1) {
       for(auto Each : E->arguments()) {
         unwrap(Each);
       }
-    }
+//    }
   }
 
   void VisitBinaryOperator(BinaryOperator *E) {

@@ -158,6 +158,8 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   /// we won't be able to fix the expression
   ZombieSequence MaxIssue = ZombieSequence::NONE;
 
+  bool ReportAll = false;
+
 
   RegionRaii beginSequenced() {
     return RegionRaii(Tree, Region, true);
@@ -181,7 +183,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     for(auto& Each : ZCalls) {
       if(Tree.isZ1(Each.second, Region)) {
         if(updateIssue(ZombieSequence::Z1))
-          diag("nodecpp-dezombiefy", E, Each.first);
+          diag("Z1", E, Each.first);
       }
     }
   }
@@ -194,13 +196,13 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
       if(Tree.isZ1(Region, Each.second)) {
         //report error
         if(updateIssue(ZombieSequence::Z1))
-          diag("nodecpp-dezombiefy", Each.first, E);
+          diag("Z1", Each.first, E);
       }
     }
     for(auto& Each : Z2Refs) {
       if(Tree.isZ2(Region, Each.second)) {
         if(updateIssue(ZombieSequence::Z2))
-          diag("nodecpp-dezombiefy", Each.first, E);
+          diag("Z2", Each.first, E);
       }
     }
   }
@@ -208,33 +210,34 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   bool updateIssue(ZombieSequence Value) {
     if(Value > Issue) {
       Issue = Value;
-      return Issue > MaxIssue;
+      return true;
     }
-    return false;
+    return ReportAll;
   }
 
 
-  void diag(StringRef Name, Expr *E1, Expr *E2) {
+  void diag(StringRef ZombieSeq, Expr *E1, Expr *E2) {
     if(true) {
-        diag(Name, E1->getExprLoc(), 
+        diag("nodecpp-dezombiefy", E1->getExprLoc(), ZombieSeq,
         "Dezombiefication not fully realiable", 
         DiagnosticIDs::Error) << E2->getExprLoc();
     }
   }
 
   DiagnosticBuilder diag(
-        StringRef CheckName, SourceLocation Loc, StringRef Description,
+        StringRef CheckName, SourceLocation Loc, StringRef ZombieSeq, StringRef Description,
         DiagnosticIDs::Level Level /* = DiagnosticIDs::Warning*/) {
     //  assert(Loc.isValid());
     unsigned ID = Context.getDiagnostics().getDiagnosticIDs()->getCustomDiagID(
-        Level, (Description + " [" + CheckName + "]").str());
+        Level, ("(" + ZombieSeq + ") " + Description + " [" + CheckName + "]").str());
     // CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
     return Context.getDiagnostics().Report(Loc, ID);
   }
 
   public:
-  SequenceCheckASTVisitor2(ASTContext &Context, ZombieSequence MaxIssue)
-      : Base(Context), Context(Context), Region(Tree.root()), MaxIssue(MaxIssue) {
+  SequenceCheckASTVisitor2(ASTContext &Context, ZombieSequence MaxIssue, bool ReportAll)
+      : Base(Context), Context(Context), Region(Tree.root()),
+      MaxIssue(MaxIssue), ReportAll(ReportAll) {
   }
 
   ZombieSequence getIssue() const {
@@ -469,6 +472,42 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     return false;
   }
 
+  bool mayBaseZombie(MemberExpr* E) {
+    //we dig MemberExpr that are not pointers until we find a 'this'
+    // a pointer access, or something relevant
+    auto Be = E->getBase()->IgnoreParenCasts();
+    if(isa<CXXThisExpr>(Be)) {
+      // we assume 'this' is already not a zombie
+      return false;
+    }
+    else if(E->isArrow()) {
+      //any arrow not being 'this' may zombie
+      return true;
+    }
+    else if(auto Me = dyn_cast<MemberExpr>(Be)) {
+      // a nested member not arrow needs digging
+      return mayBaseZombie(Me);
+    }
+    else if(auto Dre = dyn_cast<DeclRefExpr>(Be)) {
+      // anything resolved to a VarDecl or ParamVarDecl
+      // may zombie if ref or ptr to sys type
+      if(auto D = dyn_cast_or_null<VarDecl>(Dre->getDecl())) {
+        auto Qt = D->getType().getCanonicalType();
+        if(Qt->isLValueReferenceType() || Qt->isPointerType()) {
+          Qt = Qt->getPointeeType().getCanonicalType();
+          if(Qt->isStructureOrClassType()) {
+            Qt.dump();
+            auto Rd = Qt->getAsCXXRecordDecl();
+            bool SysType = isInSystemHeader(Context, Rd);
+            return SysType;
+          }
+        }
+      }
+      return false;
+    }
+    else // anything else assume may zombie
+      return true;
+  }
 
   void VisitCallExpr(CallExpr *E) {
     // C++11 [intro.execution]p15:
@@ -489,24 +528,77 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     //this call is noted in parents region
     noteCall(E);
 
+    bool AtLeastOneArgumentMayZombie = false;
+    bool BaseMayZombie = false;
+
     if(auto D = E->getDirectCallee()) {
+      bool IsSystem = isInSystemHeader(Context, D);
+
+      auto Ce = E->getCallee()->IgnoreParenCasts();
+      
+      //mb: here we need to analyze what is going to be the 
+      // 'this' in the called method, to see if we can 
+      // verify it will not be a zombie
+      if(!Ce) {
+        // not really sure this can happend
+        assert(false);
+      }
+      else if(auto Me = dyn_cast<MemberExpr>(Ce) ) {
+        
+        BaseMayZombie = mayBaseZombie(Me) ;
+        
+      }
+      else if(isa<DeclRefExpr>(Ce)) {
+        //this is a function call, no need to check anything
+      }
+      else {
+        Ce->dumpColor();
+        assert(false);
+      }
+
+      Visit(E->getCallee());
+
       vector<bool> P;
-      unsigned Count = E->getNumArgs();
-      assert(D->getNumParams() == Count);
+      unsigned Count = D->getNumParams();
+      //TODO on CXXOperatorCallExpr, the callee expr
+      // is an argument. then the count mismatch
+      unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
+      assert(E->getNumArgs() == Count + Offset);
 
       for(unsigned I = 0; I != Count; ++I) {
         auto Each = D->getParamDecl(I);
-        if(mayZombie(Each->getType())) {
-          P.push_back(true);
-          noteZ1Ref(E->getArg(I));
+        auto EachE = E->getArg(I + Offset);
+
+        bool Z = mayZombie(Each->getType());
+        if(Z != EachE->isLValue()) {
+          Each->getType()->dump();
+          EachE->getType()->dump();
         }
-        else
-          P.push_back(false);
+        
+        P.push_back(Z);
+        if(Z) {
+          AtLeastOneArgumentMayZombie = true;
+          noteZ1Ref(EachE);
+        }
       }
+
+      if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
+        //check for issue Z3 
+        for(unsigned I = 0; I != Count; ++I) {
+          auto Each = D->getParamDecl(I);
+          auto Qt = Each->getType();
+          if (isByValueUserTypeNonTriviallyCopyable(Context, Qt)) {
+              //report a Z3 issue here.
+
+          }
+        }
+      }
+
+
 
       for(unsigned I = 0; I != Count; ++I) {
         auto Each = E->getArg(I);
-        bool B = calculateOthers(P, I);
+        bool B = IsSystem && (BaseMayZombie || calculateOthers(P, I));
         if(B)
           noteZ2Ref(E);
 
@@ -515,6 +607,11 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
         if(B)
           removeZ2Ref(E);
       }
+    }
+    else {
+      // not sure how why this can happend
+      E->dumpColor();
+      assert(false);
     }
   }
 
@@ -549,9 +646,9 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 };
 
 
-ZombieSequence checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax) {
+ZombieSequence checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportAll) {
 
-  SequenceCheckASTVisitor2 V(Context, ZqMax);
+  SequenceCheckASTVisitor2 V(Context, ZqMax, ReportAll);
   V.Visit(E);
   return V.getIssue();
 }

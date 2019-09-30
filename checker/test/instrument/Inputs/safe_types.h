@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2019, OLogN Technologies AG
+* Copyright (c) 2018, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,75 +25,18 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
-#define NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
+#ifndef NODECPP_SAFE_TYPES_H
+#define NODECPP_SAFE_TYPES_H
 
-#include "clang/AST/AST.h"
-#include "clang/AST/ASTContext.h"
+namespace nodecpp::safememory {
 
-namespace nodecpp {
+struct SafeType {
 
+	void call(int) { }
+};
 
-inline
-bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
-  
-  if (!llvm::isa<clang::TranslationUnitDecl>(D)) {
+void safeFunction(int) {}
 
-    auto &SourceManager = Context.getSourceManager();
-    auto ExpansionLoc = SourceManager.getExpansionLoc(D->getLocStart());
-    if (ExpansionLoc.isInvalid()) {
-      return true;
-    }
-    if (SourceManager.isInSystemHeader(ExpansionLoc)) {
-      return true;
-    }
-  }
-  return false;
 }
 
-inline
-bool isByValueUserTypeNonTriviallyCopyable(clang::ASTContext &Context, clang::QualType Qt) {
-  Qt = Qt.getCanonicalType();
-  if(Qt->isStructureOrClassType()) {
-    Qt.dump();
-    auto Rd = Qt->getAsCXXRecordDecl();
-    bool SysType = isInSystemHeader(Context, Rd);
-    if(!SysType && !Rd->isTriviallyCopyable()) {
-      return true;
-    }
-  }
-  return false;
-}
-
-inline
-bool mayZombie(clang::QualType Qt) {
-  Qt = Qt.getCanonicalType();
-  return Qt->isLValueReferenceType() || Qt->isPointerType();
-}
-
-inline
-bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
-  if(auto D = E->getDecl())
-    return mayZombie(D->getType());
-
-  return false;
-}
-
-inline
-const clang::Expr *getParentExpr(clang::ASTContext &Context, const clang::Expr *Ex) {
-
-  auto SList = Context.getParents(*Ex);
-
-  auto SIt = SList.begin();
-
-  if (SIt == SList.end())
-    return nullptr;
-
-  return SIt->get<clang::Expr>();
-}
-
-
-} // namespace nodecpp
-
-#endif // NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
-
+#endif // NODECPP_SAFE_TYPES_H

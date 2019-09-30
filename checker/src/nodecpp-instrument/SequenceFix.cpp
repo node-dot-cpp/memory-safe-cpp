@@ -47,6 +47,7 @@ using namespace std;
 class SequenceCheck2ASTVisitor
   : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
 
+  bool DontFix = false;
   bool FixAll = false;
   int Index = 0;
 
@@ -86,8 +87,9 @@ class SequenceCheck2ASTVisitor
   }
 
 public:
-  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll):
-    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context), FixAll(FixAll) {}
+  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll, bool DontFix):
+    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context),
+     FixAll(FixAll), DontFix(DontFix) {}
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
@@ -95,16 +97,16 @@ public:
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
       if(isStandAloneExpr(St)) {
-        auto P = checkSequence(Context, E, ZombieSequence::Z2);
-        if(P != ZombieSequence::NONE) {
+        auto P = checkSequence(Context, E, ZombieSequence::Z2, DontFix);
+        if(!DontFix && P != ZombieSequence::NONE) {
           ExpressionUnwrapperVisitor V2(Context, Index);
           auto &R = V2.unwrapExpression(St, E, true, true);
           addReplacement(R);
         }
       }
       else {
-        auto P = checkSequence(Context, E, ZombieSequence::Z1);
-        if(P != ZombieSequence::NONE) {
+        auto P = checkSequence(Context, E, ZombieSequence::Z1, DontFix);
+        if(!DontFix && P != ZombieSequence::NONE) {
           SequenceFixASTVisitor V2(Context);
           auto &R = V2.fixExpression(E);
           addReplacement(R);
@@ -122,8 +124,8 @@ public:
     if(St->isSingleDecl()) {
       if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          auto P = checkSequence(Context, E, ZombieSequence::Z2);
-          if(P != ZombieSequence::NONE) {
+          auto P = checkSequence(Context, E, ZombieSequence::Z2, DontFix);
+          if(!DontFix && P != ZombieSequence::NONE) {
             ExpressionUnwrapperVisitor V2(Context, Index);
             auto &R = V2.unwrapExpression(St, E, needExtraBraces(St), false);
             addReplacement(R);
@@ -140,11 +142,14 @@ public:
 
 
 
-void sequenceFix(ASTContext &Ctx, bool FixAll) {
+void sequenceFix(ASTContext &Ctx, bool ReportOnlyDontFix) {
       
-  SequenceCheck2ASTVisitor V1(Ctx, FixAll);
+  SequenceCheck2ASTVisitor V1(Ctx, false, ReportOnlyDontFix);
 
   V1.TraverseDecl(Ctx.getTranslationUnitDecl());
+
+  if(ReportOnlyDontFix)
+    return;
 
   auto &Reps = V1.finishReplacements();
   overwriteChangedFiles(Ctx, Reps, "nodecpp-unsequenced");

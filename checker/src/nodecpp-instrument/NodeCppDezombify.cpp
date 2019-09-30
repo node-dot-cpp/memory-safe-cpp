@@ -65,10 +65,9 @@ static cl::extrahelp MoreHelp("\nMore help text...");
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(NodecppInstrumentCategory));
 
-// mb: until I figure out how to handle templates, always fix everything
-// static cl::opt<bool>
-// FixAllUnsequenced("fix-all-unsequenced", cl::desc("Rewrite all unsequenced expressions.\n"),
-//     cl::cat(NodecppInstrumentCategory));
+static cl::opt<bool>
+ReportOnly("report-only", cl::desc("Only report expressions that need to be refactored.\n"),
+    cl::cat(NodecppInstrumentCategory));
 
 namespace nodecpp {
 
@@ -124,6 +123,12 @@ public:
     }
 };
 
+class SequenceReportOnlyConsumer : public ASTConsumer {
+public:
+    void HandleTranslationUnit(ASTContext &Context) override {
+      sequenceFix(Context, true);
+    }
+};
 
 // class UnwrapperConsumer : public ASTConsumer {
 // private:
@@ -156,6 +161,15 @@ protected:
     return llvm::make_unique<nodecpp::SequenceConsumer>();
   }
 };
+
+class SequenceReportOnlyAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) override {
+    return llvm::make_unique<nodecpp::SequenceReportOnlyConsumer>();
+  }
+};
+
 
 // class UnwrapperAction : public ASTFrontendAction {
 // protected:
@@ -226,6 +240,14 @@ public:
 };
 
 
+class SequenceReportOnlyActionFactory : public FrontendActionFactory {
+public:
+  FrontendAction *create() override {
+    return new SequenceReportOnlyAction();
+  }
+};
+
+
 } //namespace nodecpp
 
 int main(int argc, const char **argv) {
@@ -243,9 +265,12 @@ int main(int argc, const char **argv) {
   ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
 
-  nodecpp::DezombiefyActionFactory Factory;
-
-//  auto FrontendFactory = newFrontendActionFactory<nodecpp::ExpandRecompileAction>();
-
-  Tool.run(&Factory);
+  if(ReportOnly) {
+    nodecpp::SequenceReportOnlyActionFactory Factory;
+    Tool.run(&Factory);
+  }
+  else {
+    nodecpp::DezombiefyActionFactory Factory;
+    Tool.run(&Factory);
+  }
 }
