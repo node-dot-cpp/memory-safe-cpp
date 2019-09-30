@@ -569,12 +569,15 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
         auto Each = D->getParamDecl(I);
         auto EachE = E->getArg(I + Offset);
 
+        // for argument to zombie, the type called declaration must be a ref or ptr
+        // and it must be initialized from something not being a plain value
         bool Z = mayZombie(Each->getType());
-        if(Z != EachE->isLValue()) {
-          Each->getType()->dump();
-          EachE->getType()->dump();
+        if(Z) {
+          if(auto Dre = dyn_cast<DeclRefExpr>(EachE->IgnoreParenCasts())) {
+            Z = isDezombiefyCandidate(Dre);
+          }
         }
-        
+
         P.push_back(Z);
         if(Z) {
           AtLeastOneArgumentMayZombie = true;

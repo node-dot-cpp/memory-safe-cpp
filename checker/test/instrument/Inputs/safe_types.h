@@ -35,7 +35,9 @@ struct SafeType {
 	void call(int) { }
 };
 
-void safeFunction(int) {}
+int safeFunction(int) { return 0; }
+int safeFunction(SafeType&) { return 0; }
+int safeFunction(SafeType&, SafeType&) { return 0; }
 
 }
 
