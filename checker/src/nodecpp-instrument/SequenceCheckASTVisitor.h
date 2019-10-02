@@ -52,6 +52,64 @@ using namespace std;
 
 enum class ZombieSequence {NONE, Z1, Z2 };
 
+class ZombieIssues {
+  std::vector<std::pair<Expr *, Expr *>> Z1Issues;
+  std::vector<std::pair<Expr *, Expr *>> Z2Issues;
+
+public:
+  void addIssue(ZombieSequence Zs, Expr *E1, Expr *E2) {
+    if(Zs == ZombieSequence::Z1)
+      Z1Issues.emplace_back(E1, E2);
+    else if(Zs == ZombieSequence::Z2)
+      Z2Issues.emplace_back(E1, E2);
+  }
+
+  ZombieSequence getMaxIssue() const {
+    if(!Z2Issues.empty())
+      return ZombieSequence::Z2;
+    else if(!Z1Issues.empty())
+      return ZombieSequence::Z1;
+    else
+      return ZombieSequence::NONE;
+  }
+
+  static
+  void reportIssue(DiagnosticsEngine &De, StringRef CheckName,
+    SourceLocation Loc1, SourceLocation Loc2, 
+    StringRef ZombieSeq, StringRef Description,
+    DiagnosticIDs::Level Level) {
+
+    unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
+        Level, ("(" + ZombieSeq + ") " + Description + " [" + CheckName + "]").str());
+    // CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
+    De.Report(Loc1, ID) << Loc2;
+
+  }
+
+  static
+  void reportIssue(DiagnosticsEngine &De, StringRef ZombieSeq,
+    const Expr *E1, const Expr *E2) {
+    reportIssue(De, "nodecpp-dezombiefy", E1->getExprLoc(), E2->getExprLoc(),
+      ZombieSeq, "Dezombiefication not fully realiable", DiagnosticIDs::Error);
+  }
+
+  void reportIssue(DiagnosticsEngine &De) const {
+    if(!Z2Issues.empty())
+      reportIssue(De, "Z2",
+        Z2Issues.front().first, Z2Issues.front().second);
+    else if(!Z1Issues.empty())
+      reportIssue(De, "Z1",
+        Z1Issues.front().first, Z1Issues.front().second);
+  }
+
+  void reportAllIssues(DiagnosticsEngine &De) const {
+    for(auto &Each : Z2Issues)
+      reportIssue(De, "Z2", Each.first, Each.second);
+    for(auto &Each : Z1Issues)
+      reportIssue(De, "Z1", Each.first, Each.second);
+  }
+};
+
 /// Visitor for expressions which looks for unsequenced access to potencially
 /// zombie objects and calls to functions that may zombie them as side-effects
 /// When this two things happend in an unsequenced region, dezombiefy can't
@@ -143,7 +201,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   llvm::SmallDenseMap<Expr *, SequenceTree::Seq, 16> Z2Refs;
   
 
-  ASTContext &Context;
+  ASTContext &Context; //non-const, as base visitor has a const ref
 
   /// Sequenced regions within the expression.
   SequenceTree Tree;
@@ -152,14 +210,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   SequenceTree::Seq Region;
 
   /// The kind of issue we need to fix for this expression
-  ZombieSequence Issue = ZombieSequence::NONE;
-
-  /// Where we should report a warning because
-  /// we won't be able to fix the expression
-  ZombieSequence MaxIssue = ZombieSequence::NONE;
-
-  bool ReportAll = false;
-
+  ZombieIssues Issues;
 
   RegionRaii beginSequenced() {
     return RegionRaii(Tree, Region, true);
@@ -168,6 +219,8 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   RegionRaii beginUnsequenced() {
     return RegionRaii(Tree, Region, false);
   }
+
+
 
   void noteZ2Ref(Expr *E) {
     Z2Refs[E] = Region;
@@ -182,8 +235,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 
     for(auto& Each : ZCalls) {
       if(Tree.isZ1(Each.second, Region)) {
-        if(updateIssue(ZombieSequence::Z1))
-          diag("Z1", E, Each.first);
+        addIssue(ZombieSequence::Z1,  E, Each.first);
       }
     }
   }
@@ -194,54 +246,27 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 
     for(auto& Each : Z1Refs) {
       if(Tree.isZ1(Region, Each.second)) {
-        //report error
-        if(updateIssue(ZombieSequence::Z1))
-          diag("Z1", Each.first, E);
+        addIssue(ZombieSequence::Z1, Each.first, E);
       }
     }
     for(auto& Each : Z2Refs) {
       if(Tree.isZ2(Region, Each.second)) {
-        if(updateIssue(ZombieSequence::Z2))
-          diag("Z2", Each.first, E);
+        addIssue(ZombieSequence::Z2, Each.first, E);
       }
     }
   }
 
-  bool updateIssue(ZombieSequence Value) {
-    if(Value > Issue) {
-      Issue = Value;
-      return true;
-    }
-    return ReportAll;
-  }
-
-
-  void diag(StringRef ZombieSeq, Expr *E1, Expr *E2) {
-    if(true) {
-        diag("nodecpp-dezombiefy", E1->getExprLoc(), ZombieSeq,
-        "Dezombiefication not fully realiable", 
-        DiagnosticIDs::Error) << E2->getExprLoc();
-    }
-  }
-
-  DiagnosticBuilder diag(
-        StringRef CheckName, SourceLocation Loc, StringRef ZombieSeq, StringRef Description,
-        DiagnosticIDs::Level Level /* = DiagnosticIDs::Warning*/) {
-    //  assert(Loc.isValid());
-    unsigned ID = Context.getDiagnostics().getDiagnosticIDs()->getCustomDiagID(
-        Level, ("(" + ZombieSeq + ") " + Description + " [" + CheckName + "]").str());
-    // CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
-    return Context.getDiagnostics().Report(Loc, ID);
+  void addIssue(ZombieSequence Zs, Expr *E1, Expr *E2) {
+    Issues.addIssue(Zs, E1, E2);
   }
 
   public:
-  SequenceCheckASTVisitor2(ASTContext &Context, ZombieSequence MaxIssue, bool ReportAll)
-      : Base(Context), Context(Context), Region(Tree.root()),
-      MaxIssue(MaxIssue), ReportAll(ReportAll) {
+  SequenceCheckASTVisitor2(ASTContext &Context)
+      : Base(Context), Context(Context), Region(Tree.root()) {
   }
 
-  ZombieSequence getIssue() const {
-    return Issue;
+  const ZombieIssues& getIssues() const {
+    return Issues;
   }
 
   void VisitStmt(Stmt *S) {
@@ -649,11 +674,28 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 };
 
 
-ZombieSequence checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportAll) {
+bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportOnly) {
 
-  SequenceCheckASTVisitor2 V(Context, ZqMax, ReportAll);
+  SequenceCheckASTVisitor2 V(Context);
   V.Visit(E);
-  return V.getIssue();
+  auto &Issues = V.getIssues(); 
+  if(Issues.getMaxIssue() == ZombieSequence::NONE) {
+    //all ok
+    return false;
+  }
+  else if(ReportOnly) {
+    Issues.reportAllIssues(Context.getDiagnostics());
+    return false;
+  }
+  else if(Issues.getMaxIssue() <= ZqMax) {
+    //needs fix
+    return true;
+  }
+  else {
+    //can't fix, report
+    Issues.reportIssue(Context.getDiagnostics());
+    return false;
+  }
 }
 
 } // namespace nodecpp

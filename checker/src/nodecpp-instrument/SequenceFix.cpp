@@ -47,7 +47,7 @@ using namespace std;
 class SequenceCheck2ASTVisitor
   : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
 
-  bool DontFix = false;
+  bool ReportOnly = false;
   bool FixAll = false;
   int Index = 0;
 
@@ -87,9 +87,9 @@ class SequenceCheck2ASTVisitor
   }
 
 public:
-  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll, bool DontFix):
+  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll, bool ReportOnly):
     BaseASTVisitor<SequenceCheck2ASTVisitor>(Context),
-     FixAll(FixAll), DontFix(DontFix) {}
+     FixAll(FixAll), ReportOnly(ReportOnly) {}
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
@@ -97,16 +97,16 @@ public:
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
       if(isStandAloneExpr(St)) {
-        auto P = checkSequence(Context, E, ZombieSequence::Z2, DontFix);
-        if(!DontFix && P != ZombieSequence::NONE) {
+        bool Fix = checkSequence(Context, E, ZombieSequence::Z2, ReportOnly);
+        if(Fix) {
           ExpressionUnwrapperVisitor V2(Context, Index);
           auto &R = V2.unwrapExpression(St, E, true, true);
           addReplacement(R);
         }
       }
       else {
-        auto P = checkSequence(Context, E, ZombieSequence::Z1, DontFix);
-        if(!DontFix && P != ZombieSequence::NONE) {
+        bool Fix = checkSequence(Context, E, ZombieSequence::Z1, ReportOnly);
+        if(Fix) {
           SequenceFixASTVisitor V2(Context);
           auto &R = V2.fixExpression(E);
           addReplacement(R);
@@ -124,8 +124,8 @@ public:
     if(St->isSingleDecl()) {
       if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          auto P = checkSequence(Context, E, ZombieSequence::Z2, DontFix);
-          if(!DontFix && P != ZombieSequence::NONE) {
+          bool Fix = checkSequence(Context, E, ZombieSequence::Z2, ReportOnly);
+          if(Fix) {
             ExpressionUnwrapperVisitor V2(Context, Index);
             auto &R = V2.unwrapExpression(St, E, needExtraBraces(St), false);
             addReplacement(R);
