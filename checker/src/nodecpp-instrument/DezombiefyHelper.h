@@ -55,7 +55,7 @@ inline
 bool isByValueUserTypeNonTriviallyCopyable(clang::ASTContext &Context, clang::QualType Qt) {
   Qt = Qt.getCanonicalType();
   if(Qt->isStructureOrClassType()) {
-    Qt.dump();
+//    Qt.dump();
     auto Rd = Qt->getAsCXXRecordDecl();
     bool SysType = isInSystemHeader(Context, Rd);
     if(!SysType && !Rd->isTriviallyCopyable()) {

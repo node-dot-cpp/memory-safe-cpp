@@ -50,11 +50,12 @@ using namespace llvm;
 using namespace std;
 
 
-enum class ZombieSequence {NONE, Z1, Z2 };
+enum class ZombieSequence {NONE, Z1, Z2, Z9};
 
 class ZombieIssues {
   std::vector<std::pair<Expr *, Expr *>> Z1Issues;
   std::vector<std::pair<Expr *, Expr *>> Z2Issues;
+  std::vector<std::pair<Expr *, Expr *>> Z9Issues;
 
 public:
   void addIssue(ZombieSequence Zs, Expr *E1, Expr *E2) {
@@ -62,10 +63,14 @@ public:
       Z1Issues.emplace_back(E1, E2);
     else if(Zs == ZombieSequence::Z2)
       Z2Issues.emplace_back(E1, E2);
+    else if(Zs == ZombieSequence::Z9)
+      Z9Issues.emplace_back(E1, E2);
   }
 
   ZombieSequence getMaxIssue() const {
-    if(!Z2Issues.empty())
+    if(!Z9Issues.empty())
+      return ZombieSequence::Z9;
+    else if(!Z2Issues.empty())
       return ZombieSequence::Z2;
     else if(!Z1Issues.empty())
       return ZombieSequence::Z1;
@@ -94,6 +99,9 @@ public:
   }
 
   void reportIssue(DiagnosticsEngine &De) const {
+    if(!Z9Issues.empty())
+      reportIssue(De, "Z9",
+        Z9Issues.front().first, Z9Issues.front().second);
     if(!Z2Issues.empty())
       reportIssue(De, "Z2",
         Z2Issues.front().first, Z2Issues.front().second);
@@ -103,6 +111,8 @@ public:
   }
 
   void reportAllIssues(DiagnosticsEngine &De) const {
+    for(auto &Each : Z9Issues)
+      reportIssue(De, "Z9", Each.first, Each.second);
     for(auto &Each : Z2Issues)
       reportIssue(De, "Z2", Each.first, Each.second);
     for(auto &Each : Z1Issues)
@@ -611,18 +621,17 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
       }
 
       if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
-        //check for issue Z3 
+        //check for issue Z9 
         for(unsigned I = 0; I != Count; ++I) {
           auto Each = D->getParamDecl(I);
           auto Qt = Each->getType();
           if (isByValueUserTypeNonTriviallyCopyable(Context, Qt)) {
-              //report a Z3 issue here.
+            //report a Z9 issue here.
+            addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
 
           }
         }
       }
-
-
 
       for(unsigned I = 0; I != Count; ++I) {
         auto Each = E->getArg(I);

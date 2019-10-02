@@ -39,6 +39,9 @@ int safeFunction(int) { return 0; }
 int safeFunction(SafeType&) { return 0; }
 int safeFunction(SafeType&, SafeType&) { return 0; }
 
+template<class T>
+void safeTemplate(SafeType&, T t) {}
+
 }
 
 #endif // NODECPP_SAFE_TYPES_H
