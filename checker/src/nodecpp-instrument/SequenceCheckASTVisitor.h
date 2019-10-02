@@ -255,27 +255,27 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 
 
   void VisitCXXThisExpr(CXXThisExpr *E) {
-    if(!E->isImplicit()) {
+//    if(!E->isImplicit()) {
       noteZ1Ref(E);
-      return;
-    }
+      // return;
+//    }
 
     //shouldn't reach here
-    const Expr *P = getParentExpr(Context, E);
-    P->dumpColor();
-    errs() << "Unexpected implicit 'this'!\n";
-    assert(false && "Unexpected implicit 'this'!");
+    // const Expr *P = getParentExpr(Context, E);
+    // P->dumpColor();
+    // errs() << "Unexpected implicit 'this'!\n";
+    // assert(false && "Unexpected implicit 'this'!");
   }
 
-  void VisitMemberExpr(MemberExpr *E) {
-    if(CXXThisExpr *Te = dyn_cast_or_null<CXXThisExpr>(E->getBase())) {
-      if(Te->isImplicit()) {
-          noteZ1Ref(E);
-          return;
-      }
-    }
-    Base::VisitMemberExpr(E);
-  }
+  // void VisitMemberExpr(MemberExpr *E) {
+    // if(CXXThisExpr *Te = dyn_cast_or_null<CXXThisExpr>(E->getBase())) {
+    //   if(Te->isImplicit()) {
+    //       noteZ1Ref(E);
+    //       return;
+    //   }
+    // }
+  //   Base::VisitMemberExpr(E);
+  // }
 
   void VisitDeclRefExpr(DeclRefExpr *E) {
     if(isDezombiefyCandidate(E))

@@ -6,25 +6,28 @@
 
 using namespace nodecpp::safememory;
 
+int release() {	return 0; }
+
+
 struct Bad {
 
 	owning_ptr<SafeType> StPtr;
 
 
 
-	Bad() { 
+	Bad() {
 		StPtr = make_owning<SafeType>(); 
 	}
 
-	int release() {
-		StPtr.reset();
-		return 0;
-	}
+	// int release() {
+	// 	StPtr.reset();
+	// 	return 0;
+	// }
 
 
 	void verifyZombie(SafeType& StRef) {
 
-		safeFunction(*StPtr) + release();//safeFunction may be eating a zombie
-// CHECK-MESSAGES: :[[@LINE-1]]:9: error: (Z1)
+		auto i = safeFunction(*StPtr) + release();//safeFunction may be eating a zombie
+// CHECK-MESSAGES: :[[@LINE-1]]:25: error: (Z1)
 	}
 };
