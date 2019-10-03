@@ -50,6 +50,8 @@ class SequenceCheck2ASTVisitor
   bool ReportOnly = false;
   bool FixAll = false;
   int Index = 0;
+  ZombieIssuesStats Stats;
+
 
   bool needExtraBraces(Stmt *St) {
 
@@ -63,7 +65,7 @@ class SequenceCheck2ASTVisitor
     return SIt->get<CompoundStmt>() == nullptr;
   }
 
-  bool isStandAloneExpr(Stmt *St) {
+  bool isStandAloneExprStmt(Stmt *St) {
 
     auto SList = Context.getParents(*St);
 
@@ -86,18 +88,26 @@ class SequenceCheck2ASTVisitor
       return false;      
   }
 
+  bool callCheckSequence(clang::Expr *E, ZombieSequence ZqMax) {
+    return checkSequence(Context, E, ZqMax, ReportOnly, Stats);
+  }
+
 public:
   explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll, bool ReportOnly):
     BaseASTVisitor<SequenceCheck2ASTVisitor>(Context),
      FixAll(FixAll), ReportOnly(ReportOnly) {}
+
+  auto getStats() {
+    return Stats;
+  }
 
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
     if(!St)
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
-      if(isStandAloneExpr(St)) {
-        bool Fix = checkSequence(Context, E, ZombieSequence::Z2, ReportOnly);
+      if(isStandAloneExprStmt(St)) {
+        bool Fix = callCheckSequence(E, ZombieSequence::Z2);
         if(Fix) {
           ExpressionUnwrapperVisitor V2(Context, Index);
           auto &R = V2.unwrapExpression(St, E, true, true);
@@ -105,7 +115,7 @@ public:
         }
       }
       else {
-        bool Fix = checkSequence(Context, E, ZombieSequence::Z1, ReportOnly);
+        bool Fix = callCheckSequence(E, ZombieSequence::Z1);
         if(Fix) {
           SequenceFixASTVisitor V2(Context);
           auto &R = V2.fixExpression(E);
@@ -124,7 +134,7 @@ public:
     if(St->isSingleDecl()) {
       if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
         if(Expr *E = D->getInit()) {
-          bool Fix = checkSequence(Context, E, ZombieSequence::Z2, ReportOnly);
+          bool Fix = callCheckSequence(E, ZombieSequence::Z2);
           if(Fix) {
             ExpressionUnwrapperVisitor V2(Context, Index);
             auto &R = V2.unwrapExpression(St, E, needExtraBraces(St), false);
@@ -140,14 +150,20 @@ public:
 
 };
 
-
+void ZombieIssuesStats::printStats() {
+  
+  llvm::errs() << "Issues stats Z1:" << Z1Count << ", Z2:" <<
+    Z2Count << ", Z9:" << Z9Count << "\n";
+}
 
 void sequenceFix(ASTContext &Ctx, bool ReportOnlyDontFix) {
-      
+  
   SequenceCheck2ASTVisitor V1(Ctx, false, ReportOnlyDontFix);
 
   V1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
+  V1.getStats().printStats();
+  
   if(ReportOnlyDontFix)
     return;
 

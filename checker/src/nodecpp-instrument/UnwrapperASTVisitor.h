@@ -118,12 +118,13 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
     return B.substr(Offset, Length);
   }
 
-  void unwrap(Expr *E) {
+  void unwrap(Expr *E, bool AddStar = false) {
 
     if(StmtText.empty())
       return;
 
     bool LValue = E->isLValue();
+    bool TrivialType = E->getType().isTrivialType(Context);
     E = E->IgnoreParenImpCasts();
     if(isa<DeclRefExpr>(E))
       return;
@@ -141,15 +142,27 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
     if(LValue) 
       Buffer += "auto& ";
+    else if(TrivialType)
+      Buffer += "auto ";
     else
       Buffer += "auto&& ";
     
     Buffer += Name;
     Buffer += " = ";
+    if(AddStar)
+      Buffer += "&*(";
+
     Buffer += subStmtWithReplaces(RangeInStmtText);
+    if(AddStar)
+      Buffer += ")";
+
     Buffer += "; ";
 
     addTextReplacement(move(Name), RangeInStmtText);
+  }
+
+  void unwrapStar(Expr *E) {
+    unwrap(E, true);
   }
 
   Range calcRange(const SourceRange &Sr) {
@@ -253,12 +266,27 @@ public:
 
   void VisitCallExpr(CallExpr *E) {
 
-//      unwrap(E->getCallee());
-//    if(E->getNumArgs() > 1) {
-      for(auto Each : E->arguments()) {
+    auto Callee = dyn_cast_or_null<MemberExpr>(E->getCallee());
+    if(Callee) {
+      Callee->dumpColor();
+      auto Op = dyn_cast<CXXOperatorCallExpr>(Callee->getBase());
+      
+      //special treatmeant for smart ptrs
+      if(Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow)
+        unwrapStar(Callee->getBase());
+      else
+        unwrap(Callee->getBase());
+    }
+  
+    for(auto Each : E->arguments()) {
+      // on CxxOperator callee may be also first arg
+      if(Each != Callee) {
         unwrap(Each);
       }
-//    }
+      else
+        Each->dump();
+
+    }
   }
 
   void VisitBinaryOperator(BinaryOperator *E) {

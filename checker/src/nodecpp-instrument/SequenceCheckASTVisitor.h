@@ -58,6 +58,12 @@ class ZombieIssues {
   std::vector<std::pair<Expr *, Expr *>> Z9Issues;
 
 public:
+  void addStats(ZombieIssuesStats& Stats) const {
+    Stats.Z1Count += Z1Issues.size();
+    Stats.Z2Count += Z2Issues.size();
+    Stats.Z9Count += Z9Issues.size();
+  }
+
   void addIssue(ZombieSequence Zs, Expr *E1, Expr *E2) {
     if(Zs == ZombieSequence::Z1)
       Z1Issues.emplace_back(E1, E2);
@@ -230,8 +236,6 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     return RegionRaii(Tree, Region, false);
   }
 
-
-
   void noteZ2Ref(Expr *E) {
     Z2Refs[E] = Region;
   }
@@ -290,54 +294,14 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 
 
   void VisitCXXThisExpr(CXXThisExpr *E) {
-//    if(!E->isImplicit()) {
+
       noteZ1Ref(E);
-      // return;
-//    }
-
-    //shouldn't reach here
-    // const Expr *P = getParentExpr(Context, E);
-    // P->dumpColor();
-    // errs() << "Unexpected implicit 'this'!\n";
-    // assert(false && "Unexpected implicit 'this'!");
   }
-
-  // void VisitMemberExpr(MemberExpr *E) {
-    // if(CXXThisExpr *Te = dyn_cast_or_null<CXXThisExpr>(E->getBase())) {
-    //   if(Te->isImplicit()) {
-    //       noteZ1Ref(E);
-    //       return;
-    //   }
-    // }
-  //   Base::VisitMemberExpr(E);
-  // }
 
   void VisitDeclRefExpr(DeclRefExpr *E) {
     if(isDezombiefyCandidate(E))
       noteZ1Ref(E);
   }
-
-//   void VisitCastExpr(CastExpr *E) {
-//     Object O = Object();
-//     if (E->getCastKind() == CastKind::CK_LValueToRValue)
-//       O = getObject(E->getSubExpr(), false);
-
-//     if (O)
-//       notePreUse(O, E);
-//     VisitExpr(E);
-//     if (O)
-//       notePostUse(O, E);
-//   }
-
-  // void VisitBinComma(clang::BinaryOperator *E) {
-  //   // C++11 [expr.comma]p1:
-  //   //   Every value computation and side effect associated with the left
-  //   //   expression is sequenced before every value computation and side
-  //   //   effect associated with the right expression.
-
-  //   auto Raii = beginSequenced();
-  //   Base::VisitBinComma(E);
-  // }
 
   void VisitBinaryOperator(clang::BinaryOperator *E) {
     switch(E->getOpcode()) {
@@ -389,110 +353,6 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     }
   }
 
-  // void VisitBinAssign(clang::BinaryOperator *E) {
-  //     //C++17
-  //   // In every simple assignment expression E1=E2 and
-  //   // every compound assignment expression E1@=E2,
-  //   // every value computation and side-effect of E2
-  //   // is sequenced before every value computation and side effect of E1
-  //   RegionRaii RR(Tree, Region);
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getLHS());
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getRHS());
-  // }
-
-  // void VisitCompoundAssignOperator(CompoundAssignOperator *CAO) {
-  //   VisitBinAssign(CAO);
-  // }
-
-//   void VisitUnaryPreInc(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
-//   void VisitUnaryPreDec(UnaryOperator *UO) { VisitUnaryPreIncDec(UO); }
-//   void VisitUnaryPreIncDec(UnaryOperator *UO) {
-//     Object O = getObject(UO->getSubExpr(), true);
-//     if (!O)
-//       return VisitExpr(UO);
-
-//     notePreMod(O, UO);
-//     Visit(UO->getSubExpr());
-//     // C++11 [expr.pre.incr]p1:
-//     //   the expression ++x is equivalent to x+=1
-//     notePostMod(O, UO, UK_ModAsValue);
-//   }
-
-//   void VisitUnaryPostInc(UnaryOperator *UO) { VisitUnaryPostIncDec(UO); }
-//   void VisitUnaryPostDec(UnaryOperator *UO) { VisitUnaryPostIncDec(UO); }
-//   void VisitUnaryPostIncDec(UnaryOperator *UO) {
-//     Object O = getObject(UO->getSubExpr(), true);
-//     if (!O)
-//       return VisitExpr(UO);
-
-//     notePreMod(O, UO);
-//     Visit(UO->getSubExpr());
-//     notePostMod(O, UO, UK_ModAsSideEffect);
-//   }
-
-  /// Don't visit the RHS of '&&' or '||' if it might not be evaluated.
-  // void VisitBinLOr(BinaryOperator *E) {
-  //   // The side-effects of the LHS of an '&&' are sequenced before the
-  //   // value computation of the RHS, and hence before the value computation
-  //   // of the '&&' itself, unless the LHS evaluates to zero. We treat them
-  //   // as if they were unconditionally sequenced.
-  //   RegionRaii RR(Tree, Region);
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getLHS());
-
-
-  //   // if it will short-circuit, don't go into RHS
-  //   auto R = evaluate(E->getLHS());
-  //   if(R == True)
-  //       return;
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getRHS());
-  // }
-  // void VisitBinLAnd(BinaryOperator *E) {
-          
-          
-  //   RegionRaii RR(Tree, Region);
-    
-  //   RR.beginNewRegion();
-  //   Visit(E->getLHS());
-
-  //   // if it will short-circuit, don't go into RHS
-  //    auto R = evaluate(E->getLHS());
-  //     if (R == False)
-  //       return;
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getRHS());
-  // }
-
-  // void VisitAbstractConditionalOperator(AbstractConditionalOperator *E) {
-
-  //   RegionRaii RR(Tree, Region);
-
-  //   RR.beginNewRegion();
-  //   Visit(E->getCond());
-
-  //   // if we know only one branck will be evaluated, don't visit the other
-  //    auto R = evaluate(E->getCond());
-
-  //   if(R == True || R == Unknown) {
-  //       RR.beginNewRegion();
-  //       Visit(E->getTrueExpr());
-  //   }
-
-  //   if(R == False || R == Unknown) {
-  //       RR.beginNewRegion();
-  //       Visit(E->getFalseExpr());
-
-  //   }
-  // }
-
   static
   bool calculateOthers(const vector<bool>& Args, unsigned I) {
 
@@ -531,7 +391,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
         if(Qt->isLValueReferenceType() || Qt->isPointerType()) {
           Qt = Qt->getPointeeType().getCanonicalType();
           if(Qt->isStructureOrClassType()) {
-            Qt.dump();
+//            Qt.dump();
             auto Rd = Qt->getAsCXXRecordDecl();
             bool SysType = isInSystemHeader(Context, Rd);
             return SysType;
@@ -683,11 +543,12 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 };
 
 
-bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportOnly) {
+bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportOnly, ZombieIssuesStats& Stats) {
 
   SequenceCheckASTVisitor2 V(Context);
   V.Visit(E);
-  auto &Issues = V.getIssues(); 
+  auto &Issues = V.getIssues();
+  Issues.addStats(Stats);
   if(Issues.getMaxIssue() == ZombieSequence::NONE) {
     //all ok
     return false;

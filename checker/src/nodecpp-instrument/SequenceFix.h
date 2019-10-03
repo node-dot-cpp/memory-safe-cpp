@@ -36,7 +36,15 @@ namespace nodecpp {
   /// Check for expressions to find attempts to dezombiefy
   /// an object unsequenced with any function call that can potencially
   /// rezombiefy it as a side-effect
+struct ZombieIssuesStats {
 
+  int Z1Count = 0;
+  int Z2Count = 0;
+  int Z9Count = 0;
+
+  void printStats();
+
+};
 
 void sequenceFix(clang::ASTContext &Context, bool ReportOnlyDontFix);
 
