@@ -168,55 +168,61 @@ public:
   }
 
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+    //mb: for overloaded operators, we try to do the same thing
+    // as for builtin operators, so templates that work on builtin
+    // types and custom types can treat all the same
+    
+    if(E->getNumArgs() == 2) {
 
-    switch (E->getOperator()) {
-      case OO_Plus:
-        refactorOverloadedOperator(E, 1, "add");
-        break;
-      case OO_Minus:
-        refactorOverloadedOperator(E, 1, "sub");
-        break;
-      case OO_Star:
-        refactorOverloadedOperator(E, 1, "mul");
-        break;
-      case OO_Slash:
-        refactorOverloadedOperator(E, 1, "div");
-        break;
-      case OO_Percent:
-        refactorOverloadedOperator(E, 1, "rem");
-        break;
-      case OO_Caret:
-        refactorOverloadedOperator(E, 1, "xor");
-        break;
-      case OO_Amp:
-        refactorOverloadedOperator(E, 1, "and");
-        break;
-      case OO_Pipe:
-        refactorOverloadedOperator(E, 1, "or");
-        break;
-      case OO_Less:
-        refactorOverloadedOperator(E, 1, "lt");
-        break;
-      case OO_Greater:
-        refactorOverloadedOperator(E, 1, "gt");
-        break;
-      case OO_EqualEqual:
-        refactorOverloadedOperator(E, 2, "eq");
-        break;
-      case OO_ExclaimEqual:
-        refactorOverloadedOperator(E, 2, "ne");
-        break;
-      case OO_LessEqual:
-        refactorOverloadedOperator(E, 2, "le");
-        break;
-      case OO_GreaterEqual:
-        refactorOverloadedOperator(E, 2, "ge");
-        break;
-      case OO_Spaceship:
-        refactorOverloadedOperator(E, 3, "cmp");
-        break;
-      default:
-        break;
+      switch (E->getOperator()) {
+        case OO_Plus:
+          refactorOverloadedOperator(E, 1, "add");
+          break;
+        case OO_Minus:
+          refactorOverloadedOperator(E, 1, "sub");
+          break;
+        case OO_Star:
+          refactorOverloadedOperator(E, 1, "mul");
+          break;
+        case OO_Slash:
+          refactorOverloadedOperator(E, 1, "div");
+          break;
+        case OO_Percent:
+          refactorOverloadedOperator(E, 1, "rem");
+          break;
+        case OO_Caret:
+          refactorOverloadedOperator(E, 1, "xor");
+          break;
+        case OO_Amp:
+          refactorOverloadedOperator(E, 1, "and");
+          break;
+        case OO_Pipe:
+          refactorOverloadedOperator(E, 1, "or");
+          break;
+        case OO_Less:
+          refactorOverloadedOperator(E, 1, "lt");
+          break;
+        case OO_Greater:
+          refactorOverloadedOperator(E, 1, "gt");
+          break;
+        case OO_EqualEqual:
+          refactorOverloadedOperator(E, 2, "eq");
+          break;
+        case OO_ExclaimEqual:
+          refactorOverloadedOperator(E, 2, "ne");
+          break;
+        case OO_LessEqual:
+          refactorOverloadedOperator(E, 2, "le");
+          break;
+        case OO_GreaterEqual:
+          refactorOverloadedOperator(E, 2, "ge");
+          break;
+        case OO_Spaceship:
+          refactorOverloadedOperator(E, 3, "cmp");
+          break;
+        default:
+          break;
+      }
     }
 
     Base::VisitCXXOperatorCallExpr(E);
