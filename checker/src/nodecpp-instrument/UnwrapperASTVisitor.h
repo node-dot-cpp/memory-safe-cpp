@@ -268,7 +268,6 @@ public:
 
     auto Callee = dyn_cast_or_null<MemberExpr>(E->getCallee());
     if(Callee) {
-      Callee->dumpColor();
       auto Op = dyn_cast<CXXOperatorCallExpr>(Callee->getBase());
       
       //special treatmeant for smart ptrs
@@ -284,7 +283,7 @@ public:
         unwrap(Each);
       }
       else
-        Each->dump();
+        Each->dumpColor();
 
     }
   }

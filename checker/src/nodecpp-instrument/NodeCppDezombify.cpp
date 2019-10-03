@@ -69,6 +69,10 @@ static cl::opt<bool>
 ReportOnly("report-only", cl::desc("Only report expressions that need to be refactored.\n"),
     cl::cat(NodecppInstrumentCategory));
 
+static cl::opt<bool>
+FixOnly("fix-only", cl::desc("fix expressions that need to be refactored, but don't dezombiefy.\n"),
+    cl::cat(NodecppInstrumentCategory));
+
 namespace nodecpp {
 
 
@@ -221,6 +225,9 @@ protected:
     std::unique_ptr<FrontendAction> FixSequence(new SequenceAction());
     if(!executeAction(FixSequence.get(), CI, File))
       return false;
+
+    if(FixOnly)
+      return true;
 
     unique_ptr<FrontendAction> Dezombiefy(new DezombiefyAction());
     if(!executeAction(Dezombiefy.get(), CI, File))
