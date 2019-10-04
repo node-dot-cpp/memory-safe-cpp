@@ -45,15 +45,16 @@
 #include <cassert>
 
 using namespace clang;
-using namespace nodecpp;
 
-
-namespace {
+namespace nodecpp {
 
   struct Scratch {
     //TODO change to Set 
     llvm::SmallVector<const clang::ValueDecl*, 4> VariablesToDZ;
     bool ThisToDZ = false;
+
+    // we need to know if a clear was ever called on this Scratch
+    // or if is empty because it was never modified
     bool IsInitialized = false;
 
     Scratch() {}
@@ -125,23 +126,44 @@ namespace {
   };
 
 
+// FakeCFGBlockValues don't reallyl track things, but simplifies the algo
+// so every block is independant and is assument to begin without any
+// already dezombiefied variable
+class FakeCFGBlockValues {
+  std::vector<bool> Vals;
+
+public:
+  FakeCFGBlockValues(unsigned int NumBlockIDs) : Vals(NumBlockIDs, false) {}
+
+  Scratch copyScratchAtInput(unsigned int Id) {
+    Vals[Id] = true;
+    return Scratch();
+  }
+
+  bool updateWithOutputScratch(unsigned int Id, const Scratch& Scr) {
+    return !Vals[Id];
+  }
+};
+
+
+// CFGBlockValues keep a list of things that are already dezombiefied
+// when we go into a Block, when a Block is reachable from more than
+// one other Block, then we need to make the minimal common between both
+
 class CFGBlockValues {
-  SmallVector<Scratch, 8> Vals;
+  std::vector<Scratch> Vals;
 
 public:
   CFGBlockValues(unsigned int NumBlockIDs) : Vals(NumBlockIDs) {}
 
-  const Scratch &getScratch(unsigned int Id) {
+  Scratch copyScratchAtInput(unsigned int Id) {
     return Vals[Id];
   }
 
-  bool updateWithScratch(unsigned int Id, const Scratch& Scr) {
+  bool updateWithOutputScratch(unsigned int Id, const Scratch& Scr) {
     return Vals[Id].intersection(Scr);
   }
 };
-
-} // namespace
-
 
 //------------------------------------------------------------------------====//
 // Worklist: worklist for dataflow analysis.
@@ -229,8 +251,6 @@ public:
 // ScratchCalculator
 //====------------------------------------------------------------------------//
 
-namespace {
-
 class ScratchCalculator : public StmtVisitor<ScratchCalculator> {
   
   Scratch& InOut;
@@ -271,40 +291,35 @@ public:
       }
     }
   }
-
 };
 
-} // namespace
-
-
-static void runOnBlock(const CFGBlock *block,
-                       Scratch &InOut) {
+static
+void runOnBlock(const CFGBlock *block, Scratch &InOut) {
 
   ScratchCalculator Sc(InOut);
   for (const auto &I : *block) {
     if (Optional<CFGStmt> cs = I.getAs<CFGStmt>()) {
 
       Sc.Visit(const_cast<Stmt *>(cs->getStmt()));
-//      cs->getStmt()->dumpColor();
     }
   }
 }
 
-
-void nodecpp::runDezombiefyRelaxAnalysis(
+template<class ScratchManager>
+void runDezombiefyRelaxAnalysis(
     const DeclContext *dc,
     const CFG *cfg,
     DezombiefyRelaxAnalysisStats &stats) {
 
-  CFGBlockValues vals(cfg->getNumBlockIDs());
+  ScratchManager vals(cfg->getNumBlockIDs());
   // Proceed with the workist.
   Worklist Wl(cfg->getNumBlockIDs());
   Wl.enqueue(&cfg->getEntry());
 
   while (const CFGBlock *Block = Wl.dequeue()) {
-    
+
     auto Id =  Block->getBlockID();
-    Scratch InOut = vals.getScratch(Id);//make a copy
+    Scratch InOut = vals.copyScratchAtInput(Id);//make  a copy
     runOnBlock(Block, InOut);
 
     ++stats.NumBlockVisits;
@@ -312,7 +327,7 @@ void nodecpp::runDezombiefyRelaxAnalysis(
     //Update all successors
     for(auto S : Block->succs()) {
       if(S.isReachable()) {
-        bool Changed = vals.updateWithScratch(S->getBlockID(), InOut);
+        bool Changed = vals.updateWithOutputScratch(S->getBlockID(), InOut);
         if(Changed) {
           Wl.enqueue(S.getReachableBlock());
         }
@@ -321,8 +336,7 @@ void nodecpp::runDezombiefyRelaxAnalysis(
   }
 }
 
-
-void nodecpp::runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
+void runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
 
   // Construct the analysis context with the specified CFG build options.
   AnalysisDeclContext AC(/* AnalysisDeclContextManager */ nullptr, D);
@@ -344,7 +358,8 @@ void nodecpp::runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
 
 //    cfg->dump(Context.getLangOpts(), true);
 
-    runDezombiefyRelaxAnalysis(D, cfg, stats);
+//    runDezombiefyRelaxAnalysis<CFGBlockValues>(D, cfg, stats);
+    runDezombiefyRelaxAnalysis<FakeCFGBlockValues>(D, cfg, stats);
 
     // if (S.CollectStats && stats.NumVariablesAnalyzed > 0) {
     //   ++NumUninitAnalysisFunctions;
@@ -359,3 +374,5 @@ void nodecpp::runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
     // }
   }
 }
+
+} // namespace

@@ -46,14 +46,11 @@ using namespace std;
 void dezombiefy(ASTContext &Ctx) {
       
   Dezombify1ASTVisitor Visitor1(Ctx);
-  // Ctx.getTranslationUnitDecl()->dumpColor();
   Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
-  {
-    DzHelper Data;
-    DezombiefyRelaxASTVisitor VisitorRelax(Ctx, Data);
-    VisitorRelax.TraverseDecl(Ctx.getTranslationUnitDecl());
-  }
-//  dezombiefyRelax(Ctx);
+
+  DezombiefyRelaxASTVisitor VisitorRelax(Ctx);
+  VisitorRelax.TraverseDecl(Ctx.getTranslationUnitDecl());
+
   Dezombify2ASTVisitor Visitor2(Ctx);
   Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());
 
