@@ -11,6 +11,7 @@ struct UnsafeType {
 	void call(int) { }
 };
 
+void unsafeFunction(UnsafeType&, UnsafeType&);
 
 struct Bad {
 
@@ -59,4 +60,18 @@ struct Bad {
 		UPtr->call(release());
 		getU().call(release());
 	}
+
+	void verifyZombieArgs(SafeType& StRef, UnsafeType& URef) {
+
+		SafeType StVal;
+		safeFunction(StVal, getSt());//this should be ok, StVal can't zombie
+
+		safeFunction(getSt(), getSt());//both args may be zombie
+// CHECK-MESSAGES: :[[@LINE-1]]:3: error: (Z2)
+// CHECK-MESSAGES: :[[@LINE-2]]:3: error: (Z2)
+
+		unsafeFunction(getU(), getU());//on unsafe types is not an issue
+
+	}
+
 };

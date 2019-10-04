@@ -34,16 +34,9 @@ struct Bad {
 	SafeType& getSt() { return *StPtr; }
 	UnsafeType& getU() { return *UPtr; }
 
-	void verifyZombieThis(SafeType& StRef, UnsafeType& URef) {
+	void verifyZombieThis(SafeType& StRef) {
 
-		safeFunction(release());//func, no 'this' to zombie
-
-		otherMethod(release());//same 'this' as we, can't zombie
-
-		StMember.call(release()); //Same this as we, can't zombie
-
-		SafeType StVal;
-		StVal.call(release());// 'this' can't zombie
+		//only cases that need fix are here
 
 		StRef.call(release());//StRef may be deleted, and 'this' will zombie
 // CHECK-FIXES: { auto nodecpp_0 = release(); StRef.call(nodecpp_0); };
@@ -52,11 +45,14 @@ struct Bad {
 		getSt().call(release());// ref may be deleted, and 'this' will zombie
 // CHECK-FIXES: { auto& nodecpp_3 = getSt(); auto nodecpp_4 = release(); nodecpp_3.call(nodecpp_4); };
 
-		//same thing on unsafe types is not an issue
-		//since we will instrument to dezombiefy 'this'
-		// inside UnsafeType::call()
-		URef.call(release());
-		UPtr->call(release());
-		getU().call(release());
 	}
+
+	void verifyZombieArgs() {
+
+		//both args may be zombie
+		safeFunction(getSt(), getSt());
+// CHECK-FIXES: { auto& nodecpp_5 = getSt(); auto& nodecpp_6 = getSt(); safeFunction(nodecpp_5, nodecpp_6); };
+
+	}
+
 };
