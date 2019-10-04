@@ -10,31 +10,34 @@ void func(int* ip, int& ir) {
     int& ir2 = ir;
 // CHECK-FIXES: int& ir2 = nodecpp::safememory::dezombiefy( ir );
 
-    int i = *ip2;
-// CHECK-FIXES: int i = *nodecpp::safememory::dezombiefy( ip2 );
+    int i = *ip2;// no dz needed here
 
-    i = ir2;
-// CHECK-FIXES: i = nodecpp::safememory::dezombiefy( ir2 );
-
+    i = ir2;// no dz needed here
 }
 
 class Class {
 
     int attribute = 0;
 
-    void method() {
-
-        int i = 0;
-        i = attribute;
-// CHECK-FIXES: i = nodecpp::safememory::dezombiefy( this )->attribute;
-        i = this->attribute;
-// CHECK-FIXES: i = nodecpp::safememory::dezombiefy( this )->attribute;
-
-        method();
-// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method();
-        this->method();
-// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method();
-
+    void method1() {
+        int i = attribute;
+// CHECK-FIXES: int i = nodecpp::safememory::dezombiefy( this )->attribute;
+        
+        i = this->attribute; //no dz needed here
     }
 
+    void method2() {
+        int i = this->attribute;
+// CHECK-FIXES: int i = nodecpp::safememory::dezombiefy( this )->attribute;
+    }
+
+    void method3() {
+        method1();
+// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method1();
+    }
+
+    void method4() {
+        this->method1();
+// CHECK-FIXES: nodecpp::safememory::dezombiefy( this )->method1();
+    }
 };

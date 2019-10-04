@@ -19,6 +19,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "DezombiefyRelaxAnalysis.h"
+#include "DezombiefyHelper.h"
+
 #include "clang/AST/Attr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclBase.h"
@@ -45,12 +47,13 @@
 #include <cassert>
 
 using namespace clang;
+using namespace llvm;
 
 namespace nodecpp {
 
   struct Scratch {
-    //TODO change to Set 
-    llvm::SmallVector<const clang::ValueDecl*, 4> VariablesToDZ;
+
+    DenseSet<const VarDecl*> VariablesToDZ;
     bool ThisToDZ = false;
 
     // we need to know if a clear was ever called on this Scratch
@@ -60,26 +63,18 @@ namespace nodecpp {
     Scratch() {}
     Scratch(const Scratch&) = default;
     
-    explicit Scratch(const clang::ValueDecl* Dc) :VariablesToDZ({Dc}) {}
-    explicit Scratch(bool Th) :ThisToDZ(Th) {}
+    // explicit Scratch(const clang::VarDecl* Dc) :VariablesToDZ({Dc}) {}
+    // explicit Scratch(bool Th) :ThisToDZ(Th) {}
 
-    bool hasDecl(const clang::ValueDecl *Vd) const {
-      for(auto Each : VariablesToDZ) {
-        if(Each == Vd) //already here
-          return true;
-      }
+    bool hasDecl(const VarDecl *Vd) const {
 
-      return false;
+      return VariablesToDZ.find(Vd) != VariablesToDZ.end();
     }
 
-    bool addDecl(const clang::ValueDecl *Vd) {
+    bool addDecl(const VarDecl *Vd) {
 
       IsInitialized = true;
-      if(hasDecl(Vd))
-        return false;
-
-      VariablesToDZ.push_back(Vd);
-      return true;
+      return VariablesToDZ.insert(Vd).second;
     }
 
     bool addThis() {
@@ -91,9 +86,9 @@ namespace nodecpp {
     }
 
     void clear() {
+      IsInitialized = true;
       VariablesToDZ.clear();
       ThisToDZ = false;
-      IsInitialized = true;
     }
 
     bool intersection(const Scratch& other) {
@@ -112,10 +107,11 @@ namespace nodecpp {
       bool Changed = ThisToDZ && !other.ThisToDZ;
       ThisToDZ = ThisToDZ && other.ThisToDZ;
 
-      llvm::SmallVector<const clang::ValueDecl*, 4> Tmp;
+      DenseSet<const VarDecl*> Tmp;
       for(auto Each : other.VariablesToDZ) {
-        if(hasDecl(Each))
-          Tmp.push_back(Each);
+        if(VariablesToDZ.find(Each) != VariablesToDZ.end()) {
+          Tmp.insert(Each);
+        }
       }
 
       Changed = Changed || VariablesToDZ.size() != Tmp.size();
@@ -126,7 +122,7 @@ namespace nodecpp {
   };
 
 
-// FakeCFGBlockValues don't reallyl track things, but simplifies the algo
+// FakeCFGBlockValues don't really track things, but simplifies the algo
 // so every block is independant and is assument to begin without any
 // already dezombiefied variable
 class FakeCFGBlockValues {
@@ -258,6 +254,16 @@ class ScratchCalculator : public StmtVisitor<ScratchCalculator> {
 public:
   ScratchCalculator(Scratch& InOut): InOut(InOut) {}
 
+  void VisitDeclStmt(DeclStmt *St) {
+    
+    if(St->isSingleDecl()) {
+      VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl());
+      if(D && mayZombie(D->getType()) && D->getInit()) {
+        InOut.addDecl(D);
+      }
+    }
+  }
+
   void VisitCallExpr(CallExpr *Ce) {
 //    Ce->dumpColor();
     if (Decl *Callee = Ce->getCalleeDecl()) {
@@ -267,7 +273,8 @@ public:
 
   void VisitDeclRefExpr(DeclRefExpr *Dre) {
     if(Dre->isDezombiefyCandidateOrRelaxed()) {
-      if(InOut.addDecl(Dre->getDecl())) {
+      VarDecl *D = dyn_cast_or_null<VarDecl>(Dre->getDecl());
+      if(InOut.addDecl(D)) {
         //It may be relaxed by previous path,
         // but need to make it explicit now
         Dre->setDezombiefyCandidate();
