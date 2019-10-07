@@ -63,6 +63,10 @@ struct Scratch {
   // explicit Scratch(const clang::VarDecl* Dc) :VariablesToDZ({Dc}) {}
   // explicit Scratch(bool Th) :ThisToDZ(Th) {}
 
+  bool isInitialized() const {
+    return IsInitialized;
+  }
+
   bool hasDecl(const VarDecl *Vd) const {
 
     return VariablesToDZ.find(Vd) != VariablesToDZ.end();
@@ -118,45 +122,35 @@ struct Scratch {
   }
 };
 
-
-// FakeCFGBlockValues don't really track things, but simplifies the algo
-// so every block is independant and is assument to begin without any
-// already dezombiefied variable
-class FakeCFGBlockValues {
-std::vector<bool> Vals;
+class ScratchManager {
+  unsigned NumBlockIDs = 0;
+  std::vector<bool> Visited;
+  std::vector<Scratch> Scratchs;
 
 public:
-FakeCFGBlockValues(unsigned int NumBlockIDs) : Vals(NumBlockIDs, false) {}
+  ScratchManager(unsigned int NumBlockIDs) :
+    NumBlockIDs(NumBlockIDs), Visited(NumBlockIDs, false),
+    Scratchs(NumBlockIDs) {}
 
-Scratch copyScratchAtInput(unsigned int Id) {
-  Vals[Id] = true;
-  return Scratch();
-}
+  bool alreadyVisited(unsigned Id) const {
+    assert(Id < NumBlockIDs);
+    return Visited[Id];
+  }
 
-bool updateWithOutputScratch(unsigned int Id, const Scratch& Scr) {
-  return !Vals[Id];
-}
+  Scratch copyScratchAtInput(unsigned Id) {
+    assert(Id < NumBlockIDs);
+    assert(!Visited[Id]);
+    Visited[Id] = true;
+    return Scratchs[Id];
+  }
+
+  void initWithScratchFromPredecesor(unsigned Id, const Scratch& Scr) {
+    assert(Id < NumBlockIDs);
+    assert(!Visited[Id]);
+    Scratchs[Id] = Scr;
+  }
 };
 
-
-// CFGBlockValues keep a list of things that are already dezombiefied
-// when we go into a Block, when a Block is reachable from more than
-// one other Block, then we need to make the minimal common between both
-
-class CFGBlockValues {
-std::vector<Scratch> Vals;
-
-public:
-CFGBlockValues(unsigned int NumBlockIDs) : Vals(NumBlockIDs) {}
-
-Scratch copyScratchAtInput(unsigned int Id) {
-  return Vals[Id];
-}
-
-bool updateWithOutputScratch(unsigned int Id, const Scratch& Scr) {
-  return Vals[Id].intersection(Scr);
-}
-};
 
 //------------------------------------------------------------------------====//
 // Worklist: worklist for dataflow analysis.
@@ -261,7 +255,7 @@ void runOnBlock(const CFGBlock *block, Scratch &InOut) {
   }
 }
 
-template<class ScratchManager>
+
 void runDezombiefyRelaxAnalysis(
     const DeclContext *dc,
     const CFG *cfg,
@@ -280,13 +274,14 @@ void runDezombiefyRelaxAnalysis(
 
     ++stats.NumBlockVisits;
 
-    //Update all successors
     for(auto S : Block->succs()) {
-      if(S.isReachable()) {
-        bool Changed = vals.updateWithOutputScratch(S->getBlockID(), InOut);
-        if(Changed) {
-          Wl.enqueue(S.getReachableBlock());
-        }
+      //for every succesor not already visited, if we are the only
+      // predecessor, then our scratch at the end is his stratch to begin
+      if(S.isReachable() && !vals.alreadyVisited(S->getBlockID())) {
+        bool SinglePredecesor = S->pred_size() < 2;
+        if(SinglePredecesor)
+          vals.initWithScratchFromPredecesor(S->getBlockID(), InOut);
+        Wl.enqueue(S.getReachableBlock());
       }
     }
   }
@@ -315,7 +310,7 @@ void runDezombiefyRelaxAnalysis(const clang::FunctionDecl *D) {
 //    cfg->dump(Context.getLangOpts(), true);
 
 //    runDezombiefyRelaxAnalysis<CFGBlockValues>(D, cfg, stats);
-    runDezombiefyRelaxAnalysis<FakeCFGBlockValues>(D, cfg, stats);
+    runDezombiefyRelaxAnalysis(D, cfg, stats);
 
     // if (S.CollectStats && stats.NumVariablesAnalyzed > 0) {
     //   ++NumUninitAnalysisFunctions;
