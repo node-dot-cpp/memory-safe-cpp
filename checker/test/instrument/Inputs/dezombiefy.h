@@ -28,81 +28,73 @@
 #ifndef NODECPP_DEZOMBIEFY_H
 #define NODECPP_DEZOMBIEFY_H
 
+#include <utility>
+
 namespace nodecpp::safememory {
 
 template<class T>
-T* dezombiefy(T* x) {
+auto dezombiefy(T* x) {
 	return x;
 }
-
-// template<class T>
-// const T* dezombiefy(const T* x) {
-// 	return x;
-// }
 
 template<class T>
-T& dezombiefy(T& x) {
-	return x;
+auto dezombiefy(T&& x) {
+	return std::forward(x);
 }
-
-// template<class T>
-// const T& dezombiefy(const T& x) {
-// 	return x;
-// }
 
 template<class T1, class T2>
 auto mul(T1&& t1, T2&& t2) {
-	return t1 * t2;
+	return std::forward(t1) * std::forward(t2);
 }
 
 template<class T1, class T2>
 auto div(T1&& t1, T2&& t2) {
-	return t1 / t2;
+	return std::forward(t1) / std::forward(t2);
 }
 
 template<class T1, class T2>
 auto rem(T1&& t1, T2&& t2) {
-	return t1 % t2;
+	return std::forward(t1) % std::forward(t2);
 }
 
 template<class T1, class T2>
 auto add(T1&& t1, T2&& t2) {
-	return t1 + t2;
+	return std::forward(t1) + std::forward(t2);
 }
 
 template<class T1, class T2>
 auto sub(T1&& t1, T2&& t2) {
-	return t1 - t2;
+	return std::forward(t1) - std::forward(t2);
 }
 /// logical
 
 template<class T1, class T2>
 auto lt(T1&& t1, T2&& t2) {
-	return t1 < t2;
+	return std::forward(t1) < std::forward(t2);
 }
 
 template<class T1, class T2>
 auto gt(T1&& t1, T2&& t2) {
-	return t1 > t2;
+	return std::forward(t1) > std::forward(t2);
 }
 
 template<class T1, class T2>
 auto le(T1&& t1, T2&& t2) {
-	return t1 <= t2;
+	return std::forward(t1) <= std::forward(t2);
 }
 template<class T1, class T2>
 auto ge(T1&& t1, T2&& t2) {
-	return t1 >= t2;
+	return std::forward(t1) >= std::forward(t2);
 }
 
 template<class T1, class T2>
 auto eq(T1&& t1, T2&& t2) {
-	return t1 == t2;
+	return std::forward(t1) == std::forward(t2);
 }
 
 template<class T1, class T2>
 auto ne(T1&& t1, T2&& t2) {
-	return t1 != t2;
+	return std::forward(t1) != std::forward(t2);
 }
 
 // template<class T1, class T2>
@@ -112,17 +104,17 @@ auto ne(T1&& t1, T2&& t2) {
 
 template<class T1, class T2>
 auto and(T1&& t1, T2&& t2) {
-	return t1 & t2;
+	return std::forward(t1) & std::forward(t2);
 }
 
 template<class T1, class T2>
 auto xor(T1&& t1, T2&& t2) {
-	return t1 ^ t2;
+	return std::forward(t1) ^ std::forward(t2);
 }
 
 template<class T1, class T2>
 auto or(T1&& t1, T2&& t2) {
-	return t1 | t2;
+	return std::forward(t1) | std::forward(t2);
 }
 
 } // namespace nodecpp::safememory
