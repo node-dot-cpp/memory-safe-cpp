@@ -393,7 +393,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
           if(Qt->isStructureOrClassType()) {
 //            Qt.dump();
             auto Rd = Qt->getAsCXXRecordDecl();
-            bool SysType = isInSystemHeader(Context, Rd);
+            bool SysType = needsExternalDezombiefy(Context, Rd);
             return SysType;
           }
         }
@@ -426,89 +426,102 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     bool AtLeastOneArgumentMayZombie = false;
     bool BaseMayZombie = false;
 
-    if(auto D = E->getDirectCallee()) {
-      bool IsSystem = isInSystemHeader(Context, D);
-
-      auto Ce = E->getCallee()->IgnoreParenCasts();
-      
-      //mb: here we need to analyze what is going to be the 
-      // 'this' in the called method, to see if we can 
-      // verify it will not be a zombie
-      if(!Ce) {
-        // not really sure this can happend
-        assert(false);
-      }
-      else if(auto Me = dyn_cast<MemberExpr>(Ce) ) {
-        
-        BaseMayZombie = mayBaseZombie(Me) ;
-        
-      }
-      else if(isa<DeclRefExpr>(Ce)) {
-        //this is a function call, no need to check anything
-      }
-      else {
-        Ce->dumpColor();
-        assert(false);
-      }
-
-      Visit(E->getCallee());
-
-      vector<bool> P;
-      unsigned Count = D->getNumParams();
-      //TODO on CXXOperatorCallExpr, the callee expr
-      // is an argument. then the count mismatch
-      unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
-      assert(E->getNumArgs() == Count + Offset);
-
-      for(unsigned I = 0; I != Count; ++I) {
-        auto Each = D->getParamDecl(I);
-        auto EachE = E->getArg(I + Offset);
-
-        // for argument to zombie, the type called declaration must be a ref or ptr
-        // and it must be initialized from something not being a plain value
-        bool Z = mayZombie(Each->getType());
-        if(Z) {
-          if(auto Dre = dyn_cast<DeclRefExpr>(EachE->IgnoreParenCasts())) {
-            Z = isDezombiefyCandidate(Dre);
-          }
-        }
-
-        P.push_back(Z);
-        if(Z) {
-          AtLeastOneArgumentMayZombie = true;
-          noteZ1Ref(EachE);
-        }
-      }
-
-      if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
-        //check for issue Z9 
-        for(unsigned I = 0; I != Count; ++I) {
-          auto Each = D->getParamDecl(I);
-          auto Qt = Each->getType();
-          if (isByValueUserTypeNonTriviallyCopyable(Context, Qt)) {
-            //report a Z9 issue here.
-            addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
-
-          }
-        }
-      }
-
-      for(unsigned I = 0; I != Count; ++I) {
-        auto Each = E->getArg(I);
-        bool B = IsSystem && (BaseMayZombie || calculateOthers(P, I));
-        if(B)
-          noteZ2Ref(E);
-
-        Visit(Each);
-
-        if(B)
-          removeZ2Ref(E);
-      }
-    }
-    else {
-      // not sure how why this can happend
+    auto D = E->getDirectCallee();
+    if(!D) {
+      // not sure how or why this can happend
       E->dumpColor();
       assert(false);
+      return;
+    }
+
+
+    bool IsSystem = needsExternalDezombiefy(Context, D);
+
+    Expr *Ce = E->getCallee()->IgnoreParenCasts();
+    
+    //mb: here we need to analyze what is going to be the 
+    // 'this' in the called method, to see if we can 
+    // verify it will not be a zombie
+    if(!Ce) {
+      // not really sure this can happend
+      E->dumpColor();
+      assert(false);
+      return;
+    }
+    else if(auto Me = dyn_cast<MemberExpr>(Ce) ) {
+      
+      BaseMayZombie = mayBaseZombie(Me) ;
+//      Me->dumpColor();
+      
+    }
+    else if(auto Dre = dyn_cast<DeclRefExpr>(Ce)) {
+      //this is a function call or a CXXOperatorExpr
+      if(isa<CXXMethodDecl>(Dre->getDecl()))
+        BaseMayZombie = true;
+
+    }
+    else {
+      Ce->dumpColor();
+      assert(false);
+      return;
+    }
+
+    Visit(E->getCallee());
+
+    vector<bool> P;
+    unsigned Count = D->getNumParams();
+    //TODO on CXXOperatorCallExpr, the callee expr
+    // is an argument. then the count mismatch
+    unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
+    assert(E->getNumArgs() == Count + Offset);
+
+    // if(Offset == 1) {
+    //   E->getArg(0)->IgnoreParenImpCasts()->dumpColor();
+    // }
+
+    for(unsigned I = 0; I != Count; ++I) {
+      auto Each = D->getParamDecl(I);
+      auto EachE = E->getArg(I + Offset);
+
+      // for argument to zombie, the type called declaration must be a ref or ptr
+      // and it must be initialized from something not being a plain value
+      bool Z = mayZombie(Each->getType());
+      if(Z) {
+        if(auto Dre = dyn_cast<DeclRefExpr>(EachE->IgnoreParenCasts())) {
+          Z = isDezombiefyCandidate(Dre);
+        }
+      }
+
+      P.push_back(Z);
+      if(Z) {
+        AtLeastOneArgumentMayZombie = true;
+        noteZ1Ref(EachE);
+      }
+    }
+
+    if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
+      //check for issue Z9 
+      for(unsigned I = 0; I != Count; ++I) {
+        auto Each = D->getParamDecl(I);
+        auto Qt = Each->getType();
+        if (isByValueUserTypeNonTriviallyCopyable(Context, Qt)) {
+          //report a Z9 issue here.
+          addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
+
+        }
+      }
+    }
+
+    for(unsigned I = 0; I != Count; ++I) {
+      auto Each = E->getArg(I);
+      bool B = IsSystem && (BaseMayZombie || calculateOthers(P, I));
+      if(B)
+        noteZ2Ref(E);
+
+      Visit(Each);
+
+      if(B)
+        removeZ2Ref(E);
     }
   }
 

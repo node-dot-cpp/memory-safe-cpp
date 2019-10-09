@@ -9,6 +9,10 @@ using namespace nodecpp::safememory;
 struct UnsafeType {
 
 	void call(int) { }
+	UnsafeType& operator<<(int) {
+		return *this;
+	}
+
 };
 
 
@@ -54,5 +58,11 @@ struct Bad {
 // CHECK-FIXES: { auto& nodecpp_5 = getSt(); auto& nodecpp_6 = getSt(); safeFunction(nodecpp_5, nodecpp_6); };
 
 	}
+
+	void verifyZombieOperator(SafeType& StRef) {
+
+		getSt() << release();
+// CHECK-FIXES: { auto& nodecpp_7 = getSt(); auto nodecpp_8 = release(); nodecpp_7 << nodecpp_8; };
+ 	}
 
 };

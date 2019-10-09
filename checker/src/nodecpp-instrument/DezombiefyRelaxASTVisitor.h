@@ -53,104 +53,28 @@ struct Scratch {
   DenseSet<const VarDecl*> VariablesToDZ;
   bool ThisToDZ = false;
 
-  // we need to know if a clear was ever called on this Scratch
-  // or if is empty because it was never modified
-  bool IsInitialized = false;
-
   Scratch() {}
   Scratch(const Scratch&) = default;
   
-  // explicit Scratch(const clang::VarDecl* Dc) :VariablesToDZ({Dc}) {}
-  // explicit Scratch(bool Th) :ThisToDZ(Th) {}
-
-  bool isInitialized() const {
-    return IsInitialized;
-  }
-
   bool hasDecl(const VarDecl *Vd) const {
-
     return VariablesToDZ.find(Vd) != VariablesToDZ.end();
   }
 
   bool addDecl(const VarDecl *Vd) {
-
-    IsInitialized = true;
     return VariablesToDZ.insert(Vd).second;
   }
 
   bool addThis() {
-    IsInitialized = true;
-
     bool Tmp = ThisToDZ;
     ThisToDZ = true;
     return !Tmp;
   }
 
   void clear() {
-    IsInitialized = true;
     VariablesToDZ.clear();
     ThisToDZ = false;
   }
-
-  bool intersection(const Scratch& other) {
-
-    if(!other.IsInitialized) {
-      return false;
-    }
-    else if(!IsInitialized) {
-      *this = other;
-//        IsInitialized = true;
-      return true;
-    }
-
-
-
-    bool Changed = ThisToDZ && !other.ThisToDZ;
-    ThisToDZ = ThisToDZ && other.ThisToDZ;
-
-    DenseSet<const VarDecl*> Tmp;
-    for(auto Each : other.VariablesToDZ) {
-      if(VariablesToDZ.find(Each) != VariablesToDZ.end()) {
-        Tmp.insert(Each);
-      }
-    }
-
-    Changed = Changed || VariablesToDZ.size() != Tmp.size();
-    VariablesToDZ = std::move(Tmp);
-
-    return Changed;
-  }
 };
-
-class ScratchManager {
-  unsigned NumBlockIDs = 0;
-  std::vector<bool> Visited;
-  std::vector<Scratch> Scratchs;
-
-public:
-  ScratchManager(unsigned int NumBlockIDs) :
-    NumBlockIDs(NumBlockIDs), Visited(NumBlockIDs, false),
-    Scratchs(NumBlockIDs) {}
-
-  bool alreadyVisited(unsigned Id) const {
-    assert(Id < NumBlockIDs);
-    return Visited[Id];
-  }
-
-  Scratch copyScratchAtInput(unsigned Id) {
-    assert(Id < NumBlockIDs);
-    assert(!Visited[Id]);
-    Visited[Id] = true;
-    return Scratchs[Id];
-  }
-
-  void initWithScratchFromPredecesor(unsigned Id, const Scratch& Scr) {
-    assert(Id < NumBlockIDs);
-    assert(!Visited[Id]);
-    Scratchs[Id] = Scr;
-  }
-};
-
 
 //------------------------------------------------------------------------====//
 // Worklist: worklist for dataflow analysis.
@@ -261,7 +185,8 @@ void runDezombiefyRelaxAnalysis(
     const CFG *cfg,
     DezombiefyRelaxAnalysisStats &stats) {
 
-  ScratchManager vals(cfg->getNumBlockIDs());
+  BitVector AlreadyVisited(cfg->getNumBlockIDs(), false);
+  std::vector<Scratch> Scratchs(cfg->getNumBlockIDs());
   // Proceed with the workist.
   Worklist Wl(cfg->getNumBlockIDs());
   Wl.enqueue(&cfg->getEntry());
@@ -269,19 +194,20 @@ void runDezombiefyRelaxAnalysis(
   while (const CFGBlock *Block = Wl.dequeue()) {
 
     auto Id =  Block->getBlockID();
-    Scratch InOut = vals.copyScratchAtInput(Id);//make  a copy
+    AlreadyVisited[Id] = true;
+    Scratch InOut = Scratchs[Id];//make  a copy
     runOnBlock(Block, InOut);
 
     ++stats.NumBlockVisits;
 
     for(auto S : Block->succs()) {
-      //for every succesor not already visited, if we are the only
-      // predecessor, then our scratch at the end is his stratch to begin
-      if(S.isReachable() && !vals.alreadyVisited(S->getBlockID())) {
-        bool SinglePredecesor = S->pred_size() < 2;
-        if(SinglePredecesor)
-          vals.initWithScratchFromPredecesor(S->getBlockID(), InOut);
+      if(S.isReachable() && !AlreadyVisited[S->getBlockID()]) {
         Wl.enqueue(S.getReachableBlock());
+
+        // if it has only one predecessor,
+        // then our scratch at the end is his stratch to begin
+        if(S->pred_size() < 2)
+          Scratchs[S->getBlockID()] = InOut;
       }
     }
   }

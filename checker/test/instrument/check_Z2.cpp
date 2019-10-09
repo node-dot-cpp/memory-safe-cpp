@@ -9,6 +9,10 @@ using namespace nodecpp::safememory;
 struct UnsafeType {
 
 	void call(int) { }
+	UnsafeType& operator<<(int) {
+		return *this;
+	}
+
 };
 
 void unsafeFunction(UnsafeType&, UnsafeType&);
@@ -73,5 +77,13 @@ struct Bad {
 		unsafeFunction(getU(), getU());//on unsafe types is not an issue
 
 	}
+
+	void verifyZombieOperator(SafeType& StRef) {
+
+		getU() << release();
+
+		getSt() << release();
+// CHECK-MESSAGES: :[[@LINE-1]]:11: error: (Z2)
+ 	}
 
 };

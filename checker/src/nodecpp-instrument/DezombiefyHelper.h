@@ -51,6 +51,17 @@ bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
   return false;
 }
 
+
+inline
+bool needsExternalDezombiefy(clang::ASTContext &Context, clang::CXXRecordDecl *D) {
+  return isInSystemHeader(Context, D);
+}
+
+inline
+bool needsExternalDezombiefy(clang::ASTContext &Context, clang::FunctionDecl *D) {
+  return isInSystemHeader(Context, D);
+}
+
 inline
 bool isByValueUserTypeNonTriviallyCopyable(clang::ASTContext &Context, clang::QualType Qt) {
   Qt = Qt.getCanonicalType();
