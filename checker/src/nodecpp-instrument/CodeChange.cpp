@@ -256,7 +256,8 @@ void FileChanges::applyAll(Rewriter &Rewrite) const {
     // ReplaceText only fails if the source location is not a file location, in
     // which case we already returned false earlier.
     bool Fail = Rewrite.ReplaceText(Start, I->getLength(), I->getReplacementText());
-    assert(!Fail);
+    if(Fail)
+      assert(false);
   }
 }
 

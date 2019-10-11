@@ -128,6 +128,8 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
     E = E->IgnoreParenImpCasts();
     if(isa<DeclRefExpr>(E))
       return;
+    else if(isa<CXXThisExpr>(E))
+      return;
     else if(isa<IntegerLiteral>(E))
       return;
     else if(isa<clang::StringLiteral>(E))
@@ -186,8 +188,17 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
   Range toTextRange(Range SrcRange) {
 
-    assert(SrcRange.getOffset() - StmtRange.getOffset() + SrcRange.getLength() <= StmtText.size());
-    return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
+    if(SrcRange.getOffset() - StmtRange.getOffset() + SrcRange.getLength() <= StmtText.size())
+      return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
+    else {
+      //bug somewhere
+      llvm::errs() << "toTextRange() error\n StmtText:'" << StmtText << "'\nSrcRange: " <<
+        SrcRange.getOffset() << ", " << SrcRange.getLength() << "\nStmtRange: " <<
+        StmtRange.getOffset() << ", " << StmtRange.getOffset() << "\n";
+//      assert(false);
+      return StmtRange;
+    }
+
   }
 
   void addTextReplacement(string Text, Range R) {
@@ -253,6 +264,16 @@ public:
     this->StmtText = R.second;
     this->StmtSourceRange = St->getSourceRange();
     this->StmtRange = calcRange(StmtSourceRange);
+    if(StmtText.size() != StmtRange.getLength()) {
+      llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<
+      StmtText << "'\nStmtRange: " << StmtRange.getOffset() << ", " << StmtRange.getLength() << "\n";
+
+//      St->dumpColor();
+      return FileReplacements;
+//      assert(false);
+    }
+
+
     this->ExtraBraces = ExtraBraces;
     this->ExtraSemicolon = ExtraSemicolon;
 
@@ -263,17 +284,32 @@ public:
     return FileReplacements;
   }
 
+  //special treatmeant for smart ptrs
+  bool isOverloadArrowOp(Expr *E) {
+
+    auto Op = dyn_cast_or_null<CXXOperatorCallExpr>(E);
+    return Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow;
+  }
+
+  void VisitMemberExpr(MemberExpr *E) {
+
+    //special treatmeant for smart ptrs
+    if(isOverloadArrowOp(E->getBase())) {
+      unwrapStar(E->getBase());
+    }
+    else {
+      Base::VisitMemberExpr(E);
+    }
+  }
 
   void VisitCallExpr(CallExpr *E) {
 
+    Base::VisitCallExpr(E);
+
     auto Callee = dyn_cast_or_null<MemberExpr>(E->getCallee());
     if(Callee) {
-      auto Op = dyn_cast<CXXOperatorCallExpr>(Callee->getBase());
-      
-      //special treatmeant for smart ptrs
-      if(Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow)
-        unwrapStar(Callee->getBase());
-      else
+      //special treatmeant for smart ptrs is at VisitMemberExpr
+      if(!isOverloadArrowOp(Callee->getBase()))
         unwrap(Callee->getBase());
     }
   
@@ -290,6 +326,8 @@ public:
 
   void VisitBinaryOperator(BinaryOperator *E) {
 
+    Base::VisitBinaryOperator(E);
+
     if(E->isAdditiveOp() || E->isMultiplicativeOp() ||
       E->isBitwiseOp() || E->isComparisonOp() ||
       E->isRelationalOp()) {
@@ -299,10 +337,17 @@ public:
   }
 
   void VisitUnaryOperator(UnaryOperator *E) {
-    
+
+    Base::VisitUnaryOperator(E);
+
     if(E->isPostfix()) {
       unwrap(E->getSubExpr());
     }
+  }
+
+  void VisitCoawaitExpr(CoawaitExpr *E) {
+
+    //TODO think what to do here
   }
 
 };

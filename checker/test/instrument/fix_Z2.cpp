@@ -63,6 +63,8 @@ struct Bad {
 
 		getSt() << release();
 // CHECK-FIXES: { auto& nodecpp_7 = getSt(); auto nodecpp_8 = release(); nodecpp_7 << nodecpp_8; };
- 	}
 
+		getSt() << 1 << 2 << release();
+// CHECK-FIXES: { auto& nodecpp_9 = getSt(); auto& nodecpp_10 = nodecpp_9 << 1; auto& nodecpp_11 = nodecpp_10 << 2; auto nodecpp_12 = release(); nodecpp_11 << nodecpp_12; };
+ 	}
 };

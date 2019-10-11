@@ -429,8 +429,9 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     auto D = E->getDirectCallee();
     if(!D) {
       // not sure how or why this can happend
-      E->dumpColor();
-      assert(false);
+      llvm::errs() << "VisitCallExpr: !E->getDirectCallee()\n";
+//      E->dumpColor();
+      // assert(false);
       return;
     }
 
@@ -445,7 +446,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     if(!Ce) {
       // not really sure this can happend
       E->dumpColor();
-      assert(false);
+      //assert(false);
       return;
     }
     else if(auto Me = dyn_cast<MemberExpr>(Ce) ) {
