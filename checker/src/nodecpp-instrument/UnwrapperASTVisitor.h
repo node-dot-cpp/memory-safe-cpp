@@ -83,7 +83,7 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
   }
 
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
-  static pair<bool, StringRef> printExprAsWritten(Stmt *St,
+  static pair<bool, StringRef> printExprAsWritten(const Stmt *St,
                                 const ASTContext &Context) {
     // if (!Context)
     //   return {false, ""};
@@ -251,7 +251,7 @@ public:
   ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
     :Base(Context), Index(Index) {}
 
-  FileChanges& unwrapExpression(Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
+  FileChanges& unwrapExpression(const Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
     
     this->FileReplacements.clear();
     this->Buffer.clear();

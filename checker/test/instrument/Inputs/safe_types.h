@@ -32,7 +32,7 @@ namespace nodecpp::safememory {
 
 struct SafeType {
 
-	void call(int) { }
+	int call(int i) { return i; }
 	SafeType& operator<<(int) {
 		return *this;
 	}

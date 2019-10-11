@@ -8,7 +8,7 @@ using namespace nodecpp::safememory;
 
 struct UnsafeType {
 
-	void call(int) { }
+	int call(int i) { return i; }
 	UnsafeType& operator<<(int) {
 		return *this;
 	}
@@ -67,4 +67,19 @@ struct Bad {
 		getSt() << 1 << 2 << release();
 // CHECK-FIXES: { auto& nodecpp_9 = getSt(); auto& nodecpp_10 = nodecpp_9 << 1; auto& nodecpp_11 = nodecpp_10 << 2; auto nodecpp_12 = release(); nodecpp_11 << nodecpp_12; };
  	}
+
+	 void verifyZombieIf() {
+
+		int i = getSt().call(release());
+// CHECK-FIXES: auto& nodecpp_13 = getSt(); auto nodecpp_14 = release(); int i = nodecpp_13.call(nodecpp_14);
+
+		if(getSt().call(release()) != 0) {}
+// CHECK-FIXES: auto& nodecpp_15 = getSt(); auto nodecpp_16 = release(); auto nodecpp_17 = nodecpp_15.call(nodecpp_16); if(nodecpp_17 != 0) {}	
+
+		if(int j = getSt().call(release())) {}
+// CHECK-FIXES: auto& nodecpp_18 = getSt(); auto nodecpp_19 = release(); if(int j = nodecpp_18.call(nodecpp_19)) {}
+
+
+		int j, k = getSt().call(release());
+	 }
 };

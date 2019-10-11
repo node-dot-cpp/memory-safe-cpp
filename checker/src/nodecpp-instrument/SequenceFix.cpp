@@ -53,7 +53,7 @@ class SequenceCheck2ASTVisitor
   ZombieIssuesStats Stats;
 
 
-  bool needExtraBraces(Stmt *St) {
+  bool needExtraBraces(const Stmt *St) {
 
     auto SList = Context.getParents(*St);
 
@@ -65,7 +65,38 @@ class SequenceCheck2ASTVisitor
     return SIt->get<CompoundStmt>() == nullptr;
   }
 
-  bool isStandAloneExprStmt(Stmt *St) {
+  bool isIfCondVarDeclStmt(DeclStmt  *St) {
+
+    auto SList = Context.getParents(*St);
+
+    auto SIt = SList.begin();
+
+    if (SIt == SList.end())
+      return false;
+
+    if(auto P = SIt->get<IfStmt>())
+      return P->getConditionVariableDeclStmt() == St;
+    else
+      return false;
+  }
+
+  bool isIfCondExpr(Expr *E) {
+
+    auto SList = Context.getParents(*E);
+
+    auto SIt = SList.begin();
+
+    if (SIt == SList.end())
+      return false;
+
+    if(auto P = SIt->get<IfStmt>())
+      return P->getCond() == E;
+    else
+      return false;
+  }
+
+
+  bool isStandAloneStmt(Stmt *St) {
 
     auto SList = Context.getParents(*St);
 
@@ -101,18 +132,53 @@ public:
     return Stats;
   }
 
+
+  void tryFixExpr(const Stmt *Parent, Expr *E) {
+
+    if(E) {
+      bool Fix = callCheckSequence(E, ZombieSequence::Z2);
+      if(Fix) {
+        ExpressionUnwrapperVisitor V2(Context, Index);
+        auto &R = V2.unwrapExpression(Parent, E, needExtraBraces(Parent), false);
+        addReplacement(R);
+      }
+    }
+  }
+
+  void tryFixDeclStmt(const Stmt *Parent, DeclStmt *St) {
+
+    if(St->isSingleDecl()) {
+      if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
+        tryFixExpr(Parent, D->getInit());
+      }
+    }
+    else {
+      llvm::errs() << "Multi decl not supported by zombie analysis (yet)\n";
+    }
+  }
+
   bool TraverseStmt(Stmt *St) {
     // For every root expr, sent it to check and don't traverse it here
     if(!St)
       return true;
     else if(Expr *E = dyn_cast<Expr>(St)) {
-      if(isStandAloneExprStmt(St)) {
+      if(isStandAloneStmt(St)) {
         bool Fix = callCheckSequence(E, ZombieSequence::Z2);
         if(Fix) {
           ExpressionUnwrapperVisitor V2(Context, Index);
           auto &R = V2.unwrapExpression(St, E, true, true);
           addReplacement(R);
         }
+      }
+      else if(isIfCondExpr(E)) {
+        auto SList = Context.getParents(*St);
+        auto SIt = SList.begin();
+
+        assert (SIt != SList.end());
+        auto P = SIt->get<IfStmt>();
+
+        tryFixExpr(P, E);
+        return true;
       }
       else {
         bool Fix = callCheckSequence(E, ZombieSequence::Z1);
@@ -131,21 +197,22 @@ public:
 
   bool TraverseDeclStmt(DeclStmt *St) {
     
-    if(St->isSingleDecl()) {
-      if(VarDecl *D = dyn_cast_or_null<VarDecl>(St->getSingleDecl())) {
-        if(Expr *E = D->getInit()) {
-          bool Fix = callCheckSequence(E, ZombieSequence::Z2);
-          if(Fix) {
-            ExpressionUnwrapperVisitor V2(Context, Index);
-            auto &R = V2.unwrapExpression(St, E, needExtraBraces(St), false);
-            addReplacement(R);
-          }
-
-          return true;
-        }
-      }
+    if(isStandAloneStmt(St)) {
+      tryFixDeclStmt(St, St);
+      return true;
     }
-    return Base::TraverseDeclStmt(St);
+    else if(isIfCondVarDeclStmt(St)) {
+      auto SList = Context.getParents(*St);
+      auto SIt = SList.begin();
+
+      assert (SIt != SList.end());
+      auto P = SIt->get<IfStmt>();
+
+      tryFixDeclStmt(P, St);
+      return true;
+    }
+    else
+      return Base::TraverseDeclStmt(St);
   }
 
 };
