@@ -176,7 +176,7 @@ public:
     if (Err) {
       llvm::errs() << "Fix conflicts with existing fix! "
                     << llvm::toString(std::move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
+//      assert(false && "Fix conflicts with existing fix!");
     }
   }
 
@@ -239,6 +239,28 @@ public:
     return FileReplacements;
   }
 
+  /*debug diagnostics*/
+  void reportTemplated(Decl *D) {
+    // auto &De = Context.getDiagnostics();
+    // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
+    //     DiagnosticIDs::Warning, "Templated code");
+    // De.Report(D->getLocation(), ID);
+  }
+
+  void reportNonTemplated(Decl *D) {
+    // auto &De = Context.getDiagnostics();
+    // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
+    //     DiagnosticIDs::Warning, "NonTemplated code");
+    // De.Report(D->getLocation(), ID);
+  }
+
+  void reportImplicit(Decl *D) {
+    // auto &De = Context.getDiagnostics();
+    // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
+    //     DiagnosticIDs::Warning, "Implicit code");
+    // De.Report(D->getLocation(), ID);
+  }
+
   bool TraverseDecl(clang::Decl *D) {
     if (!D)
       return true;
@@ -247,18 +269,52 @@ public:
     if(isInSystemHeader(Context, D))
       return true;
 
-
-    // Traverse* are type specific and don't
-    // walk up, like Visit* do, so we check it here
+    // we make this here, so we are sure is done before any subclass
+    // can see or touch the node
     if(auto F = dyn_cast<clang::FunctionDecl>(D)) {
-      if(auto P = F->getTemplateInstantiationPattern()) {
-        Inst2Templ.emplace_back(F, P);
+
+      if(D->isImplicit()) {
+        // mostly constructor / assignments
+        reportImplicit(D);
+        return true;
       }
 
-      auto &FuncStore = Store[F];
-      TiRiia2 Riia(FileReplacements, FuncStore);
+      if(F->isTemplateInstantiation()) {
+        auto P = F->getTemplateInstantiationPattern();
+        if(!P) {
+          llvm::errs() << "!getTemplateInstantiationPattern()\n";
+          D->dumpColor();
+          return false;
+        }
 
-      return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
+        Inst2Templ.emplace_back(F, P);
+        auto &FuncStore = Store[F];
+        TiRiia2 Riia(FileReplacements, FuncStore);
+        return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
+      }
+
+      // if not a template instantiation of some kind,
+      // we must check (and ignore) for any kind of template code
+      if(F->getCanonicalDecl()->getDescribedFunctionTemplate()) {
+        
+        reportTemplated(D);
+        return true;
+      }
+
+      if(auto M = dyn_cast<clang::CXXMethodDecl>(D)) {
+        auto C = M->getCanonicalDecl()->getParent();
+        while(C) {
+          if(C->getDescribedClassTemplate()) {
+            reportTemplated(D);
+            return true;
+          }
+          C = dyn_cast_or_null<CXXRecordDecl>(C->getParent());
+        }
+      }
+
+      // if we get this far, this is normal function / method code
+      // fall down to normal Traverse
+      reportNonTemplated(D);
     }
 
     return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
