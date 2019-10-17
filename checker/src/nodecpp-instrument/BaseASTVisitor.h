@@ -74,47 +74,63 @@ struct DeduplicateHelper {
   std::map<FunctionDecl *, InstHelper> Data;
 
   static
-  bool verifyReplacements2(clang::FunctionDecl *D, clang::FunctionDecl *I1, 
-    const TUChanges& Changes1, clang::FunctionDecl *I2, const TUChanges& Changes2,
-    clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) {
-    
-      if(Changes1 == Changes2)
-        return true;
+  std::string dumpChanges(clang::SourceManager &Sm, const TUChanges& Changes1) {
+    std::string R;
+    for(auto &Each : Changes1) {
+      for(auto &Each2 : Each.second) {
+        R += Each2.toString(Sm);
+      }
+    }
+    return R;
+  }
 
-
-    unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
-      clang::DiagnosticIDs::Error,
-      "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
-
-    DE.Report(D->getLocation(), ID) << D->getName();
-
-    unsigned ID2 = DE.getDiagnosticIDs()->getCustomDiagID(
-      clang::DiagnosticIDs::Note,
-      "Intantiated as '%0' here");
-
-
+  static
+  std::string dumpDecl(const clang::LangOptions &Lang, clang::FunctionDecl *I1) {
     std::string Str;
     llvm::raw_string_ostream Os(Str);
-    // llvm::errs() << "Inconsistent dezombiefy on template instantiations\n";
-    // LangOptions L;
     clang::PrintingPolicy P(Lang);
     P.TerseOutput = true;
     P.FullyQualifiedName = true;
     I1->print(Os, P, 0, true);
 
-    DE.Report(I1->getPointOfInstantiation(), ID2) << Os.str();
-
-    Os.str().clear();
-
-    I2->print(Os, P, 0, true);
-    DE.Report(I2->getPointOfInstantiation(), ID2) << Os.str();
-
-    return false;
+    return Os.str();
   }
 
-  bool add(FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
-    TUChanges TemplChanges, clang::DiagnosticsEngine &DE,
-    const clang::LangOptions &Lang) {
+  static
+  bool verifyReplacements2(clang::ASTContext &Ctx, clang::FunctionDecl *D, clang::FunctionDecl *I1, 
+    const TUChanges& Changes1, clang::FunctionDecl *I2, const TUChanges& Changes2) {
+    
+      if(Changes1 == Changes2)
+        return true;
+
+
+      auto &DE = Ctx.getDiagnostics();
+
+      unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
+        clang::DiagnosticIDs::Error,
+        "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
+
+      DE.Report(D->getLocation(), ID) << D->getName();
+
+      unsigned ID2 = DE.getDiagnosticIDs()->getCustomDiagID(
+        clang::DiagnosticIDs::Note,
+        "Intantiated as '%0' here, changes required '%1'");
+
+
+      std::string DeclDump = dumpDecl(Ctx.getLangOpts(), I1);
+      std::string ChDump = dumpChanges(Ctx.getSourceManager(), Changes1);
+      DE.Report(I1->getPointOfInstantiation(), ID2) << DeclDump << ChDump;
+
+
+      std::string DeclDump2 = dumpDecl(Ctx.getLangOpts(), I2);
+      std::string ChDump2 = dumpChanges(Ctx.getSourceManager(), Changes2);
+      DE.Report(I2->getPointOfInstantiation(), ID2) << DeclDump2 << ChDump2;
+
+      return false;
+  }
+
+  bool add(clang::ASTContext &Ctx, FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
+    TUChanges TemplChanges) {
 
       auto It2 = Data.find(TemplPattern);
       if(It2 == Data.end()) {
@@ -129,7 +145,7 @@ struct DeduplicateHelper {
         auto I2 = TemplInstantiation;
         auto &Changes2 = TemplChanges;
         //verify it is equal
-        return verifyReplacements2(D, I1, Changes1, I2, Changes2, DE, Lang);
+        return verifyReplacements2(Ctx, D, I1, Changes1, I2, Changes2);
       }
     }
 
@@ -143,6 +159,12 @@ class BaseASTVisitor
   : public clang::RecursiveASTVisitor<T> {
 protected:
   clang::ASTContext &Context;
+  
+  // used by unwrapper, we put it here for easier reset
+  // since different instantiations of a template need
+  // to share the same indexes
+  int Index = 0;
+
 private:
   /// Fixes to apply.
   TUChanges FileReplacements;
@@ -193,10 +215,6 @@ public:
   }
   
   auto& finishReplacements() {
-    return finishReplacements(Context.getDiagnostics(), Context.getLangOpts());
-  } 
-
-  auto& finishReplacements(clang::DiagnosticsEngine &DE, const clang::LangOptions &Lang) { 
     
     // llvm::errs() <<
     //   "Dezombiefy finishReplacements!\n";
@@ -218,7 +236,7 @@ public:
       auto It = Store.find(Each.first);
       assert(It != Store.end());
 
-      Helper.add(Each.second, It->first, It->second, DE, Lang);
+      Helper.add(Context, Each.second, It->first, It->second);
 
       //now we remove it from instantiation store
       Store.erase(It);
@@ -262,6 +280,9 @@ public:
   }
 
   bool TraverseDecl(clang::Decl *D) {
+
+    Index = 0;
+
     if (!D)
       return true;
 

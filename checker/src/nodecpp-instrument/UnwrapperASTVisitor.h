@@ -66,6 +66,7 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
   string StmtText;
   Range StmtRange;
   SourceRange StmtSourceRange;
+  SourceLocation StmtCloseBrace;
   string Buffer; //TODO change to ostream or similar
   int &Index;
   bool ExtraSemicolon = false;
@@ -83,13 +84,13 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
   }
 
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
-  static pair<bool, StringRef> printExprAsWritten(const Stmt *St,
+  static pair<bool, StringRef> printExprAsWritten(SourceRange R,
                                 const ASTContext &Context) {
     // if (!Context)
     //   return {false, ""};
     bool Invalid = false;
     StringRef Source = Lexer::getSourceText(
-        CharSourceRange::getTokenRange(St->getSourceRange()),
+        CharSourceRange::getTokenRange(R),
         Context.getSourceManager(), Context.getLangOpts(), &Invalid);
     return {!Invalid, Source};
   }
@@ -232,12 +233,20 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
       Buffer.insert(0, "{ ");
       if(ExtraSemicolon)
         Buffer += ";";
-
-      Buffer += " }";
     }
 
     addReplacement(CodeChange::makeReplace(
       Context.getSourceManager(), StmtSourceRange, Buffer));
+    
+
+    // we make two changes for the case of unwrapping if expr
+    // we don't want the change to go over all of the if body
+    if(ExtraBraces) {
+      addReplacement(CodeChange::makeInsertRight(
+        Context.getSourceManager(), StmtCloseBrace, " }"));
+
+    }
+
   }
 
   string generateName() {
@@ -257,12 +266,14 @@ public:
     this->Buffer.clear();
     this->Reps.clear();
 
-    auto R = printExprAsWritten(St, Context);
+    this->StmtSourceRange = {St->getBeginLoc(), E->getEndLoc()};
+    this->StmtCloseBrace = St->getEndLoc();
+    auto R = printExprAsWritten(StmtSourceRange, Context);
     if(!R.first)
       return FileReplacements;
 
     this->StmtText = R.second;
-    this->StmtSourceRange = St->getSourceRange();
+    // when unwrapping if stmt, we must not go into the body of the if
     this->StmtRange = calcRange(StmtSourceRange);
     if(StmtText.size() != StmtRange.getLength()) {
       llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<

@@ -559,6 +559,10 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 
 bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportOnly, ZombieIssuesStats& Stats) {
 
+  // for constant expressions, we assume they are ok
+  if(E->isCXX11ConstantExpr(Context))
+    return false;
+
   SequenceCheckASTVisitor2 V(Context);
   V.Visit(E);
   auto &Issues = V.getIssues();

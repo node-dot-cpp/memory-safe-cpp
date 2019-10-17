@@ -49,7 +49,7 @@ class SequenceCheck2ASTVisitor
 
   bool ReportOnly = false;
   bool FixAll = false;
-  int Index = 0;
+
   ZombieIssuesStats Stats;
 
 
@@ -214,7 +214,6 @@ public:
     else
       return Base::TraverseDeclStmt(St);
   }
-
 };
 
 void ZombieIssuesStats::printStats() {
