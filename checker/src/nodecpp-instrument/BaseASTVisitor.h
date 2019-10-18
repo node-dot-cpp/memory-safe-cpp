@@ -97,13 +97,9 @@ struct DeduplicateHelper {
   }
 
   static
-  bool verifyReplacements2(clang::ASTContext &Ctx, clang::FunctionDecl *D, clang::FunctionDecl *I1, 
+  void reportReplacements2(clang::ASTContext &Ctx, clang::FunctionDecl *D, clang::FunctionDecl *I1, 
     const TUChanges& Changes1, clang::FunctionDecl *I2, const TUChanges& Changes2) {
     
-      if(Changes1 == Changes2)
-        return true;
-
-
       auto &DE = Ctx.getDiagnostics();
 
       unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
@@ -125,8 +121,26 @@ struct DeduplicateHelper {
       std::string DeclDump2 = dumpDecl(Ctx.getLangOpts(), I2);
       std::string ChDump2 = dumpChanges(Ctx.getSourceManager(), Changes2);
       DE.Report(I2->getPointOfInstantiation(), ID2) << DeclDump2 << ChDump2;
+  }
 
-      return false;
+  bool tryMerge(clang::SourceManager &Sm, TUChanges& Changes1, const TUChanges& Changes2) {
+    if(Changes1 == Changes2) {
+      return true;
+    }
+
+    for(auto &Each : Changes2) {
+      for(auto &Each2 : Each.second) {
+        auto Err = Changes1.add(Sm, Each2, true);
+        if (Err) {
+          llvm::errs() << "Fix conflicts with existing fix! "
+                    << llvm::toString(std::move(Err)) << "\n";
+          return false;
+//      assert(false && "Fix conflicts with existing fix!");
+        }
+      }
+    }
+
+    return true;
   }
 
   bool add(clang::ASTContext &Ctx, FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
@@ -145,7 +159,11 @@ struct DeduplicateHelper {
         auto I2 = TemplInstantiation;
         auto &Changes2 = TemplChanges;
         //verify it is equal
-        return verifyReplacements2(Ctx, D, I1, Changes1, I2, Changes2);
+        if(tryMerge(Ctx.getSourceManager(), Changes1, Changes2))
+          return true;
+
+        reportReplacements2(Ctx, D, I1, Changes1, I2, Changes2);
+        return false;
       }
     }
 
@@ -181,7 +199,7 @@ private:
   // don't use map, so order is fixed
   std::vector<std::pair<FunctionDecl *, FunctionDecl *>> Inst2Templ;
 
-  bool IsTemplate = false;
+//  bool IsTemplate = false;
 
 
 public:

@@ -195,7 +195,7 @@ CodeChangeError::CodeChangeError(ErrorCode Err, const clang::SourceManager &Sm,
       Message += "\nExisting: " + ExistingChange.toString(Sm);
 }
 
-llvm::Error FileChanges::add(const SourceManager &Sm, const CodeChange &R) {
+llvm::Error FileChanges::add(const SourceManager &Sm, const CodeChange &R, bool workaroundConstexprIf) {
   // Check the file path.
   if (!Replaces.empty() && R.getFile() != Replaces.begin()->getFile())
     return llvm::make_error<CodeChangeError>(
@@ -208,6 +208,11 @@ llvm::Error FileChanges::add(const SourceManager &Sm, const CodeChange &R) {
     return llvm::Error::success();
   } 
 
+  if(workaroundConstexprIf) {
+    //if already here, ignore
+    if(Replaces.find(R) != Replaces.end())
+      return llvm::Error::success();
+  }
   // Find the first entry that is not lower that R.
   auto I = Replaces.lower_bound(R);
   auto Hint = I;
@@ -261,9 +266,9 @@ void FileChanges::applyAll(Rewriter &Rewrite) const {
   }
 }
 
-llvm::Error TUChanges::add(const SourceManager &Sm, const CodeChange &R) {
+llvm::Error TUChanges::add(const SourceManager &Sm, const CodeChange &R, bool workaroundConstexprIf) {
   if(R.isValid()) {
-    return Replaces[R.getFile()].add(Sm, R);
+    return Replaces[R.getFile()].add(Sm, R, workaroundConstexprIf);
   }
   else
     return llvm::make_error<ReplacementError>(
