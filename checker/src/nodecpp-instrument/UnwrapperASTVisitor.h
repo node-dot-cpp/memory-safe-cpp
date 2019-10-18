@@ -144,6 +144,11 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
       auto C = dyn_cast<CallExpr>(E);
       if(C && C->isCallToStdMove())
         return;
+
+      auto Ctr = dyn_cast<CXXConstructExpr>(E);
+      if(Ctr)
+        return;
+
     }
 
     Range RangeInStmtText = toTextRange(calcRange(E->getSourceRange()));
@@ -359,6 +364,15 @@ public:
 
     if(E->isPostfix()) {
       unwrap(E->getSubExpr());
+    }
+  }
+
+  void VisitCXXConstructExpr(CXXConstructExpr *E) {
+
+    Base::VisitCXXConstructExpr(E);
+  
+    for(auto Each : E->arguments()) {
+      unwrap(Each);
     }
   }
 
