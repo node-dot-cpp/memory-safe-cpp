@@ -64,13 +64,13 @@ public:
       if(E->isImplicit()) {
         const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
         addReplacement(CodeChange::makeInsertLeft(
-          Context.getSourceManager(), E->getBeginLoc(), Fix));
+          Context.getSourceManager(), E->getBeginLoc(), Fix), true);
       }
       else {
         const char *Fix = "nodecpp::safememory::dezombiefy( this )";
 //        Replacement R(Context.getSourceManager(), E, Fix);
         addReplacement(CodeChange::makeReplace(
-          Context.getSourceManager(), E->getSourceRange(), Fix));
+          Context.getSourceManager(), E->getSourceRange(), Fix), true);
       }
 
     }   
@@ -90,7 +90,7 @@ public:
       // Replacement R(Context.getSourceManager(), E, Fix);
       // addTmpReplacement(R);
       addReplacement(CodeChange::makeReplace(
-        Context.getSourceManager(), E->getSourceRange(), Fix));
+        Context.getSourceManager(), E->getSourceRange(), Fix), true);
     }   
     return Base::VisitDeclRefExpr(E);
   }

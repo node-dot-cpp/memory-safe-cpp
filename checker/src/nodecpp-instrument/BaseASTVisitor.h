@@ -211,8 +211,8 @@ public:
   //template inst are implicits, so we actually need both
   bool shouldVisitTemplateInstantiations() const { return true; }
 
-  void addReplacement(const CodeChange& Replacement) {
-    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
+  void addReplacement(const CodeChange& Replacement, bool workaroundParameterPack = false) {
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement, workaroundParameterPack);
     if (Err) {
       llvm::errs() << "Fix conflicts with existing fix! "
                     << llvm::toString(std::move(Err)) << "\n";
