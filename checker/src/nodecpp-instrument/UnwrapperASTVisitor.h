@@ -124,9 +124,10 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
     if(StmtText.empty())
       return;
 
-    bool LValue = E->isLValue();
-    bool TrivialType = E->getType().isTrivialType(Context);
     E = E->IgnoreParenImpCasts();
+    bool LValue = E->isLValue();
+    bool TrivialType = E->getType().getCanonicalType().isTrivialType(Context);
+
     if(isa<DeclRefExpr>(E))
       return;
     else if(isa<CXXThisExpr>(E))
@@ -139,6 +140,11 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
       return;
     else if(isa<FloatingLiteral>(E))
       return;
+    else {
+      auto C = dyn_cast<CallExpr>(E);
+      if(C && C->isCallToStdMove())
+        return;
+    }
 
     Range RangeInStmtText = toTextRange(calcRange(E->getSourceRange()));
     string Name = generateName();
