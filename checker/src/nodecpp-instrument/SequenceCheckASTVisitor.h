@@ -102,6 +102,8 @@ public:
     const Expr *E1, const Expr *E2) {
     reportIssue(De, "nodecpp-dezombiefy", E1->getExprLoc(), E2->getExprLoc(),
       ZombieSeq, "Dezombiefication not fully realiable", DiagnosticIDs::Error);
+    // E1->dump();
+    // E2->dumpColor();
   }
 
   void reportIssue(DiagnosticsEngine &De) const {
@@ -421,23 +423,50 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 //    RegionRaii RR(Tree, Region);
     auto Raii = beginSequenced();
     //this call is noted in parents region
-    noteCall(E);
 
     bool AtLeastOneArgumentMayZombie = false;
     bool BaseMayZombie = false;
+    bool IsSystem = false; 
 
     auto D = E->getDirectCallee();
-    if(!D) {
-      // not sure how or why this can happend
-      llvm::errs() << "VisitCallExpr: !E->getDirectCallee()\n";
-//      E->dumpColor();
+    if(D) {
+      IsSystem = needsExternalDezombiefy(Context, D->getCanonicalDecl());
+    }
+    else {
+      // this can happend with pointer to member kind of things
+      // we can't really know where it is going to land
+      // so assume external dezombiefy is required
+      IsSystem = true;
+    } 
+
+    auto CalleT = E->getCallee()->getType().getCanonicalType().getTypePtrOrNull();
+    if(isa<BuiltinType>(CalleT)) {
+      llvm::errs() << "isa<BuiltinType>(CalleT)\n";
+      CalleT->dump();
+      return;
+    }
+
+    noteCall(E);
+
+    auto Pt = dyn_cast_or_null<clang::PointerType>(CalleT);
+    if(!Pt) {
+      llvm::errs() << "VisitCallExpr: !Pt\n";
+      E->dumpColor();
+      E->getCallee()->getType().getCanonicalType().dump();
       // assert(false);
       return;
     }
 
-
-    bool IsSystem = needsExternalDezombiefy(Context, D);
-
+    auto Fpt = dyn_cast_or_null<clang::FunctionProtoType>(
+      Pt->getPointeeType().getCanonicalType().getTypePtrOrNull());
+    if(!Fpt) {
+      llvm::errs() << "VisitCallExpr: !Pt\n";
+      E->dumpColor();
+      Pt->getPointeeType().getCanonicalType().dump();
+      // assert(false);
+      return;
+    }
+    
     Expr *Ce = E->getCallee()->IgnoreParenCasts();
     
     //mb: here we need to analyze what is going to be the 
@@ -470,7 +499,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     Visit(E->getCallee());
 
     vector<bool> P;
-    unsigned Count = D->getNumParams();
+    unsigned Count = Fpt->getNumParams();
     //TODO on CXXOperatorCallExpr, the callee expr
     // is an argument. then the count mismatch
     unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
@@ -481,12 +510,12 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     // }
 
     for(unsigned I = 0; I != Count; ++I) {
-      auto Each = D->getParamDecl(I);
+      auto EachT = Fpt->getParamType(I);
       auto EachE = E->getArg(I + Offset);
 
       // for argument to zombie, the type called declaration must be a ref or ptr
       // and it must be initialized from something not being a plain value
-      bool Z = mayZombie(Each->getType());
+      bool Z = mayZombie(EachT);
       if(Z) {
         if(auto Dre = dyn_cast<DeclRefExpr>(EachE->IgnoreParenCasts())) {
           Z = isDezombiefyCandidate(Dre);
@@ -503,9 +532,8 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
       //check for issue Z9 
       for(unsigned I = 0; I != Count; ++I) {
-        auto Each = D->getParamDecl(I);
-        auto Qt = Each->getType();
-        if (isByValueUserTypeNonTriviallyCopyable(Context, Qt)) {
+        auto EachT = Fpt->getParamType(I);
+        if (isByValueUserTypeNonTriviallyCopyable(Context, EachT)) {
           //report a Z9 issue here.
           addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
 
