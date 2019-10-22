@@ -140,6 +140,7 @@ public:
       if(Fix) {
         ExpressionUnwrapperVisitor V2(Context, Index);
         auto &R = V2.unwrapExpression(Parent, E, needExtraBraces(Parent), false);
+        Stats.UnwrapCount++;
         addReplacement(R);
       }
     }
@@ -167,6 +168,7 @@ public:
         if(Fix) {
           ExpressionUnwrapperVisitor V2(Context, Index);
           auto &R = V2.unwrapExpression(St, E, true, true);
+          Stats.UnwrapCount++;
           addReplacement(R);
         }
       }
@@ -185,6 +187,7 @@ public:
         if(Fix) {
           SequenceFixASTVisitor V2(Context);
           auto &R = V2.fixExpression(E);
+          Stats.RemoveOpsCount++;
           addReplacement(R);
         }
       }
@@ -220,6 +223,8 @@ void ZombieIssuesStats::printStats() {
   
   llvm::errs() << "Issues stats Z1:" << Z1Count << ", Z2:" <<
     Z2Count << ", Z9:" << Z9Count << "\n";
+  llvm::errs() << "Fix stats RemoveOps:" << RemoveOpsCount << ", Unwrap:" <<
+    UnwrapCount << "\n";
 }
 
 void sequenceFix(ASTContext &Ctx, bool ReportOnlyDontFix) {

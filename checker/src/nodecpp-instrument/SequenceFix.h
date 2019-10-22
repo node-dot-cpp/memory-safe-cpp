@@ -42,6 +42,9 @@ struct ZombieIssuesStats {
   int Z2Count = 0;
   int Z9Count = 0;
 
+  int UnwrapCount = 0;
+  int RemoveOpsCount = 0;
+
   void printStats();
 
 };
