@@ -132,13 +132,7 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
       return;
     else if(isa<CXXThisExpr>(E))
       return;
-    else if(isa<IntegerLiteral>(E))
-      return;
-    else if(isa<clang::StringLiteral>(E))
-      return;
-    else if(isa<CXXNullPtrLiteralExpr>(E))
-      return;
-    else if(isa<FloatingLiteral>(E))
+    else if(isLiteralExpr(E))
       return;
     else {
       auto C = dyn_cast<CallExpr>(E);

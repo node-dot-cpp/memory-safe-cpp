@@ -44,5 +44,8 @@ struct Bad {
 		safeFunction(getSt(), getSt());
 // CHECK-FIXES: { auto& nodecpp_0 = getSt(); auto& nodecpp_1 = getSt(); safeFunction(nodecpp_0, nodecpp_1); };
 
+		// literal can't zombie
+		// nothing to do here
+		safeFunction(getSt(), "hello!");
 	}
 };

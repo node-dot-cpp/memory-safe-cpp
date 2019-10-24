@@ -50,7 +50,7 @@ using namespace llvm;
 using namespace std;
 
 
-enum class ZombieSequence {NONE, Z1, Z2, Z9};
+enum class ZombieSequence {NONE = 0, Z1, Z2, Z9};
 
 class ZombieIssues {
   std::vector<std::pair<Expr *, Expr *>> Z1Issues;
@@ -58,6 +58,10 @@ class ZombieIssues {
   std::vector<std::pair<Expr *, Expr *>> Z9Issues;
 
 public:
+  unsigned getMessageId(ZombieSequence Zs) {
+    
+  }
+
   void addStats(ZombieIssuesStats& Stats) const {
     Stats.Z1Count += Z1Issues.size();
     Stats.Z2Count += Z2Issues.size();
@@ -85,46 +89,104 @@ public:
   }
 
   static
-  void reportIssue(DiagnosticsEngine &De, StringRef CheckName,
-    SourceLocation Loc1, SourceLocation Loc2, 
-    StringRef ZombieSeq, StringRef Description,
-    DiagnosticIDs::Level Level) {
-
-    unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
-        Level, ("(" + ZombieSeq + ") " + Description + " [" + CheckName + "]").str());
-    // CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
-    De.Report(Loc1, ID) << Loc2;
-
-  }
-
-  static
-  void reportIssue(DiagnosticsEngine &De, StringRef ZombieSeq,
+  void reportIssue(DiagnosticsEngine &De, ZombieSequence Zs,
     const Expr *E1, const Expr *E2) {
-    reportIssue(De, "nodecpp-dezombiefy", E1->getExprLoc(), E2->getExprLoc(),
-      ZombieSeq, "Dezombiefication not fully realiable", DiagnosticIDs::Error);
+
+    unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, 
+      "(%0) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
+
+    if(Zs == ZombieSequence::Z1) {
+      De.Report(E1->getExprLoc(), ID) << "Z1" << E2->getExprLoc();
+    }
+    else if(Zs == ZombieSequence::Z2) {
+      De.Report(E1->getExprLoc(), ID) << "Z2" << E2->getExprLoc();
+    }
+    else if(Zs == ZombieSequence::Z9) {
+      De.Report(E1->getExprLoc(), ID) << "Z9" << E2->getExprLoc();
+
+      unsigned IDNote = De.getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Note, 
+        "Non-trivial copy/move constructor of type %0");
+      De.Report(E1->getExprLoc(),IDNote) << E1->getType();
+    }
     // E1->dump();
     // E2->dumpColor();
   }
 
+  static
+  unsigned makeMessageId(DiagnosticsEngine &De, ZombieSequence Zs) {
+    if(Zs == ZombieSequence::Z1) {
+      return De.getDiagnosticIDs()->getCustomDiagID(
+          DiagnosticIDs::Error, 
+          "(Z1) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
+    }
+    else if(Zs == ZombieSequence::Z2) {
+      return De.getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Error, 
+        "(Z2) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
+    }
+    else if(Zs == ZombieSequence::Z9) {
+      return De.getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Error, 
+        "(Z9) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
+    }
+    else {
+      assert(false);
+      return 0;
+    }
+    
+  }
+
+  static
+  unsigned makeTypeNoteId(DiagnosticsEngine &De) {
+
+      return De.getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Note, 
+        "Non-trivial copy/move constructor of type %0");
+  }
+
+  static
+  void reportIssue(DiagnosticsEngine &De, unsigned ID,
+    const Expr *E1, const Expr *E2) {
+
+    De.Report(E1->getExprLoc(), ID) << E2->getExprLoc();
+
+
+    // E1->dump();
+    // E2->dumpColor();
+  }
+
+  static
+  void reportTypeNote(DiagnosticsEngine &De, unsigned ID,
+    const Expr *E1) {
+      De.Report(E1->getExprLoc(),ID) << E1->getType();
+  }
+
+
   void reportIssue(DiagnosticsEngine &De) const {
-    if(!Z9Issues.empty())
-      reportIssue(De, "Z9",
+    if(!Z9Issues.empty()) {
+      reportIssue(De, ZombieSequence::Z9,
         Z9Issues.front().first, Z9Issues.front().second);
-    if(!Z2Issues.empty())
-      reportIssue(De, "Z2",
+    }
+    else if(!Z2Issues.empty()) {
+      reportIssue(De, ZombieSequence::Z2,
         Z2Issues.front().first, Z2Issues.front().second);
-    else if(!Z1Issues.empty())
-      reportIssue(De, "Z1",
+    }
+    else if(!Z1Issues.empty()) {
+      reportIssue(De, ZombieSequence::Z1,
         Z1Issues.front().first, Z1Issues.front().second);
+    }
   }
 
   void reportAllIssues(DiagnosticsEngine &De) const {
+    
     for(auto &Each : Z9Issues)
-      reportIssue(De, "Z9", Each.first, Each.second);
+      reportIssue(De, ZombieSequence::Z9, Each.first, Each.second);
     for(auto &Each : Z2Issues)
-      reportIssue(De, "Z2", Each.first, Each.second);
+      reportIssue(De, ZombieSequence::Z2, Each.first, Each.second);
     for(auto &Each : Z1Issues)
-      reportIssue(De, "Z1", Each.first, Each.second);
+      reportIssue(De, ZombieSequence::Z1, Each.first, Each.second);
   }
 };
 
@@ -406,6 +468,76 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
       return true;
   }
 
+  template<class EXPR, class DECL>
+  void CallHelper(EXPR* E, DECL* D, bool BaseMayZombie) {
+
+    D = D->getCanonicalDecl();
+    SmallVector<QualType, 4> ArgsT;
+    bool IsSystem = needsExternalDezombiefy(Context, D);
+    for(auto &Each : D->parameters()) {
+      ArgsT.push_back(Each->getType());
+    }
+
+    bool AtLeastOneArgumentMayZombie = false;
+
+    vector<bool> P;
+    unsigned Count = ArgsT.size();
+    //TODO on CXXOperatorCallExpr, the callee expr
+    // is an argument. then the count mismatch
+    unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
+    assert(E->getNumArgs() == Count + Offset);
+
+
+    for(unsigned I = 0; I != Count; ++I) {
+      auto EachT = ArgsT[I];
+      auto EachE = E->getArg(I + Offset);
+
+      // for argument to zombie, the type of called declaration must be a ref or ptr
+      // and it must be initialized from something not being a plain value or literal
+      bool Z = mayZombie(EachT);
+      if(Z) {
+        EachE = EachE->IgnoreParenCasts();
+        if(isLiteralExpr(EachE)) {
+          Z = false;
+        }
+        else if(auto Dre = dyn_cast<DeclRefExpr>(EachE)) {
+          Z = isDezombiefyCandidate(Dre);
+        }
+      }
+
+      P.push_back(Z);
+      if(Z) {
+        AtLeastOneArgumentMayZombie = true;
+        noteZ1Ref(EachE);
+      }
+    }
+
+    if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
+      //check for issue Z9 
+      for(unsigned I = 0; I != Count; ++I) {
+        auto EachT = ArgsT[I];
+        if (isByValueUserTypeNonTriviallyCopyable(Context, EachT)) {
+          //report a Z9 issue here.
+          addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
+
+        }
+      }
+    }
+
+    for(unsigned I = 0; I != Count; ++I) {
+      auto Each = E->getArg(I);
+      bool B = IsSystem && (BaseMayZombie || calculateOthers(P, I));
+      if(B)
+        noteZ2Ref(E);
+
+      Visit(Each);
+
+      if(B)
+        removeZ2Ref(E);
+    }
+
+  }
+
   void VisitCallExpr(CallExpr *E) {
     // C++11 [intro.execution]p15:
     //   When calling a function [...], every value computation and side effect
@@ -420,13 +552,9 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
     //   including every associated value computation and side effect, is
     //   indeterminately sequenced with respect to that of any other parameter. 
     
-//    RegionRaii RR(Tree, Region);
     auto Raii = beginSequenced();
-    //this call is noted in parents region
 
-    bool AtLeastOneArgumentMayZombie = false;
     bool BaseMayZombie = false;
-    bool IsSystem = false;
 
     Expr *Ce = E->getCallee()->IgnoreParenCasts();
     
@@ -472,94 +600,25 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
       // this can happend with pointer to member kind of things
       // we can't really know where it is going to land
       // right now, just don't do anything else here
-      llvm::errs() << "!E->getDirectCallee()\n";
+//      llvm::errs() << "!E->getDirectCallee()\n";
       return;
-    }
-
-
-    D = D->getCanonicalDecl();
-    SmallVector<QualType, 4> ArgsT;
-    IsSystem = needsExternalDezombiefy(Context, D);
-    for(auto &Each : D->parameters()) {
-      ArgsT.push_back(Each->getType());
     }
 
     noteCall(E);
     Visit(E->getCallee());
 
-    vector<bool> P;
-    unsigned Count = ArgsT.size();
-    //TODO on CXXOperatorCallExpr, the callee expr
-    // is an argument. then the count mismatch
-    unsigned Offset = E->getNumArgs() == Count + 1 ? 1 : 0;
-    assert(E->getNumArgs() == Count + Offset);
-
-    // if(Offset == 1) {
-    //   E->getArg(0)->IgnoreParenImpCasts()->dumpColor();
-    // }
-
-    for(unsigned I = 0; I != Count; ++I) {
-      auto EachT = ArgsT[I];
-      auto EachE = E->getArg(I + Offset);
-
-      // for argument to zombie, the type called declaration must be a ref or ptr
-      // and it must be initialized from something not being a plain value
-      bool Z = mayZombie(EachT);
-      if(Z) {
-        if(auto Dre = dyn_cast<DeclRefExpr>(EachE->IgnoreParenCasts())) {
-          Z = isDezombiefyCandidate(Dre);
-        }
-      }
-
-      P.push_back(Z);
-      if(Z) {
-        AtLeastOneArgumentMayZombie = true;
-        noteZ1Ref(EachE);
-      }
-    }
-
-    if(BaseMayZombie || AtLeastOneArgumentMayZombie) {
-      //check for issue Z9 
-      for(unsigned I = 0; I != Count; ++I) {
-        auto EachT = ArgsT[I];
-        if (isByValueUserTypeNonTriviallyCopyable(Context, EachT)) {
-          //report a Z9 issue here.
-          addIssue(ZombieSequence::Z9, E->getArg(I + Offset), E);
-
-        }
-      }
-    }
-
-    for(unsigned I = 0; I != Count; ++I) {
-      auto Each = E->getArg(I);
-      bool B = IsSystem && (BaseMayZombie || calculateOthers(P, I));
-      if(B)
-        noteZ2Ref(E);
-
-      Visit(Each);
-
-      if(B)
-        removeZ2Ref(E);
-    }
+    CallHelper(E, D, BaseMayZombie);
   }
 
-  // void VisitCXXConstructExpr(CXXConstructExpr *E) {
+  void VisitCXXConstructExpr(CXXConstructExpr *E) {
 
-  //   // In C++11, list initializations are sequenced.
-  //   // In C++17, other constructor as function call
+    // In C++11, list initializations are sequenced.
+    // In C++17, other constructor as function call
 
-  //   RegionRaii RR(Tree, Region);
+    auto Raii = beginSequenced();
 
-  //   //call body is sequenced respect to its own arguments
-  //   RR.beginNewRegion();
-  //   noteCall(E);
-
-  //   for (auto Begin = E->arg_begin(), End = E->arg_end();
-  //        Begin != End; ++Begin) {
-  //       RR.beginNewRegion();
-  //       Visit(*Begin);
-  //   }
-  // }
+    CallHelper(E, E->getConstructor(), false);
+  }
 
   // void VisitInitListExpr(InitListExpr *E) {
 

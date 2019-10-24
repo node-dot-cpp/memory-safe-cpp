@@ -91,6 +91,12 @@ bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
 }
 
 inline
+bool isLiteralExpr(const clang::Expr *E) {
+  return llvm::isa<clang::IntegerLiteral>(E) || llvm::isa<clang::StringLiteral>(E) ||
+    llvm::isa<clang::CXXNullPtrLiteralExpr>(E) || llvm::isa<clang::FloatingLiteral>(E);
+}
+
+inline
 const clang::Expr *getParentExpr(clang::ASTContext &Context, const clang::Expr *Ex) {
 
   auto SList = Context.getParents(*Ex);
