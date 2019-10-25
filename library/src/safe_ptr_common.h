@@ -62,7 +62,48 @@ namespace nodecpp::safememory
 #endif
 
 
+namespace nodecpp::safememory {
+enum class StdAllocEnforcer { enforce };
+} // namespace nodecpp::safememory
+
+
 #ifdef NODECPP_USE_IIBMALLOC
+
+inline
+void* operator new  ( std::size_t count, nodecpp::safememory::StdAllocEnforcer ) 
+{
+	return malloc( count );
+}
+
+inline
+void operator delete  ( void* ptr, nodecpp::safememory::StdAllocEnforcer )
+{
+	return free( ptr );
+}
+
+inline
+void* operator new  ( std::size_t count, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return malloc( count );
+}
+
+inline
+void operator delete  ( void* ptr, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return free( ptr );
+}
+
+inline
+void operator delete  ( void* ptr, size_t bytes, nodecpp::safememory::StdAllocEnforcer )
+{
+	return free( ptr );
+}
+
+inline
+void operator delete  ( void* ptr, size_t bytes, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return free( ptr );
+}
 
 #include <iibmalloc.h>
 using namespace nodecpp::iibmalloc;
@@ -84,15 +125,191 @@ inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNewDeleteOperators( doIntercept ? &g_AllocManager : nullptr ) != nullptr;}
 
+template<class _Ty>
+class stdallocator
+{
+	static constexpr size_t alignment4BigAlloc = 32;
+	static_assert(2 * sizeof(void *) <= alignment4BigAlloc);
+#ifdef _DEBUG
+	static constexpr size_t reserverdSize4Vecor = 2 * sizeof(void *) + alignment4BigAlloc - 1;
+#else /* _DEBUG */
+	static constexpr size_t reserverdSize4Vecor = sizeof(void *) + alignment4BigAlloc - 1;
+#endif /* _DEBUG */
+
+#ifdef _WIN64
+	static constexpr size_t bigAllocGuardSignature = 0xFAFAFAFAFAFAFAFAULL;
+#else /* ^^^ _WIN64 ^^^ // vvv !_WIN64 vvv */
+	static constexpr size_t bigAllocGuardSignature = 0xFAFAFAFAUL;
+#endif /* _WIN64 */
+
+	size_t getByteSizeOfNElem(const size_t numOfElements)
+	{
+		if constexpr ( sizeof(_Ty) == 1 )
+			return numOfElements;
+		else
+		{
+			constexpr size_t maxPossible = static_cast<size_t>(-1) / sizeof(_Ty);
+			size_t ret = numOfElements * sizeof(_Ty);
+			if (maxPossible < numOfElements)
+				ret = static_cast<size_t>(-1);
+			return ret;
+		}
+	}
+
+	void* allocAlignedVector(const size_t sz)
+	{
+		size_t allocSize = reserverdSize4Vecor + sz;
+		if (allocSize <= sz)
+			allocSize = static_cast<size_t>(-1);
+
+		const uintptr_t container = reinterpret_cast<uintptr_t>(::operator new(allocSize, StdAllocEnforcer::enforce));
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, container != 0 );
+		void * const ret = reinterpret_cast<void *>((container + reserverdSize4Vecor)	& ~(alignment4BigAlloc - 1));
+		static_cast<uintptr_t *>(ret)[-1] = container;
+
+#ifdef _DEBUG
+		static_cast<uintptr_t *>(ret)[-2] = bigAllocGuardSignature;
+#endif /* _DEBUG */
+		return ret;
+	}
+
+	void vectorValuesToAlignedValues(void *& ptr, size_t& sz)
+	{	// adjust parameters from _Allocate_manually_vector_aligned to pass to operator delete
+		sz += reserverdSize4Vecor;
+
+		const uintptr_t * const iniPtr = reinterpret_cast<uintptr_t *>(ptr);
+		const uintptr_t container = iniPtr[-1];
+
+		// If the following asserts, it likely means that we are performing
+		// an aligned delete on memory coming from an unaligned allocation.
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, iniPtr[-2] == bigAllocGuardSignature );
+
+		// Extra paranoia on aligned allocation/deallocation; ensure container is
+		// in range [minBackShift, reserverdSize4Vecor]
+#ifdef _DEBUG
+		constexpr uintptr_t minBackShift = 2 * sizeof(void *);
+#else /* ^^^ _DEBUG ^^^ // vvv !_DEBUG vvv */
+		constexpr uintptr_t minBackShift = sizeof(void *);
+#endif /* _DEBUG */
+		const uintptr_t backShift = reinterpret_cast<uintptr_t>(ptr) - container;
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, backShift >= minBackShift, "{} vs. {}", backShift, minBackShift );
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, backShift <= reserverdSize4Vecor, "{} vs. {}", backShift, reserverdSize4Vecor );
+		ptr = reinterpret_cast<void *>(container);
+	}
+
+public:
+	static_assert(!std::is_const_v<_Ty>, "The C++ Standard forbids containers of const elements because allocator<const T> is ill-formed.");
+
+	using _Not_user_specialized = void;
+	using value_type = _Ty;
+	using propagate_on_container_move_assignment = std::true_type;
+	using is_always_equal = std::true_type;
+
+	constexpr stdallocator() noexcept {}
+	constexpr stdallocator(const stdallocator&) noexcept = default;
+	template<class _Other>
+	constexpr stdallocator(const stdallocator<_Other>&) noexcept {}
+
+	void deallocate(_Ty * const ptr, size_t sz)
+	{
+		constexpr size_t alignment = alignof(_Ty) > static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__) ? alignof(_Ty) : static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__);
+
+		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
+		{
+			size_t iniAlignment = alignment;
+#if defined(_M_IX86) || defined(_M_X64)
+			if (sz >= std::_Big_allocation_threshold)
+				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
+ #endif /* defined(_M_IX86) || defined(_M_X64) */
+			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
+		}
+		else
+		{
+			void* ptr_ = ptr;
+ #if defined(_M_IX86) || defined(_M_X64)
+			if (sz >= std::_Big_allocation_threshold)
+				vectorValuesToAlignedValues(ptr_, sz);
+ #endif /* defined(_M_IX86) || defined(_M_X64) */
+			::operator delete(ptr, sz, StdAllocEnforcer::enforce);
+		}
+	}
+
+	NODISCARD _Ty * allocate(const size_t _Count)
+	{
+		size_t iniByteSz = getByteSizeOfNElem(_Count);
+		constexpr size_t alignment = alignof(_Ty) > static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__) ? alignof(_Ty) : static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__);
+
+		if (iniByteSz == 0)
+			return static_cast<_Ty *>(nullptr);
+
+		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
+		{
+			size_t iniAlignment = alignment;
+#if defined(_M_IX86) || defined(_M_X64)
+			if (iniByteSz >= std::_Big_allocation_threshold)
+				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
+#endif /* defined(_M_IX86) || defined(_M_X64) */
+			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
+		}
+		else
+		{
+ #if defined(_M_IX86) || defined(_M_X64)
+			if (iniByteSz >= std::_Big_allocation_threshold)
+				return static_cast<_Ty *>(allocAlignedVector(iniByteSz));
+ #endif /* defined(_M_IX86) || defined(_M_X64) */
+			return static_cast<_Ty *>(::operator new(iniByteSz, StdAllocEnforcer::enforce));
+		}
+	}
+};
+
 } // namespace nodecpp::safememory
 
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
+
+inline
+void* operator new  ( std::size_t count, nodecpp::safememory::StdAllocEnforcer ) 
+{
+	return ::operator new(count);
+}
+
+inline
+void operator delete  ( void* ptr, nodecpp::safememory::StdAllocEnforcer )
+{
+	return ::operator delete( ptr );
+}
+
+inline
+void* operator new  ( std::size_t count, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return ::operator new(count, align);
+}
+
+inline
+void operator delete  ( void* ptr, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return ::operator delete( ptr, align );
+}
+
+inline
+void operator delete  ( void* ptr, size_t bytes, nodecpp::safememory::StdAllocEnforcer )
+{
+	return ::operator delete( ptr, bytes );
+}
+
+inline
+void operator delete  ( void* ptr, size_t bytes, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
+{
+	return ::operator delete( ptr, bytes, align );
+}
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #include <map>
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 namespace nodecpp::safememory
 {
+template<class T>
+using stdallocator =  std::allocator<T>;
+
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
