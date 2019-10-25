@@ -69,42 +69,6 @@ enum class StdAllocEnforcer { enforce };
 
 #ifdef NODECPP_USE_IIBMALLOC
 
-inline
-void* operator new  ( std::size_t count, nodecpp::safememory::StdAllocEnforcer ) 
-{
-	return malloc( count );
-}
-
-inline
-void operator delete  ( void* ptr, nodecpp::safememory::StdAllocEnforcer )
-{
-	return free( ptr );
-}
-
-inline
-void* operator new  ( std::size_t count, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return malloc( count );
-}
-
-inline
-void operator delete  ( void* ptr, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return free( ptr );
-}
-
-inline
-void operator delete  ( void* ptr, size_t bytes, nodecpp::safememory::StdAllocEnforcer )
-{
-	return free( ptr );
-}
-
-inline
-void operator delete  ( void* ptr, size_t bytes, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return free( ptr );
-}
-
 #include <iibmalloc.h>
 using namespace nodecpp::iibmalloc;
 namespace nodecpp::safememory
@@ -126,7 +90,7 @@ NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNewDeleteOperators( doIntercept ? &g_AllocManager : nullptr ) != nullptr;}
 
 template<class _Ty>
-class stdallocator
+class iiballocator
 {
 	static constexpr size_t alignment4BigAlloc = 32;
 	static_assert(2 * sizeof(void *) <= alignment4BigAlloc);
@@ -162,7 +126,7 @@ class stdallocator
 		if (allocSize <= sz)
 			allocSize = static_cast<size_t>(-1);
 
-		const uintptr_t container = reinterpret_cast<uintptr_t>(::operator new(allocSize, StdAllocEnforcer::enforce));
+		const uintptr_t container = reinterpret_cast<uintptr_t>(::nodecpp::safememory::allocate(allocSize));
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, container != 0 );
 		void * const ret = reinterpret_cast<void *>((container + reserverdSize4Vecor)	& ~(alignment4BigAlloc - 1));
 		static_cast<uintptr_t *>(ret)[-1] = container;
@@ -201,10 +165,10 @@ public:
 	using propagate_on_container_move_assignment = std::true_type;
 	using is_always_equal = std::true_type;
 
-	constexpr stdallocator() noexcept {}
-	constexpr stdallocator(const stdallocator&) noexcept = default;
+	constexpr iiballocator() noexcept {}
+	constexpr iiballocator(const iiballocator&) noexcept = default;
 	template<class _Other>
-	constexpr stdallocator(const stdallocator<_Other>&) noexcept {}
+	constexpr iiballocator(const iiballocator<_Other>&) noexcept {}
 
 	void deallocate(_Ty * const ptr, size_t sz)
 	{
@@ -217,7 +181,8 @@ public:
 			if (sz >= std::_Big_allocation_threshold)
 				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
 #endif /* defined(_M_IX86) || defined(_M_X64) */
-			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
+//			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
+			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
 		}
 		else
 		{
@@ -226,7 +191,8 @@ public:
 			if (sz >= std::_Big_allocation_threshold)
 				vectorValuesToAlignedValues(ptr_, sz);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
-			::operator delete(ptr, sz, StdAllocEnforcer::enforce);
+//			::operator delete(ptr, sz, StdAllocEnforcer::enforce);
+			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
 		}
 	}
 
@@ -245,7 +211,9 @@ public:
 			if (iniByteSz >= std::_Big_allocation_threshold)
 				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
-			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
+//			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
+			static_assert( false, "not implemented" );
+			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz, iniAlignment));
 		}
 		else
 		{
@@ -253,50 +221,17 @@ public:
 			if (iniByteSz >= std::_Big_allocation_threshold)
 				return static_cast<_Ty *>(allocAlignedVector(iniByteSz));
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
-			return static_cast<_Ty *>(::operator new(iniByteSz, StdAllocEnforcer::enforce));
+			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz));
 		}
 	}
 };
 
+template< class T1, class T2 >
+bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
+
 } // namespace nodecpp::safememory
 
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
-
-inline
-void* operator new  ( std::size_t count, nodecpp::safememory::StdAllocEnforcer ) 
-{
-	return ::operator new(count);
-}
-
-inline
-void operator delete  ( void* ptr, nodecpp::safememory::StdAllocEnforcer )
-{
-	return ::operator delete( ptr );
-}
-
-inline
-void* operator new  ( std::size_t count, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return ::operator new(count, align);
-}
-
-inline
-void operator delete  ( void* ptr, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return ::operator delete( ptr, align );
-}
-
-inline
-void operator delete  ( void* ptr, size_t bytes, nodecpp::safememory::StdAllocEnforcer )
-{
-	return ::operator delete( ptr, bytes );
-}
-
-inline
-void operator delete  ( void* ptr, size_t bytes, std::align_val_t align, nodecpp::safememory::StdAllocEnforcer )
-{
-	return ::operator delete( ptr, bytes, align );
-}
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #include <map>
@@ -304,7 +239,7 @@ void operator delete  ( void* ptr, size_t bytes, std::align_val_t align, nodecpp
 namespace nodecpp::safememory
 {
 template<class T>
-using stdallocator =  std::allocator<T>;
+using iiballocator =  std::allocator<T>;
 
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
