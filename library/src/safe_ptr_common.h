@@ -177,10 +177,10 @@ public:
 		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
 		{
 			size_t iniAlignment = alignment;
-#if defined(_M_IX86) || defined(_M_X64)
+#if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (sz >= std::_Big_allocation_threshold)
 				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
-#endif /* defined(_M_IX86) || defined(_M_X64) */
+#endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
 			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
 		}
