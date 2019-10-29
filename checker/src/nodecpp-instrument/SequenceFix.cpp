@@ -238,8 +238,10 @@ void ZombieIssuesStats::printStats() {
   
   llvm::errs() << "Issues stats Z1:" << Z1Count << ", Z2:" <<
     Z2Count << ", Z9:" << Z9Count << "\n";
-  llvm::errs() << "Fix stats Op2Call:" << Op2CallFixCount << ", Unwrap:" <<
-    UnwrapFixCount << "\n";
+  llvm::errs() << "Op2Call stats Fix:" << Op2CallFixCount << ", Failure:" <<
+    Op2CallFailureCount << "\n";
+  llvm::errs() << "Unwrap stats Fix:" << UnwrapFixCount << ", Failure:" <<
+    UnwrapFailureCount << "\n";
   llvm::errs() << "Unfixed stats Z2:" << UnfixedZ2Count << ", Z9:" <<
     UnfixedZ9Count << "\n";
 }
