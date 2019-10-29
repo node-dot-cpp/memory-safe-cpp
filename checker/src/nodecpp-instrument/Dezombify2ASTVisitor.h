@@ -52,46 +52,63 @@ class Dezombify2ASTVisitor
 
   using Base = BaseASTVisitor<Dezombify2ASTVisitor>;
 
+  DezombiefyStats Stats;
  
 public:
-  explicit Dezombify2ASTVisitor(ASTContext &Context):
-    Base(Context) {}
+  explicit Dezombify2ASTVisitor(ASTContext &Context, bool SilentMode):
+    Base(Context, SilentMode) {}
+
+  auto getStats() {
+    return Stats;
+  }
 
 
   bool VisitCXXThisExpr(CXXThisExpr *E) {
 
-    if(E->needsDezombiefyInstrumentation()) {
-      if(E->isImplicit()) {
-        const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
-        addReplacement(CodeChange::makeInsertLeft(
-          Context.getSourceManager(), E->getBeginLoc(), Fix), true);
-      }
-      else {
-        const char *Fix = "nodecpp::safememory::dezombiefy( this )";
-//        Replacement R(Context.getSourceManager(), E, Fix);
-        addReplacement(CodeChange::makeReplace(
-          Context.getSourceManager(), E->getSourceRange(), Fix), true);
-      }
+    if(E->isDezombiefyCandidateOrRelaxed()) {
+      if(E->needsDezombiefyInstrumentation()) {
+        Stats.ThisCount++;
+        if(E->isImplicit()) {
+          const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
+          addReplacement(CodeChange::makeInsertLeft(
+            Context.getSourceManager(), E->getBeginLoc(), Fix));
+        }
+        else {
+          const char *Fix = "nodecpp::safememory::dezombiefy( this )";
+  //        Replacement R(Context.getSourceManager(), E, Fix);
+          addReplacement(CodeChange::makeReplace(
+            Context.getSourceManager(), E->getSourceRange(), Fix));
+        }
 
-    }   
+      }
+      else
+        Stats.RelaxedCount++;
+    }
     return Base::VisitCXXThisExpr(E);
   }
 
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if(E->needsDezombiefyInstrumentation()) {
-//      E->dumpColor();
 
-      SmallString<64> Fix;
-      Fix += "nodecpp::safememory::dezombiefy( ";
-      Fix += E->getNameInfo().getAsString();
-      Fix += " )";
+    if(E->isDezombiefyCandidateOrRelaxed()) {
+      if(E->needsDezombiefyInstrumentation()) {
+        Stats.VarCount++;
+  //      E->dumpColor();
 
-      // Replacement R(Context.getSourceManager(), E, Fix);
-      // addTmpReplacement(R);
-      addReplacement(CodeChange::makeReplace(
-        Context.getSourceManager(), E->getSourceRange(), Fix), true);
-    }   
+        SmallString<64> Fix;
+        Fix += "nodecpp::safememory::dezombiefy( ";
+        Fix += E->getNameInfo().getAsString();
+        Fix += " )";
+
+        // Replacement R(Context.getSourceManager(), E, Fix);
+        // addTmpReplacement(R);
+        addReplacement(CodeChange::makeReplace(
+          Context.getSourceManager(), E->getSourceRange(), Fix));
+      }
+      else
+        Stats.RelaxedCount++;
+    }
+
     return Base::VisitDeclRefExpr(E);
   }
 };

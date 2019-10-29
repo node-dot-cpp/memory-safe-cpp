@@ -66,12 +66,24 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(NodecppInstrumentCategory));
 
 static cl::opt<bool>
-ReportOnly("report-only", cl::desc("Only report expressions that need to be refactored.\n"),
+DebugReport("debug-report", cl::desc("For debug and test. Report all expressions where zombies may be found.\n"), cl::Hidden);
+
+static cl::opt<bool>
+ReportOnly("report-only", cl::desc("Report all and every expressions that needs to be refactored.\n"),
     cl::cat(NodecppInstrumentCategory));
 
 static cl::opt<bool>
 FixOnly("fix-only", cl::desc("fix expressions that need to be refactored, but don't dezombiefy.\n"),
     cl::cat(NodecppInstrumentCategory));
+
+// static cl::opt<bool>
+// SilentMode("silent-mode", cl::desc("Don't emit error messages. Just do best effort.\n"),
+//     cl::cat(NodecppInstrumentCategory));
+
+static cl::opt<bool>
+NoSilentMode("no-silent-mode", cl::desc("Emit error message at every place the tool can't verify (or make) code as zombie free.\n"),
+    cl::cat(NodecppInstrumentCategory));
+
 
 namespace nodecpp {
 
@@ -116,21 +128,21 @@ public:
 
   void HandleTranslationUnit(ASTContext &Context) override {
 
-      dezombiefy(Context);
+      dezombiefy(Context, !NoSilentMode);
     }
 };
 
 class SequenceConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      sequenceFix(Context, false);
+      sequenceFix(Context, false, !NoSilentMode);
     }
 };
 
-class SequenceReportOnlyConsumer : public ASTConsumer {
+class SequenceDebugReportConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      sequenceFix(Context, true);
+      sequenceFix(Context, true, true);
     }
 };
 
@@ -166,11 +178,11 @@ protected:
   }
 };
 
-class SequenceReportOnlyAction : public ASTFrontendAction {
+class DebugReportSequenceAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::SequenceReportOnlyConsumer>();
+    return llvm::make_unique<nodecpp::SequenceDebugReportConsumer>();
   }
 };
 
@@ -247,10 +259,10 @@ public:
 };
 
 
-class SequenceReportOnlyActionFactory : public FrontendActionFactory {
+class DebugReportSequenceActionFactory : public FrontendActionFactory {
 public:
   FrontendAction *create() override {
-    return new SequenceReportOnlyAction();
+    return new DebugReportSequenceAction();
   }
 };
 
@@ -272,8 +284,8 @@ int main(int argc, const char **argv) {
   ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
 
-  if(ReportOnly) {
-    nodecpp::SequenceReportOnlyActionFactory Factory;
+  if(DebugReport || ReportOnly) {
+    nodecpp::DebugReportSequenceActionFactory Factory;
     Tool.run(&Factory);
   }
   else {

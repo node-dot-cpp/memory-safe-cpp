@@ -44,13 +44,17 @@ struct ZombieIssuesStats {
 
   int UnwrapFixCount = 0;
   int Op2CallFixCount = 0;
-  int UnfixedCount = 0;
+  int UnwrapFailureCount = 0;
+  int Op2CallFailureCount = 0;
+
+  int UnfixedZ9Count = 0;
+  int UnfixedZ2Count = 0;
 
   void printStats();
 
 };
 
-void sequenceFix(clang::ASTContext &Context, bool ReportOnlyDontFix);
+void sequenceFix(clang::ASTContext &Context, bool DebugReportMode, bool SilentMode);
 
 } // namespace nodecpp
 

@@ -226,7 +226,7 @@ public:
   /// existing replacements. Callers must
   /// explicitly check the Error returned, and the returned error can be
   /// converted to a string message with `llvm::toString()`.
-  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R, bool workaroundConstexprIf = false);
+  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R);
 
   unsigned size() const { return Replaces.size(); }
 
@@ -264,7 +264,7 @@ public:
 
 //  TUChanges() = default;
 
-  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R, bool workaroundConstexprIf = false);
+  llvm::Error add(const clang::SourceManager &Sm, const CodeChange &R);
 
 
   unsigned size() const { return Replaces.size(); }

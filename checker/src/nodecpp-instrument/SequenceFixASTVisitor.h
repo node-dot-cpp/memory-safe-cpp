@@ -56,14 +56,19 @@ class SequenceFixASTVisitor
   using Base = clang::EvaluatedExprVisitor<SequenceFixASTVisitor>;
 
   /// Fixes to apply.
-  FileChanges FileReplacements;
+  FileChanges &FileReplacements;
+  bool SilentMode = false;
+  bool HasError = false;
 
   void addReplacement(const CodeChange& Replacement) {
     auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
-      llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
+      // we must handle it, even if not actually written :(
+      HasError = true;
+      auto Str = llvm::toString(std::move(Err));
+      if(!SilentMode) {
+        llvm::errs() << "Fix conflicts with existing fix!\n" << Str;
+      }
     }
   }
 
@@ -102,14 +107,12 @@ class SequenceFixASTVisitor
 
 public:
 
-  explicit SequenceFixASTVisitor(const clang::ASTContext &Context):
-    Base(Context) {}
+  explicit SequenceFixASTVisitor(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements):
+    Base(Context), SilentMode(SilentMode), FileReplacements(Replacements) {}
 
-
-  FileChanges& fixExpression(clang::Stmt* St) {
-    FileReplacements.clear();
+  bool fixExpression(clang::Stmt* St) {
     Visit(St);
-    return FileReplacements;
+    return !HasError;
   }
 
   void VisitBinaryOperator(BinaryOperator *E) {
@@ -164,7 +167,8 @@ public:
         break;
     }
 
-    Base::VisitBinaryOperator(E);
+    if(!HasError)
+      Base::VisitBinaryOperator(E);
   }
 
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
@@ -225,10 +229,16 @@ public:
       }
     }
 
-    Base::VisitCXXOperatorCallExpr(E);
+    if(!HasError)
+      Base::VisitCXXOperatorCallExpr(E);
   }
-
 };
+
+bool applyOp2CallFix(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements, clang::Expr* E) {
+
+  SequenceFixASTVisitor V2(Context, SilentMode, Replacements);
+  return V2.fixExpression(E);
+}
 
 } // namespace nodecpp
 

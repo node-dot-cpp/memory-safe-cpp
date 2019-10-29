@@ -33,7 +33,18 @@
 
 namespace nodecpp {
 
-void dezombiefy(clang::ASTContext &Context);
+struct DezombiefyStats {
+
+  int VarCount = 0;
+  int ThisCount = 0;
+  int RelaxedCount = 0;
+
+  void printStats();
+};
+
+
+
+void dezombiefy(clang::ASTContext &Context, bool SilentMode);
 
 } // namespace nodecpp
 

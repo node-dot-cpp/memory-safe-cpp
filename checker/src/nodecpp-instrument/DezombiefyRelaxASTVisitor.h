@@ -262,8 +262,8 @@ class DezombiefyRelaxASTVisitor
   using Base = BaseASTVisitor<DezombiefyRelaxASTVisitor>;
 
 public:
-  explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context):
-    Base(Context) {}
+  explicit DezombiefyRelaxASTVisitor(clang::ASTContext &Context, bool SilentMode):
+    Base(Context, SilentMode) {}
 
   bool VisitFunctionDecl(clang::FunctionDecl *D) {
 

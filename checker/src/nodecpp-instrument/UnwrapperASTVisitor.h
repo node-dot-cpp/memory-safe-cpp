@@ -61,14 +61,17 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
   using Base = clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor>;
 
-  FileChanges FileReplacements;
+  bool SilentMode = false;
+  bool HasError = false;
+  int &Index;
+
+  FileChanges &FileReplacements;
 
   string StmtText;
   Range StmtRange;
   SourceRange StmtSourceRange;
   SourceLocation StmtCloseBrace;
   string Buffer; //TODO change to ostream or similar
-  int &Index;
   bool ExtraSemicolon = false;
   bool ExtraBraces = false;
   
@@ -76,10 +79,12 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
   void addReplacement(const CodeChange& Replacement) {
     auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
-    if (Err) {
-      llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
+    if(Err) {
+      HasError = true;
+      auto Str = llvm::toString(std::move(Err));
+      if(!SilentMode) {
+        llvm::errs() << "Fix conflicts with existing fix!\n" << Str << "\n";
+      }
     }
   }
 
@@ -197,11 +202,13 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
     if(SrcRange.getOffset() - StmtRange.getOffset() + SrcRange.getLength() <= StmtText.size())
       return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
     else {
-      //bug somewhere
-      llvm::errs() << "toTextRange() error\n StmtText:'" << StmtText << "'\nSrcRange: " <<
-        SrcRange.getOffset() << ", " << SrcRange.getLength() << "\nStmtRange: " <<
-        StmtRange.getOffset() << ", " << StmtRange.getOffset() << "\n";
-//      assert(false);
+      //macros messing things
+      if(!SilentMode) {
+        llvm::errs() << "toTextRange() error\n StmtText:'" << StmtText << "'\nSrcRange: " <<
+          SrcRange.getOffset() << ", " << SrcRange.getLength() << "\nStmtRange: " <<
+          StmtRange.getOffset() << ", " << StmtRange.getOffset() << "\n";
+      }
+      
       return StmtRange;
     }
 
@@ -262,10 +269,11 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
 public:
 
-  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, int &Index)
-    :Base(Context), Index(Index) {}
+  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, bool SilentMode, 
+    FileChanges &Replacements, int &Index)
+    :Base(Context), SilentMode(SilentMode), FileReplacements(Replacements), Index(Index) {}
 
-  FileChanges& unwrapExpression(const Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
+  bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
     
     this->FileReplacements.clear();
     this->Buffer.clear();
@@ -275,17 +283,18 @@ public:
     this->StmtCloseBrace = St->getEndLoc();
     auto R = printExprAsWritten(StmtSourceRange, Context);
     if(!R.first)
-      return FileReplacements;
+      return false;
 
     this->StmtText = R.second;
     // when unwrapping if stmt, we must not go into the body of the if
     this->StmtRange = calcRange(StmtSourceRange);
     if(StmtText.size() != StmtRange.getLength()) {
-      llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<
-      StmtText << "'\nStmtRange: " << StmtRange.getOffset() << ", " << StmtRange.getLength() << "\n";
-
+      if(!SilentMode) {
+        llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<
+        StmtText << "'\nStmtRange: " << StmtRange.getOffset() << ", " << StmtRange.getLength() << "\n";
+      }
 //      St->dumpColor();
-      return FileReplacements;
+      return false;
 //      assert(false);
     }
 
@@ -297,7 +306,7 @@ public:
     if(!Buffer.empty()) {
       makeFix();
     }
-    return FileReplacements;
+    return !HasError;
   }
 
   //special treatmeant for smart ptrs
@@ -377,7 +386,36 @@ public:
 
 };
 
+bool needExtraBraces(clang::ASTContext &Context, const Stmt *St) {
 
+  auto SList = Context.getParents(*St);
+
+  auto SIt = SList.begin();
+
+  if (SIt == SList.end())
+    return true;
+
+  return SIt->get<CompoundStmt>() == nullptr;
+}
+
+
+
+// This one is for stand-alone expression statements
+bool applyUnwrapFix(const clang::ASTContext &Context, bool SilentMode, 
+        FileChanges &Replacements, int &Index, clang::Expr* E) {
+
+  ExpressionUnwrapperVisitor V2(Context, SilentMode, Replacements, Index);
+  return V2.unwrapExpression(E, E, true, true);
+}
+
+// This one is for expression inside statements (i.e. condition on 'if' stmt)
+bool applyUnwrapFix(clang::ASTContext &Context, bool SilentMode, 
+        FileChanges &Replacements, int &Index, const clang::Stmt* St, clang::Expr* E) {
+
+  bool ExtraBraces = needExtraBraces(Context, St);
+  ExpressionUnwrapperVisitor V2(Context, SilentMode, Replacements, Index);
+  return V2.unwrapExpression(St, E, ExtraBraces, false);
+}
 
 } // namespace nodecpp
 

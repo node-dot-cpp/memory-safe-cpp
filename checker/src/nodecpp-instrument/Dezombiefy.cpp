@@ -40,19 +40,25 @@ using namespace clang::tooling;
 using namespace llvm;
 using namespace std;
 
+void DezombiefyStats::printStats() {
+  
+  llvm::errs() << "Dezombiefy stats Vars:" << VarCount << ", This:" <<
+    ThisCount << ", Relaxed:" << RelaxedCount << "\n";
+}
 
 
-
-void dezombiefy(ASTContext &Ctx) {
+void dezombiefy(ASTContext &Ctx, bool SilentMode) {
       
-  Dezombify1ASTVisitor Visitor1(Ctx);
+  Dezombify1ASTVisitor Visitor1(Ctx, SilentMode);
   Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-  DezombiefyRelaxASTVisitor VisitorRelax(Ctx);
+  DezombiefyRelaxASTVisitor VisitorRelax(Ctx, SilentMode);
   VisitorRelax.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-  Dezombify2ASTVisitor Visitor2(Ctx);
+  Dezombify2ASTVisitor Visitor2(Ctx, SilentMode);
   Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());
+
+  Visitor2.getStats().printStats();
 
   auto &Reps = Visitor2.finishReplacements();
   overwriteChangedFiles(Ctx, Reps, "nodecpp-dezombiefy");

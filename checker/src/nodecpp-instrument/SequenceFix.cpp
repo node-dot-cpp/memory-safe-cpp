@@ -47,8 +47,7 @@ using namespace std;
 class SequenceCheck2ASTVisitor
   : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
 
-  bool ReportOnly = false;
-  bool FixAll = false;
+  bool DebugReportMode = false;
 
   ZombieIssuesStats Stats;
 
@@ -120,28 +119,29 @@ class SequenceCheck2ASTVisitor
   }
 
   bool callCheckSequence(clang::Expr *E, ZombieSequence ZqMax) {
-    return checkSequence(Context, E, ZqMax, ReportOnly, Stats);
+    return checkSequence(Context, E, ZqMax, DebugReportMode, SilentMode, Stats);
   }
 
 public:
-  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool FixAll, bool ReportOnly):
-    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context),
-     FixAll(FixAll), ReportOnly(ReportOnly) {}
+  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool DebugReportMode, bool SilentMode):
+    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context, SilentMode),
+     DebugReportMode(DebugReportMode) {}
 
   auto getStats() {
     return Stats;
   }
 
 
-  void tryFixExpr(const Stmt *Parent, Expr *E) {
+  void tryFixExpr(const Stmt *St, Expr *E) {
 
     if(E) {
       bool Fix = callCheckSequence(E, ZombieSequence::Z2);
       if(Fix) {
-        ExpressionUnwrapperVisitor V2(Context, Index);
-        auto &R = V2.unwrapExpression(Parent, E, needExtraBraces(Parent), false);
-        Stats.UnwrapFixCount++;
-        addReplacement(R);
+        FileChanges R;
+        bool Ok = applyUnwrapFix(Context, SilentMode, R, Index, St, E);
+        if(Ok) {
+          addReplacement(R);
+        }
       }
     }
   }
@@ -154,7 +154,8 @@ public:
       }
     }
     else {
-      llvm::errs() << "Multi decl not supported by zombie analysis (yet)\n";
+      if(!SilentMode)
+        llvm::errs() << "Multi decl not supported by zombie analysis (yet)\n";
     }
   }
 
@@ -166,10 +167,11 @@ public:
       if(isStandAloneStmt(St)) {
         bool Fix = callCheckSequence(E, ZombieSequence::Z2);
         if(Fix) {
-          ExpressionUnwrapperVisitor V2(Context, Index);
-          auto &R = V2.unwrapExpression(St, E, true, true);
-          Stats.UnwrapFixCount++;
-          addReplacement(R);
+          FileChanges R;
+          bool Ok = applyUnwrapFix(Context, SilentMode, R, Index, E);
+          if(Ok) {
+            addReplacement(R);
+          }
         }
       }
       else if(isIfCondExpr(E)) {
@@ -185,10 +187,13 @@ public:
       else {
         bool Fix = callCheckSequence(E, ZombieSequence::Z1);
         if(Fix) {
-          SequenceFixASTVisitor V2(Context);
-          auto &R = V2.fixExpression(E);
-          Stats.Op2CallFixCount++;
-          addReplacement(R);
+          FileChanges R;
+          bool Ok = applyOp2CallFix(Context, SilentMode, R, E);
+          if(Ok) {
+
+            addReplacement(R);
+
+          }
         }
       }
 
@@ -225,21 +230,23 @@ void ZombieIssuesStats::printStats() {
     Z2Count << ", Z9:" << Z9Count << "\n";
   llvm::errs() << "Fix stats Op2Call:" << Op2CallFixCount << ", Unwrap:" <<
     UnwrapFixCount << "\n";
+  llvm::errs() << "Unfixed stats Z2:" << UnfixedZ2Count << ", Z9:" <<
+    UnfixedZ9Count << "\n";
 }
 
-void sequenceFix(ASTContext &Ctx, bool ReportOnlyDontFix) {
-  
-  SequenceCheck2ASTVisitor V1(Ctx, false, ReportOnlyDontFix);
+void sequenceFix(ASTContext &Ctx,  bool DebugReportMode, bool SilentMode) {
+
+  SequenceCheck2ASTVisitor V1(Ctx, DebugReportMode, SilentMode);
 
   V1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
   V1.getStats().printStats();
   
-  if(ReportOnlyDontFix)
+  if(DebugReportMode)
     return;
 
   auto &Reps = V1.finishReplacements();
-  overwriteChangedFiles(Ctx, Reps, "nodecpp-unsequenced");
+  overwriteChangedFiles(Ctx, Reps, "nodecpp-sequence-fix");
 }
 
 

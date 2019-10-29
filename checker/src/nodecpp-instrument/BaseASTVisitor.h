@@ -65,6 +65,11 @@ struct TiRiia2 {
 };
 
 struct DeduplicateHelper {
+  clang::ASTContext &Ctx;
+  bool SilentMode = false;
+  DeduplicateHelper(clang::ASTContext &Ctx, bool SilentMode) :
+    Ctx(Ctx), SilentMode(SilentMode) {}
+
   struct InstHelper {
     FunctionDecl *TemplPattern = nullptr;
     FunctionDecl *TemplInstantiation = nullptr;
@@ -96,10 +101,12 @@ struct DeduplicateHelper {
     return Os.str();
   }
 
-  static
-  void reportReplacements2(clang::ASTContext &Ctx, clang::FunctionDecl *D, clang::FunctionDecl *I1, 
+  void reportReplacements2(clang::FunctionDecl *D, clang::FunctionDecl *I1, 
     const TUChanges& Changes1, clang::FunctionDecl *I2, const TUChanges& Changes2) {
     
+      if(SilentMode)
+        return;
+
       auto &DE = Ctx.getDiagnostics();
 
       unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
@@ -123,27 +130,7 @@ struct DeduplicateHelper {
       DE.Report(I2->getPointOfInstantiation(), ID2) << DeclDump2 << ChDump2;
   }
 
-  bool tryMerge(clang::SourceManager &Sm, TUChanges& Changes1, const TUChanges& Changes2) {
-    if(Changes1 == Changes2) {
-      return true;
-    }
-
-    for(auto &Each : Changes2) {
-      for(auto &Each2 : Each.second) {
-        auto Err = Changes1.add(Sm, Each2, true);
-        if (Err) {
-          llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-          return false;
-//      assert(false && "Fix conflicts with existing fix!");
-        }
-      }
-    }
-
-    return true;
-  }
-
-  bool add(clang::ASTContext &Ctx, FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
+  bool add(FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
     TUChanges TemplChanges) {
 
       auto It2 = Data.find(TemplPattern);
@@ -158,11 +145,13 @@ struct DeduplicateHelper {
         auto &Changes1 = It2->second.TemplChanges;
         auto I2 = TemplInstantiation;
         auto &Changes2 = TemplChanges;
+        
         //verify it is equal
-        if(tryMerge(Ctx.getSourceManager(), Changes1, Changes2))
+        if(Changes1 == Changes2) {
           return true;
+        }
 
-        reportReplacements2(Ctx, D, I1, Changes1, I2, Changes2);
+        reportReplacements2(D, I1, Changes1, I2, Changes2);
         return false;
       }
     }
@@ -177,6 +166,8 @@ class BaseASTVisitor
   : public clang::RecursiveASTVisitor<T> {
 protected:
   clang::ASTContext &Context;
+
+  bool SilentMode = false;
   
   // used by unwrapper, we put it here for easier reset
   // since different instantiations of a template need
@@ -205,18 +196,20 @@ private:
 public:
   using Base = clang::RecursiveASTVisitor<T>;
 
-  explicit BaseASTVisitor(clang::ASTContext &Context):
-    Context(Context) {}
+  explicit BaseASTVisitor(clang::ASTContext &Context, bool SilentMode):
+    Context(Context), SilentMode(SilentMode) {}
 
   //template inst are implicits, so we actually need both
   bool shouldVisitTemplateInstantiations() const { return true; }
 
-  void addReplacement(const CodeChange& Replacement, bool workaroundParameterPack = false) {
-    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement, workaroundParameterPack);
+  void addReplacement(const CodeChange& Replacement) {
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
-      llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-//      assert(false && "Fix conflicts with existing fix!");
+      // we must handle it, even if not actually written :(
+      auto Str = llvm::toString(std::move(Err));
+      if(!SilentMode) {
+        llvm::errs() << "Fix conflicts with existing fix!\n" << Str;
+      }
     }
   }
 
@@ -239,7 +232,7 @@ public:
     // for each template in InstantiationsStore,
     // we must have check all instantiation of such template
     // and they must have the same set of Replacements
-    DeduplicateHelper Helper;
+    DeduplicateHelper Helper(Context, SilentMode);
 
     for(auto& Each : Inst2Templ) {
       //first, the second is the template pattern,
@@ -254,7 +247,7 @@ public:
       auto It = Store.find(Each.first);
       assert(It != Store.end());
 
-      Helper.add(Context, Each.second, It->first, It->second);
+      Helper.add(Each.second, It->first, It->second);
 
       //now we remove it from instantiation store
       Store.erase(It);

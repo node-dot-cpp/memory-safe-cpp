@@ -43,8 +43,8 @@ class Dezombify1ASTVisitor
   using Base = BaseASTVisitor<Dezombify1ASTVisitor>;
 public:
 
-  explicit Dezombify1ASTVisitor(clang::ASTContext &Context):
-    Base(Context) {}
+  explicit Dezombify1ASTVisitor(clang::ASTContext &Context, bool SilentMode):
+    Base(Context, SilentMode) {}
 
   bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
     E->setDezombiefyCandidate();

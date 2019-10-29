@@ -114,56 +114,6 @@ public:
     // E2->dumpColor();
   }
 
-  static
-  unsigned makeMessageId(DiagnosticsEngine &De, ZombieSequence Zs) {
-    if(Zs == ZombieSequence::Z1) {
-      return De.getDiagnosticIDs()->getCustomDiagID(
-          DiagnosticIDs::Error, 
-          "(Z1) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
-    }
-    else if(Zs == ZombieSequence::Z2) {
-      return De.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, 
-        "(Z2) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
-    }
-    else if(Zs == ZombieSequence::Z9) {
-      return De.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Error, 
-        "(Z9) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
-    }
-    else {
-      assert(false);
-      return 0;
-    }
-    
-  }
-
-  static
-  unsigned makeTypeNoteId(DiagnosticsEngine &De) {
-
-      return De.getDiagnosticIDs()->getCustomDiagID(
-        DiagnosticIDs::Note, 
-        "Non-trivial copy/move constructor of type %0");
-  }
-
-  static
-  void reportIssue(DiagnosticsEngine &De, unsigned ID,
-    const Expr *E1, const Expr *E2) {
-
-    De.Report(E1->getExprLoc(), ID) << E2->getExprLoc();
-
-
-    // E1->dump();
-    // E2->dumpColor();
-  }
-
-  static
-  void reportTypeNote(DiagnosticsEngine &De, unsigned ID,
-    const Expr *E1) {
-      De.Report(E1->getExprLoc(),ID) << E1->getType();
-  }
-
-
   void reportIssue(DiagnosticsEngine &De) const {
     if(!Z9Issues.empty()) {
       reportIssue(De, ZombieSequence::Z9,
@@ -282,6 +232,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   
 
   ASTContext &Context; //non-const, as base visitor has a const ref
+  bool SilentMode = false;
 
   /// Sequenced regions within the expression.
   SequenceTree Tree;
@@ -339,8 +290,8 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   }
 
   public:
-  SequenceCheckASTVisitor2(ASTContext &Context)
-      : Base(Context), Context(Context), Region(Tree.root()) {
+  SequenceCheckASTVisitor2(ASTContext &Context, bool SilentMode)
+      : Base(Context), Context(Context), SilentMode(SilentMode), Region(Tree.root()) {
   }
 
   const ZombieIssues& getIssues() const {
@@ -600,6 +551,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
       // this can happend with pointer to member kind of things
       // we can't really know where it is going to land
       // right now, just don't do anything else here
+
 //      llvm::errs() << "!E->getDirectCallee()\n";
       return;
     }
@@ -633,32 +585,46 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
 };
 
 
-bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool ReportOnly, ZombieIssuesStats& Stats) {
+bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence ZqMax, bool DebugReportMode, bool SilentMode, ZombieIssuesStats& Stats) {
 
   // for constant expressions, we assume they are ok
   if(E->isCXX11ConstantExpr(Context))
     return false;
 
-  SequenceCheckASTVisitor2 V(Context);
+  SequenceCheckASTVisitor2 V(Context, SilentMode);
   V.Visit(E);
   auto &Issues = V.getIssues();
   Issues.addStats(Stats);
   if(Issues.getMaxIssue() == ZombieSequence::NONE) {
-    //all ok
+    //no issues, no fixes
     return false;
   }
-  else if(ReportOnly) {
+  else if(DebugReportMode) {
+    //report all things the checker matched
     Issues.reportAllIssues(Context.getDiagnostics());
     return false;
   }
   else if(Issues.getMaxIssue() <= ZqMax) {
-    //needs fix
+    //we can make this work
+    if(ZqMax == ZombieSequence::Z1)
+      Stats.Op2CallFixCount++;
+    else if(ZqMax == ZombieSequence::Z2)
+      Stats.UnwrapFixCount++;
+
     return true;
   }
   else {
-    //can't fix, report
-    Issues.reportIssue(Context.getDiagnostics());
-    return false;
+    //can't make the fix we need
+    if(!SilentMode)
+      Issues.reportIssue(Context.getDiagnostics());
+
+    if(Issues.getMaxIssue() == ZombieSequence::Z9)
+      Stats.UnfixedZ9Count++;
+    else if(Issues.getMaxIssue() == ZombieSequence::Z2)
+      Stats.UnfixedZ2Count++;
+
+    //but make the fix we can, is better than nothing
+    return true;
   }
 }
 
