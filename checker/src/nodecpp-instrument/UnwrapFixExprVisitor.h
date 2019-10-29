@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
-#define NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
+#ifndef NODECPP_CHECKER_UNWRAPFIXEXPRVISITOR_H
+#define NODECPP_CHECKER_UNWRAPFIXEXPRVISITOR_H
 
 #include "CodeChange.h"
 #include "BaseASTVisitor.h"
@@ -57,9 +57,9 @@ using namespace std;
 //   bool shouldTraversePostOrder() const { return true; }
 // };
 
-class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor> {
+class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVisitor> {
 
-  using Base = clang::EvaluatedExprVisitor<ExpressionUnwrapperVisitor>;
+  using Base = clang::EvaluatedExprVisitor<UnwrapFixExprVisitor>;
 
   bool SilentMode = false;
   bool HasError = false;
@@ -269,7 +269,7 @@ class ExpressionUnwrapperVisitor : public clang::EvaluatedExprVisitor<Expression
 
 public:
 
-  ExpressionUnwrapperVisitor(const clang::ASTContext &Context, bool SilentMode, 
+  UnwrapFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, 
     FileChanges &Replacements, int &Index)
     :Base(Context), SilentMode(SilentMode), FileReplacements(Replacements), Index(Index) {}
 
@@ -404,7 +404,7 @@ bool needExtraBraces(clang::ASTContext &Context, const Stmt *St) {
 bool applyUnwrapFix(const clang::ASTContext &Context, bool SilentMode, 
         FileChanges &Replacements, int &Index, clang::Expr* E) {
 
-  ExpressionUnwrapperVisitor V2(Context, SilentMode, Replacements, Index);
+  UnwrapFixExprVisitor V2(Context, SilentMode, Replacements, Index);
   return V2.unwrapExpression(E, E, true, true);
 }
 
@@ -413,11 +413,11 @@ bool applyUnwrapFix(clang::ASTContext &Context, bool SilentMode,
         FileChanges &Replacements, int &Index, const clang::Stmt* St, clang::Expr* E) {
 
   bool ExtraBraces = needExtraBraces(Context, St);
-  ExpressionUnwrapperVisitor V2(Context, SilentMode, Replacements, Index);
+  UnwrapFixExprVisitor V2(Context, SilentMode, Replacements, Index);
   return V2.unwrapExpression(St, E, ExtraBraces, false);
 }
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_UNWRAPPERASTVISITOR_H
+#endif // NODECPP_CHECKER_UNWRAPFIXEXPRVISITOR_H
 

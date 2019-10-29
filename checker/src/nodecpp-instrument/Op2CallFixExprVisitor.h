@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
-#define NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
+#ifndef NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
+#define NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
 
 #include "SequenceFix.h"
 
@@ -50,10 +50,10 @@ using namespace llvm;
 using namespace std;
 
 
-class SequenceFixASTVisitor
-  : public clang::EvaluatedExprVisitor<SequenceFixASTVisitor> {
+class Op2CallFixExprVisitor
+  : public clang::EvaluatedExprVisitor<Op2CallFixExprVisitor> {
 
-  using Base = clang::EvaluatedExprVisitor<SequenceFixASTVisitor>;
+  using Base = clang::EvaluatedExprVisitor<Op2CallFixExprVisitor>;
 
   /// Fixes to apply.
   FileChanges &FileReplacements;
@@ -107,7 +107,7 @@ class SequenceFixASTVisitor
 
 public:
 
-  explicit SequenceFixASTVisitor(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements):
+  explicit Op2CallFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements):
     Base(Context), SilentMode(SilentMode), FileReplacements(Replacements) {}
 
   bool fixExpression(clang::Stmt* St) {
@@ -167,8 +167,7 @@ public:
         break;
     }
 
-    if(!HasError)
-      Base::VisitBinaryOperator(E);
+    Base::VisitBinaryOperator(E);
   }
 
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
@@ -229,18 +228,17 @@ public:
       }
     }
 
-    if(!HasError)
-      Base::VisitCXXOperatorCallExpr(E);
+    Base::VisitCXXOperatorCallExpr(E);
   }
 };
 
 bool applyOp2CallFix(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements, clang::Expr* E) {
 
-  SequenceFixASTVisitor V2(Context, SilentMode, Replacements);
+  Op2CallFixExprVisitor V2(Context, SilentMode, Replacements);
   return V2.fixExpression(E);
 }
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
+#endif // NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
 

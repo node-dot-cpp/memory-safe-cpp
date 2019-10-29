@@ -29,9 +29,9 @@
 #include "BaseASTVisitor.h"
 #include "CodeChange.h"
 #include "DezombiefyHelper.h"
-#include "SequenceCheckASTVisitor.h"
-#include "SequenceFixASTVisitor.h"
-#include "UnwrapperASTVisitor.h"
+#include "SequenceCheckExprVisitor.h"
+#include "Op2CallFixExprVisitor.h"
+#include "UnwrapFixExprVisitor.h"
 
 #include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/Sema/Sema.h"
@@ -140,7 +140,11 @@ public:
         FileChanges R;
         bool Ok = applyUnwrapFix(Context, SilentMode, R, Index, St, E);
         if(Ok) {
+          Stats.UnwrapFixCount++;
           addReplacement(R);
+        }
+        else {
+          Stats.UnwrapFailureCount++;
         }
       }
     }
@@ -170,7 +174,11 @@ public:
           FileChanges R;
           bool Ok = applyUnwrapFix(Context, SilentMode, R, Index, E);
           if(Ok) {
+            Stats.UnwrapFixCount++;
             addReplacement(R);
+          }
+          else {
+            Stats.UnwrapFailureCount++;
           }
         }
       }
@@ -190,9 +198,11 @@ public:
           FileChanges R;
           bool Ok = applyOp2CallFix(Context, SilentMode, R, E);
           if(Ok) {
-
+            Stats.Op2CallFixCount++;
             addReplacement(R);
-
+          }
+          else {
+            Stats.Op2CallFailureCount++;
           }
         }
       }

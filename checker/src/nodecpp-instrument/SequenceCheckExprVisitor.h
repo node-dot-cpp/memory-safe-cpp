@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCECHECKASTVISITOR_H
-#define NODECPP_CHECKER_SEQUENCECHECKASTVISITOR_H
+#ifndef NODECPP_CHECKER_SEQUENCECHECKEXPRVISITOR_H
+#define NODECPP_CHECKER_SEQUENCECHECKEXPRVISITOR_H
 
 #include "SequenceFix.h"
 
@@ -144,8 +144,8 @@ public:
 /// zombie objects and calls to functions that may zombie them as side-effects
 /// When this two things happend in an unsequenced region, dezombiefy can't
 /// be used reliably.
-class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVisitor2> {
-  using Base = EvaluatedExprVisitor<SequenceCheckASTVisitor2>;
+class SequenceCheckExprVisitor : public EvaluatedExprVisitor<SequenceCheckExprVisitor> {
+  using Base = EvaluatedExprVisitor<SequenceCheckExprVisitor>;
 
   class SequenceTree {
     struct Value {
@@ -290,7 +290,7 @@ class SequenceCheckASTVisitor2 : public EvaluatedExprVisitor<SequenceCheckASTVis
   }
 
   public:
-  SequenceCheckASTVisitor2(ASTContext &Context, bool SilentMode)
+  SequenceCheckExprVisitor(ASTContext &Context, bool SilentMode)
       : Base(Context), Context(Context), SilentMode(SilentMode), Region(Tree.root()) {
   }
 
@@ -591,7 +591,7 @@ bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence Zq
   if(E->isCXX11ConstantExpr(Context))
     return false;
 
-  SequenceCheckASTVisitor2 V(Context, SilentMode);
+  SequenceCheckExprVisitor V(Context, SilentMode);
   V.Visit(E);
   auto &Issues = V.getIssues();
   Issues.addStats(Stats);
@@ -606,11 +606,6 @@ bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence Zq
   }
   else if(Issues.getMaxIssue() <= ZqMax) {
     //we can make this work
-    if(ZqMax == ZombieSequence::Z1)
-      Stats.Op2CallFixCount++;
-    else if(ZqMax == ZombieSequence::Z2)
-      Stats.UnwrapFixCount++;
-
     return true;
   }
   else {
@@ -630,5 +625,5 @@ bool checkSequence(clang::ASTContext &Context, clang::Expr *E, ZombieSequence Zq
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_SEQUENCECHECKASTVISITOR_H
+#endif // NODECPP_CHECKER_SEQUENCECHECKEXPRVISITOR_H
 
