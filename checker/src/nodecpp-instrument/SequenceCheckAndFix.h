@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCEFIX_H
-#define NODECPP_CHECKER_SEQUENCEFIX_H
+#ifndef NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
+#define NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
 
 
 #include "clang/AST/ASTContext.h"
@@ -54,9 +54,9 @@ struct ZombieIssuesStats {
 
 };
 
-void sequenceFix(clang::ASTContext &Context, bool DebugReportMode, bool SilentMode);
+void sequenceCheckAndFix(clang::ASTContext &Context, bool DebugReportMode, bool SilentMode);
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_SEQUENCEFIX_H
+#endif // NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
 

@@ -25,7 +25,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#include "SequenceFix.h"
+#include "SequenceCheckAndFix.h"
 #include "BaseASTVisitor.h"
 #include "CodeChange.h"
 #include "DezombiefyHelper.h"
@@ -44,8 +44,8 @@ using namespace llvm;
 using namespace std;
 
 
-class SequenceCheck2ASTVisitor
-  : public BaseASTVisitor<SequenceCheck2ASTVisitor> {
+class SequenceCheckAndFixASTVisitor
+  : public BaseASTVisitor<SequenceCheckAndFixASTVisitor> {
 
   bool DebugReportMode = false;
 
@@ -123,8 +123,8 @@ class SequenceCheck2ASTVisitor
   }
 
 public:
-  explicit SequenceCheck2ASTVisitor(ASTContext &Context, bool DebugReportMode, bool SilentMode):
-    BaseASTVisitor<SequenceCheck2ASTVisitor>(Context, SilentMode),
+  explicit SequenceCheckAndFixASTVisitor(ASTContext &Context, bool DebugReportMode, bool SilentMode):
+    BaseASTVisitor<SequenceCheckAndFixASTVisitor>(Context, SilentMode),
      DebugReportMode(DebugReportMode) {}
 
   auto getStats() {
@@ -246,9 +246,9 @@ void ZombieIssuesStats::printStats() {
     UnfixedZ9Count << "\n";
 }
 
-void sequenceFix(ASTContext &Ctx,  bool DebugReportMode, bool SilentMode) {
+void sequenceCheckAndFix(ASTContext &Ctx,  bool DebugReportMode, bool SilentMode) {
 
-  SequenceCheck2ASTVisitor V1(Ctx, DebugReportMode, SilentMode);
+  SequenceCheckAndFixASTVisitor V1(Ctx, DebugReportMode, SilentMode);
 
   V1.TraverseDecl(Ctx.getTranslationUnitDecl());
 

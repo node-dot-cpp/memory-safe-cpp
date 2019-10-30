@@ -10,7 +10,7 @@ add_clang_executable(nodecpp-instrument
   Dezombiefy.cpp
   InclusionRewriter.cpp
   NodeCppDezombify.cpp
-  SequenceFix.cpp
+  SequenceCheckAndFix.cpp
   )
 
 

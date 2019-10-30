@@ -32,16 +32,6 @@
 
 namespace nodecpp::safememory {
 
-template<class T>
-auto dezombiefy(T* x) {
-	return x;
-}
-
-template<class T>
-auto dezombiefy(T&& x) {
-	return std::forward(x);
-}
-
 template<class T1, class T2>
 auto mul(T1&& t1, T2&& t2) {
 	return std::forward(t1) * std::forward(t2);

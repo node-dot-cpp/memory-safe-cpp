@@ -26,7 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "Dezombiefy.h"
-#include "SequenceFix.h"
+#include "SequenceCheckAndFix.h"
 #include "InclusionRewriter.h"
 
 #include "clang/AST/ASTConsumer.h"
@@ -135,14 +135,14 @@ public:
 class SequenceConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      sequenceFix(Context, false, !NoSilentMode);
+      sequenceCheckAndFix(Context, false, !NoSilentMode);
     }
 };
 
 class SequenceDebugReportConsumer : public ASTConsumer {
 public:
     void HandleTranslationUnit(ASTContext &Context) override {
-      sequenceFix(Context, true, true);
+      sequenceCheckAndFix(Context, true, true);
     }
 };
 
@@ -212,7 +212,7 @@ protected:
     const FrontendOptions &FEOpts = CI.getFrontendOpts();
     auto &File = FEOpts.Inputs[0];
     if(Filename.empty())
-      Filename = rewriteFilename(File.getFile(), ".instrument");
+      Filename = rewriteFilename(File.getFile(), ".dz");
 
     error_code EC;
     unique_ptr<raw_fd_ostream> OutputStream;

@@ -28,8 +28,6 @@
 #ifndef NODECPP_CHECKER_SEQUENCECHECKEXPRVISITOR_H
 #define NODECPP_CHECKER_SEQUENCECHECKEXPRVISITOR_H
 
-#include "SequenceFix.h"
-
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/EvaluatedExprVisitor.h"
