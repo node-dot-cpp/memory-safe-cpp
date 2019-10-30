@@ -150,7 +150,8 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     }
 
-    Range RangeInStmtText = toTextRange(calcRange(E->getSourceRange()));
+    Range R = calcRange(E->getSourceRange());
+    Range RangeInStmtText = toTextRange(R);
     string Name = generateName();
 
     if(LValue) 
@@ -181,16 +182,22 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
   Range calcRange(const SourceRange &Sr) {
 
     auto& Sm = Context.getSourceManager();
-    SourceLocation SpellingBegin = Sm.getSpellingLoc(Sr.getBegin());
-    SourceLocation SpellingEnd = Sm.getSpellingLoc(Sr.getEnd());
+
+    if(Sm.getSpellingLoc(Sr.getBegin()) != Sr.getBegin())
+      return Range();
+
+    if(Sm.getSpellingLoc(Sr.getEnd()) != Sr.getEnd())
+      return Range();
+    // SourceLocation SpellingBegin = ;
+    // SourceLocation SpellingEnd = Sm.getSpellingLoc(Sr.getEnd());
     
-    std::pair<FileID, unsigned> Start = Sm.getDecomposedLoc(SpellingBegin);
-    std::pair<FileID, unsigned> End = Sm.getDecomposedLoc(SpellingEnd);
+    std::pair<FileID, unsigned> Start = Sm.getDecomposedLoc(Sr.getBegin());
+    std::pair<FileID, unsigned> End = Sm.getDecomposedLoc(Sr.getEnd());
     
     if (Start.first != End.first) return Range();
 
     //SourceRange is always in token
-    End.second += Lexer::MeasureTokenLength(SpellingEnd, Sm, Context.getLangOpts());
+    End.second += Lexer::MeasureTokenLength(Sr.getEnd(), Sm, Context.getLangOpts());
 
     // const FileEntry *Entry = Sm.getFileEntryForID(Start.first);
     // this->FilePath = Entry ? Entry->getName() : InvalidLocation;

@@ -75,7 +75,7 @@ public:
         }
         else {
           const char *Fix = "nodecpp::safememory::dezombiefy( this )";
-  //        Replacement R(Context.getSourceManager(), E, Fix);
+
           addReplacement(CodeChange::makeReplace(
             Context.getSourceManager(), E->getSourceRange(), Fix));
         }

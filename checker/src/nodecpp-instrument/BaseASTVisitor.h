@@ -269,21 +269,21 @@ public:
   }
 
   /*debug diagnostics*/
-  void reportTemplated(Decl *D) {
+  void debugTemplated(Decl *D) {
     // auto &De = Context.getDiagnostics();
     // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
     //     DiagnosticIDs::Warning, "Templated code");
     // De.Report(D->getLocation(), ID);
   }
 
-  void reportNonTemplated(Decl *D) {
+  void debugNonTemplated(Decl *D) {
     // auto &De = Context.getDiagnostics();
     // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
     //     DiagnosticIDs::Warning, "NonTemplated code");
     // De.Report(D->getLocation(), ID);
   }
 
-  void reportImplicit(Decl *D) {
+  void debugImplicit(Decl *D) {
     // auto &De = Context.getDiagnostics();
     // unsigned ID = De.getDiagnosticIDs()->getCustomDiagID(
     //     DiagnosticIDs::Warning, "Implicit code");
@@ -305,9 +305,11 @@ public:
     // can see or touch the node
     if(auto F = dyn_cast<clang::FunctionDecl>(D)) {
 
-      if(D->isImplicit()) {
+      // While common sence would tell defaulted implies implicit
+      // that is not always the case
+      if(D->isImplicit() || F->isDefaulted()) {
         // mostly constructor / assignments
-        reportImplicit(D);
+        debugImplicit(D);
         return true;
       }
 
@@ -329,7 +331,7 @@ public:
       // we must check (and ignore) for any kind of template code
       if(F->getCanonicalDecl()->getDescribedFunctionTemplate()) {
         
-        reportTemplated(D);
+        debugTemplated(D);
         return true;
       }
 
@@ -337,7 +339,7 @@ public:
         auto C = M->getCanonicalDecl()->getParent();
         while(C) {
           if(C->getDescribedClassTemplate()) {
-            reportTemplated(D);
+            debugTemplated(D);
             return true;
           }
           C = dyn_cast_or_null<CXXRecordDecl>(C->getParent());
@@ -346,7 +348,7 @@ public:
 
       // if we get this far, this is normal function / method code
       // fall down to normal Traverse
-      reportNonTemplated(D);
+      debugNonTemplated(D);
     }
 
     return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
