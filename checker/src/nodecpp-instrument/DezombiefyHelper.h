@@ -25,37 +25,14 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIEFYHELPER_H
-#define NODECPP_CHECKER_DEZOMBIEFYHELPER_H
+#ifndef NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
+#define NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
 
 namespace nodecpp {
 
-inline
-bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
-  if(auto D = E->getDecl()) {
-    auto Qt = D->getType().getCanonicalType();
-    if(Qt->isReferenceType() || Qt->isPointerType()) {
-      return true;
-    }
-  }   
-  return false;
-}
-
-inline
-const clang::Expr *getParentExpr(clang::ASTContext &Context, const clang::Expr *Ex) {
-
-  auto SList = Context.getParents(*Ex);
-
-  auto SIt = SList.begin();
-
-  if (SIt == SList.end())
-    return nullptr;
-
-  return SIt->get<clang::Expr>();
-}
 
 inline
 bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
@@ -74,7 +51,66 @@ bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
   return false;
 }
 
+
+inline
+bool needsExternalDezombiefy(clang::ASTContext &Context, clang::CXXRecordDecl *D) {
+  return isInSystemHeader(Context, D);
+}
+
+inline
+bool needsExternalDezombiefy(clang::ASTContext &Context, clang::FunctionDecl *D) {
+  return isInSystemHeader(Context, D);
+}
+
+inline
+bool isByValueUserTypeNonTriviallyCopyable(clang::ASTContext &Context, clang::QualType Qt) {
+  Qt = Qt.getCanonicalType();
+  if(Qt->isStructureOrClassType()) {
+//    Qt.dump();
+    auto Rd = Qt->getAsCXXRecordDecl();
+    bool SysType = isInSystemHeader(Context, Rd);
+    if(!SysType && !Rd->isTriviallyCopyable()) {
+      return true;
+    }
+  }
+  return false;
+}
+
+inline
+bool mayZombie(clang::QualType Qt) {
+  Qt = Qt.getCanonicalType();
+  return Qt->isLValueReferenceType() || Qt->isPointerType();
+}
+
+inline
+bool isDezombiefyCandidate(clang::DeclRefExpr *E) {
+  if(auto D = E->getDecl())
+    return mayZombie(D->getType());
+
+  return false;
+}
+
+inline
+bool isLiteralExpr(const clang::Expr *E) {
+  return llvm::isa<clang::IntegerLiteral>(E) || llvm::isa<clang::StringLiteral>(E) ||
+    llvm::isa<clang::CXXNullPtrLiteralExpr>(E) || llvm::isa<clang::FloatingLiteral>(E);
+}
+
+inline
+const clang::Expr *getParentExpr(clang::ASTContext &Context, const clang::Expr *Ex) {
+
+  auto SList = Context.getParents(*Ex);
+
+  auto SIt = SList.begin();
+
+  if (SIt == SList.end())
+    return nullptr;
+
+  return SIt->get<clang::Expr>();
+}
+
+
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEZOMBIEFYHELPER_H
+#endif // NODECPP_INSTRUMENT_DEZOMBIEFYHELPER_H
 

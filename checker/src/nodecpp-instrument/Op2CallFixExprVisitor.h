@@ -25,10 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
-#define NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
-
-#include "SequenceCheck.h"
+#ifndef NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
+#define NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -50,47 +48,26 @@ using namespace llvm;
 using namespace std;
 
 
-class SequenceFixASTVisitor
-  : public EvaluatedExprVisitor<SequenceFixASTVisitor> {
+class Op2CallFixExprVisitor
+  : public clang::EvaluatedExprVisitor<Op2CallFixExprVisitor> {
 
-  using Base = EvaluatedExprVisitor<SequenceFixASTVisitor>;
-  ASTContext &Context;
-  /// Fixes to apply
-  Replacements FileReplacements;
-  SmallVector<Replacement, 6> MoreReplacements;
+  using Base = clang::EvaluatedExprVisitor<Op2CallFixExprVisitor>;
 
-  void addReplacement(const Replacement& Replacement) {
-    Error Err = FileReplacements.add(Replacement);
+  /// Fixes to apply.
+  FileChanges &FileReplacements;
+  bool SilentMode = false;
+  bool HasError = false;
+
+  void addReplacement(const CodeChange& Replacement) {
+    auto Err = FileReplacements.add(Context.getSourceManager(), Replacement);
     if (Err) {
-      errs() << "Fix conflicts with existing fix! "
-                    << toString(move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
-    }
-  }
-
-  /// function names usually overlap, we keep them in order
-  /// here, and merge them as needed
-  void addConflictingReplacement(const Replacement& R) {
-    if(!MoreReplacements.empty()) {
-      auto &Last = MoreReplacements.back();
-      if(Last.getFilePath() == R.getFilePath() &&
-        Last.getOffset() == R.getOffset() &&
-        Last.getLength() == 0 && R.getLength() == 0) {
-
-        //merge them
-        SmallString<48> Buffer;
-        Buffer += Last.getReplacementText();
-        Buffer += R.getReplacementText();
-
-        Replacement N(Last.getFilePath(), Last.getOffset(),
-          Last.getLength(), Buffer);
-
-        MoreReplacements.pop_back();
-        MoreReplacements.push_back(N);
-        return;
+      // we must handle it, even if not actually written :(
+      HasError = true;
+      auto Str = llvm::toString(std::move(Err));
+      if(!SilentMode) {
+        llvm::errs() << "Fix conflicts with existing fix!\n" << Str;
       }
     }
-    MoreReplacements.push_back(R);
   }
 
   void refactorOperator(SourceRange Sr, SourceLocation OpLoc,
@@ -100,16 +77,20 @@ class SequenceFixASTVisitor
     Ss += "nodecpp::safememory::";
     Ss += Text;
     Ss += "(";
-    Replacement R0(Context.getSourceManager(), Sr.getBegin(), 0, Ss);
+    auto R0 = CodeChange::makeInsertLeft(
+      Context.getSourceManager(), Sr.getBegin(), Ss);
 
-    Replacement R1(Context.getSourceManager(), OpLoc, OpSize, ",");
+    auto R1 = CodeChange::makeReplace(
+      Context.getSourceManager(), {OpLoc, OpLoc.getLocWithOffset(OpSize)}, ",");
 
-    Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
-    // move one char to the left, to insert after EndLoc
-    Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, ")");
+    // Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
+    // // move one char to the left, to insert after EndLoc
+    // Replacement R3(R2.getFilePath(), R2.getOffset() + 1, 0, );
+    auto R3 = CodeChange::makeInsertRight(
+      Context.getSourceManager(), Sr.getEnd(), ")");
 
     /// the operator and the closing paren are never conflicting.
-    addConflictingReplacement(R0);
+    addReplacement(R0);
     addReplacement(R1);
     addReplacement(R3);
   }
@@ -124,16 +105,12 @@ class SequenceFixASTVisitor
 
 public:
 
-  explicit SequenceFixASTVisitor(clang::ASTContext &Context):
-    Base(Context), Context(Context) {}
+  explicit Op2CallFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements):
+    Base(Context), SilentMode(SilentMode), FileReplacements(Replacements) {}
 
-
-  auto& finishReplacements() { 
-    
-    for(auto& Each : MoreReplacements) {
-      addReplacement(Each);
-    }
-    return FileReplacements;
+  bool fixExpression(clang::Stmt* St) {
+    Visit(St);
+    return !HasError;
   }
 
   void VisitBinaryOperator(BinaryOperator *E) {
@@ -192,63 +169,74 @@ public:
   }
 
   void VisitCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
+    //mb: for overloaded operators, we try to do the same thing
+    // as for builtin operators, so templates that work on builtin
+    // types and custom types can treat all the same
+    
+    if(E->getNumArgs() == 2) {
 
-    switch (E->getOperator()) {
-      case OO_Plus:
-        refactorOverloadedOperator(E, 1, "add");
-        break;
-      case OO_Minus:
-        refactorOverloadedOperator(E, 1, "sub");
-        break;
-      case OO_Star:
-        refactorOverloadedOperator(E, 1, "mul");
-        break;
-      case OO_Slash:
-        refactorOverloadedOperator(E, 1, "div");
-        break;
-      case OO_Percent:
-        refactorOverloadedOperator(E, 1, "rem");
-        break;
-      case OO_Caret:
-        refactorOverloadedOperator(E, 1, "xor");
-        break;
-      case OO_Amp:
-        refactorOverloadedOperator(E, 1, "and");
-        break;
-      case OO_Pipe:
-        refactorOverloadedOperator(E, 1, "or");
-        break;
-      case OO_Less:
-        refactorOverloadedOperator(E, 1, "lt");
-        break;
-      case OO_Greater:
-        refactorOverloadedOperator(E, 1, "gt");
-        break;
-      case OO_EqualEqual:
-        refactorOverloadedOperator(E, 2, "eq");
-        break;
-      case OO_ExclaimEqual:
-        refactorOverloadedOperator(E, 2, "ne");
-        break;
-      case OO_LessEqual:
-        refactorOverloadedOperator(E, 2, "le");
-        break;
-      case OO_GreaterEqual:
-        refactorOverloadedOperator(E, 2, "ge");
-        break;
-      case OO_Spaceship:
-        refactorOverloadedOperator(E, 3, "cmp");
-        break;
-      default:
-        break;
+      switch (E->getOperator()) {
+        case OO_Plus:
+          refactorOverloadedOperator(E, 1, "add");
+          break;
+        case OO_Minus:
+          refactorOverloadedOperator(E, 1, "sub");
+          break;
+        case OO_Star:
+          refactorOverloadedOperator(E, 1, "mul");
+          break;
+        case OO_Slash:
+          refactorOverloadedOperator(E, 1, "div");
+          break;
+        case OO_Percent:
+          refactorOverloadedOperator(E, 1, "rem");
+          break;
+        case OO_Caret:
+          refactorOverloadedOperator(E, 1, "xor");
+          break;
+        case OO_Amp:
+          refactorOverloadedOperator(E, 1, "and");
+          break;
+        case OO_Pipe:
+          refactorOverloadedOperator(E, 1, "or");
+          break;
+        case OO_Less:
+          refactorOverloadedOperator(E, 1, "lt");
+          break;
+        case OO_Greater:
+          refactorOverloadedOperator(E, 1, "gt");
+          break;
+        case OO_EqualEqual:
+          refactorOverloadedOperator(E, 2, "eq");
+          break;
+        case OO_ExclaimEqual:
+          refactorOverloadedOperator(E, 2, "ne");
+          break;
+        case OO_LessEqual:
+          refactorOverloadedOperator(E, 2, "le");
+          break;
+        case OO_GreaterEqual:
+          refactorOverloadedOperator(E, 2, "ge");
+          break;
+        case OO_Spaceship:
+          refactorOverloadedOperator(E, 3, "cmp");
+          break;
+        default:
+          break;
+      }
     }
 
     Base::VisitCXXOperatorCallExpr(E);
   }
-
 };
+
+bool applyOp2CallFix(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements, clang::Expr* E) {
+
+  Op2CallFixExprVisitor V2(Context, SilentMode, Replacements);
+  return V2.fixExpression(E);
+}
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_SEQUENCEFIXASTVISITOR_H
+#endif // NODECPP_CHECKER_OP2CALLFIXEXPRVISITOR_H
 

@@ -25,42 +25,44 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
-#define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
+#include "Dezombiefy.h"
 
-#include "DezombiefyHelper.h"
-#include "BaseASTVisitor.h"
+#include "CodeChange.h"
+#include "Dezombify1ASTVisitor.h"
+#include "Dezombify2ASTVisitor.h"
+#include "DezombiefyRelaxASTVisitor.h"
 
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 
 namespace nodecpp {
 
-class Dezombify1ASTVisitor
-  : public BaseASTVisitor<Dezombify1ASTVisitor> {
+using namespace clang;
+using namespace clang::tooling;
+using namespace llvm;
+using namespace std;
+
+void DezombiefyStats::printStats() {
   
-  using Base = BaseASTVisitor<Dezombify1ASTVisitor>;
-public:
+  llvm::errs() << "Dezombiefy stats Vars:" << VarCount << ", This:" <<
+    ThisCount << ", Relaxed:" << RelaxedCount << "\n";
+}
 
-  explicit Dezombify1ASTVisitor(clang::ASTContext &Context, bool SilentMode):
-    Base(Context, SilentMode) {}
 
-  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
-    E->setDezombiefyCandidate();
+void dezombiefy(ASTContext &Ctx, bool SilentMode) {
+      
+  Dezombify1ASTVisitor Visitor1(Ctx, SilentMode);
+  Visitor1.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-    return Base::VisitCXXThisExpr(E);
-  }
+  DezombiefyRelaxASTVisitor VisitorRelax(Ctx, SilentMode);
+  VisitorRelax.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(isDezombiefyCandidate(E))
-      E->setDezombiefyCandidate();
+  Dezombify2ASTVisitor Visitor2(Ctx, SilentMode);
+  Visitor2.TraverseDecl(Ctx.getTranslationUnitDecl());
 
-    return Base::VisitDeclRefExpr(E);
-  }
-};
+  Visitor2.getStats().printStats();
 
-} // namespace nodecpp
+  auto &Reps = Visitor2.finishReplacements();
+  overwriteChangedFiles(Ctx, Reps, "nodecpp-dezombiefy");
+}
 
-#endif // NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
 
+} //namespace nodecpp

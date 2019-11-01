@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2019, OLogN Technologies AG
+* Copyright (c) 2018, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,30 +25,28 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_SEQUENCECHECK_H
-#define NODECPP_CHECKER_SEQUENCECHECK_H
+#ifndef NODECPP_SAFE_TYPES_H
+#define NODECPP_SAFE_TYPES_H
 
+namespace nodecpp::safememory {
 
-#include "clang/AST/ASTContext.h"
-#include "llvm/ADT/StringMap.h"
-#include "clang/Tooling/Core/Replacement.h"
+struct SafeType {
 
-namespace clang {
-  class TranslationUnitDecl;
+	int call(int i) { return i; }
+	SafeType& operator<<(int) {
+		return *this;
+	}
+};
+
+int safeFunction(int) { return 0; }
+int safeFunction(SafeType&) { return 0; }
+int safeFunction(SafeType&, SafeType&) { return 0; }
+int safeFunction(SafeType&, const char *) { return 0; }
+int safeByValue(SafeType&, SafeType) { return 0; }
+
+template<class T>
+void safeTemplate(SafeType&, T t) {}
+
 }
 
-namespace nodecpp {
-
-  /// Check for expressions to find attempts to dezombiefy
-  /// an object unsequenced with any function call that can potencially
-  /// rezombiefy it as a side-effect
-
-void overwriteChangedFiles(clang::ASTContext &Context, const llvm::StringMap<clang::tooling::Replacements> &FileReplacements);
-void overwriteChangedFiles(clang::ASTContext &Context, const clang::tooling::Replacements &FileReplacements);
-
-void dezombiefySequenceCheckAndFix(clang::ASTContext &Context, clang::TranslationUnitDecl *D, bool FixAll);
-
-} // namespace nodecpp
-
-#endif // NODECPP_CHECKER_SEQUENCECHECK_H
-
+#endif // NODECPP_SAFE_TYPES_H

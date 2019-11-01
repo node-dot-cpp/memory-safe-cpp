@@ -25,42 +25,28 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
-#define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
+#ifndef NODECPP_INSTRUMENT_DEZOMBIEFY_H
+#define NODECPP_INSTRUMENT_DEZOMBIEFY_H
 
-#include "DezombiefyHelper.h"
-#include "BaseASTVisitor.h"
 
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 
 namespace nodecpp {
 
-class Dezombify1ASTVisitor
-  : public BaseASTVisitor<Dezombify1ASTVisitor> {
-  
-  using Base = BaseASTVisitor<Dezombify1ASTVisitor>;
-public:
+struct DezombiefyStats {
 
-  explicit Dezombify1ASTVisitor(clang::ASTContext &Context, bool SilentMode):
-    Base(Context, SilentMode) {}
+  int VarCount = 0;
+  int ThisCount = 0;
+  int RelaxedCount = 0;
 
-  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
-    E->setDezombiefyCandidate();
-
-    return Base::VisitCXXThisExpr(E);
-  }
-
-  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(isDezombiefyCandidate(E))
-      E->setDezombiefyCandidate();
-
-    return Base::VisitDeclRefExpr(E);
-  }
+  void printStats();
 };
+
+
+
+void dezombiefy(clang::ASTContext &Context, bool SilentMode);
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
+#endif // NODECPP_INSTRUMENT_DEZOMBIEFY_H
 
