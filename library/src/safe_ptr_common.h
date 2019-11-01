@@ -373,7 +373,7 @@ T*& dezombiefy(T*& x) {
 
 template<class T>
 const T*& dezombiefy(const T*& x) {
-	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
+	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( x ) ) ) )
 		return x;
 	else
 		throw nodecpp::error::early_detected_zombie_pointer_access; 
@@ -389,7 +389,7 @@ T& dezombiefy(T& x) {
 
 template<class T>
 const T& dezombiefy(const T& x) {
-	if ( NODECPP_LIKELY( isPointerNotZombie( &x ) ) )
+	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( &x ) ) ) )
 		return x;
 	else
 		throw nodecpp::error::early_detected_zombie_pointer_access; 
