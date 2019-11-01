@@ -353,6 +353,12 @@ public:
 
     return clang::RecursiveASTVisitor<T>::TraverseDecl(D);
   }
+
+  bool TraverseLambdaExpr(clang::LambdaExpr *E) {
+
+    return TraverseCompoundStmt(E->getBody());
+  }
+
 };
 
 } // namespace nodecpp

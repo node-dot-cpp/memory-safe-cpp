@@ -433,7 +433,7 @@ template<> struct nodecpp::safememory::safeness_declarator<double> { static cons
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 template<class T>
-T* dezombiefy(T* x) {
+T*& dezombiefy(T*& x) {
 	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
 		return x;
 	else
@@ -441,7 +441,7 @@ T* dezombiefy(T* x) {
 }
 
 template<class T>
-const T* dezombiefy(const T* x) {
+const T*& dezombiefy(const T*& x) {
 	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
 		return x;
 	else
