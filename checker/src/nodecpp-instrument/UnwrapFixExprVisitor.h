@@ -139,6 +139,8 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
       return;
     else if(isLiteralExpr(E))
       return;
+    else if(isa<CXXDefaultArgExpr>(E))
+      return;
     else {
       auto C = dyn_cast<CallExpr>(E);
       if(C && C->isCallToStdMove())
@@ -151,6 +153,9 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     }
 
     Range R = calcRange(E->getSourceRange());
+    if(R == Range())
+      return;
+
     Range RangeInStmtText = toTextRange(R);
     string Name = generateName();
 
@@ -319,6 +324,7 @@ public:
   //special treatmeant for smart ptrs
   bool isOverloadArrowOp(Expr *E) {
 
+    E = E->IgnoreParenImpCasts();
     auto Op = dyn_cast_or_null<CXXOperatorCallExpr>(E);
     return Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow;
   }
