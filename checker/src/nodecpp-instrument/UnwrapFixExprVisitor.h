@@ -112,6 +112,8 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     unsigned Offset = RangeInStmtText.getOffset();
     unsigned Length =  RangeInStmtText.getLength();
 
+
+
     for(auto It = Reps.crbegin(); It != Reps.crend(); ++It) {
 
       if(isContained(Offset, Length, It->second)) {
@@ -152,11 +154,34 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     }
 
-    Range R = calcRange(E->getSourceRange());
-    if(R == Range())
+    auto Sr = E->getSourceRange();
+    if(!isSpellingLoc(Sr)) {
+      reportIssue(E);
+      // HasError = true;
       return;
+    }
+
+    Range R = calcRange(Sr);
+    if(R == Range()) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrap() error at 'if(R == Range())'\n";
+      return;
+    }
 
     Range RangeInStmtText = toTextRange(R);
+
+    if(RangeInStmtText == Range() || 
+      RangeInStmtText.getOffset() + RangeInStmtText.getLength() > StmtText.size()) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrap() error at 'toTextRange(R)'\n";
+      return;
+
+    }
+
     string Name = generateName();
 
     if(LValue) 
@@ -184,18 +209,23 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     unwrap(E, true);
   }
 
-  Range calcRange(const SourceRange &Sr) {
+  bool isSpellingLoc(const SourceRange &Sr) {
 
     auto& Sm = Context.getSourceManager();
 
     if(Sm.getSpellingLoc(Sr.getBegin()) != Sr.getBegin())
-      return Range();
+      return false;
 
     if(Sm.getSpellingLoc(Sr.getEnd()) != Sr.getEnd())
-      return Range();
-    // SourceLocation SpellingBegin = ;
-    // SourceLocation SpellingEnd = Sm.getSpellingLoc(Sr.getEnd());
-    
+      return false;
+
+    return true;
+  }
+
+  Range calcRange(const SourceRange &Sr) {
+
+    auto& Sm = Context.getSourceManager();
+
     std::pair<FileID, unsigned> Start = Sm.getDecomposedLoc(Sr.getBegin());
     std::pair<FileID, unsigned> End = Sm.getDecomposedLoc(Sr.getEnd());
     
@@ -211,18 +241,10 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
   Range toTextRange(Range SrcRange) {
 
-    if(SrcRange.getOffset() - StmtRange.getOffset() + SrcRange.getLength() <= StmtText.size())
-      return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
-    else {
-      //macros messing things
-      if(!SilentMode) {
-        llvm::errs() << "toTextRange() error\n StmtText:'" << StmtText << "'\nSrcRange: " <<
-          SrcRange.getOffset() << ", " << SrcRange.getLength() << "\nStmtRange: " <<
-          StmtRange.getOffset() << ", " << StmtRange.getOffset() << "\n";
-      }
-      
-      return StmtRange;
-    }
+    if(SrcRange.getOffset() < StmtRange.getOffset())
+      return Range();
+
+    return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
 
   }
 
@@ -279,45 +301,70 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     return Name;
   }
 
+  void reportIssue(const Expr *E1) {
+
+    if(SilentMode)
+      return;
+
+    DiagnosticsEngine &De = Context.getDiagnostics();
+    unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, 
+      "Unwrap couldn't complete [nodecpp-dezombiefy]");
+
+      De.Report(E1->getExprLoc(), ID);      
+  }
 public:
 
   UnwrapFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, 
     FileChanges &Replacements, int &Index)
     :Base(Context), SilentMode(SilentMode), FileReplacements(Replacements), Index(Index) {}
 
-  bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
+  bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraB, bool ExtraS) {
     
-    this->FileReplacements.clear();
-    this->Buffer.clear();
-    this->Reps.clear();
+    ExtraBraces = ExtraB;
+    ExtraSemicolon = ExtraS;
+    StmtSourceRange = {St->getBeginLoc(), E->getEndLoc()};
+    StmtCloseBrace = St->getEndLoc();
 
-    this->StmtSourceRange = {St->getBeginLoc(), E->getEndLoc()};
-    this->StmtCloseBrace = St->getEndLoc();
-    auto R = printExprAsWritten(StmtSourceRange, Context);
-    if(!R.first)
+    if(!isSpellingLoc(StmtSourceRange)) {
+      reportIssue(E);
       return false;
-
-    this->StmtText = R.second;
-    // when unwrapping if stmt, we must not go into the body of the if
-    this->StmtRange = calcRange(StmtSourceRange);
-    if(StmtText.size() != StmtRange.getLength()) {
-      if(!SilentMode) {
-        llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<
-        StmtText << "'\nStmtRange: " << StmtRange.getOffset() << ", " << StmtRange.getLength() << "\n";
-      }
-//      St->dumpColor();
-      return false;
-//      assert(false);
     }
 
+    StmtRange = calcRange(StmtSourceRange);
+    if(StmtRange == Range()) {
+      //mb: this shouldn't happend
 
-    this->ExtraBraces = ExtraBraces;
-    this->ExtraSemicolon = ExtraSemicolon;
+//      assert(false);
+      llvm::errs() << "unwrapExpression() error at 'if(StmtRange == Range())'\n";
+      return false;
+    }
+
+    auto R = printExprAsWritten(StmtSourceRange, Context);
+    if(!R.first) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrapExpression() error at 'printExprAsWritten()'\n";
+      return false;
+    }
+
+    StmtText = R.second;
+
+    if(StmtText.size() != StmtRange.getLength()) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrapExpression() error at 'StmtText.size() != StmtRange.getLength()'\n";
+      return false;
+    }
+
 
     Visit(E);
     if(!Buffer.empty()) {
       makeFix();
     }
+
     return !HasError;
   }
 
@@ -356,9 +403,13 @@ public:
       if(Each != Callee) {
         unwrap(Each);
       }
-      else
-        Each->dumpColor();
+      else {
+        //mb: this shouldn't happend
 
+//      assert(false);
+        llvm::errs() << "unwrapExpression() error at 'if(Each != Callee)'\n";
+        Each->dumpColor();
+      }
     }
   }
 
