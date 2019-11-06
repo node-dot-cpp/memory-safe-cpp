@@ -69,15 +69,22 @@ public:
       if(E->needsDezombiefyInstrumentation()) {
         Stats.ThisCount++;
         if(E->isImplicit()) {
-          const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
-          addReplacement(CodeChange::makeInsertLeft(
-            Context.getSourceManager(), E->getBeginLoc(), Fix));
+          auto Loc = E->getBeginLoc();
+          if(Loc.isValid() && !Loc.isMacroID()) {
+            const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
+            addReplacement(CodeChange::makeInsertLeft(
+              Context.getSourceManager(), Loc, Fix));
+          }
         }
         else {
-          const char *Fix = "nodecpp::safememory::dezombiefy( this )";
 
-          addReplacement(CodeChange::makeReplace(
-            Context.getSourceManager(), E->getSourceRange(), Fix));
+          auto ChRange = toCheckedCharRange(E->getSourceRange(),
+            Context.getSourceManager(), Context.getLangOpts());
+          if(ChRange.isValid()) {
+            const char *Fix = "nodecpp::safememory::dezombiefy( this )";
+            addReplacement(CodeChange::makeReplace(
+              Context.getSourceManager(), ChRange, Fix));
+          }
         }
 
       }
@@ -92,18 +99,24 @@ public:
 
     if(E->isDezombiefyCandidateOrRelaxed()) {
       if(E->needsDezombiefyInstrumentation()) {
-        Stats.VarCount++;
-  //      E->dumpColor();
 
-        SmallString<64> Fix;
-        Fix += "nodecpp::safememory::dezombiefy( ";
-        Fix += E->getNameInfo().getAsString();
-        Fix += " )";
+        auto ChRange = toCheckedCharRange(E->getSourceRange(),
+          Context.getSourceManager(), Context.getLangOpts());
+        if(ChRange.isValid()) {
 
-        // Replacement R(Context.getSourceManager(), E, Fix);
-        // addTmpReplacement(R);
-        addReplacement(CodeChange::makeReplace(
-          Context.getSourceManager(), E->getSourceRange(), Fix));
+          Stats.VarCount++;
+    //      E->dumpColor();
+
+          SmallString<64> Fix;
+          Fix += "nodecpp::safememory::dezombiefy( ";
+          Fix += E->getNameInfo().getAsString();
+          Fix += " )";
+
+          // Replacement R(Context.getSourceManager(), E, Fix);
+          // addTmpReplacement(R);
+            addReplacement(CodeChange::makeReplace(
+              Context.getSourceManager(), ChRange, Fix));
+        }
       }
       else
         Stats.RelaxedCount++;

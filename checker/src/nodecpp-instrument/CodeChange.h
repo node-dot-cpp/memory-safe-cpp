@@ -55,6 +55,8 @@ namespace nodecpp {
 /// When the same thing happends with inserts binding to the right
 /// the recent text is added to the left of existing text.
 
+clang::CharSourceRange toCheckedCharRange(const clang::SourceRange &Source,
+  const clang::SourceManager &Sm, const clang::LangOptions &LangOpts);
 
 class CodeChange {
   clang::FileID File;
@@ -65,6 +67,7 @@ class CodeChange {
   friend CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS);
   friend CodeChange mergeHelper(const CodeChange &LHS, const CodeChange &RHS);
 
+  CodeChange() {}
   CodeChange(clang::FileID File, clang::tooling::Range ReplacementRange,
     llvm::SmallString<4> ReplacementText, bool ToTheLeft = false) :
     File(File), ReplacementRange(ReplacementRange),
@@ -76,7 +79,7 @@ class CodeChange {
 public:
   static
   CodeChange makeReplace(const clang::SourceManager &Sources,
-    clang::SourceRange Range, llvm::StringRef Text,
+    clang::CharSourceRange ChRange, llvm::StringRef Text,
     const clang::LangOptions &LangOpts = clang::LangOptions());
 
   static

@@ -69,7 +69,7 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
   string StmtText;
   Range StmtRange;
-  SourceRange StmtSourceRange;
+  CharSourceRange StmtSourceRange;
   SourceLocation StmtCloseBrace;
   string Buffer; //TODO change to ostream or similar
   bool ExtraSemicolon = false;
@@ -89,13 +89,12 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
   }
 
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
-  static pair<bool, StringRef> printExprAsWritten(SourceRange R,
+  static pair<bool, StringRef> printExprAsWritten(CharSourceRange ChRange,
                                 const ASTContext &Context) {
     // if (!Context)
     //   return {false, ""};
     bool Invalid = false;
-    StringRef Source = Lexer::getSourceText(
-        CharSourceRange::getTokenRange(R),
+    StringRef Source = Lexer::getSourceText(ChRange,
         Context.getSourceManager(), Context.getLangOpts(), &Invalid);
     return {!Invalid, Source};
   }
@@ -154,21 +153,16 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     }
 
-    auto Sr = E->getSourceRange();
-    if(!isSpellingLoc(Sr)) {
-      reportIssue(E);
-      // HasError = true;
+    auto Sr = toCheckedCharRange(E->getSourceRange(),
+      Context.getSourceManager(), Context.getLangOpts());
+
+    if(!Sr.isValid()) {
+      reportError(E->getExprLoc());
+      HasError = true;
       return;
     }
 
     Range R = calcRange(Sr);
-    if(R == Range()) {
-      //mb: this shouldn't happend
-
-//      assert(false);
-      llvm::errs() << "unwrap() error at 'if(R == Range())'\n";
-      return;
-    }
 
     Range RangeInStmtText = toTextRange(R);
 
@@ -209,33 +203,18 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     unwrap(E, true);
   }
 
-  bool isSpellingLoc(const SourceRange &Sr) {
+  Range calcRange(const CharSourceRange &Sr) {
 
-    auto& Sm = Context.getSourceManager();
-
-    if(Sm.getSpellingLoc(Sr.getBegin()) != Sr.getBegin())
-      return false;
-
-    if(Sm.getSpellingLoc(Sr.getEnd()) != Sr.getEnd())
-      return false;
-
-    return true;
-  }
-
-  Range calcRange(const SourceRange &Sr) {
+    assert(Sr.isCharRange());
 
     auto& Sm = Context.getSourceManager();
 
     std::pair<FileID, unsigned> Start = Sm.getDecomposedLoc(Sr.getBegin());
     std::pair<FileID, unsigned> End = Sm.getDecomposedLoc(Sr.getEnd());
     
-    if (Start.first != End.first) return Range();
+    assert (Start.first == End.first);
+    assert (End.second >= Start.second);
 
-    //SourceRange is always in token
-    End.second += Lexer::MeasureTokenLength(Sr.getEnd(), Sm, Context.getLangOpts());
-
-    // const FileEntry *Entry = Sm.getFileEntryForID(Start.first);
-    // this->FilePath = Entry ? Entry->getName() : InvalidLocation;
     return Range(Start.second, End.second - Start.second);
   }
 
@@ -301,18 +280,20 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     return Name;
   }
 
-  void reportIssue(const Expr *E1) {
+  void reportError(SourceLocation OpLoc) {
 
     if(SilentMode)
       return;
 
     DiagnosticsEngine &De = Context.getDiagnostics();
+
     unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, 
-      "Unwrap couldn't complete [nodecpp-dezombiefy]");
+      "Unwrap couldn't complete because of MACRO [nodecpp-dezombiefy]");
 
-      De.Report(E1->getExprLoc(), ID);      
+      De.Report(OpLoc, ID);
   }
+
 public:
 
   UnwrapFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, 
@@ -323,22 +304,18 @@ public:
     
     ExtraBraces = ExtraB;
     ExtraSemicolon = ExtraS;
-    StmtSourceRange = {St->getBeginLoc(), E->getEndLoc()};
     StmtCloseBrace = St->getEndLoc();
 
-    if(!isSpellingLoc(StmtSourceRange)) {
-      reportIssue(E);
+    StmtSourceRange = toCheckedCharRange({St->getBeginLoc(), E->getEndLoc()},
+      Context.getSourceManager(), Context.getLangOpts());
+
+    if(!StmtSourceRange.isValid()) {
+
+      reportError(E->getExprLoc());
       return false;
     }
 
     StmtRange = calcRange(StmtSourceRange);
-    if(StmtRange == Range()) {
-      //mb: this shouldn't happend
-
-//      assert(false);
-      llvm::errs() << "unwrapExpression() error at 'if(StmtRange == Range())'\n";
-      return false;
-    }
 
     auto R = printExprAsWritten(StmtSourceRange, Context);
     if(!R.first) {

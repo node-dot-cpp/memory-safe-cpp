@@ -70,8 +70,33 @@ class Op2CallFixExprVisitor
     }
   }
 
+  void reportError(SourceLocation OpLoc) {
+
+    if(SilentMode)
+      return;
+
+    DiagnosticsEngine &De = Context.getDiagnostics();
+
+    unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, 
+      "Op2Call couldn't complete because of MACRO [nodecpp-dezombiefy]");
+
+      De.Report(OpLoc, ID);
+  }
+
+
   void refactorOperator(SourceRange Sr, SourceLocation OpLoc,
     unsigned OpSize, StringRef Text) {
+
+    auto ChRange = toCheckedCharRange({OpLoc, OpLoc.getLocWithOffset(OpSize)},
+    Context.getSourceManager(), Context.getLangOpts());
+
+    if(!ChRange.isValid() || !OpLoc.isValid() || OpLoc.isMacroID()) {
+      HasError = true;
+      reportError(OpLoc);
+      return;
+    }
+
 
     SmallString<24> Ss;
     Ss += "nodecpp::safememory::";
@@ -81,7 +106,7 @@ class Op2CallFixExprVisitor
       Context.getSourceManager(), Sr.getBegin(), Ss);
 
     auto R1 = CodeChange::makeReplace(
-      Context.getSourceManager(), {OpLoc, OpLoc.getLocWithOffset(OpSize)}, ",");
+      Context.getSourceManager(), ChRange, ",");
 
     // Replacement R2(Context.getSourceManager(), Sr.getEnd(), 0, ")");
     // // move one char to the left, to insert after EndLoc
