@@ -28,6 +28,8 @@
 #ifndef NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 #define NODECPP_CHECKER_DEZOMBIFY2ASTVISITOR_H
 
+#include "DezombiefyHelper.h"
+
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -44,60 +46,69 @@ using namespace llvm;
 using namespace clang;
 using namespace clang::tooling;
 
+
 class Dezombify2ASTVisitor
-  : public RecursiveASTVisitor<Dezombify2ASTVisitor> {
+  : public BaseASTVisitor<Dezombify2ASTVisitor> {
 
-  using Base = RecursiveASTVisitor<Dezombify2ASTVisitor>;
+  using Base = BaseASTVisitor<Dezombify2ASTVisitor>;
 
-  ASTContext &Context;
-  /// Fixes to apply.
-  Replacements FileReplacements;
+  DezombiefyStats Stats;
+ 
+public:
+  explicit Dezombify2ASTVisitor(ASTContext &Context, bool SilentMode):
+    Base(Context, SilentMode) {}
 
-  void addReplacement(const Replacement& Replacement) {
-    auto Err = FileReplacements.add(Replacement);
-    if (Err) {
-      llvm::errs() << "Fix conflicts with existing fix! "
-                    << llvm::toString(std::move(Err)) << "\n";
-      assert(false && "Fix conflicts with existing fix!");
-    }
+  auto getStats() {
+    return Stats;
   }
 
-public:
-  const auto& getReplacements() const { return FileReplacements; }
-
-  explicit Dezombify2ASTVisitor(ASTContext &Context):
-    Context(Context) {}
 
   bool VisitCXXThisExpr(CXXThisExpr *E) {
 
-    if(E->needsDezombiefyInstrumentation()) {
-      if(E->isImplicit()) {
-        const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
-        Replacement R(Context.getSourceManager(), E->getBeginLoc(), 0, Fix);
-        addReplacement(R);
-      }
-      else {
-        const char *Fix = "nodecpp::safememory::dezombiefy( this )";
-        Replacement R(Context.getSourceManager(), E, Fix);
-        addReplacement(R);
-      }
+    if(E->isDezombiefyCandidateOrRelaxed()) {
+      if(E->needsDezombiefyInstrumentation()) {
+        Stats.ThisCount++;
+        if(E->isImplicit()) {
+          const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
+          addReplacement(CodeChange::makeInsertLeft(
+            Context.getSourceManager(), E->getBeginLoc(), Fix));
+        }
+        else {
+          const char *Fix = "nodecpp::safememory::dezombiefy( this )";
 
-    }   
+          addReplacement(CodeChange::makeReplace(
+            Context.getSourceManager(), E->getSourceRange(), Fix));
+        }
+
+      }
+      else
+        Stats.RelaxedCount++;
+    }
     return Base::VisitCXXThisExpr(E);
   }
 
 
   bool VisitDeclRefExpr(DeclRefExpr *E) {
-    if(E->needsDezombiefyInstrumentation()) {
 
-      SmallString<64> Fix;
-      Fix += "nodecpp::safememory::dezombiefy( ";
-      Fix += E->getNameInfo().getAsString();
-      Fix += " )";
+    if(E->isDezombiefyCandidateOrRelaxed()) {
+      if(E->needsDezombiefyInstrumentation()) {
+        Stats.VarCount++;
+  //      E->dumpColor();
 
-      Replacement R(Context.getSourceManager(), E, Fix);
-      addReplacement(R);
-    }   
+        SmallString<64> Fix;
+        Fix += "nodecpp::safememory::dezombiefy( ";
+        Fix += E->getNameInfo().getAsString();
+        Fix += " )";
+
+        // Replacement R(Context.getSourceManager(), E, Fix);
+        // addTmpReplacement(R);
+        addReplacement(CodeChange::makeReplace(
+          Context.getSourceManager(), E->getSourceRange(), Fix));
+      }
+      else
+        Stats.RelaxedCount++;
+    }
+
     return Base::VisitDeclRefExpr(E);
   }
 };

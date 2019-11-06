@@ -34,57 +34,57 @@ namespace nodecpp::safememory {
 
 template<class T1, class T2>
 auto mul(T1&& t1, T2&& t2) {
-	return std::forward(t1) * std::forward(t2);
+	return std::forward<T1>(t1) * std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto div(T1&& t1, T2&& t2) {
-	return std::forward(t1) / std::forward(t2);
+	return std::forward<T1>(t1) / std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto rem(T1&& t1, T2&& t2) {
-	return std::forward(t1) % std::forward(t2);
+	return std::forward<T1>(t1) % std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto add(T1&& t1, T2&& t2) {
-	return std::forward(t1) + std::forward(t2);
+	return std::forward<T1>(t1) + std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto sub(T1&& t1, T2&& t2) {
-	return std::forward(t1) - std::forward(t2);
+	return std::forward<T1>(t1) - std::forward<T2>(t2);
 }
 /// logical
 
 template<class T1, class T2>
 auto lt(T1&& t1, T2&& t2) {
-	return std::forward(t1) < std::forward(t2);
+	return std::forward<T1>(t1) < std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto gt(T1&& t1, T2&& t2) {
-	return std::forward(t1) > std::forward(t2);
+	return std::forward<T1>(t1) > std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto le(T1&& t1, T2&& t2) {
-	return std::forward(t1) <= std::forward(t2);
+	return std::forward<T1>(t1) <= std::forward<T2>(t2);
 }
 template<class T1, class T2>
 auto ge(T1&& t1, T2&& t2) {
-	return std::forward(t1) >= std::forward(t2);
+	return std::forward<T1>(t1) >= std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto eq(T1&& t1, T2&& t2) {
-	return std::forward(t1) == std::forward(t2);
+	return std::forward<T1>(t1) == std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto ne(T1&& t1, T2&& t2) {
-	return std::forward(t1) != std::forward(t2);
+	return std::forward<T1>(t1) != std::forward<T2>(t2);
 }
 
 // template<class T1, class T2>
@@ -94,17 +94,17 @@ auto ne(T1&& t1, T2&& t2) {
 
 template<class T1, class T2>
 auto and(T1&& t1, T2&& t2) {
-	return std::forward(t1) & std::forward(t2);
+	return std::forward<T1>(t1) & std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto xor(T1&& t1, T2&& t2) {
-	return std::forward(t1) ^ std::forward(t2);
+	return std::forward<T1>(t1) ^ std::forward<T2>(t2);
 }
 
 template<class T1, class T2>
 auto or(T1&& t1, T2&& t2) {
-	return std::forward(t1) | std::forward(t2);
+	return std::forward<T1>(t1) | std::forward<T2>(t2);
 }
 
 } // namespace nodecpp::safememory

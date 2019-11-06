@@ -25,11 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#include "Dezombify1ASTVisitor.h"
-#include "Dezombify2ASTVisitor.h"
+#include "Dezombiefy.h"
+#include "SequenceCheckAndFix.h"
 #include "InclusionRewriter.h"
-#include "DezombiefyRelaxASTVisitor.h"
-#include "DeunsequenceASTVisitor.h"
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -67,10 +65,25 @@ static cl::extrahelp MoreHelp("\nMore help text...");
 static cl::opt<std::string>
 OutputFilename("o", cl::desc("Output filename"), cl::value_desc("filename"), cl::cat(NodecppInstrumentCategory));
 
-// mb: until I figure out how to handle templates, always fix everything
+static cl::opt<bool>
+DebugReport("debug-report", cl::desc("For debug and test. Report all expressions where zombies may be found.\n"), cl::Hidden);
+
+static cl::opt<bool>
+ReportOnly("report-only", cl::desc("Report all and every expressions that needs to be refactored.\n"),
+    cl::cat(NodecppInstrumentCategory));
+
+static cl::opt<bool>
+FixOnly("fix-only", cl::desc("fix expressions that need to be refactored, but don't dezombiefy.\n"),
+    cl::cat(NodecppInstrumentCategory));
+
 // static cl::opt<bool>
-// FixAllUnsequenced("fix-all-unsequenced", cl::desc("Rewrite all unsequenced expressions.\n"),
+// SilentMode("silent-mode", cl::desc("Don't emit error messages. Just do best effort.\n"),
 //     cl::cat(NodecppInstrumentCategory));
+
+static cl::opt<bool>
+NoSilentMode("no-silent-mode", cl::desc("Emit error message at every place the tool can't verify (or make) code as zombie free.\n"),
+    cl::cat(NodecppInstrumentCategory));
+
 
 namespace nodecpp {
 
@@ -107,55 +120,54 @@ bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendI
 }
 
 class DezombifyConsumer : public ASTConsumer {
-private:
-//  CompilerInstance &CI;
+  
+  // CompilerInstance &CI;
 
 public:
-//    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
+  // explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
 
-    void HandleTranslationUnit(ASTContext &Context) override {
+  void HandleTranslationUnit(ASTContext &Context) override {
 
-      Dezombify1ASTVisitor Visitor1(Context);
-      Dezombify2ASTVisitor Visitor2(Context);
-
-      Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
-      dezombiefyRelax(Context);
-      Visitor2.TraverseDecl(Context.getTranslationUnitDecl());
-
-      overwriteChangedFiles(Context, Visitor2.getReplacements());
+      dezombiefy(Context, !NoSilentMode);
     }
 };
 
-class UnwrapperConsumer : public ASTConsumer {
-private:
-//  CompilerInstance &CI;
-
+class SequenceConsumer : public ASTConsumer {
 public:
-//    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
-
     void HandleTranslationUnit(ASTContext &Context) override {
+      sequenceCheckAndFix(Context, false, !NoSilentMode);
+    }
+};
+
+class SequenceDebugReportConsumer : public ASTConsumer {
+public:
+    void HandleTranslationUnit(ASTContext &Context) override {
+      sequenceCheckAndFix(Context, true, true);
+    }
+};
+
+// class UnwrapperConsumer : public ASTConsumer {
+// private:
+// //  CompilerInstance &CI;
+
+// public:
+// //    explicit DezombifyConsumer(CompilerInstance &CI) :CI(CI) {}
+
+//     void HandleTranslationUnit(ASTContext &Context) override {
       
-      Deunsequence2ASTVisitor Visitor1(Context);
+//       // Deunsequence2ASTVisitor Visitor1(Context);
 
-      Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
+//       // Visitor1.TraverseDecl(Context.getTranslationUnitDecl());
 
-      overwriteChangedFiles(Context, Visitor1.getReplacements());
-    }
-};
+//       // overwriteChangedFiles(Context, Visitor1.getReplacements(), "nodecpp-unwrapper");
+//     }
+// };
 class DezombiefyAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
     return llvm::make_unique<nodecpp::DezombifyConsumer>();
   }
-};
-
-class SequenceConsumer : public ASTConsumer {
-public:
-    void HandleTranslationUnit(ASTContext &Context) override {
-      dezombiefySequenceCheckAndFix(Context,
-        Context.getTranslationUnitDecl(), true);
-    }
 };
 
 class SequenceAction : public ASTFrontendAction {
@@ -165,6 +177,23 @@ protected:
     return llvm::make_unique<nodecpp::SequenceConsumer>();
   }
 };
+
+class DebugReportSequenceAction : public ASTFrontendAction {
+protected:
+  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+                                                StringRef InFile) override {
+    return llvm::make_unique<nodecpp::SequenceDebugReportConsumer>();
+  }
+};
+
+
+// class UnwrapperAction : public ASTFrontendAction {
+// protected:
+//   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
+//                                                 StringRef InFile) override {
+//     return llvm::make_unique<nodecpp::UnwrapperConsumer>();
+//   }
+// };
 
 
 class ExpandRecompileAction : public PreprocessorFrontendAction {
@@ -183,7 +212,7 @@ protected:
     const FrontendOptions &FEOpts = CI.getFrontendOpts();
     auto &File = FEOpts.Inputs[0];
     if(Filename.empty())
-      Filename = rewriteFilename(File.getFile(), ".instrument");
+      Filename = rewriteFilename(File.getFile(), ".dz");
 
     error_code EC;
     unique_ptr<raw_fd_ostream> OutputStream;
@@ -209,6 +238,9 @@ protected:
     if(!executeAction(FixSequence.get(), CI, File))
       return false;
 
+    if(FixOnly)
+      return true;
+
     unique_ptr<FrontendAction> Dezombiefy(new DezombiefyAction());
     if(!executeAction(Dezombiefy.get(), CI, File))
       return false;
@@ -223,6 +255,14 @@ class DezombiefyActionFactory : public FrontendActionFactory {
 public:
   FrontendAction *create() override {
     return new ExpandRecompileAction(OutputFilename);
+  }
+};
+
+
+class DebugReportSequenceActionFactory : public FrontendActionFactory {
+public:
+  FrontendAction *create() override {
+    return new DebugReportSequenceAction();
   }
 };
 
@@ -244,9 +284,12 @@ int main(int argc, const char **argv) {
   ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
 
-  nodecpp::DezombiefyActionFactory Factory;
-
-//  auto FrontendFactory = newFrontendActionFactory<nodecpp::ExpandRecompileAction>();
-
-  Tool.run(&Factory);
+  if(DebugReport || ReportOnly) {
+    nodecpp::DebugReportSequenceActionFactory Factory;
+    Tool.run(&Factory);
+  }
+  else {
+    nodecpp::DezombiefyActionFactory Factory;
+    Tool.run(&Factory);
+  }
 }

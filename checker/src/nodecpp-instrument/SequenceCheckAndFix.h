@@ -25,42 +25,38 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
-#define NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
+#ifndef NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
+#define NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
 
-#include "DezombiefyHelper.h"
-#include "BaseASTVisitor.h"
 
-#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
 
 namespace nodecpp {
 
-class Dezombify1ASTVisitor
-  : public BaseASTVisitor<Dezombify1ASTVisitor> {
-  
-  using Base = BaseASTVisitor<Dezombify1ASTVisitor>;
-public:
+  /// Check for expressions to find attempts to dezombiefy
+  /// an object unsequenced with any function call that can potencially
+  /// rezombiefy it as a side-effect
+struct ZombieIssuesStats {
 
-  explicit Dezombify1ASTVisitor(clang::ASTContext &Context, bool SilentMode):
-    Base(Context, SilentMode) {}
+  int Z1Count = 0;
+  int Z2Count = 0;
+  int Z9Count = 0;
 
-  bool VisitCXXThisExpr(clang::CXXThisExpr *E) {
-    E->setDezombiefyCandidate();
+  int UnwrapFixCount = 0;
+  int Op2CallFixCount = 0;
+  int UnwrapFailureCount = 0;
+  int Op2CallFailureCount = 0;
 
-    return Base::VisitCXXThisExpr(E);
-  }
+  int UnfixedZ9Count = 0;
+  int UnfixedZ2Count = 0;
 
-  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
-    if(isDezombiefyCandidate(E))
-      E->setDezombiefyCandidate();
+  void printStats();
 
-    return Base::VisitDeclRefExpr(E);
-  }
 };
+
+void sequenceCheckAndFix(clang::ASTContext &Context, bool DebugReportMode, bool SilentMode);
 
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_DEZOMBIFY1ASTVISITOR_H
+#endif // NODECPP_CHECKER_SEQUENCECHECKANDFIX_H
 
