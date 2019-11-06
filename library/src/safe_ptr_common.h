@@ -73,6 +73,7 @@ enum class StdAllocEnforcer { enforce };
 using namespace nodecpp::iibmalloc;
 namespace nodecpp::safememory
 {
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_AllocManager.allocate( sz ); } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
@@ -174,22 +175,26 @@ public:
 	{
 		constexpr size_t alignment = alignof(_Ty) > static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__) ? alignof(_Ty) : static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__);
 
+#ifdef NODECPP_MSVC
 		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
 		{
 			size_t iniAlignment = alignment;
-#if defined(_M_IX86) || defined(_M_X64)
+#if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (sz >= std::_Big_allocation_threshold)
 				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
-#endif /* defined(_M_IX86) || defined(_M_X64) */
+#endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
 			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
 		}
 		else
+#endif
 		{
 			void* ptr_ = ptr;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
+#ifdef NODECPP_MSVC
 			if (sz >= std::_Big_allocation_threshold)
 				vectorValuesToAlignedValues(ptr_, sz);
+#endif
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, StdAllocEnforcer::enforce);
 			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
@@ -204,6 +209,7 @@ public:
 		if (iniByteSz == 0)
 			return static_cast<_Ty *>(nullptr);
 
+#ifdef NODECPP_MSVC
 		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
 		{
 			size_t iniAlignment = alignment;
@@ -212,14 +218,16 @@ public:
 				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
-			static_assert( false, "not implemented" );
 			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz, iniAlignment));
 		}
 		else
+#endif
 		{
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
+#ifdef NODECPP_MSVC
 			if (iniByteSz >= std::_Big_allocation_threshold)
 				return static_cast<_Ty *>(allocAlignedVector(iniByteSz));
+#endif
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz));
 		}
@@ -261,6 +269,7 @@ inline void killAllZombies()
 	zombieMap.clear();
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 }
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { void* ret = new uint8_t[ sz ]; return ret; } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { 
