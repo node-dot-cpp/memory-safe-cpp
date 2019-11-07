@@ -377,11 +377,15 @@ bool isAwaitableType(QualType Qt) {
 
 }
 
-bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
-                  DiagHelper &Dh) {
+bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
 
   if (!Dc) {
     return false;
+  }
+
+  if(!alreadyChecking.insert(Dc).second) {
+    //already checking this type (got recursive)
+    return true;
   }
 
   if (isSystemLocation(Context, Dc->getLocation())) {
@@ -407,7 +411,7 @@ bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
   auto F = Dc->fields();
   for (auto It = F.begin(); It != F.end(); ++It) {
     auto Ft = (*It)->getType().getCanonicalType();
-    if (!isSafeType(Ft, Context, Dh)) {
+    if (!isSafeType(Ft)) {
       std::string Msg =
           "member '" + std::string((*It)->getName()) + "' is not safe";
       Dh.diag((*It)->getLocation(), Msg);
@@ -419,7 +423,7 @@ bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
   for (auto It = B.begin(); It != B.end(); ++It) {
 
     auto Bt = It->getType().getCanonicalType();
-    if (!isSafeType(Bt, Context, Dh)) {
+    if (!isSafeType(Bt)) {
       Dh.diag((*It).getBaseTypeLoc(), "base class is not safe");
       return false;
     }
@@ -429,7 +433,7 @@ bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext *Context,
   return true;
 }
 
-bool isSafeType(QualType Qt, const ClangTidyContext *Context, DiagHelper &Dh) {
+bool TypeChecker::isSafeType(const QualType& Qt) {
 
   assert(Qt.isCanonical());
 
@@ -439,10 +443,12 @@ bool isSafeType(QualType Qt, const ClangTidyContext *Context, DiagHelper &Dh) {
     return false;
   } else if (Qt->isBuiltinType()) {
     return true;
+  } else if (Qt->isEnumeralType()) {
+    return true;
   } else if (isSafePtrType(Qt)) {
-    return isSafeType(getPointeeType(Qt), Context, Dh);
+    return isSafeType(getPointeeType(Qt));
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
-    return isSafeRecord(Rd, Context, Dh);
+    return isSafeRecord(Rd);
   } else if (Qt->isTemplateTypeParmType()) {
     // we will take care at instantiation
     return true;
