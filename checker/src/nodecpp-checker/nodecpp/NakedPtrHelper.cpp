@@ -91,6 +91,10 @@ bool isSystemSafeFunctionName(const ClangTidyContext *Context,
       Name == "nodecpp::wait_for_all")
     return true;
 
+  // coroutine automatically injected call
+  if (Name == "__builtin_coro_frame")
+    return true;
+
   auto &Wl = Context->getGlobalOptions().SafeFunctions;
   return (Wl.find(Name) != Wl.end());
 }
@@ -377,28 +381,55 @@ bool isAwaitableType(QualType Qt) {
 
 }
 
+struct SystemLocRiia {
+  TypeChecker& Tc;
+  bool wasFalse = false;
+
+  SystemLocRiia(TypeChecker& Tc, bool newValue) :
+    Tc(Tc) {
+      if(newValue) {
+        bool oldValue = Tc.swapSystemLoc(newValue);
+        if(oldValue == false)
+          wasFalse = true;
+      }
+    }
+
+  ~SystemLocRiia() {
+    if(wasFalse)
+      Tc.swapSystemLoc(false);
+  }
+
+  bool getWasFalse() const { return wasFalse; }
+};
+
+
 bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
 
   if (!Dc) {
     return false;
   }
 
+  //can this happend?
+  if(Dc->getDefinition() != Dc)
+    return false;
+
   if(!alreadyChecking.insert(Dc).second) {
     //already checking this type (got recursive)
     return true;
   }
 
-  if (isSystemLocation(Context, Dc->getLocation())) {
-    // if record is in system header, fate is decided by white list
-    std::string Name = Dc->getQualifiedNameAsString();
-    if (isSystemSafeTypeName(Context, Name)) {
-      return true;
-    } else {
-      std::string Msg = "system library type '" + Name + "' is not safe";
-      Dh.diag(Dc->getLocation(), Msg);
-      return false;
-    }
+  // if database says is a safe name, then is safe
+  std::string Name = Dc->getQualifiedNameAsString();
+  if (isSystemSafeTypeName(Context, Name))
+    return true;
+
+  bool sysLoc = false;
+
+  if (!isSystemLoc && isSystemLocation(Context, Dc->getLocation())) {
+    sysLoc = true;
   }
+
+  SystemLocRiia riia(*this, sysLoc);
 
   // if we don't have a definition, we can't check
   if (!Dc->hasDefinition())
@@ -412,9 +443,11 @@ bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
   for (auto It = F.begin(); It != F.end(); ++It) {
     auto Ft = (*It)->getType().getCanonicalType();
     if (!isSafeType(Ft)) {
-      std::string Msg =
-          "member '" + std::string((*It)->getName()) + "' is not safe";
-      Dh.diag((*It)->getLocation(), Msg);
+      if(!isSystemLoc || riia.getWasFalse()) {
+        std::string Msg =
+            "member '" + std::string((*It)->getName()) + "' is not safe";
+        Dh.diag((*It)->getLocation(), Msg);
+      }
       return false;
     }
   }
@@ -424,7 +457,9 @@ bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
 
     auto Bt = It->getType().getCanonicalType();
     if (!isSafeType(Bt)) {
-      Dh.diag((*It).getBaseTypeLoc(), "base class is not safe");
+      if(!isSystemLoc || riia.getWasFalse()) {
+        Dh.diag((*It).getBaseTypeLoc(), "base class is not safe");
+      }
       return false;
     }
   }

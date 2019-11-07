@@ -89,6 +89,8 @@ class TypeChecker {
   const ClangTidyContext* Context = nullptr;
   DiagHelper Dh = {nullptr};
   std::set<const CXXRecordDecl *> alreadyChecking;
+  bool isSystemLoc = false;
+
 
 public:
   TypeChecker(const ClangTidyContext* Context) : Context(Context) {}
@@ -99,6 +101,11 @@ public:
 
   bool isSafeRecord(const CXXRecordDecl *Dc);
   bool isSafeType(const QualType& Qt);
+  bool swapSystemLoc(bool newValue) {
+    bool tmp = isSystemLoc;
+    isSystemLoc = newValue;
+    return tmp;
+  }
 };
 
 inline
