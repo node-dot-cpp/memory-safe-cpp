@@ -20,6 +20,8 @@
     "nodecpp::safememory::soft_ptr_static_cast",
     "nodecpp::log::log",
     "nodecpp::assert::nodecpp_assert",
+    "nodecpp::net::createServer",
+    "getArgv",
   ],
   "types" : [
     "std::exception",
@@ -28,6 +30,11 @@
     "std::basic_string",
     "std::_Tree_iterator",
     "std::_Vector_iterator",
+    "std::experimental::coroutines_v1::coroutine_handle",
+    "nodecpp::DataParent",
+    "nodecpp::Buffer",
+    "nodecpp::net::Socket",
+    "nodecpp::net::Server",
     "nodecpp::net::Address",
     "nodecpp::net::SocketTBase",
     "nodecpp::net::UserDefHandlersWithOptimizedStorage",
@@ -35,10 +42,6 @@
     "nodecpp::net::SocketBase",
     "NodeRegistrator",
     "NodeBase",
-    "std::experimental::coroutines_v1::coroutine_handle",
-    "nodecpp::Buffer",
-    "nodecpp::net::Socket",
-    "nodecpp::net::Server",
   ]
 }
 ]

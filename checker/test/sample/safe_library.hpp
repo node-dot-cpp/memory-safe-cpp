@@ -47,6 +47,8 @@ namespace nodecpp {
 	void setTimeoutForAction();
 	void clearTimeout();
 
+	class DataParent;
+
 namespace safememory {
 	void make_owning();
 	void soft_ptr_static_cast();
@@ -79,6 +81,7 @@ namespace net {
 }
 }
 
+void getArgv();
 class NodeRegistrator;
 class NodeBase;
 
