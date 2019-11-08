@@ -31,6 +31,10 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
   auto Rd = Result.Nodes.getNodeAs<CXXRecordDecl>("rd");
   if (Rd && Rd->hasDefinition()) {
 
+    //only check the definition decl
+    if(Rd != Rd->getDefinition())
+      return;
+
     //lambda's CXXRecordDecl is not matched here, not sure why
     // but we add the check anyway
     if (Rd->isLambda())
