@@ -262,10 +262,15 @@ template<class _Ty>
 using iiballocator = selective_allocator<true, _Ty>;
 template< class T1, class T2 >
 bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
+template< class T1, class T2 >
+bool operator!=( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return false; }
+
 template<class _Ty>
 using stdallocator = selective_allocator<false, _Ty>;
 template< class T1, class T2 >
 bool operator==( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noexcept { return true; }
+template< class T1, class T2 >
+bool operator!=( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noexcept { return false; }
 
 
 } // namespace nodecpp::safememory
