@@ -480,6 +480,8 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
     return true;
   } else if (Qt->isEnumeralType()) {
     return true;
+  } else if (isAwaitableType(Qt)) {//explicit black-list
+    return false;
   } else if (isSafePtrType(Qt)) {
     return isSafeType(getPointeeType(Qt));
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
