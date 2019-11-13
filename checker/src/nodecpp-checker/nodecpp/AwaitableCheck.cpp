@@ -30,10 +30,16 @@ void AwaitableCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Ex = Result.Nodes.getNodeAs<Expr>("expr");
 
-  if(!isAwaitableType(Ex->getType()))
-    return;
-  
+  //some implicit expr don't even have a type
   if(isImplicitExpr(Ex))
+    return;
+
+  QualType Qt = Ex->getType();
+  //some late parsing template constructs don't have type
+  if(Qt.isNull())
+    return;
+
+  if(!isAwaitableType(Qt))
     return;
 
   auto Pex = getParentExpr(Result.Context, Ex);

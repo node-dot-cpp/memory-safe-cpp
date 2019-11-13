@@ -69,7 +69,7 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
   string StmtText;
   Range StmtRange;
-  SourceRange StmtSourceRange;
+  CharSourceRange StmtSourceRange;
   SourceLocation StmtCloseBrace;
   string Buffer; //TODO change to ostream or similar
   bool ExtraSemicolon = false;
@@ -89,13 +89,12 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
   }
 
   // mb: copy and paste from lib/AST/StmtPrinter.cpp
-  static pair<bool, StringRef> printExprAsWritten(SourceRange R,
+  static pair<bool, StringRef> printExprAsWritten(CharSourceRange ChRange,
                                 const ASTContext &Context) {
     // if (!Context)
     //   return {false, ""};
     bool Invalid = false;
-    StringRef Source = Lexer::getSourceText(
-        CharSourceRange::getTokenRange(R),
+    StringRef Source = Lexer::getSourceText(ChRange,
         Context.getSourceManager(), Context.getLangOpts(), &Invalid);
     return {!Invalid, Source};
   }
@@ -111,6 +110,8 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     string B = StmtText;
     unsigned Offset = RangeInStmtText.getOffset();
     unsigned Length =  RangeInStmtText.getLength();
+
+
 
     for(auto It = Reps.crbegin(); It != Reps.crend(); ++It) {
 
@@ -139,6 +140,8 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
       return;
     else if(isLiteralExpr(E))
       return;
+    else if(isa<CXXDefaultArgExpr>(E))
+      return;
     else {
       auto C = dyn_cast<CallExpr>(E);
       if(C && C->isCallToStdMove())
@@ -150,8 +153,29 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     }
 
-    Range R = calcRange(E->getSourceRange());
+    auto Sr = toCheckedCharRange(E->getSourceRange(),
+      Context.getSourceManager(), Context.getLangOpts());
+
+    if(!Sr.isValid()) {
+      reportError(E->getExprLoc());
+      HasError = true;
+      return;
+    }
+
+    Range R = calcRange(Sr);
+
     Range RangeInStmtText = toTextRange(R);
+
+    if(RangeInStmtText == Range() || 
+      RangeInStmtText.getOffset() + RangeInStmtText.getLength() > StmtText.size()) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrap() error at 'toTextRange(R)'\n";
+      return;
+
+    }
+
     string Name = generateName();
 
     if(LValue) 
@@ -179,45 +203,27 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     unwrap(E, true);
   }
 
-  Range calcRange(const SourceRange &Sr) {
+  Range calcRange(const CharSourceRange &Sr) {
+
+    assert(Sr.isCharRange());
 
     auto& Sm = Context.getSourceManager();
 
-    if(Sm.getSpellingLoc(Sr.getBegin()) != Sr.getBegin())
-      return Range();
-
-    if(Sm.getSpellingLoc(Sr.getEnd()) != Sr.getEnd())
-      return Range();
-    // SourceLocation SpellingBegin = ;
-    // SourceLocation SpellingEnd = Sm.getSpellingLoc(Sr.getEnd());
-    
     std::pair<FileID, unsigned> Start = Sm.getDecomposedLoc(Sr.getBegin());
     std::pair<FileID, unsigned> End = Sm.getDecomposedLoc(Sr.getEnd());
     
-    if (Start.first != End.first) return Range();
+    assert (Start.first == End.first);
+    assert (End.second >= Start.second);
 
-    //SourceRange is always in token
-    End.second += Lexer::MeasureTokenLength(Sr.getEnd(), Sm, Context.getLangOpts());
-
-    // const FileEntry *Entry = Sm.getFileEntryForID(Start.first);
-    // this->FilePath = Entry ? Entry->getName() : InvalidLocation;
     return Range(Start.second, End.second - Start.second);
   }
 
   Range toTextRange(Range SrcRange) {
 
-    if(SrcRange.getOffset() - StmtRange.getOffset() + SrcRange.getLength() <= StmtText.size())
-      return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
-    else {
-      //macros messing things
-      if(!SilentMode) {
-        llvm::errs() << "toTextRange() error\n StmtText:'" << StmtText << "'\nSrcRange: " <<
-          SrcRange.getOffset() << ", " << SrcRange.getLength() << "\nStmtRange: " <<
-          StmtRange.getOffset() << ", " << StmtRange.getOffset() << "\n";
-      }
-      
-      return StmtRange;
-    }
+    if(SrcRange.getOffset() < StmtRange.getOffset())
+      return Range();
+
+    return Range(SrcRange.getOffset() - StmtRange.getOffset(), SrcRange.getLength());
 
   }
 
@@ -274,51 +280,75 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
     return Name;
   }
 
+  void reportError(SourceLocation OpLoc) {
+
+    if(SilentMode)
+      return;
+
+    DiagnosticsEngine &De = Context.getDiagnostics();
+
+    unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Error, 
+      "Unwrap couldn't complete because of MACRO [nodecpp-dezombiefy]");
+
+      De.Report(OpLoc, ID);
+  }
+
 public:
 
   UnwrapFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, 
     FileChanges &Replacements, int &Index)
     :Base(Context), SilentMode(SilentMode), FileReplacements(Replacements), Index(Index) {}
 
-  bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraBraces, bool ExtraSemicolon) {
+  bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraB, bool ExtraS) {
     
-    this->FileReplacements.clear();
-    this->Buffer.clear();
-    this->Reps.clear();
+    ExtraBraces = ExtraB;
+    ExtraSemicolon = ExtraS;
+    StmtCloseBrace = St->getEndLoc();
 
-    this->StmtSourceRange = {St->getBeginLoc(), E->getEndLoc()};
-    this->StmtCloseBrace = St->getEndLoc();
-    auto R = printExprAsWritten(StmtSourceRange, Context);
-    if(!R.first)
-      return false;
+    StmtSourceRange = toCheckedCharRange({St->getBeginLoc(), E->getEndLoc()},
+      Context.getSourceManager(), Context.getLangOpts());
 
-    this->StmtText = R.second;
-    // when unwrapping if stmt, we must not go into the body of the if
-    this->StmtRange = calcRange(StmtSourceRange);
-    if(StmtText.size() != StmtRange.getLength()) {
-      if(!SilentMode) {
-        llvm::errs() << "unwrapExpression() error\n StmtText: " << StmtText.size() << ":'" <<
-        StmtText << "'\nStmtRange: " << StmtRange.getOffset() << ", " << StmtRange.getLength() << "\n";
-      }
-//      St->dumpColor();
+    if(!StmtSourceRange.isValid()) {
+
+      reportError(E->getExprLoc());
       return false;
-//      assert(false);
     }
 
+    StmtRange = calcRange(StmtSourceRange);
 
-    this->ExtraBraces = ExtraBraces;
-    this->ExtraSemicolon = ExtraSemicolon;
+    auto R = printExprAsWritten(StmtSourceRange, Context);
+    if(!R.first) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrapExpression() error at 'printExprAsWritten()'\n";
+      return false;
+    }
+
+    StmtText = R.second;
+
+    if(StmtText.size() != StmtRange.getLength()) {
+      //mb: this shouldn't happend
+
+//      assert(false);
+      llvm::errs() << "unwrapExpression() error at 'StmtText.size() != StmtRange.getLength()'\n";
+      return false;
+    }
+
 
     Visit(E);
     if(!Buffer.empty()) {
       makeFix();
     }
+
     return !HasError;
   }
 
   //special treatmeant for smart ptrs
   bool isOverloadArrowOp(Expr *E) {
 
+    E = E->IgnoreParenImpCasts();
     auto Op = dyn_cast_or_null<CXXOperatorCallExpr>(E);
     return Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow;
   }
@@ -350,9 +380,13 @@ public:
       if(Each != Callee) {
         unwrap(Each);
       }
-      else
-        Each->dumpColor();
+      else {
+        //mb: this shouldn't happend
 
+//      assert(false);
+        llvm::errs() << "unwrapExpression() error at 'if(Each != Callee)'\n";
+        Each->dumpColor();
+      }
     }
   }
 

@@ -39,22 +39,45 @@ using namespace clang;
 using namespace clang::tooling;
 
 
+clang::CharSourceRange toCheckedCharRange(const clang::SourceRange &Source,
+  const clang::SourceManager &Sm, const clang::LangOptions &LangOpts) {
+
+
+    //TODO add some MACRO support
+    if(Source.getBegin().isMacroID() || Source.getEnd().isMacroID())
+      return {};
+
+    auto Ch = CharSourceRange::getTokenRange(Source);
+    auto Ch2 = Lexer::makeFileCharRange(Ch, Sm, LangOpts);
+    if(Ch2.isInvalid())
+      return {};
+
+    if (Ch2.isTokenRange()) {
+      unsigned length = Lexer::MeasureTokenLength(Ch2.getEnd(), Sm, LangOpts);
+      Ch2.setEnd(Ch2.getEnd().getLocWithOffset(length));
+    }
+
+    FileID F1 = Sm.getFileID(Ch2.getBegin());
+    FileID F2 = Sm.getFileID(Ch2.getEnd());
+    
+    if (F1 != F2)
+      return {};
+
+    return Ch2;
+  }
+
+
 CodeChange CodeChange::makeReplace(const SourceManager &Sources,
-  SourceRange Range, StringRef Text, const LangOptions &LangOpts) {
+  CharSourceRange ChRange, StringRef Text, const LangOptions &LangOpts) {
 
+  assert(ChRange.isValid());
 
-  const CharSourceRange ChRange = CharSourceRange::getTokenRange(Range);
-//  setFromSourceRange(Sources, Range, ReplacementText, LangOpts);
-//  SourceLocation S = Sources.getSpellingLoc(ChRange.getBegin());
-//  unsigned Length = getRangeSize(Sources, ChRange, LangOpts);
-  SourceLocation SpellingBegin = Sources.getSpellingLoc(ChRange.getBegin());
-  SourceLocation SpellingEnd = Sources.getSpellingLoc(ChRange.getEnd());
-  std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(SpellingBegin);
-  std::pair<FileID, unsigned> End = Sources.getDecomposedLoc(SpellingEnd);
-  if (Start.first != End.first) 
-    assert(false);
-  if (ChRange.isTokenRange())
-    End.second += Lexer::MeasureTokenLength(SpellingEnd, Sources, LangOpts);
+  std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(ChRange.getBegin());
+  std::pair<FileID, unsigned> End = Sources.getDecomposedLoc(ChRange.getEnd());
+
+  assert(ChRange.isCharRange());
+  assert(Start.first == End.first);
+
   unsigned Length = End.second - Start.second;
 
   return {Start.first, {Start.second, Length}, Text};
@@ -63,20 +86,9 @@ CodeChange CodeChange::makeReplace(const SourceManager &Sources,
 CodeChange CodeChange::makeInsertLeft(const SourceManager &Sources,
   SourceLocation Loc, StringRef Text) {
 
+  assert(Loc.isValid());
 
-//  const CharSourceRange ChRange = CharSourceRange::getTokenRange(Range);
-//  setFromSourceRange(Sources, Range, ReplacementText, LangOpts);
-//  SourceLocation S = Sources.getSpellingLoc(ChRange.getBegin());
-//  unsigned Length = getRangeSize(Sources, ChRange, LangOpts);
-  SourceLocation SpellingBegin = Sources.getSpellingLoc(Loc);
-//  SourceLocation SpellingEnd = Sources.getSpellingLoc(ChRange.getEnd());
-  std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(SpellingBegin);
-//  std::pair<FileID, unsigned> End = Sources.getDecomposedLoc(SpellingEnd);
-  // if (Start.first != End.first) 
-  //   assert(false);
-  // if (ChRange.isTokenRange())
-  //   End.second += Lexer::MeasureTokenLength(SpellingEnd, Sources, LangOpts);
-  // unsigned Length = End.second - Start.second;
+  std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(Loc);
 
   return {Start.first, {Start.second, 0}, Text, false};
 }
@@ -84,20 +96,10 @@ CodeChange CodeChange::makeInsertLeft(const SourceManager &Sources,
 CodeChange CodeChange::makeInsertRight(const SourceManager &Sources,
   SourceLocation Loc, StringRef Text, const LangOptions &LangOpts) {
 
+  assert(Loc.isValid());
 
-//  const CharSourceRange ChRange = CharSourceRange::getTokenRange(Range);
-//  setFromSourceRange(Sources, Range, ReplacementText, LangOpts);
-//  SourceLocation S = Sources.getSpellingLoc(ChRange.getBegin());
-//  unsigned Length = getRangeSize(Sources, ChRange, LangOpts);
-//  SourceLocation SpellingBegin = Sources.getSpellingLoc(Loc);
-  SourceLocation SpellingEnd = Sources.getSpellingLoc(Loc);
-//  std::pair<FileID, unsigned> Start = Sources.getDecomposedLoc(SpellingBegin);
-  std::pair<FileID, unsigned> End = Sources.getDecomposedLoc(SpellingEnd);
-  // if (Start.first != End.first) 
-  //   assert(false);
-  // if (ChRange.isTokenRange())
-  End.second += Lexer::MeasureTokenLength(SpellingEnd, Sources, LangOpts);
-  // unsigned Length = End.second - Start.second;
+  std::pair<FileID, unsigned> End = Sources.getDecomposedLoc(Loc);
+  End.second += Lexer::MeasureTokenLength(Loc, Sources, LangOpts);
 
   return {End.first, {End.second, 0}, Text, true};
 }

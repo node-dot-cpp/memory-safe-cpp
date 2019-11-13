@@ -73,6 +73,7 @@ enum class StdAllocEnforcer { enforce };
 using namespace nodecpp::iibmalloc;
 namespace nodecpp::safememory
 {
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_AllocManager.allocate( sz ); } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
@@ -89,8 +90,8 @@ inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNewDeleteOperators( doIntercept ? &g_AllocManager : nullptr ) != nullptr;}
 
-template<class _Ty>
-class iiballocator
+template<bool iib, class _Ty>
+class selective_allocator
 {
 	static constexpr size_t alignment4BigAlloc = 32;
 	static_assert(2 * sizeof(void *) <= alignment4BigAlloc);
@@ -126,7 +127,12 @@ class iiballocator
 		if (allocSize <= sz)
 			allocSize = static_cast<size_t>(-1);
 
-		const uintptr_t container = reinterpret_cast<uintptr_t>(::nodecpp::safememory::allocate(allocSize));
+		uintptr_t container_;
+		if constexpr ( iib )
+			container_ = reinterpret_cast<uintptr_t>(::nodecpp::safememory::allocate(allocSize));
+		else
+			container_ = reinterpret_cast<uintptr_t>(::malloc(allocSize));
+		const uintptr_t container = container_;
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, container != 0 );
 		void * const ret = reinterpret_cast<void *>((container + reserverdSize4Vecor)	& ~(alignment4BigAlloc - 1));
 		static_cast<uintptr_t *>(ret)[-1] = container;
@@ -165,15 +171,22 @@ public:
 	using propagate_on_container_move_assignment = std::true_type;
 	using is_always_equal = std::true_type;
 
-	constexpr iiballocator() noexcept {}
-	constexpr iiballocator(const iiballocator&) noexcept = default;
 	template<class _Other>
-	constexpr iiballocator(const iiballocator<_Other>&) noexcept {}
+		struct rebind
+		{	// convert this type to allocator<_Other>
+		using other = selective_allocator<iib, _Other>;
+		};
+
+	constexpr selective_allocator() noexcept {}
+	constexpr selective_allocator(const selective_allocator&) noexcept = default;
+	template<bool useiib, class _Other>
+	constexpr selective_allocator(const selective_allocator<useiib, _Other>&) noexcept {}
 
 	void deallocate(_Ty * const ptr, size_t sz)
 	{
 		constexpr size_t alignment = alignof(_Ty) > static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__) ? alignof(_Ty) : static_cast<size_t>(__STDCPP_DEFAULT_NEW_ALIGNMENT__);
 
+#ifdef NODECPP_MSVC
 		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
 		{
 			size_t iniAlignment = alignment;
@@ -182,17 +195,26 @@ public:
 				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
-			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
+			if constexpr ( iib )
+				::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
+			else
+				::free( ptr );
 		}
 		else
+#endif
 		{
 			void* ptr_ = ptr;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
+#ifdef NODECPP_MSVC
 			if (sz >= std::_Big_allocation_threshold)
 				vectorValuesToAlignedValues(ptr_, sz);
+#endif
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, StdAllocEnforcer::enforce);
-			::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
+			if constexpr ( iib )
+				::nodecpp::safememory::deallocate(ptr); // TODO: check that we can ignore other params
+			else
+				::free( ptr );
 		}
 	}
 
@@ -204,6 +226,7 @@ public:
 		if (iniByteSz == 0)
 			return static_cast<_Ty *>(nullptr);
 
+#ifdef NODECPP_MSVC
 		if constexpr ( alignment > __STDCPP_DEFAULT_NEW_ALIGNMENT__ )
 		{
 			size_t iniAlignment = alignment;
@@ -212,22 +235,43 @@ public:
 				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
-			static_assert( false, "not implemented" );
-			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz, iniAlignment));
+			if constexpr ( iib )
+				return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz, iniAlignment));
+			else
+				return static_cast<_Ty *>(::malloc(iniByteSz)); // TODO: address alignment
 		}
 		else
+#endif
 		{
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
+#ifdef NODECPP_MSVC
 			if (iniByteSz >= std::_Big_allocation_threshold)
 				return static_cast<_Ty *>(allocAlignedVector(iniByteSz));
+#endif
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
+		if constexpr ( iib )
 			return static_cast<_Ty *>(::nodecpp::safememory::allocate(iniByteSz));
+		else
+			return static_cast<_Ty *>(::malloc(iniByteSz));
 		}
 	}
 };
 
+
+template<class _Ty>
+using iiballocator = selective_allocator<true, _Ty>;
 template< class T1, class T2 >
 bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
+template< class T1, class T2 >
+bool operator!=( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return false; }
+
+template<class _Ty>
+using stdallocator = selective_allocator<false, _Ty>;
+template< class T1, class T2 >
+bool operator==( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noexcept { return true; }
+template< class T1, class T2 >
+bool operator!=( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noexcept { return false; }
+
 
 } // namespace nodecpp::safememory
 
@@ -240,6 +284,8 @@ namespace nodecpp::safememory
 {
 template<class T>
 using iiballocator =  std::allocator<T>;
+template<class T>
+using stdallocator =  std::allocator<T>;
 
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
@@ -261,6 +307,7 @@ inline void killAllZombies()
 	zombieMap.clear();
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 }
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { void* ret = new uint8_t[ sz ]; return ret; } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { 

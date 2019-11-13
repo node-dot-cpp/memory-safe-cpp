@@ -78,12 +78,17 @@ public:
     //mb: we don't traverse decls in system-headers
     //TranslationUnitDecl has an invalid location, but needs traversing anyway
 
-    if (!isa<TranslationUnitDecl>(D)) {
-      if(isSystemLocation(&Context, D->getLocation()))
-        return true;
-    }
+    if(!D)
+      return true;
 
-    return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
+    else if (isa<TranslationUnitDecl>(D))
+      return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
+
+    else if(isSystemLocation(&Context, D->getLocation()))
+        return true;
+
+    else
+      return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
   }
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {

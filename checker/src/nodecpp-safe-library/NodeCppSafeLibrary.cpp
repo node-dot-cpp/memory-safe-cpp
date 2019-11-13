@@ -51,18 +51,18 @@ void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "[\n{\n");
 
-    fprintf(file, "    \"functions\" : [");
+    fprintf(file, "  \"functions\" : [\n");
     for(auto it = md.allFuncs.begin(); it != md.allFuncs.end(); ++it) {
         auto name = (*it)->getQualifiedNameAsString();
-        fprintf(file, "\"%s\", ", name.c_str());
+        fprintf(file, "    \"%s\",\n", name.c_str());
     }    
 
-    fprintf(file, "],\n    \"types\" : [");
+    fprintf(file, "  ],\n  \"types\" : [\n");
     for(auto it = md.allTypes.begin(); it != md.allTypes.end(); ++it) {
         auto name = (*it)->getQualifiedNameAsString();
-        fprintf(file, "\"%s\", ", name.c_str());
+        fprintf(file, "    \"%s\",\n", name.c_str());
     }    
-    fprintf(file, "]\n}\n]\n");
+    fprintf(file, "  ]\n}\n]\n");
 }
 
 

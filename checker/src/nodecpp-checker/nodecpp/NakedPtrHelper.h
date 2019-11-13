@@ -85,9 +85,46 @@ bool isConstNakedPointerType(QualType Qt);
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 
+class TypeChecker {
+  const ClangTidyContext* Context = nullptr;
+  DiagHelper Dh = {nullptr};
+  std::set<const CXXRecordDecl *> alreadyChecking;
+  bool isSystemLoc = false;
 
-bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool isSafeType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+
+public:
+  TypeChecker(const ClangTidyContext* Context) : Context(Context) {}
+  TypeChecker(const ClangTidyContext* Context, ClangTidyCheck *Check) :
+    Context(Context), Dh(Check) {}
+  TypeChecker(const ClangTidyContext* Context, const DiagHelper& Dh) :
+    Context(Context), Dh(Dh) {}
+
+  bool isSafeRecord(const CXXRecordDecl *Dc);
+  bool isSafeType(const QualType& Qt);
+  bool swapSystemLoc(bool newValue) {
+    bool tmp = isSystemLoc;
+    isSystemLoc = newValue;
+    return tmp;
+  }
+};
+
+inline
+bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context,
+  DiagHelper& Dh = NullDiagHelper) {
+
+  TypeChecker Tc(Context, Dh);
+
+  return Tc.isSafeRecord(Dc);
+}
+
+inline
+bool isSafeType(QualType Qt, const ClangTidyContext* Context,
+  DiagHelper& Dh = NullDiagHelper) {
+
+  TypeChecker Tc(Context, Dh);
+
+  return Tc.isSafeType(Qt);
+}
 
 
 const CXXRecordDecl* isUnionType(QualType Qt);
