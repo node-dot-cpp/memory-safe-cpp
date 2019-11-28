@@ -753,8 +753,9 @@ struct __extract_key_value_types<__value_type<_Key, _Tp> >
 template <class _TreeIterator>
 class _LIBCPP_TEMPLATE_VIS __map_iterator
 {
-    typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
-    typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
+    typedef __tree_key_value_types<typename _TreeIterator::value_type> _NodeTypes;
+//    typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
+    // typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
 
     _TreeIterator __i_;
 
@@ -763,7 +764,7 @@ public:
     typedef typename _NodeTypes::__map_value_type                value_type;
     typedef typename _TreeIterator::difference_type              difference_type;
     typedef value_type&                                          reference;
-    typedef typename _NodeTypes::__map_value_type_pointer        pointer;
+    typedef value_type*        pointer;
 
     _LIBCPP_INLINE_VISIBILITY
     __map_iterator() _NOEXCEPT {}
@@ -812,8 +813,9 @@ public:
 template <class _TreeIterator>
 class _LIBCPP_TEMPLATE_VIS __map_const_iterator
 {
-    typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
-    typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
+    typedef __tree_key_value_types<typename _TreeIterator::value_type> _NodeTypes;
+    // typedef typename _TreeIterator::_NodeTypes                   _NodeTypes;
+    // typedef typename _TreeIterator::__pointer_traits             __pointer_traits;
 
     _TreeIterator __i_;
 
@@ -822,7 +824,7 @@ public:
     typedef typename _NodeTypes::__map_value_type                value_type;
     typedef typename _TreeIterator::difference_type              difference_type;
     typedef const value_type&                                    reference;
-    typedef typename _NodeTypes::__const_map_value_type_pointer  pointer;
+    typedef const value_type*                              pointer;
 
     _LIBCPP_INLINE_VISIBILITY
     __map_const_iterator() _NOEXCEPT {}
