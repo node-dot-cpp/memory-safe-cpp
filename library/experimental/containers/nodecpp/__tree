@@ -18,6 +18,8 @@
 #include <stdexcept>
 #include <algorithm>
 
+#include "../../../../library/src/safe_ptr.h"
+
 #if !defined(_LIBCPP_HAS_NO_PRAGMA_SYSTEM_HEADER)
 #pragma GCC system_header
 #endif
@@ -26,10 +28,9 @@ _LIBCPP_PUSH_MACROS
 #include "__undef_macros"
 
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+namespace nodecpp {
 
-
-
+using namespace std;
 
 
 template <class _Tp, class _Compare, class _Allocator> class __tree;
@@ -1157,7 +1158,7 @@ public:
                  __is_nothrow_swappable<__node_allocator>::value)
             );
 #else
-        _NOEXCEPT_(__is_nothrow_swappable<value_compare>::value);
+        _NOEXCEPT_(is_nothrow_swappable<value_compare>::value);
 #endif
 
 #ifndef _LIBCPP_CXX03_LANG
@@ -1885,7 +1886,7 @@ __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
                  __is_nothrow_swappable<__node_allocator>::value)
             )
 #else
-        _NOEXCEPT_(__is_nothrow_swappable<value_compare>::value)
+        _NOEXCEPT_(is_nothrow_swappable<value_compare>::value)
 #endif
 {
     using _VSTD::swap;
@@ -2847,7 +2848,7 @@ swap(__tree<_Tp, _Compare, _Allocator>& __x,
     __x.swap(__y);
 }
 
-_LIBCPP_END_NAMESPACE_STD
+} // namespace nodecpp
 
 _LIBCPP_POP_MACROS
 

@@ -465,7 +465,9 @@ swap(multimap<Key, T, Compare, Allocator>& x,
 #pragma GCC system_header
 #endif
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+namespace nodecpp {
+
+using namespace std;
 
 template <class _Key, class _CP, class _Compare, bool _IsSmall>
 class __map_value_compare
@@ -492,7 +494,7 @@ public:
     bool operator()(const _Key& __x, const _CP& __y) const
         {return static_cast<const _Compare&>(*this)(__x, __y.__get_value().first);}
     void swap(__map_value_compare&__y)
-        _NOEXCEPT_(__is_nothrow_swappable<_Compare>::value)
+        _NOEXCEPT_(is_nothrow_swappable<_Compare>::value)
     {
       using _VSTD::swap;
       swap(static_cast<_Compare&>(*this), static_cast<_Compare&>(__y));
@@ -540,7 +542,7 @@ public:
     bool operator()(const _Key& __x, const _CP& __y) const
         {return comp(__x, __y.__get_value().first);}
     void swap(__map_value_compare&__y)
-        _NOEXCEPT_(__is_nothrow_swappable<_Compare>::value)
+        _NOEXCEPT_(is_nothrow_swappable<_Compare>::value)
     {
         using _VSTD::swap;
         swap(comp, __y.comp);
@@ -900,7 +902,7 @@ public:
 
 private:
 
-    typedef _VSTD::__value_type<key_type, mapped_type>             __value_type;
+    typedef nodecpp::__value_type<key_type, mapped_type>             __value_type;
     typedef __map_value_compare<key_type, __value_type, key_compare> __vc;
     typedef typename __rebind_alloc_helper<allocator_traits<allocator_type>,
                                                  __value_type>::type __allocator_type;
@@ -1303,7 +1305,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(map& __m)
-        _NOEXCEPT_(__is_nothrow_swappable<__base>::value)
+        _NOEXCEPT_(is_nothrow_swappable<__base>::value)
         {__tree_.swap(__m.__tree_);}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -1590,7 +1592,7 @@ public:
 
 private:
 
-    typedef _VSTD::__value_type<key_type, mapped_type>             __value_type;
+    typedef nodecpp::__value_type<key_type, mapped_type>             __value_type;
     typedef __map_value_compare<key_type, __value_type, key_compare> __vc;
     typedef typename __rebind_alloc_helper<allocator_traits<allocator_type>,
                                                  __value_type>::type __allocator_type;
@@ -1888,7 +1890,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     void swap(multimap& __m)
-        _NOEXCEPT_(__is_nothrow_swappable<__base>::value)
+        _NOEXCEPT_(is_nothrow_swappable<__base>::value)
         {__tree_.swap(__m.__tree_);}
 
     _LIBCPP_INLINE_VISIBILITY
@@ -2055,6 +2057,6 @@ swap(multimap<_Key, _Tp, _Compare, _Allocator>& __x,
     __x.swap(__y);
 }
 
-_LIBCPP_END_NAMESPACE_STD
+} // namespace nodecpp
 
 #endif  // _LIBCPP_MAP

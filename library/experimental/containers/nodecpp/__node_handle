@@ -22,7 +22,10 @@
 _LIBCPP_PUSH_MACROS
 #include "__undef_macros"
 
-_LIBCPP_BEGIN_NAMESPACE_STD
+namespace nodecpp {
+
+using namespace std;
+
 
 #if _LIBCPP_STD_VER > 14
 
@@ -207,7 +210,8 @@ struct __insert_return_type
 
 #endif // _LIBCPP_STD_VER > 14
 
-_LIBCPP_END_NAMESPACE_STD
+} // namespace nodecpp
+
 _LIBCPP_POP_MACROS
 
 #endif
