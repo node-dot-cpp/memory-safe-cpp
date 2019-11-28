@@ -11,7 +11,8 @@
 #ifndef _LIBCPP___TREE
 #define _LIBCPP___TREE
 
-#include <__config>
+#include "__libcpp_config"
+#include "__libcpp_extra"
 #include <iterator>
 #include <memory>
 #include <stdexcept>
@@ -22,10 +23,14 @@
 #endif
 
 _LIBCPP_PUSH_MACROS
-#include <__undef_macros>
+#include "__undef_macros"
 
 
 _LIBCPP_BEGIN_NAMESPACE_STD
+
+
+
+
 
 template <class _Tp, class _Compare, class _Allocator> class __tree;
 template <class _Tp, class _NodePtr, class _DiffType>
@@ -1040,15 +1045,17 @@ private:
 
 private:
     __iter_pointer                                     __begin_node_;
-    __compressed_pair<__end_node_t, __node_allocator>  __pair1_;
-    __compressed_pair<size_type, value_compare>        __pair3_;
+    __end_node_t                                       __pair1_first;
+    __node_allocator          __pair1_second;
+    size_type           __pair3_first;
+    value_compare        __pair3_second;
 
 public:
     _LIBCPP_INLINE_VISIBILITY
     __iter_pointer __end_node() _NOEXCEPT
     {
         return static_cast<__iter_pointer>(
-                pointer_traits<__end_node_ptr>::pointer_to(__pair1_.first())
+                pointer_traits<__end_node_ptr>::pointer_to(__pair1_first)
         );
     }
     _LIBCPP_INLINE_VISIBILITY
@@ -1056,16 +1063,16 @@ public:
     {
         return static_cast<__iter_pointer>(
             pointer_traits<__end_node_ptr>::pointer_to(
-                const_cast<__end_node_t&>(__pair1_.first())
+                const_cast<__end_node_t&>(__pair1_first)
             )
         );
     }
     _LIBCPP_INLINE_VISIBILITY
-          __node_allocator& __node_alloc() _NOEXCEPT {return __pair1_.second();}
+          __node_allocator& __node_alloc() _NOEXCEPT {return __pair1_second;}
 private:
     _LIBCPP_INLINE_VISIBILITY
     const __node_allocator& __node_alloc() const _NOEXCEPT
-        {return __pair1_.second();}
+        {return __pair1_second;}
     _LIBCPP_INLINE_VISIBILITY
           __iter_pointer& __begin_node() _NOEXCEPT {return __begin_node_;}
     _LIBCPP_INLINE_VISIBILITY
@@ -1076,15 +1083,15 @@ public:
         {return allocator_type(__node_alloc());}
 private:
     _LIBCPP_INLINE_VISIBILITY
-          size_type& size() _NOEXCEPT {return __pair3_.first();}
+          size_type& size() _NOEXCEPT {return __pair3_first;}
 public:
     _LIBCPP_INLINE_VISIBILITY
-    const size_type& size() const _NOEXCEPT {return __pair3_.first();}
+    const size_type& size() const _NOEXCEPT {return __pair3_first;}
     _LIBCPP_INLINE_VISIBILITY
-          value_compare& value_comp() _NOEXCEPT {return __pair3_.second();}
+          value_compare& value_comp() _NOEXCEPT {return __pair3_second;}
     _LIBCPP_INLINE_VISIBILITY
     const value_compare& value_comp() const _NOEXCEPT
-        {return __pair3_.second();}
+        {return __pair3_second;}
 public:
 
     _LIBCPP_INLINE_VISIBILITY
@@ -1526,7 +1533,7 @@ __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp)
         _NOEXCEPT_(
             is_nothrow_default_constructible<__node_allocator>::value &&
             is_nothrow_copy_constructible<value_compare>::value)
-    : __pair3_(0, __comp)
+    : __pair3_first(0), __pair3_second(__comp)
 {
     __begin_node() = __end_node();
 }
@@ -1534,8 +1541,8 @@ __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp)
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const allocator_type& __a)
     : __begin_node_(__iter_pointer()),
-      __pair1_(__second_tag(), __node_allocator(__a)),
-      __pair3_(0)
+      __pair1_second(__node_allocator(__a)),
+      __pair3_first(0)
 {
     __begin_node() = __end_node();
 }
@@ -1544,8 +1551,8 @@ template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const value_compare& __comp,
                                            const allocator_type& __a)
     : __begin_node_(__iter_pointer()),
-      __pair1_(__second_tag(), __node_allocator(__a)),
-      __pair3_(0, __comp)
+      __pair1_second(__node_allocator(__a)),
+      __pair3_first(0) ,__pair3_second(__comp)
 {
     __begin_node() = __end_node();
 }
@@ -1701,8 +1708,8 @@ __tree<_Tp, _Compare, _Allocator>::__assign_multi(_InputIterator __first, _Input
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(const __tree& __t)
     : __begin_node_(__iter_pointer()),
-      __pair1_(__second_tag(), __node_traits::select_on_container_copy_construction(__t.__node_alloc())),
-      __pair3_(0, __t.value_comp())
+      __pair1_second(__node_traits::select_on_container_copy_construction(__t.__node_alloc())),
+      __pair3_first(0), __pair3_second(__t.value_comp())
 {
     __begin_node() = __end_node();
 }
@@ -1715,8 +1722,10 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
         is_nothrow_move_constructible<__node_allocator>::value &&
         is_nothrow_move_constructible<value_compare>::value)
     : __begin_node_(_VSTD::move(__t.__begin_node_)),
-      __pair1_(_VSTD::move(__t.__pair1_)),
-      __pair3_(_VSTD::move(__t.__pair3_))
+      __pair1_first(_VSTD::move(__t.__pair1_first)),
+      __pair1_second(_VSTD::move(__t.__pair1_second)),
+      __pair3_first(_VSTD::move(__t.__pair3_first)),
+      __pair3_second(_VSTD::move(__t.__pair3_second))
 {
     if (size() == 0)
         __begin_node() = __end_node();
@@ -1731,8 +1740,8 @@ __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t)
 
 template <class _Tp, class _Compare, class _Allocator>
 __tree<_Tp, _Compare, _Allocator>::__tree(__tree&& __t, const allocator_type& __a)
-    : __pair1_(__second_tag(), __node_allocator(__a)),
-      __pair3_(0, _VSTD::move(__t.value_comp()))
+    : __pair1_second(__node_allocator(__a)),
+      __pair3_first(0), __pair3_second(_VSTD::move(__t.value_comp()))
 {
     if (__a == __t.__alloc())
     {
@@ -1763,9 +1772,10 @@ __tree<_Tp, _Compare, _Allocator>::__move_assign(__tree& __t, true_type)
 {
     destroy(static_cast<__node_pointer>(__end_node()->__left_));
     __begin_node_ = __t.__begin_node_;
-    __pair1_.first() = __t.__pair1_.first();
+    __pair1_first = __t.__pair1_first;
     __move_assign_alloc(__t);
-    __pair3_ = _VSTD::move(__t.__pair3_);
+    __pair3_first = _VSTD::move(__t.__pair3_first);
+    __pair3_second = _VSTD::move(__t.__pair3_second);
     if (size() == 0)
         __begin_node() = __end_node();
     else
@@ -1880,9 +1890,10 @@ __tree<_Tp, _Compare, _Allocator>::swap(__tree& __t)
 {
     using _VSTD::swap;
     swap(__begin_node_, __t.__begin_node_);
-    swap(__pair1_.first(), __t.__pair1_.first());
+    swap(__pair1_first, __t.__pair1_first);
     __swap_allocator(__node_alloc(), __t.__node_alloc());
-    __pair3_.swap(__t.__pair3_);
+    swap(__pair3_first, __t.__pair3_first);
+    swap(__pair3_second, __t.__pair3_second);
     if (size() == 0)
         __begin_node() = __end_node();
     else

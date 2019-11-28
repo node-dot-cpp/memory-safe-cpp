@@ -11,7 +11,7 @@
 #ifndef _LIBCPP___NODE_HANDLE
 #define _LIBCPP___NODE_HANDLE
 
-#include <__config>
+#include "__libcpp_config"
 #include <memory>
 #include <optional>
 
@@ -20,7 +20,7 @@
 #endif
 
 _LIBCPP_PUSH_MACROS
-#include <__undef_macros>
+#include "__undef_macros"
 
 _LIBCPP_BEGIN_NAMESPACE_STD
 
@@ -44,7 +44,7 @@ class _LIBCPP_TEMPLATE_VIS __basic_node_handle
         friend class __tree;
     template <class _Tp, class _Hash, class _Equal, class _Allocator>
         friend class __hash_table;
-    friend struct _MapOrSetSpecifics<
+    friend class _MapOrSetSpecifics<
         _NodeType, __basic_node_handle<_NodeType, _Alloc, _MapOrSetSpecifics>>;
 
     typedef allocator_traits<_Alloc> __alloc_traits;
