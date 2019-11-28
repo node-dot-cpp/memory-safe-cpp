@@ -703,11 +703,14 @@ public:
         return *this;
     }
 
+    template<class... _Types>
+    __value_type(_Types&&... _Args) : __cc(std::forward<_Types>(_Args)...) {}
+
 private:
-    __value_type() _LIBCPP_EQUAL_DELETE;
-    ~__value_type() _LIBCPP_EQUAL_DELETE;
-    __value_type(const __value_type& __v) _LIBCPP_EQUAL_DELETE;
-    __value_type(__value_type&& __v) _LIBCPP_EQUAL_DELETE;
+//    __value_type() _LIBCPP_EQUAL_DELETE;
+//    ~__value_type() _LIBCPP_EQUAL_DELETE;
+//    __value_type(const __value_type& __v) _LIBCPP_EQUAL_DELETE;
+//    __value_type(__value_type&& __v) _LIBCPP_EQUAL_DELETE;
 };
 
 #else
