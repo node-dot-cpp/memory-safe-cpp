@@ -26,18 +26,16 @@ _LIBCPP_PUSH_MACROS
 
 namespace nodecpp {
 
-using namespace std;
-
 // __uncvref
 
 template <class _Tp>
 struct __uncvref  {
-    typedef typename remove_cv<typename remove_reference<_Tp>::type>::type type;
+    typedef typename std::remove_cv<typename std::remove_reference<_Tp>::type>::type type;
 };
 
 template <class _Tp>
 struct __unconstref {
-    typedef typename remove_const<typename remove_reference<_Tp>::type>::type type;
+    typedef typename std::remove_const<typename std::remove_reference<_Tp>::type>::type type;
 };
 
 #ifndef _LIBCPP_CXX03_LANG
@@ -48,7 +46,7 @@ using __uncvref_t = typename __uncvref<_Tp>::type;
 // __is_same_uncvref
 
 template <class _Tp, class _Up>
-struct __is_same_uncvref : is_same<typename __uncvref<_Tp>::type,
+struct __is_same_uncvref : std::is_same<typename __uncvref<_Tp>::type,
                                    typename __uncvref<_Up>::type> {};
 
 #if defined(_LIBCPP_HAS_IS_FINAL)
@@ -56,7 +54,7 @@ template <class _Tp> struct _LIBCPP_TEMPLATE_VIS
 __libcpp_is_final : public integral_constant<bool, __is_final(_Tp)> {};
 #else
 template <class _Tp> struct _LIBCPP_TEMPLATE_VIS
-__libcpp_is_final : public false_type {};
+__libcpp_is_final : public std::false_type {};
 #endif
 
 // These traits are used in __tree and __hash_table
@@ -68,12 +66,12 @@ struct __extract_key_first_tag {};
 template <class _ValTy, class _Key,
           class _RawValTy = typename __unconstref<_ValTy>::type>
 struct __can_extract_key
-    : conditional<is_same<_RawValTy, _Key>::value, __extract_key_self_tag,
+    : std::conditional<std::is_same<_RawValTy, _Key>::value, __extract_key_self_tag,
                   __extract_key_fail_tag>::type {};
 
 template <class _Pair, class _Key, class _First, class _Second>
-struct __can_extract_key<_Pair, _Key, pair<_First, _Second>>
-    : conditional<is_same<typename remove_const<_First>::type, _Key>::value,
+struct __can_extract_key<_Pair, _Key, std::pair<_First, _Second>>
+    : std::conditional<std::is_same<typename std::remove_const<_First>::type, _Key>::value,
                   __extract_key_first_tag, __extract_key_fail_tag>::type {};
 
 // __can_extract_map_key uses true_type/false_type instead of the tags.
@@ -82,13 +80,13 @@ struct __can_extract_key<_Pair, _Key, pair<_First, _Second>>
 template <class _ValTy, class _Key, class _ContainerValueTy,
           class _RawValTy = typename __unconstref<_ValTy>::type>
 struct __can_extract_map_key
-    : integral_constant<bool, is_same<_RawValTy, _Key>::value> {};
+    : std::integral_constant<bool, std::is_same<_RawValTy, _Key>::value> {};
 
 // This specialization returns __extract_key_fail_tag for non-map containers
 // because _Key == _ContainerValueTy
 template <class _ValTy, class _Key, class _RawValTy>
 struct __can_extract_map_key<_ValTy, _Key, _Key, _RawValTy>
-    : false_type {};
+    : std::false_type {};
 
 #endif
 
@@ -98,12 +96,12 @@ struct __void_t { typedef void type; };
 
 #if _LIBCPP_STD_VER > 11
 template <class _Tp, class, class = void>
-struct __is_transparent : false_type {};
+struct __is_transparent : std::false_type {};
 
 template <class _Tp, class _Up>
 struct __is_transparent<_Tp, _Up,  
                         typename __void_t<typename _Tp::is_transparent>::type>
-   : true_type {};
+   : std::true_type {};
 #endif
 
 
@@ -111,7 +109,7 @@ struct __is_transparent<_Tp, _Up,
 template <class _From, class _To>
 struct __rebind_pointer {
 #ifndef _LIBCPP_CXX03_LANG
-    typedef typename pointer_traits<_From>::template rebind<_To>        type;
+    typedef typename std::pointer_traits<_From>::template rebind<_To>        type;
 #else
     typedef typename pointer_traits<_From>::template rebind<_To>::other type;
 #endif

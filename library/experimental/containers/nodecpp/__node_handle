@@ -24,8 +24,6 @@ _LIBCPP_PUSH_MACROS
 
 namespace nodecpp {
 
-using namespace std;
-
 
 #if _LIBCPP_STD_VER > 14
 
@@ -50,7 +48,7 @@ class _LIBCPP_TEMPLATE_VIS __basic_node_handle
     friend class _MapOrSetSpecifics<
         _NodeType, __basic_node_handle<_NodeType, _Alloc, _MapOrSetSpecifics>>;
 
-    typedef allocator_traits<_Alloc> __alloc_traits;
+    typedef std::allocator_traits<_Alloc> __alloc_traits;
     typedef typename __rebind_pointer<typename __alloc_traits::void_pointer,
                                       _NodeType>::type
         __node_pointer_type;
@@ -60,7 +58,7 @@ public:
 
 private:
     __node_pointer_type __ptr_ = nullptr;
-    optional<allocator_type> __alloc_;
+    std::optional<allocator_type> __alloc_;
 
     _LIBCPP_INLINE_VISIBILITY
     void __release()
