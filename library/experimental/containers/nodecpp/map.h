@@ -572,53 +572,53 @@ swap(__map_value_compare<_Key, _CP, _Compare, __b>& __x,
     __x.swap(__y);
 }
 
-template <class _Allocator>
-class __map_node_destructor
-{
-    typedef _Allocator                          allocator_type;
-    typedef std::allocator_traits<allocator_type>    __alloc_traits;
+// template <class _Allocator>
+// class __map_node_destructor
+// {
+//     typedef _Allocator                          allocator_type;
+//     typedef std::allocator_traits<allocator_type>    __alloc_traits;
 
-public:
-    typedef typename __alloc_traits::pointer    pointer;
+// public:
+//     typedef typename __alloc_traits::pointer    pointer;
 
-private:
-    allocator_type& __na_;
+// private:
+//     allocator_type& __na_;
 
-    __map_node_destructor& operator=(const __map_node_destructor&);
+//     __map_node_destructor& operator=(const __map_node_destructor&);
 
-public:
-    bool __first_constructed;
-    bool __second_constructed;
+// public:
+//     bool __first_constructed;
+//     bool __second_constructed;
 
-    _LIBCPP_INLINE_VISIBILITY
-    explicit __map_node_destructor(allocator_type& __na) _NOEXCEPT
-        : __na_(__na),
-          __first_constructed(false),
-          __second_constructed(false)
-        {}
+//     _LIBCPP_INLINE_VISIBILITY
+//     explicit __map_node_destructor(allocator_type& __na) _NOEXCEPT
+//         : __na_(__na),
+//           __first_constructed(false),
+//           __second_constructed(false)
+//         {}
 
-#ifndef _LIBCPP_CXX03_LANG
-    _LIBCPP_INLINE_VISIBILITY
-    __map_node_destructor(__tree_node_destructor<allocator_type>&& __x) _NOEXCEPT
-        : __na_(__x.__na_),
-          __first_constructed(__x.__value_constructed),
-          __second_constructed(__x.__value_constructed)
-        {
-            __x.__value_constructed = false;
-        }
-#endif  // _LIBCPP_CXX03_LANG
+// #ifndef _LIBCPP_CXX03_LANG
+//     _LIBCPP_INLINE_VISIBILITY
+//     __map_node_destructor(__tree_node_destructor<allocator_type>&& __x) _NOEXCEPT
+//         : __na_(__x.__na_),
+//           __first_constructed(__x.__value_constructed),
+//           __second_constructed(__x.__value_constructed)
+//         {
+//             __x.__value_constructed = false;
+//         }
+// #endif  // _LIBCPP_CXX03_LANG
 
-    _LIBCPP_INLINE_VISIBILITY
-    void operator()(pointer __p) _NOEXCEPT
-    {
-        if (__second_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__get_value().second));
-        if (__first_constructed)
-            __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__get_value().first));
-        if (__p)
-            __alloc_traits::deallocate(__na_, __p, 1);
-    }
-};
+//     _LIBCPP_INLINE_VISIBILITY
+//     void operator()(pointer __p) _NOEXCEPT
+//     {
+//         if (__second_constructed)
+//             __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__get_value().second));
+//         if (__first_constructed)
+//             __alloc_traits::destroy(__na_, _VSTD::addressof(__p->__value_.__get_value().first));
+//         if (__p)
+//             __alloc_traits::deallocate(__na_, __p, 1);
+//     }
+// };
 
 template <class _Key, class _Tp, class _Compare, class _Allocator>
     class map;
@@ -1395,8 +1395,8 @@ private:
     typedef typename __base::__node_base_pointer       __node_base_pointer;
     typedef typename __base::__parent_pointer          __parent_pointer;
 
-    typedef __map_node_destructor<__node_allocator> _Dp;
-    typedef std::unique_ptr<__node, _Dp> __node_holder;
+    // typedef __map_node_destructor<__node_allocator> _Dp;
+    // typedef std::unique_ptr<__node, _Dp> __node_holder;
 
 #ifdef _LIBCPP_CXX03_LANG
     __node_holder __construct_node_with_key(const key_type& __k);
@@ -1978,8 +1978,8 @@ private:
     typedef typename __base::__node_allocator          __node_allocator;
     typedef typename __base::__node_pointer            __node_pointer;
 
-    typedef __map_node_destructor<__node_allocator> _Dp;
-    typedef std::unique_ptr<__node, _Dp> __node_holder;
+    // typedef __map_node_destructor<__node_allocator> _Dp;
+    // typedef std::unique_ptr<__node, _Dp> __node_holder;
 };
 
 #ifndef _LIBCPP_CXX03_LANG
