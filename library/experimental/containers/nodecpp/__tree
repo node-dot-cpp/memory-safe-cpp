@@ -352,8 +352,8 @@ __tree_balance_after_insert(_NodePtr __root, _NodePtr __x) _NOEXCEPT
 
 // Returns:  owning ref to __x
 // Precondition:  __x != nullptr.
-template <class _NodePtr>
-auto&
+template <class _OwningNodePtr, class _NodePtr>
+_OwningNodePtr&
 __tree_get_owning_ref(_NodePtr __x) _NOEXCEPT
 {
     // check __x->__parent_ consistency
@@ -2164,6 +2164,9 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(__parent_pointer& __parent,
             }
             else
             {
+                //mb: TODO fix __nd->parent
+                // __parent is incorrect when the node is found, but in such
+                // case, clients calling this function don't use it
                 __parent = static_cast<__parent_pointer>(__nd);
                 return *__nd_ptr;
             }
@@ -2231,9 +2234,13 @@ __tree<_Tp, _Compare, _Allocator>::__find_equal(const_iterator __hint,
         return __find_equal(__parent, __v);
     }
     // else __v == *__hint
+
+    //mb: TODO fix __hint.__ptr_->parent
+    // __parent is incorrect when the node is found, but in such
+    // case, clients calling this function don't use it
     __parent = static_cast<__parent_pointer>(__hint.__ptr_);
     __dummy = static_cast<__node_base_pointer>(__hint.__ptr_);
-    return __tree_get_owning_ref(__dummy);
+    return __tree_get_owning_ref<__node_owning_pointer, __node_pointer>(__dummy);
 }
 
 template <class _Tp, class _Compare, class _Allocator>
@@ -2242,8 +2249,8 @@ __tree<_Tp, _Compare, _Allocator>::__insert_node_at(__parent_pointer     __paren
                                                     __node_owning_pointer& __child,
                                                     __node_owning_pointer  __new_node)
 {
-    __new_node->__left_   = nullptr;
-    __new_node->__right_  = nullptr;
+    // __new_node->__left_   = nullptr;
+    // __new_node->__right_  = nullptr;
     __new_node->__parent_ = __parent;
     // __new_node->__is_black_ is initialized in __tree_balance_after_insert
     __child = std::move(__new_node);
