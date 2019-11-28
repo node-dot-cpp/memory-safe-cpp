@@ -5,7 +5,11 @@
 
 int main() {
 
-    std::map<int, int> aMap;
+    nodecpp::map<int, int> aMap;
+
+    aMap[1] = 2;
+    aMap[2] = 3;
+
 
 
 

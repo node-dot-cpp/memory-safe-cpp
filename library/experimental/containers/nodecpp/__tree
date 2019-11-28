@@ -2163,7 +2163,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_unique_key_args(_Key const& __k, _A
 #else
 template <class _Tp, class _Compare, class _Allocator>
 template <class _Key, class _Args>
-pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
+std::pair<typename __tree<_Tp, _Compare, _Allocator>::iterator, bool>
 __tree<_Tp, _Compare, _Allocator>::__emplace_unique_key_args(_Key const& __k, _Args& __args)
 #endif
 {
@@ -2182,7 +2182,7 @@ __tree<_Tp, _Compare, _Allocator>::__emplace_unique_key_args(_Key const& __k, _A
         __r = __h.release();
         __inserted = true;
     }
-    return pair<iterator, bool>(iterator(__r), __inserted);
+    return std::pair<iterator, bool>(iterator(__r), __inserted);
 }
 
 
