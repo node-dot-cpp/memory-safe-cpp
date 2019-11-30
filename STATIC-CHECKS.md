@@ -158,3 +158,8 @@ Consistency checks always apply (regardless of the command line, and any attribu
   - **[Rule D2.1]** Prohibiting uninitialized class members; at the moment, ONLY C++11 initializers next to data member are recognized. TODO: allow scenarios when ALL the constructors initialize data member in question. 
     + TEST CASES/PROHIBIT: `int x;` (as data member), `int a[3] = {1,2};` (as data member), `X x;` (as data member, if class X has has non-constructed members AND has no constructor), `int x1 : 8;` (as data member, this is an uninitialized bit field)
     + TEST CASES/ALLOW: `int x = 0;` (as data member), `X x;` (as data member, provided that class X has default constructor), `int a[3] = {1,2,3};` (as data member), `int x1 : 8 = 42;` (as data member, this is an initialized bit field)
+
+### Miscellaneios Checks (in particular, coding style we want to encourage)
+* **[Rule M1]** Only nodecpp::exception can be thrown/caught (NO derivatives)
+  - **[Rule M1.1]** Only nodecpp::exception can be thrown
+  - **[Rule M1.2]** Only nodecpp::exception can be caught (and ONLY by reference)
