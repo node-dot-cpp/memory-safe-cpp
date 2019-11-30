@@ -163,3 +163,6 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * **[Rule M1]** Only nodecpp::exception can be thrown/caught (NO derivatives)
   - **[Rule M1.1]** Only nodecpp::exception can be thrown
   - **[Rule M1.2]** Only nodecpp::exception can be caught (and ONLY by reference)
+* **[Rule M2]** Ensuring code consistency regardless of tracing/assertion levels
+  - **[Rule M2.1]** Within NODETRACE* macros, there can be ONLY const expressions
+  - **[Rule M2.2]** Within NODEASSERT* macros, there can be ONLY const expressions
