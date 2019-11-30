@@ -160,9 +160,17 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + TEST CASES/ALLOW: `int x = 0;` (as data member), `X x;` (as data member, provided that class X has default constructor), `int a[3] = {1,2,3};` (as data member), `int x1 : 8 = 42;` (as data member, this is an initialized bit field)
 
 ### Miscellaneios Checks (in particular, coding style we want to encourage)
-* **[Rule M1]** Only nodecpp::exception can be thrown/caught (NO derivatives)
-  - **[Rule M1.1]** Only nodecpp::exception can be thrown
+* **[Rule M1]** Only nodecpp::error can be thrown/caught (NO derivatives)
+  - **[Rule M1.1]** Only nodecpp::error can be thrown
+      - TEST CASES/ALLOW: `throw nodecpp::error(nodecpp::errc::bad_alloc);`, `throw nodecpp::error::bad_alloc;`
+      - TEST CASES/PROHIBIT: `throw 0;`, `throw std::exception`, `throw std::error;`
   - **[Rule M1.2]** Only nodecpp::exception can be caught (and ONLY by reference)
+      - TEST CASES/ALLOW: `catch(nodecpp::error& x)`
+      - TEST CASES/PROHIBIT: `catch(int)`, `catch(std::exception)`, `catch(std::error)`, `catch(nodecpp::error)`
 * **[Rule M2]** Ensuring code consistency regardless of tracing/assertion levels
   - **[Rule M2.1]** Within NODETRACE* macros, there can be ONLY const expressions
+      - TEST CASES/ALLOW: `NODETRACE3("{}",a==b);`
+      - TEST CASES/PROHIBIT: `NODETRACE3("{}",a=b);`
   - **[Rule M2.2]** Within NODEASSERT* macros, there can be ONLY const expressions
+      - TEST CASES/ALLOW: `NODEASSERT2(a==b);`
+      - TEST CASES/PROHIBIT: `NODEASSERT2(a=b);`
