@@ -1,11 +1,11 @@
 
 
-#include "nodecpp/map.h"
+#include "include/EASTL/map.h"
 
 
 int main() {
 
-    nodecpp::map<int, int> aMap;
+    eastl::map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[5] = 5;
@@ -14,9 +14,9 @@ int main() {
         printf("[%d] = %d\n", it->first, it->second);
     }
 
-    aMap.insert(std::pair<int, int>(3,3));
+    aMap.insert(eastl::pair<int, int>(3,3));
     aMap.insert_or_assign(4,8);
-    aMap.insert(std::pair<int, int>(10,10));
+    aMap.insert(eastl::pair<int, int>(10,10));
     aMap.insert_or_assign(4,4);
     for(auto it = aMap.cbegin(); it != aMap.cend(); ++it) {
         printf("[%d] = %d\n", it->first, it->second);

@@ -2,6 +2,9 @@
 
 add_executable(container-test
   main.cpp
+  source/red_black_tree.cpp
+  source/assert.cpp
+  source/allocator_eastl.cpp
   ${PROJECT_SOURCE_DIR}/../../src/safe_ptr.cpp
 	${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/page_allocator_windows.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/iibmalloc.cpp
@@ -14,6 +17,7 @@ add_executable(container-test
   )
 
 include_directories(
+  ${PROJECT_SOURCE_DIR}/include
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/3rdparty/fmt/include
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/include
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src
