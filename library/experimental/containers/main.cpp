@@ -2,6 +2,10 @@
 
 #include "include/EASTL/map.h"
 
+template<class IT>
+void printIt(IT it) {
+    printf("[%d] = %d\n", it->first, it->second);
+}
 
 int main() {
 
@@ -11,7 +15,7 @@ int main() {
     aMap[5] = 5;
 
     for(auto it = aMap.begin(); it != aMap.end(); ++it) {
-        printf("[%d] = %d\n", it->first, it->second);
+        printIt(it);
     }
 
     aMap.insert(std::pair<int, int>(3,3));
@@ -19,19 +23,38 @@ int main() {
     aMap.insert(std::pair<int, int>(10,10));
     aMap.insert_or_assign(4,4);
     for(auto it = aMap.cbegin(); it != aMap.cend(); ++it) {
-        printf("[%d] = %d\n", it->first, it->second);
+        printIt(it);
     }
     aMap.erase(3);
 
     for(auto it = aMap.rbegin(); it != aMap.rend(); ++it) {
-        printf("[%d] = %d\n", it->first, it->second);
+        printIt(it);
     }
 
     for(auto it = aMap.crbegin(); it != aMap.crend(); ++it) {
-        printf("[%d] = %d\n", it->first, it->second);
+        printIt(it);
     }
 
+    printf("----------------\n");
+    auto jt = aMap.begin();
+    printIt(jt);
+    --jt;
+    printIt(jt);
+    --jt;
+    printIt(jt);
+    --jt;
+    printIt(jt);
 
+    printf("----------------\n");
+
+    jt = aMap.end();
+    printIt(jt);
+    ++jt;
+    printIt(jt);
+    ++jt;
+    printIt(jt);
+    ++jt;
+    printIt(jt);
 
     return 0;
 }

@@ -29,33 +29,68 @@
 #define SAFE_PTR_FOR_MAP_H
 
 #include "safe_ptr_impl.h"
+#include "safe_ptr_common.h"
 
 namespace nodecpp::safememory
 {
 
-
-template<class _Ty,
-	class... _Types,
-	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	NODISCARD _Ty* allocate_and_construct_with_control_block(_Types&&... _Args)
-	{
+template<class _Ty>
+NODISCARD _Ty* allocate_with_control_block()
+{
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 
 	FirstControlBlock* cb = getControlBlock_(dataForObj);
 	cb->init();
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
-		cb->dbgCheckValidity<void>();
+	cb->dbgCheckValidity<_Ty>();
 #endif
 
 //	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
-	void* stackTmp = thg_stackPtrForMakeOwningCall;
-	thg_stackPtrForMakeOwningCall = dataForObj;
-	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-	thg_stackPtrForMakeOwningCall = stackTmp;
+	// void* stackTmp = thg_stackPtrForMakeOwningCall;
+	// thg_stackPtrForMakeOwningCall = dataForObj;
+	// _Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	// thg_stackPtrForMakeOwningCall = stackTmp;
 
-	return dataForObj;
+	return reinterpret_cast<_Ty*>(dataForObj);
+}
+
+//mb: swap StackPtr with exception safety in case of constructor throwing
+struct StackPtrForMakeOwningCallRiia {
+	void* stackTmp;
+
+	StackPtrForMakeOwningCallRiia(void* ptr) {
+		this->stackTmp = thg_stackPtrForMakeOwningCall;
+		thg_stackPtrForMakeOwningCall = ptr;
 	}
+
+	~StackPtrForMakeOwningCallRiia() {
+		thg_stackPtrForMakeOwningCall = stackTmp;
+	}
+};
+
+
+template<class _Ty,	class... _Types>
+void construct_with_control_block(void* baseObj, void* dataForObj, _Types&&... _Args)
+{
+// 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+// 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+
+// 	FirstControlBlock* cb = getControlBlock_(dataForObj);
+// 	cb->init();
+// #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
+// 		cb->dbgCheckValidity<void>();
+// #endif
+
+//	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	// void* stackTmp = thg_stackPtrForMakeOwningCall;
+	// thg_stackPtrForMakeOwningCall = baseObj;
+	StackPtrForMakeOwningCallRiia Riia(baseObj);
+	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	// thg_stackPtrForMakeOwningCall = stackTmp;
+
+	// return objPtr;
+}
 
 
 template<class T>
@@ -70,40 +105,38 @@ void updatePtrForListItemsWithInvalidPtr(FirstControlBlock* cb)
 				reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 }
 
-template<class _Ty,
-	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	void destruct_and_deallocate_with_control_block(_Ty* t)
+template<class _Ty>
+void deallocate_with_control_block(_Ty* t)
+{
+	if ( NODECPP_LIKELY(t) )
 	{
-		if ( NODECPP_LIKELY(t) )
-		{
-			uint8_t* alloca = getAllocatedBlock_(t);
-			FirstControlBlock* cb = getControlBlock_(t);
-			destruct( t );
-			updatePtrForListItemsWithInvalidPtr<void>();
-			zombieDeallocate( alloca );
-			cb->clear();
+		uint8_t* alloca = getAllocatedBlock_(t);
+		FirstControlBlock* cb = getControlBlock_(t);
+		// destruct( t );
+		updatePtrForListItemsWithInvalidPtr<_Ty>(cb);
+		zombieDeallocate( alloca );
+		cb->clear();
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
-			cb->dbgCheckValidity<void>();
+		cb->dbgCheckValidity<_Ty>();
 #endif
-		}
 	}
+}
 
-template<class _Ty,
-	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	void get_soft_ptr_from_control_block(_Ty* t)
+template<class _Ty>
+soft_ptr_impl<_Ty> make_soft_ptr_from_raw_ptr(_Ty* t)
+{
+	if ( NODECPP_LIKELY(t) )
 	{
-		if ( NODECPP_LIKELY(t) )
-		{
 //			uint8_t* alloca = getAllocatedBlock_(t);
-			FirstControlBlock* cb = getControlBlock_(t);
-			return soft_ptr_impl<_Ty>(cb, t);
-		}
-		else
-		{
-			retur soft_ptr_impl<_Ty>(nullptr);
-		}
-		
+		FirstControlBlock* cb = getControlBlock_(t);
+		return soft_ptr_impl<_Ty>(cb, t);
 	}
+	else
+	{
+		return soft_ptr_impl<_Ty>(nullptr);
+	}
+	
+}
 
 } // namespace nodecpp::safememory
 

@@ -23,6 +23,9 @@
 #include <initializer_list>
 #include <tuple>
 
+#include <safe_ptr_for_map.h>
+#include <safe_ptr.h>
+
 // EA_DISABLE_ALL_VC_WARNINGS()
 // #include <new>
 // #include <stddef.h>
@@ -167,7 +170,10 @@ namespace nodecpp
 		typedef std::bidirectional_iterator_tag    iterator_category;
 
 	public:
-		node_type* mpNode;
+		safememory::soft_ptr<node_type> mpNode;
+
+		node_type* get_raw_ptr() const { return &*mpNode;}
+		void set_from_raw_ptr(base_node_type* pNode);
 
 	public:
 		rbtree_iterator();
@@ -647,13 +653,19 @@ namespace nodecpp
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Pointer, typename Reference>
+	void
+	rbtree_iterator<T, Pointer, Reference>::set_from_raw_ptr(base_node_type* pNode) {
+		mpNode = safememory::make_soft_ptr_from_raw_ptr<node_type>(static_cast<node_type*>(pNode));
+	}
+
+	template <typename T, typename Pointer, typename Reference>
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator()
-		: mpNode(NULL) { }
+		: mpNode(nullptr) { }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const node_type* pNode)
-		: mpNode(static_cast<node_type*>(const_cast<node_type*>(pNode))) { }
+		: mpNode(safememory::make_soft_ptr_from_raw_ptr<node_type>(const_cast<node_type*>(pNode))) { }
 
 
 	template <typename T, typename Pointer, typename Reference>
@@ -677,7 +689,7 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type&
 	rbtree_iterator<T, Pointer, Reference>::operator++()
 	{
-		mpNode = static_cast<node_type*>(RBTreeIncrement(mpNode));
+		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
 		return *this;
 	}
 
@@ -687,7 +699,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator++(int)
 	{
 		this_type temp(*this);
-		mpNode = static_cast<node_type*>(RBTreeIncrement(mpNode));
+		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
 		return temp;
 	}
 
@@ -696,7 +708,7 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type&
 	rbtree_iterator<T, Pointer, Reference>::operator--()
 	{
-		mpNode = static_cast<node_type*>(RBTreeDecrement(mpNode));
+		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
 		return *this;
 	}
 
@@ -706,7 +718,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator--(int)
 	{
 		this_type temp(*this);
-		mpNode = static_cast<node_type*>(RBTreeDecrement(mpNode));
+		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
 		return temp;
 	}
 
@@ -1479,9 +1491,9 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.mpNode != mAnchor.mpNodeRight) && (position.mpNode != &mAnchor)) // If the user specified a specific insertion position...
+		if((position.get_raw_ptr() != mAnchor.mpNodeRight) && (position.get_raw_ptr() != &mAnchor)) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.mpNode);
+			iterator itNext(position.get_raw_ptr());
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1502,11 +1514,11 @@ namespace nodecpp
 					if(position.mpNode->mpNodeRight)
 					{
 						bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-						return itNext.mpNode;
+						return itNext.get_raw_ptr();
 					}
 
 					bForceToLeft = false;
-					return position.mpNode;
+					return position.get_raw_ptr();
 				}
 			}
 
@@ -1532,9 +1544,9 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.mpNode != mAnchor.mpNodeRight) && (position.mpNode != &mAnchor)) // If the user specified a specific insertion position...
+		if((position.get_raw_ptr() != mAnchor.mpNodeRight) && (position.get_raw_ptr() != &mAnchor)) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.mpNode);
+			iterator itNext(position.get_raw_ptr());
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1546,11 +1558,11 @@ namespace nodecpp
 				if(position.mpNode->mpNodeRight) // If there are any nodes to the right... [this expression will always be true as long as we aren't at the end()]
 				{
 					bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-					return itNext.mpNode;
+					return itNext.get_raw_ptr();
 				}
 
 				bForceToLeft = false;
-				return position.mpNode;
+				return position.get_raw_ptr();
 			}
 
 			bForceToLeft = false;
@@ -1712,12 +1724,12 @@ namespace nodecpp
 	inline typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::erase(const_iterator position)
 	{
-		const iterator iErase(position.mpNode);
+		const iterator iErase(position.get_raw_ptr());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		RBTreeErase(iErase.mpNode, &mAnchor);
-		DoFreeNode(iErase.mpNode);
-		return iterator(position.mpNode);
+		RBTreeErase(iErase.get_raw_ptr(), &mAnchor);
+		DoFreeNode(iErase.get_raw_ptr());
+		return iterator(position.get_raw_ptr());
 	}
 
 
@@ -1726,12 +1738,12 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::erase(const_iterator first, const_iterator last)
 	{
 		// We expect that if the user means to clear the container, they will call clear.
-		if(EASTL_LIKELY((first.mpNode != mAnchor.mpNodeLeft) || (last.mpNode != &mAnchor))) // If (first != begin or last != end) ...
+		if(EASTL_LIKELY((first.get_raw_ptr() != mAnchor.mpNodeLeft) || (last.get_raw_ptr() != &mAnchor))) // If (first != begin or last != end) ...
 		{
 			// Basic implementation:
 			while(first != last)
 				first = erase(first);
-			return iterator(first.mpNode);
+			return iterator(first.get_raw_ptr());
 
 			// Inlined implementation:
 			//size_type n = 0;
@@ -1973,7 +1985,7 @@ namespace nodecpp
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
 			{
-				const node_type* const pNode      = (const node_type*)it.mpNode;
+				const node_type* const pNode      = (const node_type*)it.get_raw_ptr();
 				const node_type* const pNodeRight = (const node_type*)pNode->mpNodeRight;
 				const node_type* const pNodeLeft  = (const node_type*)pNode->mpNodeLeft;
 
@@ -2051,7 +2063,7 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
 	{
 //		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
-		auto* pNode = (node_type*)nullptr;
+		auto* pNode = safememory::allocate_with_control_block<node_type>();
 		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		return pNode;
@@ -2061,8 +2073,10 @@ namespace nodecpp
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(node_type* pNode)
 	{
-		pNode->~node_type();
+		// pNode->~node_type();
+		safememory::destruct(std::addressof(pNode->mValue));
 //		EASTLFree(mAllocator, pNode, sizeof(node_type));
+		safememory::deallocate_with_control_block(pNode);
 	}
 
 
@@ -2079,9 +2093,9 @@ namespace nodecpp
 			try
 			{
 		#endif
-//TODO
 //				::new (std::addressof(pNode->mValue)) value_type(pair_first_construct, key);
-
+				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue),
+					std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2115,7 +2129,8 @@ namespace nodecpp
 			try
 			{
 		#endif
-				::new(std::addressof(pNode->mValue)) value_type(value);
+				// ::new(std::addressof(pNode->mValue)) value_type(value);
+				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), value);
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2149,7 +2164,8 @@ namespace nodecpp
 			try
 			{
 		#endif
-				::new(std::addressof(pNode->mValue)) value_type(std::move(value));
+				// ::new(std::addressof(pNode->mValue)) value_type(std::move(value));
+				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::move(value));
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2184,7 +2200,8 @@ namespace nodecpp
 			try
 			{
 		#endif
-				::new(std::addressof(pNode->mValue)) value_type(std::forward<Args>(args)...);
+//				::new(std::addressof(pNode->mValue)) value_type(std::forward<Args>(args)...);
+				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::forward<Args>(args)...);
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)

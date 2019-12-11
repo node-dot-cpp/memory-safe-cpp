@@ -651,6 +651,9 @@ class soft_ptr_base_impl
 	friend struct FirstControlBlock;
 
 	template<class TT>
+	friend void updatePtrForListItemsWithInvalidPtr(FirstControlBlock* cb);
+
+	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
@@ -1142,6 +1145,10 @@ private:
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr);
+	
+	template<class TT>
+	friend soft_ptr_impl<TT> make_soft_ptr_from_raw_ptr(TT* ptr);
+	
 	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
