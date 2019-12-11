@@ -5,7 +5,7 @@
 
 int main() {
 
-    eastl::map<int, int> aMap;
+    nodecpp::map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[5] = 5;

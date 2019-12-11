@@ -37,7 +37,7 @@
 #endif
 
 
-namespace eastl
+namespace nodecpp
 {
 
 	/// EASTL_RBTREE_DEFAULT_NAME
@@ -304,9 +304,9 @@ namespace eastl
 	/// This specialization is used for 'map'.
 	///
 	template <typename Key, typename Pair, typename Compare, typename RBTree>
-	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, true, RBTree> : public rb_base_compare_ebo<Compare>
+	struct rb_base<Key, Pair, Compare, nodecpp::use_first<Pair>, true, RBTree> : public rb_base_compare_ebo<Compare>
 	{
-		typedef eastl::use_first<Pair> extract_key;
+		typedef nodecpp::use_first<Pair> extract_key;
 
 		using rb_base_compare_ebo<Compare>::compare;
 		using rb_base_compare_ebo<Compare>::get_compare;
@@ -321,9 +321,9 @@ namespace eastl
 	/// This specialization is used for 'multimap'.
 	///
 	template <typename Key, typename Pair, typename Compare, typename RBTree>
-	struct rb_base<Key, Pair, Compare, eastl::use_first<Pair>, false, RBTree> : public rb_base_compare_ebo<Compare>
+	struct rb_base<Key, Pair, Compare, nodecpp::use_first<Pair>, false, RBTree> : public rb_base_compare_ebo<Compare>
 	{
-		typedef eastl::use_first<Pair> extract_key;
+		typedef nodecpp::use_first<Pair> extract_key;
 
 		using rb_base_compare_ebo<Compare>::compare;
 		using rb_base_compare_ebo<Compare>::get_compare;
@@ -2335,7 +2335,7 @@ namespace eastl
 	}
 
 
-} // namespace eastl
+} // namespace nodecpp
 
 
 #ifdef _MSC_VER

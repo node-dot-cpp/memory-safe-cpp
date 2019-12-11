@@ -30,7 +30,7 @@
 
 
 
-namespace eastl
+namespace nodecpp
 {
 	// Forward declarations
 	rbtree_node_base* RBTreeRotateLeft(rbtree_node_base* pNode, rbtree_node_base* pNodeRoot);
@@ -490,28 +490,5 @@ namespace eastl
 
 
 
-} // namespace eastl
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} // namespace nodecpp
 

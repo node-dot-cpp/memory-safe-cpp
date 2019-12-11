@@ -32,7 +32,7 @@
 
 
 
-namespace eastl
+namespace nodecpp
 {
 
 	// /// swap
@@ -836,7 +836,7 @@ namespace eastl
 // #endif  // EASTL_TUPLE_ENABLED
 
 
-}  // namespace eastl
+}  // namespace nodecpp
 
 #ifdef _MSC_VER
 	#pragma warning(pop)

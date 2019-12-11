@@ -248,7 +248,7 @@
 
 
 
-namespace eastl
+namespace nodecpp
 {
 
 	// ///////////////////////////////////////////////////////////////////////
@@ -357,13 +357,13 @@ namespace eastl
 
 
 
-	///////////////////////////////////////////////////////////////////////
-	// first_type_select
-	//
-	//  Similar to type_select but unilaterally selects the first type.
-	//
-	template <typename T, typename = eastl::unused, typename = eastl::unused>
-	struct first_type_select { typedef T type; };
+	// ///////////////////////////////////////////////////////////////////////
+	// // first_type_select
+	// //
+	// //  Similar to type_select but unilaterally selects the first type.
+	// //
+	// template <typename T, typename = eastl::unused, typename = eastl::unused>
+	// struct first_type_select { typedef T type; };
 
 
 
@@ -1046,7 +1046,7 @@ namespace eastl
 	// };
 	// EA_RESTORE_VC_WARNING();
 
-} // namespace eastl
+} // namespace nodecpp
 
 
 // The following files implement the type traits themselves.

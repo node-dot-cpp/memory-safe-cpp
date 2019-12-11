@@ -738,23 +738,23 @@
 
 
 
-// ///////////////////////////////////////////////////////////////////////////////
-// // EASTL_EXCEPTIONS_ENABLED
-// //
-// // Defined as 0 or 1. Default is to follow what the compiler settings are.
-// // The user can predefine EASTL_EXCEPTIONS_ENABLED to 0 or 1; however, if the
-// // compiler is set to disable exceptions then EASTL_EXCEPTIONS_ENABLED is
-// // forced to a value of 0 regardless of the user predefine.
-// //
-// // Note that we do not enable EASTL exceptions by default if the compiler
-// // has exceptions enabled. To enable EASTL_EXCEPTIONS_ENABLED you need to
-// // manually set it to 1.
-// //
-// ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_EXCEPTIONS_ENABLED
+//
+// Defined as 0 or 1. Default is to follow what the compiler settings are.
+// The user can predefine EASTL_EXCEPTIONS_ENABLED to 0 or 1; however, if the
+// compiler is set to disable exceptions then EASTL_EXCEPTIONS_ENABLED is
+// forced to a value of 0 regardless of the user predefine.
+//
+// Note that we do not enable EASTL exceptions by default if the compiler
+// has exceptions enabled. To enable EASTL_EXCEPTIONS_ENABLED you need to
+// manually set it to 1.
+//
+///////////////////////////////////////////////////////////////////////////////
 
-// #if !defined(EASTL_EXCEPTIONS_ENABLED) || ((EASTL_EXCEPTIONS_ENABLED == 1) && defined(EA_COMPILER_NO_EXCEPTIONS))
-// 	#define EASTL_EXCEPTIONS_ENABLED 0
-// #endif
+#if !defined(EASTL_EXCEPTIONS_ENABLED) || ((EASTL_EXCEPTIONS_ENABLED == 1) && defined(EA_COMPILER_NO_EXCEPTIONS))
+	#define EASTL_EXCEPTIONS_ENABLED 0
+#endif
 
 
 

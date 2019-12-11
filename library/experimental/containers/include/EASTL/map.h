@@ -19,7 +19,7 @@
 
 
 
-namespace eastl
+namespace nodecpp
 {
 
 	/// EASTL_MAP_DEFAULT_NAME
@@ -73,11 +73,11 @@ namespace eastl
 	///
 	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = std::allocator<std::pair<const Key, T> > >
 	class map
-		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, eastl::use_first<std::pair<const Key, T> >, true, true>
+		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, nodecpp::use_first<std::pair<const Key, T> >, true, true>
 	{
 	public:
 		typedef rbtree<Key, std::pair<const Key, T>, Compare, Allocator,
-						eastl::use_first<std::pair<const Key, T> >, true, true>   base_type;
+						nodecpp::use_first<std::pair<const Key, T> >, true, true>   base_type;
 		typedef map<Key, T, Compare, Allocator>                                     this_type;
 		typedef typename base_type::size_type                                       size_type;
 		typedef typename base_type::key_type                                        key_type;
@@ -183,11 +183,11 @@ namespace eastl
 	///
 	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = EASTLAllocatorType>
 	class multimap
-		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, eastl::use_first<std::pair<const Key, T> >, true, false>
+		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, nodecpp::use_first<std::pair<const Key, T> >, true, false>
 	{
 	public:
 		typedef rbtree<Key, std::pair<const Key, T>, Compare, Allocator, 
-						eastl::use_first<std::pair<const Key, T> >, true, false>  base_type;
+						nodecpp::use_first<std::pair<const Key, T> >, true, false>  base_type;
 		typedef multimap<Key, T, Compare, Allocator>                                this_type;
 		typedef typename base_type::size_type                                       size_type;
 		typedef typename base_type::key_type                                        key_type;
@@ -635,7 +635,7 @@ namespace eastl
 
 
 
-} // namespace eastl
+} // namespace nodecpp
 
 
 #endif // Header include guard
