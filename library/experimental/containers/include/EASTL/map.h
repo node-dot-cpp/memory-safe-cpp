@@ -7,10 +7,11 @@
 #define EASTL_MAP_H
 
 
-#include <EASTL/internal/config.h>
+//#include <EASTL/internal/config.h>
 #include <EASTL/internal/red_black_tree.h>
-#include <EASTL/functional.h>
+#include <functional>
 #include <EASTL/utility.h>
+#include <utility>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -70,13 +71,13 @@ namespace eastl
 	///     MemoryPool myPool(sizeof(WidgetMap::node_type), 100);          // Make a pool of 100 Widget nodes.
 	///     WidgetMap myMap(&myPool);                                      // Create a map that uses the pool.
 	///
-	template <typename Key, typename T, typename Compare = eastl::less<Key>, typename Allocator = EASTLAllocatorType>
+	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = std::allocator<std::pair<const Key, T> > >
 	class map
-		: public rbtree<Key, eastl::pair<const Key, T>, Compare, Allocator, eastl::use_first<eastl::pair<const Key, T> >, true, true>
+		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, eastl::use_first<std::pair<const Key, T> >, true, true>
 	{
 	public:
-		typedef rbtree<Key, eastl::pair<const Key, T>, Compare, Allocator,
-						eastl::use_first<eastl::pair<const Key, T> >, true, true>   base_type;
+		typedef rbtree<Key, std::pair<const Key, T>, Compare, Allocator,
+						eastl::use_first<std::pair<const Key, T> >, true, true>   base_type;
 		typedef map<Key, T, Compare, Allocator>                                     this_type;
 		typedef typename base_type::size_type                                       size_type;
 		typedef typename base_type::key_type                                        key_type;
@@ -120,8 +121,8 @@ namespace eastl
 		};
 
 	public:
-		map(const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
-		map(const Compare& compare, const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
+		map(const allocator_type& allocator = allocator_type());
+		map(const Compare& compare, const allocator_type& allocator = allocator_type());
 		map(const this_type& x);
 		map(this_type&& x);
 		map(this_type&& x, const allocator_type& allocator);
@@ -132,7 +133,7 @@ namespace eastl
 
 		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
 		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(std::move(x)); }
 
 	public:
 		/// This is an extension to the C++ standard. We insert a default-constructed 
@@ -147,8 +148,8 @@ namespace eastl
 		size_type erase(const Key& key);
 		size_type count(const Key& key) const;
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+		std::pair<iterator, iterator>             equal_range(const Key& key);
+		std::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
 
 		T& operator[](const Key& key); // Of map, multimap, set, and multimap, only map has operator[].
 		T& operator[](Key&& key); 
@@ -180,13 +181,13 @@ namespace eastl
 	///     MemoryPool myPool(sizeof(WidgetMap::node_type), 100);               // Make a pool of 100 Widget nodes.
 	///     WidgetMap myMap(&myPool);                                           // Create a map that uses the pool.
 	///
-	template <typename Key, typename T, typename Compare = eastl::less<Key>, typename Allocator = EASTLAllocatorType>
+	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = EASTLAllocatorType>
 	class multimap
-		: public rbtree<Key, eastl::pair<const Key, T>, Compare, Allocator, eastl::use_first<eastl::pair<const Key, T> >, true, false>
+		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, eastl::use_first<std::pair<const Key, T> >, true, false>
 	{
 	public:
-		typedef rbtree<Key, eastl::pair<const Key, T>, Compare, Allocator, 
-						eastl::use_first<eastl::pair<const Key, T> >, true, false>  base_type;
+		typedef rbtree<Key, std::pair<const Key, T>, Compare, Allocator, 
+						eastl::use_first<std::pair<const Key, T> >, true, false>  base_type;
 		typedef multimap<Key, T, Compare, Allocator>                                this_type;
 		typedef typename base_type::size_type                                       size_type;
 		typedef typename base_type::key_type                                        key_type;
@@ -242,7 +243,7 @@ namespace eastl
 
 		this_type& operator=(const this_type& x) { return (this_type&)base_type::operator=(x); }
 		this_type& operator=(std::initializer_list<value_type> ilist) { return (this_type&)base_type::operator=(ilist); }
-		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(eastl::move(x)); }
+		this_type& operator=(this_type&& x) { return (this_type&)base_type::operator=(std::move(x)); }
 
 	public:
 		/// This is an extension to the C++ standard. We insert a default-constructed 
@@ -257,14 +258,14 @@ namespace eastl
 		size_type erase(const Key& key);
 		size_type count(const Key& key) const;
 
-		eastl::pair<iterator, iterator>             equal_range(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
+		std::pair<iterator, iterator>             equal_range(const Key& key);
+		std::pair<const_iterator, const_iterator> equal_range(const Key& key) const;
 
 		/// equal_range_small
 		/// This is a special version of equal_range which is optimized for the 
 		/// case of there being few or no duplicated keys in the tree.
-		eastl::pair<iterator, iterator>             equal_range_small(const Key& key);
-		eastl::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const;
+		std::pair<iterator, iterator>             equal_range_small(const Key& key);
+		std::pair<const_iterator, const_iterator> equal_range_small(const Key& key) const;
 
 	private:
 		// these base member functions are not included in multimaps
@@ -303,13 +304,13 @@ namespace eastl
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline map<Key, T, Compare, Allocator>::map(this_type&& x)
-		: base_type(eastl::move(x))
+		: base_type(std::move(x))
 	{
 	}
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline map<Key, T, Compare, Allocator>::map(this_type&& x, const allocator_type& allocator)
-		: base_type(eastl::move(x), allocator)
+		: base_type(std::move(x), allocator)
 	{
 	}
 
@@ -333,7 +334,7 @@ namespace eastl
 	inline typename map<Key, T, Compare, Allocator>::insert_return_type
 	map<Key, T, Compare, Allocator>::insert(const Key& key)
 	{
-		return base_type::DoInsertKey(true_type(), key);
+		return base_type::DoInsertKey(std::true_type(), key);
 	}
 
 
@@ -370,7 +371,7 @@ namespace eastl
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename map<Key, T, Compare, Allocator>::iterator,
+	inline std::pair<typename map<Key, T, Compare, Allocator>::iterator,
 					   typename map<Key, T, Compare, Allocator>::iterator>
 	map<Key, T, Compare, Allocator>::equal_range(const Key& key)
 	{
@@ -381,15 +382,15 @@ namespace eastl
 		const iterator itLower(lower_bound(key));
 
 		if((itLower == end()) || compare(key, itLower.mpNode->mValue.first)) // If at the end or if (key is < itLower)...
-			return eastl::pair<iterator, iterator>(itLower, itLower);
+			return std::pair<iterator, iterator>(itLower, itLower);
 
 		iterator itUpper(itLower);
-		return eastl::pair<iterator, iterator>(itLower, ++itUpper);
+		return std::pair<iterator, iterator>(itLower, ++itUpper);
 	}
 	
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename map<Key, T, Compare, Allocator>::const_iterator, 
+	inline std::pair<typename map<Key, T, Compare, Allocator>::const_iterator, 
 					   typename map<Key, T, Compare, Allocator>::const_iterator>
 	map<Key, T, Compare, Allocator>::equal_range(const Key& key) const
 	{
@@ -397,10 +398,10 @@ namespace eastl
 		const const_iterator itLower(lower_bound(key));
 
 		if((itLower == end()) || compare(key, itLower.mpNode->mValue.first)) // If at the end or if (key is < itLower)...
-			return eastl::pair<const_iterator, const_iterator>(itLower, itLower);
+			return std::pair<const_iterator, const_iterator>(itLower, itLower);
 
 		const_iterator itUpper(itLower);
-		return eastl::pair<const_iterator, const_iterator>(itLower, ++itUpper);
+		return std::pair<const_iterator, const_iterator>(itLower, ++itUpper);
 	}
 
 
@@ -411,7 +412,7 @@ namespace eastl
 
 		if((itLower == end()) || compare(key, (*itLower).first))
 		{
-			itLower = base_type::DoInsertKey(true_type(), itLower, key);
+			itLower = base_type::DoInsertKey(std::true_type(), itLower, key);
 		}
 
 		return (*itLower).second;
@@ -429,7 +430,7 @@ namespace eastl
 
 		if((itLower == end()) || compare(key, (*itLower).first))
 		{
-			itLower = base_type::DoInsertKey(true_type(), itLower, eastl::move(key));
+			itLower = base_type::DoInsertKey(std::true_type(), itLower, std::move(key));
 		}
 
 		return (*itLower).second;
@@ -506,13 +507,13 @@ namespace eastl
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline multimap<Key, T, Compare, Allocator>::multimap(this_type&& x)
-		: base_type(eastl::move(x))
+		: base_type(std::move(x))
 	{
 	}
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
 	inline multimap<Key, T, Compare, Allocator>::multimap(this_type&& x, const allocator_type& allocator)
-		: base_type(eastl::move(x), allocator)
+		: base_type(std::move(x), allocator)
 	{
 	}
 
@@ -536,7 +537,7 @@ namespace eastl
 	inline typename multimap<Key, T, Compare, Allocator>::insert_return_type
 	multimap<Key, T, Compare, Allocator>::insert(const Key& key)
 	{
-		return base_type::DoInsertKey(false_type(), key);
+		return base_type::DoInsertKey(std::false_type(), key);
 	}
 
 
@@ -552,8 +553,8 @@ namespace eastl
 	inline typename multimap<Key, T, Compare, Allocator>::size_type
 	multimap<Key, T, Compare, Allocator>::erase(const Key& key)
 	{
-		const eastl::pair<iterator, iterator> range(equal_range(key));
-		const size_type n = (size_type)eastl::distance(range.first, range.second);
+		const std::pair<iterator, iterator> range(equal_range(key));
+		const size_type n = (size_type)std::distance(range.first, range.second);
 		base_type::erase(range.first, range.second);
 		return n;
 	}
@@ -563,13 +564,13 @@ namespace eastl
 	inline typename multimap<Key, T, Compare, Allocator>::size_type
 	multimap<Key, T, Compare, Allocator>::count(const Key& key) const
 	{
-		const eastl::pair<const_iterator, const_iterator> range(equal_range(key));
-		return (size_type)eastl::distance(range.first, range.second);
+		const std::pair<const_iterator, const_iterator> range(equal_range(key));
+		return (size_type)std::distance(range.first, range.second);
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
+	inline std::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
 					   typename multimap<Key, T, Compare, Allocator>::iterator>
 	multimap<Key, T, Compare, Allocator>::equal_range(const Key& key)
 	{
@@ -584,22 +585,22 @@ namespace eastl
 		// of equal_range called equal_range_small for cases where the user is confident
 		// that the number of duplicated items is only a few.
 
-		return eastl::pair<iterator, iterator>(lower_bound(key), upper_bound(key));
+		return std::pair<iterator, iterator>(lower_bound(key), upper_bound(key));
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
+	inline std::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
 					   typename multimap<Key, T, Compare, Allocator>::const_iterator>
 	multimap<Key, T, Compare, Allocator>::equal_range(const Key& key) const
 	{
 		// See comments above in the non-const version of equal_range.
-		return eastl::pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key));
+		return std::pair<const_iterator, const_iterator>(lower_bound(key), upper_bound(key));
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
+	inline std::pair<typename multimap<Key, T, Compare, Allocator>::iterator,
 					   typename multimap<Key, T, Compare, Allocator>::iterator>
 	multimap<Key, T, Compare, Allocator>::equal_range_small(const Key& key)
 	{
@@ -611,12 +612,12 @@ namespace eastl
 		while((itUpper != end()) && !compare(key, itUpper.mpNode->mValue.first))
 			++itUpper;
 
-		return eastl::pair<iterator, iterator>(itLower, itUpper);
+		return std::pair<iterator, iterator>(itLower, itUpper);
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline eastl::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
+	inline std::pair<typename multimap<Key, T, Compare, Allocator>::const_iterator, 
 					   typename multimap<Key, T, Compare, Allocator>::const_iterator>
 	multimap<Key, T, Compare, Allocator>::equal_range_small(const Key& key) const
 	{
@@ -628,7 +629,7 @@ namespace eastl
 		while((itUpper != end()) && !compare(key, itUpper.mpNode->mValue.first))
 			++itUpper;
 
-		return eastl::pair<const_iterator, const_iterator>(itLower, itUpper);
+		return std::pair<const_iterator, const_iterator>(itLower, itUpper);
 	}
 
 

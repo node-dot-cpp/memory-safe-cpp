@@ -7,24 +7,26 @@
 #define EASTL_RED_BLACK_TREE_H
 
 
-#include <EABase/eabase.h>
+//#include <EABase/eabase.h>
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif
 
 #include <EASTL/internal/config.h>
 #include <EASTL/type_traits.h>
-#include <EASTL/allocator.h>
-#include <EASTL/iterator.h>
+#include <type_traits>
+//#include <EASTL/allocator.h>
+#include <iterator>
 #include <EASTL/utility.h>
-#include <EASTL/algorithm.h>
-#include <EASTL/initializer_list.h>
-#include <EASTL/tuple.h>
+#include <utility>
+#include <algorithm>
+#include <initializer_list>
+#include <tuple>
 
-EA_DISABLE_ALL_VC_WARNINGS()
-#include <new>
-#include <stddef.h>
-EA_RESTORE_ALL_VC_WARNINGS()
+// EA_DISABLE_ALL_VC_WARNINGS()
+// #include <new>
+// #include <stddef.h>
+// EA_RESTORE_ALL_VC_WARNINGS()
 
 
 #ifdef _MSC_VER
@@ -155,14 +157,14 @@ namespace eastl
 		typedef rbtree_iterator<T, Pointer, Reference>      this_type;
 		typedef rbtree_iterator<T, T*, T&>                  iterator;
 		typedef rbtree_iterator<T, const T*, const T&>      const_iterator;
-		typedef eastl_size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
-		typedef ptrdiff_t                                   difference_type;
+		typedef std::size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::ptrdiff_t                                   difference_type;
 		typedef T                                           value_type;
 		typedef rbtree_node_base                            base_node_type;
 		typedef rbtree_node<T>                              node_type;
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
-		typedef EASTL_ITC_NS::bidirectional_iterator_tag    iterator_category;
+		typedef std::bidirectional_iterator_tag    iterator_category;
 
 	public:
 		node_type* mpNode;
@@ -191,7 +193,7 @@ namespace eastl
 	// when its Compare template argument is an empty class.
 	///////////////////////////////////////////////////////////////////////////////
 
-	template <typename Compare, bool /*isEmpty*/ = is_empty<Compare>::value>
+	template <typename Compare, bool /*isEmpty*/ = std::is_empty<Compare>::value>
 	struct rb_base_compare_ebo
 	{
 	protected:
@@ -387,8 +389,8 @@ namespace eastl
 							rbtree<Key, Value, Compare, Allocator, ExtractKey, bMutableIterators, bUniqueKeys> >
 	{
 	public:
-		typedef ptrdiff_t                                                                       difference_type;
-		typedef eastl_size_t                                                                    size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::ptrdiff_t                                                                       difference_type;
+		typedef std::size_t                                                                    size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef Key                                                                             key_type;
 		typedef Value                                                                           value_type;
 		typedef rbtree_node<value_type>                                                         node_type;
@@ -401,16 +403,16 @@ namespace eastl
 					rbtree_iterator<value_type, value_type*, value_type&>, 
 					rbtree_iterator<value_type, const value_type*, const value_type&> >::type   iterator;
 		typedef rbtree_iterator<value_type, const value_type*, const value_type&>               const_iterator;
-		typedef eastl::reverse_iterator<iterator>                                               reverse_iterator;
-		typedef eastl::reverse_iterator<const_iterator>                                         const_reverse_iterator;
+		typedef std::reverse_iterator<iterator>                                               reverse_iterator;
+		typedef std::reverse_iterator<const_iterator>                                         const_reverse_iterator;
 
 		typedef Allocator                                                                       allocator_type;
 		typedef Compare                                                                         key_compare;
-		typedef typename type_select<bUniqueKeys, eastl::pair<iterator, bool>, iterator>::type  insert_return_type;  // map/set::insert return a pair, multimap/multiset::iterator return an iterator.
+		typedef typename type_select<bUniqueKeys, std::pair<iterator, bool>, iterator>::type  insert_return_type;  // map/set::insert return a pair, multimap/multiset::iterator return an iterator.
 		typedef rbtree<Key, Value, Compare, Allocator, 
 						ExtractKey, bMutableIterators, bUniqueKeys>                             this_type;
 		typedef rb_base<Key, Value, Compare, ExtractKey, bUniqueKeys, this_type>                base_type;
-		typedef integral_constant<bool, bUniqueKeys>                                            has_unique_keys_type;
+		typedef std::integral_constant<bool, bUniqueKeys>                                            has_unique_keys_type;
 		typedef typename base_type::extract_key                                                 extract_key;
 
 	protected:
@@ -479,13 +481,13 @@ namespace eastl
 		template <class... Args> 
 		iterator emplace_hint(const_iterator position, Args&&... args);
 
-		template <class... Args> eastl::pair<iterator, bool> try_emplace(const key_type& k, Args&&... args);
-		template <class... Args> eastl::pair<iterator, bool> try_emplace(key_type&& k, Args&&... args);
+		template <class... Args> std::pair<iterator, bool> try_emplace(const key_type& k, Args&&... args);
+		template <class... Args> std::pair<iterator, bool> try_emplace(key_type&& k, Args&&... args);
 		template <class... Args> iterator                    try_emplace(const_iterator position, const key_type& k, Args&&... args);
 		template <class... Args> iterator                    try_emplace(const_iterator position, key_type&& k, Args&&... args);
 
 		// Standard conversion overload to avoid the overhead of mismatched 'pair<const Key, Value>' types.
-		template <class P, class = typename eastl::enable_if<eastl::is_constructible<value_type, P&&>::value>::type> 
+		template <class P, class = typename std::enable_if<std::is_constructible<value_type, P&&>::value>::type> 
 		insert_return_type insert(P&& otherValue);
 
 		// Currently limited to value_type instead of P because it collides with insert(InputIterator, InputIterator).
@@ -520,8 +522,8 @@ namespace eastl
 		// insert_return_type insert(node_type&& nh);
 		// iterator insert(const_iterator hint, node_type&& nh);
 
-		template <class M> pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
-		template <class M> pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj);
+		template <class M> std::pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj);
+		template <class M> std::pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj);
 		template <class M> iterator             insert_or_assign(const_iterator hint, const key_type& k, M&& obj);
 		template <class M> iterator             insert_or_assign(const_iterator hint, key_type&& k, M&& obj);
 
@@ -583,26 +585,26 @@ namespace eastl
 		void       DoNukeSubtree(node_type* pNode);
 
 		template <class... Args>
-		eastl::pair<iterator, bool> DoInsertValue(true_type, Args&&... args);
+		std::pair<iterator, bool> DoInsertValue(std::true_type, Args&&... args);
 
 		template <class... Args>
-		iterator DoInsertValue(false_type, Args&&... args);
+		iterator DoInsertValue(std::false_type, Args&&... args);
 
-		eastl::pair<iterator, bool> DoInsertValue(true_type, value_type&& value);
-		iterator DoInsertValue(false_type, value_type&& value);
+		std::pair<iterator, bool> DoInsertValue(std::true_type, value_type&& value);
+		iterator DoInsertValue(std::false_type, value_type&& value);
 
 		template <class... Args>
 		iterator DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args);
 		iterator DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, node_type* pNodeNew);
 
-		eastl::pair<iterator, bool> DoInsertKey(true_type, const key_type& key);
-		iterator                    DoInsertKey(false_type, const key_type& key);
+		std::pair<iterator, bool> DoInsertKey(std::true_type, const key_type& key);
+		iterator                    DoInsertKey(std::false_type, const key_type& key);
 
-		iterator DoInsertValueHint(true_type, const_iterator position, const value_type& value);
-		iterator DoInsertValueHint(false_type, const_iterator position, const value_type& value);
+		iterator DoInsertValueHint(std::true_type, const_iterator position, const value_type& value);
+		iterator DoInsertValueHint(std::false_type, const_iterator position, const value_type& value);
 
-		iterator DoInsertKey(true_type, const_iterator position, const key_type& key);  // By design we return iterator and not a pair.
-		iterator DoInsertKey(false_type, const_iterator position, const key_type& key);
+		iterator DoInsertKey(std::true_type, const_iterator position, const key_type& key);  // By design we return iterator and not a pair.
+		iterator DoInsertKey(std::false_type, const_iterator position, const key_type& key);
 		iterator DoInsertKeyImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key);
 
 		node_type* DoGetKeyInsertionPositionUniqueKeys(bool& canInsert, const key_type& key);
@@ -832,7 +834,7 @@ namespace eastl
 			{
 		#endif
 				for(; first != last; ++first)
-					insert(eastl::move(*first));
+					insert(std::move(*first));
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -1005,7 +1007,7 @@ namespace eastl
 		clear();
 
 		for(typename std::initializer_list<value_type>::iterator it = ilist.begin(), itEnd = ilist.end(); it != itEnd; ++it)
-			DoInsertValue(has_unique_keys_type(), eastl::move(*it));
+			DoInsertValue(has_unique_keys_type(), std::move(*it));
 
 		return *this;
 	}
@@ -1014,16 +1016,19 @@ namespace eastl
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	void rbtree<K, V, C, A, E, bM, bU>::swap(this_type& x)
 	{
+		using namespace eastl;
+		using namespace std;
+
 	#if EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 		if(mAllocator == x.mAllocator) // If allocators are equivalent...
 	#endif
 		{
 			// Most of our members can be exchaged by a basic swap:
 			// We leave mAllocator as-is.
-			eastl::swap(mnSize,        x.mnSize);
-			eastl::swap(get_compare(), x.get_compare());
+			swap(mnSize,        x.mnSize);
+			swap(get_compare(), x.get_compare());
 		#if !EASTL_RBTREE_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
-			eastl::swap(mAllocator,          x.mAllocator);
+			swap(mAllocator,          x.mAllocator);
 		#endif
 
 
@@ -1036,9 +1041,9 @@ namespace eastl
 			// We optimize for the expected most common case: both pointers being non-null.
 			if(mAnchor.mpNodeParent && x.mAnchor.mpNodeParent) // If both pointers are non-null...
 			{
-				eastl::swap(mAnchor.mpNodeRight,  x.mAnchor.mpNodeRight);
-				eastl::swap(mAnchor.mpNodeLeft,   x.mAnchor.mpNodeLeft);
-				eastl::swap(mAnchor.mpNodeParent, x.mAnchor.mpNodeParent);
+				swap(mAnchor.mpNodeRight,  x.mAnchor.mpNodeRight);
+				swap(mAnchor.mpNodeLeft,   x.mAnchor.mpNodeLeft);
+				swap(mAnchor.mpNodeParent, x.mAnchor.mpNodeParent);
 
 				// We need to fix up the anchors to point to themselves (we can't just swap them).
 				mAnchor.mpNodeParent->mpNodeParent   = &mAnchor;
@@ -1085,7 +1090,7 @@ namespace eastl
 	inline typename rbtree<K, V, C, A, E, bM, bU>::insert_return_type // map/set::insert return a pair, multimap/multiset::iterator return an iterator.
 	rbtree<K, V, C, A, E, bM, bU>::emplace(Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), eastl::forward<Args>(args)...);
+		return DoInsertValue(has_unique_keys_type(), std::forward<Args>(args)...);
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1093,12 +1098,12 @@ namespace eastl
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::emplace_hint(const_iterator position, Args&&... args)
 	{
-		return DoInsertValueHint(has_unique_keys_type(), position, eastl::forward<Args>(args)...);
+		return DoInsertValueHint(has_unique_keys_type(), position, std::forward<Args>(args)...);
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class... Args>
-	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	inline std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
 		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...));
@@ -1106,10 +1111,10 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class... Args>
-	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	inline std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(std::move(key)), forward_as_tuple(forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1139,7 +1144,7 @@ namespace eastl
 	rbtree<K, V, C, A, E, bM, bU>::insert(P&& otherValue)
 	{ 
 		// Need to use forward instead of move because P&& is a "universal reference" instead of an rvalue reference.
-		return emplace(eastl::forward<P>(otherValue));
+		return emplace(std::forward<P>(otherValue));
 	}
 
 
@@ -1147,7 +1152,7 @@ namespace eastl
 	inline typename rbtree<K, V, C, A, E, bM, bU>::iterator 
 	rbtree<K, V, C, A, E, bM, bU>::insert(const_iterator position, value_type&& value)
 	{
-		return DoInsertValueHint(has_unique_keys_type(), position, value_type(eastl::move(value)));
+		return DoInsertValueHint(has_unique_keys_type(), position, value_type(std::move(value)));
 	}
 
 
@@ -1169,36 +1174,36 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class M>
-	eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::insert_or_assign(const key_type& k, M&& obj)
 	{
 		auto iter = find(k);
 
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
-			iter->second = eastl::forward<M>(obj);
+			iter->second = std::forward<M>(obj);
 			return {iter, false};
 		}
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class M>
-	eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::insert_or_assign(key_type&& k, M&& obj)
 	{
 		auto iter = find(k);
 
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(eastl::move(k)), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(std::piecewise_construct, std::forward_as_tuple(std::move(k)), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
-			iter->second = eastl::forward<M>(obj);
+			iter->second = std::forward<M>(obj);
 			return {iter, false};
 		}
 	}
@@ -1212,11 +1217,11 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(hint, value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(hint, value_type(std::piecewise_construct, std::forward_as_tuple(k), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
-			iter->second = eastl::forward<M>(obj);
+			iter->second = std::forward<M>(obj);
 			return iter;
 		}
 	}
@@ -1230,11 +1235,11 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(hint, value_type(piecewise_construct, forward_as_tuple(eastl::move(k)), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(hint, value_type(std::piecewise_construct, std::forward_as_tuple(std::move(k)), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
-			iter->second = eastl::forward<M>(obj);
+			iter->second = std::forward<M>(obj);
 			return iter;
 		}
 	}
@@ -1328,8 +1333,8 @@ namespace eastl
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool> 
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(true_type, value_type&& value)
+	std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool> 
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(std::true_type, value_type&& value)
 	{
 		extract_key extractKey;
 		key_type    key(extractKey(value));
@@ -1338,36 +1343,36 @@ namespace eastl
 
 		if(canInsert)
 		{
-			const iterator itResult(DoInsertValueImpl(pPosition, false, key, eastl::move(value)));
-			return pair<iterator, bool>(itResult, true);
+			const iterator itResult(DoInsertValueImpl(pPosition, false, key, std::move(value)));
+			return std::pair<iterator, bool>(itResult, true);
 		}
 
-		return pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition), false);
 	}
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator 
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(false_type, value_type&& value)
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(std::false_type, value_type&& value)
 	{
 		extract_key extractKey;
 		key_type    key(extractKey(value));
 		node_type*  pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
 
-		return DoInsertValueImpl(pPosition, false, key, eastl::move(value));
+		return DoInsertValueImpl(pPosition, false, key, std::move(value));
 	}
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class... Args>
-	eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(true_type, Args&&... args) // true_type means keys are unique.
+	std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(std::true_type, Args&&... args) // true_type means keys are unique.
 	{
 		// This is the pathway for insertion of unique keys (map and set, but not multimap and multiset).
 		// Note that we return a pair and not an iterator. This is because the C++ standard for map
 		// and set is to return a pair and not just an iterator.
 
-		node_type* pNodeNew = DoCreateNode(eastl::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_type* pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 		const key_type& key = extract_key{}(pNodeNew->mValue);
 
 		bool        canInsert;
@@ -1376,24 +1381,24 @@ namespace eastl
 		if(canInsert)
 		{
 			iterator itResult(DoInsertValueImpl(pPosition, false, key, pNodeNew));
-			return pair<iterator, bool>(itResult, true);
+			return std::pair<iterator, bool>(itResult, true);
 		}
 
 		DoFreeNode(pNodeNew);
-		return pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition), false);
 	}
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class... Args>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(false_type, Args&&... args) // false_type means keys are not unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValue(std::false_type, Args&&... args) // false_type means keys are not unique.
 	{
 		// We have a problem here if sizeof(value_type) is too big for the stack. We may want to consider having a specialization for large value_types.
 		// To do: Change this so that we call DoCreateNode(eastl::forward<Args>(args)...) here and use the value from the resulting pNode to get the 
 		// key, and make DoInsertValueImpl take that node as an argument. That way there is no value created on the stack.
 
-		node_type* const pNodeNew = DoCreateNode(eastl::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_type* const pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 		const key_type& key = extract_key{}(pNodeNew->mValue);
 
 		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
@@ -1407,7 +1412,7 @@ namespace eastl
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args)
 	{
-		node_type* const pNodeNew = DoCreateNode(eastl::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_type* const pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 
 		return DoInsertValueImpl(pNodeParent, bForceToLeft, key, pNodeNew);
 	}
@@ -1438,8 +1443,8 @@ namespace eastl
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(true_type, const key_type& key) // true_type means keys are unique.
+	std::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::true_type, const key_type& key) // true_type means keys are unique.
 	{
 		// This is the pathway for insertion of unique keys (map and set, but not multimap and multiset).
 		// Note that we return a pair and not an iterator. This is because the C++ standard for map
@@ -1450,16 +1455,16 @@ namespace eastl
 		if(canInsert)
 		{
 			const iterator itResult(DoInsertKeyImpl(pPosition, false, key));
-			return pair<iterator, bool>(itResult, true);
+			return std::pair<iterator, bool>(itResult, true);
 		}
 
-		return pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition), false);
 	}
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(false_type, const key_type& key) // false_type means keys are not unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::false_type, const key_type& key) // false_type means keys are not unique.
 	{
 		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
 
@@ -1567,7 +1572,7 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueHint(true_type, const_iterator position, const value_type& value) // true_type means keys are unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueHint(std::true_type, const_iterator position, const value_type& value) // true_type means keys are unique.
 	{
 		// This is the pathway for insertion of unique keys (map and set, but not multimap and multiset).
 		//
@@ -1588,7 +1593,7 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueHint(false_type, const_iterator position, const value_type& value) // false_type means keys are not unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueHint(std::false_type, const_iterator position, const value_type& value) // false_type means keys are not unique.
 	{
 		// This is the pathway for insertion of non-unique keys (multimap and multiset, but not map and set).
 		//
@@ -1608,7 +1613,7 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(true_type, const_iterator position, const key_type& key) // true_type means keys are unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::true_type, const_iterator position, const key_type& key) // true_type means keys are unique.
 	{
 		bool       bForceToLeft;
 		node_type* pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
@@ -1622,7 +1627,7 @@ namespace eastl
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(false_type, const_iterator position, const key_type& key) // false_type means keys are not unique.
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::false_type, const_iterator position, const key_type& key) // false_type means keys are not unique.
 	{
 		// This is the pathway for insertion of non-unique keys (multimap and multiset, but not map and set).
 		//
@@ -1665,7 +1670,7 @@ namespace eastl
 	void rbtree<K, V, C, A, E, bM, bU>::insert(std::initializer_list<value_type> ilist)
 	{
 		for(typename std::initializer_list<value_type>::iterator it = ilist.begin(), itEnd = ilist.end(); it != itEnd; ++it)
-			DoInsertValue(has_unique_keys_type(), eastl::move(*it));
+			DoInsertValue(has_unique_keys_type(), std::move(*it));
 	}
 
 
@@ -2045,7 +2050,8 @@ namespace eastl
 	inline typename rbtree<K, V, C, A, E, bM, bU>::node_type*
 	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
 	{
-		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+//		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+		auto* pNode = (node_type*)nullptr;
 		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		return pNode;
@@ -2056,7 +2062,7 @@ namespace eastl
 	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(node_type* pNode)
 	{
 		pNode->~node_type();
-		EASTLFree(mAllocator, pNode, sizeof(node_type));
+//		EASTLFree(mAllocator, pNode, sizeof(node_type));
 	}
 
 
@@ -2073,7 +2079,8 @@ namespace eastl
 			try
 			{
 		#endif
-				::new (eastl::addressof(pNode->mValue)) value_type(pair_first_construct, key);
+//TODO
+//				::new (std::addressof(pNode->mValue)) value_type(pair_first_construct, key);
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
@@ -2108,7 +2115,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(value);
+				::new(std::addressof(pNode->mValue)) value_type(value);
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2142,7 +2149,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(eastl::move(value));
+				::new(std::addressof(pNode->mValue)) value_type(std::move(value));
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2177,7 +2184,7 @@ namespace eastl
 			try
 			{
 		#endif
-				::new(eastl::addressof(pNode->mValue)) value_type(eastl::forward<Args>(args)...);
+				::new(std::addressof(pNode->mValue)) value_type(std::forward<Args>(args)...);
 		#if EASTL_EXCEPTIONS_ENABLED
 			}
 			catch(...)
@@ -2276,7 +2283,7 @@ namespace eastl
 	template <typename K, typename V, typename A, typename C, typename E, bool bM, bool bU>
 	inline bool operator==(const rbtree<K, V, C, A, E, bM, bU>& a, const rbtree<K, V, C, A, E, bM, bU>& b)
 	{
-		return (a.size() == b.size()) && eastl::equal(a.begin(), a.end(), b.begin());
+		return (a.size() == b.size()) && std::equal(a.begin(), a.end(), b.begin());
 	}
 
 
@@ -2289,7 +2296,7 @@ namespace eastl
 	template <typename K, typename V, typename A, typename C, typename E, bool bM, bool bU>
 	inline bool operator<(const rbtree<K, V, C, A, E, bM, bU>& a, const rbtree<K, V, C, A, E, bM, bU>& b)
 	{
-		return eastl::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+		return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 
