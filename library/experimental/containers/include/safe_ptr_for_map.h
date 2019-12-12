@@ -55,20 +55,6 @@ NODISCARD _Ty* allocate_with_control_block()
 	return reinterpret_cast<_Ty*>(dataForObj);
 }
 
-//mb: swap StackPtr with exception safety in case of constructor throwing
-struct StackPtrForMakeOwningCallRiia {
-	void* stackTmp;
-
-	StackPtrForMakeOwningCallRiia(void* ptr) {
-		this->stackTmp = thg_stackPtrForMakeOwningCall;
-		thg_stackPtrForMakeOwningCall = ptr;
-	}
-
-	~StackPtrForMakeOwningCallRiia() {
-		thg_stackPtrForMakeOwningCall = stackTmp;
-	}
-};
-
 
 template<class _Ty,	class... _Types>
 void construct_with_control_block(void* baseObj, void* dataForObj, _Types&&... _Args)
@@ -83,13 +69,16 @@ void construct_with_control_block(void* baseObj, void* dataForObj, _Types&&... _
 // #endif
 
 //	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
-	// void* stackTmp = thg_stackPtrForMakeOwningCall;
-	// thg_stackPtrForMakeOwningCall = baseObj;
-	StackPtrForMakeOwningCallRiia Riia(baseObj);
-	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-	// thg_stackPtrForMakeOwningCall = stackTmp;
-
-	// return objPtr;
+	void* stackTmp = thg_stackPtrForMakeOwningCall;
+	thg_stackPtrForMakeOwningCall = baseObj;
+	try {
+		_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	}
+	catch(...) {
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		throw;
+	}
+	thg_stackPtrForMakeOwningCall = stackTmp;
 }
 
 
