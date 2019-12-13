@@ -121,12 +121,12 @@ namespace nodecpp
 		};
 
 	public:
-		map(const allocator_type& allocator = allocator_type());
-		map(const Compare& compare, const allocator_type& allocator = allocator_type());
+		map(/*const allocator_type& allocator = allocator_type()*/);
+		map(const Compare& compare/*, const allocator_type& allocator = allocator_type()*/);
 		map(const this_type& x);
 		map(this_type&& x);
-		map(this_type&& x, const allocator_type& allocator);
-		map(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR);
+		// map(this_type&& x, const allocator_type& allocator);
+		map(std::initializer_list<value_type> ilist, const Compare& compare = Compare()/*, const allocator_type& allocator = EASTL_MAP_DEFAULT_ALLOCATOR*/);
 
 		template <typename Iterator>
 		map(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To consider: Make a second version of this function without a default arg.
@@ -231,12 +231,12 @@ namespace nodecpp
 		};
 
 	public:
-		multimap(const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR);
-		multimap(const Compare& compare, const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR);
+		multimap(/*const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR*/);
+		multimap(const Compare& compare/*, const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR*/);
 		multimap(const this_type& x);
 		multimap(this_type&& x);
-		multimap(this_type&& x, const allocator_type& allocator);
-		multimap(std::initializer_list<value_type> ilist, const Compare& compare = Compare(), const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR);
+		// multimap(this_type&& x, const allocator_type& allocator);
+		multimap(std::initializer_list<value_type> ilist, const Compare& compare = Compare()/*, const allocator_type& allocator = EASTL_MULTIMAP_DEFAULT_ALLOCATOR*/);
 
 		template <typename Iterator>
 		multimap(Iterator itBegin, Iterator itEnd); // allocator arg removed because VC7.1 fails on the default arg. To consider: Make a second version of this function without a default arg.
@@ -282,15 +282,15 @@ namespace nodecpp
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline map<Key, T, Compare, Allocator>::map(const allocator_type& allocator)
-		: base_type(allocator)
+	inline map<Key, T, Compare, Allocator>::map(/*const allocator_type& allocator*/)
+		// : base_type(allocator)
 	{
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline map<Key, T, Compare, Allocator>::map(const Compare& compare, const allocator_type& allocator)
-		: base_type(compare, allocator)
+	inline map<Key, T, Compare, Allocator>::map(const Compare& compare/*, const allocator_type& allocator*/)
+		: base_type(compare/*, allocator*/)
 	{
 	}
 
@@ -308,16 +308,16 @@ namespace nodecpp
 	{
 	}
 
-	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline map<Key, T, Compare, Allocator>::map(this_type&& x, const allocator_type& allocator)
-		: base_type(std::move(x), allocator)
-	{
-	}
+	// template <typename Key, typename T, typename Compare, typename Allocator>
+	// inline map<Key, T, Compare, Allocator>::map(this_type&& x, const allocator_type& allocator)
+	// 	: base_type(std::move(x), allocator)
+	// {
+	// }
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline map<Key, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist, const Compare& compare, const allocator_type& allocator)
-		: base_type(ilist.begin(), ilist.end(), compare, allocator)
+	inline map<Key, T, Compare, Allocator>::map(std::initializer_list<value_type> ilist, const Compare& compare/*, const allocator_type& allocator*/)
+		: base_type(ilist.begin(), ilist.end(), compare/*, allocator*/)
 	{
 	}
 
@@ -485,15 +485,15 @@ namespace nodecpp
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline multimap<Key, T, Compare, Allocator>::multimap(const allocator_type& allocator)
-		: base_type(allocator)
+	inline multimap<Key, T, Compare, Allocator>::multimap(/*const allocator_type& allocator*/)
+		// : base_type(allocator)
 	{
 	}
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline multimap<Key, T, Compare, Allocator>::multimap(const Compare& compare, const allocator_type& allocator)
-		: base_type(compare, allocator)
+	inline multimap<Key, T, Compare, Allocator>::multimap(const Compare& compare/*, const allocator_type& allocator*/)
+		: base_type(compare/*, allocator*/)
 	{
 	}
 
@@ -511,16 +511,16 @@ namespace nodecpp
 	{
 	}
 
-	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline multimap<Key, T, Compare, Allocator>::multimap(this_type&& x, const allocator_type& allocator)
-		: base_type(std::move(x), allocator)
-	{
-	}
+	// template <typename Key, typename T, typename Compare, typename Allocator>
+	// inline multimap<Key, T, Compare, Allocator>::multimap(this_type&& x, const allocator_type& allocator)
+	// 	: base_type(std::move(x), allocator)
+	// {
+	// }
 
 
 	template <typename Key, typename T, typename Compare, typename Allocator>
-	inline multimap<Key, T, Compare, Allocator>::multimap(std::initializer_list<value_type> ilist, const Compare& compare, const allocator_type& allocator)
-		: base_type(ilist.begin(), ilist.end(), compare, allocator)
+	inline multimap<Key, T, Compare, Allocator>::multimap(std::initializer_list<value_type> ilist, const Compare& compare/*, const allocator_type& allocator*/)
+		: base_type(ilist.begin(), ilist.end(), compare/*, allocator*/)
 	{
 	}
 
