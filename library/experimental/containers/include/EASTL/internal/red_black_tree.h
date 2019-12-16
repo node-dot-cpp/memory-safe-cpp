@@ -160,24 +160,27 @@ namespace nodecpp
 		typedef rbtree_iterator<T, Pointer, Reference>      this_type;
 		typedef rbtree_iterator<T, T*, T&>                  iterator;
 		typedef rbtree_iterator<T, const T*, const T&>      const_iterator;
-		typedef std::size_t                                size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
-		typedef std::ptrdiff_t                                   difference_type;
+		typedef std::size_t                                 size_type;
+		typedef std::ptrdiff_t                              difference_type;
 		typedef T                                           value_type;
 		typedef rbtree_node_base                            base_node_type;
 		typedef rbtree_node<T>                              node_type;
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
-		typedef std::bidirectional_iterator_tag    iterator_category;
+		typedef std::bidirectional_iterator_tag             iterator_category;
 
 	public:
 		safememory::soft_ptr<node_type> mpNode;
+		const node_type* mpEndNode = nullptr;
 
 		node_type* get_raw_ptr() const { return &*mpNode;}
 		void set_from_raw_ptr(base_node_type* pNode);
+		const node_type* get_end_node() const { return mpEndNode; }
+		void assert_not_end() const { if(get_raw_ptr() == get_end_node()) throw "TODO"; } //TODO
 
 	public:
 		rbtree_iterator();
-		explicit rbtree_iterator(const node_type* pNode);
+		explicit rbtree_iterator(node_type* pNode, const node_type* pEndNode);
 		rbtree_iterator(const iterator& x);
 
 		reference operator*() const;
@@ -625,8 +628,11 @@ namespace nodecpp
 		node_type* create_anchor_node();
 		static
 		void reset_anchor_node(node_type*);
+		void assert_iterator_is_mine(const const_iterator& position) const;
 		node_type* get_root_node() const { return static_cast<node_type*>(mpAnchor->mpNodeParent); }
 		node_type* get_end_node() const { return mpAnchor; }
+		node_type* get_begin_node() const { return static_cast<node_type*>(mpAnchor->mpNodeLeft); }
+//		node_type* get_last_node() const { return mpAnchor; }
 	}; // rbtree
 
 
@@ -668,35 +674,37 @@ namespace nodecpp
 
 	template <typename T, typename Pointer, typename Reference>
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator()
-		: mpNode(nullptr) { }
+		/*: mpNode(nullptr)*/ { }
 
 
 	template <typename T, typename Pointer, typename Reference>
-	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const node_type* pNode)
-		: mpNode(safememory::make_soft_ptr_from_raw_ptr<node_type>(const_cast<node_type*>(pNode))) { }
+	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(node_type* pNode, const node_type* pEndNode)
+		: mpNode(safememory::make_soft_ptr_from_raw_ptr<node_type>(pNode)),
+		mpEndNode(pEndNode) { }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const iterator& x)
-		: mpNode(x.mpNode) { }
+		: mpNode(x.mpNode), mpEndNode(x.mpEndNode) { }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::reference
 	rbtree_iterator<T, Pointer, Reference>::operator*() const
-		{ return mpNode->mValue; }
+		{ assert_not_end(); return mpNode->mValue; }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::pointer
 	rbtree_iterator<T, Pointer, Reference>::operator->() const
-		{ return &mpNode->mValue; }
+		{ assert_not_end(); return &mpNode->mValue; }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::this_type&
 	rbtree_iterator<T, Pointer, Reference>::operator++()
 	{
+		assert_not_end();
 		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
 		return *this;
 	}
@@ -706,6 +714,7 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type
 	rbtree_iterator<T, Pointer, Reference>::operator++(int)
 	{
+		assert_not_end();
 		this_type temp(*this);
 		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
 		return temp;
@@ -717,6 +726,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator--()
 	{
 		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
+		assert_not_end();
 		return *this;
 	}
 
@@ -727,6 +737,7 @@ namespace nodecpp
 	{
 		this_type temp(*this);
 		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
+		assert_not_end();
 		return temp;
 	}
 
@@ -924,37 +935,37 @@ namespace nodecpp
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::begin() EA_NOEXCEPT
-		{ return iterator(static_cast<node_type*>(mpAnchor->mpNodeLeft)); }
+		{ return iterator(get_begin_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
 	rbtree<K, V, C, A, E, bM, bU>::begin() const EA_NOEXCEPT
-		{ return const_iterator(static_cast<node_type*>(const_cast<rbtree_node_base*>(mpAnchor->mpNodeLeft))); }
+		{ return const_iterator(get_begin_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
 	rbtree<K, V, C, A, E, bM, bU>::cbegin() const EA_NOEXCEPT
-		{ return const_iterator(static_cast<node_type*>(const_cast<rbtree_node_base*>(mpAnchor->mpNodeLeft))); }
+		{ return const_iterator(get_begin_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::end() EA_NOEXCEPT
-		{ return iterator(get_end_node()); }
+		{ return iterator(get_end_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
 	rbtree<K, V, C, A, E, bM, bU>::end() const EA_NOEXCEPT
-		{ return const_iterator(get_end_node()); }
+		{ return const_iterator(get_end_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
 	rbtree<K, V, C, A, E, bM, bU>::cend() const EA_NOEXCEPT
-		{ return const_iterator(get_end_node()); }
+		{ return const_iterator(get_end_node(), get_end_node()); }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1385,7 +1396,7 @@ namespace nodecpp
 			return std::pair<iterator, bool>(itResult, true);
 		}
 
-		return std::pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition, get_end_node()), false);
 	}
 
 
@@ -1423,7 +1434,7 @@ namespace nodecpp
 		}
 
 		DoFreeNode(pNodeNew);
-		return std::pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition, get_end_node()), false);
 	}
 
 
@@ -1476,7 +1487,7 @@ namespace nodecpp
 		RBTreeInsert(pNodeNew, pNodeParent, mpAnchor, side);
 		mnSize++;
 
-		return iterator(pNodeNew);
+		return iterator(pNodeNew, get_end_node());
 	}
 
 
@@ -1496,7 +1507,7 @@ namespace nodecpp
 			return std::pair<iterator, bool>(itResult, true);
 		}
 
-		return std::pair<iterator, bool>(iterator(pPosition), false);
+		return std::pair<iterator, bool>(iterator(pPosition, get_end_node()), false);
 	}
 
 
@@ -1519,7 +1530,7 @@ namespace nodecpp
 
 		if((position.get_raw_ptr() != mpAnchor->mpNodeRight) && (position.get_raw_ptr() != mpAnchor)) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_raw_ptr());
+			iterator itNext(position.get_raw_ptr(), position.get_end_node());
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1572,7 +1583,7 @@ namespace nodecpp
 
 		if((position.get_raw_ptr() != mpAnchor->mpNodeRight) && (position.get_raw_ptr() != mpAnchor)) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_raw_ptr());
+			iterator itNext(position.get_raw_ptr(),);
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1616,6 +1627,7 @@ namespace nodecpp
 		//
 		// We follow the same approach as SGI STL/STLPort and use the position as
 		// a forced insertion position for the value when possible.
+		assert_iterator_is_mine(position);
 
 		extract_key extractKey;
 		key_type    key(extractKey(value));
@@ -1637,6 +1649,8 @@ namespace nodecpp
 		//
 		// We follow the same approach as SGI STL/STLPort and use the position as
 		// a forced insertion position for the value when possible.
+		assert_iterator_is_mine(position);
+
 		extract_key extractKey;
 		key_type    key(extractKey(value));
 		bool        bForceToLeft;
@@ -1653,6 +1667,8 @@ namespace nodecpp
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::true_type, const_iterator position, const key_type& key) // true_type means keys are unique.
 	{
+		assert_iterator_is_mine(position);
+
 		bool       bForceToLeft;
 		node_type* pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
 
@@ -1671,6 +1687,8 @@ namespace nodecpp
 		//
 		// We follow the same approach as SGI STL/STLPort and use the position as
 		// a forced insertion position for the value when possible.
+		assert_iterator_is_mine(position);
+
 		bool       bForceToLeft;
 		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeysHint(position, bForceToLeft, key);
 
@@ -1700,7 +1718,7 @@ namespace nodecpp
 		RBTreeInsert(pNodeNew, pNodeParent, mpAnchor, side);
 		mnSize++;
 
-		return iterator(pNodeNew);
+		return iterator(pNodeNew, get_end_node());
 	}
 
 
@@ -1753,12 +1771,14 @@ namespace nodecpp
 	inline typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::erase(const_iterator position)
 	{
-		const iterator iErase(position.get_raw_ptr());
+		assert_iterator_is_mine(position);
+
+		const iterator iErase(position.get_raw_ptr(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
 		RBTreeErase(iErase.get_raw_ptr(), mpAnchor);
 		DoFreeNode(iErase.get_raw_ptr());
-		return iterator(position.get_raw_ptr());
+		return iterator(position.get_raw_ptr(), get_end_node());
 	}
 
 
@@ -1766,13 +1786,16 @@ namespace nodecpp
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::erase(const_iterator first, const_iterator last)
 	{
+		assert_iterator_is_mine(first);
+		assert_iterator_is_mine(last);
+
 		// We expect that if the user means to clear the container, they will call clear.
 		if(EASTL_LIKELY((first.get_raw_ptr() != mpAnchor->mpNodeLeft) || (last.get_raw_ptr() != mpAnchor))) // If (first != begin or last != end) ...
 		{
 			// Basic implementation:
 			while(first != last)
 				first = erase(first);
-			return iterator(first.get_raw_ptr());
+			return iterator(first.get_raw_ptr(), get_end_node());
 
 			// Inlined implementation:
 			//size_type n = 0;
@@ -1789,7 +1812,7 @@ namespace nodecpp
 		}
 
 		clear();
-		return iterator(get_end_node()); // Same as: return end();
+		return iterator(get_end_node()), get_end_node(); // Same as: return end();
 	}
 
 
@@ -1857,8 +1880,8 @@ namespace nodecpp
 		}
 
 		if(EASTL_LIKELY((pRangeEnd != mpAnchor) && !compare(key, extractKey(pRangeEnd->mValue))))
-			return iterator(pRangeEnd);
-		return iterator(get_end_node());
+			return iterator(pRangeEnd, get_end_node());
+		return iterator(get_end_node(), get_end_node());
 	}
 
 
@@ -1867,7 +1890,7 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::find(const key_type& key) const
 	{
 		typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
-		return const_iterator(const_cast<rbtree_type*>(this)->find(key));
+		return const_iterator(const_cast<rbtree_type*>(this)->find(key), get_end_node());
 	}
 
 
@@ -1896,8 +1919,8 @@ namespace nodecpp
 		}
 
 		if(EASTL_LIKELY((pRangeEnd != mpAnchor) && !compare2(u, extractKey(pRangeEnd->mValue))))
-			return iterator(pRangeEnd);
-		return iterator(get_end_node());
+			return iterator(pRangeEnd, get_end_node());
+		return iterator(get_end_node(), get_end_node());
 	}
 
 
@@ -1907,7 +1930,7 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::find_as(const U& u, Compare2 compare2) const
 	{
 		typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
-		return const_iterator(const_cast<rbtree_type*>(this)->find_as(u, compare2));
+		return const_iterator(const_cast<rbtree_type*>(this)->find_as(u, compare2), get_end_node());
 	}
 
 
@@ -1934,7 +1957,7 @@ namespace nodecpp
 			}
 		}
 
-		return iterator(pRangeEnd);
+		return iterator(pRangeEnd, get_end_node());
 	}
 
 
@@ -1943,7 +1966,7 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::lower_bound(const key_type& key) const
 	{
 		typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
-		return const_iterator(const_cast<rbtree_type*>(this)->lower_bound(key));
+		return const_iterator(const_cast<rbtree_type*>(this)->lower_bound(key), get_end_node());
 	}
 
 
@@ -1968,7 +1991,7 @@ namespace nodecpp
 				pCurrent  = (node_type*)pCurrent->mpNodeRight;
 		}
 
-		return iterator(pRangeEnd);
+		return iterator(pRangeEnd, get_end_node());
 	}
 
 
@@ -1977,7 +2000,7 @@ namespace nodecpp
 	rbtree<K, V, C, A, E, bM, bU>::upper_bound(const key_type& key) const
 	{
 		typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
-		return const_iterator(const_cast<rbtree_type*>(this)->upper_bound(key));
+		return const_iterator(const_cast<rbtree_type*>(this)->upper_bound(key), get_end_node());
 	}
 
 
@@ -2014,7 +2037,7 @@ namespace nodecpp
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
 			{
-				const node_type* const pNode      = (const node_type*)it.get_raw_ptr();
+				const node_type* const pNode      = it.get_raw_ptr();
 				const node_type* const pNodeRight = (const node_type*)pNode->mpNodeRight;
 				const node_type* const pNodeLeft  = (const node_type*)pNode->mpNodeLeft;
 
@@ -2103,7 +2126,7 @@ namespace nodecpp
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(node_type* pNode)
 	{
-		//mb: we only destruct _mValue_, then node pointers are set to a know state,
+		//mb: we only destruct _mValue_, node pointers are set to a know state,
 		// in case some iterator is still pointing to it
 
 		pNode->mpNodeRight  = nullptr;
@@ -2364,6 +2387,14 @@ namespace nodecpp
 		pNode->mpNodeParent = NULL;
 		pNode->mColor       = kRBTreeColorRed;
 	}
+
+	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
+	void rbtree<K, V, C, A, E, bM, bU>::assert_iterator_is_mine(const const_iterator& it) const
+	{
+		if(it.get_end_node() != get_end_node())
+			throw "TODO"; //TODO
+	}
+
 	///////////////////////////////////////////////////////////////////////
 	// global operators
 	///////////////////////////////////////////////////////////////////////
