@@ -36,25 +36,32 @@ int main() {
     }
 
     printf("----------------\n");
-    auto jt = aMap.begin();
-    printIt(jt);
-    --jt;
-    printIt(jt);
-    --jt;
-    printIt(jt);
-    --jt;
-    printIt(jt);
+    try {
+        auto jt = aMap.begin();
+        --jt;
+    }
+    catch(...) {
+        printf("catched!\n");
+    }
 
     printf("----------------\n");
 
-    jt = aMap.end();
-    printIt(jt);
-    ++jt;
-    printIt(jt);
-    ++jt;
-    printIt(jt);
-    ++jt;
-    printIt(jt);
+    try {
+        printIt(aMap.end());
+    }
+    catch(...) {
+        printf("catched!\n");
+    }
+
+    printf("----------------\n");
+
+    try {
+        auto jt = aMap.end();
+        ++jt;
+    }
+    catch(...) {
+        printf("catched!\n");
+    }
 
     return 0;
 }
