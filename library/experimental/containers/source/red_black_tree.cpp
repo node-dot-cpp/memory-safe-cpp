@@ -217,10 +217,10 @@ namespace nodecpp
 	///
 	EASTL_API void RBTreeInsert(rbtree_node_base* pNode,
 								rbtree_node_base* pNodeParent, 
-								rbtree_node_base* pNodeAnchor,
+								rbtree_anchor_nodes* pNodeAnchor,
 								RBTreeSide insertionSide)
 	{
-		rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpNodeParent;
+		rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpRoot;
 
 		// Initialize fields in new node to insert.
 		pNode->mpNodeParent = pNodeParent;
@@ -233,20 +233,20 @@ namespace nodecpp
 		{
 			pNodeParent->mpNodeLeft = pNode; // Also makes (leftmost = pNode) when (pNodeParent == pNodeAnchor)
 
-			if(pNodeParent == pNodeAnchor)
+			if(pNodeParent == pNodeAnchor->mpEnd)
 			{
-				pNodeAnchor->mpNodeParent = pNode;
-				pNodeAnchor->mpNodeRight = pNode;
+				pNodeAnchor->mpRoot = pNode;
+				pNodeAnchor->mpMaxChild = pNode;
 			}
-			else if(pNodeParent == pNodeAnchor->mpNodeLeft)
-				pNodeAnchor->mpNodeLeft = pNode; // Maintain leftmost pointing to min node
+			else if(pNodeParent == pNodeAnchor->mpMinChild)
+				pNodeAnchor->mpMinChild = pNode; // Maintain leftmost pointing to min node
 		}
 		else
 		{
 			pNodeParent->mpNodeRight = pNode;
 
-			if(pNodeParent == pNodeAnchor->mpNodeRight)
-				pNodeAnchor->mpNodeRight = pNode; // Maintain rightmost pointing to max node
+			if(pNodeParent == pNodeAnchor->mpMaxChild)
+				pNodeAnchor->mpMaxChild = pNode; // Maintain rightmost pointing to max node
 		}
 
 		// Rebalance the tree.
@@ -319,11 +319,11 @@ namespace nodecpp
 	/// RBTreeErase
 	/// Erase a node from the tree.
 	///
-	EASTL_API void RBTreeErase(rbtree_node_base* pNode, rbtree_node_base* pNodeAnchor)
+	EASTL_API void RBTreeErase(rbtree_node_base* pNode, rbtree_anchor_nodes* pNodeAnchor)
 	{
-		rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeParent;
-		rbtree_node_base*& pNodeLeftmostRef  = pNodeAnchor->mpNodeLeft;
-		rbtree_node_base*& pNodeRightmostRef = pNodeAnchor->mpNodeRight;
+		rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpRoot;
+		rbtree_node_base*& pNodeLeftmostRef  = pNodeAnchor->mpMinChild;
+		rbtree_node_base*& pNodeRightmostRef = pNodeAnchor->mpMaxChild;
 		rbtree_node_base*  pNodeSuccessor    = pNode;
 		rbtree_node_base*  pNodeChild        = NULL;
 		rbtree_node_base*  pNodeChildParent  = NULL;

@@ -155,6 +155,12 @@ namespace nodecpp
 	};
 
 
+	struct rbtree_anchor_nodes {
+		rbtree_node_base*         mpEnd;
+		rbtree_node_base*         mpRoot;
+		rbtree_node_base*		  mpMinChild;
+		rbtree_node_base* 		  mpMaxChild;
+	};
 
 
 	// rbtree_node_base functions
@@ -171,10 +177,10 @@ namespace nodecpp
 													const rbtree_node_base* pNodeBottom);
 	EASTL_API void              RBTreeInsert       (      rbtree_node_base* pNode,
 														  rbtree_node_base* pNodeParent, 
-														  rbtree_node_base* pNodeAnchor,
+														  rbtree_anchor_nodes* pNodeAnchor,
 														  RBTreeSide insertionSide);
 	EASTL_API void              RBTreeErase        (      rbtree_node_base* pNode,
-														  rbtree_node_base* pNodeAnchor); 
+														  rbtree_anchor_nodes* pNodeAnchor); 
 
 
 
@@ -461,6 +467,7 @@ namespace nodecpp
 	public:
 //		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 		node_type*        mpAnchor = create_anchor_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
+		rbtree_anchor_nodes mAnchorNodes;
 		size_type         mnSize = 0;       /// Stores the count of nodes in the tree (not counting the anchor node).
 //		allocator_type    mAllocator;   // To do: Use base class optimization to make this go away.
 
@@ -654,14 +661,13 @@ namespace nodecpp
 		node_type* DoGetKeyInsertionPositionUniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
 		node_type* DoGetKeyInsertionPositionNonuniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
 
-		static
 		node_type* create_anchor_node();
 		static
-		void reset_anchor_node(node_type*);
+		void reset_anchor_node(node_type* anchor, rbtree_anchor_nodes* all_nodes);
 		void assert_iterator_is_mine(const const_iterator& position) const;
-		node_type* get_root_node() const { return static_cast<node_type*>(mpAnchor->mpNodeParent); }
-		node_type* get_end_node() const { return mpAnchor; }
-		node_type* get_begin_node() const { return static_cast<node_type*>(mpAnchor->mpNodeLeft); }
+		node_type* get_root_node() const { return static_cast<node_type*>(mAnchorNodes.mpRoot); }
+		node_type* get_end_node() const { return static_cast<node_type*>(mAnchorNodes.mpEnd); }
+		node_type* get_begin_node() const { return static_cast<node_type*>(mAnchorNodes.mpMinChild); }
 //		node_type* get_last_node() const { return mpAnchor; }
 	}; // rbtree
 
@@ -849,9 +855,14 @@ namespace nodecpp
 
 		if(x.get_root_node()) // mAnchor.mpNodeParent is the rb_tree root node.
 		{
-			mpAnchor->mpNodeParent = DoCopySubtree(x.get_root_node(), get_end_node());
-			mpAnchor->mpNodeRight  = RBTreeGetMaxChild(get_root_node());
-			mpAnchor->mpNodeLeft   = RBTreeGetMinChild(get_root_node());
+			mAnchorNodes.mpRoot = DoCopySubtree(x.get_root_node(), get_end_node());
+			mAnchorNodes.mpMinChild = RBTreeGetMinChild(get_root_node());
+			mAnchorNodes.mpMaxChild = RBTreeGetMaxChild(get_root_node());
+
+			mpAnchor->mpNodeParent = mAnchorNodes.mpRoot;
+			mpAnchor->mpNodeRight  = mAnchorNodes.mpMaxChild;
+			mpAnchor->mpNodeLeft   = mAnchorNodes.mpMinChild;
+
 			mnSize               = x.mnSize;
 		}
 	}
@@ -1050,9 +1061,14 @@ namespace nodecpp
 
 			if(x.get_root_node()) // mAnchor.mpNodeParent is the rb_tree root node.
 			{
-				mpAnchor->mpNodeParent = DoCopySubtree(x.get_root_node(), get_end_node());
-				mpAnchor->mpNodeRight  = RBTreeGetMaxChild(get_root_node());
-				mpAnchor->mpNodeLeft   = RBTreeGetMinChild(get_root_node());
+				mAnchorNodes.mpRoot = DoCopySubtree(x.get_root_node(), get_end_node());
+				mAnchorNodes.mpMinChild = RBTreeGetMinChild(get_root_node());
+				mAnchorNodes.mpMaxChild = RBTreeGetMaxChild(get_root_node());
+
+				mpAnchor->mpNodeParent = mAnchorNodes.mpRoot;
+				mpAnchor->mpNodeRight  = mAnchorNodes.mpMaxChild;
+				mpAnchor->mpNodeLeft   = mAnchorNodes.mpMinChild;
+
 				mnSize               = x.mnSize;
 			}
 		}
@@ -1107,8 +1123,8 @@ namespace nodecpp
 			// first, our anchor in on the heap so we can freely swap it.
 			// second, the anchor is also used to match an iterator to its tree of origin
 			// so we actually MUST swap it 
-			swap(mpAnchor, xmpAnchor);
-
+			swap(mpAnchor, x.mpAnchor);
+			swap(mAnchorNodes, x.mAnchorNodes);
 
 			// // However, because our anchor node is a part of our class instance and not 
 			// // dynamically allocated, we can't do a swap of it but must do a more elaborate
@@ -1358,7 +1374,7 @@ namespace nodecpp
 
 		if(bValueLessThanNode) // If we ended up on the left side of the last parent node...
 		{
-			if(EASTL_LIKELY(pLowerBound != (node_type*)mpAnchor->mpNodeLeft)) // If the tree was empty or if we otherwise need to insert at the very front of the tree...
+			if(EASTL_LIKELY(pLowerBound != (node_type*)mAnchorNodes.mpMinChild)) // If the tree was empty or if we otherwise need to insert at the very front of the tree...
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
@@ -1509,12 +1525,12 @@ namespace nodecpp
 		// The reason we may want to have bForceToLeft == true is that pNodeParent->mValue and value may be equal.
 		// In that case it doesn't matter what side we insert on, except that the C++ LWG #233 improvement report
 		// suggests that we should use the insert hint position to force an ordering. So that's what we do.
-		if(bForceToLeft || (pNodeParent == mpAnchor) || compare(key, extractKey(pNodeParent->mValue)))
+		if(bForceToLeft || (pNodeParent == get_end_node()) || compare(key, extractKey(pNodeParent->mValue)))
 			side = kRBTreeSideLeft;
 		else
 			side = kRBTreeSideRight;
 
-		RBTreeInsert(pNodeNew, pNodeParent, mpAnchor, side);
+		RBTreeInsert(pNodeNew, pNodeParent, &mAnchorNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew, get_end_node());
@@ -1558,7 +1574,7 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.get_raw_ptr() != mpAnchor->mpNodeRight) && (position.get_raw_ptr() != mpAnchor)) // If the user specified a specific insertion position...
+		if((position.get_raw_ptr() != mAnchorNodes.mpMaxChild) && (position.get_raw_ptr() != get_end_node())) // If the user specified a specific insertion position...
 		{
 			iterator itNext(position.get_raw_ptr(), position.get_end_node());
 			++itNext;
@@ -1593,11 +1609,11 @@ namespace nodecpp
 			return NULL;  // The above specified hint was not useful, then we do a regular insertion.
 		}
 
-		if(mnSize && compare(extractKey(((node_type*)mpAnchor->mpNodeRight)->mValue), key))
+		if(mnSize && compare(extractKey(((node_type*)mAnchorNodes.mpMaxChild)->mValue), key))
 		{
-			EASTL_VALIDATE_COMPARE(!compare(key, extractKey(((node_type*)mpAnchor->mpNodeRight)->mValue))); // Validate that the compare function is sane.
+			EASTL_VALIDATE_COMPARE(!compare(key, extractKey(((node_type*)mAnchorNodes.mpMaxChild)->mValue))); // Validate that the compare function is sane.
 			bForceToLeft = false;
-			return (node_type*)mpAnchor->mpNodeRight;
+			return (node_type*)mAnchorNodes.mpMaxChild;
 		}
 
 		bForceToLeft = false;
@@ -1611,7 +1627,7 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.get_raw_ptr() != mpAnchor->mpNodeRight) && (position.get_raw_ptr() != mpAnchor)) // If the user specified a specific insertion position...
+		if((position.get_raw_ptr() != mAnchorNodes.mpMaxChild) && (position.get_raw_ptr() != get_end_node())) // If the user specified a specific insertion position...
 		{
 			iterator itNext(position.get_raw_ptr(),);
 			++itNext;
@@ -1638,10 +1654,10 @@ namespace nodecpp
 
 		// This pathway shouldn't be commonly executed, as the user shouldn't be calling 
 		// this hinted version of insert if the user isn't providing a useful hint.
-		if(mnSize && !compare(key, extractKey(((node_type*)mpAnchor->mpNodeRight)->mValue))) // If we are non-empty and the value is >= the last node...
+		if(mnSize && !compare(key, extractKey(((node_type*)mAnchorNodes.mpMaxChild)->mValue))) // If we are non-empty and the value is >= the last node...
 		{
 			bForceToLeft =false;
-			return (node_type*)mpAnchor->mpNodeRight;
+			return (node_type*)mAnchorNodes.mpMaxChild;
 		}
 
 		bForceToLeft = false;
@@ -1739,13 +1755,13 @@ namespace nodecpp
 		// The reason we may want to have bForceToLeft == true is that pNodeParent->mValue and value may be equal.
 		// In that case it doesn't matter what side we insert on, except that the C++ LWG #233 improvement report
 		// suggests that we should use the insert hint position to force an ordering. So that's what we do.
-		if(bForceToLeft || (pNodeParent == mpAnchor) || compare(key, extractKey(pNodeParent->mValue)))
+		if(bForceToLeft || (pNodeParent == get_end_node()) || compare(key, extractKey(pNodeParent->mValue)))
 			side = kRBTreeSideLeft;
 		else
 			side = kRBTreeSideRight;
 
 		node_type* const pNodeNew = DoCreateNodeFromKey(key); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
-		RBTreeInsert(pNodeNew, pNodeParent, mpAnchor, side);
+		RBTreeInsert(pNodeNew, pNodeParent, &mAnchorNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew, get_end_node());
@@ -1777,7 +1793,7 @@ namespace nodecpp
 		DoNukeSubtree(get_root_node());
 
 		// reset_lose_memory();
-		reset_anchor_node(get_end_node());
+		reset_anchor_node(get_end_node(), &mAnchorNodes);
 		mnSize = 0;
 	}
 
@@ -1806,7 +1822,7 @@ namespace nodecpp
 		const iterator iErase(position.get_raw_ptr(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		RBTreeErase(iErase.get_raw_ptr(), mpAnchor);
+		RBTreeErase(iErase.get_raw_ptr(), &mAnchorNodes);
 		DoFreeNode(iErase.get_raw_ptr());
 		return iterator(position.get_raw_ptr(), get_end_node());
 	}
@@ -1820,7 +1836,7 @@ namespace nodecpp
 		assert_iterator_is_mine(last);
 
 		// We expect that if the user means to clear the container, they will call clear.
-		if(EASTL_LIKELY((first.get_raw_ptr() != mpAnchor->mpNodeLeft) || (last.get_raw_ptr() != mpAnchor))) // If (first != begin or last != end) ...
+		if(EASTL_LIKELY((first.get_raw_ptr() != mAnchorNodes.mpMinChild) || (last.get_raw_ptr() != get_end_node()))) // If (first != begin or last != end) ...
 		{
 			// Basic implementation:
 			while(first != last)
@@ -1909,7 +1925,7 @@ namespace nodecpp
 			}
 		}
 
-		if(EASTL_LIKELY((pRangeEnd != mpAnchor) && !compare(key, extractKey(pRangeEnd->mValue))))
+		if(EASTL_LIKELY((pRangeEnd != get_end_node()) && !compare(key, extractKey(pRangeEnd->mValue))))
 			return iterator(pRangeEnd, get_end_node());
 		return iterator(get_end_node(), get_end_node());
 	}
@@ -1948,7 +1964,7 @@ namespace nodecpp
 			}
 		}
 
-		if(EASTL_LIKELY((pRangeEnd != mpAnchor) && !compare2(u, extractKey(pRangeEnd->mValue))))
+		if(EASTL_LIKELY((pRangeEnd != get_end_node()) && !compare2(u, extractKey(pRangeEnd->mValue))))
 			return iterator(pRangeEnd, get_end_node());
 		return iterator(get_end_node(), get_end_node());
 	}
@@ -2056,13 +2072,13 @@ namespace nodecpp
 			//if(!mAnchor.mpNodeParent || (mAnchor.mpNodeLeft == mAnchor.mpNodeRight))
 			//    return false;             // Fix this for case of empty tree.
 
-			if(mpAnchor->mpNodeLeft != RBTreeGetMinChild(get_root_node()))
+			if(mAnchorNodes.mpMinChild != RBTreeGetMinChild(get_root_node()))
 				return false;
 
-			if(mpAnchor->mpNodeRight != RBTreeGetMaxChild(get_root_node()))
+			if(mAnchorNodes.mpMaxChild != RBTreeGetMaxChild(get_root_node()))
 				return false;
 
-			const size_t nBlackCount   = RBTreeGetBlackCount(get_root_node(), mpAnchor->mpNodeLeft);
+			const size_t nBlackCount   = RBTreeGetBlackCount(get_root_node(), mAnchorNodes.mpMinChild);
 			size_type    nIteratedSize = 0;
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
@@ -2114,7 +2130,7 @@ namespace nodecpp
 		}
 		else
 		{
-			if((mpAnchor->mpNodeLeft != mpAnchor) || (mpAnchor->mpNodeRight != mpAnchor))
+			if((mAnchorNodes.mpMinChild != get_end_node()) || (mAnchorNodes.mpMaxChild != get_end_node()))
 				return false;
 		}
 
@@ -2404,18 +2420,23 @@ namespace nodecpp
 		// If we change this, we also need to change rbtree destructor to match
 		memset(std::addressof(pNode->mValue), 0, sizeof(pNode->mValue));
 
-		reset_anchor_node(pNode);
+		reset_anchor_node(pNode, &mAnchorNodes);
 
 		return pNode;
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	void rbtree<K, V, C, A, E, bM, bU>::reset_anchor_node(node_type* pNode)
+	void rbtree<K, V, C, A, E, bM, bU>::reset_anchor_node(node_type* anchor, rbtree_anchor_nodes* all_nodes)
 	{
-		pNode->mpNodeRight  = pNode;
-		pNode->mpNodeLeft   = pNode;
-		pNode->mpNodeParent = NULL;
-		pNode->mColor       = kRBTreeColorRed;
+		anchor->mpNodeRight  = anchor;
+		anchor->mpNodeLeft   = anchor;
+		anchor->mpNodeParent = NULL;
+		anchor->mColor       = kRBTreeColorRed;
+
+		all_nodes->mpEnd = anchor;
+		all_nodes->mpRoot = nullptr;
+		all_nodes->mpMinChild = anchor;
+		all_nodes->mpMaxChild = anchor;	
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>

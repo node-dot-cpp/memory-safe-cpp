@@ -12,13 +12,34 @@ int main() {
     nodecpp::map<int, int> aMap;
 
     aMap[1] = 1;
-    aMap[5] = 5;
-
+    // one element iteration fwd
     for(auto it = aMap.begin(); it != aMap.end(); ++it) {
         printIt(it);
     }
 
+    // one element iteration bck
+    for(auto it = aMap.rbegin(); it != aMap.rend(); ++it) {
+        printIt(it);
+    }
+
+    aMap[5] = 5;
+    // two elements iteration fwd
+    for(auto it = aMap.begin(); it != aMap.end(); ++it) {
+        printIt(it);
+    }
+
+    // two elements iteration bck
+    for(auto it = aMap.rbegin(); it != aMap.rend(); ++it) {
+        printIt(it);
+    }
+
     aMap.insert(std::pair<int, int>(3,3));
+    // three elements iteration
+    for(auto it = aMap.begin(); it != aMap.end(); ++it) {
+        printIt(it);
+    }
+
+
     aMap.insert_or_assign(4,8);
     aMap.insert(std::pair<int, int>(10,10));
     aMap.insert_or_assign(4,4);
