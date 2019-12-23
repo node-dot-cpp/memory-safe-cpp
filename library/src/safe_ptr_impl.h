@@ -121,11 +121,11 @@ struct FirstControlBlock // not reallocatable
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
 //			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
-				//nodecpp::default_log::error( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
 			return idx;
 		}
 		void resetPtr( size_t idx, void* newPtr ) {
-				//nodecpp::default_log::error( "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -155,7 +155,7 @@ struct FirstControlBlock // not reallocatable
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
 				deallocate( present );
 				ret->otherAllockedCnt = newSize;
-				//nodecpp::default_log::error( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 			else {
@@ -165,7 +165,7 @@ struct FirstControlBlock // not reallocatable
 				//present->firstFree->set(nullptr);
 				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
 				ret->addToFreeList( ret->slots, secondBlockStartSize );
-				//nodecpp::default_log::error( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 		}
@@ -259,7 +259,7 @@ struct FirstControlBlock // not reallocatable
 		otherAllockedSlots.init();
 		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
 		dbgCheckFreeList();
-		//nodecpp::default_log::error( "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		dbgCheckValidity<void>();
 	}
 	/*void deinit() {
@@ -301,7 +301,7 @@ struct FirstControlBlock // not reallocatable
 					slots[i].setPtr(ptr);
 					slots[i].setUsed();
 					otherAllockedSlots.setMask( mask );
-					//nodecpp::default_log::error( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
+					//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
 					return i;
 				}
 		}
@@ -309,18 +309,18 @@ struct FirstControlBlock // not reallocatable
 		{
 			if ( otherAllockedSlots.getPtr() == nullptr || otherAllockedSlots.getPtr()->firstFree == nullptr )
 			{
-		//nodecpp::default_log::error( "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
-		//nodecpp::default_log::error( "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 			}
 			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
-					//nodecpp::default_log::error( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
+					//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
 			return idx;
 		}
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
-		//nodecpp::default_log::error( "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
 		if ( idx < maxSlots ) {
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -335,7 +335,7 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckValidity<void>();
 	}
 	void remove( size_t idx ) {
-		//nodecpp::default_log::error( "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
 		if ( idx < maxSlots ) {
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].isUsed() );
 			slots[idx].setUnused();
@@ -353,7 +353,7 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckValidity<void>();
 	}
 	void clear() {
-		//nodecpp::default_log::error( "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		if ( otherAllockedSlots.getPtr() != nullptr )
 			otherAllockedSlots.getPtr()->dealloc();
 		otherAllockedSlots.setZombie();
