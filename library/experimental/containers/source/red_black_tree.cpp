@@ -73,6 +73,9 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_node_base* RBTreeIncrement(const rbtree_node_base* pNode)
 	{
+		//mb: increment of end() is disallowed before getting here
+		EASTL_ASSERT(pNode->mpNodeParent);
+		
 		if(pNode->mpNodeRight) 
 		{
 			pNode = pNode->mpNodeRight;
@@ -90,7 +93,8 @@ namespace nodecpp
 				pNodeTemp = pNodeTemp->mpNodeParent;
 			}
 
-			if(pNode->mpNodeRight != pNodeTemp)
+			//mb: what is this?
+			// if(pNode->mpNodeRight != pNodeTemp)
 				pNode = pNodeTemp;
 		}
 
@@ -104,9 +108,11 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_node_base* RBTreeDecrement(const rbtree_node_base* pNode)
 	{
-		if((pNode->mpNodeParent->mpNodeParent == pNode) && (pNode->mColor == kRBTreeColorRed))
-			return pNode->mpNodeRight;
-		else if(pNode->mpNodeLeft)
+		// mb: decrement from end() works normally now
+		// if((pNode->mpNodeParent->mpNodeParent == pNode) && (pNode->mColor == kRBTreeColorRed))
+		// 	return pNode->mpNodeRight; 
+		// else
+		if(pNode->mpNodeLeft)
 		{
 			rbtree_node_base* pNodeTemp = pNode->mpNodeLeft;
 
@@ -118,7 +124,7 @@ namespace nodecpp
 
 		rbtree_node_base* pNodeTemp = pNode->mpNodeParent;
 
-		while(pNode == pNodeTemp->mpNodeLeft) 
+		while(pNodeTemp && pNode == pNodeTemp->mpNodeLeft) 
 		{
 			pNode     = pNodeTemp;
 			pNodeTemp = pNodeTemp->mpNodeParent;
@@ -216,11 +222,12 @@ namespace nodecpp
 	/// disturbance the node introduced.
 	///
 	EASTL_API void RBTreeInsert(rbtree_node_base* pNode,
-								rbtree_node_base* pNodeParent, 
-								rbtree_anchor_nodes* pNodeAnchor,
+								rbtree_node_base* pNodeParent,
+														  rbtree_node_base* pNodeAnchor,
+						rbtree_min_max_nodes* pMinMaxNodes,
 								RBTreeSide insertionSide)
 	{
-		rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpRoot;
+		rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpNodeLeft;
 
 		// Initialize fields in new node to insert.
 		pNode->mpNodeParent = pNodeParent;
@@ -231,22 +238,22 @@ namespace nodecpp
 		// Insert the node.
 		if(insertionSide == kRBTreeSideLeft)
 		{
-			pNodeParent->mpNodeLeft = pNode; // Also makes (leftmost = pNode) when (pNodeParent == pNodeAnchor)
+			pNodeParent->mpNodeLeft = pNode;
 
-			if(pNodeParent == pNodeAnchor->mpEnd)
+			if(!pNodeParent->mpNodeParent) // first root node
 			{
-				pNodeAnchor->mpRoot = pNode;
-				pNodeAnchor->mpMaxChild = pNode;
+//				pNodeAnchor->mpNode = pNode;
+				pMinMaxNodes->mpMaxChild = pNode;
 			}
-			else if(pNodeParent == pNodeAnchor->mpMinChild)
-				pNodeAnchor->mpMinChild = pNode; // Maintain leftmost pointing to min node
+			if(pNodeParent == pMinMaxNodes->mpMinChild)
+				pMinMaxNodes->mpMinChild = pNode; // Maintain leftmost pointing to min node
 		}
 		else
 		{
 			pNodeParent->mpNodeRight = pNode;
 
-			if(pNodeParent == pNodeAnchor->mpMaxChild)
-				pNodeAnchor->mpMaxChild = pNode; // Maintain rightmost pointing to max node
+			if(pNodeParent == pMinMaxNodes->mpMaxChild)
+				pMinMaxNodes->mpMaxChild = pNode; // Maintain rightmost pointing to max node
 		}
 
 		// Rebalance the tree.
@@ -319,11 +326,13 @@ namespace nodecpp
 	/// RBTreeErase
 	/// Erase a node from the tree.
 	///
-	EASTL_API void RBTreeErase(rbtree_node_base* pNode, rbtree_anchor_nodes* pNodeAnchor)
+	EASTL_API void RBTreeErase(rbtree_node_base* pNode, rbtree_node_base* pNodeAnchor,
+							rbtree_min_max_nodes* pMinMaxNodes)
+
 	{
-		rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpRoot;
-		rbtree_node_base*& pNodeLeftmostRef  = pNodeAnchor->mpMinChild;
-		rbtree_node_base*& pNodeRightmostRef = pNodeAnchor->mpMaxChild;
+		rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeLeft;
+		rbtree_node_base*& pNodeLeftmostRef  = pMinMaxNodes->mpMinChild;
+		rbtree_node_base*& pNodeRightmostRef = pMinMaxNodes->mpMaxChild;
 		rbtree_node_base*  pNodeSuccessor    = pNode;
 		rbtree_node_base*  pNodeChild        = NULL;
 		rbtree_node_base*  pNodeChildParent  = NULL;
