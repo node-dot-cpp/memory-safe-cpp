@@ -73,8 +73,6 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_node_base* RBTreeIncrement(const rbtree_node_base* pNode)
 	{
-		//mb: increment of end() is disallowed before getting here
-		EASTL_ASSERT(pNode->mpNodeParent);
 		
 		if(pNode->mpNodeRight) 
 		{
@@ -87,7 +85,11 @@ namespace nodecpp
 		{
 			rbtree_node_base* pNodeTemp = pNode->mpNodeParent;
 
-			while(pNode == pNodeTemp->mpNodeRight) 
+		    //mb: while pNodeTemp will never be null for any normal
+			// iteration, we check it anyway because user may try
+			// to increment from a deleted node. Deleted nodes get
+			// their parent set to 'end'
+			while(pNodeTemp && pNode == pNodeTemp->mpNodeRight) 
 			{
 				pNode = pNodeTemp;
 				pNodeTemp = pNodeTemp->mpNodeParent;
