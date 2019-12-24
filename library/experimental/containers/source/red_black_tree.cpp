@@ -73,7 +73,9 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_node_base* RBTreeIncrement(const rbtree_node_base* pNode)
 	{
-		
+		// check iterator is alive
+        pNode->assert_is_alive();
+
 		if(pNode->mpNodeRight) 
 		{
 			pNode = pNode->mpNodeRight;
@@ -86,18 +88,14 @@ namespace nodecpp
 			rbtree_node_base* pNodeTemp = pNode->mpNodeParent;
 
 		    //mb: while pNodeTemp will never be null for any normal
-			// iteration, we check it anyway because user may try
-			// to increment from a deleted node. Deleted nodes get
-			// their parent set to 'end'
+			// iteration, we check it anyway because I am paranoid
 			while(pNodeTemp && pNode == pNodeTemp->mpNodeRight) 
 			{
 				pNode = pNodeTemp;
 				pNodeTemp = pNodeTemp->mpNodeParent;
 			}
 
-			//mb: what is this?
-			// if(pNode->mpNodeRight != pNodeTemp)
-				pNode = pNodeTemp;
+			pNode = pNodeTemp;
 		}
 
 		return const_cast<rbtree_node_base*>(pNode);
@@ -110,6 +108,9 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_node_base* RBTreeDecrement(const rbtree_node_base* pNode)
 	{
+		// check iterator is alive
+        pNode->assert_is_alive();
+
 		// mb: decrement from end() works normally now
 		// if((pNode->mpNodeParent->mpNodeParent == pNode) && (pNode->mColor == kRBTreeColorRed))
 		// 	return pNode->mpNodeRight; 

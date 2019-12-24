@@ -134,6 +134,12 @@ namespace nodecpp
 		this_type* mpNodeLeft;
 		this_type* mpNodeParent;
 		char       mColor;       // We only need one bit here, would be nice if we could stuff that bit somewhere else.
+        
+		void assert_is_alive() const {
+    		if(mColor != kRBTreeColorRed && mColor != kRBTreeColorBlack)
+                throw "TODO3";
+
+		}
 	};
 
 
@@ -2437,8 +2443,7 @@ namespace nodecpp
 	void rbtree<K, V, C, A, E, bM, bU>::check_iterator(const const_iterator& it) const
 	{
 		// check if is a deleted node
-		if(it.get_raw_ptr()->mColor == kRBTreeColorZombie)
-		    throw "TODO1";
+		it.get_raw_ptr()->assert_is_alive();
 
 		//check if iterator belong to our tree
 		if(it.get_end_node() != get_end_node())
