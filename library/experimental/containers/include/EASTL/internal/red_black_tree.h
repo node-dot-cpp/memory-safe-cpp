@@ -107,7 +107,7 @@ namespace nodecpp
 
 
 
-	/// RBTreeColor
+	/// RBTreeSide
 	///
 	enum RBTreeSide
 	{
@@ -127,12 +127,15 @@ namespace nodecpp
 	///
 	struct rbtree_node_base
 	{
-		typedef rbtree_node_base this_type;
-
 	public:
-		this_type* mpNodeRight;  // Declared first because it is used most often.
-		this_type* mpNodeLeft;
-		this_type* mpNodeParent;
+
+		typedef rbtree_node_base* child_type;
+		typedef rbtree_node_base* parent_type;
+		typedef const rbtree_node_base* const_parent_type;
+
+		child_type mpNodeRight;  // Declared first because it is used most often.
+		child_type mpNodeLeft;
+		parent_type mpNodeParent;
 		char       mColor;       // We only need one bit here, would be nice if we could stuff that bit somewhere else.
         
 		void assert_is_alive() const {
@@ -142,12 +145,13 @@ namespace nodecpp
                 throw "TODO3";
 		}
 
-		void set_as_deleted(this_type* mpNodeEnd) {
+		void set_as_deleted(parent_type mpNodeEnd) {
 			mpNodeRight = nullptr;
 			mpNodeLeft = nullptr;
 			mpNodeParent = mpNodeEnd;
 			mColor = kRBTreeColorZombie;
 		}
+
 	};
 
 
@@ -174,21 +178,27 @@ namespace nodecpp
 	};
 
 
+	typedef rbtree_node_base::child_type rbtree_owning_ptr;
+	typedef rbtree_node_base::parent_type rbtree_soft_ptr;
+	typedef rbtree_node_base::const_parent_type rbtree_const_node_soft_ptr;
+
+
+
 	// rbtree_node_base functions
 	//
 	// These are the fundamental functions that we use to maintain the 
 	// tree. The bulk of the work of the tree maintenance is done in 
 	// these functions.
 	//
-	EASTL_API rbtree_node_base* RBTreeIncrement    (const rbtree_node_base* pNode);
-	EASTL_API rbtree_node_base* RBTreeDecrement    (const rbtree_node_base* pNode);
-	EASTL_API rbtree_node_base* RBTreeGetMinChild  (const rbtree_node_base* pNode);
-	EASTL_API rbtree_node_base* RBTreeGetMaxChild  (const rbtree_node_base* pNode);
-	EASTL_API size_t            RBTreeGetBlackCount(const rbtree_node_base* pNodeTop,
-													const rbtree_node_base* pNodeBottom);
-	EASTL_API void              RBTreeInsert       (      rbtree_node_base* pNode,
-														  rbtree_node_base* pNodeParent,
-														  rbtree_node_base* pNodeAnchor,
+	EASTL_API rbtree_soft_ptr RBTreeIncrement    (rbtree_soft_ptr pNode);
+	EASTL_API rbtree_soft_ptr RBTreeDecrement    (rbtree_soft_ptr pNode);
+	EASTL_API rbtree_soft_ptr RBTreeGetMinChild  (rbtree_soft_ptr pNode);
+	EASTL_API rbtree_soft_ptr RBTreeGetMaxChild  (rbtree_soft_ptr pNode);
+	EASTL_API size_t            RBTreeGetBlackCount(rbtree_soft_ptr pNodeTop,
+													rbtree_soft_ptr pNodeBottom);
+	EASTL_API void              RBTreeInsert       (      rbtree_owning_ptr pNode,
+														  rbtree_soft_ptr pNodeParent,
+														  rbtree_soft_ptr pNodeAnchor,
 														  rbtree_min_max_nodes* pMinMaxNodes,
 														  RBTreeSide insertionSide);
 	EASTL_API void              RBTreeErase        (      rbtree_node_base* pNode,
@@ -695,18 +705,18 @@ namespace nodecpp
 	// rbtree_node_base functions
 	///////////////////////////////////////////////////////////////////////
 
-	EASTL_API inline rbtree_node_base* RBTreeGetMinChild(const rbtree_node_base* pNodeBase)
+	EASTL_API inline rbtree_soft_ptr RBTreeGetMinChild(rbtree_soft_ptr pNodeBase)
 	{
 		while(pNodeBase->mpNodeLeft) 
 			pNodeBase = pNodeBase->mpNodeLeft;
-		return const_cast<rbtree_node_base*>(pNodeBase);
+		return pNodeBase;
 	}
 
-	EASTL_API inline rbtree_node_base* RBTreeGetMaxChild(const rbtree_node_base* pNodeBase)
+	EASTL_API inline rbtree_soft_ptr RBTreeGetMaxChild(rbtree_soft_ptr pNodeBase)
 	{
 		while(pNodeBase->mpNodeRight) 
 			pNodeBase = pNodeBase->mpNodeRight;
-		return const_cast<rbtree_node_base*>(pNodeBase);
+		return pNodeBase;
 	}
 
 	// The rest of the functions are non-trivial and are found in 
