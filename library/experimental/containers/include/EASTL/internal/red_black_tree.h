@@ -136,9 +136,17 @@ namespace nodecpp
 		char       mColor;       // We only need one bit here, would be nice if we could stuff that bit somewhere else.
         
 		void assert_is_alive() const {
+			// as now, we use a special color, in the future change to verify
+			// the safe pointer control block
     		if(mColor != kRBTreeColorRed && mColor != kRBTreeColorBlack)
                 throw "TODO3";
+		}
 
+		void set_as_deleted(this_type* mpNodeEnd) {
+			mpNodeRight = nullptr;
+			mpNodeLeft = nullptr;
+			mpNodeParent = mpNodeEnd;
+			mColor = kRBTreeColorZombie;
 		}
 	};
 
@@ -928,18 +936,14 @@ namespace nodecpp
 	{
 		// Erase the entire tree. DoNukeSubtree is not a 
 		// conventional erase function, as it does no rebalancing.
-		DoNukeSubtree(get_end_node());
+		DoNukeSubtree(get_root_node());
 
 		//mb: this is paired with create_end_node()
-		// since we never constructed the _mValue_ on the anchor
+		// since we never constructed the _mValue_ on the end node
 		// we neither destruct it. Only set the pointer to a known state
-		// in case we have some iterator still pointing to them
+		// just in case.
 		node_type* pNode = get_end_node();
-		pNode->mpNodeRight  = nullptr;
-		pNode->mpNodeLeft   = nullptr;
-		pNode->mpNodeParent = pNode;
-		pNode->mColor       = kRBTreeColorBlack; 
-
+		pNode->set_as_deleted(nullptr);
 		safememory::deallocate_with_control_block(pNode);
 	}
 
@@ -2176,11 +2180,7 @@ namespace nodecpp
 	{
 		//mb: we only destruct _mValue_, node pointers are set to a know state,
 		// in case some iterator is still pointing to it
-
-		pNode->mpNodeRight  = nullptr;
-		pNode->mpNodeLeft   = nullptr;
-		pNode->mpNodeParent = get_end_node();
-		pNode->mColor       = kRBTreeColorZombie;
+		pNode->set_as_deleted(get_end_node());
 
 		// pNode->~node_type();
 		safememory::destruct(std::addressof(pNode->mValue));
