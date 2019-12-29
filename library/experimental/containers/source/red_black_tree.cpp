@@ -69,25 +69,32 @@ namespace nodecpp
 
 	inline void RBTreeSetLeftChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
-		EASTL_ASSERT(pNodeChild);
+//		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeLeft);
 
+		if(pNodeChild) {
 		pNodeChild->mpNodeParent = pNode;
 		pNode->mpNodeLeft = std::move(pNodeChild);
+	}
 	}
 
 	inline void RBTreeSetRightChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
-		EASTL_ASSERT(pNodeChild);
+//		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeRight);
 
+		if(pNodeChild) {
 		pNodeChild->mpNodeParent = pNode;
 		pNode->mpNodeRight = std::move(pNodeChild);
+	}
 	}
 
 	inline rbtree_owning_ptr RBTreeTakeLeftChild(rbtree_soft_ptr pNode) {
 		EASTL_ASSERT(pNode);
-		EASTL_ASSERT(pNode->mpNodeLeft);
+//		EASTL_ASSERT(pNode->mpNodeLeft);
+
+		if(!pNode->mpNodeLeft)
+			return rbtree_owning_ptr(nullptr);
 
 		rbtree_owning_ptr tmp = std::move(pNode->mpNodeLeft);
 		pNode->mpNodeLeft = nullptr;
@@ -96,7 +103,10 @@ namespace nodecpp
 
 	inline rbtree_owning_ptr RBTreeTakeRightChild(rbtree_soft_ptr pNode) {
 		EASTL_ASSERT(pNode);
-		EASTL_ASSERT(pNode->mpNodeRight);
+//		EASTL_ASSERT(pNode->mpNodeRight);
+
+		if(!pNode->mpNodeRight)
+			return rbtree_owning_ptr(nullptr);
 
 		rbtree_owning_ptr tmp = std::move(pNode->mpNodeRight);
 		pNode->mpNodeRight = nullptr;
@@ -305,8 +315,8 @@ namespace nodecpp
 
 		// Initialize fields in new node to insert.
 		pNode->mpNodeParent = pNodeParent;
-		pNode->mpNodeRight  = NULL;
-		pNode->mpNodeLeft   = NULL;
+		pNode->mpNodeRight  = nullptr;
+		pNode->mpNodeLeft   = nullptr;
 		pNode->mColor       = kRBTreeColorRed;
 
 		// Insert the node.
@@ -333,7 +343,7 @@ namespace nodecpp
 		// Rebalance the tree.
 		while((pNode != pNodeAnchor->mpNodeLeft) && (pNode->mpNodeParent->mColor == kRBTreeColorRed)) 
 		{
-			EA_ANALYSIS_ASSUME(pNode->mpNodeParent != NULL);
+			EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
 			rbtree_soft_ptr pNodeParentParent = pNode->mpNodeParent->mpNodeParent;
 
 			if(pNode->mpNodeParent == pNodeParentParent->mpNodeLeft) 
@@ -356,7 +366,7 @@ namespace nodecpp
 						RBTreeRotateLeft(pNode);
 					}
 
-					EA_ANALYSIS_ASSUME(pNode->mpNodeParent != NULL);
+					EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
 					pNode->mpNodeParent->mColor = kRBTreeColorBlack;
 					pNodeParentParent->mColor = kRBTreeColorRed;
 					// pNodeRootRef = RBTreeRotateRight(pNodeParentParent, pNodeRootRef);
@@ -376,7 +386,7 @@ namespace nodecpp
 				}
 				else 
 				{
-					EA_ANALYSIS_ASSUME(pNode != NULL && pNode->mpNodeParent != NULL);
+					EA_ANALYSIS_ASSUME(pNode != nullptr && pNode->mpNodeParent != nullptr);
 
 					if(pNode == pNode->mpNodeParent->mpNodeLeft) 
 					{
@@ -393,7 +403,7 @@ namespace nodecpp
 			}
 		}
 
-		EA_ANALYSIS_ASSUME(pNodeAnchor->mpNodeLeft != NULL);
+		EA_ANALYSIS_ASSUME(pNodeAnchor->mpNodeLeft != nullptr);
 		pNodeAnchor->mpNodeLeft->mColor = kRBTreeColorBlack;
 
 	} // RBTreeInsert
@@ -404,122 +414,244 @@ namespace nodecpp
 	/// RBTreeErase
 	/// Erase a node from the tree.
 	///
-	EASTL_API void RBTreeErase(rbtree_node_base* pNode,
+	EASTL_API rbtree_owning_ptr RBTreeErase(rbtree_node_base* pNode,
 								rbtree_node_base* pNodeAnchor,
 								rbtree_min_max_nodes* pMinMaxNodes)
 
 	{
-		rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeLeft;
-		rbtree_node_base*& pNodeLeftmostRef  = pMinMaxNodes->mpMinChild;
-		rbtree_node_base*& pNodeRightmostRef = pMinMaxNodes->mpMaxChild;
-		rbtree_node_base*  pNodeSuccessor    = pNode;
-		rbtree_node_base*  pNodeChild        = NULL;
-		rbtree_node_base*  pNodeChildParent  = NULL;
+		// rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeLeft;
+		// rbtree_node_base*& pNodeLeftmostRef  = pMinMaxNodes->mpMinChild;
+		// rbtree_node_base*& pNodeRightmostRef = pMinMaxNodes->mpMaxChild;
+		// rbtree_node_base*  pNodeSuccessor    = pNode;
+		rbtree_soft_ptr    pNodeChild        = nullptr;
+		// rbtree_node_base*  pNodeChildParent  = nullptr;
+		
+		rbtree_owning_ptr  pNodeOwning 		 = nullptr;
 
-		if(pNodeSuccessor->mpNodeLeft == NULL)         // pNode has at most one non-NULL child.
-			pNodeChild = pNodeSuccessor->mpNodeRight;  // pNodeChild might be null.
-		else if(pNodeSuccessor->mpNodeRight == NULL)   // pNode has exactly one non-NULL child.
-			pNodeChild = pNodeSuccessor->mpNodeLeft;   // pNodeChild is not null.
-		else 
+		if(pNode == pMinMaxNodes->mpMinChild) // If pNode is the tree begin() node...
 		{
-			// pNode has two non-null children. Set pNodeSuccessor to pNode's successor. pNodeChild might be NULL.
-			pNodeSuccessor = pNodeSuccessor->mpNodeRight;
-
-			while(pNodeSuccessor->mpNodeLeft)
-				pNodeSuccessor = pNodeSuccessor->mpNodeLeft;
-
-			pNodeChild = pNodeSuccessor->mpNodeRight;
-		}
-
-		// Here we remove pNode from the tree and fix up the node pointers appropriately around it.
-		if(pNodeSuccessor == pNode) // If pNode was a leaf node (had both NULL children)...
-		{
-			pNodeChildParent = pNodeSuccessor->mpNodeParent;  // Assign pNodeReplacement's parent.
-
-			if(pNodeChild) 
-				pNodeChild->mpNodeParent = pNodeSuccessor->mpNodeParent;
-
-			if(pNode == pNodeAnchor->mpNodeLeft) // If the node being deleted is the root node...
-				pNodeAnchor->mpNodeLeft = pNodeChild; // Set the new root node to be the pNodeReplacement.
-			else 
-			{
-				if(pNode == pNode->mpNodeParent->mpNodeLeft) // If pNode is a left node...
-					pNode->mpNodeParent->mpNodeLeft  = pNodeChild;  // Make pNode's replacement node be on the same side.
-				else
-					pNode->mpNodeParent->mpNodeRight = pNodeChild;
-				// Now pNode is disconnected from the bottom of the tree (recall that in this pathway pNode was determined to be a leaf).
-			}
-
-			if(pNode == pNodeLeftmostRef) // If pNode is the tree begin() node...
-			{
-				// Because pNode is the tree begin(), pNode->mpNodeLeft must be NULL.
-				// Here we assign the new begin() (first node).
-				if(pNode->mpNodeRight && pNodeChild)
-				{
-					EASTL_ASSERT(pNodeChild != NULL); // Logically pNodeChild should always be valid.
-					pNodeLeftmostRef = RBTreeGetMinChild(pNodeChild); 
-				}
-				else
-					pNodeLeftmostRef = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
-			}
-
-			if(pNode == pNodeRightmostRef) // If pNode is the tree last (rbegin()) node...
-			{
-				// Because pNode is the tree rbegin(), pNode->mpNodeRight must be NULL.
-				// Here we assign the new rbegin() (last node)
-				if(pNode->mpNodeLeft && pNodeChild)
-				{
-					EASTL_ASSERT(pNodeChild != NULL); // Logically pNodeChild should always be valid.
-					pNodeRightmostRef = RBTreeGetMaxChild(pNodeChild);
-				}
-				else // pNodeChild == pNode->mpNodeLeft
-					pNodeRightmostRef = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
-			}
-		}
-		else // else (pNodeSuccessor != pNode)
-		{
-			// Relink pNodeSuccessor in place of pNode. pNodeSuccessor is pNode's successor.
-			// We specifically set pNodeSuccessor to be on the right child side of pNode, so fix up the left child side.
-			pNode->mpNodeLeft->mpNodeParent = pNodeSuccessor; 
-			pNodeSuccessor->mpNodeLeft = pNode->mpNodeLeft;
-
-			if(pNodeSuccessor == pNode->mpNodeRight) // If pNode's successor was at the bottom of the tree... (yes that's effectively what this statement means)
-				pNodeChildParent = pNodeSuccessor; // Assign pNodeReplacement's parent.
+			// Because pNode is the tree begin(), pNode->mpNodeLeft must be NULL.
+			// Here we assign the new begin() (first node).
+			if(pNode->mpNodeRight)
+				pMinMaxNodes->mpMinChild = RBTreeGetMinChild(pNode->mpNodeRight); 
 			else
-			{
-				pNodeChildParent = pNodeSuccessor->mpNodeParent;
+				pMinMaxNodes->mpMinChild = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
+		}
 
-				if(pNodeChild)
-					pNodeChild->mpNodeParent = pNodeChildParent;
+		if(pNode == pMinMaxNodes->mpMaxChild) // If pNode is the tree last (rbegin()) node...
+		{
+			// Because pNode is the tree rbegin(), pNode->mpNodeRight must be NULL.
+			// Here we assign the new rbegin() (last node)
+			if(pNode->mpNodeLeft)
+				pMinMaxNodes->mpMaxChild = RBTreeGetMaxChild(pNode->mpNodeLeft);
+			else
+				pMinMaxNodes->mpMaxChild = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
+		}
 
-				pNodeChildParent->mpNodeLeft = pNodeChild;
+		if(!pNode->mpNodeLeft && !pNode->mpNodeRight) {
+			if(pNode == pNode->mpNodeParent->mpNodeLeft)
+				pNodeOwning = RBTreeTakeLeftChild(pNode->mpNodeParent);  // Make pNode's replacement node be on the same side.
+			else
+				pNodeOwning = RBTreeTakeRightChild(pNode->mpNodeParent);
 
-				pNodeSuccessor->mpNodeRight = pNode->mpNodeRight;
-				pNode->mpNodeRight->mpNodeParent = pNodeSuccessor;
+		}
+		else if(!pNode->mpNodeLeft) {
+			EASTL_ASSERT(pNode->mpNodeRight);
+
+			rbtree_owning_ptr pNodeChildOwn = RBTreeTakeRightChild(pNode);
+			pNodeChild = pNodeChildOwn;
+			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
+				pNodeOwning = RBTreeTakeLeftChild(pNode->mpNodeParent);
+				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
+			}
+			else {
+				pNodeOwning = RBTreeTakeRightChild(pNode->mpNodeParent);
+				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeChildOwn));
 			}
 
-			if(pNode == pNodeAnchor->mpNodeLeft)
-				pNodeAnchor->mpNodeLeft = pNodeSuccessor;
-			else if(pNode == pNode->mpNodeParent->mpNodeLeft)
-				pNode->mpNodeParent->mpNodeLeft = pNodeSuccessor;
-			else 
-				pNode->mpNodeParent->mpNodeRight = pNodeSuccessor;
+		}
+		else if(!pNode->mpNodeRight) {
+			EASTL_ASSERT(pNode->mpNodeLeft);
 
-			// Now pNode is disconnected from the tree.
+			rbtree_owning_ptr pNodeChildOwn = RBTreeTakeLeftChild(pNode); 
+			pNodeChild = pNodeChildOwn;
+			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
+				pNodeOwning = RBTreeTakeLeftChild(pNode->mpNodeParent);
+				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
+			}
+			else {
+				pNodeOwning = RBTreeTakeRightChild(pNode->mpNodeParent);
+				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeChildOwn));
+			}
+		
+		}
+		//both childs are non-null
+		else if(!pNode->mpNodeRight->mpNodeLeft) {
+			//the node at the right doesn't have a left child,
+			rbtree_owning_ptr pNodeLeft = RBTreeTakeLeftChild(pNode);
+			rbtree_owning_ptr pNodeSuccessor = RBTreeTakeRightChild(pNode);
+			RBTreeSetLeftChild(pNodeSuccessor, std::move(pNodeLeft));
+			pNodeChild = pNodeSuccessor->mpNodeRight;
 
-			pNodeSuccessor->mpNodeParent = pNode->mpNodeParent;
 			using std::swap;
 			swap(pNodeSuccessor->mColor, pNode->mColor);
+
+			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
+				pNodeOwning = RBTreeTakeLeftChild(pNode->mpNodeParent);
+				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
+			}
+			else {
+				pNodeOwning = RBTreeTakeRightChild(pNode->mpNodeParent);
+				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeSuccessor));
+			}
 		}
+		else {
+			// if we are here, pNode has two childs and the child on the right
+			// is not the succesors, go down the right child to find next
+
+
+			rbtree_soft_ptr pNodeSuccessorSoft = RBTreeIncrement(pNode);
+			rbtree_soft_ptr pNodeSuccessorParent = pNodeSuccessorSoft->mpNodeParent;
+			
+//			rbtree_soft_ptr pNodeChildParent = RBTreeIncrement(pNode)->mpNodeParent;
+
+			EASTL_ASSERT(pNodeSuccessorParent != pNode);
+			rbtree_owning_ptr pNodeSuccessor = RBTreeTakeLeftChild(pNodeSuccessorParent);
+
+			EASTL_ASSERT(!pNodeSuccessorOwn->mpNodeLeft);
+			if(pNodeSuccessor->mpNodeRight) {
+				pNodeChild = pNodeSuccessor->mpNodeRight;
+
+				rbtree_owning_ptr pNodeSuccessorRight = RBTreeTakeRightChild(pNodeSuccessor);
+				RBTreeSetLeftChild(pNodeSuccessorParent, std::move(pNodeSuccessorRight));  // Make pNode's replacement node be on the same side.
+
+			}
+			rbtree_owning_ptr pNodeLeft = RBTreeTakeLeftChild(pNode);
+			RBTreeSetLeftChild(pNodeSuccessor, std::move(pNodeLeft));  // Make pNode's replacement node be on the same side.
+
+			rbtree_owning_ptr pNodeRight = RBTreeTakeRightChild(pNode);
+			RBTreeSetRightChild(pNodeSuccessor, std::move(pNodeRight));
+
+			using std::swap;
+			swap(pNodeSuccessor->mColor, pNode->mColor);
+
+			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
+				pNodeOwning = RBTreeTakeLeftChild(pNode->mpNodeParent);
+				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
+			}
+			else {
+				pNodeOwning = RBTreeTakeRightChild(pNode->mpNodeParent);
+				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeSuccessor));
+			}
+		}
+
+		rbtree_soft_ptr pNodeChildParent = pNodeChild->mpNodeParent;
+
+		// if(pNodeSuccessor->mpNodeLeft == NULL)         // pNode has at most one non-NULL child.
+		// 	pNodeChild = pNodeSuccessor->mpNodeRight;  // pNodeChild might be null.
+		// else if(pNodeSuccessor->mpNodeRight == NULL)   // pNode has exactly one non-NULL child.
+		// 	pNodeChild = pNodeSuccessor->mpNodeLeft;   // pNodeChild is not null.
+		// else 
+		// {
+		// 	// pNode has two non-null children. Set pNodeSuccessor to pNode's successor. pNodeChild might be NULL.
+		// 	pNodeSuccessor = pNodeSuccessor->mpNodeRight;
+
+		// 	while(pNodeSuccessor->mpNodeLeft)
+		// 		pNodeSuccessor = pNodeSuccessor->mpNodeLeft;
+
+		// 	pNodeChild = pNodeSuccessor->mpNodeRight;
+		// }
+
+		// // Here we remove pNode from the tree and fix up the node pointers appropriately around it.
+		// if(pNodeSuccessor == pNode) // If pNode was a leaf node (had both NULL children)...
+		// {
+		// 	pNodeChildParent = pNodeSuccessor->mpNodeParent;  // Assign pNodeReplacement's parent.
+
+		// 	if(pNodeChild) 
+		// 		pNodeChild->mpNodeParent = pNodeSuccessor->mpNodeParent;
+
+		// 	if(pNode == pNodeAnchor->mpNodeLeft) // If the node being deleted is the root node...
+		// 		pNodeAnchor->mpNodeLeft = pNodeChild; // Set the new root node to be the pNodeReplacement.
+		// 	else 
+		// 	{
+		// 		if(pNode == pNode->mpNodeParent->mpNodeLeft) // If pNode is a left node...
+		// 			pNode->mpNodeParent->mpNodeLeft  = pNodeChild;  // Make pNode's replacement node be on the same side.
+		// 		else
+		// 			pNode->mpNodeParent->mpNodeRight = pNodeChild;
+		// 		// Now pNode is disconnected from the bottom of the tree (recall that in this pathway pNode was determined to be a leaf).
+		// 	}
+
+		// 	if(pNode == pNodeLeftmostRef) // If pNode is the tree begin() node...
+		// 	{
+		// 		// Because pNode is the tree begin(), pNode->mpNodeLeft must be NULL.
+		// 		// Here we assign the new begin() (first node).
+		// 		if(pNode->mpNodeRight && pNodeChild)
+		// 		{
+		// 			EASTL_ASSERT(pNodeChild != NULL); // Logically pNodeChild should always be valid.
+		// 			pNodeLeftmostRef = RBTreeGetMinChild(pNodeChild); 
+		// 		}
+		// 		else
+		// 			pNodeLeftmostRef = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
+		// 	}
+
+		// 	if(pNode == pNodeRightmostRef) // If pNode is the tree last (rbegin()) node...
+		// 	{
+		// 		// Because pNode is the tree rbegin(), pNode->mpNodeRight must be NULL.
+		// 		// Here we assign the new rbegin() (last node)
+		// 		if(pNode->mpNodeLeft && pNodeChild)
+		// 		{
+		// 			EASTL_ASSERT(pNodeChild != NULL); // Logically pNodeChild should always be valid.
+		// 			pNodeRightmostRef = RBTreeGetMaxChild(pNodeChild);
+		// 		}
+		// 		else // pNodeChild == pNode->mpNodeLeft
+		// 			pNodeRightmostRef = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
+		// 	}
+		// }
+		// else // else (pNodeSuccessor != pNode)
+		// {
+		// 	// Relink pNodeSuccessor in place of pNode. pNodeSuccessor is pNode's successor.
+		// 	// We specifically set pNodeSuccessor to be on the right child side of pNode, so fix up the left child side.
+		// 	pNode->mpNodeLeft->mpNodeParent = pNodeSuccessor; 
+		// 	pNodeSuccessor->mpNodeLeft = pNode->mpNodeLeft;
+
+		// 	if(pNodeSuccessor == pNode->mpNodeRight) // If pNode's successor was at the bottom of the tree... (yes that's effectively what this statement means)
+		// 		pNodeChildParent = pNodeSuccessor; // Assign pNodeReplacement's parent.
+		// 	else
+		// 	{
+		// 		pNodeChildParent = pNodeSuccessor->mpNodeParent;
+
+		// 		if(pNodeChild)
+		// 			pNodeChild->mpNodeParent = pNodeChildParent;
+
+		// 		pNodeChildParent->mpNodeLeft = pNodeChild;
+
+		// 		pNodeSuccessor->mpNodeRight = pNode->mpNodeRight;
+		// 		pNode->mpNodeRight->mpNodeParent = pNodeSuccessor;
+		// 	}
+
+		// 	if(pNode == pNodeAnchor->mpNodeLeft)
+		// 		pNodeAnchor->mpNodeLeft = pNodeSuccessor;
+		// 	else if(pNode == pNode->mpNodeParent->mpNodeLeft)
+		// 		pNode->mpNodeParent->mpNodeLeft = pNodeSuccessor;
+		// 	else 
+		// 		pNode->mpNodeParent->mpNodeRight = pNodeSuccessor;
+
+		// 	// Now pNode is disconnected from the tree.
+
+		// 	pNodeSuccessor->mpNodeParent = pNode->mpNodeParent;
+		// 	using std::swap;
+		// 	swap(pNodeSuccessor->mColor, pNode->mColor);
+		// }
+
 
 		// Here we do tree balancing as per the conventional red-black tree algorithm.
 		if(pNode->mColor == kRBTreeColorBlack) 
 		{ 
-			while((pNodeChild != pNodeAnchor->mpNodeLeft) && ((pNodeChild == NULL) || (pNodeChild->mColor == kRBTreeColorBlack)))
+			while((pNodeChild != pNodeAnchor->mpNodeLeft) && ((pNodeChild == nullptr) || (pNodeChild->mColor == kRBTreeColorBlack)))
 			{
 				if(pNodeChild == pNodeChildParent->mpNodeLeft) 
 				{
-					rbtree_node_base* pNodeTemp = pNodeChildParent->mpNodeRight;
+					rbtree_soft_ptr pNodeTemp = pNodeChildParent->mpNodeRight;
 
 					if(pNodeTemp->mColor == kRBTreeColorRed) 
 					{
@@ -530,8 +662,8 @@ namespace nodecpp
 						pNodeTemp = pNodeChildParent->mpNodeRight;
 					}
 
-					if(((pNodeTemp->mpNodeLeft  == NULL) || (pNodeTemp->mpNodeLeft->mColor  == kRBTreeColorBlack)) &&
-						((pNodeTemp->mpNodeRight == NULL) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack))) 
+					if(((pNodeTemp->mpNodeLeft  == nullptr) || (pNodeTemp->mpNodeLeft->mColor  == kRBTreeColorBlack)) &&
+						((pNodeTemp->mpNodeRight == nullptr) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack))) 
 					{
 						pNodeTemp->mColor = kRBTreeColorRed;
 						pNodeChild = pNodeChildParent;
@@ -539,7 +671,7 @@ namespace nodecpp
 					} 
 					else 
 					{
-						if((pNodeTemp->mpNodeRight == NULL) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack)) 
+						if((pNodeTemp->mpNodeRight == nullptr) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack)) 
 						{
 							pNodeTemp->mpNodeLeft->mColor = kRBTreeColorBlack;
 							pNodeTemp->mColor = kRBTreeColorRed;
@@ -562,7 +694,7 @@ namespace nodecpp
 				else 
 				{   
 					// The following is the same as above, with mpNodeRight <-> mpNodeLeft.
-					rbtree_node_base* pNodeTemp = pNodeChildParent->mpNodeLeft;
+					rbtree_soft_ptr pNodeTemp = pNodeChildParent->mpNodeLeft;
 
 					if(pNodeTemp->mColor == kRBTreeColorRed) 
 					{
@@ -574,8 +706,8 @@ namespace nodecpp
 						pNodeTemp = pNodeChildParent->mpNodeLeft;
 					}
 
-					if(((pNodeTemp->mpNodeRight == NULL) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack)) &&
-						((pNodeTemp->mpNodeLeft  == NULL) || (pNodeTemp->mpNodeLeft->mColor  == kRBTreeColorBlack))) 
+					if(((pNodeTemp->mpNodeRight == nullptr) || (pNodeTemp->mpNodeRight->mColor == kRBTreeColorBlack)) &&
+						((pNodeTemp->mpNodeLeft  == nullptr) || (pNodeTemp->mpNodeLeft->mColor  == kRBTreeColorBlack))) 
 					{
 						pNodeTemp->mColor = kRBTreeColorRed;
 						pNodeChild       = pNodeChildParent;
@@ -583,7 +715,7 @@ namespace nodecpp
 					} 
 					else 
 					{
-						if((pNodeTemp->mpNodeLeft == NULL) || (pNodeTemp->mpNodeLeft->mColor == kRBTreeColorBlack)) 
+						if((pNodeTemp->mpNodeLeft == nullptr) || (pNodeTemp->mpNodeLeft->mColor == kRBTreeColorBlack)) 
 						{
 							pNodeTemp->mpNodeRight->mColor = kRBTreeColorBlack;
 							pNodeTemp->mColor              = kRBTreeColorRed;
@@ -610,6 +742,7 @@ namespace nodecpp
 				pNodeChild->mColor = kRBTreeColorBlack;
 		}
 
+		return pNodeOwning;
 	} // RBTreeErase
 
 
