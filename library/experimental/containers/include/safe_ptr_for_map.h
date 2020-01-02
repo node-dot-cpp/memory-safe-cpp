@@ -111,20 +111,15 @@ void deallocate_with_control_block(_Ty* t)
 	}
 }
 
-template<class _Ty>
-soft_ptr_impl<_Ty> make_soft_ptr_from_raw_ptr(_Ty* t)
-{
-	if ( NODECPP_LIKELY(t) )
-	{
-//			uint8_t* alloca = getAllocatedBlock_(t);
-		FirstControlBlock* cb = getControlBlock_(t);
-		return soft_ptr_impl<_Ty>(cb, t);
-	}
-	else
-	{
-		return soft_ptr_impl<_Ty>(nullptr);
-	}
-	
+
+template<class T1, class T2>
+T1 node_soft_ptr_static_cast(T2 t2) {
+	return static_cast<T1>(t2);
+}
+
+template<class T1, class T2>
+T1 node_owning_ptr_static_cast(T2 t2) {
+	return static_cast<T1>(t2);
 }
 
 } // namespace nodecpp::safememory

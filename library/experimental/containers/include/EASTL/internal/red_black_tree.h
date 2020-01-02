@@ -146,10 +146,25 @@ namespace nodecpp
 		}
 
 		void set_as_deleted(parent_type mpNodeEnd) {
-			mpNodeRight = nullptr;
-			mpNodeLeft = nullptr;
+			EASTL_ASSERT(!mpNodeLeft);
+			EASTL_ASSERT(!mpNodeRight);
+
 			mpNodeParent = mpNodeEnd;
 			mColor = kRBTreeColorZombie;
+		}
+
+		child_type take_node_left() {
+			EASTL_ASSERT(mpNodeLeft);
+			child_type pNode = std::move(mpNodeLeft);
+			mpNodeLeft = nullptr;
+			return pNode;
+		}
+
+		child_type take_node_right() {
+			EASTL_ASSERT(mpNodeRight);
+			child_type pNode = std::move(mpNodeRight);
+			mpNodeRight = nullptr;
+			return pNode;
 		}
 
 	};
@@ -169,6 +184,19 @@ namespace nodecpp
 		#if defined(_MSC_VER)
 			rbtree_node(const rbtree_node&) = delete;
 		#endif
+
+		typedef rbtree_node<Value>* node_soft_ptr;
+		typedef rbtree_node<Value>* node_owning_ptr;
+// /		typedef const rbtree_node_base* const_parent_type;
+
+		node_soft_ptr get_node_right() const {
+			return safememory::node_soft_ptr_static_cast<node_soft_ptr>(this->mpNodeRight);
+		}
+
+		node_soft_ptr get_node_left() const {
+			return safememory::node_soft_ptr_static_cast<node_soft_ptr>(this->mpNodeLeft);
+		}
+
 	};
 
 
@@ -201,8 +229,8 @@ namespace nodecpp
 														  rbtree_soft_ptr pNodeAnchor,
 														  rbtree_min_max_nodes* pMinMaxNodes,
 														  RBTreeSide insertionSide);
-	EASTL_API rbtree_owning_ptr RBTreeErase        (      rbtree_node_base* pNode,
-														  rbtree_node_base* pNodeAnchor,
+	EASTL_API rbtree_owning_ptr RBTreeErase        (      rbtree_soft_ptr pNode,
+														  rbtree_soft_ptr pNodeAnchor,
 														  rbtree_min_max_nodes* pMinMaxNodes); 
 
 
@@ -227,21 +255,23 @@ namespace nodecpp
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
 		typedef std::bidirectional_iterator_tag             iterator_category;
+		typedef node_type*									node_soft_ptr;
 
 	public:
-		safememory::soft_ptr<node_type> mpNode;
-		const node_type* mpEndNode = nullptr;
+		node_soft_ptr mpNode;
+		node_soft_ptr mpEndNode = nullptr;
 
-		node_type* get_raw_ptr() const { return &*mpNode;}
-		void set_from_raw_ptr(base_node_type* pNode);
-		const node_type* get_end_node() const { return mpEndNode; }
+		node_soft_ptr get_raw_ptr() const { return mpNode;}
+		void set_from_raw_ptr(rbtree_soft_ptr pNode);
+		const node_soft_ptr get_end_node() const { return mpEndNode; }
 		void assert_not_end() const { if(get_raw_ptr() == get_end_node()) throw "TODO"; } //TODO
 		void assert_not_null() const { if(get_raw_ptr() == nullptr) throw "TODO"; } //TODO
 
 	public:
 		rbtree_iterator();
-		explicit rbtree_iterator(node_type* pNode, const node_type* pEndNode);
+		explicit rbtree_iterator(node_soft_ptr pNode, node_soft_ptr pEndNode);
 		rbtree_iterator(const iterator& x);
+//		rbtree_iterator& operator=(const rbtree_iterator&) = default; //TODO review
 
 		reference operator*() const;
 		pointer   operator->() const;
@@ -486,8 +516,8 @@ namespace nodecpp
 		typedef std::integral_constant<bool, bUniqueKeys>                                            has_unique_keys_type;
 		typedef typename base_type::extract_key                                                 extract_key;
 
-		typedef pointer																			rbtree_owning_ptr;
-		typedef pointer																			rbtree_soft_ptr;
+		typedef node_type*																		node_owning_ptr;
+		typedef node_type*																		node_soft_ptr;
 
 
 	protected:
@@ -496,7 +526,7 @@ namespace nodecpp
 
 	public:
 //		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
-		node_type*        mpNodeEnd = create_end_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
+		node_owning_ptr        mpNodeEnd = create_end_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 		rbtree_min_max_nodes mMinMaxNodes;
 		size_type         mnSize = 0;       /// Stores the count of nodes in the tree (not counting the anchor node).
 //		allocator_type    mAllocator;   // To do: Use base class optimization to make this go away.
@@ -648,19 +678,19 @@ namespace nodecpp
 
 	protected:
 		static
-		rbtree_owning_ptr DoAllocateNode();
-		void       DoFreeNode(rbtree_owning_ptr pNode);
+		node_owning_ptr DoAllocateNode();
+		void       DoFreeNode(node_owning_ptr pNode);
 
-		rbtree_owning_ptr DoCreateNodeFromKey(const key_type& key);
+		node_owning_ptr DoCreateNodeFromKey(const key_type& key);
 
 		template<class... Args>
-		rbtree_owning_ptr DoCreateNode(Args&&... args);
-		rbtree_owning_ptr DoCreateNode(const value_type& value);
-		rbtree_owning_ptr DoCreateNode(value_type&& value);
-		rbtree_owning_ptr DoCreateNode(const node_type* pNodeSource, node_type* pNodeParent);
+		node_owning_ptr DoCreateNode(Args&&... args);
+		node_owning_ptr DoCreateNode(const value_type& value);
+		node_owning_ptr DoCreateNode(value_type&& value);
+		node_owning_ptr DoCreateNode(const node_soft_ptr pNodeSource, node_soft_ptr pNodeParent);
 
-		rbtree_owning_ptr DoCopySubtree(const node_type* pNodeSource, node_type* pNodeDest);
-		void       DoNukeSubtree(rbtree_owning_ptr pNode);
+		node_owning_ptr DoCopySubtree(const node_soft_ptr pNodeSource, node_soft_ptr pNodeDest);
+		void       DoNukeSubtree(node_owning_ptr pNode);
 
 		template <class... Args>
 		std::pair<iterator, bool> DoInsertValue(std::true_type, Args&&... args);
@@ -672,8 +702,8 @@ namespace nodecpp
 		iterator DoInsertValue(std::false_type, value_type&& value);
 
 		template <class... Args>
-		iterator DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args);
-		iterator DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, rbtree_owning_ptr pNodeNew);
+		iterator DoInsertValueImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args);
+		iterator DoInsertValueImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key, node_owning_ptr pNodeNew);
 
 		std::pair<iterator, bool> DoInsertKey(std::true_type, const key_type& key);
 		iterator                    DoInsertKey(std::false_type, const key_type& key);
@@ -683,21 +713,36 @@ namespace nodecpp
 
 		iterator DoInsertKey(std::true_type, const_iterator position, const key_type& key);  // By design we return iterator and not a pair.
 		iterator DoInsertKey(std::false_type, const_iterator position, const key_type& key);
-		iterator DoInsertKeyImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key);
+		iterator DoInsertKeyImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key);
 
-		node_type* DoGetKeyInsertionPositionUniqueKeys(bool& canInsert, const key_type& key);
-		node_type* DoGetKeyInsertionPositionNonuniqueKeys(const key_type& key);
+		node_soft_ptr DoGetKeyInsertionPositionUniqueKeys(bool& canInsert, const key_type& key);
+		node_soft_ptr DoGetKeyInsertionPositionNonuniqueKeys(const key_type& key);
 
-		node_type* DoGetKeyInsertionPositionUniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
-		node_type* DoGetKeyInsertionPositionNonuniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
+		node_soft_ptr DoGetKeyInsertionPositionUniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
+		node_soft_ptr DoGetKeyInsertionPositionNonuniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
 
-		node_type* create_end_node();
+		node_owning_ptr create_end_node();
 		static
-		void reset_end_node(node_type* anchor, rbtree_min_max_nodes* all_nodes);
+		void reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes* all_nodes);
 		void check_iterator(const const_iterator& position) const;
-		node_type* get_root_node() const { return static_cast<node_type*>(mpNodeEnd->mpNodeLeft); }
-		node_type* get_end_node() const { return mpNodeEnd; }
-		node_type* get_begin_node() const { return static_cast<node_type*>(mMinMaxNodes.mpMinChild); }
+		node_soft_ptr get_root_node() const { return mpNodeEnd->get_node_left(); }
+		node_owning_ptr take_root_node() {
+			if(mpNodeEnd->mpNodeLeft) {
+				node_owning_ptr pNode = safememory::node_owning_ptr_static_cast<node_owning_ptr>(mpNodeEnd->take_node_left());
+				mpNodeEnd->mpNodeLeft = nullptr;
+				return pNode;
+			}
+			else
+				return node_owning_ptr{};
+		}
+		node_soft_ptr get_end_node() const { return mpNodeEnd; }
+		node_owning_ptr take_end_node() { 
+			node_owning_ptr pNode = std::move(mpNodeEnd);
+			mpNodeEnd = nullptr;
+			return pNode;
+		}
+		node_soft_ptr get_begin_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMinChild); }
+		node_soft_ptr get_last_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMaxChild); }
 //		node_type* get_last_node() const { return mpNodeEnd; }
 	}; // rbtree
 
@@ -734,8 +779,8 @@ namespace nodecpp
 
 	template <typename T, typename Pointer, typename Reference>
 	void
-	rbtree_iterator<T, Pointer, Reference>::set_from_raw_ptr(base_node_type* pNode) {
-		mpNode = safememory::make_soft_ptr_from_raw_ptr<node_type>(static_cast<node_type*>(pNode));
+	rbtree_iterator<T, Pointer, Reference>::set_from_raw_ptr(rbtree_soft_ptr pNode) {
+		mpNode = safememory::node_soft_ptr_static_cast<node_soft_ptr>(pNode);
 	}
 
 	template <typename T, typename Pointer, typename Reference>
@@ -744,9 +789,8 @@ namespace nodecpp
 
 
 	template <typename T, typename Pointer, typename Reference>
-	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(node_type* pNode, const node_type* pEndNode)
-		: mpNode(safememory::make_soft_ptr_from_raw_ptr<node_type>(pNode)),
-		mpEndNode(pEndNode) { }
+	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(node_soft_ptr pNode, const node_soft_ptr pEndNode)
+		: mpNode(pNode), mpEndNode(pEndNode) { }
 
 
 	template <typename T, typename Pointer, typename Reference>
@@ -950,15 +994,15 @@ namespace nodecpp
 	{
 		// Erase the entire tree. DoNukeSubtree is not a 
 		// conventional erase function, as it does no rebalancing.
-		DoNukeSubtree(get_root_node());
+		DoNukeSubtree(take_root_node());
 
 		//mb: this is paired with create_end_node()
 		// since we never constructed the _mValue_ on the end node
 		// we neither destruct it. Only set the pointer to a known state
 		// just in case.
-		node_type* pNode = get_end_node();
+		node_owning_ptr pNode = take_end_node();
 		pNode->set_as_deleted(nullptr);
-		safememory::deallocate_with_control_block(pNode);
+		safememory::deallocate_with_control_block(std::move(pNode));
 	}
 
 
@@ -1360,16 +1404,16 @@ namespace nodecpp
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::node_type*
+	typename rbtree<K, V, C, A, E, bM, bU>::node_soft_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoGetKeyInsertionPositionUniqueKeys(bool& canInsert, const key_type& key)
 	{
 		// This code is essentially a slightly modified copy of the the rbtree::insert 
 		// function whereby this version takes a key and not a full value_type.
 		extract_key extractKey;
 
-		node_type* pCurrent    = get_root_node(); // Start with the root node.
-		node_type* pLowerBound = get_end_node();             // Set it to the container end for now.
-		node_type* pParent;                                        // This will be where we insert the new node.
+		node_soft_ptr pCurrent    = get_root_node(); // Start with the root node.
+		node_soft_ptr pLowerBound = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pParent;                                        // This will be where we insert the new node.
 
 		bool bValueLessThanNode = true; // If the tree is empty, this will result in an insertion at the front.
 
@@ -1384,21 +1428,21 @@ namespace nodecpp
 			if(bValueLessThanNode)
 			{
 				EASTL_VALIDATE_COMPARE(!compare(extractKey(pCurrent->mValue), key)); // Validate that the compare function is sane.
-				pCurrent = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent = pCurrent->get_node_left();
 			}
 			else
-				pCurrent = (node_type*)pCurrent->mpNodeRight;
+				pCurrent = pCurrent->get_node_right();
 		}
 
 		pParent = pLowerBound; // pLowerBound is actually upper bound right now (i.e. it is > value instead of <=), but we will make it the lower bound below.
 
 		if(bValueLessThanNode) // If we ended up on the left side of the last parent node...
 		{
-			if(EASTL_LIKELY(pLowerBound != (node_type*)mMinMaxNodes.mpMinChild)) // If the tree was empty or if we otherwise need to insert at the very front of the tree...
+			if(EASTL_LIKELY(pLowerBound != get_begin_node())) // If the tree was empty or if we otherwise need to insert at the very front of the tree...
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
-				pLowerBound = (node_type*)RBTreeDecrement(pLowerBound);
+				pLowerBound = safememory::node_soft_ptr_static_cast<node_soft_ptr>(RBTreeDecrement(pLowerBound));
 			}
 			else
 			{
@@ -1422,12 +1466,12 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::node_type*
+	typename rbtree<K, V, C, A, E, bM, bU>::node_soft_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoGetKeyInsertionPositionNonuniqueKeys(const key_type& key)
 	{
 		// This is the pathway for insertion of non-unique keys (multimap and multiset, but not map and set).
-		node_type* pCurrent  = get_root_node(); // Start with the root node.
-		node_type* pRangeEnd = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pCurrent  = get_root_node(); // Start with the root node.
+		node_soft_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 		extract_key extractKey;
 
 		while(pCurrent)
@@ -1437,10 +1481,10 @@ namespace nodecpp
 			if(compare(key, extractKey(pCurrent->mValue)))
 			{
 				EASTL_VALIDATE_COMPARE(!compare(extractKey(pCurrent->mValue), key)); // Validate that the compare function is sane.
-				pCurrent = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent = pCurrent->get_node_left();
 			}
 			else
-				pCurrent = (node_type*)pCurrent->mpNodeRight;
+				pCurrent = pCurrent->get_node_right();
 		}
 
 		return pRangeEnd;
@@ -1454,7 +1498,7 @@ namespace nodecpp
 		extract_key extractKey;
 		key_type    key(extractKey(value));
 		bool        canInsert;
-		node_type*  pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
+		node_soft_ptr  pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
 
 		if(canInsert)
 		{
@@ -1472,7 +1516,7 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 		key_type    key(extractKey(value));
-		node_type*  pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
+		node_soft_ptr  pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
 
 		return DoInsertValueImpl(pPosition, false, key, std::move(value));
 	}
@@ -1487,11 +1531,11 @@ namespace nodecpp
 		// Note that we return a pair and not an iterator. This is because the C++ standard for map
 		// and set is to return a pair and not just an iterator.
 
-		rbtree_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 		const key_type& key = extract_key{}(pNodeNew->mValue);
 
 		bool        canInsert;
-		node_type*  pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
+		node_soft_ptr  pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
 
 		if(canInsert)
 		{
@@ -1513,10 +1557,10 @@ namespace nodecpp
 		// To do: Change this so that we call DoCreateNode(eastl::forward<Args>(args)...) here and use the value from the resulting pNode to get the 
 		// key, and make DoInsertValueImpl take that node as an argument. That way there is no value created on the stack.
 
-		rbtree_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 		const key_type& key = extract_key{}(pNodeNew->mValue);
 
-		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
+		node_soft_ptr pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
 
 		return DoInsertValueImpl(pPosition, false, key, std::move(pNodeNew));
 	}
@@ -1525,9 +1569,9 @@ namespace nodecpp
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template <class... Args>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args)
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key, Args&&... args)
 	{
-		rbtree_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_owning_ptr pNodeNew = DoCreateNode(std::forward<Args>(args)...); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
 
 		return DoInsertValueImpl(pNodeParent, bForceToLeft, key, std::move(pNodeNew));
 	}
@@ -1535,7 +1579,7 @@ namespace nodecpp
 	
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key, rbtree_owning_ptr pNodeNew)
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertValueImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key, node_owning_ptr pNodeNew)
 	{
 		EASTL_ASSERT_MSG(pNodeNew != nullptr, "node to insert to the rbtree must not be null");
 
@@ -1565,7 +1609,7 @@ namespace nodecpp
 		// Note that we return a pair and not an iterator. This is because the C++ standard for map
 		// and set is to return a pair and not just an iterator.
 		bool       canInsert;
-		node_type* pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
+		node_soft_ptr pPosition = DoGetKeyInsertionPositionUniqueKeys(canInsert, key);
 
 		if(canInsert)
 		{
@@ -1581,7 +1625,7 @@ namespace nodecpp
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
 	rbtree<K, V, C, A, E, bM, bU>::DoInsertKey(std::false_type, const key_type& key) // false_type means keys are not unique.
 	{
-		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
+		node_soft_ptr pPosition = DoGetKeyInsertionPositionNonuniqueKeys(key);
 
 		return DoInsertKeyImpl(pPosition, false, key);
 	}
@@ -1589,7 +1633,7 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::node_type*
+	typename rbtree<K, V, C, A, E, bM, bU>::node_soft_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoGetKeyInsertionPositionUniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key)
 	{
 		extract_key extractKey;
@@ -1629,11 +1673,11 @@ namespace nodecpp
 			return NULL;  // The above specified hint was not useful, then we do a regular insertion.
 		}
 
-		if(mnSize && compare(extractKey(((node_type*)mMinMaxNodes.mpMaxChild)->mValue), key))
+		if(mnSize && compare(extractKey(get_last_node()->mValue), key))
 		{
-			EASTL_VALIDATE_COMPARE(!compare(key, extractKey(((node_type*)mMinMaxNodes.mpMaxChild)->mValue))); // Validate that the compare function is sane.
+			EASTL_VALIDATE_COMPARE(!compare(key, extractKey(get_last_node()->mValue))); // Validate that the compare function is sane.
 			bForceToLeft = false;
-			return (node_type*)mMinMaxNodes.mpMaxChild;
+			return get_last_node();
 		}
 
 		bForceToLeft = false;
@@ -1642,7 +1686,7 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::node_type*
+	typename rbtree<K, V, C, A, E, bM, bU>::node_soft_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoGetKeyInsertionPositionNonuniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key)
 	{
 		extract_key extractKey;
@@ -1674,10 +1718,10 @@ namespace nodecpp
 
 		// This pathway shouldn't be commonly executed, as the user shouldn't be calling 
 		// this hinted version of insert if the user isn't providing a useful hint.
-		if(mnSize && !compare(key, extractKey(((node_type*)mMinMaxNodes.mpMaxChild)->mValue))) // If we are non-empty and the value is >= the last node...
+		if(mnSize && !compare(key, extractKey(get_last_node()->mValue))) // If we are non-empty and the value is >= the last node...
 		{
 			bForceToLeft =false;
-			return (node_type*)mMinMaxNodes.mpMaxChild;
+			return get_last_node();
 		}
 
 		bForceToLeft = false;
@@ -1698,7 +1742,7 @@ namespace nodecpp
 		extract_key extractKey;
 		key_type    key(extractKey(value));
 		bool        bForceToLeft;
-		node_type*  pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
+		node_soft_ptr  pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
 
 		if(pPosition)
 			return DoInsertValueImpl(pPosition, bForceToLeft, key, value);
@@ -1720,7 +1764,7 @@ namespace nodecpp
 		extract_key extractKey;
 		key_type    key(extractKey(value));
 		bool        bForceToLeft;
-		node_type*  pPosition = DoGetKeyInsertionPositionNonuniqueKeysHint(position, bForceToLeft, key);
+		node_soft_ptr  pPosition = DoGetKeyInsertionPositionNonuniqueKeysHint(position, bForceToLeft, key);
 
 		if(pPosition)
 			return DoInsertValueImpl(pPosition, bForceToLeft, key, value);
@@ -1736,7 +1780,7 @@ namespace nodecpp
 		check_iterator(position);
 
 		bool       bForceToLeft;
-		node_type* pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
+		node_soft_ptr pPosition = DoGetKeyInsertionPositionUniqueKeysHint(position, bForceToLeft, key);
 
 		if(pPosition)
 			return DoInsertKeyImpl(pPosition, bForceToLeft, key);
@@ -1756,7 +1800,7 @@ namespace nodecpp
 		check_iterator(position);
 
 		bool       bForceToLeft;
-		node_type* pPosition = DoGetKeyInsertionPositionNonuniqueKeysHint(position, bForceToLeft, key);
+		node_soft_ptr pPosition = DoGetKeyInsertionPositionNonuniqueKeysHint(position, bForceToLeft, key);
 
 		if(pPosition)
 			return DoInsertKeyImpl(pPosition, bForceToLeft, key);
@@ -1767,7 +1811,7 @@ namespace nodecpp
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::DoInsertKeyImpl(node_type* pNodeParent, bool bForceToLeft, const key_type& key)
+	rbtree<K, V, C, A, E, bM, bU>::DoInsertKeyImpl(node_soft_ptr pNodeParent, bool bForceToLeft, const key_type& key)
 	{
 		RBTreeSide  side;
 		extract_key extractKey;
@@ -1780,8 +1824,8 @@ namespace nodecpp
 		else
 			side = kRBTreeSideRight;
 
-		rbtree_owning_ptr pNodeNew = DoCreateNodeFromKey(key); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
-		rbtree_soft_ptr pNodeNew2 = pNodeNew;
+		node_owning_ptr pNodeNew = DoCreateNodeFromKey(key); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_soft_ptr pNodeNew2 = pNodeNew;
 		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, &mMinMaxNodes, side);
 		mnSize++;
 
@@ -1811,7 +1855,7 @@ namespace nodecpp
 	{
 		// Erase the entire tree. DoNukeSubtree is not a 
 		// conventional erase function, as it does no rebalancing.
-		DoNukeSubtree(get_root_node());
+		DoNukeSubtree(take_root_node());
 
 		// reset_lose_memory();
 		reset_end_node(get_end_node(), &mMinMaxNodes);
@@ -1843,7 +1887,7 @@ namespace nodecpp
 		const iterator iErase(position.get_raw_ptr(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		rbtree_owning_ptr pNode = RBTreeErase(iErase.get_raw_ptr(), mpNodeEnd, &mMinMaxNodes);
+		node_owning_ptr pNode = safememory::node_owning_ptr_static_cast<node_owning_ptr>(RBTreeErase(iErase.get_raw_ptr(), mpNodeEnd, &mMinMaxNodes));
 		DoFreeNode(std::move(pNode));
 		return iterator(position.get_raw_ptr(), get_end_node());
 	}
@@ -1929,20 +1973,20 @@ namespace nodecpp
 		// find a lot with trees, but very uncommonly call lower_bound.
 		extract_key extractKey;
 
-		node_type* pCurrent  = get_root_node(); // Start with the root node.
-		node_type* pRangeEnd = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pCurrent  = get_root_node(); // Start with the root node.
+		node_soft_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 
 		while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
 		{
 			if(EASTL_LIKELY(!compare(extractKey(pCurrent->mValue), key))) // If pCurrent is >= key...
 			{
 				pRangeEnd = pCurrent;
-				pCurrent  = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent  = pCurrent->get_node_left();
 			}
 			else
 			{
 				EASTL_VALIDATE_COMPARE(!compare(key, extractKey(pCurrent->mValue))); // Validate that the compare function is sane.
-				pCurrent  = (node_type*)pCurrent->mpNodeRight;
+				pCurrent  = pCurrent->get_node_right();
 			}
 		}
 
@@ -1968,20 +2012,20 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		node_type* pCurrent  = get_root_node(); // Start with the root node.
-		node_type* pRangeEnd = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pCurrent  = get_root_node(); // Start with the root node.
+		node_soft_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 
 		while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
 		{
 			if(EASTL_LIKELY(!compare2(extractKey(pCurrent->mValue), u))) // If pCurrent is >= u...
 			{
 				pRangeEnd = pCurrent;
-				pCurrent  = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent  = pCurrent->get_node_left();
 			}
 			else
 			{
 				EASTL_VALIDATE_COMPARE(!compare2(u, extractKey(pCurrent->mValue))); // Validate that the compare function is sane.
-				pCurrent  = (node_type*)pCurrent->mpNodeRight;
+				pCurrent  = pCurrent->get_node_right();
 			}
 		}
 
@@ -2007,20 +2051,20 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		node_type* pCurrent  = get_root_node(); // Start with the root node.
-		node_type* pRangeEnd = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pCurrent  = get_root_node(); // Start with the root node.
+		node_soft_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 
 		while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
 		{
 			if(EASTL_LIKELY(!compare(extractKey(pCurrent->mValue), key))) // If pCurrent is >= key...
 			{
 				pRangeEnd = pCurrent;
-				pCurrent  = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent  = pCurrent->get_node_left();
 			}
 			else
 			{
 				EASTL_VALIDATE_COMPARE(!compare(key, extractKey(pCurrent->mValue))); // Validate that the compare function is sane.
-				pCurrent  = (node_type*)pCurrent->mpNodeRight;
+				pCurrent  = pCurrent->get_node_right();
 			}
 		}
 
@@ -2043,8 +2087,8 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		node_type* pCurrent  = get_root_node(); // Start with the root node.
-		node_type* pRangeEnd = get_end_node();             // Set it to the container end for now.
+		node_soft_ptr pCurrent  = get_root_node(); // Start with the root node.
+		node_soft_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 
 		while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
 		{
@@ -2052,10 +2096,10 @@ namespace nodecpp
 			{
 				EASTL_VALIDATE_COMPARE(!compare(extractKey(pCurrent->mValue), key)); // Validate that the compare function is sane.
 				pRangeEnd = pCurrent;
-				pCurrent  = (node_type*)pCurrent->mpNodeLeft;
+				pCurrent  = pCurrent->get_node_right();
 			}
 			else
-				pCurrent  = (node_type*)pCurrent->mpNodeRight;
+				pCurrent  = pCurrent->get_node_right();
 		}
 
 		return iterator(pRangeEnd, get_end_node());
@@ -2104,9 +2148,9 @@ namespace nodecpp
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
 			{
-				const node_type* const pNode      = it.get_raw_ptr();
-				const node_type* const pNodeRight = (const node_type*)pNode->mpNodeRight;
-				const node_type* const pNodeLeft  = (const node_type*)pNode->mpNodeLeft;
+				node_soft_ptr pNode      = it.get_raw_ptr();
+				node_soft_ptr pNodeRight = pNode->get_node_right();
+				node_soft_ptr pNodeLeft  = pNode->get_node_left();
 
 				// Verify #7 above.
 				if(pNodeRight && compare(extractKey(pNodeRight->mValue), extractKey(pNode->mValue)) && compare(extractKey(pNode->mValue), extractKey(pNodeRight->mValue))) // Validate that the compare function is sane.
@@ -2179,11 +2223,11 @@ namespace nodecpp
 	
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	inline typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
+	inline typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
 	{
 //		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
-		rbtree_owning_ptr = safememory::allocate_with_control_block<node_type>();
+		node_owning_ptr pNode = safememory::allocate_with_control_block<node_type>();
 		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
 
 		return pNode;
@@ -2191,7 +2235,7 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(rbtree_owning_ptr pNode)
+	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(node_owning_ptr pNode)
 	{
 		//mb: we only destruct _mValue_, node pointers are set to a know state,
 		// in case some iterator is still pointing to it
@@ -2205,13 +2249,13 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoCreateNodeFromKey(const key_type& key)
 	{
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		rbtree_owning_ptr pNode = DoAllocateNode();
+		node_owning_ptr pNode = DoAllocateNode();
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2241,13 +2285,13 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(const value_type& value)
 	{
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		rbtree_owning_ptr pNode = DoAllocateNode();
+		node_owning_ptr pNode = DoAllocateNode();
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2276,13 +2320,13 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(value_type&& value)
 	{
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		rbtree_owning_ptr pNode = DoAllocateNode();
+		node_owning_ptr pNode = DoAllocateNode();
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2312,13 +2356,13 @@ namespace nodecpp
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	template<class... Args>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(Args&&... args)
 	{
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		rbtree_owning_ptr pNode = DoAllocateNode();
+		node_owning_ptr pNode = DoAllocateNode();
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2347,10 +2391,10 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
-	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(const node_type* pNodeSource, node_type* pNodeParent)
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
+	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(const node_soft_ptr pNodeSource, node_soft_ptr pNodeParent)
 	{
-		rbtree_owning_ptr pNode = DoCreateNode(pNodeSource->mValue);
+		node_owning_ptr pNode = DoCreateNode(pNodeSource->mValue);
 
 		pNode->mpNodeRight  = NULL;
 		pNode->mpNodeLeft   = NULL;
@@ -2362,10 +2406,10 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::rbtree_owning_ptr
-	rbtree<K, V, C, A, E, bM, bU>::DoCopySubtree(const node_type* pNodeSource, node_type* pNodeDest)
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
+	rbtree<K, V, C, A, E, bM, bU>::DoCopySubtree(const node_soft_ptr pNodeSource, node_soft_ptr pNodeDest)
 	{
-		rbtree_owning_ptr pNewNodeRoot = DoCreateNode(pNodeSource, pNodeDest);
+		node_owning_ptr pNewNodeRoot = DoCreateNode(pNodeSource, pNodeDest);
 
 		#if EASTL_EXCEPTIONS_ENABLED
 			try
@@ -2373,22 +2417,22 @@ namespace nodecpp
 		#endif
 				// Copy the right side of the tree recursively.
 				if(pNodeSource->mpNodeRight)
-					pNewNodeRoot->mpNodeRight = std::move(DoCopySubtree((const node_type*)pNodeSource->mpNodeRight, pNewNodeRoot));
+					pNewNodeRoot->mpNodeRight = DoCopySubtree(pNodeSource->get_node_right(), pNewNodeRoot);
 
 //				node_type* pNewNodeLeft;
 
-				for(pNodeSource = (node_type*)pNodeSource->mpNodeLeft, pNodeDest = pNewNodeRoot; 
+				for(pNodeSource = pNodeSource->get_node_left(), pNodeDest = pNewNodeRoot; 
 					pNodeSource;
-					pNodeSource = (node_type*)pNodeSource->mpNodeLeft)
+					pNodeSource = pNodeSource->get_node_left())
 				{
-					rbtree_owning_ptr pNewNodeLeft = DoCreateNode(pNodeSource, pNodeDest);
+					node_owning_ptr pNewNodeLeft = DoCreateNode(pNodeSource, pNodeDest);
 
 					pNodeDest->mpNodeLeft = std::move(pNewNodeLeft);
 					pNodeDest = pNodeDest->mpNodeLeft
 
 					// Copy the right side of the tree recursively.
 					if(pNodeSource->mpNodeRight)
-						pNodeDest->mpNodeRight = std::move(DoCopySubtree((const node_type*)pNodeSource->mpNodeRight, pNodeDest));
+						pNodeDest->mpNodeRight = DoCopySubtree(pNodeSource->get_node_right(), pNodeDest);
 
 
 					
@@ -2407,20 +2451,21 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	void rbtree<K, V, C, A, E, bM, bU>::DoNukeSubtree(rbtree_owning_ptr pNode)
+	void rbtree<K, V, C, A, E, bM, bU>::DoNukeSubtree(node_owning_ptr pNode)
 	{
 		while(pNode) // Recursively traverse the tree and destroy items as we go.
 		{
-			DoNukeSubtree((node_type*)pNode->mpNodeRight);
+			node_owning_ptr pNodeRight = safememory::node_owning_ptr_static_cast<node_owning_ptr>(pNode->take_node_right());
+			DoNukeSubtree(std::move(pNodeRight));
 
-			node_type* const pNodeLeft = (node_type*)pNode->mpNodeLeft;
-			DoFreeNode(pNode);
+			node_owning_ptr pNodeLeft = safememory::node_owning_ptr_static_cast<node_owning_ptr>(pNode->take_node_left());
+			DoFreeNode(std::move(pNode));
 			pNode = pNodeLeft;
 		}
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	typename rbtree<K, V, C, A, E, bM, bU>::node_type*
+	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::create_end_node()
 	{
 		//mb: here we are allocating on the heap the anchor, or 'end' node
@@ -2429,7 +2474,7 @@ namespace nodecpp
 		// we do this because we need to always be able to create a reliable soft_ptr
 		// to the 'end' node, regardless of the map being created on the heap
 		// or on the stack  
-		node_type* const pNode = DoAllocateNode();
+		node_owning_ptr pNode = DoAllocateNode();
 
 		//mb: TODO check if using default constructor of _mValue_ is a better option.
 		// at first looks like it is, but has some details we need to analyse.
@@ -2447,7 +2492,7 @@ namespace nodecpp
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	void rbtree<K, V, C, A, E, bM, bU>::reset_end_node(node_type* anchor, rbtree_min_max_nodes* all_nodes)
+	void rbtree<K, V, C, A, E, bM, bU>::reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes* all_nodes)
 	{
 		anchor->mpNodeRight  = nullptr;
 		anchor->mpNodeLeft   = nullptr;

@@ -1,11 +1,60 @@
 
 
 #include "include/EASTL/map.h"
+#include <vector>
+#include <random>
 
 template<class IT>
 void printIt(IT it) {
     printf("[%d] = %d\n", it->first, it->second);
 }
+
+void checkMap(nodecpp::map<int, bool>& testMap) {
+    if(!testMap.validate()) {
+        printf("failed!!!\n");
+        assert(false);
+    }
+}
+
+void randomCheck(int sz, int ini) {
+
+    nodecpp::map<int, bool> testMap;
+
+    std::vector<int> v;
+    v.resize(sz);
+    for(int i = 0; i != sz; ++i) {
+        v[i] = i;
+    }
+
+    std::random_device rd;
+    std::mt19937 g(rd());
+ 
+    std::shuffle(v.begin(), v.end(), g);
+
+    // std::vector<int> v2;
+    // v2.resize(ini);
+    int j = 0;
+    for(; j != 4 * ini; ++j) {
+
+        testMap[v[j]] = true;
+        // v2[j] = v[j];
+        checkMap(testMap);
+    }
+
+    std::shuffle(v.begin(), v.begin() + j, g);
+
+    int k = 0;
+    for(; k != ini; ++k) {
+        testMap.erase(v[k]);
+        checkMap(testMap);
+    }
+
+    printf("done\n");
+
+}
+
+
+
 
 int main() {
 
@@ -62,6 +111,9 @@ int main() {
     catch(...) {
         printf("catched!\n");
     }
+
+    for(size_t i = 0; i != 1000; ++i)
+        randomCheck(511, 127);
 
     return 0;
 }
