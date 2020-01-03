@@ -129,15 +129,16 @@ namespace nodecpp
 	{
 	public:
 
-		typedef rbtree_node_base* child_type;
-		typedef rbtree_node_base* parent_type;
-		typedef const rbtree_node_base* const_parent_type;
+		typedef rbtree_node_base* base_owning_ptr;
+		typedef rbtree_node_base* base_soft_ptr;
 
-		child_type mpNodeRight;  // Declared first because it is used most often.
-		child_type mpNodeLeft;
-		parent_type mpNodeParent;
-		char       mColor;       // We only need one bit here, would be nice if we could stuff that bit somewhere else.
-        
+		base_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
+		base_owning_ptr mpNodeLeft = nullptr;
+		base_soft_ptr mpNodeParent = nullptr;
+		char       mColor = kRBTreeColorBlack;
+
+		virtual ~rbtree_node_base() {}
+
 		void assert_is_alive() const {
 			// as now, we use a special color, in the future change to verify
 			// the safe pointer control block
@@ -145,7 +146,7 @@ namespace nodecpp
                 throw "TODO3";
 		}
 
-		void set_as_deleted(parent_type mpNodeEnd) {
+		void set_as_deleted(base_soft_ptr mpNodeEnd) {
 			EASTL_ASSERT(!mpNodeLeft);
 			EASTL_ASSERT(!mpNodeRight);
 
@@ -153,21 +154,24 @@ namespace nodecpp
 			mColor = kRBTreeColorZombie;
 		}
 
-		child_type take_node_left() {
+		base_owning_ptr take_node_left() {
 			EASTL_ASSERT(mpNodeLeft);
-			child_type pNode = std::move(mpNodeLeft);
+			base_owning_ptr pNode = std::move(mpNodeLeft);
 			mpNodeLeft = nullptr;
 			return pNode;
 		}
 
-		child_type take_node_right() {
+		base_owning_ptr take_node_right() {
 			EASTL_ASSERT(mpNodeRight);
-			child_type pNode = std::move(mpNodeRight);
+			base_owning_ptr pNode = std::move(mpNodeRight);
 			mpNodeRight = nullptr;
 			return pNode;
 		}
 
 	};
+
+	typedef rbtree_node_base::base_owning_ptr rbtree_owning_ptr;
+	typedef rbtree_node_base::base_soft_ptr rbtree_soft_ptr;
 
 
 	/// rbtree_node
@@ -177,17 +181,16 @@ namespace nodecpp
 	{
 		Value mValue; // For set and multiset, this is the user's value, for map and multimap, this is a pair of key/value.
 
-		// This type is never constructed, so to avoid a MSVC warning we "delete" the copy constructor.
-		//
-		// Potentially we could provide a constructor that would satisfy the compiler and change the code to use this constructor
-		// instead of constructing mValue in place within an unconstructed rbtree_node.
-		#if defined(_MSC_VER)
-			rbtree_node(const rbtree_node&) = delete;
-		#endif
 
 		typedef rbtree_node<Value>* node_soft_ptr;
 		typedef rbtree_node<Value>* node_owning_ptr;
-// /		typedef const rbtree_node_base* const_parent_type;
+// /		typedef const rbtree_node_base* const_node_soft_ptr;
+
+		rbtree_node() = default;
+
+		template<class... Types>
+		rbtree_node(Types&&... Args) : mValue(::std::forward<Types>(Args)...) {}
+
 
 		node_soft_ptr get_node_right() const {
 			return safememory::node_soft_ptr_static_cast<node_soft_ptr>(this->mpNodeRight);
@@ -206,9 +209,6 @@ namespace nodecpp
 	};
 
 
-	typedef rbtree_node_base::child_type rbtree_owning_ptr;
-	typedef rbtree_node_base::parent_type rbtree_soft_ptr;
-	typedef rbtree_node_base::const_parent_type rbtree_const_node_soft_ptr;
 
 
 
@@ -255,7 +255,7 @@ namespace nodecpp
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
 		typedef std::bidirectional_iterator_tag             iterator_category;
-		typedef node_type*									node_soft_ptr;
+		typedef typename node_type::node_soft_ptr			node_soft_ptr;
 
 	public:
 		node_soft_ptr mpNode;
@@ -516,8 +516,8 @@ namespace nodecpp
 		typedef std::integral_constant<bool, bUniqueKeys>                                            has_unique_keys_type;
 		typedef typename base_type::extract_key                                                 extract_key;
 
-		typedef node_type*																		node_owning_ptr;
-		typedef node_type*																		node_soft_ptr;
+		typedef typename node_type::node_owning_ptr												node_owning_ptr;
+		typedef typename node_type::node_soft_ptr												node_soft_ptr;
 
 
 	protected:
@@ -677,9 +677,9 @@ namespace nodecpp
 		int  validate_iterator(const_iterator i) const;
 
 	protected:
-		static
-		node_owning_ptr DoAllocateNode();
-		void       DoFreeNode(node_owning_ptr pNode);
+		// static
+//		node_owning_ptr DoAllocateNode();
+		void       DoFreeNode(rbtree_owning_ptr pNode);
 
 		node_owning_ptr DoCreateNodeFromKey(const key_type& key);
 
@@ -690,7 +690,7 @@ namespace nodecpp
 		node_owning_ptr DoCreateNode(const node_soft_ptr pNodeSource, node_soft_ptr pNodeParent);
 
 		node_owning_ptr DoCopySubtree(const node_soft_ptr pNodeSource, node_soft_ptr pNodeDest);
-		void       DoNukeSubtree(node_owning_ptr pNode);
+		void       DoNukeSubtree(rbtree_owning_ptr pNode);
 
 		template <class... Args>
 		std::pair<iterator, bool> DoInsertValue(std::true_type, Args&&... args);
@@ -726,21 +726,15 @@ namespace nodecpp
 		void reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes* all_nodes);
 		void check_iterator(const const_iterator& position) const;
 		node_soft_ptr get_root_node() const { return mpNodeEnd->get_node_left(); }
-		node_owning_ptr take_root_node() {
-			if(mpNodeEnd->mpNodeLeft) {
-				node_owning_ptr pNode = safememory::node_owning_ptr_static_cast<node_owning_ptr>(mpNodeEnd->take_node_left());
-				mpNodeEnd->mpNodeLeft = nullptr;
-				return pNode;
-			}
-			else
-				return node_owning_ptr{};
+		rbtree_owning_ptr take_root_node() {
+			return mpNodeEnd->take_node_left();
 		}
 		node_soft_ptr get_end_node() const { return mpNodeEnd; }
-		node_owning_ptr take_end_node() { 
-			node_owning_ptr pNode = std::move(mpNodeEnd);
-			mpNodeEnd = nullptr;
-			return pNode;
-		}
+		// node_owning_ptr take_end_node() { 
+		// 	node_owning_ptr pNode = std::move(mpNodeEnd);
+		// 	mpNodeEnd = nullptr;
+		// 	return pNode;
+		// }
 		node_soft_ptr get_begin_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMinChild); }
 		node_soft_ptr get_last_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMaxChild); }
 //		node_type* get_last_node() const { return mpNodeEnd; }
@@ -1000,9 +994,9 @@ namespace nodecpp
 		// since we never constructed the _mValue_ on the end node
 		// we neither destruct it. Only set the pointer to a known state
 		// just in case.
-		node_owning_ptr pNode = take_end_node();
-		pNode->set_as_deleted(nullptr);
-		safememory::deallocate_with_control_block(std::move(pNode));
+	
+		mpNodeEnd->set_as_deleted(nullptr); //not really needed
+//		safememory::deallocate_with_control_block(std::move(pNode));
 	}
 
 
@@ -1887,7 +1881,7 @@ namespace nodecpp
 		const iterator iErase(position.get_raw_ptr(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		node_owning_ptr pNode = safememory::node_owning_ptr_static_cast<node_owning_ptr>(RBTreeErase(iErase.get_raw_ptr(), mpNodeEnd, &mMinMaxNodes));
+		rbtree_owning_ptr pNode = RBTreeErase(iErase.get_raw_ptr(), mpNodeEnd, &mMinMaxNodes);
 		DoFreeNode(std::move(pNode));
 		return iterator(position.get_raw_ptr(), get_end_node());
 	}
@@ -2222,29 +2216,30 @@ namespace nodecpp
 
 	
 
+// 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
+// 	inline typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
+// 	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
+// 	{
+// //		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
+// 		node_owning_ptr pNode = safememory::allocate_with_control_block<node_type>();
+// 		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+
+// 		return pNode;
+// 	}
+
+
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	inline typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
-	rbtree<K, V, C, A, E, bM, bU>::DoAllocateNode()
-	{
-//		auto* pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
-		node_owning_ptr pNode = safememory::allocate_with_control_block<node_type>();
-		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
-
-		return pNode;
-	}
-
-
-	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(node_owning_ptr pNode)
+	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(rbtree_owning_ptr pNode)
 	{
 		//mb: we only destruct _mValue_, node pointers are set to a know state,
 		// in case some iterator is still pointing to it
 		pNode->set_as_deleted(get_end_node());
 
 		// pNode->~node_type();
-		safememory::destruct(std::addressof(pNode->mValue));
+//		safememory::destruct(std::addressof(pNode->mValue));
 //		EASTLFree(mAllocator, pNode, sizeof(node_type));
-		safememory::deallocate_with_control_block(pNode);
+//		safememory::deallocate_with_control_block(pNode);
+		safememory::node_delete_owning(std::move(pNode));
 	}
 
 
@@ -2255,32 +2250,34 @@ namespace nodecpp
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		node_owning_ptr pNode = DoAllocateNode();
+// 		node_owning_ptr pNode = DoAllocateNode();
 
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-//				::new (std::addressof(pNode->mValue)) value_type(pair_first_construct, key);
-				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue),
-					std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch(...)
-			{
-				DoFreeNode(std::move(pNode));
-				throw;
-			}
-		#endif
+// 		#if EASTL_EXCEPTIONS_ENABLED
+// 			try
+// 			{
+// 		#endif
+// //				::new (std::addressof(pNode->mValue)) value_type(pair_first_construct, key);
+// 				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue),
+// 					std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
+// 		#if EASTL_EXCEPTIONS_ENABLED
+// 			}
+// 			catch(...)
+// 			{
+// 				DoFreeNode(std::move(pNode));
+// 				throw;
+// 			}
+// 		#endif
 
-		#if EASTL_DEBUG
-			pNode->mpNodeRight  = NULL;
-			pNode->mpNodeLeft   = NULL;
-			pNode->mpNodeParent = NULL;
-			pNode->mColor       = kRBTreeColorBlack;
-		#endif
+// 		#if EASTL_DEBUG
+// 			pNode->mpNodeRight  = NULL;
+// 			pNode->mpNodeLeft   = NULL;
+// 			pNode->mpNodeParent = NULL;
+// 			pNode->mColor       = kRBTreeColorBlack;
+// 		#endif
 
-		return pNode;
+// 		return pNode;
+
+		return safememory::node_make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
 	}
 
 
@@ -2291,31 +2288,33 @@ namespace nodecpp
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		node_owning_ptr pNode = DoAllocateNode();
+		// node_owning_ptr pNode = DoAllocateNode();
 
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-				// ::new(std::addressof(pNode->mValue)) value_type(value);
-				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), value);
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch(...)
-			{
-				DoFreeNode(std::move(pNode));
-				throw;
-			}
-		#endif
+		// #if EASTL_EXCEPTIONS_ENABLED
+		// 	try
+		// 	{
+		// #endif
+		// 		// ::new(std::addressof(pNode->mValue)) value_type(value);
+		// 		safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), value);
+		// #if EASTL_EXCEPTIONS_ENABLED
+		// 	}
+		// 	catch(...)
+		// 	{
+		// 		DoFreeNode(std::move(pNode));
+		// 		throw;
+		// 	}
+		// #endif
 
-		#if EASTL_DEBUG
-			pNode->mpNodeRight  = NULL;
-			pNode->mpNodeLeft   = NULL;
-			pNode->mpNodeParent = NULL;
-			pNode->mColor       = kRBTreeColorBlack;
-		#endif
+		// #if EASTL_DEBUG
+		// 	pNode->mpNodeRight  = NULL;
+		// 	pNode->mpNodeLeft   = NULL;
+		// 	pNode->mpNodeParent = NULL;
+		// 	pNode->mColor       = kRBTreeColorBlack;
+		// #endif
 
-		return pNode;
+		// return pNode;
+
+		return safememory::node_make_owning<node_type>(value);
 	}
 
 
@@ -2326,31 +2325,33 @@ namespace nodecpp
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		node_owning_ptr pNode = DoAllocateNode();
+		// node_owning_ptr pNode = DoAllocateNode();
 
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-				// ::new(std::addressof(pNode->mValue)) value_type(std::move(value));
-				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::move(value));
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch(...)
-			{
-				DoFreeNode(std::move(pNode));
-				throw;
-			}
-		#endif
+		// #if EASTL_EXCEPTIONS_ENABLED
+		// 	try
+		// 	{
+		// #endif
+		// 		// ::new(std::addressof(pNode->mValue)) value_type(std::move(value));
+		// 		safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::move(value));
+		// #if EASTL_EXCEPTIONS_ENABLED
+		// 	}
+		// 	catch(...)
+		// 	{
+		// 		DoFreeNode(std::move(pNode));
+		// 		throw;
+		// 	}
+		// #endif
 
-		#if EASTL_DEBUG
-			pNode->mpNodeRight  = NULL;
-			pNode->mpNodeLeft   = NULL;
-			pNode->mpNodeParent = NULL;
-			pNode->mColor       = kRBTreeColorBlack;
-		#endif
+		// #if EASTL_DEBUG
+		// 	pNode->mpNodeRight  = NULL;
+		// 	pNode->mpNodeLeft   = NULL;
+		// 	pNode->mpNodeParent = NULL;
+		// 	pNode->mColor       = kRBTreeColorBlack;
+		// #endif
 
-		return pNode;
+		// return pNode;
+
+		return safememory::node_make_owning<node_type>(std::move(value));
 	}
 
 
@@ -2362,31 +2363,33 @@ namespace nodecpp
 		// Note that this function intentionally leaves the node pointers uninitialized.
 		// The caller would otherwise just turn right around and modify them, so there's
 		// no point in us initializing them to anything (except in a debug build).
-		node_owning_ptr pNode = DoAllocateNode();
+// 		node_owning_ptr pNode = DoAllocateNode();
 
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-//				::new(std::addressof(pNode->mValue)) value_type(std::forward<Args>(args)...);
-				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::forward<Args>(args)...);
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch(...)
-			{
-				DoFreeNode(std::move(pNode));
-				throw;
-			}
-		#endif
+// 		#if EASTL_EXCEPTIONS_ENABLED
+// 			try
+// 			{
+// 		#endif
+// //				::new(std::addressof(pNode->mValue)) value_type(std::forward<Args>(args)...);
+// 				safememory::construct_with_control_block<value_type>(pNode, std::addressof(pNode->mValue), std::forward<Args>(args)...);
+// 		#if EASTL_EXCEPTIONS_ENABLED
+// 			}
+// 			catch(...)
+// 			{
+// 				DoFreeNode(std::move(pNode));
+// 				throw;
+// 			}
+// 		#endif
 
-		#if EASTL_DEBUG
-			pNode->mpNodeRight  = NULL;
-			pNode->mpNodeLeft   = NULL;
-			pNode->mpNodeParent = NULL;
-			pNode->mColor       = kRBTreeColorBlack;
-		#endif
+// 		#if EASTL_DEBUG
+// 			pNode->mpNodeRight  = NULL;
+// 			pNode->mpNodeLeft   = NULL;
+// 			pNode->mpNodeParent = NULL;
+// 			pNode->mColor       = kRBTreeColorBlack;
+// 		#endif
 
-		return pNode;
+// 		return pNode;
+
+		return safememory::node_make_owning<node_type>(std::forward<Args>(args)...);
 	}
 
 
@@ -2451,14 +2454,14 @@ namespace nodecpp
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	void rbtree<K, V, C, A, E, bM, bU>::DoNukeSubtree(node_owning_ptr pNode)
+	void rbtree<K, V, C, A, E, bM, bU>::DoNukeSubtree(rbtree_owning_ptr pNode)
 	{
 		while(pNode) // Recursively traverse the tree and destroy items as we go.
 		{
-			node_owning_ptr pNodeRight = safememory::node_owning_ptr_static_cast<node_owning_ptr>(pNode->take_node_right());
+			rbtree_owning_ptr pNodeRight = pNode->take_node_right();
 			DoNukeSubtree(std::move(pNodeRight));
 
-			node_owning_ptr pNodeLeft = safememory::node_owning_ptr_static_cast<node_owning_ptr>(pNode->take_node_left());
+			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
 			DoFreeNode(std::move(pNode));
 			pNode = pNodeLeft;
 		}
@@ -2474,7 +2477,7 @@ namespace nodecpp
 		// we do this because we need to always be able to create a reliable soft_ptr
 		// to the 'end' node, regardless of the map being created on the heap
 		// or on the stack  
-		node_owning_ptr pNode = DoAllocateNode();
+		node_owning_ptr pNode = safememory::node_make_owning<node_type>();
 
 		//mb: TODO check if using default constructor of _mValue_ is a better option.
 		// at first looks like it is, but has some details we need to analyse.
@@ -2484,7 +2487,7 @@ namespace nodecpp
 		// 		he may get a surprise.
 		//
 		// If we change this, we also need to change rbtree destructor to match
-		memset(std::addressof(pNode->mValue), 0, sizeof(pNode->mValue));
+	//	memset(std::addressof(pNode->mValue), 0, sizeof(pNode->mValue));
 
 		reset_end_node(pNode, &mMinMaxNodes);
 

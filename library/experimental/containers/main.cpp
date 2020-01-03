@@ -112,7 +112,7 @@ int main() {
         printf("catched!\n");
     }
 
-    for(size_t i = 0; i != 1000; ++i)
+    for(size_t i = 0; i != 10; ++i)
         randomCheck(511, 127);
 
     return 0;
