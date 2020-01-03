@@ -391,8 +391,8 @@ namespace nodecpp
 	/// RBTreeErase
 	/// Erase a node from the tree.
 	///
-	EASTL_API rbtree_owning_ptr RBTreeErase(rbtree_node_base* pNode,
-								rbtree_node_base* pNodeAnchor,
+	EASTL_API rbtree_owning_ptr RBTreeErase(rbtree_soft_ptr pNode,
+								rbtree_soft_ptr pNodeAnchor,
 								rbtree_min_max_nodes* pMinMaxNodes)
 
 	{

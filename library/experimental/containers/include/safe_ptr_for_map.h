@@ -40,29 +40,29 @@ template<class _Ty>
 using node_soft_ptr = soft_ptr<_Ty>;
 
 template<class _Ty,	class... _Types>
-_Ty* node_make_owning(_Types&&... _Args)
+node_owning_ptr<_Ty> node_make_owning(_Types&&... _Args)
 {
-	return new _Ty(::std::forward<_Types>(_Args)...);
+	return make_owning<_Ty>(::std::forward<_Types>(_Args)...);
 }
 
 
 
 template<class _Ty>
-void node_delete_owning(_Ty ty)
+void node_delete_owning(_Ty p)
 {
-	delete ty;
+	;//do nothing, 'p' will be deleted as it goes out of scope
 }
 
 
 template<class T, class T1>
-node_soft_ptr<T> node_soft_ptr_static_cast(node_soft_ptr<T1> p) {
-	return soft_ptr_static_cast<T, T1>(p);
+node_soft_ptr<T> node_soft_ptr_static_cast(T1 p) {
+	return soft_ptr_static_cast<T>(p);
 }
 
-template<class T, class T1>
-T node_soft_ptr_static_cast(T1 p) {
-	return static_cast<T>(p);
-}
+// template<class T, class T1>
+// T node_soft_ptr_static_cast(T1 p) {
+// 	return static_cast<T>(p);
+// }
 
 } // namespace nodecpp::safememory
 

@@ -129,8 +129,8 @@ namespace nodecpp
 	{
 	public:
 
-		typedef rbtree_node_base* base_owning_ptr;
-		typedef rbtree_node_base* base_soft_ptr;
+		typedef safememory::node_owning_ptr<rbtree_node_base> base_owning_ptr;
+		typedef safememory::node_soft_ptr<rbtree_node_base> base_soft_ptr;
 
 		base_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
 		base_owning_ptr mpNodeLeft = nullptr;
@@ -182,8 +182,8 @@ namespace nodecpp
 		Value mValue; // For set and multiset, this is the user's value, for map and multimap, this is a pair of key/value.
 
 
-		typedef rbtree_node<Value>* node_soft_ptr;
-		typedef rbtree_node<Value>* node_owning_ptr;
+		typedef typename safememory::node_owning_ptr<rbtree_node<Value>> node_owning_ptr;
+		typedef typename safememory::node_soft_ptr<rbtree_node<Value>> node_soft_ptr;
 // /		typedef const rbtree_node_base* const_node_soft_ptr;
 
 		rbtree_node() = default;
@@ -193,19 +193,27 @@ namespace nodecpp
 
 
 		node_soft_ptr get_node_right() const {
-			return safememory::node_soft_ptr_static_cast<node_soft_ptr>(this->mpNodeRight);
+			rbtree_node_base::base_soft_ptr pNode = mpNodeRight;
+			if(pNode)
+				return safememory::node_soft_ptr_static_cast<rbtree_node<Value>>(pNode);
+			else
+				return node_soft_ptr();
 		}
 
 		node_soft_ptr get_node_left() const {
-			return safememory::node_soft_ptr_static_cast<node_soft_ptr>(this->mpNodeLeft);
+			rbtree_node_base::base_soft_ptr pNode = mpNodeLeft;
+			if(pNode)
+				return safememory::node_soft_ptr_static_cast<rbtree_node<Value>>(pNode);
+			else
+				return node_soft_ptr();
 		}
 
 	};
 
 
 	struct rbtree_min_max_nodes {
-		rbtree_node_base*		  mpMinChild;
-		rbtree_node_base* 		  mpMaxChild;
+		rbtree_soft_ptr	mpMinChild;
+		rbtree_soft_ptr mpMaxChild;
 	};
 
 
@@ -526,10 +534,12 @@ namespace nodecpp
 
 	public:
 //		rbtree_node_base  mAnchor;      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
-		node_owning_ptr        mpNodeEnd = create_end_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
-		rbtree_min_max_nodes mMinMaxNodes;
-		size_type         mnSize = 0;       /// Stores the count of nodes in the tree (not counting the anchor node).
 //		allocator_type    mAllocator;   // To do: Use base class optimization to make this go away.
+
+		// mMinMaxNodex must be initialized before mpEndNode does
+		size_type         		mnSize = 0;       /// Stores the count of nodes in the tree (not counting the anchor node).
+		rbtree_min_max_nodes 	mMinMaxNodes;
+		node_owning_ptr        	mpNodeEnd = create_end_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 
 	public:
 		// ctor/dtor
@@ -735,8 +745,8 @@ namespace nodecpp
 		// 	mpNodeEnd = nullptr;
 		// 	return pNode;
 		// }
-		node_soft_ptr get_begin_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMinChild); }
-		node_soft_ptr get_last_node() const { return safememory::node_soft_ptr_static_cast<node_soft_ptr>(mMinMaxNodes.mpMaxChild); }
+		node_soft_ptr get_begin_node() const { return safememory::node_soft_ptr_static_cast<node_type>(mMinMaxNodes.mpMinChild); }
+		node_soft_ptr get_last_node() const { return safememory::node_soft_ptr_static_cast<node_type>(mMinMaxNodes.mpMaxChild); }
 //		node_type* get_last_node() const { return mpNodeEnd; }
 	}; // rbtree
 
@@ -774,7 +784,7 @@ namespace nodecpp
 	template <typename T, typename Pointer, typename Reference>
 	void
 	rbtree_iterator<T, Pointer, Reference>::set_from_raw_ptr(rbtree_soft_ptr pNode) {
-		mpNode = safememory::node_soft_ptr_static_cast<node_soft_ptr>(pNode);
+		mpNode = safememory::node_soft_ptr_static_cast<node_type>(pNode);
 	}
 
 	template <typename T, typename Pointer, typename Reference>
@@ -1436,7 +1446,7 @@ namespace nodecpp
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
-				pLowerBound = safememory::node_soft_ptr_static_cast<node_soft_ptr>(RBTreeDecrement(pLowerBound));
+				pLowerBound = safememory::node_soft_ptr_static_cast<node_type>(RBTreeDecrement(pLowerBound));
 			}
 			else
 			{
@@ -2463,7 +2473,7 @@ namespace nodecpp
 
 			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
 			DoFreeNode(std::move(pNode));
-			pNode = pNodeLeft;
+			pNode = std::move(pNodeLeft);
 		}
 	}
 
