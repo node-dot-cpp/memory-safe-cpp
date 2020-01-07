@@ -133,10 +133,13 @@ namespace nodecpp
 		typedef safememory::node_soft_ptr<rbtree_node_base> base_soft_ptr;
 
 		base_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
-		base_owning_ptr mpNodeLeft = nullptr;
-		base_soft_ptr mpNodeParent = nullptr;
-		char       mColor = kRBTreeColorBlack;
+		base_owning_ptr mpNodeLeft  = nullptr;
+		base_soft_ptr mpNodeParent  = nullptr;
+		RBTreeColor mColor          = kRBTreeColorRed;
 
+		rbtree_node_base() = default;
+		rbtree_node_base(base_soft_ptr nodeParent, RBTreeColor color) :
+			mpNodeParent(nodeParent), mColor(color) {}
 		virtual ~rbtree_node_base() {}
 
 		void assert_is_alive() const {
@@ -146,11 +149,11 @@ namespace nodecpp
                 throw "TODO3";
 		}
 
-		void set_as_deleted(base_soft_ptr mpNodeEnd) {
+		void set_as_deleted() {
 			EASTL_ASSERT(!mpNodeLeft);
 			EASTL_ASSERT(!mpNodeRight);
 
-			mpNodeParent = mpNodeEnd;
+			mpNodeParent = nullptr;
 			mColor = kRBTreeColorZombie;
 		}
 
@@ -188,9 +191,11 @@ namespace nodecpp
 
 		rbtree_node() = default;
 
-		template<class... Types>
-		rbtree_node(Types&&... Args) : mValue(::std::forward<Types>(Args)...) {}
+		rbtree_node(base_soft_ptr nodeParent, RBTreeColor color, const Value& value) :
+			rbtree_node_base(nodeParent, color), mValue(value) {}
 
+		template<class... Types>
+		rbtree_node(Types&&... args) : mValue(::std::forward<Types>(args)...) {}
 
 		node_soft_ptr get_node_right() const {
 			rbtree_node_base::base_soft_ptr pNode = mpNodeRight;
@@ -235,11 +240,11 @@ namespace nodecpp
 	EASTL_API void              RBTreeInsert       (      rbtree_owning_ptr pNode,
 														  rbtree_soft_ptr pNodeParent,
 														  rbtree_soft_ptr pNodeAnchor,
-														  rbtree_min_max_nodes* pMinMaxNodes,
+														  rbtree_min_max_nodes& pMinMaxNodes,
 														  RBTreeSide insertionSide);
 	EASTL_API rbtree_owning_ptr RBTreeErase        (      rbtree_soft_ptr pNode,
 														  rbtree_soft_ptr pNodeAnchor,
-														  rbtree_min_max_nodes* pMinMaxNodes); 
+														  rbtree_min_max_nodes& pMinMaxNodes); 
 
 
 
@@ -269,11 +274,21 @@ namespace nodecpp
 		node_soft_ptr mpNode;
 		node_soft_ptr mpEndNode = nullptr;
 
-		node_soft_ptr get_raw_ptr() const { return mpNode;}
-		void set_from_raw_ptr(rbtree_soft_ptr pNode);
+		node_soft_ptr get_node() const { return mpNode; }
+		void set_from_base_ptr(rbtree_soft_ptr pNode);
 		const node_soft_ptr get_end_node() const { return mpEndNode; }
-		void assert_not_end() const { if(get_raw_ptr() == get_end_node()) throw "TODO"; } //TODO
-		void assert_not_null() const { if(get_raw_ptr() == nullptr) throw "TODO"; } //TODO
+		void assert_alive_and_not_end() const {
+			if(mpNode == mpEndNode)
+				throw "TODO";
+
+			//TODO: think if end is alive or not
+			mpNode->assert_is_alive();
+		}
+
+		void assert_alive_or_end() const {
+			if(mpNode != mpEndNode)
+				mpNode->assert_is_alive();
+		}
 
 	public:
 		rbtree_iterator();
@@ -732,8 +747,8 @@ namespace nodecpp
 		node_soft_ptr DoGetKeyInsertionPositionNonuniqueKeysHint(const_iterator position, bool& bForceToLeft, const key_type& key);
 
 		node_owning_ptr create_end_node();
-		static
-		void reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes* all_nodes);
+//		static
+//		void reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes& all_nodes);
 		void check_iterator(const const_iterator& position) const;
 		node_soft_ptr get_root_node() const { return mpNodeEnd->get_node_left(); }
 		rbtree_owning_ptr take_root_node() {
@@ -783,7 +798,10 @@ namespace nodecpp
 
 	template <typename T, typename Pointer, typename Reference>
 	void
-	rbtree_iterator<T, Pointer, Reference>::set_from_raw_ptr(rbtree_soft_ptr pNode) {
+	rbtree_iterator<T, Pointer, Reference>::set_from_base_ptr(rbtree_soft_ptr pNode) {
+		if(!pNode)
+			throw "TODO";
+
 		mpNode = safememory::node_soft_ptr_static_cast<node_type>(pNode);
 	}
 
@@ -805,21 +823,21 @@ namespace nodecpp
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::reference
 	rbtree_iterator<T, Pointer, Reference>::operator*() const
-		{ assert_not_end(); return mpNode->mValue; }
+		{ assert_alive_and_not_end(); return mpNode->mValue; }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::pointer
 	rbtree_iterator<T, Pointer, Reference>::operator->() const
-		{ assert_not_end(); return &mpNode->mValue; }
+		{ assert_alive_and_not_end(); return &mpNode->mValue; }
 
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::this_type&
 	rbtree_iterator<T, Pointer, Reference>::operator++()
 	{
-		assert_not_end();
-		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
+		assert_alive_and_not_end();
+		set_from_base_ptr(RBTreeIncrement(mpNode));
 		return *this;
 	}
 
@@ -828,9 +846,9 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type
 	rbtree_iterator<T, Pointer, Reference>::operator++(int)
 	{
-		assert_not_end();
+		assert_alive_and_not_end();
 		this_type temp(*this);
-		set_from_raw_ptr(RBTreeIncrement(get_raw_ptr()));
+		set_from_base_ptr(RBTreeIncrement(mpNode));
 		return temp;
 	}
 
@@ -839,8 +857,8 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type&
 	rbtree_iterator<T, Pointer, Reference>::operator--()
 	{
-		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
-		assert_not_null();//decrement from end() returns null
+		assert_alive_or_end();
+		set_from_base_ptr(RBTreeDecrement(mpNode));
 		return *this;
 	}
 
@@ -849,9 +867,9 @@ namespace nodecpp
 	typename rbtree_iterator<T, Pointer, Reference>::this_type
 	rbtree_iterator<T, Pointer, Reference>::operator--(int)
 	{
+		assert_alive_or_end();
 		this_type temp(*this);
-		set_from_raw_ptr(RBTreeDecrement(get_raw_ptr()));
-		assert_not_null();//decrement from end() returns null
+		set_from_base_ptr(RBTreeDecrement(mpNode));
 		return temp;
 	}
 
@@ -1000,13 +1018,8 @@ namespace nodecpp
 		// conventional erase function, as it does no rebalancing.
 		DoNukeSubtree(take_root_node());
 
-		//mb: this is paired with create_end_node()
-		// since we never constructed the _mValue_ on the end node
-		// we neither destruct it. Only set the pointer to a known state
-		// just in case.
-	
-		mpNodeEnd->set_as_deleted(nullptr); //not really needed
-//		safememory::deallocate_with_control_block(std::move(pNode));
+		mpNodeEnd->set_as_deleted(); //not really needed as mpNodeEnd is already as a deleted
+		// mb: mpNodeEnd will be automatically dealocated by owning_ptr
 	}
 
 
@@ -1598,7 +1611,7 @@ namespace nodecpp
 		else
 			side = kRBTreeSideRight;
 
-		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, &mMinMaxNodes, side);
+		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew, get_end_node());
@@ -1642,9 +1655,9 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.get_raw_ptr() != mMinMaxNodes.mpMaxChild) && (position.get_raw_ptr() != get_end_node())) // If the user specified a specific insertion position...
+		if((position.get_node() != mMinMaxNodes.mpMaxChild) && (position.get_node() != get_end_node())) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_raw_ptr(), position.get_end_node());
+			iterator itNext(position.get_node(), position.get_end_node());
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1665,11 +1678,11 @@ namespace nodecpp
 					if(position.mpNode->mpNodeRight)
 					{
 						bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-						return itNext.get_raw_ptr();
+						return itNext.get_node();
 					}
 
 					bForceToLeft = false;
-					return position.get_raw_ptr();
+					return position.get_node();
 				}
 			}
 
@@ -1695,9 +1708,9 @@ namespace nodecpp
 	{
 		extract_key extractKey;
 
-		if((position.get_raw_ptr() != mMinMaxNodes.mpMaxChild) && (position.get_raw_ptr() != get_end_node())) // If the user specified a specific insertion position...
+		if((position.get_node() != mMinMaxNodes.mpMaxChild) && (position.get_node() != get_end_node())) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_raw_ptr(),);
+			iterator itNext(position.get_node(),);
 			++itNext;
 
 			// To consider: Change this so that 'position' specifies the position after 
@@ -1709,11 +1722,11 @@ namespace nodecpp
 				if(position.mpNode->mpNodeRight) // If there are any nodes to the right... [this expression will always be true as long as we aren't at the end()]
 				{
 					bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-					return itNext.get_raw_ptr();
+					return itNext.get_node();
 				}
 
 				bForceToLeft = false;
-				return position.get_raw_ptr();
+				return position.get_node();
 			}
 
 			bForceToLeft = false;
@@ -1828,9 +1841,9 @@ namespace nodecpp
 		else
 			side = kRBTreeSideRight;
 
-		node_owning_ptr pNodeNew = DoCreateNodeFromKey(key); // Note that pNodeNew->mpLeft, mpRight, mpParent, will be uninitialized.
+		node_owning_ptr pNodeNew = DoCreateNodeFromKey(key);
 		node_soft_ptr pNodeNew2 = pNodeNew;
-		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, &mMinMaxNodes, side);
+		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew2, get_end_node());
@@ -1862,7 +1875,8 @@ namespace nodecpp
 		DoNukeSubtree(take_root_node());
 
 		// reset_lose_memory();
-		reset_end_node(get_end_node(), &mMinMaxNodes);
+		mMinMaxNodes.mpMinChild = get_end_node();
+		mMinMaxNodes.mpMaxChild = get_end_node();	
 		mnSize = 0;
 	}
 
@@ -1888,12 +1902,12 @@ namespace nodecpp
 	{
 		check_iterator(position);
 
-		const iterator iErase(position.get_raw_ptr(), position.get_end_node());
+		const iterator iErase(position.get_node(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		rbtree_owning_ptr pNode = RBTreeErase(iErase.get_raw_ptr(), mpNodeEnd, &mMinMaxNodes);
+		rbtree_owning_ptr pNode = RBTreeErase(iErase.get_node(), mpNodeEnd, mMinMaxNodes);
 		DoFreeNode(std::move(pNode));
-		return iterator(position.get_raw_ptr(), get_end_node());
+		return iterator(position.get_node(), get_end_node());
 	}
 
 
@@ -1905,12 +1919,12 @@ namespace nodecpp
 		check_iterator(last);
 
 		// We expect that if the user means to clear the container, they will call clear.
-		if(EASTL_LIKELY((first.get_raw_ptr() != mMinMaxNodes.mpMinChild) || (last.get_raw_ptr() != get_end_node()))) // If (first != begin or last != end) ...
+		if(EASTL_LIKELY((first.get_node() != mMinMaxNodes.mpMinChild) || (last.get_node() != get_end_node()))) // If (first != begin or last != end) ...
 		{
 			// Basic implementation:
 			while(first != last)
 				first = erase(first);
-			return iterator(first.get_raw_ptr(), get_end_node());
+			return iterator(first.get_node(), get_end_node());
 
 			// Inlined implementation:
 			//size_type n = 0;
@@ -2152,7 +2166,7 @@ namespace nodecpp
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
 			{
-				node_soft_ptr pNode      = it.get_raw_ptr();
+				node_soft_ptr pNode      = it.get_node();
 				node_soft_ptr pNodeRight = pNode->get_node_right();
 				node_soft_ptr pNodeLeft  = pNode->get_node_left();
 
@@ -2241,15 +2255,10 @@ namespace nodecpp
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	inline void rbtree<K, V, C, A, E, bM, bU>::DoFreeNode(rbtree_owning_ptr pNode)
 	{
-		//mb: we only destruct _mValue_, node pointers are set to a know state,
-		// in case some iterator is still pointing to it
-		pNode->set_as_deleted(get_end_node());
+		//mb: we put it in special state in case some iterator is still pointing to it
+		pNode->set_as_deleted();
 
-		// pNode->~node_type();
-//		safememory::destruct(std::addressof(pNode->mValue));
-//		EASTLFree(mAllocator, pNode, sizeof(node_type));
-//		safememory::deallocate_with_control_block(pNode);
-		safememory::node_delete_owning(std::move(pNode));
+		// release will be automatic, as owning_ptr goes out of scope here
 	}
 
 
@@ -2407,14 +2416,17 @@ namespace nodecpp
 	typename rbtree<K, V, C, A, E, bM, bU>::node_owning_ptr
 	rbtree<K, V, C, A, E, bM, bU>::DoCreateNode(const node_soft_ptr pNodeSource, node_soft_ptr pNodeParent)
 	{
-		node_owning_ptr pNode = DoCreateNode(pNodeSource->mValue);
+		// node_owning_ptr pNode = DoCreateNode(pNodeSource->mValue);
 
-		pNode->mpNodeRight  = NULL;
-		pNode->mpNodeLeft   = NULL;
-		pNode->mpNodeParent = pNodeParent;
-		pNode->mColor       = pNodeSource->mColor;
+		// pNode->mpNodeRight  = NULL;
+		// pNode->mpNodeLeft   = NULL;
+		// pNode->mpNodeParent = pNodeParent;
+		// pNode->mColor       = pNodeSource->mColor;
 
-		return pNode;
+		// return pNode;
+
+		return safememory::node_make_owning<node_type>(pNodeParent, pNodeSource->mColor, pNodeSource->mValue);
+
 	}
 
 
@@ -2486,45 +2498,40 @@ namespace nodecpp
 		// as a member an not heap allocated.
 		// we do this because we need to always be able to create a reliable soft_ptr
 		// to the 'end' node, regardless of the map being created on the heap
-		// or on the stack  
+		// or on the stack
+		// This is also helpful as the 'end' node is used to match iterators to its source trees
 		node_owning_ptr pNode = safememory::node_make_owning<node_type>();
+		pNode->mColor = kRBTreeColorZombie;
 
-		//mb: TODO check if using default constructor of _mValue_ is a better option.
-		// at first looks like it is, but has some details we need to analyse.
-		// 1. key type may not have a default constructor.
-		// 2. key type constructor may throw 
-		// 3. if user is counting how many times his constructor is called,
-		// 		he may get a surprise.
-		//
-		// If we change this, we also need to change rbtree destructor to match
-	//	memset(std::addressof(pNode->mValue), 0, sizeof(pNode->mValue));
-
-		reset_end_node(pNode, &mMinMaxNodes);
+		mMinMaxNodes.mpMinChild = pNode;
+		mMinMaxNodes.mpMaxChild = pNode;	
 
 		return pNode;
 	}
 
-	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	void rbtree<K, V, C, A, E, bM, bU>::reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes* all_nodes)
-	{
-		anchor->mpNodeRight  = nullptr;
-		anchor->mpNodeLeft   = nullptr;
-		anchor->mpNodeParent = nullptr;
-		anchor->mColor       = kRBTreeColorRed;
+	// template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
+	// void rbtree<K, V, C, A, E, bM, bU>::reset_end_node(node_soft_ptr anchor, rbtree_min_max_nodes& all_nodes)
+	// {
+	// 	EASTL_ASSERT(!anchor->mpNodeRight);
+	// 	EASTL_ASSERT(!anchor->mpNodeLeft);
+	// 	EASTL_ASSERT(!anchor->mpNodeParent);
+	// 	EASTL_ASSERT(anchor->mColor == kRBTreeColorRed);
 
-		all_nodes->mpMinChild = anchor;
-		all_nodes->mpMaxChild = anchor;	
-	}
+
+	// 	all_nodes.mpMinChild = anchor;
+	// 	all_nodes.mpMaxChild = anchor;	
+	// }
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
 	void rbtree<K, V, C, A, E, bM, bU>::check_iterator(const const_iterator& it) const
 	{
-		// check if is a deleted node
-		it.get_raw_ptr()->assert_is_alive();
-
-		//check if iterator belong to our tree
+		//first check if iterator belong to our tree
 		if(it.get_end_node() != get_end_node())
 			throw "TODO2"; //TODO
+
+
+		// check if is not a deleted node
+		it.assert_alive_or_end();
 	}
 
 	///////////////////////////////////////////////////////////////////////

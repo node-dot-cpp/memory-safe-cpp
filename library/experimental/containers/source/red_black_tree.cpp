@@ -95,9 +95,6 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_soft_ptr RBTreeIncrement(rbtree_soft_ptr pNode)
 	{
-		// check iterator is alive
-        pNode->assert_is_alive();
-
 		if(pNode->mpNodeRight) 
 		{
 			pNode = pNode->mpNodeRight;
@@ -130,9 +127,6 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_soft_ptr RBTreeDecrement(rbtree_soft_ptr pNode)
 	{
-		// check iterator is alive
-        pNode->assert_is_alive();
-
 		// mb: decrement from end() works normally now
 		// if((pNode->mpNodeParent->mpNodeParent == pNode) && (pNode->mColor == kRBTreeColorRed))
 		// 	return pNode->mpNodeRight; 
@@ -284,17 +278,18 @@ namespace nodecpp
 	EASTL_API void RBTreeInsert(rbtree_owning_ptr pNodeOwner,
 								rbtree_soft_ptr pNodeParent,
 								rbtree_soft_ptr pNodeAnchor,
-								rbtree_min_max_nodes* pMinMaxNodes,
+								rbtree_min_max_nodes& pMinMaxNodes,
 								RBTreeSide insertionSide)
 	{
 		// rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpNodeLeft;
 		rbtree_soft_ptr pNode = pNodeOwner;
 
 		// Initialize fields in new node to insert.
+		EASTL_ASSERT(!pNode->mpNodeLeft);
+		EASTL_ASSERT(!pNode->mpNodeRight);
+		EASTL_ASSERT(pNode->mColor == kRBTreeColorRed);
+	
 		pNode->mpNodeParent = pNodeParent;
-		pNode->mpNodeRight  = nullptr;
-		pNode->mpNodeLeft   = nullptr;
-		pNode->mColor       = kRBTreeColorRed;
 
 		// Insert the node.
 		if(insertionSide == kRBTreeSideLeft)
@@ -304,17 +299,17 @@ namespace nodecpp
 			if(!pNodeParent->mpNodeParent) // first root node
 			{
 //				pNodeAnchor->mpNode = pNode;
-				pMinMaxNodes->mpMaxChild = pNode;
+				pMinMaxNodes.mpMaxChild = pNode;
 			}
-			if(pNodeParent == pMinMaxNodes->mpMinChild)
-				pMinMaxNodes->mpMinChild = pNode; // Maintain leftmost pointing to min node
+			if(pNodeParent == pMinMaxNodes.mpMinChild)
+				pMinMaxNodes.mpMinChild = pNode; // Maintain leftmost pointing to min node
 		}
 		else
 		{
 			pNodeParent->mpNodeRight = std::move(pNodeOwner);
 
-			if(pNodeParent == pMinMaxNodes->mpMaxChild)
-				pMinMaxNodes->mpMaxChild = pNode; // Maintain rightmost pointing to max node
+			if(pNodeParent == pMinMaxNodes.mpMaxChild)
+				pMinMaxNodes.mpMaxChild = pNode; // Maintain rightmost pointing to max node
 		}
 
 		// Rebalance the tree.
@@ -393,7 +388,7 @@ namespace nodecpp
 	///
 	EASTL_API rbtree_owning_ptr RBTreeErase(rbtree_soft_ptr pNode,
 								rbtree_soft_ptr pNodeAnchor,
-								rbtree_min_max_nodes* pMinMaxNodes)
+								rbtree_min_max_nodes& pMinMaxNodes)
 
 	{
 		// rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeLeft;
@@ -405,24 +400,24 @@ namespace nodecpp
 		
 		rbtree_owning_ptr  pNodeOwning 		 = nullptr;
 
-		if(pNode == pMinMaxNodes->mpMinChild) // If pNode is the tree begin() node...
+		if(pNode == pMinMaxNodes.mpMinChild) // If pNode is the tree begin() node...
 		{
 			// Because pNode is the tree begin(), pNode->mpNodeLeft must be NULL.
 			// Here we assign the new begin() (first node).
 			if(pNode->mpNodeRight)
-				pMinMaxNodes->mpMinChild = RBTreeGetMinChild(pNode->mpNodeRight); 
+				pMinMaxNodes.mpMinChild = RBTreeGetMinChild(pNode->mpNodeRight); 
 			else
-				pMinMaxNodes->mpMinChild = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
+				pMinMaxNodes.mpMinChild = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
 		}
 
-		if(pNode == pMinMaxNodes->mpMaxChild) // If pNode is the tree last (rbegin()) node...
+		if(pNode == pMinMaxNodes.mpMaxChild) // If pNode is the tree last (rbegin()) node...
 		{
 			// Because pNode is the tree rbegin(), pNode->mpNodeRight must be NULL.
 			// Here we assign the new rbegin() (last node)
 			if(pNode->mpNodeLeft)
-				pMinMaxNodes->mpMaxChild = RBTreeGetMaxChild(pNode->mpNodeLeft);
+				pMinMaxNodes.mpMaxChild = RBTreeGetMaxChild(pNode->mpNodeLeft);
 			else
-				pMinMaxNodes->mpMaxChild = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
+				pMinMaxNodes.mpMaxChild = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
 		}
 
 		if(!pNode->mpNodeLeft && !pNode->mpNodeRight) {

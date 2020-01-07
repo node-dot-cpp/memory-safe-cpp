@@ -48,7 +48,7 @@ node_owning_ptr<_Ty> node_make_owning(_Types&&... _Args)
 
 
 template<class _Ty>
-void node_delete_owning(_Ty p)
+void node_delete_owning(node_owning_ptr<_Ty> p)
 {
 	;//do nothing, 'p' will be deleted as it goes out of scope
 }
