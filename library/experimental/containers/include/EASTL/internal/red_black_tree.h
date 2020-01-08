@@ -132,8 +132,8 @@ namespace nodecpp
 		typedef safememory::node_owning_ptr<rbtree_node_base> base_owning_ptr;
 		typedef safememory::node_soft_ptr<rbtree_node_base> base_soft_ptr;
 
-		base_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
 		base_owning_ptr mpNodeLeft  = nullptr;
+		base_owning_ptr mpNodeRight = nullptr;
 		base_soft_ptr mpNodeParent  = nullptr;
 		RBTreeColor mColor          = kRBTreeColorRed;
 

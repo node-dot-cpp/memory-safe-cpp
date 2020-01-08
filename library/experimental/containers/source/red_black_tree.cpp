@@ -67,29 +67,45 @@ namespace nodecpp
 	void RBTreeRotateRight(rbtree_soft_ptr pNode);
 
 
-	inline void RBTreeSetLeftChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
+	void RBTreeSetLeftChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
 //		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeLeft);
 
 		if(pNodeChild) {
-		pNodeChild->mpNodeParent = pNode;
-		pNode->mpNodeLeft = std::move(pNodeChild);
-	}
+			pNodeChild->mpNodeParent = pNode;
+			pNode->mpNodeLeft = std::move(pNodeChild);
+		}
 	}
 
-	inline void RBTreeSetRightChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
+	void RBTreeSetRightChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
 //		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeRight);
 
 		if(pNodeChild) {
-		pNodeChild->mpNodeParent = pNode;
-		pNode->mpNodeRight = std::move(pNodeChild);
-	}
+			pNodeChild->mpNodeParent = pNode;
+			pNode->mpNodeRight = std::move(pNodeChild);
+		}
 	}
 
+	/// RBTreeIncrement
+	/// Replaces a node at its parents, and returns an owning_ptr to itself.
+	///
+	rbtree_owning_ptr RBTreeReplaceNode(rbtree_soft_ptr pNode, rbtree_owning_ptr pNewNode) {
 
+		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
+		if(pNode == pNodeParent->mpNodeLeft) {// If pNode is a left node...
+			rbtree_owning_ptr pNodeOwning = pNodeParent->take_node_left();
+			RBTreeSetLeftChild(pNodeParent, std::move(pNewNode));  // Make pNode's replacement node be on the same side.
+			return pNodeOwning;
+		}
+		else {
+			rbtree_owning_ptr pNodeOwning = pNodeParent->take_node_right();
+			RBTreeSetRightChild(pNodeParent, std::move(pNewNode));
+			return pNodeOwning;
+		}
+	}
 	/// RBTreeIncrement
 	/// Returns the next item in a sorted red-black tree.
 	///
@@ -183,6 +199,8 @@ namespace nodecpp
 	/// discussion the topic in good detail.
 	void RBTreeRotateLeft(rbtree_soft_ptr pNode)
 	{
+		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
+
 		rbtree_owning_ptr pNodeTemp = pNode->take_node_right();
 
 		if(pNodeTemp->mpNodeLeft)
@@ -196,7 +214,6 @@ namespace nodecpp
 		// if(pNode == pNodeRoot)
 		// 	pNodeRoot = pNodeTemp;
 		// else
-		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
 
 		if(pNode == pNodeParent->mpNodeLeft) {
 			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
@@ -248,21 +265,20 @@ namespace nodecpp
 		// pNode->mpNodeParent = pNodeTemp;
 
 		////////////////
+		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
+
 		rbtree_owning_ptr pNodeTemp = pNode->take_node_left();
 
 		if(pNodeTemp->mpNodeRight)
 			RBTreeSetLeftChild(pNode, pNodeTemp->take_node_right());
 
-		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
-		rbtree_owning_ptr pNodeOwner = nullptr; 
-
 		if(pNode == pNodeParent->mpNodeRight) {
-			pNodeOwner = pNodeParent->take_node_right();
+			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_right();
 			RBTreeSetRightChild(pNodeParent, std::move(pNodeTemp));
 			RBTreeSetRightChild(pNodeParent->mpNodeRight, std::move(pNodeOwner));
 		}
 		else {
-			pNodeOwner = pNodeParent->take_node_left();
+			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
 			RBTreeSetLeftChild(pNodeParent, std::move(pNodeTemp));
 			RBTreeSetRightChild(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
 		}
@@ -420,68 +436,52 @@ namespace nodecpp
 				pMinMaxNodes.mpMaxChild = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
 		}
 
-		if(!pNode->mpNodeLeft && !pNode->mpNodeRight) {
-			if(pNode == pNode->mpNodeParent->mpNodeLeft)
-				pNodeOwning = pNode->mpNodeParent->take_node_left();  // Make pNode's replacement node be on the same side.
-			else
-				pNodeOwning = pNode->mpNodeParent->take_node_right();
+		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
 
-			pNodeChildParent = pNode->mpNodeParent;
+		if(!pNode->mpNodeLeft && !pNode->mpNodeRight) {
+			if(pNode == pNodeParent->mpNodeLeft)
+				pNodeOwning = pNodeParent->take_node_left();  // Make pNode's replacement node be on the same side.
+			else
+				pNodeOwning = pNodeParent->take_node_right();
+
+			pNodeChildParent = pNodeParent;
 		}
 		else if(!pNode->mpNodeLeft) {
 			EASTL_ASSERT(pNode->mpNodeRight);
 
-			pNodeChildParent = pNode->mpNodeParent;
-			rbtree_owning_ptr pNodeChildOwn = pNode->take_node_right();
-			pNodeChild = pNodeChildOwn;
-			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
-				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
-			}
-			else {
-				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeChildOwn));
-			}
+			pNodeChild = pNode->mpNodeRight;
+			pNodeChildParent = pNodeParent;
 
+			rbtree_owning_ptr pNodeSuccessor = pNode->take_node_right();
+
+			pNodeOwning = RBTreeReplaceNode(pNode, std::move(pNodeSuccessor));
 		}
 		else if(!pNode->mpNodeRight) {
 			EASTL_ASSERT(pNode->mpNodeLeft);
 
-			pNodeChildParent = pNode->mpNodeParent;
-			rbtree_owning_ptr pNodeChildOwn = pNode->take_node_left(); 
-			pNodeChild = pNodeChildOwn;
-			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
-				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
-			}
-			else {
-				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeChildOwn));
-			}
-		
+			pNodeChild = pNode->mpNodeLeft;
+			pNodeChildParent = pNodeParent;
+
+			rbtree_owning_ptr pNodeSuccessor = pNode->take_node_left(); 
+
+			pNodeOwning = RBTreeReplaceNode(pNode, std::move(pNodeSuccessor));
 		}
 		//both childs are non-null
 		else if(!pNode->mpNodeRight->mpNodeLeft) {
-			//the node at the right doesn't have a left child,
+			//the node at the right doesn't have a left child
+			// so the right child is the successor
+			pNodeChild = pNode->mpNodeRight->mpNodeRight;
 			pNodeChildParent = pNode->mpNodeRight;
 
 
 			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
 			rbtree_owning_ptr pNodeSuccessor = pNode->take_node_right();
 			RBTreeSetLeftChild(pNodeSuccessor, std::move(pNodeLeft));
-			pNodeChild = pNodeSuccessor->mpNodeRight;
 
 			using std::swap;
 			swap(pNodeSuccessor->mColor, pNode->mColor);
 
-			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
-				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
-			}
-			else {
-				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeSuccessor));
-			}
+			pNodeOwning = RBTreeReplaceNode(pNode, std::move(pNodeSuccessor));
 		}
 		else {
 			// if we are here, pNode has two childs and the child on the right
@@ -490,20 +490,24 @@ namespace nodecpp
 
 			rbtree_soft_ptr pNodeSuccessorSoft = RBTreeIncrement(pNode);
 			rbtree_soft_ptr pNodeSuccessorParent = pNodeSuccessorSoft->mpNodeParent;
-			pNodeChildParent = pNodeSuccessorParent;
 //			rbtree_soft_ptr pNodeChildParent = RBTreeIncrement(pNode)->mpNodeParent;
 
 			EASTL_ASSERT(pNodeSuccessorParent != pNode);
 			rbtree_owning_ptr pNodeSuccessor = pNodeSuccessorParent->take_node_left();
 
-			EASTL_ASSERT(!pNodeSuccessorOwn->mpNodeLeft);
+			EASTL_ASSERT(!pNodeSuccessor->mpNodeLeft);
 			if(pNodeSuccessor->mpNodeRight) {
 				pNodeChild = pNodeSuccessor->mpNodeRight;
+				pNodeChildParent = pNodeChild->mpNodeParent;
 
 				rbtree_owning_ptr pNodeSuccessorRight = pNodeSuccessor->take_node_right();
 				RBTreeSetLeftChild(pNodeSuccessorParent, std::move(pNodeSuccessorRight));  // Make pNode's replacement node be on the same side.
 
 			}
+			else {
+				pNodeChildParent = pNodeSuccessorParent;
+			}
+
 			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
 			RBTreeSetLeftChild(pNodeSuccessor, std::move(pNodeLeft));  // Make pNode's replacement node be on the same side.
 
@@ -513,14 +517,7 @@ namespace nodecpp
 			using std::swap;
 			swap(pNodeSuccessor->mColor, pNode->mColor);
 
-			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
-				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
-			}
-			else {
-				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild(pNode->mpNodeParent, std::move(pNodeSuccessor));
-			}
+			pNodeOwning = RBTreeReplaceNode(pNode, std::move(pNodeSuccessor));
 		}
 
 
