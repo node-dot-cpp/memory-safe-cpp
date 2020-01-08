@@ -66,32 +66,30 @@ namespace nodecpp
 	void RBTreeRotateLeft(rbtree_soft_ptr pNode);
 	void RBTreeRotateRight(rbtree_soft_ptr pNode);
 
-
+	inline
 	void RBTreeSetLeftChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
-//		EASTL_ASSERT(pNodeChild);
+		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeLeft);
 
-		if(pNodeChild) {
-			pNodeChild->mpNodeParent = pNode;
-			pNode->mpNodeLeft = std::move(pNodeChild);
-		}
+		pNodeChild->mpNodeParent = pNode;
+		pNode->mpNodeLeft = std::move(pNodeChild);
 	}
 
+	inline
 	void RBTreeSetRightChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
-//		EASTL_ASSERT(pNodeChild);
+		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeRight);
 
-		if(pNodeChild) {
-			pNodeChild->mpNodeParent = pNode;
-			pNode->mpNodeRight = std::move(pNodeChild);
-		}
+		pNodeChild->mpNodeParent = pNode;
+		pNode->mpNodeRight = std::move(pNodeChild);
 	}
 
 	/// RBTreeIncrement
 	/// Replaces a node at its parents, and returns an owning_ptr to itself.
 	///
+	inline
 	rbtree_owning_ptr RBTreeReplaceNode(rbtree_soft_ptr pNode, rbtree_owning_ptr pNewNode) {
 
 		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
@@ -201,7 +199,8 @@ namespace nodecpp
 	{
 		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
 
-		rbtree_owning_ptr pNodeTemp = pNode->take_node_right();
+		rbtree_soft_ptr pNodeTemp = pNode->mpNodeRight;
+		rbtree_owning_ptr pNodeTempOwn = pNode->take_node_right();
 
 		if(pNodeTemp->mpNodeLeft)
 			RBTreeSetRightChild(pNode, pNodeTemp->take_node_left());
@@ -215,27 +214,8 @@ namespace nodecpp
 		// 	pNodeRoot = pNodeTemp;
 		// else
 
-		if(pNode == pNodeParent->mpNodeLeft) {
-			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
-			RBTreeSetLeftChild(pNodeParent, std::move(pNodeTemp));
-//			pNodeParent->mpNodeLeft = std::move(pNodeTemp);
-			RBTreeSetLeftChild(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
-			// pNodeParent->mpNodeLeft->mpNodeLeft = ;
-			// pNodeParent->mpNodeLeft->mpNodeLeft->mpNodeParent = pNodeParent->mpNodeLeft;
-		}
-		else {
-			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_right();
-			RBTreeSetRightChild(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetLeftChild(pNodeParent->mpNodeRight, std::move(pNodeOwner));
-			// pNodeParent->mpNodeRight = std::move(pNodeTemp);
-			// pNodeParent->mpNodeRight->mpNodeLeft = std::move(pNodeOwner);
-			// pNodeParent->mpNodeRight->mpNodeLeft->mpNodeParent = pNodeParent->mpNodeRight;
-		}
-
-//		pNodeTemp->mpNodeLeft = pNode;
-//		pNode->mpNodeParent = pNodeTemp;
-
-//		return pNodeRoot;
+		rbtree_owning_ptr pNodeOwner = RBTreeReplaceNode(pNode, std::move(pNodeTempOwn));
+		RBTreeSetLeftChild(pNodeTemp, std::move(pNodeOwner));
 	}
 
 
@@ -267,21 +247,14 @@ namespace nodecpp
 		////////////////
 		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
 
-		rbtree_owning_ptr pNodeTemp = pNode->take_node_left();
+		rbtree_soft_ptr pNodeTemp = pNode->mpNodeLeft;
+		rbtree_owning_ptr pNodeTempOwn = pNode->take_node_left();
 
 		if(pNodeTemp->mpNodeRight)
 			RBTreeSetLeftChild(pNode, pNodeTemp->take_node_right());
 
-		if(pNode == pNodeParent->mpNodeRight) {
-			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_right();
-			RBTreeSetRightChild(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetRightChild(pNodeParent->mpNodeRight, std::move(pNodeOwner));
-		}
-		else {
-			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
-			RBTreeSetLeftChild(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetRightChild(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
-		}
+		rbtree_owning_ptr pNodeOwner = RBTreeReplaceNode(pNode, std::move(pNodeTempOwn));
+		RBTreeSetRightChild(pNodeTemp, std::move(pNodeOwner));
 	}
 
 
