@@ -53,6 +53,8 @@
 #include <initializer_list>
 #include <tuple>
 
+#include "../../../source/red_black_tree_cpp.h"
+
 #include <safe_ptr_for_map.h>
 #include <safe_ptr.h>
 
@@ -96,132 +98,6 @@ namespace nodecpp
 	#endif
 
 
-	/// RBTreeColor
-	///
-	enum RBTreeColor
-	{
-		kRBTreeColorRed,
-		kRBTreeColorBlack,
-		kRBTreeColorZombie
-	};
-
-
-
-	/// RBTreeSide
-	///
-	enum RBTreeSide
-	{
-		kRBTreeSideLeft,
-		kRBTreeSideRight
-	};
-
-
-
-	/// rbtree_node_base
-	///
-	/// We define a rbtree_node_base separately from rbtree_node (below), because it 
-	/// allows us to have non-templated operations. The downside to all of this is 
-	/// that it makes debug 
-	/// viewing of an rbtree harder, given that the node pointers are of type 
-	/// rbtree_node_base and not rbtree_node.
-	///
-	struct rbtree_node_base
-	{
-	public:
-
-		typedef safememory::node_owning_ptr<rbtree_node_base> base_owning_ptr;
-		typedef safememory::node_soft_ptr<rbtree_node_base> base_soft_ptr;
-
-		base_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
-		base_owning_ptr mpNodeLeft  = nullptr;
-		base_soft_ptr mpNodeParent  = nullptr;
-		RBTreeColor mColor          = kRBTreeColorRed;
-
-		rbtree_node_base() = default;
-		rbtree_node_base(base_soft_ptr nodeParent, RBTreeColor color) :
-			mpNodeParent(nodeParent), mColor(color) {}
-		virtual ~rbtree_node_base() {}
-
-		void assert_is_alive() const {
-			// as now, we use a special color, in the future change to verify
-			// the safe pointer control block
-    		if(mColor != kRBTreeColorRed && mColor != kRBTreeColorBlack)
-                throw "TODO3";
-		}
-
-		void set_as_deleted() {
-			EASTL_ASSERT(!mpNodeLeft);
-			EASTL_ASSERT(!mpNodeRight);
-
-			mpNodeParent = nullptr;
-			mColor = kRBTreeColorZombie;
-		}
-
-		base_owning_ptr take_node_left() {
-			EASTL_ASSERT(mpNodeLeft);
-			base_owning_ptr pNode = std::move(mpNodeLeft);
-			mpNodeLeft = nullptr;
-			return pNode;
-		}
-
-		base_owning_ptr take_node_right() {
-			EASTL_ASSERT(mpNodeRight);
-			base_owning_ptr pNode = std::move(mpNodeRight);
-			mpNodeRight = nullptr;
-			return pNode;
-		}
-
-	};
-
-	typedef rbtree_node_base::base_owning_ptr rbtree_owning_ptr;
-	typedef rbtree_node_base::base_soft_ptr rbtree_soft_ptr;
-
-
-	/// rbtree_node
-	///
-	template <typename Value>
-	struct rbtree_node : public rbtree_node_base
-	{
-		Value mValue; // For set and multiset, this is the user's value, for map and multimap, this is a pair of key/value.
-
-
-		typedef typename safememory::node_owning_ptr<rbtree_node<Value>> node_owning_ptr;
-		typedef typename safememory::node_soft_ptr<rbtree_node<Value>> node_soft_ptr;
-// /		typedef const rbtree_node_base* const_node_soft_ptr;
-
-		rbtree_node() = default;
-
-		rbtree_node(base_soft_ptr nodeParent, RBTreeColor color, const Value& value) :
-			rbtree_node_base(nodeParent, color), mValue(value) {}
-
-		template<class... Types>
-		rbtree_node(Types&&... args) : mValue(::std::forward<Types>(args)...) {}
-
-		node_soft_ptr get_node_right() const {
-			rbtree_node_base::base_soft_ptr pNode = mpNodeRight;
-			if(pNode)
-				return safememory::node_soft_ptr_static_cast<rbtree_node<Value>>(pNode);
-			else
-				return node_soft_ptr();
-		}
-
-		node_soft_ptr get_node_left() const {
-			rbtree_node_base::base_soft_ptr pNode = mpNodeLeft;
-			if(pNode)
-				return safememory::node_soft_ptr_static_cast<rbtree_node<Value>>(pNode);
-			else
-				return node_soft_ptr();
-		}
-
-	};
-
-
-	struct rbtree_min_max_nodes {
-		rbtree_soft_ptr	mpMinChild;
-		rbtree_soft_ptr mpMaxChild;
-	};
-
-
 
 
 
@@ -231,20 +107,20 @@ namespace nodecpp
 	// tree. The bulk of the work of the tree maintenance is done in 
 	// these functions.
 	//
-	EASTL_API rbtree_soft_ptr RBTreeIncrement    (rbtree_soft_ptr pNode);
-	EASTL_API rbtree_soft_ptr RBTreeDecrement    (rbtree_soft_ptr pNode);
-	EASTL_API rbtree_soft_ptr RBTreeGetMinChild  (rbtree_soft_ptr pNode);
-	EASTL_API rbtree_soft_ptr RBTreeGetMaxChild  (rbtree_soft_ptr pNode);
-	EASTL_API size_t            RBTreeGetBlackCount(rbtree_soft_ptr pNodeTop,
-													rbtree_soft_ptr pNodeBottom);
-	EASTL_API void              RBTreeInsert       (      rbtree_owning_ptr pNode,
-														  rbtree_soft_ptr pNodeParent,
-														  rbtree_soft_ptr pNodeAnchor,
-														  rbtree_min_max_nodes& pMinMaxNodes,
-														  RBTreeSide insertionSide);
-	EASTL_API rbtree_owning_ptr RBTreeErase        (      rbtree_soft_ptr pNode,
-														  rbtree_soft_ptr pNodeAnchor,
-														  rbtree_min_max_nodes& pMinMaxNodes); 
+	// EASTL_API rbtree_soft_ptr RBTreeIncrement    (rbtree_soft_ptr pNode);
+	// EASTL_API rbtree_soft_ptr RBTreeDecrement    (rbtree_soft_ptr pNode);
+	// EASTL_API rbtree_soft_ptr RBTreeGetMinChild  (rbtree_soft_ptr pNode);
+	// EASTL_API rbtree_soft_ptr RBTreeGetMaxChild  (rbtree_soft_ptr pNode);
+	// EASTL_API size_t            RBTreeGetBlackCount(rbtree_soft_ptr pNodeTop,
+	// 												rbtree_soft_ptr pNodeBottom);
+	// EASTL_API void              RBTreeInsert       (      rbtree_owning_ptr pNode,
+	// 													  rbtree_soft_ptr pNodeParent,
+	// 													  rbtree_soft_ptr pNodeAnchor,
+	// 													  rbtree_min_max_nodes& pMinMaxNodes,
+	// 													  RBTreeSide insertionSide);
+	// EASTL_API rbtree_owning_ptr RBTreeErase        (      rbtree_soft_ptr pNode,
+	// 													  rbtree_soft_ptr pNodeAnchor,
+	// 													  rbtree_min_max_nodes& pMinMaxNodes); 
 
 
 
@@ -770,29 +646,6 @@ namespace nodecpp
 
 
 	///////////////////////////////////////////////////////////////////////
-	// rbtree_node_base functions
-	///////////////////////////////////////////////////////////////////////
-
-	EASTL_API inline rbtree_soft_ptr RBTreeGetMinChild(rbtree_soft_ptr pNodeBase)
-	{
-		while(pNodeBase->mpNodeLeft) 
-			pNodeBase = pNodeBase->mpNodeLeft;
-		return pNodeBase;
-	}
-
-	EASTL_API inline rbtree_soft_ptr RBTreeGetMaxChild(rbtree_soft_ptr pNodeBase)
-	{
-		while(pNodeBase->mpNodeRight) 
-			pNodeBase = pNodeBase->mpNodeRight;
-		return pNodeBase;
-	}
-
-	// The rest of the functions are non-trivial and are found in 
-	// the corresponding .cpp file to this file.
-
-
-
-	///////////////////////////////////////////////////////////////////////
 	// rbtree_iterator functions
 	///////////////////////////////////////////////////////////////////////
 
@@ -837,7 +690,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator++()
 	{
 		assert_alive_and_not_end();
-		set_from_base_ptr(RBTreeIncrement(mpNode));
+		set_from_base_ptr(RBTreeIncrement<rbtree_soft_ptr>(mpNode));
 		return *this;
 	}
 
@@ -848,7 +701,7 @@ namespace nodecpp
 	{
 		assert_alive_and_not_end();
 		this_type temp(*this);
-		set_from_base_ptr(RBTreeIncrement(mpNode));
+		set_from_base_ptr(RBTreeIncrement<rbtree_soft_ptr>(mpNode));
 		return temp;
 	}
 
@@ -858,7 +711,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator--()
 	{
 		assert_alive_or_end();
-		set_from_base_ptr(RBTreeDecrement(mpNode));
+		set_from_base_ptr(RBTreeDecrement<rbtree_soft_ptr>(mpNode));
 		return *this;
 	}
 
@@ -869,7 +722,7 @@ namespace nodecpp
 	{
 		assert_alive_or_end();
 		this_type temp(*this);
-		set_from_base_ptr(RBTreeDecrement(mpNode));
+		set_from_base_ptr(RBTreeDecrement<rbtree_soft_ptr>(mpNode));
 		return temp;
 	}
 
@@ -953,8 +806,8 @@ namespace nodecpp
 		{
 			mpNodeEnd->mpNodeLeft = DoCopySubtree(x.get_root_node(), get_end_node()); 
 
-			mMinMaxNodes.mpMinChild = RBTreeGetMinChild(get_root_node());
-			mMinMaxNodes.mpMaxChild = RBTreeGetMaxChild(get_root_node());
+			mMinMaxNodes.mpMinChild = RBTreeGetMinChild<rbtree_soft_ptr>(get_root_node());
+			mMinMaxNodes.mpMaxChild = RBTreeGetMaxChild<rbtree_soft_ptr>(get_root_node());
 
 			mnSize               = x.mnSize;
 		}
@@ -1147,8 +1000,8 @@ namespace nodecpp
 			{
 				mpNodeEnd->mpNodeLeft = DoCopySubtree(x.get_root_node(), get_end_node())
 
-				mMinMaxNodes.mpMinChild = RBTreeGetMinChild(get_root_node());
-				mMinMaxNodes.mpMaxChild = RBTreeGetMaxChild(get_root_node());
+				mMinMaxNodes.mpMinChild = RBTreeGetMinChild<rbtree_soft_ptr>(get_root_node());
+				mMinMaxNodes.mpMaxChild = RBTreeGetMaxChild<rbtree_soft_ptr>(get_root_node());
 
 				mnSize               = x.mnSize;
 			}
@@ -1459,7 +1312,7 @@ namespace nodecpp
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
-				pLowerBound = safememory::node_soft_ptr_static_cast<node_type>(RBTreeDecrement(pLowerBound));
+				pLowerBound = safememory::node_soft_ptr_static_cast<node_type>(RBTreeDecrement<rbtree_soft_ptr>(pLowerBound));
 			}
 			else
 			{
@@ -1611,7 +1464,7 @@ namespace nodecpp
 		else
 			side = kRBTreeSideRight;
 
-		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
+		RBTreeInsert<rbtree_soft_ptr, rbtree_owning_ptr>(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew, get_end_node());
@@ -1843,7 +1696,7 @@ namespace nodecpp
 
 		node_owning_ptr pNodeNew = DoCreateNodeFromKey(key);
 		node_soft_ptr pNodeNew2 = pNodeNew;
-		RBTreeInsert(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
+		RBTreeInsert<rbtree_soft_ptr, rbtree_owning_ptr>(std::move(pNodeNew), pNodeParent, mpNodeEnd, mMinMaxNodes, side);
 		mnSize++;
 
 		return iterator(pNodeNew2, get_end_node());
@@ -1905,7 +1758,7 @@ namespace nodecpp
 		const iterator iErase(position.get_node(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		rbtree_owning_ptr pNode = RBTreeErase(iErase.get_node(), mpNodeEnd, mMinMaxNodes);
+		rbtree_owning_ptr pNode = RBTreeErase<rbtree_soft_ptr, rbtree_owning_ptr>(iErase.get_node(), mpNodeEnd, mMinMaxNodes);
 		DoFreeNode(std::move(pNode));
 		return iterator(position.get_node(), get_end_node());
 	}
@@ -2155,13 +2008,13 @@ namespace nodecpp
 			//if(!mAnchor.mpNodeParent || (mAnchor.mpNodeLeft == mAnchor.mpNodeRight))
 			//    return false;             // Fix this for case of empty tree.
 
-			if(mMinMaxNodes.mpMinChild != RBTreeGetMinChild(get_root_node()))
+			if(mMinMaxNodes.mpMinChild != RBTreeGetMinChild<rbtree_soft_ptr>(get_root_node()))
 				return false;
 
-			if(mMinMaxNodes.mpMaxChild != RBTreeGetMaxChild(get_root_node()))
+			if(mMinMaxNodes.mpMaxChild != RBTreeGetMaxChild<rbtree_soft_ptr>(get_root_node()))
 				return false;
 
-			const size_t nBlackCount   = RBTreeGetBlackCount(get_root_node(), mMinMaxNodes.mpMinChild);
+			const size_t nBlackCount   = RBTreeGetBlackCount<rbtree_soft_ptr>(get_root_node(), mMinMaxNodes.mpMinChild);
 			size_type    nIteratedSize = 0;
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
@@ -2200,7 +2053,7 @@ namespace nodecpp
 				if(!pNodeRight && !pNodeLeft) // If we are at a bottom node of the tree...
 				{
 					// Verify item #4 above.
-					if(RBTreeGetBlackCount(get_root_node(), pNode) != nBlackCount)
+					if(RBTreeGetBlackCount<rbtree_soft_ptr>(get_root_node(), pNode) != nBlackCount)
 						return false;
 				}
 			}

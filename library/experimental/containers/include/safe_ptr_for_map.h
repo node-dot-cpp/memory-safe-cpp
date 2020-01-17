@@ -39,6 +39,7 @@ using node_owning_ptr = owning_ptr<_Ty>;
 template<class _Ty>
 using node_soft_ptr = soft_ptr<_Ty>;
 
+
 template<class _Ty,	class... _Types>
 node_owning_ptr<_Ty> node_make_owning(_Types&&... _Args)
 {

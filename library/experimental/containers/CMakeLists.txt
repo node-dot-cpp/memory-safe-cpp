@@ -2,7 +2,6 @@
 
 add_executable(container-test
   main.cpp
-  source/red_black_tree.cpp
   ${PROJECT_SOURCE_DIR}/../../src/safe_ptr.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/iibmalloc.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
