@@ -640,8 +640,8 @@ namespace nodecpp
 		// 	mpNodeEnd = nullptr;
 		// 	return pNode;
 		// }
-		node_soft_ptr get_begin_node() const { return safememory::node_soft_ptr_static_cast<node_type>(mMinMaxNodes.mpMinChild); }
-		node_soft_ptr get_last_node() const { return safememory::node_soft_ptr_static_cast<node_type>(mMinMaxNodes.mpMaxChild); }
+		node_soft_ptr get_begin_node() const { return mMinMaxNodes.mpMinChild; }
+		node_soft_ptr get_last_node() const { return mMinMaxNodes.mpMaxChild; }
 //		node_type* get_last_node() const { return mpNodeEnd; }
 	}; // rbtree
 
@@ -659,7 +659,7 @@ namespace nodecpp
 		if(!pNode)
 			throw "TODO";
 
-		mpNode = safememory::node_soft_ptr_static_cast<node_type>(pNode);
+		mpNode = pNode;
 	}
 
 	template <typename T, typename Pointer, typename Reference>
@@ -1316,7 +1316,7 @@ namespace nodecpp
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
-				pLowerBound = safememory::node_soft_ptr_static_cast<node_type>(RBTreeDecrement<rbtree_soft_ptr>(pLowerBound));
+				pLowerBound = RBTreeDecrement<rbtree_soft_ptr>(pLowerBound);
 			}
 			else
 			{
@@ -2115,6 +2115,7 @@ namespace nodecpp
 		//mb: we put it in special state in case some iterator is still pointing to it
 		pNode->set_as_deleted();
 
+		safememory::lib_helpers::rbtree_delete_owning<node_type>(std::move(pNode));
 		// release will be automatic, as owning_ptr goes out of scope here
 	}
 
@@ -2153,7 +2154,7 @@ namespace nodecpp
 
 // 		return pNode;
 
-		return safememory::node_make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
+		return safememory::lib_helpers::rbtree_make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple());
 	}
 
 
@@ -2190,7 +2191,7 @@ namespace nodecpp
 
 		// return pNode;
 
-		return safememory::node_make_owning<node_type>(value);
+		return safememory::lib_helpers::rbtree_make_owning<node_type>(value);
 	}
 
 
@@ -2227,7 +2228,7 @@ namespace nodecpp
 
 		// return pNode;
 
-		return safememory::node_make_owning<node_type>(std::move(value));
+		return safememory::lib_helpers::rbtree_make_owning<node_type>(std::move(value));
 	}
 
 
@@ -2265,7 +2266,7 @@ namespace nodecpp
 
 // 		return pNode;
 
-		return safememory::node_make_owning<node_type>(std::forward<Args>(args)...);
+		return safememory::lib_helpers::rbtree_make_owning<node_type>(std::forward<Args>(args)...);
 	}
 
 
@@ -2282,7 +2283,7 @@ namespace nodecpp
 
 		// return pNode;
 
-		return safememory::node_make_owning<node_type>(pNodeParent, pNodeSource->mColor, pNodeSource->mValue);
+		return safememory::lib_helpers::rbtree_make_owning<node_type>(pNodeParent, pNodeSource->mColor, pNodeSource->mValue);
 
 	}
 
@@ -2357,7 +2358,7 @@ namespace nodecpp
 		// to the 'end' node, regardless of the map being created on the heap
 		// or on the stack
 		// This is also helpful as the 'end' node is used to match iterators to its source trees
-		node_owning_ptr pNode = safememory::node_make_owning<node_type>();
+		node_owning_ptr pNode = safememory::lib_helpers::rbtree_make_owning<node_type>();
 		pNode->mColor = kRBTreeColorZombie;
 
 		mMinMaxNodes.mpMinChild = pNode;

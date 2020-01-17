@@ -30,18 +30,18 @@
 
 #include "safe_ptr.h"
 
-namespace nodecpp::safememory
+namespace nodecpp::safememory::lib_helpers
 {
 
 template<class _Ty>
-using node_owning_ptr = owning_ptr<_Ty>;
+using rbtree_owning_ptr = nodecpp::safememory::owning_ptr<_Ty>;
 
 template<class _Ty>
-using node_soft_ptr = soft_ptr<_Ty>;
+using rbtree_soft_ptr = nodecpp::safememory::soft_ptr<_Ty>;
 
 
 template<class _Ty,	class... _Types>
-node_owning_ptr<_Ty> node_make_owning(_Types&&... _Args)
+rbtree_owning_ptr<_Ty> rbtree_make_owning(_Types&&... _Args)
 {
 	return make_owning<_Ty>(::std::forward<_Types>(_Args)...);
 }
@@ -49,14 +49,14 @@ node_owning_ptr<_Ty> node_make_owning(_Types&&... _Args)
 
 
 template<class _Ty>
-void node_delete_owning(node_owning_ptr<_Ty> p)
+void rbtree_delete_owning(rbtree_owning_ptr<_Ty> p)
 {
 	;//do nothing, 'p' will be deleted as it goes out of scope
 }
 
 
 template<class T, class T1>
-node_soft_ptr<T> node_soft_ptr_static_cast(T1 p) {
+rbtree_soft_ptr<T> node_soft_ptr_static_cast(T1 p) {
 	return soft_ptr_static_cast<T>(p);
 }
 

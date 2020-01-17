@@ -90,11 +90,12 @@ namespace nodecpp
 	struct rbtree_node
 	{
 
-		typedef typename safememory::node_owning_ptr<rbtree_node<Value>> node_owning_ptr;
-		typedef typename safememory::node_soft_ptr<rbtree_node<Value>> node_soft_ptr;
+		typedef typename safememory::lib_helpers::rbtree_owning_ptr<rbtree_node<Value>> rbtree_owning_ptr;
+		typedef typename safememory::lib_helpers::rbtree_soft_ptr<rbtree_node<Value>> rbtree_soft_ptr;
 
-		typedef typename safememory::node_owning_ptr<rbtree_node<Value>> rbtree_owning_ptr;
-		typedef typename safememory::node_soft_ptr<rbtree_node<Value>> rbtree_soft_ptr;
+		typedef rbtree_owning_ptr node_owning_ptr;
+		typedef rbtree_soft_ptr node_soft_ptr;
+
 
 		
 		// typedef safememory::node_owning_ptr<rbtree_node_base> base_owning_ptr;
