@@ -39,6 +39,11 @@ namespace nodecpp::safememory
 	constexpr uint64_t module_id = 2;
 } // namespace nodecpp::safememory
 
+namespace nodecpp
+{
+	constexpr const char* safememory_module_id = "safememory";
+}
+
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)

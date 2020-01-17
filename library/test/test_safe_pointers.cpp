@@ -36,6 +36,7 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
+#include <safe_ptr_with_zero_offset.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -55,7 +56,7 @@ public:
 	}
 	~IIBMallocInitializer()
 	{
-//	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+//	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 	}
 };
@@ -108,27 +109,27 @@ int testWithLest( int argc, char * argv[] )
 	#if 0 // TODO: rework for new data structures
 				int* n1 = new int;
 				int* n2 = new int;
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[1] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[1] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 				Ptr2PtrWishData n1D, n2D;
 				//SECTION( "initializing ptrs-with-data" )
 				{
 					n1D.init(n1,Ptr2PtrWishData::invalidData);
 					n2D.init(n2,Ptr2PtrWishData::invalidData);
-				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[2] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::default_log::error( "[2] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					EXPECT( n1D.getPtr() == n1 );
 					EXPECT( n2D.getPtr() == n2 );
 					EXPECT( n1D.getData() == Ptr2PtrWishData::invalidData );
 					EXPECT( n2D.getData() == Ptr2PtrWishData::invalidData );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[3] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[3] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 				}
 				//SECTION( "updating data" )
 				{
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[4] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[4] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					n1D.updateData(6);
 					n2D.updateData(500000);
-				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[5] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::default_log::error( "[5] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					EXPECT( n1D.getPtr() == n1 );
 					EXPECT( n2D.getPtr() == n2 );
 					EXPECT( n1D.getData() == 6 );
@@ -142,7 +143,7 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( n2D.getPtr() == n1 );
 					EXPECT( n1D.getData() == 6 );
 					EXPECT( n2D.getData() == 500000 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				//SECTION( "yet updating data" )
 				{
@@ -152,7 +153,7 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( n2D.getPtr() == n1 );
 					EXPECT( n1D.getData() == 500000 );
 					EXPECT( n2D.getData() == 6 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				delete n1;
 				delete n2;
@@ -184,39 +185,39 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT( *s12 == 6 );
 					EXPECT( *s21 == 26 );
 					EXPECT( *s22 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+					//nodecpp::log::default_log::error( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
+					//nodecpp::log::default_log::error( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
 					s21.swap(s12);
 					//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+					//nodecpp::log::default_log::error( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
  					EXPECT( *s11 == 6 );
 					EXPECT( *s12 == 26 );
 					EXPECT( *s21 == 6 );
 					EXPECT( *s22 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s11 = {}", *s11.get() );
+					//nodecpp::log::default_log::error( "before swapping: *s11 = {}", *s11.get() );
 					s01.swap(s11);
 					//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s01 = {}", *s01.get() );
+					//nodecpp::log::default_log::error( "after swapping: *s01 = {}", *s01.get() );
  					EXPECT( *s01 == 6 );
 					soft_ptr<int> s13(p1);
 					soft_ptr<int> s14(p1);
 					{
 						soft_ptr<int> s15(p1);
- 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 						//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 						EXPECT( *s15 == 6 );
 					}
 					soft_ptr<int> s15(p1);
 					EXPECT( *s15 == 6 );
- 					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 					//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 					soft_ptr<int> s16(p1);
 					{
 						soft_ptr<int> s17(p1);
 						EXPECT( *s17 == 6 );
- 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}", *s17.get() );
+ 						//nodecpp::log::default_log::error( "*s17 = {}", *s17.get() );
 					}
 					EXPECT( *p1 == 6 );
 					EXPECT( *p2 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}", *p1, *p2 );
+					//nodecpp::log::default_log::error( "*p1 = {}, *p2 = {}", *p1, *p2 );
 					owning_ptr<int> p3 = make_owning<int>();
 					*p3 = 17;
 					s02 = p3;
@@ -321,7 +322,7 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT(  !(np1 != np2v) );
 					EXPECT(  !(np1v == np3) );
 				}
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
+				//nodecpp::log::default_log::error( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//EXPECT( !s01 );
 				//EXPECT( !s02 );
 			}
@@ -541,27 +542,27 @@ int testWithLest( int argc, char * argv[] )
 	#if 0 // TODO: rework for new data structures
 				int* n1 = new int;
 				int* n2 = new int;
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[1] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[1] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 				Ptr2PtrWishData n1D, n2D;
 				////SECTION( "initializing ptrs-with-data" )
 				{
 					n1D.init(n1,Ptr2PtrWishData::invalidData);
 					n2D.init(n2,Ptr2PtrWishData::invalidData);
-				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[2] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::default_log::error( "[2] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n1 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == Ptr2PtrWishData::invalidData );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == Ptr2PtrWishData::invalidData );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[3] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[3] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 				}
 				////SECTION( "updating data" )
 				{
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[4] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+			 //nodecpp::log::default_log::error( "[4] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					n1D.updateData(6);
 					n2D.updateData(500000);
-				 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
-			 //nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "[5] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
+				 //nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+			 //nodecpp::log::default_log::error( "[5] n1 = 0x{:x}, n2 = 0x{:x}", (uintptr_t)n1, (uintptr_t)n2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getPtr() == n1 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 6 );
@@ -575,7 +576,7 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n1 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 6 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == 500000 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				////SECTION( "yet updating data" )
 				{
@@ -585,7 +586,7 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getPtr() == n1 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n1D.getData() == 500000 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, n2D.getData() == 6 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
+					//nodecpp::log::default_log::error( "n1D.ptr = 0x{:x}, n1D.data = {}, n2D.ptr = 0x{:x}, n2D.data = {}", (uintptr_t)(n1D.getPtr()), n1D.getData(), (uintptr_t)(n2D.getPtr()), n2D.getData() );
 				}
 				delete n1;
 				delete n2;
@@ -617,39 +618,39 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 6 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 26 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+					//nodecpp::log::default_log::error( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
+					//nodecpp::log::default_log::error( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
 					s21.swap(s12);
 					//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+					//nodecpp::log::default_log::error( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
  					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 26 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 6 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s11 = {}", *s11.get() );
+					//nodecpp::log::default_log::error( "before swapping: *s11 = {}", *s11.get() );
 					s01.swap(s11);
 					//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s01 = {}", *s01.get() );
+					//nodecpp::log::default_log::error( "after swapping: *s01 = {}", *s01.get() );
  					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s01 == 6 );
 					soft_ptr<int> s13(p1);
 					soft_ptr<int> s14(p1);
 					{
 						soft_ptr<int> s15(p1);
- 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 						//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 						NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
 					}
 					soft_ptr<int> s15(p1);
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
- 					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 					//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 					soft_ptr<int> s16(p1);
 					{
 						soft_ptr<int> s17(p1);
 						NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s17 == 6 );
- 						//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}", *s17.get() );
+ 						//nodecpp::log::default_log::error( "*s17 = {}", *s17.get() );
 					}
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p1 == 6 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p2 == 26 );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}", *p1, *p2 );
+					//nodecpp::log::default_log::error( "*p1 = {}, *p2 = {}", *p1, *p2 );
 					owning_ptr<int> p3 = make_owning<int>();
 					*p3 = 17;
 					s02 = p3;
@@ -731,7 +732,7 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1 != np2v) );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(np1v == np3) );
 				}
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
+				//nodecpp::log::default_log::error( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s01 );
 				//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 			}
@@ -1158,39 +1159,39 @@ void temptest()
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 6 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 26 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+		//nodecpp::log::default_log::error( "*s11 = {}, *s12 = {}, *s11 = {}, *s12 = {}", *s11, *s12, *s21, *s22 );
+		//nodecpp::log::default_log::error( "before swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
 		s21.swap(s12);
 		//soft_ptr<int> tmp1 = s21; s21 = s12; s12 = tmp1;
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
+		//nodecpp::log::default_log::error( "after swapping: *s21 = {}, *s12 = {}", *s21, *s12 );
  		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s11 == 6 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s12 == 26 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s21 == 6 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s22 == 26 );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "before swapping: *s11 = {}", *s11.get() );
+		//nodecpp::log::default_log::error( "before swapping: *s11 = {}", *s11.get() );
 		s01.swap(s11);
 		//soft_ptr<int> tmp2 = s01; s01 = s11; s11 = tmp2;
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after swapping: *s01 = {}", *s01.get() );
+		//nodecpp::log::default_log::error( "after swapping: *s01 = {}", *s01.get() );
  		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s01 == 6 );
 		soft_ptr<int> s13(p1);
 		soft_ptr<int> s14(p1);
 		{
 			soft_ptr<int> s15(p1);
- 			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 			//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
 		}
 		soft_ptr<int> s15(p1);
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s15 == 6 );
- 		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s15 = {}", *s15.get() );
+ 		//nodecpp::log::default_log::error( "*s15 = {}", *s15.get() );
 		soft_ptr<int> s16(p1);
 		{
 			soft_ptr<int> s17(p1);
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *s17 == 6 );
- 			//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*s17 = {}", *s17.get() );
+ 			//nodecpp::log::default_log::error( "*s17 = {}", *s17.get() );
 		}
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p1 == 6 );
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, *p2 == 26 );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "*p1 = {}, *p2 = {}", *p1, *p2 );
+		//nodecpp::log::default_log::error( "*p1 = {}, *p2 = {}", *p1, *p2 );
 		owning_ptr<int> p3 = make_owning<int>();
 		*p3 = 17;
 		s02 = p3;
@@ -1241,15 +1242,27 @@ void temptest()
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == sp21) );
 
 	}
-	//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
+	//nodecpp::log::default_log::error( "is s14 == NULL (as it shoudl be)? {}", s14 ? "NO" : "YES" );
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s01 );
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
+}
+
+void testSptrsWithZeroOffset()
+{
+	owning_ptr<int> op = make_owning<int>(17);
+	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+	soft_ptr<int> sp1 = spz2.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
 }
 
 
 int main( int argc, char * argv[] )
 {
-	::nodecpp::log::init_log();
+	nodecpp::log::Log log;
+	log.level = nodecpp::log::LogLevel::info;
+	log.add( stdout );
 
 	interceptNewDeleteOperators( true );
 
@@ -1257,18 +1270,21 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
+	testSptrsWithZeroOffset();
+//	return 0;
+
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
 	//test__allocated_ptr_and_ptr_and_data_and_flags();
 	//test__allocated_ptr_with_mask_and_flags(); return 0;
 
 	int any = 0;
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "&any = 0x{:x}", (size_t)(&any) );
+	nodecpp::log::default_log::error( "&any = 0x{:x}", (size_t)(&any) );
 	//testNullPtrAccess(); return 0;
 	test__allocated_ptr_and_ptr_and_data_and_flags(); //return 0;
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>> onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>> onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 /*	for ( uint64_t n=0; n<8; ++n )
@@ -1277,7 +1293,7 @@ int main( int argc, char * argv[] )
 		uint64_t n1 = ~n;
 		uint8_t r = _BitScanForward(&ix, n1);
 		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ( (1<<ix) & n ) == 0 || ix > 2 );
-		nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "{} {}: {} ({})", n, n1, ix, (size_t)r );
+		nodecpp::log::default_log::error( "{} {}: {} ({})", n, n1, ix, (size_t)r );
 	}
 	return 0;*/
 	//int ret = lest::run( specification, argc, argv );
@@ -1285,7 +1301,7 @@ int main( int argc, char * argv[] )
 	killAllZombies();
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
     //return ret;
@@ -1293,13 +1309,15 @@ int main( int argc, char * argv[] )
 	fnSoftEnd();
 	fnOwningEnd();
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "about to exit main()..." );
+	nodecpp::log::default_log::error( "about to exit main()..." );
 
 	killAllZombies();
 	interceptNewDeleteOperators( false );
+
+	nodecpp::log::default_log::info( "about to exit...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         " );
 
 	return 0;
 }

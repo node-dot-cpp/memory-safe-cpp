@@ -72,6 +72,7 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class naked_ptr_base_impl; // forward declaration
 template<class T> class naked_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
+namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; } // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -121,11 +122,11 @@ struct FirstControlBlock // not reallocatable
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, firstFree == nullptr || !firstFree->isUsed() );
 			//dbgCheckFreeList();
 //			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < (1<<19) ); // TODO
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "at 2nd block 0x{:x}: inserted idx {} with 0x{:x}", (size_t)this, idx, (size_t)ptr);
 			return idx;
 		}
 		void resetPtr( size_t idx, void* newPtr ) {
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "at 2nd block 0x{:x}: about to reset idx {} to 0x{:x}", (size_t)this, idx, (size_t)newPtr);
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, idx < otherAllockedCnt );
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -155,7 +156,7 @@ struct FirstControlBlock // not reallocatable
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
 				deallocate( present );
 				ret->otherAllockedCnt = newSize;
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 			else {
@@ -165,7 +166,7 @@ struct FirstControlBlock // not reallocatable
 				//present->firstFree->set(nullptr);
 				//otherAllockedSlots.setPtr( reinterpret_cast<PtrWishFlagsForSoftPtrList*>( allocate( otherAllockedCnt * sizeof(PtrWishFlagsForSoftPtrList) ) ) );
 				ret->addToFreeList( ret->slots, secondBlockStartSize );
-				//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
+				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (ini allocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
 			}
 		}
@@ -259,7 +260,7 @@ struct FirstControlBlock // not reallocatable
 		otherAllockedSlots.init();
 		//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !firstFree->isUsed() );
 		dbgCheckFreeList();
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB initialized at 0x{:x}, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		dbgCheckValidity<void>();
 	}
 	/*void deinit() {
@@ -301,7 +302,7 @@ struct FirstControlBlock // not reallocatable
 					slots[i].setPtr(ptr);
 					slots[i].setUsed();
 					otherAllockedSlots.setMask( mask );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
+					//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, i );
 					return i;
 				}
 		}
@@ -309,18 +310,18 @@ struct FirstControlBlock // not reallocatable
 		{
 			if ( otherAllockedSlots.getPtr() == nullptr || otherAllockedSlots.getPtr()->firstFree == nullptr )
 			{
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 			}
 			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
-					//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
+					//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
 			return idx;
 		}
 	}
 	void resetPtr( size_t idx, void* newPtr ) {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to reset to 0x{:x} at idx {}", (size_t)this, (size_t)newPtr, idx );
 		if ( idx < maxSlots ) {
 			slots[idx].setPtr( newPtr );
 			slots[idx].setUsed();
@@ -335,7 +336,7 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckValidity<void>();
 	}
 	void remove( size_t idx ) {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: about to remove at idx {}", (size_t)this, idx );
 		if ( idx < maxSlots ) {
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, slots[idx].isUsed() );
 			slots[idx].setUnused();
@@ -353,7 +354,7 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckValidity<void>();
 	}
 	void clear() {
-		//nodecpp::log::log<nodecpp::safememory::module_id, nodecpp::log::LogLevel::info>( "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		if ( otherAllockedSlots.getPtr() != nullptr )
 			otherAllockedSlots.getPtr()->dealloc();
 		otherAllockedSlots.setZombie();
@@ -375,20 +376,25 @@ inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
+
 //struct make_owning_t {};
 template<class T>
-class owning_ptr_impl
+class owning_ptr_base_impl
 {
-/*template<class _Ty,
-	class... _Types,
-	enable_if_t<!is_array_v<_Ty>, int>>
-	friend owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args);*/
+	template<class TT>
+	friend class owning_ptr_base_impl;
+	friend class owning_ptr_impl<T>;
 	template<class TT>
 	friend class owning_ptr_impl;
+
 	template<class TT>
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
@@ -458,26 +464,26 @@ public:
 
 	static constexpr memory_safety is_safe = memory_safety::safe;
 
-	owning_ptr_impl( make_owning_t, T* t_ ) // make it private with a friend make_owning_impl()!
+	owning_ptr_base_impl( make_owning_t, T* t_ ) // make it private with a friend make_owning_impl()!
 	{
 		t.setPtr( t_ );
 		getControlBlock()->init();
 		dbgCheckValidity();
 	}
-	owning_ptr_impl()
+	owning_ptr_base_impl()
 	{
 		t.setPtr( nullptr );
 	}
-	owning_ptr_impl( owning_ptr_impl<T>& other ) = delete;
-	owning_ptr_impl& operator = ( owning_ptr_impl<T>& other ) = delete;
-	owning_ptr_impl( owning_ptr_impl<T>&& other )
+	owning_ptr_base_impl( owning_ptr_base_impl<T>& other ) = delete;
+	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>& other ) = delete;
+	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
 	{
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
 		dbgCheckValidity();
 	}
-	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other )
+	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
 		if ( this == &other ) return *this;
 		t.setTypedPtr( other.t.getTypedPtr() );
@@ -487,7 +493,7 @@ public:
 		return *this;
 	}
 	template<class T1>
-	owning_ptr_impl( owning_ptr_impl<T1>&& other )
+	owning_ptr_base_impl( owning_ptr_base_impl<T1>&& other )
 	{
 		t.setTypedPtr( other.t.getTypedPtr() ); // implicit cast, if at all possible
 		other.t.init( nullptr );
@@ -495,7 +501,7 @@ public:
 		dbgCheckValidity();
 	}
 	template<class T1>
-	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other )
+	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
 		if ( this == &other ) return *this;
 		t = other.t; // implicit cast, if at all possible
@@ -504,16 +510,22 @@ public:
 		dbgCheckValidity();
 		return *this;
 	}
-	owning_ptr_impl( std::nullptr_t nulp )
+	owning_ptr_base_impl( std::nullptr_t nulp )
 	{
 		t.setPtr( nullptr );
 	}
-	owning_ptr_impl& operator = ( std::nullptr_t nulp )
+	owning_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
 		return *this;
 	}
-	~owning_ptr_impl()
+	~owning_ptr_base_impl()
+	{
+		// NOTE: if this class is used (for lib-internal purposes), it is assumed that do_delete() is already called
+		//       this is (so far) the only difference with owning_pt_impl where do_delete() is made private and is only called from ctor
+	}
+
+	void do_delete()
 	{
 		//dbgValidateList();
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
@@ -541,7 +553,7 @@ public:
 		dbgCheckValidity();
 	}
 
-	void swap( owning_ptr_impl<T>& other )
+	void swap( owning_ptr_base_impl<T>& other )
 	{
 		T* tmp = t;
 		t = other.t;
@@ -588,6 +600,61 @@ public:
 	}
 };
 
+template<class T>
+class owning_ptr_impl : public owning_ptr_base_impl<T>
+{
+	template<class TT>
+	friend class owning_ptr_impl;
+	template<class TT>
+	friend class soft_ptr_base_impl;
+	template<class TT>
+	friend class soft_ptr_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
+
+	template<class TT>
+	friend class soft_ptr_base_no_checks;
+	template<class TT>
+	friend class soft_ptr_no_checks;
+
+	using owning_ptr_base_impl<T>::do_delete;
+
+public:
+	static constexpr memory_safety is_safe = memory_safety::safe;
+
+	owning_ptr_impl( make_owning_t mo, T* t_ ) : owning_ptr_base_impl<T>( mo, t_ ) {}
+	owning_ptr_impl() : owning_ptr_base_impl<T>() {}
+	owning_ptr_impl( owning_ptr_impl<T>& other ) = delete;
+	owning_ptr_impl( owning_ptr_impl<T>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
+	template<class T1>
+	owning_ptr_impl( owning_ptr_impl<T1>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
+	owning_ptr_impl( std::nullptr_t nulp ) : owning_ptr_base_impl<T>( nulp ) {}
+
+	owning_ptr_impl& operator = ( owning_ptr_impl<T>& other ) = delete;
+	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other ) { 
+		if ( this == &other ) return *this;
+		owning_ptr_base_impl<T>::operator = ( std::move( other ) );
+		return *this;
+	}
+	template<class T1>
+	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other )
+	{
+		if ( this == &other ) return *this;
+		owning_ptr_base_impl<T>::operator = ( std::move( other ) );
+		return *this;
+	}
+	owning_ptr_impl& operator = ( std::nullptr_t nulp )
+	{
+		owning_ptr_base_impl<T>::operator = ( nulp );
+		return *this;
+	}
+	~owning_ptr_impl()
+	{
+		this->do_delete();
+	}
+};
 
 extern thread_local void* thg_stackPtrForMakeOwningCall;
 
@@ -634,11 +701,16 @@ extern thread_local size_t onStackSafePtrDestructionCount;
 template<class T>
 class soft_ptr_base_impl
 {
+	friend class owning_ptr_base_impl<T>;
 	friend class owning_ptr_impl<T>;
 	template<class TT>
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1122,11 +1194,16 @@ soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
 template<class T>
 class soft_ptr_impl : public soft_ptr_base_impl<T>
 {
+	friend class owning_ptr_base_impl<T>;
 	friend class owning_ptr_impl<T>;
 	template<class TT>
 	friend class soft_ptr_impl;
 	template<class TT>
 	friend class soft_ptr_base_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1326,6 +1403,8 @@ template<>
 class soft_ptr_impl<void> : public soft_ptr_base_impl<void>
 {
 	template<class TT>
+	friend class owning_ptr_base_impl;
+	template<class TT>
 	friend class owning_ptr_impl;
 	//template<class TT>
 	//friend class soft_ptr_base_impl;
@@ -1504,11 +1583,14 @@ public:
 template<class T>
 class naked_ptr_base_impl
 {
+	friend class owning_ptr_base_impl<T>;
 	friend class owning_ptr_impl<T>;
 	friend class soft_ptr_base_impl<T>;
 	template<class TT>
 	friend class soft_ptr_base_impl;
 	//friend class soft_ptr_impl<T>;
+	template<class TT>
+	friend class owning_ptr_base_impl;
 	template<class TT>
 	friend class owning_ptr_impl;
 	//template<class TT>

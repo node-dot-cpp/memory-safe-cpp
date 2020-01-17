@@ -140,6 +140,9 @@ Consistency checks always apply (regardless of the command line, and any attribu
   + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function wait_for_all())
     - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); another_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
     - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`, `co_await wait_for_all(af(), af2())`
+  + **[Rule S9.2]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
+    - TEST CASES/PROHIBIT: `const char* s = "abc"; StringLiteral x = s;`, `void fsl(StringLiteral x) {} ... const char* s = "abc"; fsl(s);`
+    - TEST CASES/ALLOW: `StringLiteral x = "abc";`, `void fsl(StringLiteral x) {} ... fsl("abc");`, `void fsl(StringLiteral x) {} ... StringLiteral x = "abc"; fsl(x);`
 * **[Rule S10]** Prohibit using unsafe collections and iterators
   + Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, nmust be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
     - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc; ` 
@@ -158,3 +161,19 @@ Consistency checks always apply (regardless of the command line, and any attribu
   - **[Rule D2.1]** Prohibiting uninitialized class members; at the moment, ONLY C++11 initializers next to data member are recognized. TODO: allow scenarios when ALL the constructors initialize data member in question. 
     + TEST CASES/PROHIBIT: `int x;` (as data member), `int a[3] = {1,2};` (as data member), `X x;` (as data member, if class X has has non-constructed members AND has no constructor), `int x1 : 8;` (as data member, this is an uninitialized bit field)
     + TEST CASES/ALLOW: `int x = 0;` (as data member), `X x;` (as data member, provided that class X has default constructor), `int a[3] = {1,2,3};` (as data member), `int x1 : 8 = 42;` (as data member, this is an initialized bit field)
+
+### Miscellaneios Checks (in particular, coding style we want to encourage)
+* **[Rule M1]** Only nodecpp::error can be thrown/caught (NO derivatives)
+  - **[Rule M1.1]** Only nodecpp::error can be thrown
+      - TEST CASES/ALLOW: `throw nodecpp::error(nodecpp::errc::bad_alloc);`, `throw nodecpp::error::bad_alloc;`
+      - TEST CASES/PROHIBIT: `throw 0;`, `throw std::exception`, `throw std::error;`
+  - **[Rule M1.2]** Only nodecpp::exception can be caught (and ONLY by reference)
+      - TEST CASES/ALLOW: `catch(nodecpp::error& x)`
+      - TEST CASES/PROHIBIT: `catch(int)`, `catch(std::exception)`, `catch(std::error)`, `catch(nodecpp::error)`
+* **[Rule M2]** Ensuring code consistency regardless of tracing/assertion levels
+  - **[Rule M2.1]** Within NODETRACE* macros, there can be ONLY const expressions
+      - TEST CASES/ALLOW: `NODETRACE3("{}",a==b);`
+      - TEST CASES/PROHIBIT: `NODETRACE3("{}",a=b);`
+  - **[Rule M2.2]** Within NODEASSERT* macros, there can be ONLY const expressions
+      - TEST CASES/ALLOW: `NODEASSERT2(a==b);`
+      - TEST CASES/PROHIBIT: `NODEASSERT2(a=b);`
