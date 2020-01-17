@@ -1250,9 +1250,10 @@ void temptest()
 void testSptrsWithZeroOffset()
 {
 	owning_ptr<int> op = make_owning<int>(17);
-	lib_helpers::soft_ptr_with_zero_offset_impl<int> spz( op );
-	soft_ptr<int> sp = spz.get();
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp );
+	lib_helpers::soft_ptr_with_zero_offset_impl<int> spz1( op );
+	lib_helpers::soft_ptr_with_zero_offset_impl<int> spz2( spz1 );
+	soft_ptr<int> sp1 = spz2.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
 }
 
 
