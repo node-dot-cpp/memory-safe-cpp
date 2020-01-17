@@ -54,6 +54,7 @@
     <ClInclude Include="..\..\src\safe_ptr_common.h" />
     <ClInclude Include="..\..\src\safe_ptr_impl.h" />
     <ClInclude Include="..\..\src\safe_ptr_no_checks.h" />
+    <ClInclude Include="..\..\src\safe_ptr_with_zero_offset.h" />
     <ClInclude Include="..\..\src\startup_checks.h" />
     <ClInclude Include="..\dummy_test_objects.h" />
     <ClInclude Include="..\safety_exclusions.h" />

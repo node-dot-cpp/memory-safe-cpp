@@ -36,6 +36,7 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
+#include <safe_ptr_with_zero_offset.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -1246,6 +1247,14 @@ void temptest()
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 }
 
+void testSptrsWithZeroOffset()
+{
+	owning_ptr<int> op = make_owning<int>(17);
+	lib_helpers::soft_ptr_with_zero_offset_impl<int> spz( op );
+	soft_ptr<int> sp = spz.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp );
+}
+
 
 int main( int argc, char * argv[] )
 {
@@ -1254,6 +1263,9 @@ int main( int argc, char * argv[] )
 	log.add( stdout );
 
 	interceptNewDeleteOperators( true );
+
+	testSptrsWithZeroOffset();
+	return 0;
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default

@@ -375,6 +375,8 @@ inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
+namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; }
+
 //struct make_owning_t {};
 template<class T>
 class owning_ptr_impl
@@ -389,6 +391,10 @@ class owning_ptr_impl
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
@@ -639,6 +645,10 @@ class soft_ptr_base_impl
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1124,6 +1134,10 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	friend class soft_ptr_impl;
 	template<class TT>
 	friend class soft_ptr_base_impl;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
