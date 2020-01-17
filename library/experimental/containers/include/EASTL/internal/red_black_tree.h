@@ -139,12 +139,13 @@ namespace nodecpp
 		typedef std::size_t                                 size_type;
 		typedef std::ptrdiff_t                              difference_type;
 		typedef T                                           value_type;
-		typedef rbtree_node_base                            base_node_type;
+//		typedef rbtree_node_base                            base_node_type;
 		typedef rbtree_node<T>                              node_type;
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
 		typedef std::bidirectional_iterator_tag             iterator_category;
 		typedef typename node_type::node_soft_ptr			node_soft_ptr;
+		typedef typename node_type::node_soft_ptr			rbtree_soft_ptr;
 
 	public:
 		node_soft_ptr mpNode;
@@ -418,6 +419,9 @@ namespace nodecpp
 		typedef typename node_type::node_owning_ptr												node_owning_ptr;
 		typedef typename node_type::node_soft_ptr												node_soft_ptr;
 
+		typedef typename node_type::node_owning_ptr												rbtree_owning_ptr;
+		typedef typename node_type::node_soft_ptr												rbtree_soft_ptr;
+
 
 	protected:
 		using base_type::compare;
@@ -429,7 +433,7 @@ namespace nodecpp
 
 		// mMinMaxNodex must be initialized before mpEndNode does
 		size_type         		mnSize = 0;       /// Stores the count of nodes in the tree (not counting the anchor node).
-		rbtree_min_max_nodes 	mMinMaxNodes;
+		rbtree_min_max_nodes<node_soft_ptr> 	mMinMaxNodes;
 		node_owning_ptr        	mpNodeEnd = create_end_node();      /// This node acts as end() and its mpLeft points to begin(), and mpRight points to rbegin() (the last node on the right).
 
 	public:
