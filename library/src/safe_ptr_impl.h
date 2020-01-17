@@ -72,6 +72,7 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class naked_ptr_base_impl; // forward declaration
 template<class T> class naked_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
+namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; } // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -375,7 +376,6 @@ inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
-namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; }
 
 //struct make_owning_t {};
 template<class T>

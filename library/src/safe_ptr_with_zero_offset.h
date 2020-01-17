@@ -125,6 +125,10 @@ public:
 	template<class T1> 
 	bool operator == (const owning_ptr_impl<T1>& other ) const { return ptr == other.t.getTypedPtr(); }
 
+	bool operator == (const soft_ptr_impl<T>& other ) const { return ptr == other.getDereferencablePtr(); }
+	template<class T1> 
+	bool operator == (const soft_ptr_impl<T1>& other ) const { return ptr == other.getDereferencablePtr(); }
+
 	bool operator == (const soft_ptr_with_zero_offset_impl<T>& other ) const { return ptr == other.ptr; }
 	template<class T1>
 	bool operator == (const soft_ptr_with_zero_offset_impl<T1>& other ) const { return ptr == other.ptr; }
@@ -132,6 +136,10 @@ public:
 	bool operator != (const owning_ptr_impl<T>& other ) const { return ptr != other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator != (const owning_ptr_impl<T1>& other ) const { return ptr != other.t.getTypedPtr(); }
+
+	bool operator != (const soft_ptr_impl<T>& other ) const { return ptr != other.getDereferencablePtr(); }
+	template<class T1> 
+	bool operator != (const soft_ptr_impl<T1>& other ) const { return ptr != other.getDereferencablePtr(); }
 
 	bool operator != (const soft_ptr_with_zero_offset_impl<T>& other ) const { return ptr != other.ptr; }
 	template<class T1>
