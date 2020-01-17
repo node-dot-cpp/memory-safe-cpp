@@ -29,6 +29,7 @@
 #define SAFE_PTR_FOR_MAP_H
 
 #include "safe_ptr.h"
+#include "safe_ptr_with_zero_offset.h"
 
 namespace nodecpp::safememory::lib_helpers
 {
@@ -37,7 +38,7 @@ template<class _Ty>
 using rbtree_owning_ptr = nodecpp::safememory::owning_ptr<_Ty>;
 
 template<class _Ty>
-using rbtree_soft_ptr = nodecpp::safememory::soft_ptr<_Ty>;
+using rbtree_soft_ptr = nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<_Ty>;
 
 
 template<class _Ty,	class... _Types>
@@ -53,17 +54,6 @@ void rbtree_delete_owning(rbtree_owning_ptr<_Ty> p)
 {
 	;//do nothing, 'p' will be deleted as it goes out of scope
 }
-
-
-template<class T, class T1>
-rbtree_soft_ptr<T> node_soft_ptr_static_cast(T1 p) {
-	return soft_ptr_static_cast<T>(p);
-}
-
-// template<class T, class T1>
-// T node_soft_ptr_static_cast(T1 p) {
-// 	return static_cast<T>(p);
-// }
 
 } // namespace nodecpp::safememory
 
