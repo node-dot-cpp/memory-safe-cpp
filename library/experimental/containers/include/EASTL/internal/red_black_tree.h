@@ -53,7 +53,7 @@
 #include <initializer_list>
 #include <tuple>
 
-#include "../../../source/red_black_tree_cpp.h"
+#include "red_black_tree_cpp.h"
 
 #include <safe_ptr_for_map.h>
 #include <safe_ptr.h>
