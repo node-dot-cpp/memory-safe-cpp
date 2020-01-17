@@ -4,9 +4,10 @@ add_executable(container-test
   main.cpp
   source/red_black_tree.cpp
   ${PROJECT_SOURCE_DIR}/../../src/safe_ptr.cpp
-	${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/page_allocator_windows.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/iibmalloc.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
+  ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/src/nodecpp_assert.cpp
+  ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/src/page_allocator.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/src/log.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/src/std_error.cpp
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src/foundation/src/tagged_ptr_impl.cpp
