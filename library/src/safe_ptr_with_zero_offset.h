@@ -30,6 +30,7 @@
 
 #include "safe_ptr_common.h"
 #include "safe_ptr_impl.h"
+#include "safe_ptr_no_checks.h"
 
 namespace nodecpp::safememory::lib_helpers
 {
@@ -163,6 +164,148 @@ public:
 		ptr = nullptr;
 	}
 };
+
+template<class T> bool operator != (const owning_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 != p1; }
+template<class T> bool operator == (const owning_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 == p1; }
+
+template<class T> bool operator != (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 != p1; }
+template<class T> bool operator == (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 == p1; }
+
+template<class T>
+class soft_ptr_with_zero_offset_no_checks
+{
+	template<class TT>
+	friend class soft_ptr_with_zero_offset_base_no_checks;
+	template<class TT>
+	friend class soft_ptr_with_zero_offset_no_checks;
+
+	T* ptr = nullptr;
+
+public:
+
+	static constexpr memory_safety is_safe = memory_safety::none;
+ 
+	soft_ptr_with_zero_offset_no_checks() {}
+
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner )
+	{
+		ptr = owner.t;
+	}
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
+	{
+		ptr = owner.t;
+		return *this;
+	}
+
+
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other )
+	{
+		ptr = other.ptr;
+	}
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
+	{
+		ptr = other.ptr;
+		return *this;
+	}
+
+
+	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& other )
+	{
+		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
+		if ( this == &other ) return;
+		ptr = other.ptr;
+	}
+
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( soft_ptr_with_zero_offset_no_checks<T>&& other )
+	{
+		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
+		if ( this == &other ) return *this;
+		ptr = other.ptr;
+		return *this;
+	}
+
+	soft_ptr_with_zero_offset_no_checks( std::nullptr_t nulp ) {}
+	soft_ptr_with_zero_offset_no_checks& operator = ( std::nullptr_t nulp )
+	{
+		reset();
+		return *this;
+	}
+
+	void swap( soft_ptr_with_zero_offset_no_checks<T>& other )
+	{
+		T* tmp = ptr;
+		ptr = other.ptr;
+		other.ptr = tmp;
+	}
+
+	soft_ptr_no_checks<T> get() const
+	{
+		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
+		FirstControlBlock* cb = getControlBlock_( ptr );
+		return soft_ptr_no_checks<T>( cb, ptr );
+	}
+
+	explicit operator bool() const noexcept
+	{
+		return ptr != nullptr;
+	}
+
+	void reset() { ptr = nullptr; }
+
+	bool operator == (const owning_ptr_no_checks<T>& other ) const { return ptr == other.t; }
+	template<class T1> 
+	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return ptr == other.t; }
+
+	bool operator == (const soft_ptr_no_checks<T>& other ) const { return ptr == other.getDereferencablePtr(); }
+	template<class T1> 
+	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return ptr == other.getDereferencablePtr(); }
+
+	bool operator == (const soft_ptr_with_zero_offset_no_checks<T>& other ) const { return ptr == other.ptr; }
+	template<class T1>
+	bool operator == (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const { return ptr == other.ptr; }
+
+	bool operator != (const owning_ptr_no_checks<T>& other ) const { return ptr != other.t; }
+	template<class T1> 
+	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return ptr != other.t; }
+
+	bool operator != (const soft_ptr_no_checks<T>& other ) const { return ptr != other.getDereferencablePtr(); }
+	template<class T1> 
+	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return ptr != other.getDereferencablePtr(); }
+
+	bool operator != (const soft_ptr_with_zero_offset_no_checks<T>& other ) const { return ptr != other.ptr; }
+	template<class T1>
+	bool operator != (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const { return ptr != other.ptr; }
+
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr != nullptr; }
+
+	T& operator * () const
+	{
+		return *(this->ptr);
+	}
+
+	T* operator -> () const 
+	{
+		return this->ptr;
+	}
+
+	~soft_ptr_with_zero_offset_no_checks()
+	{
+		ptr = nullptr;
+	}
+};
+
+template<class T> bool operator != (const owning_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 != p1; }
+template<class T> bool operator == (const owning_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 == p1; }
+
+template<class T> bool operator != (const soft_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 != p1; }
+template<class T> bool operator == (const soft_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 == p1; }
+
+
+template<class T, memory_safety is_safe> struct soft_ptr_with_zero_offset_type_ { typedef soft_ptr_with_zero_offset_impl<T> type; };
+template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::none> { typedef soft_ptr_with_zero_offset_no_checks<T> type; };
+template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::safe> { typedef soft_ptr_with_zero_offset_impl<T> type; };
+template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using soft_ptr_with_zero_offset = typename soft_ptr_with_zero_offset_type_<T, is_safe>::type;
 
 
 } // namespace nodecpp::safememory::libhelpers

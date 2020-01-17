@@ -12,6 +12,8 @@ Global
 		Debug|x86 = Debug|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		Release-No-Safety-Features|x64 = Release-No-Safety-Features|x64
+		Release-No-Safety-Features|x86 = Release-No-Safety-Features|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Debug_with_heneric_ptr_structs|x64.ActiveCfg = Debug_with_heneric_ptr_structs|x64
@@ -26,6 +28,10 @@ Global
 		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release|x64.Build.0 = Release|x64
 		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release|x86.ActiveCfg = Release|Win32
 		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release|x86.Build.0 = Release|Win32
+		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release-No-Safety-Features|x64.ActiveCfg = Release-No-Safety_Features|x64
+		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release-No-Safety-Features|x64.Build.0 = Release-No-Safety_Features|x64
+		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release-No-Safety-Features|x86.ActiveCfg = Release-No-Safety_Features|Win32
+		{A617E51F-5DCF-4B12-8A84-3B78CEEC5FE6}.Release-No-Safety-Features|x86.Build.0 = Release-No-Safety_Features|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
