@@ -1266,12 +1266,12 @@ int main( int argc, char * argv[] )
 
 	interceptNewDeleteOperators( true );
 
-	testSptrsWithZeroOffset();
-	return 0;
-
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+
+	testSptrsWithZeroOffset();
+//	return 0;
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
