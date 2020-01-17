@@ -38,6 +38,7 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 template<class T> class soft_this_ptr_no_checks; // forward declaration
 template<class T> class naked_ptr_no_checks; // forward declaration
+namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_no_checks; } // forward declaration
 
 //struct make_owning_t {};
 struct fbc_ptr_t {};
@@ -54,6 +55,10 @@ class owning_ptr_no_checks
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
 
 	T* t;
 
@@ -185,6 +190,10 @@ class soft_ptr_base_no_checks
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
+
 	T* t;
 
 	soft_ptr_base_no_checks(fbc_ptr_t, T* t_) { t = t_; } // to be used for only types annotaded as [[nodecpp::owning_only]]
@@ -300,6 +309,10 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	friend soft_ptr_no_checks<TT> soft_ptr_static_cast_no_checks( soft_ptr_no_checks<TT1> );
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
+
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
+	template<class TT>
+	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
 
 private:
 	friend class soft_this_ptr_no_checks<T>;

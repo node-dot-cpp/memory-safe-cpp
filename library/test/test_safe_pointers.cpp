@@ -36,6 +36,7 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
+#include <safe_ptr_with_zero_offset.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -1246,6 +1247,16 @@ void temptest()
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 }
 
+void testSptrsWithZeroOffset()
+{
+	owning_ptr<int> op = make_owning<int>(17);
+	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+	soft_ptr<int> sp1 = spz2.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+}
+
 
 int main( int argc, char * argv[] )
 {
@@ -1258,6 +1269,9 @@ int main( int argc, char * argv[] )
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+
+	testSptrsWithZeroOffset();
+//	return 0;
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
