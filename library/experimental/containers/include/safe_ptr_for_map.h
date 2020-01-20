@@ -38,7 +38,10 @@ template<class _Ty>
 using rbtree_owning_ptr = nodecpp::safememory::owning_ptr<_Ty>;
 
 template<class _Ty>
-using rbtree_soft_ptr = nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<_Ty>;
+using rbtree_soft_ptr = nodecpp::safememory::soft_ptr<_Ty>;
+
+template<class _Ty>
+using rbtree_soft0_ptr = nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<_Ty>;
 
 
 template<class _Ty,	class... _Types>

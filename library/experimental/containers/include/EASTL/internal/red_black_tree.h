@@ -144,14 +144,14 @@ namespace nodecpp
 		typedef Pointer                                     pointer;
 		typedef Reference                                   reference;
 		typedef std::bidirectional_iterator_tag             iterator_category;
-//		typedef typename node_type::rbtree_soft_ptr			node_soft_ptr;
-		typedef typename node_type::rbtree_soft0_ptr			rbtree_soft0_ptr;
+		typedef typename node_type::rbtree_soft_ptr			rbtree_soft_ptr;
+		typedef typename node_type::rbtree_soft0_ptr		rbtree_soft0_ptr;
 
 	public:
-		rbtree_soft0_ptr mpNode;
+		rbtree_soft_ptr mpNode;
 		rbtree_soft0_ptr mpEndNode = nullptr;
 
-		rbtree_soft0_ptr get_node() const { return mpNode; }
+		rbtree_soft_ptr get_node() const { return mpNode; }
 		void set_from_base_ptr(rbtree_soft0_ptr pNode);
 		const rbtree_soft0_ptr get_end_node() const { return mpEndNode; }
 		void assert_alive_and_not_end() const {
@@ -169,6 +169,7 @@ namespace nodecpp
 
 	public:
 		rbtree_iterator();
+		explicit rbtree_iterator(rbtree_soft_ptr pNode, rbtree_soft0_ptr pEndNode);
 		explicit rbtree_iterator(rbtree_soft0_ptr pNode, rbtree_soft0_ptr pEndNode);
 		rbtree_iterator(const iterator& x);
 //		rbtree_iterator& operator=(const rbtree_iterator&) = default; //TODO review
@@ -420,7 +421,8 @@ namespace nodecpp
 //		typedef typename node_type::rbtree_soft_ptr												node_soft_ptr;
 
 		typedef typename node_type::rbtree_owning_ptr											rbtree_owning_ptr;
-		typedef typename node_type::rbtree_soft0_ptr												rbtree_soft0_ptr;
+		typedef typename node_type::rbtree_soft_ptr												rbtree_soft_ptr;
+		typedef typename node_type::rbtree_soft0_ptr											rbtree_soft0_ptr;
 
 
 	protected:
@@ -659,7 +661,7 @@ namespace nodecpp
 		if(!pNode)
 			throw "TODO";
 
-		mpNode = pNode;
+		mpNode = pNode.get();
 	}
 
 	template <typename T, typename Pointer, typename Reference>
@@ -668,9 +670,12 @@ namespace nodecpp
 
 
 	template <typename T, typename Pointer, typename Reference>
-	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(rbtree_soft0_ptr pNode, const rbtree_soft0_ptr pEndNode)
+	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(rbtree_soft_ptr pNode, const rbtree_soft0_ptr pEndNode)
 		: mpNode(pNode), mpEndNode(pEndNode) { }
 
+	template <typename T, typename Pointer, typename Reference>
+	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(rbtree_soft0_ptr pNode, const rbtree_soft0_ptr pEndNode)
+		: mpNode(pNode.get()), mpEndNode(pEndNode) { }
 
 	template <typename T, typename Pointer, typename Reference>
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const iterator& x)
@@ -694,7 +699,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator++()
 	{
 		assert_alive_and_not_end();
-		set_from_base_ptr(RBTreeIncrement<rbtree_soft0_ptr>(mpNode));
+		set_from_base_ptr(RBTreeIncrement<rbtree_soft0_ptr, rbtree_soft_ptr>(mpNode));
 		return *this;
 	}
 
@@ -705,7 +710,7 @@ namespace nodecpp
 	{
 		assert_alive_and_not_end();
 		this_type temp(*this);
-		set_from_base_ptr(RBTreeIncrement<rbtree_soft0_ptr>(mpNode));
+		set_from_base_ptr(RBTreeIncrement<rbtree_soft0_ptr, rbtree_soft_ptr>(mpNode));
 		return temp;
 	}
 
@@ -715,7 +720,7 @@ namespace nodecpp
 	rbtree_iterator<T, Pointer, Reference>::operator--()
 	{
 		assert_alive_or_end();
-		set_from_base_ptr(RBTreeDecrement<rbtree_soft0_ptr>(mpNode));
+		set_from_base_ptr(RBTreeDecrement<rbtree_soft0_ptr, rbtree_soft_ptr>(mpNode));
 		return *this;
 	}
 
@@ -726,7 +731,7 @@ namespace nodecpp
 	{
 		assert_alive_or_end();
 		this_type temp(*this);
-		set_from_base_ptr(RBTreeDecrement<rbtree_soft0_ptr>(mpNode));
+		set_from_base_ptr(RBTreeDecrement<rbtree_soft0_ptr, rbtree_soft_ptr>(mpNode));
 		return temp;
 	}
 
@@ -1316,7 +1321,7 @@ namespace nodecpp
 			{
 				// At this point, pLowerBound points to a node which is > than value.
 				// Move it back by one, so that it points to a node which is <= value.
-				pLowerBound = RBTreeDecrement<rbtree_soft0_ptr>(pLowerBound);
+				pLowerBound = RBTreeDecrement<rbtree_soft0_ptr, rbtree_soft_ptr>(pLowerBound.get());
 			}
 			else
 			{
@@ -1514,8 +1519,11 @@ namespace nodecpp
 
 		if((position.get_node() != mMinMaxNodes.mpMaxChild) && (position.get_node() != get_end_node())) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_node(), position.get_end_node());
-			++itNext;
+			// iterator itNext(position.get_node(), position.get_end_node());
+			// ++itNext;
+
+			//mb: TODO check safety of this change
+			rbtree_soft0_ptr mpNext = RBTreeIncrement<rbtree_soft0_ptr, rbtree_soft_ptr>(position.get_node());
 
 			// To consider: Change this so that 'position' specifies the position after 
 			// where the insertion goes and not the position before where the insertion goes.
@@ -1526,20 +1534,20 @@ namespace nodecpp
 			{
 				EASTL_VALIDATE_COMPARE(!compare(key, extractKey(position.mpNode->mValue))); // Validate that the compare function is sane.
 
-				const bool bValueLessThanNext = compare(key, extractKey(itNext.mpNode->mValue));
+				const bool bValueLessThanNext = compare(key, extractKey(mpNext->mValue));
 
 				if(bValueLessThanNext) // If value < *itNext...
 				{
-					EASTL_VALIDATE_COMPARE(!compare(extractKey(itNext.mpNode->mValue), key)); // Validate that the compare function is sane.
+					EASTL_VALIDATE_COMPARE(!compare(extractKey(mpNext->mValue), key)); // Validate that the compare function is sane.
 
 					if(position.mpNode->mpNodeRight)
 					{
 						bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-						return itNext.get_node();
+						return mpNext;
 					}
 
 					bForceToLeft = false;
-					return position.get_node();
+					return mpNext;
 				}
 			}
 
@@ -1567,23 +1575,26 @@ namespace nodecpp
 
 		if((position.get_node() != mMinMaxNodes.mpMaxChild) && (position.get_node() != get_end_node())) // If the user specified a specific insertion position...
 		{
-			iterator itNext(position.get_node(),);
-			++itNext;
+			// iterator itNext(position.get_node(),);
+			// ++itNext;
+
+			//mb: TODO check safety of this change
+			rbtree_soft0_ptr mpNext = RBTreeIncrement<rbtree_soft0_ptr, rbtree_soft_ptr>(position.get_node());
 
 			// To consider: Change this so that 'position' specifies the position after 
 			// where the insertion goes and not the position before where the insertion goes.
 			// Doing so would make this more in line with user expectations and with LWG #233.
 			if(!compare(key, extractKey(position.mpNode->mValue)) && // If value >= *position && 
-			   !compare(extractKey(itNext.mpNode->mValue), key))     // if value <= *itNext...
+			   !compare(extractKey(mpNext->mValue), key))     // if value <= *itNext...
 			{
 				if(position.mpNode->mpNodeRight) // If there are any nodes to the right... [this expression will always be true as long as we aren't at the end()]
 				{
 					bForceToLeft = true; // Specifically insert in front of (to the left of) itNext (and thus after 'position').
-					return itNext.get_node();
+					return mpNext;
 				}
 
 				bForceToLeft = false;
-				return position.get_node();
+				return mpNext;
 			}
 
 			bForceToLeft = false;
@@ -1762,7 +1773,7 @@ namespace nodecpp
 		const iterator iErase(position.get_node(), position.get_end_node());
 		--mnSize; // Interleave this between the two references to itNext. We expect no exceptions to occur during the code below.
 		++position;
-		rbtree_owning_ptr pNode = RBTreeErase<rbtree_soft0_ptr, rbtree_owning_ptr>(iErase.get_node(), mpNodeEnd, mMinMaxNodes);
+		rbtree_owning_ptr pNode = RBTreeErase<rbtree_soft0_ptr, rbtree_soft_ptr, rbtree_owning_ptr>(iErase.get_node(), mpNodeEnd, mMinMaxNodes);
 		DoFreeNode(std::move(pNode));
 		return iterator(position.get_node(), get_end_node());
 	}
@@ -2023,7 +2034,17 @@ namespace nodecpp
 
 			for(const_iterator it = begin(); it != end(); ++it, ++nIteratedSize)
 			{
-				rbtree_soft0_ptr pNode      = it.get_node();
+				rbtree_soft_ptr pNodeTmp      = it.get_node();
+				rbtree_soft0_ptr pNode;
+				//mb: this is slow convertion from soft_ptr to soft0_ptr
+				// but we don't care because this is a debug only function
+				if(pNodeTmp == pNodeTmp->mpNodeParent->mpNodeLeft)
+					pNode = pNodeTmp->mpNodeParent->get_node_left();
+				else
+					pNode = pNodeTmp->mpNodeParent->get_node_right();
+
+
+
 				rbtree_soft0_ptr pNodeRight = pNode->get_node_right();
 				rbtree_soft0_ptr pNodeLeft  = pNode->get_node_left();
 

@@ -91,7 +91,8 @@ namespace nodecpp
 	{
 
 		typedef typename safememory::lib_helpers::rbtree_owning_ptr<rbtree_node<Value>> rbtree_owning_ptr;
-		typedef typename safememory::lib_helpers::rbtree_soft_ptr<rbtree_node<Value>> rbtree_soft0_ptr;
+		typedef typename safememory::lib_helpers::rbtree_soft_ptr<rbtree_node<Value>> rbtree_soft_ptr;
+		typedef typename safememory::lib_helpers::rbtree_soft0_ptr<rbtree_node<Value>> rbtree_soft0_ptr;
 
 		// typedef rbtree_owning_ptr node_owning_ptr;
 		// typedef rbtree_soft_ptr node_soft_ptr;
@@ -221,32 +222,34 @@ namespace nodecpp
 	/// RBTreeIncrement
 	/// Returns the next item in a sorted red-black tree.
 	///
-	template<class rbtree_soft_ptr>
-	rbtree_soft_ptr RBTreeIncrement(rbtree_soft_ptr pNode)
+	template<class rbtree_soft0_ptr, class rbtree_soft_ptr>
+	rbtree_soft0_ptr RBTreeIncrement(rbtree_soft_ptr pNode)
 	{
 		if(pNode->mpNodeRight) 
 		{
-			pNode = pNode->mpNodeRight;
+			rbtree_soft0_ptr pNodeTemp = pNode->mpNodeRight;
 
-			while(pNode->mpNodeLeft)
-				pNode = pNode->mpNodeLeft;
+			while(pNodeTemp->mpNodeLeft)
+				pNodeTemp = pNodeTemp->mpNodeLeft;
+
+			return pNodeTemp;
 		}
 		else 
 		{
-			rbtree_soft_ptr pNodeTemp = pNode->mpNodeParent;
+			rbtree_soft0_ptr pNodeTemp = pNode->mpNodeParent;
 
 		    //mb: while pNodeTemp will never be null for any normal
 			// iteration, we check it anyway because I am paranoid
 			while(pNodeTemp && pNode == pNodeTemp->mpNodeRight) 
 			{
-				pNode = pNodeTemp;
+				pNode = pNodeTemp.get();
 				pNodeTemp = pNodeTemp->mpNodeParent;
 			}
 
-			pNode = pNodeTemp;
+			return pNodeTemp;
 		}
 
-		return pNode;
+		// return pNode;
 	}
 
 
@@ -254,8 +257,8 @@ namespace nodecpp
 	/// RBTreeIncrement
 	/// Returns the previous item in a sorted red-black tree.
 	///
-	template<class rbtree_soft_ptr>
-	rbtree_soft_ptr RBTreeDecrement(rbtree_soft_ptr pNode)
+	template<class rbtree_soft0_ptr, class rbtree_soft_ptr>
+	rbtree_soft0_ptr RBTreeDecrement(rbtree_soft_ptr pNode)
 	{
 		// mb: decrement from end() works normally now
 		// if((pNode->mpNodeParent->mpNodeParent == pNode) && (pNode->mColor == kRBTreeColorRed))
@@ -263,23 +266,25 @@ namespace nodecpp
 		// else
 		if(pNode->mpNodeLeft)
 		{
-			rbtree_soft_ptr pNodeTemp = pNode->mpNodeLeft;
+			rbtree_soft0_ptr pNodeTemp = pNode->mpNodeLeft;
 
 			while(pNodeTemp->mpNodeRight)
 				pNodeTemp = pNodeTemp->mpNodeRight;
 
 			return pNodeTemp;
 		}
-
-		rbtree_soft_ptr pNodeTemp = pNode->mpNodeParent;
-
-		while(pNodeTemp && pNode == pNodeTemp->mpNodeLeft) 
+		else
 		{
-			pNode     = pNodeTemp;
-			pNodeTemp = pNodeTemp->mpNodeParent;
-		}
+			rbtree_soft0_ptr pNodeTemp = pNode->mpNodeParent;
 
-		return pNodeTemp;
+			while(pNodeTemp && pNode == pNodeTemp->mpNodeLeft) 
+			{
+				pNode     = pNodeTemp.get();
+				pNodeTemp = pNodeTemp->mpNodeParent;
+			}
+
+			return pNodeTemp;
+		}
 	}
 
 
@@ -290,8 +295,8 @@ namespace nodecpp
 	/// red node counts; it is black node counts that are significant in the 
 	/// maintenance of a balanced tree.
 	///
-	template<class rbtree_soft_ptr>
-	size_t RBTreeGetBlackCount(rbtree_soft_ptr pNodeTop, rbtree_soft_ptr pNodeBottom)
+	template<class rbtree_soft0_ptr>
+	size_t RBTreeGetBlackCount(rbtree_soft0_ptr pNodeTop, rbtree_soft0_ptr pNodeBottom)
 	{
 		size_t nCount = 0;
 
@@ -312,13 +317,13 @@ namespace nodecpp
 	/// Does a left rotation about the given node. 
 	/// If you want to understand tree rotation, any book on algorithms will
 	/// discussion the topic in good detail.
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
-	void RBTreeRotateLeft(rbtree_soft_ptr pNode)
+	template<class rbtree_soft0_ptr, class rbtree_owning_ptr>
+	void RBTreeRotateLeft(rbtree_soft0_ptr pNode)
 	{
 		rbtree_owning_ptr pNodeTemp = pNode->take_node_right();
 
 		if(pNodeTemp->mpNodeLeft)
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode, pNodeTemp->take_node_left());
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode, pNodeTemp->take_node_left());
 		// pNode->mpNodeRight = std::move(pNodeTemp->mpNodeLeft);
 
 		// if(pNode->mpNodeRight)
@@ -328,20 +333,20 @@ namespace nodecpp
 		// if(pNode == pNodeRoot)
 		// 	pNodeRoot = pNodeTemp;
 		// else
-		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
+		rbtree_soft0_ptr pNodeParent = pNode->mpNodeParent;
 
 		if(pNode == pNodeParent->mpNodeLeft) {
 			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
 //			pNodeParent->mpNodeLeft = std::move(pNodeTemp);
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
 			// pNodeParent->mpNodeLeft->mpNodeLeft = ;
 			// pNodeParent->mpNodeLeft->mpNodeLeft->mpNodeParent = pNodeParent->mpNodeLeft;
 		}
 		else {
 			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_right();
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeRight, std::move(pNodeOwner));
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeRight, std::move(pNodeOwner));
 			// pNodeParent->mpNodeRight = std::move(pNodeTemp);
 			// pNodeParent->mpNodeRight->mpNodeLeft = std::move(pNodeOwner);
 			// pNodeParent->mpNodeRight->mpNodeLeft->mpNodeParent = pNodeParent->mpNodeRight;
@@ -359,8 +364,8 @@ namespace nodecpp
 	/// Does a right rotation about the given node. 
 	/// If you want to understand tree rotation, any book on algorithms will
 	/// discussion the topic in good detail.
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
-	void RBTreeRotateRight(rbtree_soft_ptr pNode)
+	template<class rbtree_soft0_ptr, class rbtree_owning_ptr>
+	void RBTreeRotateRight(rbtree_soft0_ptr pNode)
 	{
 		// rbtree_node_base* const pNodeTemp = pNode->mpNodeLeft;
 
@@ -384,19 +389,19 @@ namespace nodecpp
 		rbtree_owning_ptr pNodeTemp = pNode->take_node_left();
 
 		if(pNodeTemp->mpNodeRight)
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode, pNodeTemp->take_node_right());
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode, pNodeTemp->take_node_right());
 
-		rbtree_soft_ptr pNodeParent = pNode->mpNodeParent;
+		rbtree_soft0_ptr pNodeParent = pNode->mpNodeParent;
 
 		if(pNode == pNodeParent->mpNodeRight) {
 			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_right();
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeRight, std::move(pNodeOwner));
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeRight, std::move(pNodeOwner));
 		}
 		else {
 			rbtree_owning_ptr pNodeOwner = pNodeParent->take_node_left();
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent, std::move(pNodeTemp));
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParent->mpNodeLeft, std::move(pNodeOwner));
 		}
 	}
 
@@ -407,15 +412,15 @@ namespace nodecpp
 	/// Insert a node into the tree and rebalance the tree as a result of the 
 	/// disturbance the node introduced.
 	///
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
+	template<class rbtree_soft0_ptr, class rbtree_owning_ptr>
 	void RBTreeInsert(rbtree_owning_ptr pNodeOwner,
-								rbtree_soft_ptr pNodeParent,
-								rbtree_soft_ptr pNodeAnchor,
-								rbtree_min_max_nodes<rbtree_soft_ptr>& pMinMaxNodes,
+								rbtree_soft0_ptr pNodeParent,
+								rbtree_soft0_ptr pNodeAnchor,
+								rbtree_min_max_nodes<rbtree_soft0_ptr>& pMinMaxNodes,
 								RBTreeSide insertionSide)
 	{
 		// rbtree_node_base*& pNodeRootRef = pNodeAnchor->mpNodeLeft;
-		rbtree_soft_ptr pNode = pNodeOwner;
+		rbtree_soft0_ptr pNode = pNodeOwner;
 
 		// Initialize fields in new node to insert.
 		EASTL_ASSERT(!pNode->mpNodeLeft);
@@ -449,11 +454,11 @@ namespace nodecpp
 		while((pNode != pNodeAnchor->mpNodeLeft) && (pNode->mpNodeParent->mColor == kRBTreeColorRed)) 
 		{
 			EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
-			rbtree_soft_ptr pNodeParentParent = pNode->mpNodeParent->mpNodeParent;
+			rbtree_soft0_ptr pNodeParentParent = pNode->mpNodeParent->mpNodeParent;
 
 			if(pNode->mpNodeParent == pNodeParentParent->mpNodeLeft) 
 			{
-				rbtree_soft_ptr pNodeTemp = pNodeParentParent->mpNodeRight;
+				rbtree_soft0_ptr pNodeTemp = pNodeParentParent->mpNodeRight;
 
 				if(pNodeTemp && (pNodeTemp->mColor == kRBTreeColorRed)) 
 				{
@@ -468,19 +473,19 @@ namespace nodecpp
 					{
 						pNode = pNode->mpNodeParent;
 						// pNodeRootRef = RBTreeRotateLeft(pNode, pNodeRootRef);
-						RBTreeRotateLeft<rbtree_soft_ptr, rbtree_owning_ptr>(pNode);
+						RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode);
 					}
 
 					EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
 					pNode->mpNodeParent->mColor = kRBTreeColorBlack;
 					pNodeParentParent->mColor = kRBTreeColorRed;
 					// pNodeRootRef = RBTreeRotateRight(pNodeParentParent, pNodeRootRef);
-					RBTreeRotateRight<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParentParent);
+					RBTreeRotateRight<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParentParent);
 				}
 			}
 			else 
 			{
-				rbtree_soft_ptr pNodeTemp = pNodeParentParent->mpNodeLeft;
+				rbtree_soft0_ptr pNodeTemp = pNodeParentParent->mpNodeLeft;
 
 				if(pNodeTemp && (pNodeTemp->mColor == kRBTreeColorRed)) 
 				{
@@ -497,13 +502,13 @@ namespace nodecpp
 					{
 						pNode = pNode->mpNodeParent;
 						// pNodeRootRef = RBTreeRotateRight(pNode, pNodeRootRef);
-						RBTreeRotateRight<rbtree_soft_ptr, rbtree_owning_ptr>(pNode);
+						RBTreeRotateRight<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode);
 					}
 
 					pNode->mpNodeParent->mColor = kRBTreeColorBlack;
 					pNodeParentParent->mColor = kRBTreeColorRed;
 					// pNodeRootRef = RBTreeRotateLeft(pNodeParentParent, pNodeRootRef);
-					RBTreeRotateLeft<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeParentParent);
+					RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeParentParent);
 				}
 			}
 		}
@@ -519,18 +524,18 @@ namespace nodecpp
 	/// RBTreeErase
 	/// Erase a node from the tree.
 	///
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
+	template<class rbtree_soft0_ptr, class rbtree_soft_ptr, class rbtree_owning_ptr>
 	rbtree_owning_ptr RBTreeErase(rbtree_soft_ptr pNode,
-								rbtree_soft_ptr pNodeAnchor,
-								rbtree_min_max_nodes<rbtree_soft_ptr>& pMinMaxNodes)
+								rbtree_soft0_ptr pNodeAnchor,
+								rbtree_min_max_nodes<rbtree_soft0_ptr>& pMinMaxNodes)
 
 	{
 		// rbtree_node_base*& pNodeRootRef      = pNodeAnchor->mpNodeLeft;
 		// rbtree_node_base*& pNodeLeftmostRef  = pMinMaxNodes->mpMinChild;
 		// rbtree_node_base*& pNodeRightmostRef = pMinMaxNodes->mpMaxChild;
 		// rbtree_node_base*  pNodeSuccessor    = pNode;
-		rbtree_soft_ptr    pNodeChild        = nullptr;
-		rbtree_soft_ptr    pNodeChildParent  = nullptr;
+		rbtree_soft0_ptr    pNodeChild        = nullptr;
+		rbtree_soft0_ptr    pNodeChildParent  = nullptr;
 		
 		rbtree_owning_ptr  pNodeOwning 		 = nullptr;
 
@@ -539,7 +544,7 @@ namespace nodecpp
 			// Because pNode is the tree begin(), pNode->mpNodeLeft must be NULL.
 			// Here we assign the new begin() (first node).
 			if(pNode->mpNodeRight)
-				pMinMaxNodes.mpMinChild = RBTreeGetMinChild<rbtree_soft_ptr>(pNode->mpNodeRight); 
+				pMinMaxNodes.mpMinChild = RBTreeGetMinChild<rbtree_soft0_ptr>(pNode->mpNodeRight); 
 			else
 				pMinMaxNodes.mpMinChild = pNode->mpNodeParent; // This  makes (pNodeLeftmostRef == end()) if (pNode == root node)
 		}
@@ -549,7 +554,7 @@ namespace nodecpp
 			// Because pNode is the tree rbegin(), pNode->mpNodeRight must be NULL.
 			// Here we assign the new rbegin() (last node)
 			if(pNode->mpNodeLeft)
-				pMinMaxNodes.mpMaxChild = RBTreeGetMaxChild<rbtree_soft_ptr>(pNode->mpNodeLeft);
+				pMinMaxNodes.mpMaxChild = RBTreeGetMaxChild<rbtree_soft0_ptr>(pNode->mpNodeLeft);
 			else
 				pMinMaxNodes.mpMaxChild = pNode->mpNodeParent; // makes pNodeRightmostRef == &mAnchor if pNode == pNodeRootRef
 		}
@@ -570,11 +575,11 @@ namespace nodecpp
 			pNodeChild = pNodeChildOwn;
 			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
 				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
+				RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
 			}
 			else {
 				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));
+				RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));
 			}
 
 		}
@@ -586,11 +591,11 @@ namespace nodecpp
 			pNodeChild = pNodeChildOwn;
 			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
 				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
+				RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));  // Make pNode's replacement node be on the same side.
 			}
 			else {
 				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));
+				RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeChildOwn));
 			}
 		
 		}
@@ -602,7 +607,7 @@ namespace nodecpp
 
 			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
 			rbtree_owning_ptr pNodeSuccessor = pNode->take_node_right();
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeLeft));
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeLeft));
 			pNodeChild = pNodeSuccessor->mpNodeRight;
 
 			using std::swap;
@@ -610,11 +615,11 @@ namespace nodecpp
 
 			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
 				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
+				RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
 			}
 			else {
 				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));
+				RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));
 			}
 		}
 		else {
@@ -622,8 +627,8 @@ namespace nodecpp
 			// is not the succesors, go down the right child to find next
 
 
-			rbtree_soft_ptr pNodeSuccessorSoft = RBTreeIncrement<rbtree_soft_ptr>(pNode);
-			rbtree_soft_ptr pNodeSuccessorParent = pNodeSuccessorSoft->mpNodeParent;
+			rbtree_soft0_ptr pNodeSuccessorSoft = RBTreeIncrement<rbtree_soft0_ptr, rbtree_soft_ptr>(pNode);
+			rbtree_soft0_ptr pNodeSuccessorParent = pNodeSuccessorSoft->mpNodeParent;
 			pNodeChildParent = pNodeSuccessorParent;
 //			rbtree_soft_ptr pNodeChildParent = RBTreeIncrement(pNode)->mpNodeParent;
 
@@ -635,25 +640,25 @@ namespace nodecpp
 				pNodeChild = pNodeSuccessor->mpNodeRight;
 
 				rbtree_owning_ptr pNodeSuccessorRight = pNodeSuccessor->take_node_right();
-				RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeSuccessorParent, std::move(pNodeSuccessorRight));  // Make pNode's replacement node be on the same side.
+				RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeSuccessorParent, std::move(pNodeSuccessorRight));  // Make pNode's replacement node be on the same side.
 
 			}
 			rbtree_owning_ptr pNodeLeft = pNode->take_node_left();
-			RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeLeft));  // Make pNode's replacement node be on the same side.
+			RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeLeft));  // Make pNode's replacement node be on the same side.
 
 			rbtree_owning_ptr pNodeRight = pNode->take_node_right();
-			RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeRight));
+			RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeSuccessor, std::move(pNodeRight));
 
 			using std::swap;
 			swap(pNodeSuccessor->mColor, pNode->mColor);
 
 			if(pNode == pNode->mpNodeParent->mpNodeLeft) {// If pNode is a left node...
 				pNodeOwning = pNode->mpNodeParent->take_node_left();
-				RBTreeSetLeftChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
+				RBTreeSetLeftChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));  // Make pNode's replacement node be on the same side.
 			}
 			else {
 				pNodeOwning = pNode->mpNodeParent->take_node_right();
-				RBTreeSetRightChild<rbtree_soft_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));
+				RBTreeSetRightChild<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode->mpNodeParent, std::move(pNodeSuccessor));
 			}
 		}
 
@@ -762,14 +767,14 @@ namespace nodecpp
 			{
 				if(pNodeChild == pNodeChildParent->mpNodeLeft) 
 				{
-					rbtree_soft_ptr pNodeTemp = pNodeChildParent->mpNodeRight;
+					rbtree_soft0_ptr pNodeTemp = pNodeChildParent->mpNodeRight;
 
 					if(pNodeTemp->mColor == kRBTreeColorRed) 
 					{
 						pNodeTemp->mColor = kRBTreeColorBlack;
 						pNodeChildParent->mColor = kRBTreeColorRed;
 						// pNodeRootRef = RBTreeRotateLeft(pNodeChildParent, pNodeRootRef);
-						RBTreeRotateLeft<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeChildParent);
+						RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeChildParent);
 						pNodeTemp = pNodeChildParent->mpNodeRight;
 					}
 
@@ -787,7 +792,7 @@ namespace nodecpp
 							pNodeTemp->mpNodeLeft->mColor = kRBTreeColorBlack;
 							pNodeTemp->mColor = kRBTreeColorRed;
 							// pNodeRootRef = RBTreeRotateRight(pNodeTemp, pNodeRootRef);
-							RBTreeRotateRight<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeTemp);
+							RBTreeRotateRight<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeTemp);
 							pNodeTemp = pNodeChildParent->mpNodeRight;
 						}
 
@@ -798,14 +803,14 @@ namespace nodecpp
 							pNodeTemp->mpNodeRight->mColor = kRBTreeColorBlack;
 
 						// pNodeRootRef = RBTreeRotateLeft(pNodeChildParent, pNodeRootRef);
-						RBTreeRotateLeft<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeChildParent);
+						RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeChildParent);
 						break;
 					}
 				} 
 				else 
 				{   
 					// The following is the same as above, with mpNodeRight <-> mpNodeLeft.
-					rbtree_soft_ptr pNodeTemp = pNodeChildParent->mpNodeLeft;
+					rbtree_soft0_ptr pNodeTemp = pNodeChildParent->mpNodeLeft;
 
 					if(pNodeTemp->mColor == kRBTreeColorRed) 
 					{
@@ -813,7 +818,7 @@ namespace nodecpp
 						pNodeChildParent->mColor = kRBTreeColorRed;
 
 						// pNodeRootRef = RBTreeRotateRight(pNodeChildParent, pNodeRootRef);
-						RBTreeRotateRight<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeChildParent);
+						RBTreeRotateRight<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeChildParent);
 						pNodeTemp = pNodeChildParent->mpNodeLeft;
 					}
 
@@ -832,7 +837,7 @@ namespace nodecpp
 							pNodeTemp->mColor              = kRBTreeColorRed;
 
 							// pNodeRootRef = RBTreeRotateLeft(pNodeTemp, pNodeRootRef);
-							RBTreeRotateLeft<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeTemp);
+							RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeTemp);
 							pNodeTemp = pNodeChildParent->mpNodeLeft;
 						}
 
@@ -843,7 +848,7 @@ namespace nodecpp
 							pNodeTemp->mpNodeLeft->mColor = kRBTreeColorBlack;
 
 						// pNodeRootRef = RBTreeRotateRight(pNodeChildParent, pNodeRootRef);
-						RBTreeRotateRight<rbtree_soft_ptr, rbtree_owning_ptr>(pNodeChildParent);
+						RBTreeRotateRight<rbtree_soft0_ptr, rbtree_owning_ptr>(pNodeChildParent);
 						break;
 					}
 				}
