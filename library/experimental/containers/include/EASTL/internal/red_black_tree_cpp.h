@@ -91,10 +91,10 @@ namespace nodecpp
 	{
 
 		typedef typename safememory::lib_helpers::rbtree_owning_ptr<rbtree_node<Value>> rbtree_owning_ptr;
-		typedef typename safememory::lib_helpers::rbtree_soft_ptr<rbtree_node<Value>> rbtree_soft_ptr;
+		typedef typename safememory::lib_helpers::rbtree_soft_ptr<rbtree_node<Value>> rbtree_soft0_ptr;
 
-		typedef rbtree_owning_ptr node_owning_ptr;
-		typedef rbtree_soft_ptr node_soft_ptr;
+		// typedef rbtree_owning_ptr node_owning_ptr;
+		// typedef rbtree_soft_ptr node_soft_ptr;
 
 
 		
@@ -103,13 +103,13 @@ namespace nodecpp
 
 		rbtree_owning_ptr mpNodeRight = nullptr;  // Declared first because it is used most often.
 		rbtree_owning_ptr mpNodeLeft  = nullptr;
-		rbtree_soft_ptr mpNodeParent  = nullptr;
+		rbtree_soft0_ptr mpNodeParent  = nullptr;
 		RBTreeColor mColor          = kRBTreeColorRed;
 		Value mValue; // For set and multiset, this is the user's value, for map and multimap, this is a pair of key/value.
 
 		rbtree_node() = default;
 
-		rbtree_node(rbtree_soft_ptr nodeParent, RBTreeColor color, const Value& value) :
+		rbtree_node(rbtree_soft0_ptr nodeParent, RBTreeColor color, const Value& value) :
 			mpNodeParent(nodeParent), mColor(color), mValue(value) {}
 
 		template<class... Types>
@@ -149,11 +149,11 @@ namespace nodecpp
 			return pNode;
 		}
 
-		rbtree_soft_ptr get_node_right() const {
+		rbtree_soft0_ptr get_node_right() const {
 			return mpNodeRight;
 		}
 
-		rbtree_soft_ptr get_node_left() const {
+		rbtree_soft0_ptr get_node_left() const {
 			return mpNodeLeft;
 		}
 	};
@@ -167,10 +167,10 @@ namespace nodecpp
 //	typedef rbtree_node_base::base_owning_ptr rbtree_owning_ptr;
 //	typedef rbtree_node_base::base_soft_ptr rbtree_soft_ptr;
 
-	template<class rbtree_soft_ptr>
+	template<class rbtree_soft0_ptr>
 	struct rbtree_min_max_nodes {
-		rbtree_soft_ptr	mpMinChild;
-		rbtree_soft_ptr mpMaxChild;
+		rbtree_soft0_ptr	mpMinChild;
+		rbtree_soft0_ptr 	mpMaxChild;
 	};
 
 
@@ -180,16 +180,16 @@ namespace nodecpp
 	// rbtree_node_base functions
 	///////////////////////////////////////////////////////////////////////
 
-	template<class rbtree_soft_ptr>
-	rbtree_soft_ptr RBTreeGetMinChild(rbtree_soft_ptr pNodeBase)
+	template<class rbtree_soft0_ptr>
+	rbtree_soft0_ptr RBTreeGetMinChild(rbtree_soft0_ptr pNodeBase)
 	{
 		while(pNodeBase->mpNodeLeft) 
 			pNodeBase = pNodeBase->mpNodeLeft;
 		return pNodeBase;
 	}
 
-	template<class rbtree_soft_ptr>
-	rbtree_soft_ptr RBTreeGetMaxChild(rbtree_soft_ptr pNodeBase)
+	template<class rbtree_soft0_ptr>
+	rbtree_soft0_ptr RBTreeGetMaxChild(rbtree_soft0_ptr pNodeBase)
 	{
 		while(pNodeBase->mpNodeRight) 
 			pNodeBase = pNodeBase->mpNodeRight;
@@ -197,8 +197,8 @@ namespace nodecpp
 	}
 
 
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
-	void RBTreeSetLeftChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
+	template<class rbtree_soft0_ptr, class rbtree_owning_ptr>
+	void RBTreeSetLeftChild(rbtree_soft0_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
 		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeLeft);
@@ -207,8 +207,8 @@ namespace nodecpp
 		pNode->mpNodeLeft = std::move(pNodeChild);
 	}
 
-	template<class rbtree_soft_ptr, class rbtree_owning_ptr>
-	void RBTreeSetRightChild(rbtree_soft_ptr pNode, rbtree_owning_ptr pNodeChild) {
+	template<class rbtree_soft0_ptr, class rbtree_owning_ptr>
+	void RBTreeSetRightChild(rbtree_soft0_ptr pNode, rbtree_owning_ptr pNodeChild) {
 		EASTL_ASSERT(pNode);
 		EASTL_ASSERT(pNodeChild);
 		EASTL_ASSERT(!pNode->mpNodeRight);
