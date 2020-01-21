@@ -68,6 +68,17 @@ public:
 	}
 
 
+	soft_ptr_with_zero_offset_impl( const owning_ptr_base_impl<T>& owner )
+	{
+		ptr = owner.t.getTypedPtr();
+	}
+	soft_ptr_with_zero_offset_impl<T>& operator = ( const owning_ptr_base_impl<T>& owner )
+	{
+		ptr = owner.t.getTypedPtr();
+		return *this;
+	}
+
+
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<T>& other )
 	{
 		ptr = other.ptr;
@@ -198,6 +209,17 @@ public:
 	}
 
 
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner )
+	{
+		ptr = owner.t;
+	}
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_base_no_checks<T>& owner )
+	{
+		ptr = owner.t;
+		return *this;
+	}
+
+
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other )
 	{
 		ptr = other.ptr;
@@ -295,6 +317,33 @@ public:
 	}
 };
 
+template<class _Ty,
+	class... _Types,
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+	NODISCARD owning_ptr_base_impl<_Ty> make_owning_base_impl(_Types&&... _Args)
+	{
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+	owning_ptr_base_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	void* stackTmp = thg_stackPtrForMakeOwningCall;
+	thg_stackPtrForMakeOwningCall = dataForObj;
+	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+	thg_stackPtrForMakeOwningCall = stackTmp;
+	//return owning_ptr_impl<_Ty>(objPtr);
+	return op;
+	}
+
+template<class _Ty,
+	class... _Types,
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+NODISCARD owning_ptr_base_no_checks<_Ty> make_owning_base_no_checks(_Types&&... _Args)
+{
+	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
+	owning_ptr_base_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
+	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
+	return op;
+}
+
 template<class T> bool operator != (const owning_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 != p1; }
 template<class T> bool operator == (const owning_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 == p1; }
 
@@ -306,6 +355,43 @@ template<class T, memory_safety is_safe> struct soft_ptr_with_zero_offset_type_ 
 template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::none> { typedef soft_ptr_with_zero_offset_no_checks<T> type; };
 template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::safe> { typedef soft_ptr_with_zero_offset_impl<T> type; };
 template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using soft_ptr_with_zero_offset = typename soft_ptr_with_zero_offset_type_<T, is_safe>::type;
+
+template<class T, memory_safety is_safe> struct owning_ptr_with_manual_delete_type_ { typedef owning_ptr_base_impl<T> type; };
+template<class T> struct owning_ptr_with_manual_delete_type_<T, memory_safety::none> { typedef owning_ptr_base_no_checks<T> type; };
+template<class T> struct owning_ptr_with_manual_delete_type_<T, memory_safety::safe> { typedef owning_ptr_base_impl<T> type; };
+template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using owning_ptr_with_manual_delete = typename owning_ptr_with_manual_delete_type_<T, is_safe>::type;
+
+template<class _Ty,
+	class... _Types,
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+NODISCARD owning_ptr_with_manual_delete<_Ty> make_owning_with_manual_delete(_Types&&... _Args)
+{
+	if constexpr ( safeness_declarator<_Ty>::is_safe == memory_safety::safe )
+	{
+		static_assert( owning_ptr_with_manual_delete<_Ty>::is_safe == memory_safety::safe );
+		return make_owning_base_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+	else
+	{
+		static_assert( owning_ptr_with_manual_delete<_Ty>::is_safe == memory_safety::none );
+		return make_owning_base_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+}
+
+template<class _Ty, memory_safety is_safe,
+	class... _Types,
+	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
+NODISCARD auto make_owning_with_manual_delete_2(_Types&&... _Args) -> owning_ptr_with_manual_delete<_Ty, is_safe>
+{
+	if constexpr ( is_safe == memory_safety::safe )
+	{
+		return make_owning_base_impl<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+	else
+	{
+		return make_owning_base_no_checks<_Ty, _Types ...>( ::std::forward<_Types>(_Args)... );
+	}
+}
 
 
 } // namespace nodecpp::safememory::libhelpers
