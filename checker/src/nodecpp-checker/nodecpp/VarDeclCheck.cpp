@@ -94,7 +94,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   //unwrap const ref
   if (Qt->isReferenceType()) {
-    if (Qt.isConstQualified() || isConstNakedPointerType(Qt)) {
+    if (Qt.isConstQualified()) {
       Qt = Qt->getPointeeType().getCanonicalType();
     }
   }

@@ -55,7 +55,7 @@ void AwaitableCheck::check(const MatchFinder::MatchResult &Result) {
       return; //The error goes to the declaration initializer, not here
     else if(auto Cex = dyn_cast<CallExpr>(Pex) ) {
       auto Fdecl = Cex->getDirectCallee();
-      if(Fdecl && Fdecl->getQualifiedNameAsString() == "nodecpp::wait_for_all")
+      if(Fdecl && getQnameForSystemSafeDb(Fdecl) == "nodecpp::wait_for_all")
         return;
     }
   }

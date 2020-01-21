@@ -51,17 +51,19 @@ public:
 
 /// FIXME: Write a short description.
 ///
+bool isOsnPtrMethodName(const std::string& Name);
 bool isOwnerPtrName(const std::string& Name);
 bool isOwnerPtrDecl(const NamedDecl* Dc);
 bool isSafePtrName(const std::string& Name);
 bool isAwaitableName(const std::string &Name);
-
 bool isNakedPtrName(const std::string& Name);
-bool isConstNakedPtrName(const std::string& Name);
+
+bool isOsnMethodName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
+std::string getQnameForSystemSafeDb(const NamedDecl *Decl);
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
@@ -81,7 +83,7 @@ const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool isConstNakedPointerType(QualType Qt);
+
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 

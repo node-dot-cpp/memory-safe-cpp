@@ -1,4 +1,14 @@
 
+
+/*
+ * This file contain type names and functions names that are declared as 'safe'
+ * under Rule S8.
+ * At this moment only names are of interest, we don't care about arguments,
+ * return type or template parameters. This simplifies this file a lot.
+ * 
+ */
+
+
 namespace fmt {
 namespace v5 {
 	void print();
@@ -15,7 +25,6 @@ namespace std {
 	class exception;
 
 	class vector; //TODO
-	class map;
 	class basic_string;
 
 	class _Tree_iterator;
@@ -48,6 +57,14 @@ namespace nodecpp {
 	void clearTimeout();
 
 	class DataParent;
+	class map {
+		void insert();
+		void erase();
+		void begin();
+		void end();
+		void clear();
+		void size();
+	};
 
 namespace safememory {
 	void make_owning();
