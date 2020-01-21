@@ -129,10 +129,12 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * **[Rule S7]** Prohibit unsupported-yet things
   + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
 * **[Rule S8]** Prohibit functions except for those safe ones. 
-  + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special safe-library header file (specified in a command line to the compiler such as safe-library=safe_library.h), are allowed. safe-library header MUST include ALL safe functions from C library. 
-    - safe-library header should allow specifying safe classes (with ALL safe functions within the class also explicitly listed; whatever-functions-are-unlisted, are deemed unsafe)
-    - safe-library header should support `#include` within; it should support BOTH (a) including other safe-library headers, and (b) including real library files (such as our own soft_ptr.h). TBD: for (b), there should be a way to restrict `#include` within safe-library header to only direct #include (without nested #includes). 
-    - TODO: support for `strlen()` etc. - provided that the parameter is zstring(!)
+  + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special safe-library header file (specified in a command line to the compiler such as safe-library=safe_library.h), are allowed. safe-library header MUST include ALL safe functions from C library.
+    - safe-library header should allow specifying safe classes (with ALL safe member functions within the class also explicitly listed; whatever-functions-are-unlisted, are deemed unsafe)
+    - safe-library header should support `#include` within; it should support BOTH (a) including other safe-library headers, and (b) including real library files (such as our own soft_ptr.h). TBD: for (b), there should be a way to restrict `#include` within safe-library header to only direct #include (without nested #includes).
+    - template types and functions listed as safe are so independant of its parameters. Control of allowed template parameters must be done at a different level (i.e. using enable_if<> or concepts).
+    - functions and methods listed as safe are so independant of its arguments or overloads.
+    - TODO: support for `strlen()` etc.
     - TEST CASES/PROHIBIT: `memset(p,1,1)`
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
