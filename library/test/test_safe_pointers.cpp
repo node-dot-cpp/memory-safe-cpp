@@ -1247,7 +1247,7 @@ void temptest()
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 }
 
-void testSptrsWithZeroOffset()
+void testSoftPtrsWithZeroOffset()
 {
 	owning_ptr<int> op = make_owning<int>(17);
 	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
@@ -1255,6 +1255,19 @@ void testSptrsWithZeroOffset()
 	soft_ptr<int> sp1 = spz2.get();
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+}
+
+void testOwningPtrWithManDel()
+{
+	lib_helpers::owning_ptr_with_manual_delete<int> op = lib_helpers::make_owning_with_manual_delete<int>(17);
+	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+	soft_ptr<int> sp1 = spz2.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+
+	soft_ptr<int> sp2( op );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp2 );
 }
 
 
@@ -1270,8 +1283,9 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
-	testSptrsWithZeroOffset();
-//	return 0;
+	testSoftPtrsWithZeroOffset();
+	testOwningPtrWithManDel();
+	return 0;
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;

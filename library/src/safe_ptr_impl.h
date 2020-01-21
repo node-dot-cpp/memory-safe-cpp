@@ -33,6 +33,8 @@
 namespace nodecpp::safememory
 {
 
+extern thread_local void* thg_stackPtrForMakeOwningCall;
+
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
@@ -656,8 +658,6 @@ public:
 	}
 };
 
-extern thread_local void* thg_stackPtrForMakeOwningCall;
-
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
@@ -811,6 +811,39 @@ public:
 #endif // NODECPP_SAFEMEMORY_HEAVY_DEBUG
 
 	soft_ptr_base_impl() {}
+
+	template<class T1>
+	soft_ptr_base_impl( const owning_ptr_base_impl<T1>& owner )
+	{
+		IF_IS_GUARANTEED_ON_STACK( this )
+		{
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t .getPtr())
+				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+	template<class T1>
+	soft_ptr_base_impl<T>& operator = ( const owning_ptr_base_impl<T1>& owner )
+	{
+		bool iWasOnStack = isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+		}
+		else
+			if ( owner.t .getPtr())
+				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+		return *this;
+	}
 
 	template<class T1>
 	soft_ptr_base_impl( const owning_ptr_impl<T1>& owner )
@@ -1001,6 +1034,24 @@ public:
 	}
 
 	template<class T1>
+	soft_ptr_base_impl( const owning_ptr_base_impl<T1>& owner, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
+			throwPointerOutOfRange();
+		IF_IS_GUARANTEED_ON_STACK( this )
+		{
+			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t.getPtr())
+				init( t_, owner.t.getPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, owner.t.getPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+		dbgCheckMySlotConsistency();
+	}
+
+	template<class T1>
 	soft_ptr_base_impl( const owning_ptr_impl<T1>& owner, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
@@ -1141,7 +1192,10 @@ public:
 		dbgCheckMySlotConsistency();
 	}
 
+	bool operator == (const owning_ptr_base_impl<T>& other ) const { return getDereferencablePtr() == other.t.getTypedPtr(); }
 	bool operator == (const owning_ptr_impl<T>& other ) const { return getDereferencablePtr() == other.t.getTypedPtr(); }
+	template<class T1> 
+	bool operator == (const owning_ptr_base_impl<T1>& other ) const { return getDereferencablePtr() == other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator == (const owning_ptr_impl<T1>& other ) const { return getDereferencablePtr() == other.t.getTypedPtr(); }
 
@@ -1149,7 +1203,10 @@ public:
 	template<class T1>
 	bool operator == (const soft_ptr_base_impl<T1>& other ) const { return getDereferencablePtr() == other.getDereferencablePtr(); }
 
+	bool operator != (const owning_ptr_base_impl<T>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 	bool operator != (const owning_ptr_impl<T>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
+	template<class T1> 
+	bool operator != (const owning_ptr_base_impl<T1>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator != (const owning_ptr_impl<T1>& other ) const { return getDereferencablePtr() != other.t.getTypedPtr(); }
 
@@ -1235,7 +1292,10 @@ public:
 
 
 	template<class T1>
+	soft_ptr_impl( const owning_ptr_base_impl<T1>& owner ) : soft_ptr_base_impl<T>(owner) {}
+	template<class T1>
 	soft_ptr_impl( const owning_ptr_impl<T1>& owner ) : soft_ptr_base_impl<T>(owner) {}
+
 	soft_ptr_impl( const owning_ptr_impl<T>& owner )
 	{
 		IF_IS_GUARANTEED_ON_STACK( this )
@@ -1250,6 +1310,27 @@ public:
 				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
 		this->dbgCheckMySlotConsistency();
 	}
+	soft_ptr_impl( const owning_ptr_base_impl<T>& owner )
+	{
+		IF_IS_GUARANTEED_ON_STACK( this )
+		{
+			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t .getPtr())
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+		this->dbgCheckMySlotConsistency();
+	}
+
+	template<class T1>
+	soft_ptr_impl<T>& operator = ( const owning_ptr_base_impl<T1>& owner )
+	{
+		soft_ptr_base_impl<T>::operator = (owner);
+		return *this;
+	}
 	template<class T1>
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T1>& owner )
 	{
@@ -1257,6 +1338,22 @@ public:
 		return *this;
 	}
 
+	soft_ptr_impl<T>& operator = ( const owning_ptr_base_impl<T>& owner )
+	{
+		bool iWasOnStack = this->isOnStack();
+		reset();
+		if ( iWasOnStack )
+		{
+			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
+		}
+		else
+			if ( owner.t .getPtr())
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), this->getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				this->init( owner.t.getTypedPtr(), owner.t.getTypedPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+		this->dbgCheckMySlotConsistency();
+		return *this;
+	}
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T>& owner )
 	{
 		bool iWasOnStack = this->isOnStack();
@@ -1300,7 +1397,26 @@ public:
 	}
 
 	template<class T1>
+	soft_ptr_impl( const owning_ptr_base_impl<T1>& owner, T* t_ ) : soft_ptr_base_impl<T>(owner, t_) {}
+	template<class T1>
 	soft_ptr_impl( const owning_ptr_impl<T1>& owner, T* t_ ) : soft_ptr_base_impl<T>(owner, t_) {}
+
+	soft_ptr_impl( const owning_ptr_base_impl<T>& owner, T* t_ )
+	{
+		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
+			throwPointerOutOfRange();
+		IF_IS_GUARANTEED_ON_STACK( this )
+		{
+			initOnStack( t_, owner.t.getPtr() ); // automatic type conversion (if at all possible)
+			INCREMENT_ONSTACK_SAFE_PTR_CREATION_COUNT()
+		}
+		else
+			if ( owner.t .getPtr())
+				init( t_, owner.t.getPtr(), getControlBlock(owner.t.getPtr())->insert(this) ); // automatic type conversion (if at all possible)
+			else
+				init( t_, owner.t.getPtr(), soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+		this->dbgCheckMySlotConsistency();
+	}
 	soft_ptr_impl( const owning_ptr_impl<T>& owner, T* t_ )
 	{
 		if ( !isZombieablePointerInBlock( getAllocatedBlock_(owner.t.getPtr()), t_ ) )
@@ -1372,7 +1488,10 @@ public:
 		soft_ptr_base_impl<T>::reset();
 	}
 
+	bool operator == (const owning_ptr_base_impl<T>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
 	bool operator == (const owning_ptr_impl<T>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
+	template<class T1> 
+	bool operator == (const owning_ptr_base_impl<T1>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator == (const owning_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
 
@@ -1380,7 +1499,10 @@ public:
 	template<class T1>
 	bool operator == (const soft_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() == other.getDereferencablePtr(); }
 
+	bool operator != (const owning_ptr_base_impl<T>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 	bool operator != (const owning_ptr_impl<T>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
+	template<class T1> 
+	bool operator != (const owning_ptr_base_impl<T1>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator != (const owning_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 
@@ -1431,7 +1553,16 @@ public:
 
 
 	template<class T1>
+	soft_ptr_impl( const owning_ptr_base_impl<T1>& owner ) : soft_ptr_base_impl<void>(owner) {}
+	template<class T1>
 	soft_ptr_impl( const owning_ptr_impl<T1>& owner ) : soft_ptr_base_impl<void>(owner) {}
+
+	template<class T1>
+	soft_ptr_impl<void>& operator = ( const owning_ptr_base_impl<T1>& owner )
+	{
+		soft_ptr_base_impl<void>::operator = (owner);
+		return *this;
+	}
 	template<class T1>
 	soft_ptr_impl<void>& operator = ( const owning_ptr_impl<T1>& owner )
 	{
@@ -1491,12 +1622,16 @@ public:
 	}
 
 	template<class T1> 
+	bool operator == (const owning_ptr_base_impl<T1>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
+	template<class T1> 
 	bool operator == (const owning_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() == other.t.getTypedPtr(); }
 
 	bool operator == (const soft_ptr_impl<void>& other ) const { return this->getDereferencablePtr() == other.getDereferencablePtr(); }
 	template<class T1>
 	bool operator == (const soft_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() == other.getDereferencablePtr(); }
 
+	template<class T1> 
+	bool operator != (const owning_ptr_base_impl<T1>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 	template<class T1> 
 	bool operator != (const owning_ptr_impl<T1>& other ) const { return this->getDereferencablePtr() != other.t.getTypedPtr(); }
 
