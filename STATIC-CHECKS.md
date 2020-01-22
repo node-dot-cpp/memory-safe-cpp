@@ -125,7 +125,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
       - TEST CASES/PROHIBIT: `co_await some_function(); auto x = *np;`, `co_await some_function(); auto x = r;`
       - TEST CASES/ALLOW: `co_await some_function(); auto x = *sp;`  
 * **[Rule S6]** Prohibit inherently unsafe things
-  + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with (TODO: CHECK!), so it is only GCC/Clang asm which has to be detected and thrown away
+  + **[Rule S6.1]** prohibit asm, both MSVC and GCC style.
 * **[Rule S7]** Prohibit unsupported-yet things
   + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
 * **[Rule S8]** Prohibit functions except for those safe ones. 
