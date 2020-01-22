@@ -59,6 +59,7 @@ bool isAwaitableName(const std::string &Name);
 bool isNakedPtrName(const std::string& Name);
 
 bool isOsnMethodName(const std::string& Name);
+bool isSoftPtrCastName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);

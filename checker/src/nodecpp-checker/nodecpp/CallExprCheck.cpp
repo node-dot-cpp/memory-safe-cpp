@@ -133,6 +133,12 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
     return; // this is in user code, then is ok
 
   std::string Name = getQnameForSafeLibraryDb(Decl);
+
+  if(isSoftPtrCastName(Name)) {
+    diag(Ex->getExprLoc(), "(S1.1.1) soft_ptr cast is prohibited in safe code");
+    return;
+  }
+
   if(isSystemSafeFunctionName(getContext(), Name))
     return;
 

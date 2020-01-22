@@ -75,6 +75,12 @@ bool isOsnMethodName(const std::string& Name) {
   return false;
 }
 
+bool isSoftPtrCastName(const std::string& Name) {
+  return Name == "nodecpp::safememory::soft_ptr_static_cast" ||
+          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast";
+}
+
+
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
   auto Sm = Context->getSourceManager();
