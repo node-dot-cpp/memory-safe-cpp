@@ -52,7 +52,8 @@ Consistency checks always apply (regardless of the command line, and any attribu
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
       * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`naked_ptr<T>` functions is necessary
-    + or (sub)expression is nullptr
+    + or (sub)expression is _nullptr_
+    + or (sub)expression is _this_
     + or (sub)expression is dereferencing of a `naked_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
       - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
     + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `naked_ptr<>`)
