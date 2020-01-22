@@ -404,8 +404,8 @@ const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
   if (!Dc)
     return nullptr;
 
-  if (!Dc->hasDefinition())
-    return nullptr;
+  // if (!Dc->hasDefinition())
+  //   return nullptr;
 
   auto &Args = Dc->getTemplateArgs();
 
@@ -430,7 +430,7 @@ QualType getPointeeType(QualType Qt) {
   auto Dc = getTemplatePtrDecl(Qt);
 
   assert(Dc);
-  assert(Dc->hasDefinition());
+//  assert(Dc->hasDefinition());
 
   auto &Args = Dc->getTemplateArgs();
 
