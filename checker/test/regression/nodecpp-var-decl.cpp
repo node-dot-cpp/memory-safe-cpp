@@ -77,17 +77,3 @@ void badFunc() {
 // CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }
 
-class Sock {};
-
-class Safe {
-
-	void mayExtendCallback(Sock* dontExtend, Sock* sock [[nodecpp::may_extend_to_this]]) {
-// CHECK: :[[@LINE-1]]:31: error: (S1.3)
-// CHECK: :[[@LINE-2]]:49: error: (S1.3)
-		Sock* other [[nodecpp::may_extend_to_this]] = sock;
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-		Sock* other2 [[nodecpp::may_extend_to_this]] = dontExtend; //bad donExtend is not valid initializer
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-	}
-
-};
