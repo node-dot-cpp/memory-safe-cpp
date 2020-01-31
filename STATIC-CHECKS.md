@@ -106,7 +106,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
     - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(naked_ptr<int>& x)`
     - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const_naked_ptr<int>& np);`, `const int *& x = p;`
-  + **[Rule S5.4]** by default, no struct/class may contain a naked_ptr<> (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
+  + **[Rule S5.4]** by default, no struct/class may contain naked_ptrs, raw pointers or references  (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
     - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - allocating naked_struct on heap is prohibited
     - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
