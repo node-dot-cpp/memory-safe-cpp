@@ -52,7 +52,8 @@ Consistency checks always apply (regardless of the command line, and any attribu
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
       * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`naked_ptr<T>` functions is necessary
-    + or (sub)expression is nullptr
+    + or (sub)expression is _nullptr_
+    + or (sub)expression is _this_
     + or (sub)expression is dereferencing of a `naked_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
       - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
     + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `naked_ptr<>`)
@@ -105,7 +106,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
     - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(naked_ptr<int>& x)`
     - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const_naked_ptr<int>& np);`, `const int *& x = p;`
-  + **[Rule S5.4]** by default, no struct/class may contain a naked_ptr<> (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
+  + **[Rule S5.4]** by default, no struct/class may contain naked_ptrs, raw pointers or references  (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
     - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - allocating naked_struct on heap is prohibited
     - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
@@ -125,14 +126,16 @@ Consistency checks always apply (regardless of the command line, and any attribu
       - TEST CASES/PROHIBIT: `co_await some_function(); auto x = *np;`, `co_await some_function(); auto x = r;`
       - TEST CASES/ALLOW: `co_await some_function(); auto x = *sp;`  
 * **[Rule S6]** Prohibit inherently unsafe things
-  + **[Rule S6.1]** prohinbit asm. NB: most likely, MSVC-style ASM won't be parsed by clang-tools to start with (TODO: CHECK!), so it is only GCC/Clang asm which has to be detected and thrown away
+  + **[Rule S6.1]** prohibit asm, both MSVC and GCC style.
 * **[Rule S7]** Prohibit unsupported-yet things
   + **[Rule S7.1]** prohibit function pointers (in the future, will be supported via something like naked_func_ptr<> checking for nullptr)
 * **[Rule S8]** Prohibit functions except for those safe ones. 
-  + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special safe-library header file (specified in a command line to the compiler such as safe-library=safe_library.h), are allowed. safe-library header MUST include ALL safe functions from C library. 
-    - safe-library header should allow specifying safe classes (with ALL safe functions within the class also explicitly listed; whatever-functions-are-unlisted, are deemed unsafe)
-    - safe-library header should support `#include` within; it should support BOTH (a) including other safe-library headers, and (b) including real library files (such as our own soft_ptr.h). TBD: for (b), there should be a way to restrict `#include` within safe-library header to only direct #include (without nested #includes). 
-    - TODO: support for `strlen()` etc. - provided that the parameter is zstring(!)
+  + Out of functions declared in "library files" (those included via `#include <>`), ONLY functions which protoypes are explicitly listed in a special safe-library header file (specified in a command line to the compiler such as safe-library=safe_library.h), are allowed. safe-library header MUST include ALL safe functions from C library.
+    - safe-library header should allow specifying safe classes (with ALL safe member functions within the class also explicitly listed; whatever-functions-are-unlisted, are deemed unsafe)
+    - safe-library header should support `#include` within; it should support BOTH (a) including other safe-library headers, and (b) including real library files (such as our own soft_ptr.h). TBD: for (b), there should be a way to restrict `#include` within safe-library header to only direct #include (without nested #includes).
+    - template types and functions listed as safe are so independant of its parameters. Control of allowed template parameters must be done at a different level (i.e. using enable_if<> or concepts).
+    - functions and methods listed as safe are so independant of its arguments or overloads.
+    - TODO: support for `strlen()` etc.
     - TEST CASES/PROHIBIT: `memset(p,1,1)`
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
