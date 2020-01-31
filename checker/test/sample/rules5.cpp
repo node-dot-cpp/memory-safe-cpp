@@ -115,7 +115,7 @@ void func_S55() {
 
 //ALLOW
 void ff(const NSTR&);
-// CHECK: :[[@LINE-1]]:20: error: (S5.3)
+
 
 void func_S55A() {
 //    const_naked_ptr<NSTR> cnstr;

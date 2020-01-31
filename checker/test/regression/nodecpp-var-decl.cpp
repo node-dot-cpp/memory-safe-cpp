@@ -5,7 +5,7 @@
 using namespace nodecpp::safememory;
 
 struct Safe1 {
-	int i;
+	int i = 0;
 };
 
 struct Safe2 {
@@ -47,7 +47,7 @@ void nakedFunc() {
 
 struct Bad1 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
+	int* ptr = nullptr;
 };
 
 struct Bad2 : public NakedStr {
@@ -56,7 +56,7 @@ struct Bad2 : public NakedStr {
 
 struct Bad3 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
+	int* ptr = nullptr;
 
 	void set(int* ptr);
 // CHECK: :[[@LINE-1]]:16: error: (S1.3)

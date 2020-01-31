@@ -21,11 +21,13 @@ namespace checker {
 
 const char *DiagMsgSrc = "memory-safe-cpp";
 
-DiagHelper NullDiagHelper(nullptr);
+DiagHelper NullDiagHelper;
 
 bool isOwnerPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::owning_ptr_impl" ||
-         Name == "nodecpp::safememory::owning_ptr_no_checks";
+          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
+          Name == "nodecpp::safememory::owning_ptr_no_checks" ||
+          Name == "nodecpp::safememory::owning_ptr_base_no_checks";
 }
 
 bool isOwnerPtrDecl(const NamedDecl *Dc) {
@@ -68,6 +70,7 @@ bool isOsnMethodName(const std::string& Name) {
       return Post == "operator*" || 
               Post == "operator->" ||
               Post == "operator=" ||
+              Post == "operator bool" ||
               Post == "get";
     }
   }
@@ -597,6 +600,113 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
     return false;
   }
 }
+
+bool TypeChecker::isDeterministicRecord(const CXXRecordDecl *Dc) {
+
+  if (!Dc) {
+    return false;
+  }
+
+  //can this happend?
+  if(Dc->getDefinition() != Dc)
+    return false;
+
+  if(!alreadyChecking.insert(Dc).second) {
+    //already checking this type (got recursive)
+    return true;
+  }
+
+  // if database says is a safe name, then is safe
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if (isSystemSafeTypeName(Context, Name))
+    return true;
+
+  bool sysLoc = false;
+
+  if (!isSystemLoc && isSystemLocation(Context, Dc->getLocation())) {
+    sysLoc = true;
+  }
+
+  SystemLocRiia riia(*this, sysLoc);
+
+  // if we don't have a definition, we can't check
+  if (!Dc->hasDefinition())
+    return false;
+
+  if (Dc->isUnion()) {
+
+    // for unions, one initializer is enought.
+    // the rest of the union is zero padded.
+
+    auto F = Dc->fields();
+    for (auto It = F.begin(); It != F.end(); ++It) {
+      if (It->hasInClassInitializer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  auto F = Dc->fields();
+  for (auto It = F.begin(); It != F.end(); ++It) {
+    auto Ft = (*It)->getType().getCanonicalType();
+    if (!isDeterministicType(Ft) && !It->hasInClassInitializer()) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        std::string Msg =
+            "member '" + std::string((*It)->getName()) + "' is not deterministic";
+        Dh.diag((*It)->getLocation(), Msg);
+      }
+      return false;
+    }
+  }
+
+  auto B = Dc->bases();
+  for (auto It = B.begin(); It != B.end(); ++It) {
+
+    auto Bt = It->getType().getCanonicalType();
+    if (!isDeterministicType(Bt)) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        Dh.diag((*It).getBaseTypeLoc(), "base class is not deterministic");
+      }
+      return false;
+    }
+  }
+
+  // finally we are deterministic!
+  return true;
+}
+
+bool TypeChecker::isDeterministicType(const QualType& Qt) {
+
+  assert(Qt.isCanonical());
+
+  if (Qt->isReferenceType()) {
+    return true;
+  } else if (Qt->isPointerType()) {
+    return false;
+  } else if (Qt->isBuiltinType()) {
+    return false;
+  } else if (Qt->isEnumeralType()) {
+    return false;
+  } else if (isAwaitableType(Qt)) {//mb: check
+    return true;
+  } else if (isLambdaType(Qt)) {
+    return true;
+  } else if (isSafePtrType(Qt)) {
+    return true;
+  } else if (isNakedPointerType(Qt, Context)) {
+    return true;
+  } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
+    return isDeterministicRecord(Rd);
+  } else if (Qt->isTemplateTypeParmType()) {
+    // we will take care at instantiation
+    return true;
+  } else {
+    //t->dump();
+    return false;
+  }
+}
+
 
 const CXXRecordDecl *isUnionType(QualType Qt) {
 

@@ -21,18 +21,24 @@ namespace checker {
 extern const char *DiagMsgSrc;
 
 class DiagHelper {
-  ClangTidyCheck *Check = nullptr;
+  std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag;
   DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
 public:
 
   DiagHelper(ClangTidyCheck *Check, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
-  :Check(Check), Level(Level) {}
+  :Diag(std::bind(&ClangTidyCheck::diag, Check, std::placeholders::_1,
+    std::placeholders::_2, std::placeholders::_3)), Level(Level) {}
+
+  DiagHelper(std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
+  :Diag(Diag), Level(Level) {}
+
+  DiagHelper() {}
 
   void diag(SourceLocation Loc, StringRef Message) {
-    if(Check) {
+    if(Diag) {
       DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
       std::swap(Level, NextLevel);
-      Check->diag(Loc, Message, NextLevel);
+      Diag(Loc, Message, NextLevel);
     }
   }
 };
@@ -104,6 +110,10 @@ public:
 
   bool isSafeRecord(const CXXRecordDecl *Dc);
   bool isSafeType(const QualType& Qt);
+
+  bool isDeterministicRecord(const CXXRecordDecl *Dc);
+  bool isDeterministicType(const QualType& Qt);
+
   bool swapSystemLoc(bool newValue) {
     bool tmp = isSystemLoc;
     isSystemLoc = newValue;
@@ -129,6 +139,14 @@ bool isSafeType(QualType Qt, const ClangTidyContext* Context,
   return Tc.isSafeType(Qt);
 }
 
+inline
+bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
+  DiagHelper& Dh = NullDiagHelper) {
+
+  TypeChecker Tc(Context, Dh);
+
+  return Tc.isDeterministicType(Qt);
+}
 
 const CXXRecordDecl* isUnionType(QualType Qt);
 bool checkUnion(const CXXRecordDecl *Dc, DiagHelper& Dh = NullDiagHelper);
