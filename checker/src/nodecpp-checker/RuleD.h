@@ -96,7 +96,17 @@ public:
       return Super::TraverseDecl(D);
   }
 
-  //TODO check temporaries
+  bool VisitExplicitCastExpr(clang::ExplicitCastExpr *Expr) {
+    
+    if(isRawPointerType(Expr->getSubExpr()->getType().getCanonicalType())) {
+      if(!isRawPointerType(Expr->getType().getCanonicalType())) {
+        diag(Expr->getExprLoc(), "(D1) expression is not deterministic");
+      }
+    }
+    return Super::VisitExplicitCastExpr(Expr);
+  }
+
+
   bool VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObjectExpr *Expr) {
     
     checkTypeMembers(Expr->getType().getCanonicalType(), Expr->getExprLoc());
