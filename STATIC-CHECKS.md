@@ -156,8 +156,9 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * Not allowing to convert pointers into non-pointers
   - **[Rule D1]** any (sub)expression which takes an argument of raw pointer type X* AND returns non-pointer type is prohibited, unless it is one of the following:
     + function call taking X* as parameter
+    + convertion to `bool`
     + TEST CASES/PROHIBIT: `(int)p`, `static_cast<int>(p)`
-    + TEST CASES/ALLOW: `fp(p)`
+    + TEST CASES/ALLOW: `fp(p)`, `if(!p)`
 * **[Rule D2]** Prohibiting uinitialized variables, including partially unitialized arrays
   - TEST CASES/PROHIBIT: `int x;` (in function), `int a[3] = {1,2};` (in function), `X x;` (in function, if class X has non-constructed members AND has no constructor), `int x1 : 8;` (in function, this is an uninitialized bit field)
   - TEST CASES/ALLOW: `int x = 0;` (in function), `X x;` (in function, provided that class X has default constructor), `int a[3] = {1,2,3};` (in function), `int x1 : 8 = 42;` (in function, this is an initialized bit field)
