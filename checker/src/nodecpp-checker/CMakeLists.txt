@@ -3,6 +3,7 @@ set(LLVM_LINK_COMPONENTS
   )
 
 add_clang_library(nodecppChecker
+  CheckerData.cpp
   ClangTidy.cpp
   ClangTidyModule.cpp
   ClangTidyDiagnosticConsumer.cpp

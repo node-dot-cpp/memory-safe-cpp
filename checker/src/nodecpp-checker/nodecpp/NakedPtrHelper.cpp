@@ -99,6 +99,9 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
   if (isSafePtrName(Name) || isNakedPtrName(Name) || isAwaitableName(Name))
     return false;
 
+  if(Context->getCheckerData().isFromUnsafeNamespace(Name))
+    return true;
+
   auto &Wl = Context->getGlobalOptions().SafeTypes;
   return (Wl.find(Name) != Wl.end());
 }

@@ -77,7 +77,19 @@ public:
   }
 
   bool VisitNamespaceDecl(clang::NamespaceDecl *D) {
-    if(!D->isAnonymousNamespace() && !D->isOriginalNamespace()) {
+
+    if(D->isAnonymousNamespace()) {
+
+      return Super::VisitNamespaceDecl(D);
+    }
+    else if(D->isOriginalNamespace()) {
+      if(D->hasAttr<NodeCppMemoryUnsafeAttr>()) {
+
+        std::string Name = getQnameForSystemSafeDb(D);
+        Context.getCheckerData().addUnsafeNamespace(Name);
+      }
+    }
+    else {
 
       clang::NamespaceDecl* O = D->getOriginalNamespace();
       if((D->hasAttr<NodeCppMemoryUnsafeAttr>() != O->hasAttr<NodeCppMemoryUnsafeAttr>()) ||

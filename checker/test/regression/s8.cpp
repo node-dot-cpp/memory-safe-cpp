@@ -2,6 +2,12 @@
 
 #include <utility>
 
+namespace [[nodecpp::memory_unsafe]] name {
+	class UnsafeButOk {
+		int *P = nullptr;
+	};
+}
+
 void func() {
 	
 	int i = 0;
@@ -10,5 +16,7 @@ void func() {
 
 
 	func(); // ok, defined in safe code
+
+	name::UnsafeButOk Ok; // ok, unsafe but [[nodecpp::memory_unsafe]]
 }
 

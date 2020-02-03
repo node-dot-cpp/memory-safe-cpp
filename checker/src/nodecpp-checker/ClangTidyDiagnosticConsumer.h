@@ -11,6 +11,7 @@
 #define NODECPP_CHECKER_CLANGTIDYDIAGNOSTICCONSUMER_H
 
 #include "ClangTidyOptions.h"
+#include "CheckerData.h"
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Tooling/Core/Diagnostic.h"
@@ -194,6 +195,14 @@ public:
     return SourceMgr;
   }
 
+  CheckerData& getCheckerData() {
+    return ChkData;
+  }
+
+  const CheckerData& getCheckerData() const {
+    return ChkData;
+  }
+
 private:
   // Calls setDiagnosticsEngine() and storeError().
   friend class ClangTidyDiagnosticConsumer;
@@ -226,6 +235,8 @@ private:
 
   ProfileData *Profile;
   SourceManager *SourceMgr;
+
+  CheckerData ChkData;
 };
 
 /// \brief A diagnostic consumer that turns each \c Diagnostic into a
