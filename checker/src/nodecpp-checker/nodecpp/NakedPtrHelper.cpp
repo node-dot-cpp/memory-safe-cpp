@@ -490,6 +490,20 @@ bool isAwaitableType(QualType Qt) {
 
 }
 
+bool isNodecppErrorType(QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+
+  auto Dc = Qt->getAsCXXRecordDecl();
+  if (!Dc)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  
+  return Name == "nodecpp::error";
+}
+
+
 struct SystemLocRiia {
   TypeChecker& Tc;
   bool wasFalse = false;
@@ -867,6 +881,22 @@ const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
   else
     return nullptr;
 }
+
+bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
+  
+  assert(D);
+
+  if(isa<ParmVarDecl>(D))
+    return true;
+
+  auto L = Context->getParents(*D);
+
+  if (L.begin() != L.end())
+    return L.begin()->get<CXXCatchStmt>();
+  else
+    return false;
+}
+
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
                                                      QualType Arg) {

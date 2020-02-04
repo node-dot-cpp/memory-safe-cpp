@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULEDASTVISITOR_H
-#define NODECPP_CHECKER_RULEDASTVISITOR_H
+#ifndef NODECPP_CHECKER_RULEM1_H
+#define NODECPP_CHECKER_RULEM1_H
 
 
 #include "nodecpp/NakedPtrHelper.h"
@@ -40,10 +40,10 @@ namespace nodecpp {
 namespace checker {
 
 
-class RuleDASTVisitor
-  : public clang::RecursiveASTVisitor<RuleDASTVisitor> {
+class RuleM1ASTVisitor
+  : public clang::RecursiveASTVisitor<RuleM1ASTVisitor> {
 
-  typedef clang::RecursiveASTVisitor<RuleDASTVisitor> Super;
+  typedef clang::RecursiveASTVisitor<RuleM1ASTVisitor> Super;
 
   ClangTidyContext &Context;
 //  MyStack St;
@@ -56,25 +56,13 @@ class RuleDASTVisitor
   }
 
   DiagHelper makeDiagHelper() {
-    return DiagHelper(std::bind(&RuleDASTVisitor::diag, this, std::placeholders::_1,
+    return DiagHelper(std::bind(&RuleM1ASTVisitor::diag, this, std::placeholders::_1,
     std::placeholders::_2, std::placeholders::_3), DiagnosticIDs::Note);
-  }
-
-  void checkTypeMembers(QualType Qt, SourceLocation Loc) {
-
-    assert(Qt.isCanonical());
-    if(Qt->getAs<RecordType>()) {
-      if(!isDeterministicType(Qt, &Context)) {
-        diag(Loc, "(D2.1) expression type is not deterministic");
-        auto Dh = makeDiagHelper();
-        isDeterministicType(Qt, &Context, Dh);
-      }
-    }
   }
 
 public:
 
-  explicit RuleDASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleM1ASTVisitor(ClangTidyContext &Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -89,79 +77,44 @@ public:
     else if(isSystemLocation(&Context, D->getLocation()))
         return true;
 
-    else if(D->hasAttr<NodeCppNonDeterministicAttr>())
-      return true;
-
     else
       return Super::TraverseDecl(D);
   }
 
-  bool VisitExplicitCastExpr(clang::ExplicitCastExpr *Expr) {
+  bool VisitCXXThrowExpr(clang::CXXThrowExpr *Expr) {
     
-    if(isRawPointerType(Expr->getSubExpr()->getType().getCanonicalType())) {
-      if(!isRawPointerType(Expr->getType().getCanonicalType())) {
-        diag(Expr->getExprLoc(), "(D1) expression is not deterministic");
+    auto Qt = Expr->getSubExpr()->getType();
+    if(!isNodecppErrorType(Qt))
+      diag(Expr->getExprLoc(), "(M1.1) throw expression must be of nodecpp::error type");
+
+    return Super::VisitCXXThrowExpr(Expr);
+  }
+
+
+  bool VisitCXXCatchStmt(clang::CXXCatchStmt *Stmt) {
+    
+    auto Qt = Stmt->getCaughtType();
+    if(!Qt->isLValueReferenceType()) {
+      diag(Stmt->getExceptionDecl()->getLocation(), "(M1.2) catch type must be reference to nodecpp::error type");
+    }
+    else {
+      auto Qt2 = Qt->getPointeeType();
+      if(!isNodecppErrorType(Qt2)) {
+        diag(Stmt->getExceptionDecl()->getLocation(), "(M1.2) catch type must be reference to nodecpp::error type");
       }
     }
-    return Super::VisitExplicitCastExpr(Expr);
-  }
 
-
-  bool VisitCXXTemporaryObjectExpr(clang::CXXTemporaryObjectExpr *Expr) {
-    
-    checkTypeMembers(Expr->getType().getCanonicalType(), Expr->getExprLoc());
-    return Super::VisitCXXTemporaryObjectExpr(Expr);
-  }
-
-  bool VisitMaterializeTemporaryExpr(clang::MaterializeTemporaryExpr *Expr) {
-    
-    checkTypeMembers(Expr->getType().getCanonicalType(), Expr->getExprLoc());
-    return Super::VisitMaterializeTemporaryExpr(Expr);
-  }
-
-  bool VisitVarDecl(clang::VarDecl *Var) {
-
-    if(isParmVarOrCatchVar(Context.getASTContext(), Var))
-      return Super::VisitVarDecl(Var);
-
-    if(Var->hasLocalStorage() || Var->isStaticLocal()) {
-
-      auto Qt = Var->getType().getCanonicalType();
-    
-      if(!isDeterministicType(Qt, &Context)) {
-        if(Qt->getAs<RecordType>()) {
-          
-          diag(Var->getLocation(), "(D2.1) variable type is not deterministic");
-          auto Dh = makeDiagHelper();
-          isDeterministicType(Qt, &Context, Dh);
-        }
-        else if (!Var->getInit()) {
-          diag(Var->getLocation(), "(D2) variable type must have initializer");
-        }
-      }
-      // else if(Qt->isConstantArrayType()) {
-
-      //   auto Arr = cast<ConstantArrayType>(Qt->castAsArrayTypeUnsafe());
-      //   auto Ie = dyn_cast_or_null<InitListExpr>(Var->getInit());
-
-      //   auto S = Arr->getSize();
-      //   if(!Ie || Ie->getNumInits() != S.getLimitedValue(UINT_MAX)) {
-      //     diag(Var->getLocation(), "(D2) array type size must match the number of initializers");
-      //   }
-      // }
-    }
-    
-    return Super::VisitVarDecl(Var);
+    return Super::VisitCXXCatchStmt(Stmt);
   }
 
 };
 
-class RuleDASTConsumer : public clang::ASTConsumer {
+class RuleM1ASTConsumer : public clang::ASTConsumer {
 
-  RuleDASTVisitor Visitor;
+  RuleM1ASTVisitor Visitor;
 
 public:
-  RuleDASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleM1ASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -172,5 +125,5 @@ public:
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_RULEDASTVISITOR_H
+#endif // NODECPP_CHECKER_RULEM1_H
 

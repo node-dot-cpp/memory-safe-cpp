@@ -93,6 +93,7 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagH
 
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
+bool isNodecppErrorType(QualType Qt);
 
 class TypeChecker {
   const ClangTidyContext* Context = nullptr;
@@ -163,6 +164,10 @@ bool isFunctionPtr(const Expr *Ex);
 
 const Stmt *getParentStmt(ASTContext *Context, const Stmt *St);
 const DeclStmt* getParentDeclStmt(ASTContext *Context, const Decl* Dc);
+
+/// \brief Returns \c true if \p D is either a \c ParmVarDecl
+/// or the argument of a \c CXXCatchStmt
+bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);
 
 class NakedPtrScopeChecker {
 

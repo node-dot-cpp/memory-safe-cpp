@@ -215,9 +215,10 @@ void ClangTidyContext::setCurrentFile(StringRef File) {
       llvm::make_unique<CachedGlobList>(*getOptions().WarningsAsErrors);
 }
 
-void ClangTidyContext::setASTContext(ASTContext *Context) {
-  DiagEngine->SetArgToStringFn(&FormatASTNodeDiagnosticArgument, Context);
-  LangOpts = Context->getLangOpts();
+void ClangTidyContext::setASTContext(ASTContext *Ctx) {
+  DiagEngine->SetArgToStringFn(&FormatASTNodeDiagnosticArgument, Ctx);
+  LangOpts = Ctx->getLangOpts();
+  Context = Ctx;
 }
 
 const ClangTidyGlobalOptions &ClangTidyContext::getGlobalOptions() const {

@@ -136,6 +136,10 @@ public:
   /// \brief Sets ASTContext for the current translation unit.
   void setASTContext(ASTContext *Context);
 
+  /// \brief Gets ASTContext for the current translation unit.
+  ASTContext *getASTContext() { return Context; }
+
+
   /// \brief Gets the language options from the AST context.
   const LangOptions &getLangOpts() const { return LangOpts; }
 
@@ -235,6 +239,7 @@ private:
 
   ProfileData *Profile;
   SourceManager *SourceMgr;
+  ASTContext *Context;
 
   CheckerData ChkData;
 };
