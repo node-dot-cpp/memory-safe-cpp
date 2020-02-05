@@ -34,10 +34,10 @@ void ConstCheck::check(const MatchFinder::MatchResult &Result) {
     if (FD->isMutable()) {
       diag(FD->getLocation(), "(S2.2) mutable members are prohibited");
     }
-  } else if (auto LE = Result.Nodes.getNodeAs<LambdaExpr>("lE")) {
-    if (LE->isMutable()) {
-      diag(LE->getExprLoc(), "(S2) mutable lambdas are prohibited");
-    }
+  // } else if (auto LE = Result.Nodes.getNodeAs<LambdaExpr>("lE")) {
+  //   if (LE->isMutable()) {
+  //     diag(LE->getExprLoc(), "(S2) mutable lambdas are prohibited");
+  //   }
   }
 }
 

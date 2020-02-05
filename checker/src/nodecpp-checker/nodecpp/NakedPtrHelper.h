@@ -21,18 +21,24 @@ namespace checker {
 extern const char *DiagMsgSrc;
 
 class DiagHelper {
-  ClangTidyCheck *Check = nullptr;
+  std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag;
   DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
 public:
 
   DiagHelper(ClangTidyCheck *Check, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
-  :Check(Check), Level(Level) {}
+  :Diag(std::bind(&ClangTidyCheck::diag, Check, std::placeholders::_1,
+    std::placeholders::_2, std::placeholders::_3)), Level(Level) {}
+
+  DiagHelper(std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
+  :Diag(Diag), Level(Level) {}
+
+  DiagHelper() {}
 
   void diag(SourceLocation Loc, StringRef Message) {
-    if(Check) {
+    if(Diag) {
       DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
       std::swap(Level, NextLevel);
-      Check->diag(Loc, Message, NextLevel);
+      Diag(Loc, Message, NextLevel);
     }
   }
 };
@@ -51,17 +57,20 @@ public:
 
 /// FIXME: Write a short description.
 ///
+bool isOsnPtrMethodName(const std::string& Name);
 bool isOwnerPtrName(const std::string& Name);
 bool isOwnerPtrDecl(const NamedDecl* Dc);
 bool isSafePtrName(const std::string& Name);
 bool isAwaitableName(const std::string &Name);
-
 bool isNakedPtrName(const std::string& Name);
-bool isConstNakedPtrName(const std::string& Name);
+
+bool isOsnMethodName(const std::string& Name);
+bool isSoftPtrCastName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
+std::string getQnameForSystemSafeDb(const NamedDecl *Decl);
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
@@ -81,9 +90,10 @@ const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool isConstNakedPointerType(QualType Qt);
+
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
+bool isNodecppErrorType(QualType Qt);
 
 class TypeChecker {
   const ClangTidyContext* Context = nullptr;
@@ -101,6 +111,10 @@ public:
 
   bool isSafeRecord(const CXXRecordDecl *Dc);
   bool isSafeType(const QualType& Qt);
+
+  bool isDeterministicRecord(const CXXRecordDecl *Dc);
+  bool isDeterministicType(const QualType& Qt);
+
   bool swapSystemLoc(bool newValue) {
     bool tmp = isSystemLoc;
     isSystemLoc = newValue;
@@ -126,6 +140,14 @@ bool isSafeType(QualType Qt, const ClangTidyContext* Context,
   return Tc.isSafeType(Qt);
 }
 
+inline
+bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
+  DiagHelper& Dh = NullDiagHelper) {
+
+  TypeChecker Tc(Context, Dh);
+
+  return Tc.isDeterministicType(Qt);
+}
 
 const CXXRecordDecl* isUnionType(QualType Qt);
 bool checkUnion(const CXXRecordDecl *Dc, DiagHelper& Dh = NullDiagHelper);
@@ -142,6 +164,10 @@ bool isFunctionPtr(const Expr *Ex);
 
 const Stmt *getParentStmt(ASTContext *Context, const Stmt *St);
 const DeclStmt* getParentDeclStmt(ASTContext *Context, const Decl* Dc);
+
+/// \brief Returns \c true if \p D is either a \c ParmVarDecl
+/// or the argument of a \c CXXCatchStmt
+bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);
 
 class NakedPtrScopeChecker {
 

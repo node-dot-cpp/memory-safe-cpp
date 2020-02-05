@@ -19,6 +19,9 @@
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
 #include "CoroutineASTVisitor.h"
+#include "RuleC.h"
+#include "RuleD.h"
+#include "RuleM1.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -367,10 +370,15 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   }
 
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+
+  Consumers.push_back(llvm::make_unique<RuleCASTConsumer>(Context));
+
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
   Consumers.push_back(llvm::make_unique<CoroutineASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<RuleDASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
 
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));

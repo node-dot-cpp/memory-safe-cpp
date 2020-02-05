@@ -45,13 +45,13 @@ void func() {
     //ALLOW
     dynamic_cast<Der*>(p);
     p=p2;
-    p=np.get_dereferencable();
-    p=sp.get().get_dereferencable();
-    p=op.get().get_dereferencable();
+    // p=np.get_dereferencable();
+    // p=sp.get().get_dereferencable();
+    // p=op.get().get_dereferencable();
     fp(p);
-    fp(np.get_dereferencable());
-    fp(sp.get().get_dereferencable());
-    fp(op.get().get_dereferencable());
+    // fp(np.get_dereferencable());
+    // fp(sp.get().get_dereferencable());
+    // fp(op.get().get_dereferencable());
     &i;
     *np;
     *sp;
@@ -125,7 +125,7 @@ class ProhibitS3 {
 
 void rule_S3() {
 
-    static int x;
+    static int x = 0;
 // CHECK: :[[@LINE-1]]:16: error: (S3)
 }
 

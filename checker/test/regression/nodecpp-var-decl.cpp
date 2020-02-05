@@ -5,7 +5,7 @@
 using namespace nodecpp::safememory;
 
 struct Safe1 {
-	int i;
+	int i = 0;
 };
 
 struct Safe2 {
@@ -47,7 +47,7 @@ void nakedFunc() {
 
 struct Bad1 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
+	int* ptr = nullptr;
 };
 
 struct Bad2 : public NakedStr {
@@ -56,7 +56,7 @@ struct Bad2 : public NakedStr {
 
 struct Bad3 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
+	int* ptr = nullptr;
 
 	void set(int* ptr);
 // CHECK: :[[@LINE-1]]:16: error: (S1.3)
@@ -77,17 +77,3 @@ void badFunc() {
 // CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }
 
-class Sock {};
-
-class Safe {
-
-	void mayExtendCallback(Sock* dontExtend, Sock* sock [[nodecpp::may_extend_to_this]]) {
-// CHECK: :[[@LINE-1]]:31: error: (S1.3)
-// CHECK: :[[@LINE-2]]:49: error: (S1.3)
-		Sock* other [[nodecpp::may_extend_to_this]] = sock;
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-		Sock* other2 [[nodecpp::may_extend_to_this]] = dontExtend; //bad donExtend is not valid initializer
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-	}
-
-};

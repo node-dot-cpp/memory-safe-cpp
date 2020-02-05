@@ -65,7 +65,7 @@ struct MyServer {
 
 
 	void bad2() {
-		int i;
+		int i = 0;
 		auto l = [this, &i](naked_ptr<Socket> sock) {};
 // CHECK: :[[@LINE-1]]:20: error: unsafe capture to extend scope
 		srv.on(l);

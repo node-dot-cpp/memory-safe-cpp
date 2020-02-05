@@ -72,7 +72,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-  bool IsParam = isa<ParmVarDecl>(Var);
+  bool IsParam = isParmVarOrCatchVar(Result.Context, Var);
   auto Qt = Var->getType().getCanonicalType();
 
   //first check references initializers
@@ -94,8 +94,9 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   //unwrap const ref
   if (Qt->isReferenceType()) {
-    if (Qt.isConstQualified() || isConstNakedPointerType(Qt)) {
+    if (Qt->getPointeeType().isConstQualified()) {
       Qt = Qt->getPointeeType().getCanonicalType();
+      Qt.removeLocalConst();
     }
   }
 

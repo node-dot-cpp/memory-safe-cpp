@@ -193,23 +193,23 @@ index 51f2ce2..b13de57 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index dc9edac..dcae747 100644
+index dc9edac..7ec0336 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3004,3 +3004,21 @@ def InternalLinkage : InheritableAttr {
+@@ -3004,3 +3004,33 @@ def InternalLinkage : InheritableAttr {
    let Subjects = SubjectList<[Var, Function, CXXRecord]>;
    let Documentation = [InternalLinkageDocs];
  }
 +
 +def NodeCppNakedStruct : InheritableAttr {
 +  let Spellings = [CXX11<"nodecpp","naked_struct">];
-+  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppNoInstanceDocs];
++//  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [NodeCppNakedStructDocs];
 +}
 +
 +def NodeCppMayExtend : InheritableAttr {
 +  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
-+  let Subjects = SubjectList<[ParmVar]>;
++//  let Subjects = SubjectList<[ParmVar]>;
 +  let Documentation = [NodeCppMayExtendDocs];
 +}
 +
@@ -218,11 +218,23 @@ index dc9edac..dcae747 100644
 +  let Subjects = SubjectList<[ParmVar]>;
 +  let Documentation = [NodeCppMayExtendDocs];
 +}
++
++def NodeCppMemoryUnsafe : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
++//  let Subjects = SubjectList<[Namespace]>;
++  let Documentation = [NodeCppMemoryUnsafeDocs];
++}
++
++def NodeCppNonDeterministic : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","non_deterministic">];
++//  let Subjects = SubjectList<[Namespace]>;
++  let Documentation = [NodeCppNonDeterministicDocs];
++}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..0028fa5 100644
+index 5a937b1..d472055 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,27 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,43 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -233,12 +245,11 @@ index 5a937b1..0028fa5 100644
 +}
 +
 +
-+def NodeCppNoInstanceDocs : Documentation {
++def NodeCppNakedStructDocs : Documentation {
 +  let Category = DocCatNodeCpp;
 +  let Content = [{
-+This attribute is used on class / struct declaration to indicate that safe code
-+shouldn't be allowed to create instances of it.
-+All instances are created by infraestructure only.
++This attribute is used on class / struct declaration.
++Such classes can be created only on the stack and may contain naked ptrs.
 +}];
 +}
 +
@@ -250,6 +261,35 @@ index 5a937b1..0028fa5 100644
 +Checker must add extra validations to such arguments.
 +}];
 +}
++
++def NodeCppMemoryUnsafeDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on namespace declaration to indicate that
++elements inside such namespace shouln't be checked for memory safety.
++}];
++}
++
++def NodeCppNonDeterministicDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on namespace declaration to indicate that
++elements inside such namespace shouln't be checked for determinism.
++}];
++}
++
+diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
+index b241856..f33df4a 100644
+--- a/include/clang/Basic/DiagnosticSemaKinds.td
++++ b/include/clang/Basic/DiagnosticSemaKinds.td
+@@ -9438,4 +9438,7 @@ def err_std_compare_type_not_supported : Error<
+    "member '%2' is missing|"
+    "the type is not trivially copyable|"
+    "the type does not have the expected form}1">;
++
++def err_unknown_nodecpp_attribute : Error<
++  "(C1) unknown attribute %0">;   
+ } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
 index 50cff15..43048e1 100644
 --- a/lib/AST/Expr.cpp
@@ -276,7 +316,7 @@ index e032c31..6db41be 100644
        if (ABI != ParameterABI::Ordinary)
          OS << "__attribute__((" << getParameterABISpelling(ABI) << ")) ";
 diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index 63f8395..5635cbd 100644
+index 63f8395..a749ff5 100644
 --- a/lib/ASTMatchers/ASTMatchFinder.cpp
 +++ b/lib/ASTMatchers/ASTMatchFinder.cpp
 @@ -389,6 +389,7 @@ public:
@@ -287,13 +327,17 @@ index 63f8395..5635cbd 100644
  
    // Matches children or descendants of 'Node' with 'BaseMatcher'.
    bool memoizedMatchesRecursively(const ast_type_traits::DynTypedNode &Node,
-@@ -842,6 +843,20 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
+@@ -842,6 +843,24 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
    if (!DeclNode) {
      return true;
    }
 +
 +  //mb: we don't traverse decls in system-headers
-+  if (!isa<TranslationUnitDecl>(DeclNode)) {
++  // nor namespaces with [[nodecpp::memory_unsafe]] attr
++  if(DeclNode->hasAttr<NodeCppMemoryUnsafeAttr>()) {
++    return true;
++  }
++  else if (!isa<TranslationUnitDecl>(DeclNode)) {
 +
 +    auto &SourceManager = getASTContext().getSourceManager();
 +    auto ExpansionLoc = SourceManager.getExpansionLoc(DeclNode->getLocStart());
@@ -308,7 +352,7 @@ index 63f8395..5635cbd 100644
    match(*DeclNode);
    return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
  }
-@@ -901,6 +916,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
+@@ -901,6 +920,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
        CtorInit);
  }
  
@@ -368,10 +412,31 @@ index 8a70404..113c960 100644
        AddPath("/usr/include/c++/v1", CXXSystem, false);
      } else {
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..2512058 100644
+index 77deed6..0c616e2 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
-@@ -6604,6 +6604,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+   // though they were unknown attributes.
+   if (AL.getKind() == ParsedAttr::UnknownAttribute ||
+       !AL.existsInTarget(S.Context.getTargetInfo())) {
+-    S.Diag(AL.getLoc(), AL.isDeclspecAttribute()
+-                            ? diag::warn_unhandled_ms_attribute_ignored
+-                            : diag::warn_unknown_attribute_ignored)
+-        << AL.getName();
++
++    if(AL.hasScope() && AL.getScopeName()->getName() == "nodecpp") {
++      S.Diag(AL.getLoc(), diag::err_unknown_nodecpp_attribute) << AL.getName();
++    }
++    else {
++      S.Diag(AL.getLoc(), AL.isDeclspecAttribute()
++                              ? diag::warn_unhandled_ms_attribute_ignored
++                              : diag::warn_unknown_attribute_ignored)
++          << AL.getName();
++    }
+     return;
+   }
+ 
+@@ -6604,6 +6610,22 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    case ParsedAttr::AT_XRayLogArgs:
      handleXRayLogArgsAttr(S, D, AL);
      break;
@@ -383,6 +448,12 @@ index 77deed6..2512058 100644
 +    break;
 +  case ParsedAttr::AT_NodeCppOwnedByThis:
 +    handleSimpleAttribute<NodeCppOwnedByThisAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppMemoryUnsafe:
++    handleSimpleAttribute<NodeCppMemoryUnsafeAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppNonDeterministic:
++    handleSimpleAttribute<NodeCppNonDeterministicAttr>(S, D, AL);
 +    break;
 +
    }

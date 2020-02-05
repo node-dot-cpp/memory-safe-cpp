@@ -3,7 +3,7 @@
 
 union Bad {
 // CHECK: :[[@LINE-1]]:7: error: unsafe type declaration
-	int i;
+	int i = 0;
 	int* ptr;
 };
 
@@ -15,7 +15,7 @@ void func1() {
 
 template <class T>
 union MayBeBad {
-	int i;
+	int i = 0;
 	T ptr;
 };
 
@@ -31,7 +31,7 @@ class UsesUnion {
 	MayBeBad<int*> pt;
 };
 
-void func3() { 
+void func3() {
 
 	UsesUnion uu;
 // CHECK: :[[@LINE-1]]:12: error: unsafe type at variable declaration

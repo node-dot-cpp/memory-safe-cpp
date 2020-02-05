@@ -14,7 +14,4 @@ void bad() {
 	int& j = const_cast<int&>(i);
 // CHECK: :[[@LINE-1]]:11: error: (S2.1)
 
-	auto l = []() mutable {};
-// CHECK: :[[@LINE-1]]:11: error: (S2)
-
 }
