@@ -1,6 +1,8 @@
 
 
 #include "include/EASTL/map.h"
+#include "include/EASTL/unordered_map.h"
+
 #include <vector>
 #include <random>
 
@@ -9,7 +11,8 @@ void printIt(IT it) {
     printf("[%d] = %d\n", it->first, it->second);
 }
 
-void checkMap(nodecpp::map<int, bool>& testMap) {
+template<class T>
+void checkMap(T& testMap) {
     if(!testMap.validate()) {
         printf("failed!!!\n");
         assert(false);
@@ -18,7 +21,7 @@ void checkMap(nodecpp::map<int, bool>& testMap) {
 
 void randomCheck(int sz, int ini) {
 
-    nodecpp::map<int, bool> testMap;
+    eastl::unordered_map<int, bool> testMap;
 
     std::vector<int> v;
     v.resize(sz);
@@ -58,7 +61,7 @@ void randomCheck(int sz, int ini) {
 
 int main() {
 
-    nodecpp::map<int, int> aMap;
+    eastl::unordered_map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[2] = 2;
