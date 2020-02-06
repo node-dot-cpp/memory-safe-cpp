@@ -71,7 +71,7 @@
 #include <algorithm>
 #include <initializer_list>
 #include <tuple>
-#include <string.h>
+#include <string>
 #include <safe_ptr_for_map.h>
 
 // EA_DISABLE_ALL_VC_WARNINGS()
@@ -1117,17 +1117,17 @@ namespace nodecpp
 		///     hash_set<string> hashSet;
 		///     hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 		///
-		template <typename U, typename UHash, typename BinaryPredicate>
-		iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
+		// template <typename U, typename UHash, typename BinaryPredicate>
+		// iterator       find_as(const U& u, UHash uhash, BinaryPredicate predicate);
 
-		template <typename U, typename UHash, typename BinaryPredicate>
-		const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
+		// template <typename U, typename UHash, typename BinaryPredicate>
+		// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
 
-		template <typename U>
-		iterator       find_as(const U& u);
+		// template <typename U>
+		// iterator       find_as(const U& u);
 
-		template <typename U>
-		const_iterator find_as(const U& u) const;
+		// template <typename U>
+		// const_iterator find_as(const U& u) const;
 
 		// Note: find_by_hash and find_range_by_hash both perform a search based on a hash value.
 		// It is important to note that multiple hash values may map to the same hash bucket, so
@@ -1777,33 +1777,33 @@ namespace nodecpp
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename U, typename UHash, typename BinaryPredicate>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate)
-	{
-		const hash_code_t c = (hash_code_t)uhash(other);
-		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
+	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// template <typename U, typename UHash, typename BinaryPredicate>
+	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate)
+	// {
+	// 	const hash_code_t c = (hash_code_t)uhash(other);
+	// 	const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
 
-		node_type* const pNode = DoFindNodeT(mpBucketArray[n], other, predicate);
-		return pNode ? iterator(pNode, mpBucketArray + n) : iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
-	}
+	// 	node_type* const pNode = DoFindNodeT(mpBucketArray[n], other, predicate);
+	// 	return pNode ? iterator(pNode, mpBucketArray + n) : iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
+	// }
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename U, typename UHash, typename BinaryPredicate>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate) const
-	{
-		const hash_code_t c = (hash_code_t)uhash(other);
-		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
+	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// template <typename U, typename UHash, typename BinaryPredicate>
+	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate) const
+	// {
+	// 	const hash_code_t c = (hash_code_t)uhash(other);
+	// 	const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
 
-		node_type* const pNode = DoFindNodeT(mpBucketArray[n], other, predicate);
-		return pNode ? const_iterator(pNode, mpBucketArray + n) : const_iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
-	}
+	// 	node_type* const pNode = DoFindNodeT(mpBucketArray[n], other, predicate);
+	// 	return pNode ? const_iterator(pNode, mpBucketArray + n) : const_iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
+	// }
 
 
 	/// hashtable_find
@@ -1820,33 +1820,33 @@ namespace nodecpp
 	///     hash_set<string> hashSet;
 	///     hashtable_find(hashSet, "hello");
 	///
-	template <typename H, typename U>
-	inline typename H::iterator hashtable_find(H& hashTable, U u)
-		{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+	// template <typename H, typename U>
+	// inline typename H::iterator hashtable_find(H& hashTable, U u)
+	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
-	template <typename H, typename U>
-	inline typename H::const_iterator hashtable_find(const H& hashTable, U u)
-		{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
-
-
-
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename U>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other)
-		{ return nodecpp::hashtable_find(*this, other); }
-		// VC++ doesn't appear to like the following, though it seems correct to me.
-		// So we implement the workaround above until we can straighten this out.
-		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
+	// template <typename H, typename U>
+	// inline typename H::const_iterator hashtable_find(const H& hashTable, U u)
+	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename U>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
-		{ return std::hashtable_find(*this, other); }
+
+	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// template <typename U>
+	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other)
+	// 	{ return nodecpp::hashtable_find(*this, other); }
+	// 	// VC++ doesn't appear to like the following, though it seems correct to me.
+	// 	// So we implement the workaround above until we can straighten this out.
+	// 	//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
+
+
+	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// template <typename U>
+	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
+	// 	{ return std::hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
 		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }

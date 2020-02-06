@@ -571,8 +571,8 @@ namespace nodecpp
 		///     set<string> strings;
 		///     strings.find_as("hello", less_2<string, const char*>());
 		///
-		template <typename U, typename Compare2> iterator       find_as(const U& u, Compare2 compare2);
-		template <typename U, typename Compare2> const_iterator find_as(const U& u, Compare2 compare2) const;
+		// template <typename U, typename Compare2> iterator       find_as(const U& u, Compare2 compare2);
+		// template <typename U, typename Compare2> const_iterator find_as(const U& u, Compare2 compare2) const;
 
 		iterator       lower_bound(const key_type& key);
 		const_iterator lower_bound(const key_type& key) const;
@@ -1891,44 +1891,44 @@ namespace nodecpp
 	}
 
 
-	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	template <typename U, typename Compare2>
-	typename rbtree<K, V, C, A, E, bM, bU>::iterator
-	rbtree<K, V, C, A, E, bM, bU>::find_as(const U& u, Compare2 compare2)
-	{
-		extract_key extractKey;
+	// template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
+	// template <typename U, typename Compare2>
+	// typename rbtree<K, V, C, A, E, bM, bU>::iterator
+	// rbtree<K, V, C, A, E, bM, bU>::find_as(const U& u, Compare2 compare2)
+	// {
+	// 	extract_key extractKey;
 
-		rbtree_soft0_ptr pCurrent  = get_root_node(); // Start with the root node.
-		rbtree_soft0_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
+	// 	rbtree_soft0_ptr pCurrent  = get_root_node(); // Start with the root node.
+	// 	rbtree_soft0_ptr pRangeEnd = get_end_node();             // Set it to the container end for now.
 
-		while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
-		{
-			if(EASTL_LIKELY(!compare2(extractKey(pCurrent->mValue), u))) // If pCurrent is >= u...
-			{
-				pRangeEnd = pCurrent;
-				pCurrent  = pCurrent->get_node_left();
-			}
-			else
-			{
-				EASTL_VALIDATE_COMPARE(!compare2(u, extractKey(pCurrent->mValue))); // Validate that the compare function is sane.
-				pCurrent  = pCurrent->get_node_right();
-			}
-		}
+	// 	while(EASTL_LIKELY(pCurrent)) // Do a walk down the tree.
+	// 	{
+	// 		if(EASTL_LIKELY(!compare2(extractKey(pCurrent->mValue), u))) // If pCurrent is >= u...
+	// 		{
+	// 			pRangeEnd = pCurrent;
+	// 			pCurrent  = pCurrent->get_node_left();
+	// 		}
+	// 		else
+	// 		{
+	// 			EASTL_VALIDATE_COMPARE(!compare2(u, extractKey(pCurrent->mValue))); // Validate that the compare function is sane.
+	// 			pCurrent  = pCurrent->get_node_right();
+	// 		}
+	// 	}
 
-		if(EASTL_LIKELY((pRangeEnd != get_end_node()) && !compare2(u, extractKey(pRangeEnd->mValue))))
-			return iterator(pRangeEnd, get_end_node());
-		return iterator(get_end_node(), get_end_node());
-	}
+	// 	if(EASTL_LIKELY((pRangeEnd != get_end_node()) && !compare2(u, extractKey(pRangeEnd->mValue))))
+	// 		return iterator(pRangeEnd, get_end_node());
+	// 	return iterator(get_end_node(), get_end_node());
+	// }
 
 
-	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
-	template <typename U, typename Compare2>
-	inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
-	rbtree<K, V, C, A, E, bM, bU>::find_as(const U& u, Compare2 compare2) const
-	{
-		typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
-		return const_iterator(const_cast<rbtree_type*>(this)->find_as(u, compare2), get_end_node());
-	}
+	// template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
+	// template <typename U, typename Compare2>
+	// inline typename rbtree<K, V, C, A, E, bM, bU>::const_iterator
+	// rbtree<K, V, C, A, E, bM, bU>::find_as(const U& u, Compare2 compare2) const
+	// {
+	// 	typedef rbtree<K, V, C, A, E, bM, bU> rbtree_type;
+	// 	return const_iterator(const_cast<rbtree_type*>(this)->find_as(u, compare2), get_end_node());
+	// }
 
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
