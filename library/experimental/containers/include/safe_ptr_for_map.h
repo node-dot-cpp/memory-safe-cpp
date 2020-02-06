@@ -58,6 +58,17 @@ void rbtree_delete_owning(rbtree_owning_ptr<_Ty> p)
 	;//do nothing, 'p' will be deleted as it goes out of scope
 }
 
-} // namespace nodecpp::safememory
+inline
+void* allocate_memory(size_t sz, size_t al, size_t a, size_t flags = 0) {
+	return malloc(sz);
+}
+
+inline
+void EASTLFree(void *ptr, size_t sz) {
+	free(ptr);
+}
+
+
+} // namespace nodecpp::safememory::lib_helpers
 
 #endif // SAFE_PTR_FOR_MAP_H

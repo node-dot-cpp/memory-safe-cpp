@@ -1181,26 +1181,26 @@
 
 
 
-// ///////////////////////////////////////////////////////////////////////////////
-// // EASTL_MAY_ALIAS
-// //
-// // Defined as a macro that wraps the GCC may_alias attribute. This attribute
-// // has no significance for VC++ because VC++ doesn't support the concept of
-// // strict aliasing. Users should avoid writing code that breaks strict
-// // aliasing rules; EASTL_MAY_ALIAS is for cases with no alternative.
-// //
-// // Example usage:
-// //    uint32_t value EASTL_MAY_ALIAS;
-// //
-// // Example usage:
-// //    typedef uint32_t EASTL_MAY_ALIAS value_type;
-// //    value_type value;
-// //
-// #if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 303) && !defined(EA_COMPILER_RVCT)
-// 	#define EASTL_MAY_ALIAS __attribute__((__may_alias__))
-// #else
-// 	#define EASTL_MAY_ALIAS
-// #endif
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_MAY_ALIAS
+//
+// Defined as a macro that wraps the GCC may_alias attribute. This attribute
+// has no significance for VC++ because VC++ doesn't support the concept of
+// strict aliasing. Users should avoid writing code that breaks strict
+// aliasing rules; EASTL_MAY_ALIAS is for cases with no alternative.
+//
+// Example usage:
+//    uint32_t value EASTL_MAY_ALIAS;
+//
+// Example usage:
+//    typedef uint32_t EASTL_MAY_ALIAS value_type;
+//    value_type value;
+//
+#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 303) && !defined(EA_COMPILER_RVCT)
+	#define EASTL_MAY_ALIAS __attribute__((__may_alias__))
+#else
+	#define EASTL_MAY_ALIAS
+#endif
 
 
 

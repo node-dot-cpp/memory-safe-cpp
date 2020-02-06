@@ -42,7 +42,7 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-namespace eastl
+namespace nodecpp
 {
 	/// unordered_map 
 	///
@@ -56,9 +56,9 @@ namespace eastl
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Key,
 				  typename T,
-				  typename Hash = eastl::hash<Key>,
-				  typename Predicate = eastl::equal_to<Key>,
-				  typename Allocator = EASTLAllocatorType,
+				  typename Hash = std::hash<Key>,
+				  typename Predicate = std::equal_to<Key>,
+				  typename Allocator = std::allocator< std::pair<const Key, T> >,
 				  bool bCacheHashCode = false>
 		using unordered_map = hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>;
     #endif
@@ -71,14 +71,14 @@ namespace eastl
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Key,
 				  typename T,
-				  typename Hash = eastl::hash<Key>,
-				  typename Predicate = eastl::equal_to<Key>,
-				  typename Allocator = EASTLAllocatorType,
+				  typename Hash = std::hash<Key>,
+				  typename Predicate = std::equal_to<Key>,
+				  typename Allocator = std::allocator< std::pair<const Key, T> >,
 				  bool bCacheHashCode = false>
 		using unordered_multimap = hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>;
     #endif
 
-} // namespace eastl
+} // namespace nodecpp
 
 #endif // Header include guard
 

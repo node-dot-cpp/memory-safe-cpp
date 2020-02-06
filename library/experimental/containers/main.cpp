@@ -21,7 +21,7 @@ void checkMap(T& testMap) {
 
 void randomCheck(int sz, int ini) {
 
-    eastl::unordered_map<int, bool> testMap;
+    nodecpp::unordered_map<int, bool> testMap;
 
     std::vector<int> v;
     v.resize(sz);
@@ -61,7 +61,7 @@ void randomCheck(int sz, int ini) {
 
 int main() {
 
-    eastl::unordered_map<int, int> aMap;
+    nodecpp::unordered_map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[2] = 2;
@@ -76,25 +76,25 @@ int main() {
     }
 
     // one element iteration bck
-    auto jt = aMap.end();
-    while(jt != aMap.begin()) {
-        --jt;
-        printIt(jt);
-    }
+    // auto jt = aMap.end();
+    // while(jt != aMap.begin()) {
+    //     --jt;
+    //     printIt(jt);
+    // }
     // for(auto it = aMap.rbegin(); it != aMap.rend(); ++it) {
     //     printIt(it);
     // }
 
 
 
-    printf("----------------\n");
-    try {
-        auto jt = aMap.begin();
-        --jt;
-    }
-    catch(...) {
-        printf("catched!\n");
-    }
+    // printf("----------------\n");
+    // try {
+    //     auto jt = aMap.begin();
+    //     --jt;
+    // }
+    // catch(...) {
+    //     printf("catched!\n");
+    // }
 
     printf("----------------\n");
 

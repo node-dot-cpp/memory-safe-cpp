@@ -70,17 +70,17 @@ namespace nodecpp
 	#endif
 
 
-	/// EASTL_MAP_DEFAULT_ALLOCATOR
-	///
-	#ifndef EASTL_MAP_DEFAULT_ALLOCATOR
-		#define EASTL_MAP_DEFAULT_ALLOCATOR allocator_type(EASTL_MAP_DEFAULT_NAME)
-	#endif
+	// /// EASTL_MAP_DEFAULT_ALLOCATOR
+	// ///
+	// #ifndef EASTL_MAP_DEFAULT_ALLOCATOR
+	// 	#define EASTL_MAP_DEFAULT_ALLOCATOR allocator_type(EASTL_MAP_DEFAULT_NAME)
+	// #endif
 
-	/// EASTL_MULTIMAP_DEFAULT_ALLOCATOR
-	///
-	#ifndef EASTL_MULTIMAP_DEFAULT_ALLOCATOR
-		#define EASTL_MULTIMAP_DEFAULT_ALLOCATOR allocator_type(EASTL_MULTIMAP_DEFAULT_NAME)
-	#endif
+	// /// EASTL_MULTIMAP_DEFAULT_ALLOCATOR
+	// ///
+	// #ifndef EASTL_MULTIMAP_DEFAULT_ALLOCATOR
+	// 	#define EASTL_MULTIMAP_DEFAULT_ALLOCATOR allocator_type(EASTL_MULTIMAP_DEFAULT_NAME)
+	// #endif
 
 
 
@@ -116,7 +116,7 @@ namespace nodecpp
 		typedef typename base_type::node_type                                       node_type;
 		typedef typename base_type::iterator                                        iterator;
 		typedef typename base_type::const_iterator                                  const_iterator;
-		typedef typename base_type::allocator_type                                  allocator_type;
+		// typedef typename base_type::allocator_type                                  allocator_type;
 		typedef typename base_type::insert_return_type                              insert_return_type;
 		typedef typename base_type::extract_key                                     extract_key;
 		// Other types are inherited from the base class.
@@ -211,7 +211,7 @@ namespace nodecpp
 	///     MemoryPool myPool(sizeof(WidgetMap::node_type), 100);               // Make a pool of 100 Widget nodes.
 	///     WidgetMap myMap(&myPool);                                           // Create a map that uses the pool.
 	///
-	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = EASTLAllocatorType>
+	template <typename Key, typename T, typename Compare = std::less<Key>, typename Allocator = std::allocator< std::pair<const Key, T> > >
 	class multimap
 		: public rbtree<Key, std::pair<const Key, T>, Compare, Allocator, nodecpp::use_first<std::pair<const Key, T> >, true, false>
 	{
@@ -226,7 +226,7 @@ namespace nodecpp
 		typedef typename base_type::node_type                                       node_type;
 		typedef typename base_type::iterator                                        iterator;
 		typedef typename base_type::const_iterator                                  const_iterator;
-		typedef typename base_type::allocator_type                                  allocator_type;
+		// typedef typename base_type::allocator_type                                  allocator_type;
 		typedef typename base_type::insert_return_type                              insert_return_type;
 		typedef typename base_type::extract_key                                     extract_key;
 		// Other types are inherited from the base class.

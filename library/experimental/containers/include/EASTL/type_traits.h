@@ -324,13 +324,13 @@ namespace nodecpp
 	// #endif
 
 
-	// ///////////////////////////////////////////////////////////////////////
-	// // yes_type / no_type
-	// //
-	// // These are used as a utility to differentiate between two things.
-	// //
-	// typedef char yes_type;                      // sizeof(yes_type) == 1
-	// struct       no_type { char padding[8]; };  // sizeof(no_type)  != 1
+	///////////////////////////////////////////////////////////////////////
+	// yes_type / no_type
+	//
+	// These are used as a utility to differentiate between two things.
+	//
+	typedef char yes_type;                      // sizeof(yes_type) == 1
+	struct       no_type { char padding[8]; };  // sizeof(no_type)  != 1
 
 
 

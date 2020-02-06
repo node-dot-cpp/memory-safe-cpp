@@ -47,7 +47,8 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/hashtable.h>
-#include <EASTL/functional.h>
+#include <functional>
+#include <EASTL/utility.h>
 #include <utility>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -56,7 +57,7 @@
 
 
 
-namespace eastl
+namespace nodecpp
 {
 
 	/// EASTL_HASH_MAP_DEFAULT_NAME
@@ -79,15 +80,15 @@ namespace eastl
 
 	/// EASTL_HASH_MAP_DEFAULT_ALLOCATOR
 	///
-	#ifndef EASTL_HASH_MAP_DEFAULT_ALLOCATOR
-		#define EASTL_HASH_MAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MAP_DEFAULT_NAME)
-	#endif
+	// #ifndef EASTL_HASH_MAP_DEFAULT_ALLOCATOR
+	// 	#define EASTL_HASH_MAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MAP_DEFAULT_NAME)
+	// #endif
 
-	/// EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
-	///
-	#ifndef EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
-		#define EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MULTIMAP_DEFAULT_NAME)
-	#endif
+	// /// EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
+	// ///
+	// #ifndef EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
+	// 	#define EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MULTIMAP_DEFAULT_NAME)
+	// #endif
 
 
 
@@ -126,15 +127,15 @@ namespace eastl
 	///     hash_map<string, int> hashMap;
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
-	template <typename Key, typename T, typename Hash = eastl::hash<Key>, typename Predicate = eastl::equal_to<Key>, 
-			  typename Allocator = EASTLAllocatorType, bool bCacheHashCode = false>
+	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
+			  typename Allocator = std::allocator< std::pair<const Key, T> >, bool bCacheHashCode = false>
 	class hash_map
-		: public hashtable<Key, eastl::pair<const Key, T>, Allocator, eastl::use_first<eastl::pair<const Key, T> >, Predicate,
+		: public hashtable<Key, std::pair<const Key, T>, Allocator, nodecpp::use_first<std::pair<const Key, T> >, Predicate,
 							Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, true>
 	{
 	public:
-		typedef hashtable<Key, eastl::pair<const Key, T>, Allocator, 
-						  eastl::use_first<eastl::pair<const Key, T> >, 
+		typedef hashtable<Key, std::pair<const Key, T>, Allocator, 
+						  nodecpp::use_first<std::pair<const Key, T> >, 
 						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
 						  prime_rehash_policy, bCacheHashCode, true, true>        base_type;
 		typedef hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>      this_type;
@@ -142,7 +143,7 @@ namespace eastl
 		typedef typename base_type::key_type                                      key_type;
 		typedef T                                                                 mapped_type;
 		typedef typename base_type::value_type                                    value_type;     // NOTE: 'value_type = pair<const key_type, mapped_type>'.
-		typedef typename base_type::allocator_type                                allocator_type;
+		// typedef typename base_type::allocator_type                                allocator_type;
 		typedef typename base_type::node_type                                     node_type;
 		typedef typename base_type::insert_return_type                            insert_return_type;
 		typedef typename base_type::iterator                                      iterator;
@@ -155,9 +156,9 @@ namespace eastl
 		///
 		/// Default constructor.
 		///
-		explicit hash_map(const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR)
+		explicit hash_map(/*const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
 			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
-						Predicate(), eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						Predicate(), nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -170,9 +171,9 @@ namespace eastl
 		/// specify an appropriate value in order to prevent memory from being reallocated.
 		///
 		explicit hash_map(size_type nBucketCount, const Hash& hashFunction = Hash(), 
-						  const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR)
+						  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
 			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -185,15 +186,15 @@ namespace eastl
 
 
 		hash_map(this_type&& x)
-		  : base_type(eastl::move(x))
+		  : base_type(std::move(x))
 		{
 		}
 
 
-		hash_map(this_type&& x, const allocator_type& allocator)
-		  : base_type(eastl::move(x), allocator)
-		{
-		}
+		// hash_map(this_type&& x, const allocator_type& allocator)
+		//   : base_type(std::move(x), allocator)
+		// {
+		// }
 
 
 		/// hash_map
@@ -202,9 +203,9 @@ namespace eastl
 		/// Allows for initializing with brace values (e.g. hash_map<int, char*> hm = { {3,"c"}, {4,"d"}, {5,"e"} }; )
 		///     
 		hash_map(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-				   const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR)
+				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
 			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -217,9 +218,9 @@ namespace eastl
 		///
 		template <typename ForwardIterator>
 		hash_map(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-				 const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR)
+				 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
 			: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -239,7 +240,7 @@ namespace eastl
 
 		this_type& operator=(this_type&& x)
 		{
-			return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
+			return static_cast<this_type&>(base_type::operator=(std::move(x)));
 		}
 
 
@@ -251,7 +252,7 @@ namespace eastl
 		/// object on the stack.
 		insert_return_type insert(const key_type& key)
 		{
-			return base_type::DoInsertKey(true_type(), key);
+			return base_type::DoInsertKey(std::true_type(), key);
 		}
 
 		T& at(const key_type& k)
@@ -294,13 +295,13 @@ namespace eastl
 
 		insert_return_type insert(key_type&& key)
 		{
-			return base_type::DoInsertKey(true_type(), eastl::move(key));
+			return base_type::DoInsertKey(std::true_type(), std::move(key));
 		}
 
 
 		mapped_type& operator[](const key_type& key)
 		{
-			return (*base_type::DoInsertKey(true_type(), key).first).second;
+			return (*base_type::DoInsertKey(std::true_type(), key).first).second;
 
 			// Slower reference version:
 			//const typename base_type::iterator it = base_type::find(key);
@@ -312,7 +313,7 @@ namespace eastl
 		mapped_type& operator[](key_type&& key)
 		{
 			// The Standard states that this function "inserts the value value_type(std::move(key), mapped_type())"
-			return (*base_type::DoInsertKey(true_type(), eastl::move(key)).first).second;
+			return (*base_type::DoInsertKey(std::true_type(), std::move(key)).first).second;
 		}
 
 
@@ -329,15 +330,15 @@ namespace eastl
 	/// except that contained elements need not be unique. See the 
 	/// documentation for hash_set for details.
 	///
-	template <typename Key, typename T, typename Hash = eastl::hash<Key>, typename Predicate = eastl::equal_to<Key>,
-			  typename Allocator = EASTLAllocatorType, bool bCacheHashCode = false>
+	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
+			  typename Allocator = std::allocator< std::pair<const Key, T> >, bool bCacheHashCode = false>
 	class hash_multimap
-		: public hashtable<Key, eastl::pair<const Key, T>, Allocator, eastl::use_first<eastl::pair<const Key, T> >, Predicate,
+		: public hashtable<Key, std::pair<const Key, T>, Allocator, nodecpp::use_first<std::pair<const Key, T> >, Predicate,
 						   Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, false>
 	{
 	public:
-		typedef hashtable<Key, eastl::pair<const Key, T>, Allocator, 
-						  eastl::use_first<eastl::pair<const Key, T> >, 
+		typedef hashtable<Key, std::pair<const Key, T>, Allocator, 
+						  nodecpp::use_first<std::pair<const Key, T> >, 
 						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
 						  prime_rehash_policy, bCacheHashCode, true, false>           base_type;
 		typedef hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>     this_type;
@@ -345,7 +346,7 @@ namespace eastl
 		typedef typename base_type::key_type                                          key_type;
 		typedef T                                                                     mapped_type;
 		typedef typename base_type::value_type                                        value_type;     // Note that this is pair<const key_type, mapped_type>.
-		typedef typename base_type::allocator_type                                    allocator_type;
+		// typedef typename base_type::allocator_type                                    allocator_type;
 		typedef typename base_type::node_type                                         node_type;
 		typedef typename base_type::insert_return_type                                insert_return_type;
 		typedef typename base_type::iterator                                          iterator;
@@ -361,9 +362,9 @@ namespace eastl
 		///
 		/// Default constructor.
 		///
-		explicit hash_multimap(const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR)
+		explicit hash_multimap(/*const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
 			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
-						Predicate(), eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						Predicate(), nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -376,9 +377,9 @@ namespace eastl
 		/// specify an appropriate value in order to prevent memory from being reallocated.
 		///
 		explicit hash_multimap(size_type nBucketCount, const Hash& hashFunction = Hash(), 
-							   const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR)
+							   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
 			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -391,15 +392,15 @@ namespace eastl
 
 
 		hash_multimap(this_type&& x)
-		  : base_type(eastl::move(x))
+		  : base_type(std::move(x))
 		{
 		}
 
 
-		hash_multimap(this_type&& x, const allocator_type& allocator)
-		  : base_type(eastl::move(x), allocator)
-		{
-		}
+		// hash_multimap(this_type&& x, const allocator_type& allocator)
+		//   : base_type(std::move(x), allocator)
+		// {
+		// }
 
 
 		/// hash_multimap
@@ -408,9 +409,9 @@ namespace eastl
 		/// Allows for initializing with brace values (e.g. hash_multimap<int, char*> hm = { {3,"c"}, {3,"C"}, {4,"d"} }; )
 		///     
 		hash_multimap(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-				   const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR)
+				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
 			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -423,9 +424,9 @@ namespace eastl
 		///
 		template <typename ForwardIterator>
 		hash_multimap(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-					  const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR)
+					  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
 			: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
-						predicate, eastl::use_first<eastl::pair<const Key, T> >(), allocator)
+						predicate, nodecpp::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -445,7 +446,7 @@ namespace eastl
 
 		this_type& operator=(this_type&& x)
 		{
-			return static_cast<this_type&>(base_type::operator=(eastl::move(x)));
+			return static_cast<this_type&>(base_type::operator=(std::move(x)));
 		}
 
 
@@ -457,13 +458,13 @@ namespace eastl
 		/// object on the stack.
 		insert_return_type insert(const key_type& key)
 		{
-			return base_type::DoInsertKey(false_type(), key);
+			return base_type::DoInsertKey(std::false_type(), key);
 		}
 
 
 		insert_return_type insert(key_type&& key)
 		{
-			return base_type::DoInsertKey(false_type(), eastl::move(key));
+			return base_type::DoInsertKey(std::false_type(), std::move(key));
 		}
 
 
@@ -511,7 +512,7 @@ namespace eastl
 						   const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
 	{
 		typedef typename hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>::const_iterator const_iterator;
-		typedef typename eastl::iterator_traits<const_iterator>::difference_type difference_type;
+		typedef typename std::iterator_traits<const_iterator>::difference_type difference_type;
 
 		// We implement branching with the assumption that the return value is usually false.
 		if(a.size() != b.size())
@@ -521,8 +522,8 @@ namespace eastl
 		// two elements in a has those same two elements in b but in different order (which should 
 		// still result in equality). Also it's possible that one bucket in a has two elements which 
 		// both match a solitary element in the equivalent bucket in b (which shouldn't result in equality).
-		eastl::pair<const_iterator, const_iterator> aRange;
-		eastl::pair<const_iterator, const_iterator> bRange;
+		std::pair<const_iterator, const_iterator> aRange;
+		std::pair<const_iterator, const_iterator> bRange;
 
 		for(const_iterator ai = a.begin(), aiEnd = a.end(); ai != aiEnd; ai = aRange.second) // For each element in a...
 		{
@@ -530,8 +531,8 @@ namespace eastl
 			bRange = b.equal_range(ai->first); // Get the range of elements in b that are equal to ai.
 
 			// We need to verify that aRange == bRange. First make sure the range sizes are equivalent...
-			const difference_type aDistance = eastl::distance(aRange.first, aRange.second);
-			const difference_type bDistance = eastl::distance(bRange.first, bRange.second);
+			const difference_type aDistance = std::distance(aRange.first, aRange.second);
+			const difference_type bDistance = std::distance(bRange.first, bRange.second);
 
 			if(aDistance != bDistance)
 				return false;
@@ -563,7 +564,7 @@ namespace eastl
 	}
 
 
-} // namespace eastl
+} // namespace nodecpp
 
 
 #endif // Header include guard

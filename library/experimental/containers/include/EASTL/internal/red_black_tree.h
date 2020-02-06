@@ -408,7 +408,7 @@ namespace nodecpp
 		typedef std::reverse_iterator<iterator>                                               reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>                                         const_reverse_iterator;
 
-		typedef Allocator                                                                       allocator_type;
+		// typedef Allocator                                                                       allocator_type;
 		typedef Compare                                                                         key_compare;
 		typedef typename type_select<bUniqueKeys, std::pair<iterator, bool>, iterator>::type  insert_return_type;  // map/set::insert return a pair, multimap/multiset::iterator return an iterator.
 		typedef rbtree<Key, Value, Compare, Allocator, 
