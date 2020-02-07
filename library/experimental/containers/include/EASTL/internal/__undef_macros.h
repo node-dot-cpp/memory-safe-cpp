@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2018, OLogN Technologies AG
+* Copyright (c) 2019, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,55 +25,23 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_PTR_FOR_MAP_H
-#define SAFE_PTR_FOR_MAP_H
-
-#include "safe_ptr.h"
-#include "safe_ptr_with_zero_offset.h"
-
-namespace nodecpp::safememory::lib_helpers
-{
-
-template<class _Ty>
-using rbtree_owning_ptr = nodecpp::safememory::owning_ptr<_Ty>;
-
-template<class _Ty>
-using rbtree_soft_ptr = nodecpp::safememory::soft_ptr<_Ty>;
-
-template<class _Ty>
-using rbtree_soft0_ptr = nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<_Ty>;
+// -*- C++ -*-
+//===------------------------ __undef_macros ------------------------------===//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
 
 
-template<class _Ty,	class... _Types>
-rbtree_owning_ptr<_Ty> rbtree_make_owning(_Types&&... _Args)
-{
-	return make_owning<_Ty>(::std::forward<_Types>(_Args)...);
-}
+#ifdef min
+#warning: macro min is incompatible with C++.  #undefing min
+#undef min
+#endif
 
-
-
-template<class _Ty>
-void rbtree_delete_owning(rbtree_owning_ptr<_Ty> p)
-{
-	;//do nothing, 'p' will be deleted as it goes out of scope
-}
-
-inline
-void* allocate_memory(size_t sz, size_t al, size_t a, size_t flags = 0) {
-	return malloc(sz);
-}
-
-inline
-void* EASTLAlloc(size_t sz) {
-	return malloc(sz);
-}
-
-inline
-void EASTLFree(void *ptr, size_t sz) {
-	free(ptr);
-}
-
-
-} // namespace nodecpp::safememory::lib_helpers
-
-#endif // SAFE_PTR_FOR_MAP_H
+#ifdef max
+#warning: macro max is incompatible with C++.  #undefing max
+#undef max
+#endif

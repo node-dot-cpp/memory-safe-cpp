@@ -2,6 +2,7 @@
 
 #include "include/EASTL/map.h"
 #include "include/EASTL/unordered_map.h"
+#include "include/EASTL/string.h"
 
 #include <vector>
 #include <random>
@@ -60,6 +61,8 @@ void randomCheck(int sz, int ini) {
 
 
 int main() {
+
+    nodecpp::string s = "hola mundo";
 
     nodecpp::unordered_map<int, int> aMap;
 
