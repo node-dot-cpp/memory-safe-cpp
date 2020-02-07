@@ -3,6 +3,7 @@
 #include "include/EASTL/map.h"
 #include "include/EASTL/unordered_map.h"
 #include "include/EASTL/string.h"
+#include "include/EASTL/vector.h"
 
 #include <vector>
 #include <random>
@@ -24,7 +25,7 @@ void randomCheck(int sz, int ini) {
 
     nodecpp::unordered_map<int, bool> testMap;
 
-    std::vector<int> v;
+    nodecpp::vector<int> v;
     v.resize(sz);
     for(int i = 0; i != sz; ++i) {
         v[i] = i;
