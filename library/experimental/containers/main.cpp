@@ -102,26 +102,27 @@ int main() {
 
     printf("----------------\n");
 
-    try {
-        printIt(aMap.end());
-    }
-    catch(...) {
-        printf("catched!\n");
-    }
+    // try {
+    //     printIt(aMap.end());
+    // }
+    // catch(...) {
+    //     printf("catched!\n");
+    // }
 
     printf("----------------\n");
 
-    try {
-        auto jt = aMap.end();
-        ++jt;
-    }
-    catch(...) {
-        printf("catched!\n");
-    }
+    // try {
+    //     auto jt = aMap.end();
+    //     ++jt;
+    // }
+    // catch(...) {
+    //     printf("catched!\n");
+    // }
 
     for(size_t i = 0; i != 10; ++i)
         randomCheck(511, 127);
 
+    printf("done\n");
     return 0;
 }
 

@@ -245,7 +245,7 @@ namespace nodecpp
 		typedef Value                                                    value_type;
 		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
 		typedef typename type_select<bConst, const Value&, Value&>::type reference;
-		typedef ptrdiff_t                                                difference_type;
+		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag          			             iterator_category;
 
 	public:
@@ -350,7 +350,7 @@ namespace nodecpp
 		typedef Value                                                    value_type;
 		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
 		typedef typename type_select<bConst, const Value&, Value&>::type reference;
-		typedef ptrdiff_t                                                difference_type;
+		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag                                iterator_category;
 
 	public:
@@ -869,8 +869,8 @@ namespace nodecpp
 		typedef typename hash_code_base_type::hash_code_t                                           hash_code_t;
 		// typedef Allocator                                                                           allocator_type;
 		typedef Equal                                                                               key_equal;
-		typedef ptrdiff_t                                                                           difference_type;
-		typedef size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::ptrdiff_t                                                                           difference_type;
+		typedef std::size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
 		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode>                       local_iterator;
