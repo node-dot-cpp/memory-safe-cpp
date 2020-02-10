@@ -39,11 +39,10 @@ struct MyServer {
 class Bad {
 	void bad(naked_ptr<nodecpp::SrvMember> srv) {
 		auto l = [this](naked_ptr<nodecpp::Socket> sock) {};
-	// CHECK: :[[@LINE-1]]:13: error: (S5.7)
+// CHECK: :[[@LINE-1]]:13: error: (S5.7)
 		srv->onEvent(l);
 	}
 };
-
 
 
 

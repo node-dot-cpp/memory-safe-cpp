@@ -1,5 +1,7 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
+#include <functional>
+
 [[nodecpp::memory_unsafe]] void f();
 // CHECK: :[[@LINE-1]]:33: error: (C2)
 
@@ -13,19 +15,14 @@ union [[nodecpp::naked_struct]] Wrong {
 	int j;
 };
 
-
-void func(int i [[nodecpp::may_extend_to_this]]);
-// CHECK: :[[@LINE-1]]:15: error: (C2)
-
-class Bad {
-	void good(int i [[nodecpp::may_extend_to_this]]);//ok
-
-	static void myStatic(int i [[nodecpp::may_extend_to_this]]);
-// CHECK: :[[@LINE-1]]:27: error: (C2)
+class MayExtendBad {
+    void onEvent(std::function<void()> cb [[nodecpp::may_extend_to_this]]);
+// CHECK: :[[@LINE-1]]:40: error: (C2)
 };
 
-void g() {
-
-    auto l = [](int i [[nodecpp::may_extend_to_this]]) {};
-// CHECK: :[[@LINE-1]]:21: error: (C2)
+namespace [[nodecpp::memory_unsafe]] {
+class MayExtendGood {
+	// now this is ok on user side
+    void onEvent(std::function<void()> cb [[nodecpp::may_extend_to_this]]);
+};
 }
