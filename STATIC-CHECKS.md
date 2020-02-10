@@ -117,11 +117,13 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - NB: passing naked_struct by value is ok - and should be treated as passing several naked_ptrs (with their respective scopes)
     - TEST CASES/PROHIBIT: `naked_ptr<NSTR>`, `void ff(NSTR&)`
     - TEST CASES/ALLOW: `const_naked_ptr<NSTR>`, `void ff(const NSTR&)`
-  + **[Rule S5.6]** There is special parameter mark-up `[[nodecpp::may_extend_to_this]]`. It applies to parameters which are naked pointers or naked structs, AND means that the scope of marked-up parameter MAY be extended to 'this' of current function. If such a parameter is specified, then the scope of `this` MUST be not-larger-than the scope of ALL the naked_ptrs within marked-up parameter
-      + In the future, we MAY introduce other similar mark-up (`[[nodecpp:may_extend_to_a]]`?)
-  + **[Rule S5.7]** Lambda is considered as an implicit naked_struct, containing all the naked_ptrs which are captured by reference
-      - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp:may_extend_to_this]]`) passing lambda with local vars passed by reference
-      - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference, `sort()` passing lamda with local vars captured by reference
+  + **[Rule S5.6]** Lambda is considered as an implicit _naked_struct_, captures may include local var references, _naked_ptrs_ and raw pointer `this`.
+    - TEST CASES/ALLOW: `sort()` passing lamda with local vars captured by reference
+  + **[Rule S5.7]** There is special parameter mark-up `[[nodecpp::may_extend_to_this]]` that may be applied to method parameter of type `std::function` or _lambda_ on library code api (or `[[nodecpp::memory_unsafe]]` marked code), AND means that the scope of marked-up parameter MAY be extended to `this` of called instance. If such a parameter is specified, then the scope of the captures MUST be equal-or-larger-than the scope of the called instance.
+    - When applied to parameter of type `std::function`, it means it can only be initialized with a lambda that verifies the mentioned retrictions.
+    - In the future, we MAY introduce other similar mark-up (`[[nodecpp::may_extend_to_a]]`?)
+    - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp::may_extend_to_this]]`) passing lambda with local vars passed by reference
+    - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference
   + **[Rule S5.8]** naked_ptr<>s and references MUST NOT survive over co_await
       - TEST CASES/PROHIBIT: `co_await some_function(); auto x = *np;`, `co_await some_function(); auto x = r;`
       - TEST CASES/ALLOW: `co_await some_function(); auto x = *sp;`  
