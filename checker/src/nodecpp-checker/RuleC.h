@@ -40,14 +40,29 @@ namespace nodecpp {
 namespace checker {
 
 
+
+
 class RuleCASTVisitor
   : public clang::RecursiveASTVisitor<RuleCASTVisitor> {
 
   typedef clang::RecursiveASTVisitor<RuleCASTVisitor> Super;
 
   ClangTidyContext &Context;
+  bool IsMemoryUnsafe = false;
 //  MyStack St;
 
+  struct FlagRiia {
+    bool &V;
+    bool OldValue;
+    FlagRiia(bool &V) :V(V) {
+      OldValue = V;
+      V = true;
+    }
+    ~FlagRiia() {
+      V = OldValue;
+    }
+
+  };
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
@@ -76,11 +91,22 @@ public:
       return Super::TraverseDecl(D);
   }
 
+  bool TraverseNamespaceDecl(clang::NamespaceDecl *D) {
+
+    if(D->hasAttr<NodeCppMemoryUnsafeAttr>()) {
+              
+      FlagRiia R(IsMemoryUnsafe);
+      return Super::TraverseNamespaceDecl(D);
+    }
+    else
+      return Super::TraverseNamespaceDecl(D);
+  }
+
   bool VisitNamespaceDecl(clang::NamespaceDecl *D) {
 
     if(D->isAnonymousNamespace()) {
 
-      return Super::VisitNamespaceDecl(D);
+      //nothing here
     }
     else if(D->isOriginalNamespace()) {
       if(D->hasAttr<NodeCppMemoryUnsafeAttr>()) {
@@ -120,17 +146,8 @@ public:
       }
     }
 
-    if(D->hasAttr<NodeCppMayExtendAttr>()) {
-      auto P = dyn_cast<ParmVarDecl>(D);
-      if(!P) {
-        diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] allowed at non-static, non-lambda, method argument declaration only");
-      }
-      else {
-        auto M = dyn_cast<CXXMethodDecl>(D->getDeclContext());
-        if(!M || M->isStatic() || isLambdaCallOperator(M)) {
-          diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] allowed at non-static, non-lambda, method argument declaration only");
-        }
-      }
+    if(D->hasAttr<NodeCppMayExtendAttr>() && !IsMemoryUnsafe) {
+      diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] only allowed at system libraries declarartions");
     }
 
     return Super::VisitDecl(D);

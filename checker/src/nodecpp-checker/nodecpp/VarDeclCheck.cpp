@@ -125,7 +125,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if (isAnyFunctorType(Var->getType())) // don't use canonical type here
+  if (isStdFunctionType(Qt))
     return;
 
   if (isAwaitableType(Qt)) {

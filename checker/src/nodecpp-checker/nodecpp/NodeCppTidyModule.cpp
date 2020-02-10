@@ -30,7 +30,6 @@
 #include "RawPtrExprCheck.h"
 #include "RecordDeclCheck.h"
 #include "StaticStorageCheck.h"
-#include "StdFunctionCheck.h"
 #include "TemporaryExprCheck.h"
 #include "VarDeclCheck.h"
 
@@ -75,8 +74,6 @@ public:
         "nodecpp-record-decl");
     CheckFactories.registerCheck<StaticStorageCheck>(
         "nodecpp-static-storage");
-    CheckFactories.registerCheck<StdFunctionCheck>(
-        "nodecpp-std-function");
     CheckFactories.registerCheck<TemporaryExprCheck>(
         "nodecpp-temporary-expr");
     CheckFactories.registerCheck<VarDeclCheck>(

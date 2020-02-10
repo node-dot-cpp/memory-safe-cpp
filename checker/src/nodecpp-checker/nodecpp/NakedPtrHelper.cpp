@@ -349,11 +349,11 @@ FunctionKind getFunctionKind(QualType Qt) {
 
   if (auto Ts = Qt->getAs<TemplateSpecializationType>()) {
 
-    auto Td = Ts->getTemplateName().getAsTemplateDecl();
-    if (Td) {
-      if (getQnameForSystemSafeDb(Td) == "nodecpp::function_owned_arg0")
-        return FunctionKind::OwnedArg0;
-    }
+    // auto Td = Ts->getTemplateName().getAsTemplateDecl();
+    // if (Td) {
+    //   if (getQnameForSystemSafeDb(Td) == "nodecpp::function_owned_arg0")
+    //     return FunctionKind::OwnedArg0;
+    // }
 
     return getFunctionKind(Ts->desugar());
   } else if (auto Rc = Qt->getAs<RecordType>()) {
@@ -382,17 +382,6 @@ bool isStdFunctionType(QualType Qt) {
 bool isLambdaType(QualType Qt) {
 
   return getFunctionKind(Qt) == FunctionKind::Lambda;
-}
-
-bool isNodecppFunctionOwnedArg0Type(QualType Qt) {
-
-  return getFunctionKind(Qt) == FunctionKind::OwnedArg0;
-}
-
-bool isAnyFunctorType(QualType Qt) {
-
-  auto Kind = getFunctionKind(Qt);
-  return Kind == FunctionKind::StdFunction || Kind == FunctionKind::OwnedArg0;
 }
 
 bool isRawPointerType(QualType Qt) {

@@ -23,6 +23,12 @@ namespace nodecpp {
 		void yield_value();
 	};
 
+	class SrvMember
+	{
+		void onEvent();
+	};
+
+
 namespace safememory {
 	void make_owning();
 
