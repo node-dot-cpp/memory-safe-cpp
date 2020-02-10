@@ -42,9 +42,9 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (!Qt.isNull()) {
 
-    if (isAnyFunctorType(Qt)) // don't use cannonical type here
-      return;
     Qt = Qt.getCanonicalType();
+    if (isStdFunctionType(Qt))
+      return;
 
     if (isSafeType(Qt, getContext()))
       return;

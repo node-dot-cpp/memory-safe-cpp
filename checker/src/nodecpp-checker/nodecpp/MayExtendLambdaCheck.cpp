@@ -21,12 +21,6 @@ namespace nodecpp {
 namespace checker {
 
 void MayExtendLambdaCheck::registerMatchers(MatchFinder *Finder) {
-  Finder->addMatcher(
-      cxxMemberCallExpr(callee(cxxMethodDecl(hasAnyParameter(hasAttr(
-                                           clang::attr::NodeCppOwnedByThis)))))
-                         .bind("bad"),
-                     this);
-
 
   Finder->addMatcher(
       cxxMemberCallExpr(callee(cxxMethodDecl(hasAnyParameter(hasAttr(
@@ -45,7 +39,7 @@ bool MayExtendLambdaCheck::checkLambda(
       if (Dc.first)
         break;
 
-      diag(It->getLocation(), "capture of 'this' unsafe to extend scope");
+      diag(It->getLocation(), "(S5.7) capture of 'this' unsafe to extend scope");
       return false;
     case LCK_StarThis:
       // this is ok
@@ -65,13 +59,13 @@ bool MayExtendLambdaCheck::checkLambda(
       if (D == Dc.second) // ok
         break;
 
-      diag(It->getLocation(), "unsafe capture to extend scope");
+      diag(It->getLocation(), "(S5.7) unsafe capture to extend scope");
     } return false;
     case LCK_ByRef:
-      diag(It->getLocation(), "unsafe capture to extend scope");
+      diag(It->getLocation(), "(S5.7) unsafe capture to extend scope");
       return false;
     case LCK_VLAType:
-      diag(It->getLocation(), "capture by array not allowed");
+      diag(It->getLocation(), "(S5.7) capture by array not allowed");
       return false;
     }
   }
@@ -192,8 +186,8 @@ bool MayExtendLambdaCheck::canMayExtendBeCalled(const Expr *Ex) {
 
     if (Decl->hasAttr<NodeCppMayExtendAttr>())
       return true;
-    else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
-      return true;
+    // else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+    //   return true;
     else
       return false;
   } else if (auto OsnBase = getBaseIfOsnPtrDerref(Base)) {
@@ -205,8 +199,8 @@ bool MayExtendLambdaCheck::canMayExtendBeCalled(const Expr *Ex) {
 
       if (Decl->hasAttr<NodeCppMayExtendAttr>())
         return true;
-      else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
-        return true;
+      // else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+      //   return true;
       else
         return true;
     }
@@ -236,9 +230,6 @@ MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr *Ex) {
   // [[may_extend]]->call()
   // [[may_extend]]->member.call()
 
-  // [[owned_by_this]]->call()
-  // [[owned_by_this]]->member.call()
-
   if (!Ex) {
     assert(false);
     return {false, nullptr};
@@ -258,10 +249,11 @@ MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr *Ex) {
       return {false, nullptr};
     }
 
+
     if (Decl->hasAttr<NodeCppMayExtendAttr>())
       return {true, Decl};
-    else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
-      return {true, Decl};
+    // else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+    //   return {true, Decl};
     else
       return {false, Decl};
   } else if (auto OsnBase = getBaseIfOsnPtrDerref(Base)) {
@@ -273,8 +265,8 @@ MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr *Ex) {
 
       if (Decl->hasAttr<NodeCppMayExtendAttr>())
         return {true, Decl};
-      else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
-        return {true, Decl};
+      // else if (Decl->hasAttr<NodeCppOwnedByThisAttr>())
+      //   return {true, Decl};
       else
         return {false, Decl};
     }
@@ -288,12 +280,6 @@ MayExtendLambdaCheck::canMayExtendBeCalled2(const Expr *Ex) {
 }
 
 void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
-
-  if (auto Bad = Result.Nodes.getNodeAs<CXXMemberCallExpr>("bad")) {
-    diag(Bad->getExprLoc(), "calling method with [[owned_by_this]] attribute "
-                            "from safe code is not implemented yet");
-    return;
-  }
 
   auto Call = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
   auto Decl = Call->getMethodDecl();
@@ -326,9 +312,9 @@ void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
             continue;
         }
       }
-            // e may be null?
-            diag(E->getExprLoc(),
-                 "is not safe to extend argument scope to 'this'");
+      // e may be null?
+      diag(E->getExprLoc(),
+            "(S5.7) is not safe to extend argument scope");
     }
   }
 }

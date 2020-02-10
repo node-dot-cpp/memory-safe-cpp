@@ -20,7 +20,6 @@ add_clang_library(clangTidyNodeCppModule
   RawPtrExprCheck.cpp
   RecordDeclCheck.cpp
   StaticStorageCheck.cpp
-  StdFunctionCheck.cpp
   TemporaryExprCheck.cpp
   VarDeclCheck.cpp
 

@@ -76,14 +76,12 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Con
 KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 
-enum class FunctionKind { None = 0, Lambda, StdFunction, OwnedArg0 };
+enum class FunctionKind { None = 0, Lambda, StdFunction };
 
 FunctionKind getFunctionKind(QualType Qt);
 
 bool isStdFunctionType(QualType Qt);
 bool isLambdaType(QualType Qt);
-bool isNodecppFunctionOwnedArg0Type(QualType Qt);
-bool isAnyFunctorType(QualType Qt);
 
 bool isRawPointerType(QualType Qt);
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
