@@ -5,6 +5,7 @@
 
 using namespace nodecpp::safememory;
 
+void my_sort(std::function<void()>);
 
 struct MyServer {
 	nodecpp::SrvMember srv;
@@ -13,6 +14,11 @@ struct MyServer {
 		srv.onEvent([this](naked_ptr<nodecpp::Socket> sock) {}); //is ok
 	}
 
+	void good2() {
+		int i = 0;
+		auto l = [this, &i](naked_ptr<nodecpp::Socket> sock) {};
+		my_sort(l);
+	} 
 
 	void bad1() {
 		int i = 0;
