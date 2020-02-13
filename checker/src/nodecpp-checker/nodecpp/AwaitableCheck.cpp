@@ -30,6 +30,8 @@ void AwaitableCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Ex = Result.Nodes.getNodeAs<Expr>("expr");
 
+  return;
+
   //some implicit expr don't even have a type
   if(isImplicitExpr(Ex))
     return;
@@ -55,8 +57,13 @@ void AwaitableCheck::check(const MatchFinder::MatchResult &Result) {
       return; //The error goes to the declaration initializer, not here
     else if(auto Cex = dyn_cast<CallExpr>(Pex) ) {
       auto Fdecl = Cex->getDirectCallee();
-      if(Fdecl && getQnameForSystemSafeDb(Fdecl) == "nodecpp::wait_for_all")
-        return;
+      if(Fdecl) {
+        std::string Name = getQnameForSystemSafeDb(Fdecl);
+        if(isWaitForAllName(Name))
+          return;
+        else if(Fdecl->hasAttr<NodeCppNoAwaitAttr>())
+          return;
+      }
     }
   }
 

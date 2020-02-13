@@ -129,10 +129,12 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   if (isAwaitableType(Qt)) {
-    if(IsParam)
-      diag(Var->getLocation(), "(S9.1) awaitable parameter not allowed");
-    else
-      diag(Var->getLocation(), "(S9.1) awaitable variable not allowed (yet)");
+
+    //don't diagnose here
+    // if(IsParam)
+    //   diag(Var->getLocation(), "(S9.1) awaitable parameter not allowed");
+    // else
+    //   diag(Var->getLocation(), "(S9.1) awaitable variable not allowed (yet)");
 
     return;
   }

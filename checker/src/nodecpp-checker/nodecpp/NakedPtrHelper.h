@@ -66,6 +66,7 @@ bool isNakedPtrName(const std::string& Name);
 
 bool isOsnMethodName(const std::string& Name);
 bool isSoftPtrCastName(const std::string& Name);
+bool isWaitForAllName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
@@ -157,6 +158,10 @@ bool isImplicitExpr(const Expr *Ex);
 const Expr *getParentExpr(ASTContext *Context, const Expr *Ex);
 const Expr *ignoreTemporaries(const Expr *Ex);
 const LambdaExpr *getLambda(const Expr *Ex);
+
+/// \brief if this is a call to std::move then return its
+/// argument, otherwise \c nullptr
+DeclRefExpr *getStdMoveArg(Expr *Ex);
 
 bool isFunctionPtr(const Expr *Ex);
 

@@ -21,6 +21,7 @@ namespace nodecpp {
 
 	class promise_type_struct {
 		void yield_value();
+		void return_void();
 	};
 
 	class SrvMember
