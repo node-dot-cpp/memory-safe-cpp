@@ -51,7 +51,9 @@ class RuleS91ASTVisitor
   llvm::SmallSet<CallExpr*, 4> CallWhiteList;
   llvm::SmallSet<CoawaitExpr*, 4> CoawaitWhiteList;
   llvm::SmallSet<ValueDecl*, 4> DeclWhiteList;
-  llvm::SmallSet<Stmt*, 4> DontTraverseCoawaitedExpr;
+
+  /// \brief keep \c Stmt that have already been checked and shouldn't be traversed 
+  llvm::SmallSet<Stmt*, 4> DontTraverse;
 //  MyStack St;
 
   struct FlagRiia {
@@ -79,7 +81,7 @@ public:
 
   void ReportAndClear() {
     for(auto each : DeclWhiteList) {
-      diag(each->getLocation(), "(S9.1) awaitable variable must be awaited");
+      diag(each->getLocation(), "(S9.1) awaitable variable must be co_awaited");
     }
     DeclWhiteList.clear();
     
@@ -95,11 +97,11 @@ public:
     }
     CoawaitWhiteList.clear();
     
-    for(auto each : DontTraverseCoawaitedExpr) {
+    for(auto each : DontTraverse) {
       each->dump();
       diag(each->getBeginLoc(), "(S9.1) internal check failed");
     }
-    DontTraverseCoawaitedExpr.clear();
+    DontTraverse.clear();
   }
 
   bool TraverseDecl(Decl *D) {
@@ -124,7 +126,7 @@ public:
 
   bool TraverseStmt(clang::Stmt *St) {
 
-    if(DontTraverseCoawaitedExpr.erase(St))
+    if(DontTraverse.erase(St))
       return true;
     else
       return Super::TraverseStmt(St);
@@ -165,7 +167,7 @@ public:
         }
       }
       else {
-        diag(Each->getExprLoc(), "(S9.1) nodecpp::wait_for_all argument not allowed");
+        diag(Each->getExprLoc(), "(S9.1) wait_for_all argument not allowed");
       }
     }
   }
@@ -269,8 +271,13 @@ public:
     if(isAwaitableType(Qt)) {
       // diag(E->getExprLoc(), "(S9.1) awaitable call"); 
       // E->dumpColor();
-      if(!CallWhiteList.erase(E)) {
-        diag(E->getExprLoc(), "(S9.1) awaitable object must be awaited");
+      Decl *D = E->getCalleeDecl();
+      if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
+        //if we get here, then [[no_await]] was missing
+        diag(E->getExprLoc(), "(S9.1) missing [[nodecpp::no_await]] at call");
+      }
+      else if(!CallWhiteList.erase(E)) {
+        diag(E->getExprLoc(), "(S9.1) awaitable returning call not allowed here");
       }
     }
 
@@ -299,10 +306,44 @@ public:
     }
 
     //don't traverse
-    DontTraverseCoawaitedExpr.insert(E->getOperand());
+    DontTraverse.insert(E->getOperand());
     return Super::VisitCoawaitExpr(E);
   }
-  
+
+  bool VisitAttributedStmt(clang::AttributedStmt *St) {
+
+    if(!hasSpecificAttr<NodeCppNoAwaitAttr>(St->getAttrs()))
+      return Super::VisitAttributedStmt(St);
+
+
+    clang::Stmt *Ch = St->getSubStmt();
+    if(clang::Expr *E = dyn_cast<clang::Expr>(Ch)) {
+      E = E->IgnoreImplicit();
+      if(clang::CallExpr *CallE = dyn_cast<clang::CallExpr>(E)) {
+        
+        Decl *D = CallE->getCalleeDecl();
+        if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
+
+          //this is ok, white list
+          DontTraverse.insert(Ch);
+        }
+        else {
+          diag(CallE->getExprLoc(), "(S9.1) no_await not found at declaration");
+          diag(D->getLocation(), "(S9.1) referenced here", DiagnosticIDs::Note);
+
+          //white list anyway, as we already reported the issue
+          DontTraverse.insert(Ch);
+        }
+
+        return Super::VisitAttributedStmt(St);
+      }
+    }
+
+    diag(St->getBeginLoc(), "(S9.1) no_await not allowed here");
+        
+    return Super::VisitAttributedStmt(St);
+  }
+
 
 };
 

@@ -174,10 +174,10 @@ index 51f2ce2..b13de57 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index dc9edac..8d77072 100644
+index dc9edac..cfe7969 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3004,3 +3004,27 @@ def InternalLinkage : InheritableAttr {
+@@ -3004,3 +3004,33 @@ def InternalLinkage : InheritableAttr {
    let Subjects = SubjectList<[Var, Function, CXXRecord]>;
    let Documentation = [InternalLinkageDocs];
  }
@@ -194,6 +194,12 @@ index dc9edac..8d77072 100644
 +  let Documentation = [NodeCppMayExtendDocs];
 +}
 +
++def NodeCppNoAwait : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","no_await">];
++//  let Subjects = SubjectList<[ParmVar]>;
++  let Documentation = [NodeCppNoAwaitDocs];
++}
++
 +def NodeCppMemoryUnsafe : InheritableAttr {
 +  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
 +//  let Subjects = SubjectList<[Namespace]>;
@@ -206,10 +212,10 @@ index dc9edac..8d77072 100644
 +  let Documentation = [NodeCppNonDeterministicDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..785a84b 100644
+index 5a937b1..4819836 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,43 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,51 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -234,6 +240,14 @@ index 5a937b1..785a84b 100644
 +This attribute is used on library parameter declaration to indicate that lifetime
 +of the callable object may be extended beyond the time of the call.
 +Checker will check that no reference to stack object is present in such arguments.
++}];
++}
++
++def NodeCppNoAwaitDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on library method declaration to indicate that returned
++awaitable doesn't need to be checked for co_await.
 +}];
 +}
 +
@@ -374,7 +388,7 @@ index 8a70404..113c960 100644
        AddPath("/usr/include/c++/v1", CXXSystem, false);
      } else {
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..adb59aa 100644
+index 77deed6..4f6779d 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -398,7 +412,7 @@ index 77deed6..adb59aa 100644
      return;
    }
  
-@@ -6604,6 +6610,19 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -6604,6 +6610,22 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    case ParsedAttr::AT_XRayLogArgs:
      handleXRayLogArgsAttr(S, D, AL);
      break;
@@ -407,6 +421,9 @@ index 77deed6..adb59aa 100644
 +    break;
 +  case ParsedAttr::AT_NodeCppMayExtend:
 +    handleSimpleAttribute<NodeCppMayExtendAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppNoAwait:
++    handleSimpleAttribute<NodeCppNoAwaitAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppMemoryUnsafe:
 +    handleSimpleAttribute<NodeCppMemoryUnsafeAttr>(S, D, AL);
@@ -441,6 +458,20 @@ index 4cf3abd..17bb5fb 100644
    }
  
    // Virtual overrides must have the same code_seg.
+diff --git a/lib/Sema/SemaStmtAttr.cpp b/lib/Sema/SemaStmtAttr.cpp
+index e39a65c..5b8ba77 100644
+--- a/lib/Sema/SemaStmtAttr.cpp
++++ b/lib/Sema/SemaStmtAttr.cpp
+@@ -304,6 +304,9 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
+     return handleOpenCLUnrollHint(S, St, A, Range);
+   case ParsedAttr::AT_Suppress:
+     return handleSuppressAttr(S, St, A, Range);
++  case ParsedAttr::AT_NodeCppNoAwait:
++    return ::new (S.Context) NodeCppNoAwaitAttr(A.getRange(), S.Context,
++                                        A.getAttributeSpellingListIndex());
+   default:
+     // if we're here, then we parsed a known attribute, but didn't recognize
+     // it as a statement attribute => it is declaration attribute
 diff --git a/lib/Tooling/CompilationDatabase.cpp b/lib/Tooling/CompilationDatabase.cpp
 index 31a769f..6bdcd8a 100644
 --- a/lib/Tooling/CompilationDatabase.cpp
