@@ -23,5 +23,9 @@ add_clang_library(nodecppChecker
   clangToolingCore
   )
 
+if (MSVC)
+  set_source_files_properties(ClangTidy.cpp PROPERTIES COMPILE_FLAGS /bigobj)
+endif()
+
 add_subdirectory(nodecpp)
 add_subdirectory(tool)

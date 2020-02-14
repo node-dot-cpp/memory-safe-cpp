@@ -11,6 +11,8 @@
 namespace nodecpp {
 
 	void wait_for_all();
+	void await_function();
+	void no_await_function();
 
 	class awaitable {
 		void await_ready();
@@ -21,6 +23,7 @@ namespace nodecpp {
 
 	class promise_type_struct {
 		void yield_value();
+		void return_void();
 	};
 
 	class SrvMember

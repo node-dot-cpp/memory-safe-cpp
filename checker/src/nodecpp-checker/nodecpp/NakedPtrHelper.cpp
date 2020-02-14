@@ -83,6 +83,10 @@ bool isSoftPtrCastName(const std::string& Name) {
           Name == "nodecpp::safememory::soft_ptr_reinterpret_cast";
 }
 
+bool isWaitForAllName(const std::string& Name) {
+  return Name == "nodecpp::wait_for_all";
+}
+
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
@@ -469,6 +473,9 @@ bool isSafePtrType(QualType Qt) {
 
 bool isAwaitableType(QualType Qt) {
 
+  if(Qt.isNull())
+    return false;
+
   Qt = Qt.getCanonicalType();
   auto Dc = getTemplatePtrDecl(Qt);
   if (!Dc)
@@ -824,6 +831,30 @@ const Expr *ignoreTemporaries(const Expr *Ex) {
     return Ex;
   }
 } // namespace nodecpp
+
+DeclRefExpr *getStdMoveArg(Expr *Ex) {
+  
+  CXXConstructExpr *Ctor = dyn_cast<CXXConstructExpr>(Ex);
+
+  if(!Ctor)
+    return nullptr;
+  
+  if(Ctor->getNumArgs() != 1)
+    return nullptr;
+
+  CallExpr *Call = dyn_cast<CallExpr>(Ctor->getArg(0));
+  if(!Call)
+    return nullptr;
+  
+  if(!Call->isCallToStdMove())
+    return nullptr;
+
+  if(Call->getNumArgs() != 1)
+    return nullptr;
+
+  DeclRefExpr *Dre = dyn_cast<DeclRefExpr>(Call->getArg(0));
+  return Dre;
+}
 
 bool isFunctionPtr(const Expr *Ex) {
 

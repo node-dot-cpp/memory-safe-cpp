@@ -3,63 +3,56 @@
 #include <utility>
 #include <awaitable.h>
 
-nodecpp::awaitable<int> af();
-nodecpp::awaitable<int> af2();
+using namespace nodecpp;
 
-template <class T>
-void another_f(T t) {}
-// CHECK: :[[@LINE-1]]:18: error: (S9.1)
+// user functions
+nodecpp::awaitable<int> awaitInt();
+void eatAwaitable(nodecpp::awaitable<void>);
 
-
-struct SomeClass {
-// CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-
-	nodecpp::awaitable<int> aw;
-
-};
 
 nodecpp::awaitable<void> func() {
 
-	{ co_await af(); }
-	{ int x = co_await af(); }
+	co_await await_function(); // ok
+
+	await_function();
+// CHECK: :[[@LINE-1]]:2: error: (S9)
+
+
+	nodecpp::awaitable<void> var1 = await_function();
+	co_await var1; // ok
+
+	auto avar = await_function();
+	co_await avar; // ok
+
+
+	nodecpp::awaitable<void> var2 = await_function();
+// CHECK: :[[@LINE-1]]:27: error: (S9)
+
+	eatAwaitable(await_function());
+// CHECK: :[[@LINE-1]]:15: error: (S9)
+
+	int i = co_await awaitInt(); //ok
+
+	int j = (co_await awaitInt()) + 1;
+// CHECK: :[[@LINE-1]]:11: error: (S9)
+
+
+	nodecpp::awaitable<void> var3 = await_function();
+	co_await nodecpp::wait_for_all(std::move(var3), await_function()); //all ok
+
 	
-	{
-	auto x = af();
-// CHECK: :[[@LINE-1]]:7: error: (S9.1)
-// CHECK: :[[@LINE-2]]:11: error: (S9.1)
-	auto y = af2();
-// CHECK: :[[@LINE-1]]:7: error: (S9.1)
-// CHECK: :[[@LINE-2]]:11: error: (S9.1)
-	co_await x;
-	co_await y;
-	}
-	{
-	nodecpp::awaitable<int> x = af();
-// CHECK: :[[@LINE-1]]:26: error: (S9.1)
-// CHECK: :[[@LINE-2]]:30: error: (S9.1)
-	co_await x;
-	}
 
-	{ co_await nodecpp::wait_for_all(af(), af2()); }
+	[[nodecpp::no_await]] no_await_function();
+
+	no_await_function();
+// CHECK: :[[@LINE-1]]:2: error: (S9)
 
 
-	
+	co_await no_await_function(); //this is ok
 
-	{ af(); }
-// CHECK: :[[@LINE-1]]:4: error: (S9.1)
-	{ auto x = af(); }
-// CHECK: :[[@LINE-1]]:9: error: (S9.1)
-// CHECK: :[[@LINE-2]]:13: error: (S9.1)
-	
-//	int x = af();
-	{
-		auto x = af();
-// CHECK: :[[@LINE-1]]:8: error: (S9.1)
-// CHECK: :[[@LINE-2]]:12: error: (S9.1)
-		another_f(std::move(x)); /* where another_f() takes nodecpp::awaitable<> */
-// CHECK: :[[@LINE-1]]:13: error: (S9.1)
-// CHECK: :[[@LINE-2]]:23: error: (S9.1)
-	}
+	[[nodecpp::no_await]] await_function();
+// CHECK: :[[@LINE-1]]:24: error: (S9)
 
+	co_return;
 }
 

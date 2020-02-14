@@ -175,7 +175,10 @@ T wait_for_all(T t, T t2, T t3) { return t; }
 template<typename T>
 T wait_for_all(T t, T t2, T t3, T t4) { return t; }
 
-} // namespace nodecpp::awaitable
+nodecpp::awaitable<void> await_function();
+[[nodecpp::no_await]] nodecpp::awaitable<void> no_await_function();
 
+
+} // namespace nodecpp
 
 #endif // NODECPP_AWAITABLE_H

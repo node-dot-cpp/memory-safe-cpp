@@ -150,6 +150,10 @@ public:
       diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] only allowed at system libraries declarartions");
     }
 
+    if(D->hasAttr<NodeCppNoAwaitAttr>() && !IsMemoryUnsafe) {
+      diag(D->getLocation(), "(C2) attribute [[nodecpp::no_await]] only allowed at system libraries declarartions");
+    }
+
     return Super::VisitDecl(D);
   }
 
