@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULES91_H
-#define NODECPP_CHECKER_RULES91_H
+#ifndef NODECPP_CHECKER_RULES9_H
+#define NODECPP_CHECKER_RULES9_H
 
 
 #include "nodecpp/NakedPtrHelper.h"
@@ -42,10 +42,10 @@ namespace checker {
 
 
 
-class RuleS91ASTVisitor
-  : public clang::RecursiveASTVisitor<RuleS91ASTVisitor> {
+class RuleS9ASTVisitor
+  : public RecursiveASTVisitor<RuleS9ASTVisitor> {
 
-  typedef clang::RecursiveASTVisitor<RuleS91ASTVisitor> Super;
+  typedef RecursiveASTVisitor<RuleS9ASTVisitor> Super;
 
   ClangTidyContext &Context;
   llvm::SmallSet<CallExpr*, 4> CallWhiteList;
@@ -77,29 +77,29 @@ class RuleS91ASTVisitor
 
 public:
 
-  explicit RuleS91ASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleS9ASTVisitor(ClangTidyContext &Context): Context(Context) {}
 
   void ReportAndClear() {
     for(auto each : DeclWhiteList) {
-      diag(each->getLocation(), "(S9.1) awaitable variable must be co_awaited");
+      diag(each->getLocation(), "(S9) awaitable variable must be co_awaited");
     }
     DeclWhiteList.clear();
     
     for(auto each : CallWhiteList) {
       each->dump();
-      diag(each->getExprLoc(), "(S9.1) internal check failed");
+      diag(each->getExprLoc(), "(S9) internal check failed");
     }
     CallWhiteList.clear();
     
     for(auto each : CoawaitWhiteList) {
       each->dump();
-      diag(each->getExprLoc(), "(S9.1) internal check failed");
+      diag(each->getExprLoc(), "(S9) internal check failed");
     }
     CoawaitWhiteList.clear();
     
     for(auto each : DontTraverse) {
       each->dump();
-      diag(each->getBeginLoc(), "(S9.1) internal check failed");
+      diag(each->getBeginLoc(), "(S9) internal check failed");
     }
     DontTraverse.clear();
   }
@@ -124,7 +124,7 @@ public:
       return Super::TraverseDecl(D);
   }
 
-  bool TraverseStmt(clang::Stmt *St) {
+  bool TraverseStmt(Stmt *St) {
 
     if(DontTraverse.erase(St))
       return true;
@@ -132,14 +132,14 @@ public:
       return Super::TraverseStmt(St);
   }
 
-  void checkWaitForAllCall(clang::Expr *E, bool AddCallsToWhiteList) {
+  void checkWaitForAllCall(Expr *E, bool AddCallsToWhiteList) {
 
-    clang::CallExpr *Ce0 = dyn_cast<clang::CallExpr>(E->IgnoreImplicit());
+    CallExpr *Ce0 = dyn_cast<CallExpr>(E->IgnoreImplicit());
 
     if(!Ce0)
       return;
 
-    clang::NamedDecl *D = dyn_cast_or_null<clang::NamedDecl>(Ce0->getCalleeDecl());
+    NamedDecl *D = dyn_cast_or_null<NamedDecl>(Ce0->getCalleeDecl());
     if(!D)
       return;
 
@@ -151,35 +151,35 @@ public:
 
       Expr *A = Each->IgnoreImplicit();
 
-      if(clang::DeclRefExpr *Dre = getStdMoveArg(A)) {
-        clang::ValueDecl *D = Dre->getDecl();
+      if(DeclRefExpr *Dre = getStdMoveArg(A)) {
+        ValueDecl *D = Dre->getDecl();
         if(!DeclWhiteList.erase(D)) {
-          diag(Dre->getExprLoc(), "(S9.1) awaitable variable not allowed here");
+          diag(Dre->getExprLoc(), "(S9) awaitable variable not allowed here");
         }
       }
-      else if(clang::CallExpr *Ce = dyn_cast<clang::CallExpr>(A)) {
+      else if(CallExpr *Ce = dyn_cast<CallExpr>(A)) {
         if(AddCallsToWhiteList)
           CallWhiteList.insert(Ce);
-      } else if(clang::DeclRefExpr *Dre = dyn_cast<clang::DeclRefExpr>(A)) {
-        clang::ValueDecl *D = Dre->getDecl();
+      } else if(DeclRefExpr *Dre = dyn_cast<DeclRefExpr>(A)) {
+        ValueDecl *D = Dre->getDecl();
         if(!DeclWhiteList.erase(D)) {
-          diag(Dre->getExprLoc(), "(S9.1) awaitable variable not allowed here");
+          diag(Dre->getExprLoc(), "(S9) awaitable variable not allowed here");
         }
       }
       else {
-        diag(Each->getExprLoc(), "(S9.1) wait_for_all argument not allowed");
+        diag(Each->getExprLoc(), "(S9) wait_for_all argument not allowed");
       }
     }
   }
 
-  void checkCoawaitExpr(clang::CoawaitExpr *AwaitE, bool AddCallsToWhiteList) {
+  void checkCoawaitExpr(CoawaitExpr *AwaitE, bool AddCallsToWhiteList) {
 
     //first white list this co_await, as is in a valid place
     CoawaitWhiteList.insert(AwaitE);
     
     // then check the argument
-    clang::Expr *Ch = AwaitE->getOperand()->IgnoreImplicit();
-    if(clang::CallExpr *CallE = dyn_cast<clang::CallExpr>(Ch)) {
+    Expr *Ch = AwaitE->getOperand()->IgnoreImplicit();
+    if(CallExpr *CallE = dyn_cast<CallExpr>(Ch)) {
 
       if(AddCallsToWhiteList)
         CallWhiteList.insert(CallE);
@@ -189,36 +189,36 @@ public:
       //is under the umbrella of white listed co_await above
       ;
     }
-    else if(clang::DeclRefExpr *Dre = dyn_cast<clang::DeclRefExpr>(Ch)) {
+    else if(DeclRefExpr *Dre = dyn_cast<DeclRefExpr>(Ch)) {
 
       // we must verify this is a valid Decl to co_await, and 
       // in such case mark it as already used.
 
-      clang::ValueDecl *D = Dre->getDecl();
+      ValueDecl *D = Dre->getDecl();
       if(!DeclWhiteList.erase(D)) {
-        diag(Ch->getExprLoc(), "(S9.1) not a valid expression to co_await");
+        diag(Ch->getExprLoc(), "(S9) not a valid expression to co_await");
         Ch->dumpColor();
       }
     }
     else {
-      diag(Ch->getExprLoc(), "(S9.1) not a valid expression to co_await");
+      diag(Ch->getExprLoc(), "(S9) not a valid expression to co_await");
       Ch->dumpColor();
     }
   }
 
-  bool VisitStmt(clang::Stmt *St) {
+  bool VisitStmt(Stmt *St) {
 
     //TODO update to ValueStmt
 
     // expression statement is an statement that is an expression
     // and whose direct parent is an statement that is not an expression
-    if(clang::Expr *E = dyn_cast<clang::Expr>(St)) {
+    if(Expr *E = dyn_cast<Expr>(St)) {
 
-      const clang::Stmt * P = getParentStmt(Context.getASTContext(), St);
-      if(P && !isa<const clang::Expr>(P)) {
+      const Stmt * P = getParentStmt(Context.getASTContext(), St);
+      if(P && !isa<const Expr>(P)) {
 
         E = E->IgnoreImplicit();
-        if(clang::CoawaitExpr *Ce = dyn_cast<clang::CoawaitExpr>(E)) {
+        if(CoawaitExpr *Ce = dyn_cast<CoawaitExpr>(E)) {
 
           checkCoawaitExpr(Ce, false);
         }
@@ -228,14 +228,14 @@ public:
     return Super::VisitStmt(St);
   }
 
-  bool VisitDeclStmt(clang::DeclStmt *St) {
+  bool VisitDeclStmt(DeclStmt *St) {
 
     // declaration statement
     if(!St->isSingleDecl()) {
       return Super::VisitDeclStmt(St);
     }
 
-    clang::VarDecl *D = dyn_cast<clang::VarDecl>(St->getSingleDecl());
+    VarDecl *D = dyn_cast<VarDecl>(St->getSingleDecl());
     if(!D) {
       return Super::VisitDeclStmt(St);
     }
@@ -244,14 +244,14 @@ public:
       return Super::VisitDeclStmt(St);
     }
 
-    clang::Expr *E = D->getInit()->IgnoreImplicit();
+    Expr *E = D->getInit()->IgnoreImplicit();
 
     //TODO if this is a Coawait, then check as stmt like coawait
-    if(clang::CoawaitExpr *Ae = dyn_cast<clang::CoawaitExpr>(E)) {
+    if(CoawaitExpr *Ae = dyn_cast<CoawaitExpr>(E)) {
 
       checkCoawaitExpr(Ae, false);
     }
-    else if(clang::CallExpr *Ce = dyn_cast<clang::CallExpr>(E)) {
+    else if(CallExpr *Ce = dyn_cast<CallExpr>(E)) {
       
       // if is a call to function returning awaitable, then whitelist
       // the call and the decl var 
@@ -265,44 +265,44 @@ public:
     return Super::VisitDeclStmt(St);
   }
 
-  bool VisitCallExpr(clang::CallExpr *E) {
+  bool VisitCallExpr(CallExpr *E) {
 
     QualType Qt = E->getType();
     if(isAwaitableType(Qt)) {
-      // diag(E->getExprLoc(), "(S9.1) awaitable call"); 
+      // diag(E->getExprLoc(), "(S9) awaitable call"); 
       // E->dumpColor();
       Decl *D = E->getCalleeDecl();
       if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
         //if we get here, then [[no_await]] was missing
-        diag(E->getExprLoc(), "(S9.1) missing [[nodecpp::no_await]] at call");
+        diag(E->getExprLoc(), "(S9) missing [[nodecpp::no_await]] at call");
       }
       else if(!CallWhiteList.erase(E)) {
-        diag(E->getExprLoc(), "(S9.1) awaitable returning call not allowed here");
+        diag(E->getExprLoc(), "(S9) awaitable returning call not allowed here");
       }
     }
 
     return Super::VisitCallExpr(E);
   }
 
-  bool VisitDeclRefExpr(clang::DeclRefExpr *E) {
+  bool VisitDeclRefExpr(DeclRefExpr *E) {
 
     QualType Qt = E->getType();
     if(isAwaitableType(Qt)) {
-      clang::ValueDecl *D = E->getDecl();
+      ValueDecl *D = E->getDecl();
       if(!DeclWhiteList.erase(D)) {
-        diag(E->getExprLoc(), "(S9.1) awaitable variable not allowed here");
+        diag(E->getExprLoc(), "(S9) awaitable variable not allowed here");
       }
     }
 
     return Super::VisitDeclRefExpr(E);
   }
 
-  bool VisitCoawaitExpr(clang::CoawaitExpr *E) {
+  bool VisitCoawaitExpr(CoawaitExpr *E) {
 
     //we only support a limited set of uses of co_await
     //and they have all been already checked.
     if(!CoawaitWhiteList.erase(E)) {
-      diag(E->getExprLoc(), "(S9.1) co_await not allowed here");
+      diag(E->getExprLoc(), "(S9) co_await not allowed here");
     }
 
     //don't traverse
@@ -310,16 +310,16 @@ public:
     return Super::VisitCoawaitExpr(E);
   }
 
-  bool VisitAttributedStmt(clang::AttributedStmt *St) {
+  bool VisitAttributedStmt(AttributedStmt *St) {
 
     if(!hasSpecificAttr<NodeCppNoAwaitAttr>(St->getAttrs()))
       return Super::VisitAttributedStmt(St);
 
 
-    clang::Stmt *Ch = St->getSubStmt();
-    if(clang::Expr *E = dyn_cast<clang::Expr>(Ch)) {
+    Stmt *Ch = St->getSubStmt();
+    if(Expr *E = dyn_cast<Expr>(Ch)) {
       E = E->IgnoreImplicit();
-      if(clang::CallExpr *CallE = dyn_cast<clang::CallExpr>(E)) {
+      if(CallExpr *CallE = dyn_cast<CallExpr>(E)) {
         
         Decl *D = CallE->getCalleeDecl();
         if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
@@ -328,8 +328,8 @@ public:
           DontTraverse.insert(Ch);
         }
         else {
-          diag(CallE->getExprLoc(), "(S9.1) no_await not found at declaration");
-          diag(D->getLocation(), "(S9.1) referenced here", DiagnosticIDs::Note);
+          diag(CallE->getExprLoc(), "(S9) no_await not found at declaration");
+          diag(D->getLocation(), "(S9) referenced here", DiagnosticIDs::Note);
 
           //white list anyway, as we already reported the issue
           DontTraverse.insert(Ch);
@@ -339,7 +339,7 @@ public:
       }
     }
 
-    diag(St->getBeginLoc(), "(S9.1) no_await not allowed here");
+    diag(St->getBeginLoc(), "(S9) no_await not allowed here");
         
     return Super::VisitAttributedStmt(St);
   }
@@ -347,14 +347,14 @@ public:
 
 };
 
-class RuleS91ASTConsumer : public clang::ASTConsumer {
+class RuleS9ASTConsumer : public ASTConsumer {
 
-  RuleS91ASTVisitor Visitor;
+  RuleS9ASTVisitor Visitor;
 
 public:
-  RuleS91ASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleS9ASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
 
-  void HandleTranslationUnit(clang::ASTContext &Context) override {
+  void HandleTranslationUnit(ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
     Visitor.ReportAndClear();
   }
@@ -364,5 +364,5 @@ public:
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_RULES91_H
+#endif // NODECPP_CHECKER_RULES9_H
 

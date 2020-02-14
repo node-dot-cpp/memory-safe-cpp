@@ -132,9 +132,9 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
     //don't diagnose here
     // if(IsParam)
-    //   diag(Var->getLocation(), "(S9.1) awaitable parameter not allowed");
+    //   diag(Var->getLocation(), "(S9) awaitable parameter not allowed");
     // else
-    //   diag(Var->getLocation(), "(S9.1) awaitable variable not allowed (yet)");
+    //   diag(Var->getLocation(), "(S9) awaitable variable not allowed (yet)");
 
     return;
   }
