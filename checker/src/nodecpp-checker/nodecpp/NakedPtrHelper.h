@@ -168,6 +168,10 @@ bool isFunctionPtr(const Expr *Ex);
 const Stmt *getParentStmt(ASTContext *Context, const Stmt *St);
 const DeclStmt* getParentDeclStmt(ASTContext *Context, const Decl* Dc);
 
+
+/// \brief returns the enclosing \c FunctionDecl where this \c Stmt lives
+const FunctionDecl* getParentFunctionDecl(ASTContext *Context, const Stmt* St);
+
 /// \brief Returns \c true if \p D is either a \c ParmVarDecl
 /// or the argument of a \c CXXCatchStmt
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);

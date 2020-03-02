@@ -38,7 +38,7 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (!Checker.checkExpr(Ex->getRHS()))
     diag(Ex->getExprLoc(),
-         "(S5.2) assignment of raw pointer may extend scope");
+         "(S5.1) assignment of raw pointer may extend scope");
 }
 
 } // namespace checker

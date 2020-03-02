@@ -31,25 +31,19 @@ void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Ex)
     return;
 
-  QualType Qt = Ex->getType().getCanonicalType();
-  if (isRawPointerType(Qt)) {
+  auto Fd = getParentFunctionDecl(Result.Context, St);
+  if(!Fd)
+    return;
+
+//  QualType Qt = Ex->getType().getCanonicalType();
+  QualType Qt = Fd->getReturnType().getCanonicalType();
+
+  if (isRawPointerType(Qt) || isNakedPointerType(Qt, getContext()) ||
+    isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {
+
     auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
     if (!Ch.checkExpr(Ex))
-      diag(Ex->getExprLoc(), "(S5.1) return of raw pointer may extend scope");
-  } else if (isNakedPointerType(Qt, getContext())) {
-    auto Checker =
-        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if (!Checker.checkExpr(Ex))
-      diag(Ex->getExprLoc(),
-           "(S5.1) return of naked pointer may extend scope");
-  } else if (isNakedStructType(Qt, getContext())) {
-    auto Checker =
-        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if (!Checker.checkExpr(Ex))
-      diag(Ex->getExprLoc(),
-           "(S5.1) return of naked struct may extend scope");
+      diag(Ex->getExprLoc(), "(S5.1) return value may extend scope");
   }
 }
 

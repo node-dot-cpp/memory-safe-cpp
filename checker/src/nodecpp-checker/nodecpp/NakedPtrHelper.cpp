@@ -902,6 +902,26 @@ const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
     return nullptr;
 }
 
+
+const FunctionDecl *getParentFunctionDecl(ASTContext *Context, const Stmt *St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getParentFunctionDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<FunctionDecl>())
+      return Ch;
+    else
+      return nullptr;
+  }
+  else
+    return nullptr;
+}
+
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
   
   assert(D);
