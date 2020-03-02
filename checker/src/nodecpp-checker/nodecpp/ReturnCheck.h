@@ -1,7 +1,7 @@
 /*******************************************************************************
   Copyright (C) 2019 OLogN Technologies AG
 *******************************************************************************/
-//===--- NakedPtrReturnCheck.h - clang-tidy----------------------*- C++ -*-===//
+//===--- ReturnCheck.h - clang-tidy----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NODECPP_CHECKER_NODECPP_NAKEDPTRRETURNCHECK_H
-#define NODECPP_CHECKER_NODECPP_NAKEDPTRRETURNCHECK_H
+#ifndef NODECPP_CHECKER_NODECPP_RETURNCHECK_H
+#define NODECPP_CHECKER_NODECPP_RETURNCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -22,9 +22,9 @@ namespace checker {
 ///
 /// For the user-facing documentation see:
 /// http://clang.llvm.org/extra/clang-tidy/checks/nodecpp-naked-ptr-return.html
-class NakedPtrReturnCheck : public ClangTidyCheck {
+class ReturnCheck : public ClangTidyCheck {
 public:
-  NakedPtrReturnCheck(StringRef Name, ClangTidyContext *Context)
+  ReturnCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -33,4 +33,4 @@ public:
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_NODECPP_NAKEDPTRRETURNCHECK_H
+#endif // NODECPP_CHECKER_NODECPP_RETURNCHECK_H

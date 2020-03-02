@@ -10,7 +10,6 @@ add_clang_library(clangTidyNodeCppModule
   NakedAssignmentCheck.cpp
   NakedPtrHelper.cpp
   NakedPtrFuncCheck.cpp
-  NakedPtrReturnCheck.cpp
   NewExprCheck.cpp
   NodeCppTidyModule.cpp
   PtrArithmeticCheck.cpp
@@ -18,6 +17,7 @@ add_clang_library(clangTidyNodeCppModule
   RawPointerDereferenceCheck.cpp
   RawPtrExprCheck.cpp
   RecordDeclCheck.cpp
+  ReturnCheck.cpp
   StaticStorageCheck.cpp
   TemporaryExprCheck.cpp
   VarDeclCheck.cpp

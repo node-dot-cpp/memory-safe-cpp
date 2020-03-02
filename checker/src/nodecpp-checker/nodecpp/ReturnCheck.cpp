@@ -1,7 +1,7 @@
 /*******************************************************************************
   Copyright (C) 2019 OLogN Technologies AG
 *******************************************************************************/
-//===--- NakedPtrReturnCheck.cpp - clang-tidy------------------------------===//
+//===--- ReturnCheck.cpp - clang-tidy------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NakedPtrReturnCheck.h"
+#include "ReturnCheck.h"
 #include "NakedPtrHelper.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -20,11 +20,11 @@ using namespace clang::ast_matchers;
 namespace nodecpp {
 namespace checker {
 
-void NakedPtrReturnCheck::registerMatchers(MatchFinder *Finder) {
+void ReturnCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(returnStmt().bind("stmt"), this);
 }
 
-void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
+void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   auto St = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
 
   auto Ex = St->getRetValue();
