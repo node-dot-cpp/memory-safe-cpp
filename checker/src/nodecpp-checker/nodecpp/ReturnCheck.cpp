@@ -31,7 +31,7 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Ex)
     return;
 
-  auto Fd = getParentFunctionDecl(Result.Context, St);
+  auto Fd = getEnclosingFunctionDecl(Result.Context, St);
   if(!Fd)
     return;
 

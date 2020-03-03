@@ -87,6 +87,9 @@ bool isWaitForAllName(const std::string& Name) {
   return Name == "nodecpp::wait_for_all";
 }
 
+bool isNodeBaseName(const std::string& Name) {
+  return Name == "nodecpp::NodeBase";
+}
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
@@ -903,7 +906,7 @@ const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
 }
 
 
-const FunctionDecl *getParentFunctionDecl(ASTContext *Context, const Stmt *St) {
+const FunctionDecl *getEnclosingFunctionDecl(ASTContext *Context, const Stmt *St) {
 
   if (!St)
     return nullptr;
@@ -912,15 +915,32 @@ const FunctionDecl *getParentFunctionDecl(ASTContext *Context, const Stmt *St) {
 
   if (L.begin() != L.end()) {
     if (auto Ch = L.begin()->get<Stmt>())
-      return getParentFunctionDecl(Context, Ch);
+      return getEnclosingFunctionDecl(Context, Ch);
     else if(auto Ch = L.begin()->get<FunctionDecl>())
       return Ch;
-    else
-      return nullptr;
   }
-  else
-    return nullptr;
+
+  return nullptr;
 }
+
+const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getEnclosingCXXRecordDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<CXXMethodDecl>())
+      return Ch->getParent();
+  }
+
+  return nullptr;
+}
+
+
 
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
   
@@ -937,6 +957,28 @@ bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
     return false;
 }
 
+bool isDerivedFromNodeBase(const QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(R);
+  if(isNodeBaseName(Name))
+    return true;
+
+  for(auto Each : R->bases()) {
+    if(isDerivedFromNodeBase(Each.getType()))
+      return true;
+  }
+
+  return false;
+}
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
                                                      QualType Arg) {

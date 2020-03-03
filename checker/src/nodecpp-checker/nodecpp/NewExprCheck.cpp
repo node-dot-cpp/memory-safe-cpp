@@ -76,6 +76,18 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
     diag(Expr->getExprLoc(), "(S4) operator delete is prohibited");
   } else if (auto Expr = Result.Nodes.getNodeAs<CallExpr>("make")) {
 
+    QualType Rt = Expr->getCallReturnType(*getASTContext());
+    
+    Rt = Rt.getCanonicalType();
+    assert(isSafePtrType(Rt));
+
+    if(isDerivedFromNodeBase(getPointeeType(Rt))) {
+      diag(Expr->getExprLoc(),
+           "(node-dot-cpp) clases derived from NodeBase can't be instantiated by user");
+
+      return;
+    }
+
     if (!checkParentExpr(Result.Context, Expr)) {
       diag(Expr->getExprLoc(),
            "(S4.1) result of make_owning must be assigned to owning_ptr");

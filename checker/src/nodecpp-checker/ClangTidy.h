@@ -193,6 +193,8 @@ protected:
   LangOptions getLangOpts() const { return Context->getLangOpts(); }
   /// \brief Returns the context.
   ClangTidyContext* getContext() const { return Context; }
+  /// \brief Returns the AST context.
+  ASTContext* getASTContext() const { return Context->getASTContext(); }
 };
 
 class ClangTidyCheckFactories;

@@ -31,6 +31,7 @@ namespace nodecpp {
 		void onEvent();
 	};
 
+	class NodeBase {};
 
 namespace safememory {
 	void make_owning();
