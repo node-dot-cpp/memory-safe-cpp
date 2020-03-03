@@ -38,6 +38,11 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
 //  QualType Qt = Ex->getType().getCanonicalType();
   QualType Qt = Fd->getReturnType().getCanonicalType();
 
+  if(isRawPointerType(Qt) && isNullPtrValue(getASTContext(), Ex)) {
+    diag(Ex->getExprLoc(), "(RAW) raw pointer can't be null");
+    return;
+  }
+
   if (isRawPointerType(Qt) || isNakedPointerType(Qt, getContext()) ||
     isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {
 
@@ -45,6 +50,7 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
     if (!Ch.checkExpr(Ex))
       diag(Ex->getExprLoc(), "(S5.1) return value may extend scope");
   }
+
 }
 
 } // namespace checker

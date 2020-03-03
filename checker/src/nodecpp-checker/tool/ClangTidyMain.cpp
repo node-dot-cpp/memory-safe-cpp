@@ -195,6 +195,12 @@ report to stderr.
                                         cl::init(false),
                                         cl::cat(NodecppCheckerCategory));
 
+static cl::opt<bool> RawPtr("raw-ptr", cl::desc(R"(
+Allow for non null raw pointers.
+)"),
+                                        cl::init(false),
+                                        cl::cat(NodecppCheckerCategory));
+
 // static cl::opt<bool> AnalyzeTemporaryDtors("analyze-temporary-dtors",
 //                                            cl::desc(R"(
 // Enable temporary destructor-aware analysis in
@@ -343,6 +349,8 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
     Safes->getFunctions(GlobalOptions.SafeFunctions);
     Safes->getTypes(GlobalOptions.SafeTypes);
   }
+
+  GlobalOptions.AllowRawPointers = RawPtr;
 
   ClangTidyOptions DefaultOptions;
   DefaultOptions.Checks = "nodecpp-*";

@@ -55,7 +55,10 @@ bool isAwaitableName(const std::string &Name) {
 
 bool isNakedPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::naked_ptr_impl" ||
-         Name == "nodecpp::safememory::naked_ptr_no_checks";
+         Name == "nodecpp::safememory::naked_ptr_no_checks" ||
+         Name == "nodecpp::safememory::nullable_ptr" ||
+         Name == "nodecpp::safememory::nullable_ptr_impl" ||
+         Name == "nodecpp::safememory::nullable_ptr_no_checks";
 }
 
 bool isOsnMethodName(const std::string& Name) {
@@ -396,6 +399,12 @@ bool isRawPointerType(QualType Qt) {
 
   return Qt->isPointerType();
 }
+
+bool isNullPtrValue(ASTContext *Context, const Expr *Ex) {
+    return Ex->isNullPointerConstant(*Context, 
+      Expr::NullPointerConstantValueDependence::NPC_NeverValueDependent);
+}
+
 
 const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
 

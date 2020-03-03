@@ -87,6 +87,7 @@ bool isStdFunctionType(QualType Qt);
 bool isLambdaType(QualType Qt);
 
 bool isRawPointerType(QualType Qt);
+bool isNullPtrValue(ASTContext *Context, const Expr *Ex);
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);

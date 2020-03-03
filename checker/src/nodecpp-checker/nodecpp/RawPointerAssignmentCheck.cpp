@@ -36,9 +36,19 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
   auto Checker = NakedPtrScopeChecker::makeChecker(
       this, getContext(), Result.Context, Ex->getLHS());
 
-  if (!Checker.checkExpr(Ex->getRHS()))
+  if (!Checker.checkExpr(Ex->getRHS())) {
     diag(Ex->getExprLoc(),
          "(S5.1) assignment of raw pointer may extend scope");
+    return;
+  }
+
+  if(isNullPtrValue(getASTContext(), Ex->getRHS())) {
+    diag(Ex->getExprLoc(),
+         "(RAW) raw pointer variable can't be assigned to null");
+    return;
+  }
+
+  
 }
 
 } // namespace checker

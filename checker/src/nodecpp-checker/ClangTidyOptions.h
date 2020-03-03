@@ -48,8 +48,13 @@ struct ClangTidyGlobalOptions {
 
   /// \brief Set of functions names from standard library that are safe.
   std::set<std::string> SafeFunctions;
+
   /// \brief Set of types names from standard library that are safe.
   std::set<std::string> SafeTypes;
+
+  /// \brief Allow raw pointers
+  bool AllowRawPointers = false;
+
 };
 
 /// \brief Contains options for clang-tidy. These options may be read from
