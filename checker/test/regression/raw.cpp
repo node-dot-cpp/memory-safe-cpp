@@ -24,3 +24,9 @@ int* badFunc() {
     return 0;
 // CHECK: :[[@LINE-1]]:12: error: (RAW)
 }
+
+
+void f(int* p=nullptr);
+// CHECK: :[[@LINE-1]]:13: error: (RAW)
+
+
