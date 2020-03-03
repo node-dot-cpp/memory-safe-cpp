@@ -86,7 +86,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand [[**TODO/v0.5: CHANGE Rule S5 completely to rely on Herb Sutter's D1179: https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf; NB: SOME of the rules below may still be needed on top of D1179 **]]
-  + **[Rule S5.1]** each `naked_ptr<>` and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
+  + **[Rule S5.1]** each `naked_ptr<>`, reference (T&) or naked_struct is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
     + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
