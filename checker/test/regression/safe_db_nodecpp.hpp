@@ -8,6 +8,8 @@
  * 
  */
 
+class NodeBase {};
+
 namespace nodecpp {
 
 	void wait_for_all();
@@ -26,32 +28,30 @@ namespace nodecpp {
 		void return_void();
 	};
 
+	class string_literal {
+		void operator=(const string_literal&);
+	};
+
 	class SrvMember
 	{
 		void onEvent();
 	};
 
-	class NodeBase {};
-
-	class string_literal {
-		void operator=(const string_literal&);
-	};
-
-namespace safememory {
-	void make_owning();
+	namespace safememory {
+		void make_owning();
 
 
-	// osn ptrs are hardcoded with special safety rules
-	// they must not be included here
-	// class owning_ptr_impl;
-	// class owning_ptr_no_checks;
-	// class soft_ptr_impl;
-	// class soft_ptr_no_checks;
-	// class soft_this_ptr_impl;
-	// class soft_this_ptr_no_checks;
-	// class naked_ptr_impl;
-	// class naked_ptr_no_checks;
-}
+		// osn ptrs are hardcoded with special safety rules
+		// they must not be included here
+		// class owning_ptr_impl;
+		// class owning_ptr_no_checks;
+		// class soft_ptr_impl;
+		// class soft_ptr_no_checks;
+		// class soft_this_ptr_impl;
+		// class soft_this_ptr_no_checks;
+		// class naked_ptr_impl;
+		// class naked_ptr_no_checks;
+	}
 }
 
 

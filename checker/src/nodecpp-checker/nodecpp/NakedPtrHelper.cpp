@@ -91,7 +91,9 @@ bool isWaitForAllName(const std::string& Name) {
 }
 
 bool isNodeBaseName(const std::string& Name) {
-  return Name == "nodecpp::NodeBase";
+  return Name == "NodeBase" || 
+    Name == "nodecpp::NodeBase" || 
+    Name == "nodecpp::net::NodeBase";
 }
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {

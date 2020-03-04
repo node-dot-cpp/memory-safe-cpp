@@ -6,7 +6,7 @@
 using namespace nodecpp::safememory;
 
 
-struct MyServer2 : public nodecpp::NodeBase {
+struct MyServer2 : public NodeBase {
 	
 	owning_ptr<nodecpp::SrvMember> server;
 

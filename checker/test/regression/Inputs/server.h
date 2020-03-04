@@ -30,10 +30,11 @@
 
 #include <functional>
 
+class NodeBase {};
+
 namespace nodecpp {
 
 class Socket {};
-class NodeBase {};
 
 class /*[[nodecpp::owning_only]]*/ SrvMember
 {
