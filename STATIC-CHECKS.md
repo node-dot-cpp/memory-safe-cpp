@@ -76,6 +76,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
   + TEST CASE/PROHIBIT: `const_cast<X*>`, `mutable int x;`
 * **[Rule S3]** non-constant global variables, static variables, and thread_local variables are prohibited. NB: while prohibiting thread_local is not 100% required to ensure safety, it is still prohibited at least for now.
   + const statics/globals are ok (because of [Rule S2])
+  + static/globals of empty types are also ok
   + NB: this rule effectively ensures that all our functions are no-side-effect ones (at least unless explicitly marked so)
   + TEST CASES/PROHIBIT: `int x;` at global scope, `thread_local int x;`, `static int x;` within function, `static int x;` within the class
   + TEST CASES/ALLOW: `static void f();` within class, free-standing `static void f();`, `static constexpr int x;`, `static const int x;` (both in class and globally)
