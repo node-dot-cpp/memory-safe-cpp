@@ -86,7 +86,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand [[**TODO/v0.5: CHANGE Rule S5 completely to rely on Herb Sutter's D1179: https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf; NB: SOME of the rules below may still be needed on top of D1179 **]]
-  + **[Rule S5.1]** each `naked_ptr<>` and each reference (T&) is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
+  + **[Rule S5.1]** each `naked_ptr<>`, reference (T&) or naked_struct is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
     + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
@@ -145,13 +145,13 @@ Consistency checks always apply (regardless of the command line, and any attribu
   + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function wait_for_all())
     - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); another_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
     - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`, `co_await wait_for_all(af(), af2())`
-  + **[Rule S9.2]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
-    - TEST CASES/PROHIBIT: `const char* s = "abc"; StringLiteral x = s;`, `void fsl(StringLiteral x) {} ... const char* s = "abc"; fsl(s);`
-    - TEST CASES/ALLOW: `StringLiteral x = "abc";`, `void fsl(StringLiteral x) {} ... fsl("abc");`, `void fsl(StringLiteral x) {} ... StringLiteral x = "abc"; fsl(x);`
 * **[Rule S10]** Prohibit using unsafe collections and iterators
   + Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, nmust be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
     - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc; ` 
     - TEST CASES/ALLOW: `nodecpp::vector<...> v`, `nodecpp::string s`, etc; 
+  + **[Rule S10.1]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
+    - TEST CASES/PROHIBIT: `const char* s = "abc"; StringLiteral x = s;`, `void fsl(StringLiteral x) {} ... const char* s = "abc"; fsl(s);`
+    - TEST CASES/ALLOW: `StringLiteral x = "abc";`, `void fsl(StringLiteral x) {} ... fsl("abc");`, `void fsl(StringLiteral x) {} ... StringLiteral x = "abc"; fsl(x);`
 
 ### Determinism Checks (strictly - ensuring Same-Executable Determinism)
 

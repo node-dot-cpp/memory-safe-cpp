@@ -142,12 +142,14 @@ CodeChange mergeHelper(const CodeChange &LHS, const CodeChange &RHS) {
       // RHS must end where LHS is
       assert(RHS.getEndOffset() == LHS.getOffset());
 
-      SmallString<4> R = (RHS.ReplacementText + LHS.ReplacementText).str();
+      SmallString<4> R = RHS.ReplacementText.str();
+      R += LHS.ReplacementText.str();
       return CodeChange{RHS.File, RHS.ReplacementRange, std::move(R)};
     }
     else {
       assert(LHS.getOffset() == RHS.getOffset());
-      SmallString<4> R = (LHS.ReplacementText + RHS.ReplacementText).str();
+      SmallString<4> R = LHS.ReplacementText.str();
+      R + RHS.ReplacementText.str();
       return CodeChange{LHS.File, LHS.ReplacementRange, std::move(R)};
     }
 }
@@ -159,11 +161,13 @@ CodeChange mergeChanges(const CodeChange &LHS, const CodeChange &RHS) {
     assert(LHS.getOffset() == RHS.getOffset());
     assert(LHS.toTheLeft() == RHS.toTheLeft());
     if(LHS.toTheLeft()) {
-      SmallString<4> R = (LHS.ReplacementText + RHS.ReplacementText).str();
+      SmallString<4> R = LHS.ReplacementText.str();
+      R += RHS.ReplacementText.str();
       return CodeChange{LHS.File, LHS.ReplacementRange, std::move(R), LHS.ToTheLeft};
     }
     else {//is to the right
-      SmallString<4> R = (RHS.ReplacementText + LHS.ReplacementText).str();
+      SmallString<4> R = RHS.ReplacementText.str();
+      R += LHS.ReplacementText.str();
       return CodeChange{LHS.File, LHS.ReplacementRange, std::move(R), LHS.ToTheLeft};
     }
   }
