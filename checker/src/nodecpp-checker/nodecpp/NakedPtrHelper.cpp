@@ -991,7 +991,7 @@ bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
     return false;
 }
 
-bool isDerivedFromNodeBase(const QualType Qt) {
+bool isDerivedFromNodeBase(QualType Qt) {
 
   auto T = Qt.getCanonicalType().getTypePtr();
 
@@ -1012,6 +1012,28 @@ bool isDerivedFromNodeBase(const QualType Qt) {
   }
 
   return false;
+}
+
+bool isEmptyClass(QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  if(!R->field_empty())
+    return false;
+
+  for(auto Each : R->bases()) {
+    if(!isEmptyClass(Each.getType()))
+      return false;
+  }
+
+  return true;
 }
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,

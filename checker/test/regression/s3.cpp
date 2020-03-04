@@ -36,3 +36,6 @@ static
 void func2() {
 	//this is ok
 }
+
+Good ok; //ok, because is empty
+

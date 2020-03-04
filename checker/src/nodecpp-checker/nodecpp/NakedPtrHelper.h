@@ -187,7 +187,11 @@ const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* 
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);
 
 /// \brief Returns \c true if this class is derived from NodeBase
-bool isDerivedFromNodeBase(const QualType Qt);
+bool isDerivedFromNodeBase(QualType Qt);
+
+/// \brief Returns \c true if this is an empty class (without any members),
+/// an all its base classes are also empty
+bool isEmptyClass(QualType Qt);
 
 class NakedPtrScopeChecker {
 
