@@ -274,10 +274,12 @@ public:
       Decl *D = E->getCalleeDecl();
       if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
         //if we get here, then [[no_await]] was missing
-        diag(E->getExprLoc(), "(S9) missing [[nodecpp::no_await]] at call");
+//        diag(E->getExprLoc(), "(S9) missing [[nodecpp::no_await]] at call");
+
+        return Super::VisitCallExpr(E);
       }
       else if(!CallWhiteList.erase(E)) {
-        diag(E->getExprLoc(), "(S9) awaitable returning call not allowed here");
+        diag(E->getExprLoc(), "(S9) awaitable expression must be co_awaited");
       }
     }
 
@@ -312,34 +314,34 @@ public:
 
   bool VisitAttributedStmt(AttributedStmt *St) {
 
-    if(!hasSpecificAttr<NodeCppNoAwaitAttr>(St->getAttrs()))
-      return Super::VisitAttributedStmt(St);
+    // if(!hasSpecificAttr<NodeCppNoAwaitAttr>(St->getAttrs()))
+    //   return Super::VisitAttributedStmt(St);
 
 
-    Stmt *Ch = St->getSubStmt();
-    if(Expr *E = dyn_cast<Expr>(Ch)) {
-      E = E->IgnoreImplicit();
-      if(CallExpr *CallE = dyn_cast<CallExpr>(E)) {
+    // Stmt *Ch = St->getSubStmt();
+    // if(Expr *E = dyn_cast<Expr>(Ch)) {
+    //   E = E->IgnoreImplicit();
+    //   if(CallExpr *CallE = dyn_cast<CallExpr>(E)) {
         
-        Decl *D = CallE->getCalleeDecl();
-        if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
+    //     Decl *D = CallE->getCalleeDecl();
+    //     if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
 
-          //this is ok, white list
-          DontTraverse.insert(Ch);
-        }
-        else {
-          diag(CallE->getExprLoc(), "(S9) no_await not found at declaration");
-          diag(D->getLocation(), "(S9) referenced here", DiagnosticIDs::Note);
+    //       //this is ok, white list
+    //       DontTraverse.insert(Ch);
+    //     }
+    //     else {
+    //       diag(CallE->getExprLoc(), "(S9) no_await not found at declaration");
+    //       diag(D->getLocation(), "(S9) referenced here", DiagnosticIDs::Note);
 
-          //white list anyway, as we already reported the issue
-          DontTraverse.insert(Ch);
-        }
+    //       //white list anyway, as we already reported the issue
+    //       DontTraverse.insert(Ch);
+    //     }
 
-        return Super::VisitAttributedStmt(St);
-      }
-    }
+    //     return Super::VisitAttributedStmt(St);
+    //   }
+    // }
 
-    diag(St->getBeginLoc(), "(S9) no_await not allowed here");
+    // diag(St->getBeginLoc(), "(S9) no_await not allowed here");
         
     return Super::VisitAttributedStmt(St);
   }
