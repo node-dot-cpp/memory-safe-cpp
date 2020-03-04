@@ -405,6 +405,29 @@ bool isNullPtrValue(ASTContext *Context, const Expr *Ex) {
       Expr::NullPointerConstantValueDependence::NPC_NeverValueDependent);
 }
 
+bool isStringLiteralType(QualType Qt) {
+  
+  assert(Qt.isCanonical());
+
+  auto R = Qt->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  auto Name = getQnameForSystemSafeDb(R);
+  return Name == "nodecpp::string_literal" || Name == "nodecpp::StringLiteral";
+}
+
+
+bool isCharPointerType(QualType Qt) {
+  assert(Qt.isCanonical());
+
+  if(Qt->isPointerType()) {
+    auto Qt2 = Qt->getPointeeType();
+    if(Qt2->isAnyCharacterType())
+      return true;
+  }
+  return false;
+}
 
 const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
 

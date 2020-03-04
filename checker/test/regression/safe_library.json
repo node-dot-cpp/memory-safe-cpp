@@ -1,15 +1,5 @@
 [
 {
-  "types" : [
-    "std::function",
-    "std::__1::function",
-    "std::experimental::suspend_never",
-    "nodecpp::SrvMember",
-    "std::experimental::coroutine_handle",
-    "std::experimental::coroutines_v1::coroutine_handle",
-    "nodecpp::awaitable",
-    "nodecpp::promise_type_struct",
-  ],
   "functions" : [
     "std::move",
     "std::forward",
@@ -21,6 +11,7 @@
     "nodecpp::promise_type_struct::yield_value",
     "nodecpp::promise_type_struct::return_void",
     "nodecpp::SrvMember::onEvent",
+    "nodecpp::string_literal::operator=",
     "nodecpp::safememory::make_owning",
     "std::experimental::suspend_never::await_resume",
     "std::experimental::suspend_never::await_suspend",
@@ -32,6 +23,18 @@
     "nodecpp::awaitable::await_ready",
     "nodecpp::awaitable::await_resume",
     "nodecpp::awaitable::await_suspend",
+  ],
+  "types" : [
+    "std::function",
+    "std::__1::function",
+    "std::experimental::suspend_never",
+    "nodecpp::SrvMember",
+    "nodecpp::NodeBase",
+    "nodecpp::string_literal",
+    "std::experimental::coroutine_handle",
+    "std::experimental::coroutines_v1::coroutine_handle",
+    "nodecpp::awaitable",
+    "nodecpp::promise_type_struct",
   ]
 }
 ]

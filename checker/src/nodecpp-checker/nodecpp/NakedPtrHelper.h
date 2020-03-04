@@ -88,6 +88,10 @@ bool isLambdaType(QualType Qt);
 
 bool isRawPointerType(QualType Qt);
 bool isNullPtrValue(ASTContext *Context, const Expr *Ex);
+
+bool isStringLiteralType(QualType Qt);
+bool isCharPointerType(QualType Qt);
+
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);

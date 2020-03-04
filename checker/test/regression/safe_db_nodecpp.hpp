@@ -33,6 +33,10 @@ namespace nodecpp {
 
 	class NodeBase {};
 
+	class string_literal {
+		void operator=(const string_literal&);
+	};
+
 namespace safememory {
 	void make_owning();
 

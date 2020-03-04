@@ -29,6 +29,7 @@
 #include "RecordDeclCheck.h"
 #include "ReturnCheck.h"
 #include "StaticStorageCheck.h"
+#include "StringLiteralCheck.h"
 #include "TemporaryExprCheck.h"
 #include "VarDeclCheck.h"
 
@@ -71,6 +72,8 @@ public:
         "nodecpp-record-decl");
     CheckFactories.registerCheck<StaticStorageCheck>(
         "nodecpp-static-storage");
+    CheckFactories.registerCheck<StringLiteralCheck>(
+        "nodecpp-string-literal");
     CheckFactories.registerCheck<TemporaryExprCheck>(
         "nodecpp-temporary-expr");
     CheckFactories.registerCheck<VarDeclCheck>(
