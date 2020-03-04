@@ -52,13 +52,6 @@ namespace nodecpp
 #define NODISCARD
 #endif
 
-// NODECPP_CHECKER_EXTENSIONS is defined internally by nodecpp-checker tool
-#ifdef NODECPP_CHECKER_EXTENSIONS
-#define  NODECPP_OWNED_BY_THIS [[nodecpp::owned_by_this]]
-#else
-#define  NODECPP_OWNED_BY_THIS
-#endif
-
 
 #ifdef NODECPP_X64
 #define NODECPP_USE_IIBMALLOC
