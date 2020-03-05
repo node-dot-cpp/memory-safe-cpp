@@ -46,6 +46,49 @@ struct MappingData {
     std::set<const FunctionDecl*> allFuncs;
 };
 
+std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
+  
+  std::string QualName;
+  llvm::raw_string_ostream OS(QualName);
+
+  const DeclContext *Ctx = Decl->getDeclContext();
+
+  using ContextsTy = SmallVector<const DeclContext *, 8>;
+  ContextsTy NamedCtxs;
+
+  // Collect named contexts.
+  while (Ctx) {
+    if (isa<NamedDecl>(Ctx))
+      NamedCtxs.push_back(Ctx);
+    Ctx = Ctx->getParent();
+  }
+
+  for (const DeclContext *DC : llvm::reverse(NamedCtxs)) {
+    if (const auto *Spec = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
+      OS << Spec->getNameAsString();
+    } else if (const auto *ND = dyn_cast<NamespaceDecl>(DC)) {
+      OS <<  ND->getNameAsString();
+    } else if (const auto *RD = dyn_cast<RecordDecl>(DC)) {
+      OS << RD->getNameAsString();
+    } else if (const auto *FD = dyn_cast<FunctionDecl>(DC)) {
+      OS << FD->getNameAsString();
+    } else if (const auto *ED = dyn_cast<EnumDecl>(DC)) {
+      OS << ED->getNameAsString();
+    } else {
+      OS << cast<NamedDecl>(DC)->getNameAsString();
+    }
+    OS << "::";
+  }
+
+  // if (Decl->getDeclName() || isa<DecompositionDecl>(Decl))
+  OS << Decl->getNameAsString();
+  // else
+  //   return "";
+//    OS << "(anonymous)";
+
+  return OS.str();
+
+}
 
 void SerializeData(FILE* file, const MappingData& md) {
 
@@ -53,13 +96,13 @@ void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "  \"types\" : [\n");
     for(auto it = md.allTypes.begin(); it != md.allTypes.end(); ++it) {
-        auto name = (*it)->getQualifiedNameAsString();
+        auto name = getQnameForSystemSafeDb(*it);
         fprintf(file, "    \"%s\",\n", name.c_str());
     }    
 
     fprintf(file, "  ],\n  \"functions\" : [\n");
     for(auto it = md.allFuncs.begin(); it != md.allFuncs.end(); ++it) {
-        auto name = (*it)->getQualifiedNameAsString();
+        auto name = getQnameForSystemSafeDb(*it);
         fprintf(file, "    \"%s\",\n", name.c_str());
     }    
 
