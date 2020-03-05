@@ -528,6 +528,7 @@ static int clangTidyMain(int Argc, const char **Argv) {
 //    }
     return WErrorCount;
   }
+  llvm::errs() << "done\n";
 
   return 0;
 }
