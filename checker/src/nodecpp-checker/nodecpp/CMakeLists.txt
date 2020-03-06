@@ -28,8 +28,5 @@ add_clang_library(clangTidyNodeCppModule
   clangASTMatchers
   clangBasic
   clangLex
-  clangTidy
-  clangTidyMiscModule
-  clangTidyUtils
   clangTooling
   )

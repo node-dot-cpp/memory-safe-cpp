@@ -44,6 +44,11 @@ Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
 struct MappingData {
     std::set<const CXXRecordDecl*> allTypes;
     std::set<const FunctionDecl*> allFuncs;
+
+    std::set<std::string> allTypeNames;
+    std::set<std::string> allFuncNames;
+
+    void GenerateNames();
 };
 
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
@@ -90,20 +95,35 @@ std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
 
 }
 
+
+void MappingData::GenerateNames() {
+    // We generate all names and put them into set, so they get
+    // lexicograph ordered, and make the tool deterministic
+
+    for(auto it = allTypes.begin(); it != allTypes.end(); ++it) {
+        auto name = getQnameForSystemSafeDb(*it);
+        allTypeNames.insert(name);
+    }    
+
+    for(auto it = allFuncs.begin(); it != allFuncs.end(); ++it) {
+        auto name = getQnameForSystemSafeDb(*it);
+        allFuncNames.insert(name);
+    }    
+
+}
+
 void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "[\n{\n");
 
     fprintf(file, "  \"types\" : [\n");
-    for(auto it = md.allTypes.begin(); it != md.allTypes.end(); ++it) {
-        auto name = getQnameForSystemSafeDb(*it);
-        fprintf(file, "    \"%s\",\n", name.c_str());
+    for(auto it = md.allTypeNames.begin(); it != md.allTypeNames.end(); ++it) {
+        fprintf(file, "    \"%s\",\n", it->c_str());
     }    
 
     fprintf(file, "  ],\n  \"functions\" : [\n");
-    for(auto it = md.allFuncs.begin(); it != md.allFuncs.end(); ++it) {
-        auto name = getQnameForSystemSafeDb(*it);
-        fprintf(file, "    \"%s\",\n", name.c_str());
+    for(auto it = md.allFuncNames.begin(); it != md.allFuncNames.end(); ++it) {
+        fprintf(file, "    \"%s\",\n", it->c_str());
     }    
 
     fprintf(file, "  ]\n}\n]\n");
@@ -165,7 +185,7 @@ public:
         //     errs() << "-----------\n";
         //     visitor2.TraverseDecl(context.getTranslationUnitDecl());
         // }
-
+        md.GenerateNames();
         SerializeData(os, md);
     }
 };
