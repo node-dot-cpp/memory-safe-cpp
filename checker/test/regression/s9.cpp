@@ -45,8 +45,6 @@ nodecpp::awaitable<void> func() {
 	[[nodecpp::no_await]] no_await_function();
 
 	no_await_function();
-// CHECK: :[[@LINE-1]]:2: error: (S9)
-
 
 	co_await no_await_function(); //this is ok
 

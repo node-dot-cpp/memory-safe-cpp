@@ -20,6 +20,7 @@
 #include "clang/AST/ASTConsumer.h"
 #include "clang/Driver/Options.h"
 #include "clang/Tooling/CommonOptionsParser.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/Process.h"
 #include "llvm/Support/TargetSelect.h"
 
@@ -195,6 +196,12 @@ report to stderr.
                                         cl::init(false),
                                         cl::cat(NodecppCheckerCategory));
 
+static cl::opt<bool> RawPtr("raw-ptr", cl::desc(R"(
+Allow for non null raw pointers.
+)"),
+                                        cl::init(false),
+                                        cl::cat(NodecppCheckerCategory));
+
 // static cl::opt<bool> AnalyzeTemporaryDtors("analyze-temporary-dtors",
 //                                            cl::desc(R"(
 // Enable temporary destructor-aware analysis in
@@ -227,13 +234,13 @@ static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
 static cl::opt<bool>
 ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
         cl::cat(NodecppCheckerCategory));
-static cl::opt<bool>
-ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
-        cl::cat(NodecppCheckerCategory));
-static cl::opt<bool>
-ASTPrint("ast-print",
-         cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
-         cl::cat(NodecppCheckerCategory));
+// static cl::opt<bool>
+// ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
+//         cl::cat(NodecppCheckerCategory));
+// static cl::opt<bool>
+// ASTPrint("ast-print",
+//          cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
+//          cl::cat(NodecppCheckerCategory));
 static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
     cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)),
@@ -344,6 +351,8 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
     Safes->getTypes(GlobalOptions.SafeTypes);
   }
 
+  GlobalOptions.AllowRawPointers = RawPtr;
+
   ClangTidyOptions DefaultOptions;
   DefaultOptions.Checks = "nodecpp-*";
   DefaultOptions.WarningsAsErrors = "";
@@ -394,6 +403,8 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
 }
 
 static int clangTidyMain(int Argc, const char **Argv) {
+  llvm::sys::PrintStackTraceOnErrorSignal(Argv[0]);
+
   CommonOptionsParser OptionsParser(Argc, Argv, NodecppCheckerCategory,
                                     cl::ZeroOrMore);
 
@@ -467,6 +478,7 @@ static int clangTidyMain(int Argc, const char **Argv) {
   }
 
   ProfileData Profile;
+  ProfileData *PPtr = EnableCheckProfile ? &Profile : nullptr;
 
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
@@ -474,8 +486,7 @@ static int clangTidyMain(int Argc, const char **Argv) {
 
   ClangTidyContext Context(std::move(OwningOptionsProvider));
   runClangTidy(Context, OptionsParser.getCompilations(), PathList,
-               EnableCheckProfile ? &Profile : nullptr,
-               ASTDump, ASTList, ASTPrint, ASTDumpFilter);
+               PPtr, ASTDump, ASTDumpFilter);
                
 //  ArrayRef<ClangTidyError> Errors = Context.getErrors();
   // bool FoundErrors =
@@ -520,6 +531,7 @@ static int clangTidyMain(int Argc, const char **Argv) {
 //    }
     return WErrorCount;
   }
+  llvm::errs() << "done\n";
 
   return 0;
 }

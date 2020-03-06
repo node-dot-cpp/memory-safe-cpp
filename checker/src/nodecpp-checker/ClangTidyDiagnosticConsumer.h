@@ -242,6 +242,7 @@ private:
   ASTContext *Context;
 
   CheckerData ChkData;
+  bool AllowRawPointers = false;
 };
 
 /// \brief A diagnostic consumer that turns each \c Diagnostic into a

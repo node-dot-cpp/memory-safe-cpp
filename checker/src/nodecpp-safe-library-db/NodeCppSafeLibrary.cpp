@@ -44,23 +44,86 @@ Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
 struct MappingData {
     std::set<const CXXRecordDecl*> allTypes;
     std::set<const FunctionDecl*> allFuncs;
+
+    std::set<std::string> allTypeNames;
+    std::set<std::string> allFuncNames;
+
+    void GenerateNames();
 };
 
+std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
+  
+  std::string QualName;
+  llvm::raw_string_ostream OS(QualName);
+
+  const DeclContext *Ctx = Decl->getDeclContext();
+
+  using ContextsTy = SmallVector<const DeclContext *, 8>;
+  ContextsTy NamedCtxs;
+
+  // Collect named contexts.
+  while (Ctx) {
+    if (isa<NamedDecl>(Ctx))
+      NamedCtxs.push_back(Ctx);
+    Ctx = Ctx->getParent();
+  }
+
+  for (const DeclContext *DC : llvm::reverse(NamedCtxs)) {
+    if (const auto *Spec = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
+      OS << Spec->getNameAsString();
+    } else if (const auto *ND = dyn_cast<NamespaceDecl>(DC)) {
+      OS <<  ND->getNameAsString();
+    } else if (const auto *RD = dyn_cast<RecordDecl>(DC)) {
+      OS << RD->getNameAsString();
+    } else if (const auto *FD = dyn_cast<FunctionDecl>(DC)) {
+      OS << FD->getNameAsString();
+    } else if (const auto *ED = dyn_cast<EnumDecl>(DC)) {
+      OS << ED->getNameAsString();
+    } else {
+      OS << cast<NamedDecl>(DC)->getNameAsString();
+    }
+    OS << "::";
+  }
+
+  // if (Decl->getDeclName() || isa<DecompositionDecl>(Decl))
+  OS << Decl->getNameAsString();
+  // else
+  //   return "";
+//    OS << "(anonymous)";
+
+  return OS.str();
+
+}
+
+
+void MappingData::GenerateNames() {
+    // We generate all names and put them into set, so they get
+    // lexicograph ordered, and make the tool deterministic
+
+    for(auto it = allTypes.begin(); it != allTypes.end(); ++it) {
+        auto name = getQnameForSystemSafeDb(*it);
+        allTypeNames.insert(name);
+    }    
+
+    for(auto it = allFuncs.begin(); it != allFuncs.end(); ++it) {
+        auto name = getQnameForSystemSafeDb(*it);
+        allFuncNames.insert(name);
+    }    
+
+}
 
 void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "[\n{\n");
 
     fprintf(file, "  \"types\" : [\n");
-    for(auto it = md.allTypes.begin(); it != md.allTypes.end(); ++it) {
-        auto name = (*it)->getQualifiedNameAsString();
-        fprintf(file, "    \"%s\",\n", name.c_str());
+    for(auto it = md.allTypeNames.begin(); it != md.allTypeNames.end(); ++it) {
+        fprintf(file, "    \"%s\",\n", it->c_str());
     }    
 
     fprintf(file, "  ],\n  \"functions\" : [\n");
-    for(auto it = md.allFuncs.begin(); it != md.allFuncs.end(); ++it) {
-        auto name = (*it)->getQualifiedNameAsString();
-        fprintf(file, "    \"%s\",\n", name.c_str());
+    for(auto it = md.allFuncNames.begin(); it != md.allFuncNames.end(); ++it) {
+        fprintf(file, "    \"%s\",\n", it->c_str());
     }    
 
     fprintf(file, "  ]\n}\n]\n");
@@ -122,7 +185,7 @@ public:
         //     errs() << "-----------\n";
         //     visitor2.TraverseDecl(context.getTranslationUnitDecl());
         // }
-
+        md.GenerateNames();
         SerializeData(os, md);
     }
 };

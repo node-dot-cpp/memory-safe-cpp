@@ -31,6 +31,11 @@ void RawPointerDereferenceCheck::registerMatchers(MatchFinder *Finder) {
 
 void RawPointerDereferenceCheck::check(const MatchFinder::MatchResult &Result) {
 
+  bool Allow = getContext()->getGlobalOptions().AllowRawPointers;
+  if(Allow)
+    return;
+
+
   if (auto Ex = Result.Nodes.getNodeAs<MemberExpr>("arrow")) {
     auto Base = Ex->getBase()->IgnoreParenImpCasts();
     if (isa<CXXThisExpr>(Base))

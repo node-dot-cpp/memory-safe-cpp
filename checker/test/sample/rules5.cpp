@@ -33,7 +33,7 @@ void rule_S52() {
         {
             naked_ptr<int> i2;
             i1 = ff(i1, i2);
-// CHECK: :[[@LINE-1]]:16: error: (S5.2)
+// CHECK: :[[@LINE-1]]:16: error: (S5.1)
         }
     }
 

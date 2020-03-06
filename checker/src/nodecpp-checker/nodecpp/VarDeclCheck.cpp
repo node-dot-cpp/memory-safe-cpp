@@ -140,8 +140,8 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
   }
 
   if (isRawPointerType(Qt)) {
-    //getContext()->getGlobalOptions().SafeFunctions;
-    bool Allow = false;
+
+    bool Allow = getContext()->getGlobalOptions().AllowRawPointers;
     if (!Allow) {
       diag(Var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
       return;
@@ -154,12 +154,25 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    // //params don't need initializer
-    if (!IsParam) {
-      auto E = Var->getInit();
-      if (!E) {
+    if (auto P = dyn_cast<ParmVarDecl>(Var)) {
+      // params check they don't have a null default initializer
+      auto Ex = P->getDefaultArg();
+      if(Ex && isNullPtrValue(getASTContext(), Ex)) {
         diag(Var->getLocation(),
-             "(S5.3) raw pointer variable type must have initializer");
+             "(RAW) raw pointer variable can't be initialized to null");
+        return;
+      }
+    }
+    else {
+      auto Ex = Var->getInit();
+      if (!Ex) {
+        diag(Var->getLocation(),
+             "(RAW) raw pointer variable type must have initializer");
+        return;
+      }
+      else if(isNullPtrValue(getASTContext(), Ex)) {
+        diag(Var->getLocation(),
+             "(RAW) raw pointer variable can't be initialized to null");
         return;
       }
     }

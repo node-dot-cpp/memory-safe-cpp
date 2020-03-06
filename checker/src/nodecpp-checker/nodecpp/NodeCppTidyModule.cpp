@@ -21,14 +21,15 @@
 #include "MayExtendLambdaCheck.h"
 #include "NakedAssignmentCheck.h"
 #include "NakedPtrFuncCheck.h"
-#include "NakedPtrReturnCheck.h"
 #include "NewExprCheck.h"
 #include "PtrArithmeticCheck.h"
 #include "RawPointerAssignmentCheck.h"
 #include "RawPointerDereferenceCheck.h"
 #include "RawPtrExprCheck.h"
 #include "RecordDeclCheck.h"
+#include "ReturnCheck.h"
 #include "StaticStorageCheck.h"
+#include "StringLiteralCheck.h"
 #include "TemporaryExprCheck.h"
 #include "VarDeclCheck.h"
 
@@ -55,8 +56,8 @@ public:
         "nodecpp-naked-assignment");
     CheckFactories.registerCheck<NakedPtrFuncCheck>(
         "nodecpp-naked-ptr-func");
-    CheckFactories.registerCheck<NakedPtrReturnCheck>(
-        "nodecpp-naked-ptr-return");
+    CheckFactories.registerCheck<ReturnCheck>(
+        "nodecpp-return");
     CheckFactories.registerCheck<NewExprCheck>(
         "nodecpp-new-expr");
     CheckFactories.registerCheck<PtrArithmeticCheck>(
@@ -71,6 +72,8 @@ public:
         "nodecpp-record-decl");
     CheckFactories.registerCheck<StaticStorageCheck>(
         "nodecpp-static-storage");
+    CheckFactories.registerCheck<StringLiteralCheck>(
+        "nodecpp-string-literal");
     CheckFactories.registerCheck<TemporaryExprCheck>(
         "nodecpp-temporary-expr");
     CheckFactories.registerCheck<VarDeclCheck>(

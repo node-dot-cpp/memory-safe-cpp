@@ -55,7 +55,10 @@ bool isAwaitableName(const std::string &Name) {
 
 bool isNakedPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::naked_ptr_impl" ||
-         Name == "nodecpp::safememory::naked_ptr_no_checks";
+         Name == "nodecpp::safememory::naked_ptr_no_checks" ||
+         Name == "nodecpp::safememory::nullable_ptr" ||
+         Name == "nodecpp::safememory::nullable_ptr_impl" ||
+         Name == "nodecpp::safememory::nullable_ptr_no_checks";
 }
 
 bool isOsnMethodName(const std::string& Name) {
@@ -87,6 +90,11 @@ bool isWaitForAllName(const std::string& Name) {
   return Name == "nodecpp::wait_for_all";
 }
 
+bool isNodeBaseName(const std::string& Name) {
+  return Name == "NodeBase" || 
+    Name == "nodecpp::NodeBase" || 
+    Name == "nodecpp::net::NodeBase";
+}
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
@@ -128,95 +136,42 @@ bool isSystemSafeFunctionName(const ClangTidyContext *Context,
 
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
   
-  // mb: this function is borrowed from NamedDecl::getQualifiedNameAsString
-  // but it doesn't use a PrintingPolicy, doesn't show template parameters
-  // and will short-circuit and return empty string on any annonimous context
-  
   std::string QualName;
   llvm::raw_string_ostream OS(QualName);
 
   const DeclContext *Ctx = Decl->getDeclContext();
 
-  if (Ctx->isFunctionOrMethod()) {
-    // printName(OS);
-    return "";
-  }
-
   using ContextsTy = SmallVector<const DeclContext *, 8>;
-  ContextsTy Contexts;
+  ContextsTy NamedCtxs;
 
   // Collect named contexts.
   while (Ctx) {
     if (isa<NamedDecl>(Ctx))
-      Contexts.push_back(Ctx);
+      NamedCtxs.push_back(Ctx);
     Ctx = Ctx->getParent();
   }
 
-  for (const DeclContext *DC : llvm::reverse(Contexts)) {
+  for (const DeclContext *DC : llvm::reverse(NamedCtxs)) {
     if (const auto *Spec = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
-      OS << Spec->getName();
-      // const TemplateArgumentList &TemplateArgs = Spec->getTemplateArgs();
-      // printTemplateArgumentList(OS, TemplateArgs.asArray(), P);
+      OS << Spec->getNameAsString();
     } else if (const auto *ND = dyn_cast<NamespaceDecl>(DC)) {
-      if (/* P.SuppressUnwrittenScope && */
-          (ND->isAnonymousNamespace() || ND->isInline()))
-        return "";
-      // if (ND->isAnonymousNamespace()) {
-      //   OS << (P.MSVCFormatting ? "`anonymous namespace\'"
-      //                           : "(anonymous namespace)");
-      // }
-      else
-        OS << *ND;
+      OS <<  ND->getNameAsString();
     } else if (const auto *RD = dyn_cast<RecordDecl>(DC)) {
-      if (!RD->getIdentifier())
-        // OS << "(anonymous " << RD->getKindName() << ')';
-        return "";
-      else
-        OS << *RD;
+      OS << RD->getNameAsString();
     } else if (const auto *FD = dyn_cast<FunctionDecl>(DC)) {
-      // const FunctionProtoType *FT = nullptr;
-      // if (FD->hasWrittenPrototype())
-      //   FT = dyn_cast<FunctionProtoType>(FD->getType()->castAs<FunctionType>());
-
-      // OS << *FD << '(';
-      // if (FT) {
-      //   unsigned NumParams = FD->getNumParams();
-      //   for (unsigned i = 0; i < NumParams; ++i) {
-      //     if (i)
-      //       OS << ", ";
-      //     OS << FD->getParamDecl(i)->getType().stream(P);
-      //   }
-
-      //   if (FT->isVariadic()) {
-      //     if (NumParams > 0)
-      //       OS << ", ";
-      //     OS << "...";
-      //   }
-      // }
-      // OS << ')';
-      return "";
+      OS << FD->getNameAsString();
     } else if (const auto *ED = dyn_cast<EnumDecl>(DC)) {
-      // C++ [dcl.enum]p10: Each enum-name and each unscoped
-      // enumerator is declared in the scope that immediately contains
-      // the enum-specifier. Each scoped enumerator is declared in the
-      // scope of the enumeration.
-      // For the case of unscoped enumerator, do not include in the qualified
-      // name any information about its enum enclosing scope, as its visibility
-      // is global.
-      if (ED->isScoped())
-        OS << *ED;
-      else
-        return "";
+      OS << ED->getNameAsString();
     } else {
-      OS << *cast<NamedDecl>(DC);
+      OS << cast<NamedDecl>(DC)->getNameAsString();
     }
     OS << "::";
   }
 
-  if (Decl->getDeclName() /*|| isa<DecompositionDecl>(Decl)*/)
-    OS << *Decl;
-  else
-    return "";
+  // if (Decl->getDeclName() || isa<DecompositionDecl>(Decl))
+  OS << Decl->getNameAsString();
+  // else
+  //   return "";
 //    OS << "(anonymous)";
 
   return OS.str();
@@ -392,6 +347,35 @@ bool isRawPointerType(QualType Qt) {
   assert(Qt.isCanonical());
 
   return Qt->isPointerType();
+}
+
+bool isNullPtrValue(ASTContext *Context, const Expr *Ex) {
+    return Ex->isNullPointerConstant(*Context, 
+      Expr::NullPointerConstantValueDependence::NPC_NeverValueDependent);
+}
+
+bool isStringLiteralType(QualType Qt) {
+  
+  assert(Qt.isCanonical());
+
+  auto R = Qt->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  auto Name = getQnameForSystemSafeDb(R);
+  return Name == "nodecpp::string_literal" || Name == "nodecpp::StringLiteral";
+}
+
+
+bool isCharPointerType(QualType Qt) {
+  assert(Qt.isCanonical());
+
+  if(Qt->isPointerType()) {
+    auto Qt2 = Qt->getPointeeType();
+    if(Qt2->isAnyCharacterType())
+      return true;
+  }
+  return false;
 }
 
 const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
@@ -902,6 +886,43 @@ const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
     return nullptr;
 }
 
+
+const FunctionDecl *getEnclosingFunctionDecl(ASTContext *Context, const Stmt *St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getEnclosingFunctionDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<FunctionDecl>())
+      return Ch;
+  }
+
+  return nullptr;
+}
+
+const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getEnclosingCXXRecordDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<CXXMethodDecl>())
+      return Ch->getParent();
+  }
+
+  return nullptr;
+}
+
+
+
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
   
   assert(D);
@@ -917,6 +938,50 @@ bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
     return false;
 }
 
+bool isDerivedFromNodeBase(QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(R);
+  if(isNodeBaseName(Name))
+    return true;
+
+  for(auto Each : R->bases()) {
+    if(isDerivedFromNodeBase(Each.getType()))
+      return true;
+  }
+
+  return false;
+}
+
+bool isEmptyClass(QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  if(!R->field_empty())
+    return false;
+
+  for(auto Each : R->bases()) {
+    if(!isEmptyClass(Each.getType()))
+      return false;
+  }
+
+  return true;
+}
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
                                                      QualType Arg) {

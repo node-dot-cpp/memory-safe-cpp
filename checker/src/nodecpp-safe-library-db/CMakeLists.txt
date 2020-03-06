@@ -5,13 +5,13 @@ set( LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_executable(nodecpp-safe-library-db
+add_clang_executable(nodecpp-safe-library
   NodeCppSafeLibrary.cpp
   raiistdiofile.h
   )
 
 
-target_link_libraries(nodecpp-safe-library-db
+target_link_libraries(nodecpp-safe-library
   PRIVATE
   clangAST
   clangBasic
@@ -20,5 +20,5 @@ target_link_libraries(nodecpp-safe-library-db
   clangTooling
   )
 
-install(TARGETS nodecpp-safe-library-db
+install(TARGETS nodecpp-safe-library
   RUNTIME DESTINATION bin)

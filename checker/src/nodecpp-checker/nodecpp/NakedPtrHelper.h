@@ -67,10 +67,12 @@ bool isNakedPtrName(const std::string& Name);
 bool isOsnMethodName(const std::string& Name);
 bool isSoftPtrCastName(const std::string& Name);
 bool isWaitForAllName(const std::string& Name);
+bool isNodeBaseName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
+
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl);
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
@@ -85,6 +87,11 @@ bool isStdFunctionType(QualType Qt);
 bool isLambdaType(QualType Qt);
 
 bool isRawPointerType(QualType Qt);
+bool isNullPtrValue(ASTContext *Context, const Expr *Ex);
+
+bool isStringLiteralType(QualType Qt);
+bool isCharPointerType(QualType Qt);
+
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);
@@ -168,9 +175,23 @@ bool isFunctionPtr(const Expr *Ex);
 const Stmt *getParentStmt(ASTContext *Context, const Stmt *St);
 const DeclStmt* getParentDeclStmt(ASTContext *Context, const Decl* Dc);
 
+
+/// \brief returns the enclosing \c FunctionDecl where this \c Stmt lives
+const FunctionDecl* getEnclosingFunctionDecl(ASTContext *Context, const Stmt* St);
+
+/// \brief returns the enclosing \c CXXRecordDecl where this \c Stmt lives
+const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* St);
+
 /// \brief Returns \c true if \p D is either a \c ParmVarDecl
 /// or the argument of a \c CXXCatchStmt
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);
+
+/// \brief Returns \c true if this class is derived from NodeBase
+bool isDerivedFromNodeBase(QualType Qt);
+
+/// \brief Returns \c true if this is an empty class (without any members),
+/// an all its base classes are also empty
+bool isEmptyClass(QualType Qt);
 
 class NakedPtrScopeChecker {
 

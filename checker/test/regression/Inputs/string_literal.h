@@ -25,22 +25,21 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_SERVER_H
-#define NODECPP_SERVER_H
-
-#include <functional>
-
-class NodeBase {};
-
+#ifndef STRING_LITERAL_H
+#define STRING_LITERAL_H
 namespace nodecpp {
 
-class Socket {};
-
-class /*[[nodecpp::owning_only]]*/ SrvMember
-{
+    class string_literal {
     public:
-    void onEvent(std::function<void()> cb [[nodecpp::may_extend_to_this]]);
-};
-}
+        string_literal();
+        string_literal(const char*);
+        string_literal(const string_literal&);
 
-#endif //NODECPP_SERVER_H
+        string_literal& operator=(const char*);
+        string_literal& operator=(const string_literal&);
+
+    };
+
+} // namespace nodecpp
+
+#endif

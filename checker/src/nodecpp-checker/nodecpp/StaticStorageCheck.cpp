@@ -11,6 +11,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "StaticStorageCheck.h"
+#include "NakedPtrHelper.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
 
@@ -32,7 +33,10 @@ void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
     return;
 
   auto Qt = Decl->getType().getCanonicalType();
-  if (Qt.isConstQualified() && Qt->isBuiltinType())
+  if (Qt.isConstQualified())
+    return;
+
+  if(isEmptyClass(Qt))
     return;
 
   diag(Decl->getLocation(),

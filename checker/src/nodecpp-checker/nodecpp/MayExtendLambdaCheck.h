@@ -27,13 +27,14 @@ public:
   MayExtendLambdaCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
-  bool checkLambda(const LambdaExpr *Lamb, std::pair<bool, const ValueDecl*> Dc);
-//  void checkLambda2(const LambdaExpr *lamb);
- // static const LambdaExpr *getLambda(const Expr *expr);
-  bool tryCheckAsLambda(const Expr *Ex, std::pair<bool, const ValueDecl*> Dc);
 
-  static bool canMayExtendBeCalled(const Expr* Ex);
-  static std::pair<bool, const ValueDecl*> canMayExtendBeCalled2(const Expr* Ex);
+  bool checkLambda(const LambdaExpr *Lamb, bool IsCompositeOfThis);
+
+  /// returns \c true if the expression was checked as a lambda 
+  /// (either positively or negatively)
+  bool tryCheckAsLambda(const Expr *Ex,  bool IsCompositeOfThis);
+
+  static bool isCompositeOfThis(const Expr *Ex);
 
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
 };

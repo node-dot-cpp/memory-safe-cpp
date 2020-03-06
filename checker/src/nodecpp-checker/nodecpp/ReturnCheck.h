@@ -1,7 +1,7 @@
 /*******************************************************************************
   Copyright (C) 2019 OLogN Technologies AG
 *******************************************************************************/
-//===--- CallExprCheck.h - clang-tidy----------------------------*- C++ -*-===//
+//===--- ReturnCheck.h - clang-tidy----------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NODECPP_CHECKER_NODECPP_CALLEXPRCHECK_H
-#define NODECPP_CHECKER_NODECPP_CALLEXPRCHECK_H
+#ifndef NODECPP_CHECKER_NODECPP_RETURNCHECK_H
+#define NODECPP_CHECKER_NODECPP_RETURNCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -21,17 +21,16 @@ namespace checker {
 /// FIXME: Write a short description.
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/nodecpp-call-expr.html
-class CallExprCheck : public ClangTidyCheck {
+/// http://clang.llvm.org/extra/clang-tidy/checks/nodecpp-naked-ptr-return.html
+class ReturnCheck : public ClangTidyCheck {
 public:
-  CallExprCheck(StringRef Name, ClangTidyContext *Context)
+  ReturnCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
-
 };
 
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_NODECPP_CALLEXPRCHECK_H
+#endif // NODECPP_CHECKER_NODECPP_RETURNCHECK_H
