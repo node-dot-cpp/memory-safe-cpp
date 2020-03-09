@@ -21,7 +21,7 @@ void checkMap(T& testMap) {
     }
 }
 
-void randomCheck(int sz, int ini) {
+void randomCheckMap(int sz, int ini) {
 
     nodecpp::unordered_map<int, bool> testMap;
 
@@ -58,12 +58,8 @@ void randomCheck(int sz, int ini) {
 
 }
 
+void mainForMap() {
 
-
-
-int main() {
-
-    nodecpp::string s = "hola mundo";
 
     nodecpp::unordered_map<int, int> aMap;
 
@@ -120,8 +116,22 @@ int main() {
     // }
 
     for(size_t i = 0; i != 10; ++i)
-        randomCheck(511, 127);
+        randomCheckMap(511, 127);
 
+}
+
+
+void testString() {
+
+    nodecpp::string s = "hola mundo";
+
+
+}
+
+int main() {
+
+
+    // mainForMap();
     printf("done\n");
     return 0;
 }

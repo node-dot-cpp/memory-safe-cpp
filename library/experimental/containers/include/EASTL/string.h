@@ -291,6 +291,108 @@ namespace nodecpp
 	// #endif
 
 
+	/// reverse_iterator
+	///
+	/// From the C++ standard:
+	/// Bidirectional and random access iterators have corresponding reverse 
+	/// iterator adaptors that iterate through the data structure in the 
+	/// opposite direction. They have the same signatures as the corresponding 
+	/// iterators. The fundamental relation between a reverse iterator and its 
+	/// corresponding iterator i is established by the identity:
+	///     &*(reverse_iterator(i)) == &*(i - 1).
+	/// This mapping is dictated by the fact that while there is always a pointer 
+	/// past the end of an array, there might not be a valid pointer before the
+	/// beginning of an array.
+	///
+	template <typename T>
+	class unsafe_iterator
+	{
+	public:
+		typedef std::random_access_iterator_tag  iterator_category;
+		typedef T         value_type;
+		typedef std::ptrdiff_t                              difference_type;
+		typedef T*   pointer;
+		typedef T& reference;
+
+	// protected:
+		pointer mIterator;
+
+	public:
+		EA_CPP14_CONSTEXPR unsafe_iterator()  
+			: mIterator(nullptr) { }
+
+		EA_CPP14_CONSTEXPR explicit unsafe_iterator(pointer i)
+			: mIterator(i) { }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator<typename std::remove_const<T>::type>& ri)
+			: mIterator(ri.mIterator) { }
+
+		// template <typename U>
+		// EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator<U>& ri)
+		// 	: mIterator(ri.base()) { }
+
+		// This operator= isn't in the standard, but the the C++ 
+		// library working group has tentatively approved it, as it
+		// allows const and non-const reverse_iterators to interoperate.
+		// template <typename U>
+		// EA_CPP14_CONSTEXPR unsafe_iterator<Iterator>& operator=(const unsafe_iterator<U>& ri)
+		// 	{ mIterator = ri.base(); return *this; }
+
+		// EA_CPP14_CONSTEXPR iterator_type base() const
+		// 	{ return mIterator; }
+
+		EA_CPP14_CONSTEXPR reference operator*() const
+		{
+			return *mIterator;
+		}
+
+		EA_CPP14_CONSTEXPR pointer operator->() const
+			{ return &(operator*()); }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator& operator++()
+			{ ++mIterator; return *this; }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator operator++(int)
+		{
+			unsafe_iterator ri(*this);
+			++mIterator;
+			return ri;
+		}
+
+		EA_CPP14_CONSTEXPR unsafe_iterator& operator--()
+			{ --mIterator; return *this; }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator operator--(int)
+		{
+			unsafe_iterator ri(*this);
+			--mIterator;
+			return ri;
+		}
+
+		EA_CPP14_CONSTEXPR unsafe_iterator operator+(difference_type n) const
+			{ return unsafe_iterator(mIterator + n); }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator& operator+=(difference_type n)
+			{ mIterator += n; return *this; }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator operator-(difference_type n) const
+			{ return unsafe_iterator(mIterator - n); }
+
+		EA_CPP14_CONSTEXPR unsafe_iterator& operator-=(difference_type n)
+			{ mIterator -= n; return *this; }
+
+		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
+			{ return mIterator[n]; }
+
+		EA_CPP14_CONSTEXPR bool operator==(const unsafe_iterator& ri) const
+			{ return mIterator == ri.mIterator; }
+
+		EA_CPP14_CONSTEXPR bool operator!=(const unsafe_iterator& ri) const
+			{ return !operator==(ri); }
+	};
+
+
+
 	///////////////////////////////////////////////////////////////////////////////
 	/// basic_string
 	///
@@ -321,8 +423,8 @@ namespace nodecpp
 		typedef const T*                                        const_pointer;
 		typedef T&                                              reference;
 		typedef const T&                                        const_reference;
-		typedef T*                                              iterator;           // Maintainer note: We want to leave iterator defined as T* -- at least in release builds -- as this gives some algorithms an advantage that optimizers cannot get around.
-		typedef const T*                                        const_iterator;
+		typedef unsafe_iterator<T>                              iterator;           // Maintainer note: We want to leave iterator defined as T* -- at least in release builds -- as this gives some algorithms an advantage that optimizers cannot get around.
+		typedef unsafe_iterator<const T>                        const_iterator;
 		typedef std::reverse_iterator<iterator>                 reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>           const_reverse_iterator;
 		typedef std::size_t                                     size_type;          // See config.h for the definition of eastl_size_t, which defaults to size_t.
@@ -367,7 +469,7 @@ namespace nodecpp
 		// The view of memory when the string data is obtained from the allocator.
 		struct HeapLayout
 		{
-			value_type* mpBegin;  // Begin of string.
+			pointer mpBegin;  // Begin of string.
 			size_type mnSize;     // Size of the string. Number of characters currently in the string, not including the trailing '0'
 			size_type mnCapacity; // Capacity of the string. Number of characters string can hold, not including the trailing '0'
 		};
@@ -433,8 +535,8 @@ namespace nodecpp
 			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
 			inline bool IsHeap() const EA_NOEXCEPT                    { return !!(sso.mRemainingSizeField.mnRemainingSize & kSSOMask); }
 			inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
-			inline value_type* SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
-			inline const value_type* SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
+			inline pointer SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
+			inline const_pointer SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
 
 			// Largest value for SSO.mnSize == 23, which has two LSB bits set, but on big-endian (BE)
 			// use least significant bit (LSB) to denote heap so shift.
@@ -463,36 +565,36 @@ namespace nodecpp
 
 			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return size_type(CapacityPtr() - EndPtr()); }
 
-			inline value_type* HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
-			inline const value_type* HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
+			inline pointer HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
+			inline const_pointer HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
 
-			inline value_type* SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
-			inline const value_type* SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
+			inline pointer SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
+			inline const_pointer SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
 
-			inline value_type* BeginPtr() EA_NOEXCEPT                    { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
-			inline const value_type* BeginPtr() const EA_NOEXCEPT        { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
+			inline pointer BeginPtr() EA_NOEXCEPT                    { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
+			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
 
-			inline value_type* HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
-			inline const value_type* HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
+			inline pointer HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
+			inline const_pointer HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
 
-			inline value_type* SSOEndPtr() EA_NOEXCEPT                   { return sso.mData + GetSSOSize(); }
-			inline const value_type* SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
+			inline pointer SSOEndPtr() EA_NOEXCEPT                   { return sso.mData + GetSSOSize(); }
+			inline const_pointer SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
 
 			// Points to end of character stream, *ptr == '0'
-			inline value_type* EndPtr() EA_NOEXCEPT                      { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
-			inline const value_type* EndPtr() const EA_NOEXCEPT          { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
+			inline pointer EndPtr() EA_NOEXCEPT                      { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
+			inline const_pointer EndPtr() const EA_NOEXCEPT          { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
 
-			inline value_type* HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
-			inline const value_type* HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
+			inline pointer HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
+			inline const_pointer HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
 
-			inline value_type* SSOCapcityPtr() EA_NOEXCEPT               { return sso.mData + SSOLayout::SSO_CAPACITY; }
-			inline const value_type* SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
+			inline pointer SSOCapcityPtr() EA_NOEXCEPT               { return sso.mData + SSOLayout::SSO_CAPACITY; }
+			inline const_pointer SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- only true when size() == capacity()
-			inline value_type* CapacityPtr() EA_NOEXCEPT                 { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
-			inline const value_type* CapacityPtr() const EA_NOEXCEPT     { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
+			inline pointer CapacityPtr() EA_NOEXCEPT                 { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
+			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
 
-			inline void SetHeapBeginPtr(value_type* pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
+			inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
 
 			inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
 			{
@@ -532,14 +634,14 @@ namespace nodecpp
 		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR));
 		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
-		basic_string(const value_type* p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		EASTL_STRING_EXPLICIT basic_string(const value_type* p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		basic_string(const_pointer p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		EASTL_STRING_EXPLICIT basic_string(const_pointer p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(size_type n, value_type c/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(const this_type& x);
 	    // basic_string(const this_type& x, const allocator_type& allocator);
-		basic_string(const value_type* pBegin, const value_type* pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(CtorDoNotInitialize, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		basic_string(CtorSprintf, const value_type* pFormat, ...);
+		basic_string(CtorSprintf, const_pointer pFormat, ...);
 		basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
 		basic_string(this_type&& x) EA_NOEXCEPT;
@@ -554,7 +656,7 @@ namespace nodecpp
 		template <typename OtherCharType>
 		basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
-		template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
+		template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the pointer constructor.
 		basic_string(CtorConvert, const OtherStringType& x);
 
 	   ~basic_string();
@@ -569,14 +671,14 @@ namespace nodecpp
 
 		// Operator=
 		this_type& operator=(const this_type& x);
-		this_type& operator=(const value_type* p);
+		this_type& operator=(const_pointer p);
 		this_type& operator=(value_type c);
 		this_type& operator=(std::initializer_list<value_type> ilist);
 		this_type& operator=(view_type v);
 		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 
 		#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
-			this_type& operator=(value_type* p) { return operator=((const value_type*)p); } // We need this because otherwise the const value_type* version can collide with the const OtherStringType& version below.
+			this_type& operator=(pointer p) { return operator=(const_cast<const_pointer>(p)); } // We need this because otherwise the const_pointer version can collide with the const OtherStringType& version below.
 
 			template <typename OtherCharType>
 			this_type& operator=(const OtherCharType* p);
@@ -590,10 +692,10 @@ namespace nodecpp
 		// Assignment operations
 		this_type& assign(const this_type& x);
 		this_type& assign(const this_type& x, size_type position, size_type n = npos);
-		this_type& assign(const value_type* p, size_type n);
-		this_type& assign(const value_type* p);
+		this_type& assign(const_pointer p, size_type n);
+		this_type& assign(const_pointer p);
 		this_type& assign(size_type n, value_type c);
-		this_type& assign(const value_type* pBegin, const value_type* pEnd);
+		this_type& assign(const_pointer pBegin, const_pointer pEnd);
 		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 		this_type& assign(std::initializer_list<value_type>);
 
@@ -638,9 +740,9 @@ namespace nodecpp
 		void shrink_to_fit();
 
 		// Raw access
-		const value_type* data() const  EA_NOEXCEPT;
-		      value_type* data()        EA_NOEXCEPT;
-		const value_type* c_str() const EA_NOEXCEPT;
+		const_pointer data() const  EA_NOEXCEPT;
+		      pointer data()        EA_NOEXCEPT;
+		const_pointer c_str() const EA_NOEXCEPT;
 
 		// Element access
 		reference       operator[](size_type n);
@@ -654,18 +756,18 @@ namespace nodecpp
 
 		// Append operations
 		this_type& operator+=(const this_type& x);
-		this_type& operator+=(const value_type* p);
+		this_type& operator+=(const_pointer p);
 		this_type& operator+=(value_type c);
 
 		this_type& append(const this_type& x);
 		this_type& append(const this_type& x,  size_type position, size_type n = npos);
-		this_type& append(const value_type* p, size_type n);
-		this_type& append(const value_type* p);
+		this_type& append(const_pointer p, size_type n);
+		this_type& append(const_pointer p);
 		this_type& append(size_type n, value_type c);
-		this_type& append(const value_type* pBegin, const value_type* pEnd);
+		this_type& append(const_pointer pBegin, const_pointer pEnd);
 
-		this_type& append_sprintf_va_list(const value_type* pFormat, va_list arguments);
-		this_type& append_sprintf(const value_type* pFormat, ...);
+		this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
+		this_type& append_sprintf(const_pointer pFormat, ...);
 
 		template <typename OtherCharType>
 		this_type& append_convert(const OtherCharType* p);
@@ -682,12 +784,12 @@ namespace nodecpp
 		// Insertion operations
 		this_type& insert(size_type position, const this_type& x);
 		this_type& insert(size_type position, const this_type& x, size_type beg, size_type n);
-		this_type& insert(size_type position, const value_type* p, size_type n);
-		this_type& insert(size_type position, const value_type* p);
+		this_type& insert(size_type position, const_pointer p, size_type n);
+		this_type& insert(size_type position, const_pointer p);
 		this_type& insert(size_type position, size_type n, value_type c);
 		iterator   insert(const_iterator p, value_type c);
 		iterator   insert(const_iterator p, size_type n, value_type c);
-		iterator   insert(const_iterator p, const value_type* pBegin, const value_type* pEnd);
+		iterator   insert(const_iterator p, const_pointer pBegin, const_pointer pEnd);
 		iterator   insert(const_iterator p, std::initializer_list<value_type>);
 
 		// Erase operations
@@ -704,50 +806,50 @@ namespace nodecpp
 		// Replacement operations
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
 		this_type&  replace(size_type pos1,     size_type n1, const this_type& x,  size_type pos2, size_type n2 = npos);
-		this_type&  replace(size_type position, size_type n1, const value_type* p, size_type n2);
-		this_type&  replace(size_type position, size_type n1, const value_type* p);
+		this_type&  replace(size_type position, size_type n1, const_pointer p, size_type n2);
+		this_type&  replace(size_type position, size_type n1, const_pointer p);
 		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c);
 		this_type&  replace(const_iterator first, const_iterator last, const this_type& x);
-		this_type&  replace(const_iterator first, const_iterator last, const value_type* p, size_type n);
-		this_type&  replace(const_iterator first, const_iterator last, const value_type* p);
+		this_type&  replace(const_iterator first, const_iterator last, const_pointer p, size_type n);
+		this_type&  replace(const_iterator first, const_iterator last, const_pointer p);
 		this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c);
-		this_type&  replace(const_iterator first, const_iterator last, const value_type* pBegin, const value_type* pEnd);
-		size_type   copy(value_type* p, size_type n, size_type position = 0) const;
+		this_type&  replace(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
+		size_type   copy(pointer p, size_type n, size_type position = 0) const;
 
 		// Find operations
 		size_type find(const this_type& x,  size_type position = 0) const EA_NOEXCEPT;
-		size_type find(const value_type* p, size_type position = 0) const;
-		size_type find(const value_type* p, size_type position, size_type n) const;
+		size_type find(const_pointer p, size_type position = 0) const;
+		size_type find(const_pointer p, size_type position, size_type n) const;
 		size_type find(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Reverse find operations
 		size_type rfind(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
-		size_type rfind(const value_type* p, size_type position = npos) const;
-		size_type rfind(const value_type* p, size_type position, size_type n) const;
+		size_type rfind(const_pointer p, size_type position = npos) const;
+		size_type rfind(const_pointer p, size_type position, size_type n) const;
 		size_type rfind(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first-of operations
 		size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
-		size_type find_first_of(const value_type* p, size_type position = 0) const;
-		size_type find_first_of(const value_type* p, size_type position, size_type n) const;
+		size_type find_first_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last-of operations
 		size_type find_last_of(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
-		size_type find_last_of(const value_type* p, size_type position = npos) const;
-		size_type find_last_of(const value_type* p, size_type position, size_type n) const;
+		size_type find_last_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first not-of operations
 		size_type find_first_not_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
-		size_type find_first_not_of(const value_type* p, size_type position = 0) const;
-		size_type find_first_not_of(const value_type* p, size_type position, size_type n) const;
+		size_type find_first_not_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_not_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_not_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last not-of operations
 		size_type find_last_not_of(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
-		size_type find_last_not_of(const value_type* p, size_type position = npos) const;
-		size_type find_last_not_of(const value_type* p, size_type position, size_type n) const;
+		size_type find_last_not_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_not_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_not_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Substring functionality
@@ -757,15 +859,15 @@ namespace nodecpp
 		int        compare(const this_type& x) const EA_NOEXCEPT;
 		int        compare(size_type pos1, size_type n1, const this_type& x) const;
 		int        compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const;
-		int        compare(const value_type* p) const;
-		int        compare(size_type pos1, size_type n1, const value_type* p) const;
-		int        compare(size_type pos1, size_type n1, const value_type* p, size_type n2) const;
-		static int compare(const value_type* pBegin1, const value_type* pEnd1, const value_type* pBegin2, const value_type* pEnd2);
+		int        compare(const_pointer p) const;
+		int        compare(size_type pos1, size_type n1, const_pointer p) const;
+		int        compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const;
+		static int compare(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
 		// Case-insensitive comparison functions. Not part of C++ this_type. Only ASCII-level locale functionality is supported. Thus this is not suitable for localization purposes.
 		int        comparei(const this_type& x) const EA_NOEXCEPT;
-		int        comparei(const value_type* p) const;
-		static int comparei(const value_type* pBegin1, const value_type* pEnd1, const value_type* pBegin2, const value_type* pEnd2);
+		int        comparei(const_pointer p) const;
+		static int comparei(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
 		// Misc functionality, not part of C++ this_type.
 		void         make_lower();
@@ -773,13 +875,13 @@ namespace nodecpp
 		void         ltrim();
 		void         rtrim();
 		void         trim();
-		void         ltrim(const value_type* p);
-		void         rtrim(const value_type* p);
-		void         trim(const value_type* p);
+		void         ltrim(const_pointer p);
+		void         rtrim(const_pointer p);
+		void         trim(const_pointer p);
 		this_type    left(size_type n) const;
 		this_type    right(size_type n) const;
-		this_type&   sprintf_va_list(const value_type* pFormat, va_list arguments);
-		this_type&   sprintf(const value_type* pFormat, ...);
+		this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
+		this_type&   sprintf(const_pointer pFormat, ...);
 
 		bool validate() const EA_NOEXCEPT;
 		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
@@ -787,16 +889,16 @@ namespace nodecpp
 
 	protected:
 		// Helper functions for initialization/insertion operations.
-		value_type* DoAllocate(size_type n);
-		void        DoFree(value_type* p, size_type n);
+		pointer DoAllocate(size_type n);
+		void        DoFree(pointer p, size_type n);
 		size_type   GetNewCapacity(size_type currentCapacity);
 		size_type   GetNewCapacity(size_type currentCapacity, size_type minimumGrowSize);
 		void        AllocateSelf();
 		void        AllocateSelf(size_type n);
 		void        DeallocateSelf();
 		iterator    InsertInternal(const_iterator p, value_type c);
-		void        RangeInitialize(const value_type* pBegin, const value_type* pEnd);
-		void        RangeInitialize(const value_type* pBegin);
+		void        RangeInitialize(const_pointer pBegin, const_pointer pEnd);
+		void        RangeInitialize(const_pointer pBegin);
 		void        SizeInitialize(size_type n, value_type c);
 
 		bool        IsSSO() const EA_NOEXCEPT;
@@ -814,14 +916,14 @@ namespace nodecpp
 		#endif
 
 		// Replacements for STL template functions.
-		static const value_type* CharTypeStringFindEnd(const value_type* pBegin, const value_type* pEnd, value_type c);
-		static const value_type* CharTypeStringRFind(const value_type* pRBegin, const value_type* pREnd, const value_type c);
-		static const value_type* CharTypeStringSearch(const value_type* p1Begin, const value_type* p1End, const value_type* p2Begin, const value_type* p2End);
-		static const value_type* CharTypeStringRSearch(const value_type* p1Begin, const value_type* p1End, const value_type* p2Begin, const value_type* p2End);
-		static const value_type* CharTypeStringFindFirstOf(const value_type* p1Begin, const value_type* p1End, const value_type* p2Begin, const value_type* p2End);
-		static const value_type* CharTypeStringRFindFirstOf(const value_type* p1RBegin, const value_type* p1REnd, const value_type* p2Begin, const value_type* p2End);
-		static const value_type* CharTypeStringFindFirstNotOf(const value_type* p1Begin, const value_type* p1End, const value_type* p2Begin, const value_type* p2End);
-		static const value_type* CharTypeStringRFindFirstNotOf(const value_type* p1RBegin, const value_type* p1REnd, const value_type* p2Begin, const value_type* p2End);
+		static const_pointer CharTypeStringFindEnd(const_pointer pBegin, const_pointer pEnd, value_type c);
+		static const_pointer CharTypeStringRFind(const_pointer pRBegin, const_pointer pREnd, const value_type c);
+		static const_pointer CharTypeStringSearch(const_pointer p1Begin, const_pointer p1End, const_pointer p2Begin, const_pointer p2End);
+		static const_pointer CharTypeStringRSearch(const_pointer p1Begin, const_pointer p1End, const_pointer p2Begin, const_pointer p2End);
+		static const_pointer CharTypeStringFindFirstOf(const_pointer p1Begin, const_pointer p1End, const_pointer p2Begin, const_pointer p2End);
+		static const_pointer CharTypeStringRFindFirstOf(const_pointer p1RBegin, const_pointer p1REnd, const_pointer p2Begin, const_pointer p2End);
+		static const_pointer CharTypeStringFindFirstNotOf(const_pointer p1Begin, const_pointer p1End, const_pointer p2Begin, const_pointer p2End);
+		static const_pointer CharTypeStringRFindFirstNotOf(const_pointer p1RBegin, const_pointer p1REnd, const_pointer p2Begin, const_pointer p2End);
 
 	}; // basic_string
 
@@ -898,7 +1000,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const value_type* p, size_type n/*, const allocator_type& allocator*/)
+	inline basic_string<T, Allocator>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		RangeInitialize(p, p + n);
@@ -940,7 +1042,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const value_type* p/*, const allocator_type& allocator*/)
+	inline basic_string<T, Allocator>::basic_string(const_pointer p/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		RangeInitialize(p);
@@ -956,7 +1058,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const value_type* pBegin, const value_type* pEnd/*, const allocator_type& allocator*/)
+	inline basic_string<T, Allocator>::basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		RangeInitialize(pBegin, pEnd);
@@ -978,7 +1080,7 @@ namespace nodecpp
 	// CtorSprintf exists so that we can create a version that does a variable argument
 	// sprintf but also doesn't collide with any other constructor declaration.
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>::basic_string(CtorSprintf /*unused*/, const value_type* pFormat, ...)
+	basic_string<T, Allocator>::basic_string(CtorSprintf /*unused*/, const_pointer pFormat, ...)
 		// : mPair_second()
 	{
 		const size_type n = (size_type)CharStrlen(pFormat);
@@ -1056,7 +1158,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline const typename basic_string<T, Allocator>::value_type*
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::data()  const EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
@@ -1064,14 +1166,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline const typename basic_string<T, Allocator>::value_type*
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
 	}
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::value_type*
+	inline typename basic_string<T, Allocator>::pointer
 	basic_string<T, Allocator>::data() EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
@@ -1081,7 +1183,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::begin() EA_NOEXCEPT
 	{
-		return internalLayout().BeginPtr();
+		return iterator(internalLayout().BeginPtr());
 	}
 
 
@@ -1089,7 +1191,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::end() EA_NOEXCEPT
 	{
-		return internalLayout().EndPtr();
+		return iterator(internalLayout().EndPtr());
 	}
 
 
@@ -1097,7 +1199,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::begin() const EA_NOEXCEPT
 	{
-		return internalLayout().BeginPtr();
+		return const_iterator(internalLayout().BeginPtr());
 	}
 
 
@@ -1113,7 +1215,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::end() const EA_NOEXCEPT
 	{
-		return internalLayout().EndPtr();
+		return const_iterator(internalLayout().EndPtr());
 	}
 
 
@@ -1121,7 +1223,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_iterator
 	basic_string<T, Allocator>::cend() const EA_NOEXCEPT
 	{
-		return internalLayout().EndPtr();
+		return const_iterator(internalLayout().EndPtr());
 	}
 
 
@@ -1129,7 +1231,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::reverse_iterator
 	basic_string<T, Allocator>::rbegin() EA_NOEXCEPT
 	{
-		return reverse_iterator(internalLayout().EndPtr());
+		return reverse_iterator(end());
 	}
 
 
@@ -1137,7 +1239,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::reverse_iterator
 	basic_string<T, Allocator>::rend() EA_NOEXCEPT
 	{
-		return reverse_iterator(internalLayout().BeginPtr());
+		return reverse_iterator(begin());
 	}
 
 
@@ -1145,7 +1247,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::rbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().EndPtr());
+		return const_reverse_iterator(end());
 	}
 
 
@@ -1153,7 +1255,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::crbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().EndPtr());
+		return const_reverse_iterator(end());
 	}
 
 
@@ -1161,7 +1263,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::rend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().BeginPtr());
+		return const_reverse_iterator(begin());
 	}
 
 
@@ -1169,7 +1271,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
 	basic_string<T, Allocator>::crend() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(internalLayout().BeginPtr());
+		return const_reverse_iterator(begin());
 	}
 
 
@@ -1326,7 +1428,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const value_type* p)
+	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const_pointer p)
 	{
 		return assign(p, p + CharStrlen(p));
 	}
@@ -1382,7 +1484,7 @@ namespace nodecpp
 		const size_type s = internalLayout().GetSize();
 
 		if(n < s)
-			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
+			erase(begin() + n, end());
 		else if(n > s)
 		{
 			append(n - s, value_type());
@@ -1628,7 +1730,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::operator+=(const value_type* p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::operator+=(const_pointer p)
 	{
 		return append(p);
 	}
@@ -1663,14 +1765,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const value_type* p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p, size_type n)
 	{
 		return append(p, p + n);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const value_type* p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p)
 	{
 		return append(p, p + CharStrlen(p));
 	}
@@ -1705,12 +1807,12 @@ namespace nodecpp
 
 		const size_t         kBufferSize = 512;
 		value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
-		value_type* const    selfBufferEnd = selfBuffer + kBufferSize;
+		pointer const    selfBufferEnd = selfBuffer + kBufferSize;
 		const OtherCharType* pOtherEnd = pOther + n;
 
 		while(pOther != pOtherEnd)
 		{
-			value_type* pSelfBufferCurrent = selfBuffer;
+			pointer pSelfBufferCurrent = selfBuffer;
 			DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
 			append(selfBuffer, pSelfBufferCurrent);
 		}
@@ -1740,7 +1842,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append(const value_type* pBegin, const value_type* pEnd)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer pBegin, const_pointer pEnd)
 	{
 		if(pBegin != pEnd)
 		{
@@ -1777,7 +1879,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf_va_list(const value_type* pFormat, va_list arguments)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
 	{
 		// From unofficial C89 extension documentation:
 		// The vsnprintf returns the number of characters written into the array,
@@ -1897,7 +1999,7 @@ namespace nodecpp
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf(const value_type* pFormat, ...)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf(const_pointer pFormat, ...)
 	{
 		va_list arguments;
 		va_start(arguments, pFormat);
@@ -1952,14 +2054,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const value_type* p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p, size_type n)
 	{
 		return assign(p, p + n);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const value_type* p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p)
 	{
 		return assign(p, p + CharStrlen(p));
 	}
@@ -1983,7 +2085,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const value_type* pBegin, const value_type* pEnd)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer pBegin, const_pointer pEnd)
 	{
 		const size_type n = (size_type)(pEnd - pBegin);
 		if(n <= internalLayout().GetSize())
@@ -2090,7 +2192,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const value_type* p, size_type n)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2108,7 +2210,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const value_type* p)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2149,7 +2251,7 @@ namespace nodecpp
 	inline typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::insert(const_iterator p, value_type c)
 	{
-		if(p == internalLayout().EndPtr())
+		if(p == const_iterator(internalLayout().EndPtr()))
 		{
 			push_back(c);
 			return internalLayout().EndPtr() - 1;
@@ -2182,8 +2284,8 @@ namespace nodecpp
 					const size_type nSavedSize = internalLayout().GetSize();
 					CharStringUninitializedCopy((internalLayout().EndPtr() - n) + 1, internalLayout().EndPtr() + 1, internalLayout().EndPtr() + 1);
 					internalLayout().SetSize(nSavedSize + n);
-					memmove(const_cast<value_type*>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
-					CharTypeAssignN(const_cast<value_type*>(p), n, c);
+					memmove(const_cast<pointer>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
+					CharTypeAssignN(const_cast<pointer>(p), n, c);
 				}
 				else
 				{
@@ -2211,7 +2313,7 @@ namespace nodecpp
 						}
 					#endif
 
-					CharTypeAssignN(const_cast<value_type*>(p), nElementsAfter + 1, c);
+					CharTypeAssignN(const_cast<pointer>(p), nElementsAfter + 1, c);
 				}
 			}
 			else
@@ -2240,7 +2342,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, const value_type* pBegin, const value_type* pEnd)
+	basic_string<T, Allocator>::insert(const_iterator p, const_pointer pBegin, const_pointer pEnd)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2283,8 +2385,8 @@ namespace nodecpp
 					const size_type nSavedSize = internalLayout().GetSize();
 					CharStringUninitializedCopy((internalLayout().EndPtr() - n) + 1, internalLayout().EndPtr() + 1, internalLayout().EndPtr() + 1);
 					internalLayout().SetSize(nSavedSize + n);
-					memmove(const_cast<value_type*>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
-					memmove(const_cast<value_type*>(p), pBegin, (size_t)(n) * sizeof(value_type));
+					memmove(const_cast<pointer>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
+					memmove(const_cast<pointer>(p), pBegin, (size_t)(n) * sizeof(value_type));
 				}
 				else
 				{
@@ -2292,7 +2394,7 @@ namespace nodecpp
 					#if EASTL_EXCEPTIONS_ENABLED
 						const size_type nOldSize = internalLayout().GetSize();
 					#endif
-					const value_type* const pMid = pBegin + (nElementsAfter + 1);
+					const_pointer const pMid = pBegin + (nElementsAfter + 1);
 
 					CharStringUninitializedCopy(pMid, pEnd, internalLayout().EndPtr() + 1);
 					internalLayout().SetSize(internalLayout().GetSize() + (n - nElementsAfter));
@@ -2314,7 +2416,7 @@ namespace nodecpp
 						}
 					#endif
 
-					CharStringUninitializedCopy(pBegin, pMid, const_cast<value_type*>(p));
+					CharStringUninitializedCopy(pBegin, pMid, const_cast<pointer>(p));
 				}
 			}
 			else // Else we need to reallocate to implement this.
@@ -2383,9 +2485,9 @@ namespace nodecpp
 				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
-		memmove(const_cast<value_type*>(p), p + 1, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
+		memmove(const_cast<pointer>(p), p + 1, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
 		internalLayout().SetSize(internalLayout().GetSize() - 1);
-		return const_cast<value_type*>(p);
+		return const_cast<pointer>(p);
 	}
 
 
@@ -2394,18 +2496,18 @@ namespace nodecpp
 	basic_string<T, Allocator>::erase(const_iterator pBegin, const_iterator pEnd)
 	{
 		#if EASTL_ASSERT_ENABLED
-			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
-							   (pEnd < internalLayout().BeginPtr()) || (pEnd > internalLayout().EndPtr()) || (pEnd < pBegin)))
+			if (EASTL_UNLIKELY((pBegin.mIterator < internalLayout().BeginPtr()) || (pBegin.mIterator > internalLayout().EndPtr()) ||
+							   (pEnd.mIterator < internalLayout().BeginPtr()) || (pEnd.mIterator > internalLayout().EndPtr()) || (pEnd.mIterator < pBegin.mIterator)))
 			    EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
 		if(pBegin != pEnd)
 		{
-			memmove(const_cast<value_type*>(pBegin), pEnd, (size_t)((internalLayout().EndPtr() - pEnd) + 1) * sizeof(value_type));
-			const size_type n = (size_type)(pEnd - pBegin);
+			memmove(const_cast<pointer>(pBegin.mIterator), pEnd.mIterator, (size_t)((internalLayout().EndPtr() - pEnd.mIterator) + 1) * sizeof(value_type));
+			const size_type n = (size_type)(pEnd.mIterator - pBegin.mIterator);
 			internalLayout().SetSize(internalLayout().GetSize() - n);
 		}
-		return const_cast<value_type*>(pBegin);
+		return iterator(const_cast<pointer>(pBegin.mIterator));
 	}
 
 
@@ -2465,7 +2567,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const value_type* p, size_type n2)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p, size_type n2)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2484,7 +2586,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const value_type* p)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2530,14 +2632,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const value_type* p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p, size_type n)
 	{
 		return replace(pBegin, pEnd, p, p + n);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const value_type* p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p)
 	{
 		return replace(pBegin, pEnd, p, p + CharStrlen(p));
 	}
@@ -2556,12 +2658,12 @@ namespace nodecpp
 
 		if(nLength >= n)
 		{
-			CharTypeAssignN(const_cast<value_type*>(pBegin), n, c);
+			CharTypeAssignN(const_cast<pointer>(pBegin), n, c);
 			erase(pBegin + n, pEnd);
 		}
 		else
 		{
-			CharTypeAssignN(const_cast<value_type*>(pBegin), nLength, c);
+			CharTypeAssignN(const_cast<pointer>(pBegin), nLength, c);
 			insert(pEnd, n - nLength, c);
 		}
 		return *this;
@@ -2569,7 +2671,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin1, const_iterator pEnd1, const value_type* pBegin2, const value_type* pEnd2)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin1, const_iterator pEnd1, const_pointer pBegin2, const_pointer pEnd2)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin1 < internalLayout().BeginPtr()) || (pBegin1 > internalLayout().EndPtr()) ||
@@ -2583,21 +2685,21 @@ namespace nodecpp
 		if(nLength1 >= nLength2) // If we have a non-expanding operation...
 		{
 			if((pBegin2 > pEnd1) || (pEnd2 <= pBegin1))  // If we have a non-overlapping operation...
-				memcpy(const_cast<value_type*>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
+				memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
 			else
-				memmove(const_cast<value_type*>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
+				memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
 			erase(pBegin1 + nLength2, pEnd1);
 		}
 		else // Else we are expanding.
 		{
 			if((pBegin2 > pEnd1) || (pEnd2 <= pBegin1)) // If we have a non-overlapping operation...
 			{
-				const value_type* const pMid2 = pBegin2 + nLength1;
+				const_pointer const pMid2 = pBegin2 + nLength1;
 
 				if((pEnd2 <= pBegin1) || (pBegin2 > pEnd1))
-					memcpy(const_cast<value_type*>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
+					memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
 				else
-					memmove(const_cast<value_type*>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
+					memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
 				insert(pEnd1, pMid2, pEnd2);
 			}
 			else // else we have an overlapping operation.
@@ -2626,7 +2728,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::copy(value_type* p, size_type n, size_type position) const
+	basic_string<T, Allocator>::copy(pointer p, size_type n, size_type position) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2668,7 +2770,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::find(const_pointer p, size_type position) const
 	{
 		return find(p, position, (size_type)CharStrlen(p));
 	}
@@ -2676,7 +2778,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find(const_pointer p, size_type position, size_type n) const
 	{
 		// It is not clear what the requirements are for position, but since the C++ standard
 		// appears to be silent it is assumed for now that position can be any value.
@@ -2687,7 +2789,7 @@ namespace nodecpp
 
 		if(EASTL_LIKELY(((npos - n) >= position) && (position + n) <= internalLayout().GetSize())) // If the range is valid...
 		{
-			const value_type* const pTemp = std::search(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
+			const_pointer const pTemp = std::search(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
 
 			if((pTemp != internalLayout().EndPtr()) || (n == 0))
 				return (size_type)(pTemp - internalLayout().BeginPtr());
@@ -2728,7 +2830,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::rfind(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::rfind(const_pointer p, size_type position) const
 	{
 		return rfind(p, position, (size_type)CharStrlen(p));
 	}
@@ -2736,7 +2838,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::rfind(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::rfind(const_pointer p, size_type position, size_type n) const
 	{
 		// Disabled because it's not clear what values are valid for position.
 		// It is documented that npos is a valid value, though. We return npos and
@@ -2779,8 +2881,8 @@ namespace nodecpp
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFind(pEnd, internalLayout().BeginPtr(), c);
+			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
+			const_pointer const pResult = CharTypeStringRFind(pEnd, internalLayout().BeginPtr(), c);
 
 			if(pResult != internalLayout().BeginPtr())
 				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
@@ -2799,7 +2901,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_of(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position) const
 	{
 		return find_first_of(p, position, (size_type)CharStrlen(p));
 	}
@@ -2807,12 +2909,12 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_of(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position, size_type n) const
 	{
 		// If position is >= size, we return npos.
 		if(EASTL_LIKELY((position < internalLayout().GetSize())))
 		{
-			const value_type* const pBegin = internalLayout().BeginPtr() + position;
+			const_pointer const pBegin = internalLayout().BeginPtr() + position;
 			const const_iterator pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().EndPtr(), p, p + n);
 
 			if(pResult != internalLayout().EndPtr())
@@ -2840,7 +2942,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_of(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position) const
 	{
 		return find_last_of(p, position, (size_type)CharStrlen(p));
 	}
@@ -2848,15 +2950,15 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_of(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position, size_type n) const
 	{
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstOf(pEnd, internalLayout().BeginPtr(), p, p + n);
+			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
+			const_pointer const pResult = CharTypeStringRFindFirstOf(pEnd, internalLayout().BeginPtr(), p, p + n);
 
 			if(pResult != internalLayout().BeginPtr())
 				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
@@ -2883,7 +2985,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_not_of(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position) const
 	{
 		return find_first_not_of(p, position, (size_type)CharStrlen(p));
 	}
@@ -2891,7 +2993,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_not_of(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position, size_type n) const
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
@@ -2932,7 +3034,7 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_not_of(const value_type* p, size_type position) const
+	basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position) const
 	{
 		return find_last_not_of(p, position, (size_type)CharStrlen(p));
 	}
@@ -2940,14 +3042,14 @@ namespace nodecpp
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_not_of(const value_type* p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position, size_type n) const
 	{
 		const size_type nLength = internalLayout().GetSize();
 
 		if(EASTL_LIKELY(nLength))
 		{
-			const value_type* const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), p, p + n);
+			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
+			const_pointer const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), p, p + n);
 
 			if(pResult != internalLayout().BeginPtr())
 				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
@@ -2965,8 +3067,8 @@ namespace nodecpp
 		if(EASTL_LIKELY(nLength))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringRFindFirstNotOf(pBegin, pEnd, c).
-			const value_type* const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
-			const value_type* const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), &c, &c + 1);
+			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
+			const_pointer const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), &c, &c + 1);
 
 			if(pResult != internalLayout().BeginPtr())
 				return (size_type)((pResult - 1) - internalLayout().BeginPtr());
@@ -3033,14 +3135,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(const value_type* p) const
+	inline int basic_string<T, Allocator>::compare(const_pointer p) const
 	{
 		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const value_type* p) const
+	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3055,7 +3157,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const value_type* p, size_type n2) const
+	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3116,21 +3218,21 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::ltrim(const value_type* p)
+	inline void basic_string<T, Allocator>::ltrim(const_pointer p)
 	{
 		erase(0, find_first_not_of(p));
 	}
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::rtrim(const value_type* p)
+	inline void basic_string<T, Allocator>::rtrim(const_pointer p)
 	{
 		erase(find_last_not_of(p) + 1);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::trim(const value_type* p)
+	inline void basic_string<T, Allocator>::trim(const_pointer p)
 	{
 		ltrim(p);
 		rtrim(p);
@@ -3162,7 +3264,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf(const value_type* pFormat, ...)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf(const_pointer pFormat, ...)
 	{
 		va_list arguments;
 		va_start(arguments, pFormat);
@@ -3175,7 +3277,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf_va_list(const value_type* pFormat, va_list arguments)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf_va_list(const_pointer pFormat, va_list arguments)
 	{
 		internalLayout().SetSize(0); // Fast truncate to zero length.
 
@@ -3184,8 +3286,8 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	int basic_string<T, Allocator>::compare(const value_type* pBegin1, const value_type* pEnd1,
-											const value_type* pBegin2, const value_type* pEnd2)
+	int basic_string<T, Allocator>::compare(const_pointer pBegin1, const_pointer pEnd1,
+											const_pointer pBegin2, const_pointer pEnd2)
 	{
 		const difference_type n1   = pEnd1 - pBegin1;
 		const difference_type n2   = pEnd2 - pBegin2;
@@ -3197,8 +3299,8 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	int basic_string<T, Allocator>::comparei(const value_type* pBegin1, const value_type* pEnd1,
-											 const value_type* pBegin2, const value_type* pEnd2)
+	int basic_string<T, Allocator>::comparei(const_pointer pBegin1, const_pointer pEnd1,
+											 const_pointer pBegin2, const_pointer pEnd2)
 	{
 		const difference_type n1   = pEnd1 - pBegin1;
 		const difference_type n2   = pEnd2 - pBegin2;
@@ -3217,7 +3319,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::comparei(const value_type* p) const
+	inline int basic_string<T, Allocator>::comparei(const_pointer p) const
 	{
 		return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
@@ -3227,12 +3329,12 @@ namespace nodecpp
 	typename basic_string<T, Allocator>::iterator
 	basic_string<T, Allocator>::InsertInternal(const_iterator p, value_type c)
 	{
-		iterator pNewPosition = const_cast<value_type*>(p);
+		iterator pNewPosition = const_cast<pointer>(p);
 
 		if((internalLayout().EndPtr() + 1) <= internalLayout().CapacityPtr())
 		{
 			const size_type nSavedSize = internalLayout().GetSize();
-			memmove(const_cast<value_type*>(p) + 1, p, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
+			memmove(const_cast<pointer>(p) + 1, p, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
 			*(internalLayout().EndPtr() + 1) = 0;
 			*pNewPosition = c;
 			internalLayout().SetSize(nSavedSize + 1);
@@ -3273,7 +3375,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	void basic_string<T, Allocator>::RangeInitialize(const value_type* pBegin, const value_type* pEnd)
+	void basic_string<T, Allocator>::RangeInitialize(const_pointer pBegin, const_pointer pEnd)
 	{
 		#if EASTL_STRING_OPT_ARGUMENT_ERRORS
 			if(EASTL_UNLIKELY(!pBegin && (pEnd < pBegin))) // 21.4.2 p7
@@ -3291,7 +3393,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::RangeInitialize(const value_type* pBegin)
+	inline void basic_string<T, Allocator>::RangeInitialize(const_pointer pBegin)
 	{
 		#if EASTL_STRING_OPT_ARGUMENT_ERRORS
 			if(EASTL_UNLIKELY(!pBegin))
@@ -3303,15 +3405,15 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::value_type*
+	inline typename basic_string<T, Allocator>::pointer
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
-		return (value_type*)safememory::lib_helpers::EASTLAlloc(/*get_allocator(), */n * sizeof(value_type));
+		return reinterpret_cast<pointer>(safememory::lib_helpers::EASTLAlloc(/*get_allocator(), */n * sizeof(value_type)));
 	}
 
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::DoFree(value_type* p, size_type n)
+	inline void basic_string<T, Allocator>::DoFree(pointer p, size_type n)
 	{
 		if(p)
 			safememory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
@@ -3424,10 +3526,10 @@ namespace nodecpp
 	// Specialized char version of STL find() from back function.
 	// Not the same as RFind because search range is specified as forward iterators.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringFindEnd(const value_type* pBegin, const value_type* pEnd, value_type c)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringFindEnd(const_pointer pBegin, const_pointer pEnd, value_type c)
 	{
-		const value_type* pTemp = pEnd;
+		const_pointer pTemp = pEnd;
 		while(--pTemp >= pBegin)
 		{
 			if(*pTemp == c)
@@ -3441,8 +3543,8 @@ namespace nodecpp
 	// CharTypeStringRFind
 	// Specialized value_type version of STL find() function in reverse.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringRFind(const value_type* pRBegin, const value_type* pREnd, const value_type c)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringRFind(const_pointer pRBegin, const_pointer pREnd, const value_type c)
 	{
 		while(pRBegin > pREnd)
 		{
@@ -3458,9 +3560,9 @@ namespace nodecpp
 	// Specialized value_type version of STL search() function.
 	// Purpose: find p2 within p1. Return p1End if not found or if either string is zero length.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringSearch(const value_type* p1Begin, const value_type* p1End,
-													 const value_type* p2Begin, const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringSearch(const_pointer p1Begin, const_pointer p1End,
+													 const_pointer p2Begin, const_pointer p2End)
 	{
 		// Test for zero length strings, in which case we have a match or a failure,
 		// but the return value is the same either way.
@@ -3472,9 +3574,9 @@ namespace nodecpp
 			return std::find(p1Begin, p1End, *p2Begin);
 
 		// General case.
-		const value_type* pTemp;
-		const value_type* pTemp1 = (p2Begin + 1);
-		const value_type* pCurrent = p1Begin;
+		const_pointer pTemp;
+		const_pointer pTemp1 = (p2Begin + 1);
+		const_pointer pCurrent = p1Begin;
 
 		while(p1Begin != p1End)
 		{
@@ -3506,9 +3608,9 @@ namespace nodecpp
 	// Specialized value_type version of STL find_end() function (which really is a reverse search function).
 	// Purpose: find last instance of p2 within p1. Return p1End if not found or if either string is zero length.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringRSearch(const value_type* p1Begin, const value_type* p1End,
-													  const value_type* p2Begin, const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringRSearch(const_pointer p1Begin, const_pointer p1End,
+													  const_pointer p2Begin, const_pointer p2End)
 	{
 		// Test for zero length strings, in which case we have a match or a failure,
 		// but the return value is the same either way.
@@ -3524,9 +3626,9 @@ namespace nodecpp
 			return p1End;
 
 		// General case.
-		const value_type* pSearchEnd = (p1End - (p2End - p2Begin) + 1);
-		const value_type* pCurrent1;
-		const value_type* pCurrent2;
+		const_pointer pSearchEnd = (p1End - (p2End - p2Begin) + 1);
+		const_pointer pCurrent1;
+		const_pointer pCurrent2;
 
 		while(pSearchEnd != p1Begin)
 		{
@@ -3556,13 +3658,13 @@ namespace nodecpp
 	// Specialized value_type version of STL find_first_of() function.
 	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringFindFirstOf(const value_type* p1Begin, const value_type* p1End,
-														  const value_type* p2Begin, const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringFindFirstOf(const_pointer p1Begin, const_pointer p1End,
+														  const_pointer p2Begin, const_pointer p2End)
 	{
 		for( ; p1Begin != p1End; ++p1Begin)
 		{
-			for(const value_type* pTemp = p2Begin; pTemp != p2End; ++pTemp)
+			for(const_pointer pTemp = p2Begin; pTemp != p2End; ++pTemp)
 			{
 				if(*p1Begin == *pTemp)
 					return p1Begin;
@@ -3576,13 +3678,13 @@ namespace nodecpp
 	// Specialized value_type version of STL find_first_of() function in reverse.
 	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringRFindFirstOf(const value_type* p1RBegin, const value_type* p1REnd,
-														   const value_type* p2Begin,  const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringRFindFirstOf(const_pointer p1RBegin, const_pointer p1REnd,
+														   const_pointer p2Begin,  const_pointer p2End)
 	{
 		for( ; p1RBegin != p1REnd; --p1RBegin)
 		{
-			for(const value_type* pTemp = p2Begin; pTemp != p2End; ++pTemp)
+			for(const_pointer pTemp = p2Begin; pTemp != p2End; ++pTemp)
 			{
 				if(*(p1RBegin - 1) == *pTemp)
 					return p1RBegin;
@@ -3596,13 +3698,13 @@ namespace nodecpp
 	// CharTypeStringFindFirstNotOf
 	// Specialized value_type version of STL find_first_not_of() function.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringFindFirstNotOf(const value_type* p1Begin, const value_type* p1End,
-															 const value_type* p2Begin, const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringFindFirstNotOf(const_pointer p1Begin, const_pointer p1End,
+															 const_pointer p2Begin, const_pointer p2End)
 	{
 		for( ; p1Begin != p1End; ++p1Begin)
 		{
-			const value_type* pTemp;
+			const_pointer pTemp;
 			for(pTemp = p2Begin; pTemp != p2End; ++pTemp)
 			{
 				if(*p1Begin == *pTemp)
@@ -3618,13 +3720,13 @@ namespace nodecpp
 	// CharTypeStringRFindFirstNotOf
 	// Specialized value_type version of STL find_first_not_of() function in reverse.
 	template <typename T, typename Allocator>
-	const typename basic_string<T, Allocator>::value_type*
-	basic_string<T, Allocator>::CharTypeStringRFindFirstNotOf(const value_type* p1RBegin, const value_type* p1REnd,
-															  const value_type* p2Begin,  const value_type* p2End)
+	typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::CharTypeStringRFindFirstNotOf(const_pointer p1RBegin, const_pointer p1REnd,
+															  const_pointer p2Begin,  const_pointer p2End)
 	{
 		for( ; p1RBegin != p1REnd; --p1RBegin)
 		{
-			const value_type* pTemp;
+			const_pointer pTemp;
 			for(pTemp = p2Begin; pTemp != p2End; ++pTemp)
 			{
 				if(*(p1RBegin-1) == *pTemp)
@@ -3670,7 +3772,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
 		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
@@ -3695,7 +3797,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
 		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
@@ -3734,14 +3836,14 @@ namespace nodecpp
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(const typename basic_string<T, Allocator>::value_type* p, basic_string<T, Allocator>&& b)
+	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::const_pointer p, basic_string<T, Allocator>&& b)
 	{
 		b.insert(0, p);
 		return std::move(b);
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, const typename basic_string<T, Allocator>::value_type* p)
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		a.append(p);
 		return std::move(a);
@@ -3799,7 +3901,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator==(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator==(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const size_type n = (size_type)CharStrlen(p);
@@ -3808,7 +3910,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator==(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator==(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const size_type n = (size_type)CharStrlen(p);
@@ -3824,14 +3926,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator!=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator!=(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		return !(p == b);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator!=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator!=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		return !(a == p);
 	}
@@ -3845,7 +3947,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator<(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const size_type n = (size_type)CharStrlen(p);
@@ -3854,7 +3956,7 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator<(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const size_type n = (size_type)CharStrlen(p);
@@ -3870,14 +3972,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator>(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		return b < p;
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator>(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		return p < a;
 	}
@@ -3891,14 +3993,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator<=(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		return !(b < p);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator<=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		return !(p < a);
 	}
@@ -3912,14 +4014,14 @@ namespace nodecpp
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	inline bool operator>=(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
 		return !(p < b);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	inline bool operator>=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
 		return !(a < p);
 	}
