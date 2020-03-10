@@ -1,4 +1,7 @@
 
+add_compile_options( /wd4996 )
+add_compile_options( /wd4267 )
+add_compile_options( /wd4535 )
 
 add_executable(container-test
   main.cpp
@@ -22,6 +25,7 @@ include_directories(
   ${PROJECT_SOURCE_DIR}/../../src/iibmalloc/src
   ${PROJECT_SOURCE_DIR}/../../test
   ${PROJECT_SOURCE_DIR}/../../src	)
+
 
 
 

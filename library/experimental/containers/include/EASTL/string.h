@@ -304,27 +304,27 @@ namespace nodecpp
 	/// past the end of an array, there might not be a valid pointer before the
 	/// beginning of an array.
 	///
-	template <typename T>
+	template <typename T, typename Ptr, typename Ref>
 	class unsafe_iterator
 	{
 	public:
 		typedef std::random_access_iterator_tag  iterator_category;
 		typedef T         value_type;
 		typedef std::ptrdiff_t                              difference_type;
-		typedef T*   pointer;
-		typedef T& reference;
+		typedef Ptr   pointer;
+		typedef Ref reference;
 
 	// protected:
 		pointer mIterator;
 
 	public:
-		EA_CPP14_CONSTEXPR unsafe_iterator()  
+		EA_CPP14_CONSTEXPR unsafe_iterator()
 			: mIterator(nullptr) { }
 
 		EA_CPP14_CONSTEXPR explicit unsafe_iterator(pointer i)
 			: mIterator(i) { }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator<typename std::remove_const<T>::type>& ri)
+		EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator& ri)
 			: mIterator(ri.mIterator) { }
 
 		// template <typename U>
@@ -423,8 +423,8 @@ namespace nodecpp
 		typedef const T*                                        const_pointer;
 		typedef T&                                              reference;
 		typedef const T&                                        const_reference;
-		typedef unsafe_iterator<T>                              iterator;           // Maintainer note: We want to leave iterator defined as T* -- at least in release builds -- as this gives some algorithms an advantage that optimizers cannot get around.
-		typedef unsafe_iterator<const T>                        const_iterator;
+		typedef unsafe_iterator<T, T*, T&>						iterator;
+		typedef unsafe_iterator<T, const T*, const T&>			const_iterator;
 		typedef std::reverse_iterator<iterator>                 reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>           const_reverse_iterator;
 		typedef std::size_t                                     size_type;          // See config.h for the definition of eastl_size_t, which defaults to size_t.
@@ -640,24 +640,24 @@ namespace nodecpp
 		basic_string(const this_type& x);
 	    // basic_string(const this_type& x, const allocator_type& allocator);
 		basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		basic_string(CtorDoNotInitialize, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		basic_string(CtorSprintf, const_pointer pFormat, ...);
-		basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+//		basic_string(CtorDoNotInitialize, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+//		basic_string(CtorSprintf, const_pointer pFormat, ...);
+		// basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
 		basic_string(this_type&& x) EA_NOEXCEPT;
 		// basic_string(this_type&& x, const allocator_type& allocator);
 
-		explicit basic_string(const view_type& sv/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// explicit basic_string(const view_type& sv/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
-		template <typename OtherCharType>
-		basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// template <typename OtherCharType>
+		// basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
-		template <typename OtherCharType>
-		basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// template <typename OtherCharType>
+		// basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
-		template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the pointer constructor.
-		basic_string(CtorConvert, const OtherStringType& x);
+		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the pointer constructor.
+		// basic_string(CtorConvert, const OtherStringType& x);
 
 	   ~basic_string();
 
@@ -673,19 +673,19 @@ namespace nodecpp
 		this_type& operator=(const this_type& x);
 		this_type& operator=(const_pointer p);
 		this_type& operator=(value_type c);
-		this_type& operator=(std::initializer_list<value_type> ilist);
-		this_type& operator=(view_type v);
+		// this_type& operator=(std::initializer_list<value_type> ilist);
+		// this_type& operator=(view_type v);
 		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 
-		#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
-			this_type& operator=(pointer p) { return operator=(const_cast<const_pointer>(p)); } // We need this because otherwise the const_pointer version can collide with the const OtherStringType& version below.
+		// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
+		// 	this_type& operator=(pointer p) { return operator=(const_cast<const_pointer>(p)); } // We need this because otherwise the const_pointer version can collide with the const OtherStringType& version below.
 
-			template <typename OtherCharType>
-			this_type& operator=(const OtherCharType* p);
+		// 	template <typename OtherCharType>
+		// 	this_type& operator=(const OtherCharType* p);
 
-			template <typename OtherStringType>
-			this_type& operator=(const OtherStringType& x);
-		#endif
+		// 	template <typename OtherStringType>
+		// 	this_type& operator=(const OtherStringType& x);
+		// #endif
 
 		void swap(this_type& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_swap::value || allocator_traits<Allocator>::is_always_equal::value);
 
@@ -697,16 +697,16 @@ namespace nodecpp
 		this_type& assign(size_type n, value_type c);
 		this_type& assign(const_pointer pBegin, const_pointer pEnd);
 		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
-		this_type& assign(std::initializer_list<value_type>);
+		// this_type& assign(std::initializer_list<value_type>);
 
-		template <typename OtherCharType>
-		this_type& assign_convert(const OtherCharType* p);
+		// template <typename OtherCharType>
+		// this_type& assign_convert(const OtherCharType* p);
 
-		template <typename OtherCharType>
-		this_type& assign_convert(const OtherCharType* p, size_type n);
+		// template <typename OtherCharType>
+		// this_type& assign_convert(const OtherCharType* p, size_type n);
 
-		template <typename OtherStringType>
-		this_type& assign_convert(const OtherStringType& x);
+		// template <typename OtherStringType>
+		// this_type& assign_convert(const OtherStringType& x);
 
 		// Iterators.
 		iterator       begin() EA_NOEXCEPT;                 // Expanded in source code as: mpBegin
@@ -766,17 +766,17 @@ namespace nodecpp
 		this_type& append(size_type n, value_type c);
 		this_type& append(const_pointer pBegin, const_pointer pEnd);
 
-		this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
-		this_type& append_sprintf(const_pointer pFormat, ...);
+		// this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
+		// this_type& append_sprintf(const_pointer pFormat, ...);
 
-		template <typename OtherCharType>
-		this_type& append_convert(const OtherCharType* p);
+		// template <typename OtherCharType>
+		// this_type& append_convert(const OtherCharType* p);
 
-		template <typename OtherCharType>
-		this_type& append_convert(const OtherCharType* p, size_type n);
+		// template <typename OtherCharType>
+		// this_type& append_convert(const OtherCharType* p, size_type n);
 
-		template <typename OtherStringType>
-		this_type& append_convert(const OtherStringType& x);
+		// template <typename OtherStringType>
+		// this_type& append_convert(const OtherStringType& x);
 
 		void push_back(value_type c);
 		void pop_back();
@@ -790,7 +790,7 @@ namespace nodecpp
 		iterator   insert(const_iterator p, value_type c);
 		iterator   insert(const_iterator p, size_type n, value_type c);
 		iterator   insert(const_iterator p, const_pointer pBegin, const_pointer pEnd);
-		iterator   insert(const_iterator p, std::initializer_list<value_type>);
+		// iterator   insert(const_iterator p, std::initializer_list<value_type>);
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos);
@@ -865,23 +865,23 @@ namespace nodecpp
 		static int compare(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
 		// Case-insensitive comparison functions. Not part of C++ this_type. Only ASCII-level locale functionality is supported. Thus this is not suitable for localization purposes.
-		int        comparei(const this_type& x) const EA_NOEXCEPT;
-		int        comparei(const_pointer p) const;
-		static int comparei(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
+		// int        comparei(const this_type& x) const EA_NOEXCEPT;
+		// int        comparei(const_pointer p) const;
+		// static int comparei(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
 		// Misc functionality, not part of C++ this_type.
-		void         make_lower();
-		void         make_upper();
-		void         ltrim();
-		void         rtrim();
-		void         trim();
-		void         ltrim(const_pointer p);
-		void         rtrim(const_pointer p);
-		void         trim(const_pointer p);
-		this_type    left(size_type n) const;
-		this_type    right(size_type n) const;
-		this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
-		this_type&   sprintf(const_pointer pFormat, ...);
+		// void         make_lower();
+		// void         make_upper();
+		// void         ltrim();
+		// void         rtrim();
+		// void         trim();
+		// void         ltrim(const_pointer p);
+		// void         rtrim(const_pointer p);
+		// void         trim(const_pointer p);
+		// this_type    left(size_type n) const;
+		// this_type    right(size_type n) const;
+		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
+		// this_type&   sprintf(const_pointer pFormat, ...);
 
 		bool validate() const EA_NOEXCEPT;
 		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
@@ -907,13 +907,13 @@ namespace nodecpp
 		void        ThrowRangeException() const;
 		void        ThrowInvalidArgumentException() const;
 
-		#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
-			template <typename CharType>
-			void DoAssignConvert(CharType c, true_type);
+		// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
+		// 	template <typename CharType>
+		// 	void DoAssignConvert(CharType c, true_type);
 
-			template <typename StringType>
-			void DoAssignConvert(const StringType& x, false_type);
-		#endif
+		// 	template <typename StringType>
+		// 	void DoAssignConvert(const StringType& x, false_type);
+		// #endif
 
 		// Replacements for STL template functions.
 		static const_pointer CharTypeStringFindEnd(const_pointer pBegin, const_pointer pEnd, value_type c);
@@ -967,14 +967,14 @@ namespace nodecpp
 	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherStringType>
-	inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherStringType& x)
-	    // : mPair_second(x.get_allocator())
-	{
-		AllocateSelf();
-		append_convert(x.c_str(), x.length());
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherStringType>
+	// inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherStringType& x)
+	//     // : mPair_second(x.get_allocator())
+	// {
+	// 	AllocateSelf();
+	// 	append_convert(x.c_str(), x.length());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1007,38 +1007,38 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const view_type& sv/*, const allocator_type& allocator*/)
-	    : basic_string(sv.data(), sv.size()/*, allocator*/)
-	{
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>::basic_string(const view_type& sv/*, const allocator_type& allocator*/)
+	//     : basic_string(sv.data(), sv.size()/*, allocator*/)
+	// {
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator*/)
-	    : basic_string(sv.substr(position, n)/*, allocator*/)
-	{
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>::basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator*/)
+	//     : basic_string(sv.substr(position, n)/*, allocator*/)
+	// {
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		AllocateSelf();    // In this case we are converting from one string encoding to another, and we
-		append_convert(p); // implement this in the simplest way, by simply default-constructing and calling assign.
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	AllocateSelf();    // In this case we are converting from one string encoding to another, and we
+	// 	append_convert(p); // implement this in the simplest way, by simply default-constructing and calling assign.
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		AllocateSelf();         // In this case we are converting from one string encoding to another, and we
-		append_convert(p, n);   // implement this in the simplest way, by simply default-constructing and calling assign.
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// inline basic_string<T, Allocator>::basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	AllocateSelf();         // In this case we are converting from one string encoding to another, and we
+	// 	append_convert(p, n);   // implement this in the simplest way, by simply default-constructing and calling assign.
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1065,40 +1065,40 @@ namespace nodecpp
 	}
 
 
-	// CtorDoNotInitialize exists so that we can create a version that allocates but doesn't
-	// initialize but also doesn't collide with any other constructor declaration.
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>::basic_string(CtorDoNotInitialize /*unused*/, size_type n/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		// Note that we do not call SizeInitialize here.
-		AllocateSelf(n);
-		*internalLayout().EndPtr() = 0;
-	}
+	// // CtorDoNotInitialize exists so that we can create a version that allocates but doesn't
+	// // initialize but also doesn't collide with any other constructor declaration.
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>::basic_string(CtorDoNotInitialize /*unused*/, size_type n/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	// Note that we do not call SizeInitialize here.
+	// 	AllocateSelf(n);
+	// 	*internalLayout().EndPtr() = 0;
+	// }
 
 
-	// CtorSprintf exists so that we can create a version that does a variable argument
-	// sprintf but also doesn't collide with any other constructor declaration.
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>::basic_string(CtorSprintf /*unused*/, const_pointer pFormat, ...)
-		// : mPair_second()
-	{
-		const size_type n = (size_type)CharStrlen(pFormat);
-		AllocateSelf(n);
+	// // CtorSprintf exists so that we can create a version that does a variable argument
+	// // sprintf but also doesn't collide with any other constructor declaration.
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>::basic_string(CtorSprintf /*unused*/, const_pointer pFormat, ...)
+	// 	// : mPair_second()
+	// {
+	// 	const size_type n = (size_type)CharStrlen(pFormat);
+	// 	AllocateSelf(n);
 
-		va_list arguments;
-		va_start(arguments, pFormat);
-		append_sprintf_va_list(pFormat, arguments);
-		va_end(arguments);
-	}
+	// 	va_list arguments;
+	// 	va_start(arguments, pFormat);
+	// 	append_sprintf_va_list(pFormat, arguments);
+	// 	va_end(arguments);
+	// }
 
 
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		RangeInitialize(init.begin(), init.end());
-	}
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	RangeInitialize(init.begin(), init.end());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1351,11 +1351,11 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	basic_string<T,Allocator>::operator std::basic_string_view<T>() const EA_NOEXCEPT
-	{
-		return std::basic_string_view<T>(data(), size());
-	}
+	// template <typename T, typename Allocator>
+	// basic_string<T,Allocator>::operator std::basic_string_view<T>() const EA_NOEXCEPT
+	// {
+	// 	return std::basic_string_view<T>(data(), size());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1384,47 +1384,47 @@ namespace nodecpp
 	}
 
 
-	#if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
-		template <typename T, typename Allocator>
-		template <typename CharType>
-		inline void basic_string<T, Allocator>::DoAssignConvert(CharType c, true_type)
-		{
-			assign_convert(&c, 1); // Call this version of append because it will result in the encoding-converting append being used.
-		}
+	// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
+	// 	template <typename T, typename Allocator>
+	// 	template <typename CharType>
+	// 	inline void basic_string<T, Allocator>::DoAssignConvert(CharType c, true_type)
+	// 	{
+	// 		assign_convert(&c, 1); // Call this version of append because it will result in the encoding-converting append being used.
+	// 	}
 
 
-		template <typename T, typename Allocator>
-		template <typename StringType>
-		inline void basic_string<T, Allocator>::DoAssignConvert(const StringType& x, false_type)
-		{
-			//if(&x != this) // Unnecessary because &x cannot possibly equal this.
-			{
-				#if EASTL_ALLOCATOR_COPY_ENABLED
-					get_allocator() = x.get_allocator();
-				#endif
+	// 	template <typename T, typename Allocator>
+	// 	template <typename StringType>
+	// 	inline void basic_string<T, Allocator>::DoAssignConvert(const StringType& x, false_type)
+	// 	{
+	// 		//if(&x != this) // Unnecessary because &x cannot possibly equal this.
+	// 		{
+	// 			#if EASTL_ALLOCATOR_COPY_ENABLED
+	// 				get_allocator() = x.get_allocator();
+	// 			#endif
 
-				assign_convert(x.c_str(), x.length());
-			}
-		}
-
-
-		template <typename T, typename Allocator>
-		template <typename OtherStringType>
-		inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const OtherStringType& x)
-		{
-			clear();
-			DoAssignConvert(x, is_integral<OtherStringType>());
-			return *this;
-		}
+	// 			assign_convert(x.c_str(), x.length());
+	// 		}
+	// 	}
 
 
-		template <typename T, typename Allocator>
-		template <typename OtherCharType>
-		inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const OtherCharType* p)
-		{
-			return assign_convert(p);
-		}
-	#endif
+	// 	template <typename T, typename Allocator>
+	// 	template <typename OtherStringType>
+	// 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const OtherStringType& x)
+	// 	{
+	// 		clear();
+	// 		DoAssignConvert(x, is_integral<OtherStringType>());
+	// 		return *this;
+	// 	}
+
+
+	// 	template <typename T, typename Allocator>
+	// 	template <typename OtherCharType>
+	// 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const OtherCharType* p)
+	// 	{
+	// 		return assign_convert(p);
+	// 	}
+	// #endif
 
 
 	template <typename T, typename Allocator>
@@ -1447,18 +1447,18 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
-	{
-		return assign(ilist.begin(), ilist.end());
-	}
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
+	// {
+	// 	return assign(ilist.begin(), ilist.end());
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(view_type v)
-	{
-		return assign(v.data(), static_cast<this_type::size_type>(v.size()));
-	}
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(view_type v)
+	// {
+	// 	return assign(v.data(), static_cast<this_type::size_type>(v.size()));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1778,47 +1778,47 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
-	{
-		return append_convert(pOther, (size_type)CharStrlen(pOther));
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
+	// {
+	// 	return append_convert(pOther, (size_type)CharStrlen(pOther));
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherStringType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
-	{
-		return append_convert(x.c_str(), x.length());
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherStringType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
+	// {
+	// 	return append_convert(x.c_str(), x.length());
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther, size_type n)
-	{
-		// Question: What do we do in the case that we have an illegally encoded source string?
-		// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
-		// One argument is that it's not a string class' job to handle the security aspects of a
-		// program and the higher level application code should be verifying UTF8 string validity,
-		// and thus we should do the friendly thing and ignore the invalid characters as opposed
-		// to making the user of this function handle exceptions that are easily forgotten.
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther, size_type n)
+	// {
+	// 	// Question: What do we do in the case that we have an illegally encoded source string?
+	// 	// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
+	// 	// One argument is that it's not a string class' job to handle the security aspects of a
+	// 	// program and the higher level application code should be verifying UTF8 string validity,
+	// 	// and thus we should do the friendly thing and ignore the invalid characters as opposed
+	// 	// to making the user of this function handle exceptions that are easily forgotten.
 
-		const size_t         kBufferSize = 512;
-		value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
-		pointer const    selfBufferEnd = selfBuffer + kBufferSize;
-		const OtherCharType* pOtherEnd = pOther + n;
+	// 	const size_t         kBufferSize = 512;
+	// 	value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
+	// 	pointer const    selfBufferEnd = selfBuffer + kBufferSize;
+	// 	const OtherCharType* pOtherEnd = pOther + n;
 
-		while(pOther != pOtherEnd)
-		{
-			pointer pSelfBufferCurrent = selfBuffer;
-			DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
-			append(selfBuffer, pSelfBufferCurrent);
-		}
+	// 	while(pOther != pOtherEnd)
+	// 	{
+	// 		pointer pSelfBufferCurrent = selfBuffer;
+	// 		DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
+	// 		append(selfBuffer, pSelfBufferCurrent);
+	// 	}
 
-		return *this;
-	}
+	// 	return *this;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1878,136 +1878,136 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
-	{
-		// From unofficial C89 extension documentation:
-		// The vsnprintf returns the number of characters written into the array,
-		// not counting the terminating null character, or a negative value
-		// if count or more characters are requested to be generated.
-		// An error can occur while converting a value for output.
+// 	template <typename T, typename Allocator>
+// 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
+// 	{
+// 		// From unofficial C89 extension documentation:
+// 		// The vsnprintf returns the number of characters written into the array,
+// 		// not counting the terminating null character, or a negative value
+// 		// if count or more characters are requested to be generated.
+// 		// An error can occur while converting a value for output.
 
-		// From the C99 standard:
-		// The vsnprintf function returns the number of characters that would have
-		// been written had n been sufficiently large, not counting the terminating
-		// null character, or a negative value if an encoding error occurred.
-		// Thus, the null-terminated output has been completely written if and only
-		// if the returned value is nonnegative and less than n.
+// 		// From the C99 standard:
+// 		// The vsnprintf function returns the number of characters that would have
+// 		// been written had n been sufficiently large, not counting the terminating
+// 		// null character, or a negative value if an encoding error occurred.
+// 		// Thus, the null-terminated output has been completely written if and only
+// 		// if the returned value is nonnegative and less than n.
 
-		// https://www.freebsd.org/cgi/man.cgi?query=vswprintf&sektion=3&manpath=freebsd-release-ports
-		// https://www.freebsd.org/cgi/man.cgi?query=snprintf&manpath=SuSE+Linux/i386+11.3
-		// Well its time to go on an adventure...
-		// C99 vsnprintf states that a buffer size of zero returns the number of characters that would
-		// be written to the buffer irrelevant of whether the buffer is a nullptr
-		// But C99 vswprintf for wchar_t changes the behaviour of the return to instead say that it
-		// "will fail if n or more wide characters were requested to be written", so
-		// calling vswprintf with a buffer size of zero always returns -1
-		// unless... you are MSVC where they deviate from the std and say if the buffer is NULL
-		// and the size is zero it will return the number of characters written or if we are using
-		// EAStdC which also does the sane behaviour.
+// 		// https://www.freebsd.org/cgi/man.cgi?query=vswprintf&sektion=3&manpath=freebsd-release-ports
+// 		// https://www.freebsd.org/cgi/man.cgi?query=snprintf&manpath=SuSE+Linux/i386+11.3
+// 		// Well its time to go on an adventure...
+// 		// C99 vsnprintf states that a buffer size of zero returns the number of characters that would
+// 		// be written to the buffer irrelevant of whether the buffer is a nullptr
+// 		// But C99 vswprintf for wchar_t changes the behaviour of the return to instead say that it
+// 		// "will fail if n or more wide characters were requested to be written", so
+// 		// calling vswprintf with a buffer size of zero always returns -1
+// 		// unless... you are MSVC where they deviate from the std and say if the buffer is NULL
+// 		// and the size is zero it will return the number of characters written or if we are using
+// 		// EAStdC which also does the sane behaviour.
 
-#if !EASTL_OPENSOURCE || defined(EA_PLATFORM_MICROSOFT)
-		size_type nInitialSize = internalLayout().GetSize();
-		int nReturnValue;
+// #if !EASTL_OPENSOURCE || defined(EA_PLATFORM_MICROSOFT)
+// 		size_type nInitialSize = internalLayout().GetSize();
+// 		int nReturnValue;
 
-		#if EASTL_VA_COPY_ENABLED
-			va_list argumentsSaved;
-			va_copy(argumentsSaved, arguments);
-		#endif
+// 		#if EASTL_VA_COPY_ENABLED
+// 			va_list argumentsSaved;
+// 			va_copy(argumentsSaved, arguments);
+// 		#endif
 
-		nReturnValue = nodecpp::Vsnprintf(nullptr, 0, pFormat, arguments);
+// 		nReturnValue = nodecpp::Vsnprintf(nullptr, 0, pFormat, arguments);
 
-		if (nReturnValue > 0)
-		{
-			resize(nReturnValue + nInitialSize);
+// 		if (nReturnValue > 0)
+// 		{
+// 			resize(nReturnValue + nInitialSize);
 
-		#if EASTL_VA_COPY_ENABLED
-			va_end(arguments);
-			va_copy(arguments, argumentsSaved);
-		#endif
+// 		#if EASTL_VA_COPY_ENABLED
+// 			va_end(arguments);
+// 			va_copy(arguments, argumentsSaved);
+// 		#endif
 
-			nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, static_cast<size_t>(nReturnValue) + 1, pFormat, arguments);
-		}
+// 			nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, static_cast<size_t>(nReturnValue) + 1, pFormat, arguments);
+// 		}
 
-		if (nReturnValue >= 0)
-			internalLayout().SetSize(nInitialSize + nReturnValue);
+// 		if (nReturnValue >= 0)
+// 			internalLayout().SetSize(nInitialSize + nReturnValue);
 
-		#if EASTL_VA_COPY_ENABLED
-			// va_end for arguments will be called by the caller.
-			va_end(argumentsSaved);
-		#endif
+// 		#if EASTL_VA_COPY_ENABLED
+// 			// va_end for arguments will be called by the caller.
+// 			va_end(argumentsSaved);
+// 		#endif
 
-#else
-		size_type nInitialSize = internalLayout().GetSize();
-		size_type nInitialRemainingCapacity = internalLayout().GetRemainingCapacity();
-		int       nReturnValue;
+// #else
+// 		size_type nInitialSize = internalLayout().GetSize();
+// 		size_type nInitialRemainingCapacity = internalLayout().GetRemainingCapacity();
+// 		int       nReturnValue;
 
-		#if EASTL_VA_COPY_ENABLED
-			va_list argumentsSaved;
-			va_copy(argumentsSaved, arguments);
-		#endif
+// 		#if EASTL_VA_COPY_ENABLED
+// 			va_list argumentsSaved;
+// 			va_copy(argumentsSaved, arguments);
+// 		#endif
 
-		nReturnValue = nodecpp::Vsnprintf(internalLayout().EndPtr(), (size_t)nInitialRemainingCapacity + 1,
-										pFormat, arguments);
+// 		nReturnValue = nodecpp::Vsnprintf(internalLayout().EndPtr(), (size_t)nInitialRemainingCapacity + 1,
+// 										pFormat, arguments);
 
-		if(nReturnValue >= (int)(nInitialRemainingCapacity + 1))  // If there wasn't enough capacity...
-		{
-			// In this case we definitely have C99 Vsnprintf behaviour.
-		#if EASTL_VA_COPY_ENABLED
-			va_end(arguments);
-			va_copy(arguments, argumentsSaved);
-		#endif
-			resize(nInitialSize + nReturnValue);
-			nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1),
-											pFormat, arguments);
-		}
-		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard
-		{
-			// In this case we either have C89 extension behaviour or C99 behaviour.
-			size_type n = std::max((size_type)(SSOLayout::SSO_CAPACITY - 1), (size_type)(nInitialSize * 2));
+// 		if(nReturnValue >= (int)(nInitialRemainingCapacity + 1))  // If there wasn't enough capacity...
+// 		{
+// 			// In this case we definitely have C99 Vsnprintf behaviour.
+// 		#if EASTL_VA_COPY_ENABLED
+// 			va_end(arguments);
+// 			va_copy(arguments, argumentsSaved);
+// 		#endif
+// 			resize(nInitialSize + nReturnValue);
+// 			nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, (size_t)(nReturnValue + 1),
+// 											pFormat, arguments);
+// 		}
+// 		else if(nReturnValue < 0) // If vsnprintf is non-C99-standard
+// 		{
+// 			// In this case we either have C89 extension behaviour or C99 behaviour.
+// 			size_type n = std::max((size_type)(SSOLayout::SSO_CAPACITY - 1), (size_type)(nInitialSize * 2));
 
-			for(; (nReturnValue < 0) && (n < 1000000); n *= 2)
-			{
-			#if EASTL_VA_COPY_ENABLED
-				va_end(arguments);
-				va_copy(arguments, argumentsSaved);
-			#endif
-				resize(n);
+// 			for(; (nReturnValue < 0) && (n < 1000000); n *= 2)
+// 			{
+// 			#if EASTL_VA_COPY_ENABLED
+// 				va_end(arguments);
+// 				va_copy(arguments, argumentsSaved);
+// 			#endif
+// 				resize(n);
 
-				const size_t nCapacity = (size_t)(n - nInitialSize);
-				nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 1, pFormat, arguments);
+// 				const size_t nCapacity = (size_t)(n - nInitialSize);
+// 				nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 1, pFormat, arguments);
 
-				if(nReturnValue == (int)(unsigned)nCapacity)
-				{
-					resize(++n);
-					nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 2, pFormat, arguments);
-				}
-			}
-		}
+// 				if(nReturnValue == (int)(unsigned)nCapacity)
+// 				{
+// 					resize(++n);
+// 					nReturnValue = nodecpp::Vsnprintf(internalLayout().BeginPtr() + nInitialSize, nCapacity + 2, pFormat, arguments);
+// 				}
+// 			}
+// 		}
 
-		if(nReturnValue >= 0)
-			internalLayout().SetSize(nInitialSize + nReturnValue);
+// 		if(nReturnValue >= 0)
+// 			internalLayout().SetSize(nInitialSize + nReturnValue);
 
-		#if EASTL_VA_COPY_ENABLED
-			// va_end for arguments will be called by the caller.
-			va_end(argumentsSaved);
-		#endif
+// 		#if EASTL_VA_COPY_ENABLED
+// 			// va_end for arguments will be called by the caller.
+// 			va_end(argumentsSaved);
+// 		#endif
 
-#endif // EASTL_OPENSOURCE
+// #endif // EASTL_OPENSOURCE
 
-		return *this;
-	}
+// 		return *this;
+// 	}
 
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf(const_pointer pFormat, ...)
-	{
-		va_list arguments;
-		va_start(arguments, pFormat);
-		append_sprintf_va_list(pFormat, arguments);
-		va_end(arguments);
+// 	template <typename T, typename Allocator>
+// 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf(const_pointer pFormat, ...)
+// 	{
+// 		va_list arguments;
+// 		va_start(arguments, pFormat);
+// 		append_sprintf_va_list(pFormat, arguments);
+// 		va_end(arguments);
 
-		return *this;
-	}
+// 		return *this;
+// 	}
 
 
 	template <typename T, typename Allocator>
@@ -2102,11 +2102,11 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(std::initializer_list<value_type> ilist)
-	{
-		return assign(ilist.begin(), ilist.end());
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(std::initializer_list<value_type> ilist)
+	// {
+	// 	return assign(ilist.begin(), ilist.end());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2123,34 +2123,34 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
-	{
-		clear();
-		append_convert(p);
-		return *this;
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
+	// {
+	// 	clear();
+	// 	append_convert(p);
+	// 	return *this;
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p, size_type n)
-	{
-		clear();
-		append_convert(p, n);
-		return *this;
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p, size_type n)
+	// {
+	// 	clear();
+	// 	append_convert(p, n);
+	// 	return *this;
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherStringType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
-	{
-		clear();
-		append_convert(x.data(), x.length());
-		return *this;
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherStringType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
+	// {
+	// 	clear();
+	// 	append_convert(x.data(), x.length());
+	// 	return *this;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2448,12 +2448,12 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, std::initializer_list<value_type> ilist)
-	{
-		return insert(p, ilist.begin(), ilist.end());
-	}
+	// template <typename T, typename Allocator>
+	// typename basic_string<T, Allocator>::iterator
+	// basic_string<T, Allocator>::insert(const_iterator p, std::initializer_list<value_type> ilist)
+	// {
+	// 	return insert(p, ilist.begin(), ilist.end());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3174,115 +3174,115 @@ namespace nodecpp
 	// make_lower
 	// This is a very simple ASCII-only case conversion function
 	// Anything more complicated should use a more powerful separate library.
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::make_lower()
-	{
-		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
-			*p = (value_type)CharToLower(*p);
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::make_lower()
+	// {
+	// 	for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
+	// 		*p = (value_type)CharToLower(*p);
+	// }
 
 
-	// make_upper
-	// This is a very simple ASCII-only case conversion function
-	// Anything more complicated should use a more powerful separate library.
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::make_upper()
-	{
-		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
-			*p = (value_type)CharToUpper(*p);
-	}
+	// // make_upper
+	// // This is a very simple ASCII-only case conversion function
+	// // Anything more complicated should use a more powerful separate library.
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::make_upper()
+	// {
+	// 	for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
+	// 		*p = (value_type)CharToUpper(*p);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::ltrim()
-	{
-		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-		erase(0, find_first_not_of(array));
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::ltrim()
+	// {
+	// 	const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
+	// 	erase(0, find_first_not_of(array));
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::rtrim()
-	{
-		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-		erase(find_last_not_of(array) + 1);
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::rtrim()
+	// {
+	// 	const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
+	// 	erase(find_last_not_of(array) + 1);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::trim()
-	{
-		ltrim();
-		rtrim();
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::trim()
+	// {
+	// 	ltrim();
+	// 	rtrim();
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::ltrim(const_pointer p)
-	{
-		erase(0, find_first_not_of(p));
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::ltrim(const_pointer p)
+	// {
+	// 	erase(0, find_first_not_of(p));
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::rtrim(const_pointer p)
-	{
-		erase(find_last_not_of(p) + 1);
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::rtrim(const_pointer p)
+	// {
+	// 	erase(find_last_not_of(p) + 1);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::trim(const_pointer p)
-	{
-		ltrim(p);
-		rtrim(p);
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::trim(const_pointer p)
+	// {
+	// 	ltrim(p);
+	// 	rtrim(p);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator> basic_string<T, Allocator>::left(size_type n) const
-	{
-		const size_type nLength = length();
-		if(n < nLength)
-			return substr(0, n);
-		// C++ std says that substr must return default constructed allocated, but we do not.
-		// Instead it is much more practical to provide the copy of the current allocator
-		return basic_string(*this/*, get_allocator()*/);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator> basic_string<T, Allocator>::left(size_type n) const
+	// {
+	// 	const size_type nLength = length();
+	// 	if(n < nLength)
+	// 		return substr(0, n);
+	// 	// C++ std says that substr must return default constructed allocated, but we do not.
+	// 	// Instead it is much more practical to provide the copy of the current allocator
+	// 	return basic_string(*this/*, get_allocator()*/);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator> basic_string<T, Allocator>::right(size_type n) const
-	{
-		const size_type nLength = length();
-		if(n < nLength)
-			return substr(nLength - n, n);
-		// C++ std says that substr must return default constructed allocated, but we do not.
-		// Instead it is much more practical to provide the copy of the current allocator
-		return basic_string(*this/*, get_allocator()*/);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator> basic_string<T, Allocator>::right(size_type n) const
+	// {
+	// 	const size_type nLength = length();
+	// 	if(n < nLength)
+	// 		return substr(nLength - n, n);
+	// 	// C++ std says that substr must return default constructed allocated, but we do not.
+	// 	// Instead it is much more practical to provide the copy of the current allocator
+	// 	return basic_string(*this/*, get_allocator()*/);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf(const_pointer pFormat, ...)
-	{
-		va_list arguments;
-		va_start(arguments, pFormat);
-		internalLayout().SetSize(0); // Fast truncate to zero length.
-		append_sprintf_va_list(pFormat, arguments);
-		va_end(arguments);
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf(const_pointer pFormat, ...)
+	// {
+	// 	va_list arguments;
+	// 	va_start(arguments, pFormat);
+	// 	internalLayout().SetSize(0); // Fast truncate to zero length.
+	// 	append_sprintf_va_list(pFormat, arguments);
+	// 	va_end(arguments);
 
-		return *this;
-	}
+	// 	return *this;
+	// }
 
 
-	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf_va_list(const_pointer pFormat, va_list arguments)
-	{
-		internalLayout().SetSize(0); // Fast truncate to zero length.
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::sprintf_va_list(const_pointer pFormat, va_list arguments)
+	// {
+	// 	internalLayout().SetSize(0); // Fast truncate to zero length.
 
-		return append_sprintf_va_list(pFormat, arguments);
-	}
+	// 	return append_sprintf_va_list(pFormat, arguments);
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3298,31 +3298,31 @@ namespace nodecpp
 	}
 
 
-	template <typename T, typename Allocator>
-	int basic_string<T, Allocator>::comparei(const_pointer pBegin1, const_pointer pEnd1,
-											 const_pointer pBegin2, const_pointer pEnd2)
-	{
-		const difference_type n1   = pEnd1 - pBegin1;
-		const difference_type n2   = pEnd2 - pBegin2;
-		const difference_type nMin = std::min(n1, n2);
-		const int       cmp  = CompareI(pBegin1, pBegin2, (size_t)nMin);
+	// template <typename T, typename Allocator>
+	// int basic_string<T, Allocator>::comparei(const_pointer pBegin1, const_pointer pEnd1,
+	// 										 const_pointer pBegin2, const_pointer pEnd2)
+	// {
+	// 	const difference_type n1   = pEnd1 - pBegin1;
+	// 	const difference_type n2   = pEnd2 - pBegin2;
+	// 	const difference_type nMin = std::min(n1, n2);
+	// 	const int       cmp  = CompareI(pBegin1, pBegin2, (size_t)nMin);
 
-		return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
-	}
-
-
-	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::comparei(const this_type& x) const EA_NOEXCEPT
-	{
-		return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
-	}
+	// 	return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::comparei(const_pointer p) const
-	{
-		return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
-	}
+	// template <typename T, typename Allocator>
+	// inline int basic_string<T, Allocator>::comparei(const this_type& x) const EA_NOEXCEPT
+	// {
+	// 	return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+	// }
+
+
+	// template <typename T, typename Allocator>
+	// inline int basic_string<T, Allocator>::comparei(const_pointer p) const
+	// {
+	// 	return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -4122,24 +4122,24 @@ namespace nodecpp
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/to_string
 	///
-	inline string to_string(int value)
-		{ return string(string::CtorSprintf(), "%d", value); }
-	inline string to_string(long value)
-		{ return string(string::CtorSprintf(), "%ld", value); }
-	inline string to_string(long long value)
-		{ return string(string::CtorSprintf(), "%lld", value); }
-	inline string to_string(unsigned value)
-		{ return string(string::CtorSprintf(), "%u", value); }
-	inline string to_string(unsigned long value)
-		{ return string(string::CtorSprintf(), "%lu", value); }
-	inline string to_string(unsigned long long value)
-		{ return string(string::CtorSprintf(), "%llu", value); }
-	inline string to_string(float value)
-		{ return string(string::CtorSprintf(), "%f", value); }
-	inline string to_string(double value)
-		{ return string(string::CtorSprintf(), "%f", value); }
-	inline string to_string(long double value)
-		{ return string(string::CtorSprintf(), "%Lf", value); }
+	// inline string to_string(int value)
+	// 	{ return string(string::CtorSprintf(), "%d", value); }
+	// inline string to_string(long value)
+	// 	{ return string(string::CtorSprintf(), "%ld", value); }
+	// inline string to_string(long long value)
+	// 	{ return string(string::CtorSprintf(), "%lld", value); }
+	// inline string to_string(unsigned value)
+	// 	{ return string(string::CtorSprintf(), "%u", value); }
+	// inline string to_string(unsigned long value)
+	// 	{ return string(string::CtorSprintf(), "%lu", value); }
+	// inline string to_string(unsigned long long value)
+	// 	{ return string(string::CtorSprintf(), "%llu", value); }
+	// inline string to_string(float value)
+	// 	{ return string(string::CtorSprintf(), "%f", value); }
+	// inline string to_string(double value)
+	// 	{ return string(string::CtorSprintf(), "%f", value); }
+	// inline string to_string(long double value)
+	// 	{ return string(string::CtorSprintf(), "%Lf", value); }
 
 
 	/// to_wstring
@@ -4150,24 +4150,24 @@ namespace nodecpp
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
 	///
-	inline wstring to_wstring(int value)
-		{ return wstring(wstring::CtorSprintf(), L"%d", value); }
-	inline wstring to_wstring(long value)
-		{ return wstring(wstring::CtorSprintf(), L"%ld", value); }
-	inline wstring to_wstring(long long value)
-		{ return wstring(wstring::CtorSprintf(), L"%lld", value); }
-	inline wstring to_wstring(unsigned value)
-		{ return wstring(wstring::CtorSprintf(), L"%u", value); }
-	inline wstring to_wstring(unsigned long value)
-		{ return wstring(wstring::CtorSprintf(), L"%lu", value); }
-	inline wstring to_wstring(unsigned long long value)
-		{ return wstring(wstring::CtorSprintf(), L"%llu", value); }
-	inline wstring to_wstring(float value)
-		{ return wstring(wstring::CtorSprintf(), L"%f", value); }
-	inline wstring to_wstring(double value)
-		{ return wstring(wstring::CtorSprintf(), L"%f", value); }
-	inline wstring to_wstring(long double value)
-		{ return wstring(wstring::CtorSprintf(), L"%Lf", value); }
+	// inline wstring to_wstring(int value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%d", value); }
+	// inline wstring to_wstring(long value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%ld", value); }
+	// inline wstring to_wstring(long long value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%lld", value); }
+	// inline wstring to_wstring(unsigned value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%u", value); }
+	// inline wstring to_wstring(unsigned long value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%lu", value); }
+	// inline wstring to_wstring(unsigned long long value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%llu", value); }
+	// inline wstring to_wstring(float value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%f", value); }
+	// inline wstring to_wstring(double value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%f", value); }
+	// inline wstring to_wstring(long double value)
+	// 	{ return wstring(wstring::CtorSprintf(), L"%Lf", value); }
 
 
 	/// user defined literals
@@ -4179,20 +4179,20 @@ namespace nodecpp
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/operator%22%22s
 	///
-	#if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-		EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
-	    inline namespace literals
-	    {
-		    inline namespace string_literals
-		    {
-				inline string operator"" s(const char* str, size_t len) EA_NOEXCEPT { return {str, string::size_type(len)}; }
-				inline u16string operator"" s(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
-				inline u32string operator"" s(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
-				inline wstring operator"" s(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
-		    }
-	    }
-		EA_RESTORE_VC_WARNING()  // warning: 4455
-	#endif
+	// #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
+	// 	EA_DISABLE_VC_WARNING(4455) // disable warning C4455: literal suffix identifiers that do not start with an underscore are reserved
+	//     inline namespace literals
+	//     {
+	// 	    inline namespace string_literals
+	// 	    {
+	// 			inline string operator"" s(const char* str, size_t len) EA_NOEXCEPT { return {str, string::size_type(len)}; }
+	// 			inline u16string operator"" s(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
+	// 			inline u32string operator"" s(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
+	// 			inline wstring operator"" s(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
+	// 	    }
+	//     }
+	// 	EA_RESTORE_VC_WARNING()  // warning: 4455
+	// #endif
 
 } // namespace nodecpp
 
