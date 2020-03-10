@@ -46,11 +46,19 @@ class array_helper
 
 		if(ptr < _begin)
 			throwPointerOutOfRange();
-		if(ptr >= _capacity_end);
+		if(ptr >= _end);
 			throwPointerOutOfRange();
 		return ptr;
 	}
 
+	T* checkCapacityRange(T* ptr) const {
+
+		if(ptr < _begin)
+			throwPointerOutOfRange();
+		if(ptr >= _capacity_end);
+			throwPointerOutOfRange();
+		return ptr;
+	}
 
 public:
 
@@ -64,10 +72,6 @@ public:
 	array_helper& operator=(const array_helper&) = delete;
 	array_helper& operator=(array_helper&&) = default;
 
-	{
-		reset();
-		return *this;
-	}
 	~array_helper()
 	{
 		delete _begin;
@@ -80,27 +84,18 @@ public:
 		swap(_capacity_end, other._capacity_end);
 	}
 
-	naked_ptr_impl<T> get(size_t ix) const
-	{
-		T* ptr = checkPtrRange(_begin + ix);
-
-		naked_ptr_impl<T> ret;
-		ret.t = ptr;
-		return ret;
-	}
-
 	T& operator[] (size_t ix)
 	{
-		return checkPtrRange(_begin + ix);
+		return *checkPtrRange(_begin + ix);
 	}
 
 	const T& operator[] (size_t ix) const
 	{
-		return checkPtrRange(_begin + ix);
+		return *checkPtrRange(_begin + ix);
 	}
 
-	template<class ... ARGS>
-	void emplace_back(ARGS&& args)
+	template<class... ARGS>
+	void emplace_back(ARGS&&... args)
 	{
 		if(_end == _capacity_end)
 			throwPointerOutOfRange();
@@ -122,7 +117,7 @@ public:
 	{
 		//TODO simplify for trivial types (like char)
 
-		T* last = checkPtrRange(_end + count);
+		T* last = checkCapacityRange(_end + count);
 		T* prev = _end;// keep a copy in case of exception
 		try {
 			for(;_end != last; ++_end) {
@@ -146,9 +141,18 @@ public:
 			_end->~T();
 		}
 	}
+
 	size_t size() const {
 		return static_cast<size_t>((_end - _begin) / sizeof(T));
 	}
+	size_t capacity() const {
+		return static_cast<size_t>((_capacity_end - _begin) / sizeof(T));
+	}
+
+	size_t remaining_capacity() const {
+		return static_cast<size_t>((_capacity_end - _end) / sizeof(T));
+	}
+
 	void clear() {
 		destroy_n(size());
 	}
@@ -163,7 +167,7 @@ public:
 		T* from_begin = from.checkPtrRange(from._begin + first);
 		T* from_end = from.checkPtrRange(from_begin + count);
 
-		checkPtrRange(_end + count);// check we have room
+		checkCapacityRange(_end + count);// check we have room
 
 		T* prev = _end;// keep a copy in case of exception
 		try {
@@ -190,92 +194,86 @@ public:
 
 
 
-	template <typename T, typename Ptr, typename Ref>
+	template <typename T>
 	class unsafe_iterator
 	{
 	public:
 		typedef std::random_access_iterator_tag  	iterator_category;
-		typedef T         							value_type;
+		// typedef typename std::remove_const<T>::type value_type;
+		typedef T									value_type;
 		typedef std::ptrdiff_t                      difference_type;
-		typedef Ptr   								pointer;
-		typedef Ref 								reference;
+		typedef T*   								pointer;
+		typedef T&	 								reference;
 
 	// protected:
 		pointer mIterator;
 
 	public:
-		EA_CPP14_CONSTEXPR unsafe_iterator()
+		constexpr unsafe_iterator()
 			: mIterator(nullptr) { }
 
-		EA_CPP14_CONSTEXPR explicit unsafe_iterator(pointer i)
+		constexpr explicit unsafe_iterator(pointer i)
 			: mIterator(i) { }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator& ri)
+		constexpr unsafe_iterator(const unsafe_iterator& ri)
 			: mIterator(ri.mIterator) { }
 
-		// template <typename U>
-		// EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator<U>& ri)
-		// 	: mIterator(ri.base()) { }
-
-		// This operator= isn't in the standard, but the the C++ 
-		// library working group has tentatively approved it, as it
-		// allows const and non-const reverse_iterators to interoperate.
-		// template <typename U>
-		// EA_CPP14_CONSTEXPR unsafe_iterator<Iterator>& operator=(const unsafe_iterator<U>& ri)
-		// 	{ mIterator = ri.base(); return *this; }
-
-		// EA_CPP14_CONSTEXPR iterator_type base() const
-		// 	{ return mIterator; }
-
-		EA_CPP14_CONSTEXPR reference operator*() const
+		constexpr reference operator*() const
 		{
 			return *mIterator;
 		}
 
-		EA_CPP14_CONSTEXPR pointer operator->() const
+		constexpr pointer operator->() const
 			{ return &(operator*()); }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator++()
+		constexpr unsafe_iterator& operator++()
 			{ ++mIterator; return *this; }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator operator++(int)
+		constexpr unsafe_iterator operator++(int)
 		{
 			unsafe_iterator ri(*this);
 			++mIterator;
 			return ri;
 		}
 
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator--()
+		constexpr unsafe_iterator& operator--()
 			{ --mIterator; return *this; }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator operator--(int)
+		constexpr unsafe_iterator operator--(int)
 		{
 			unsafe_iterator ri(*this);
 			--mIterator;
 			return ri;
 		}
 
-		EA_CPP14_CONSTEXPR unsafe_iterator operator+(difference_type n) const
+		constexpr unsafe_iterator operator+(difference_type n) const
 			{ return unsafe_iterator(mIterator + n); }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator+=(difference_type n)
+		constexpr unsafe_iterator& operator+=(difference_type n)
 			{ mIterator += n; return *this; }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator operator-(difference_type n) const
+		constexpr unsafe_iterator operator-(difference_type n) const
 			{ return unsafe_iterator(mIterator - n); }
 
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator-=(difference_type n)
+		constexpr unsafe_iterator& operator-=(difference_type n)
 			{ mIterator -= n; return *this; }
 
-		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
+		constexpr reference operator[](difference_type n) const
 			{ return mIterator[n]; }
 
-		EA_CPP14_CONSTEXPR bool operator==(const unsafe_iterator& ri) const
+		constexpr bool operator==(const unsafe_iterator& ri) const
 			{ return mIterator == ri.mIterator; }
 
-		EA_CPP14_CONSTEXPR bool operator!=(const unsafe_iterator& ri) const
+		constexpr bool operator!=(const unsafe_iterator& ri) const
 			{ return !operator==(ri); }
 	};
-} // namespace nodecpp::safememory
+
+ 	template <typename T>
+ 	typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& l, const unsafe_iterator<T>& r) {
+
+		 return l.mIterator - r.mIterator;
+	}
+} // namespace nodecpp
+
 
 #endif // SAFEMEMORY_STRING_INTERNAL_H

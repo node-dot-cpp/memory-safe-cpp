@@ -325,8 +325,8 @@ namespace nodecpp
 		typedef const T*                                        const_pointer;
 		typedef T&                                              reference;
 		typedef const T&                                        const_reference;
-		typedef unsafe_iterator<T, T*, T&>						iterator;
-		typedef unsafe_iterator<T, const T*, const T&>			const_iterator;
+		typedef unsafe_iterator<T>								iterator;
+		typedef unsafe_iterator<const T>						const_iterator;
 		typedef std::reverse_iterator<iterator>                 reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>           const_reverse_iterator;
 		typedef std::size_t                                     size_type;          // See config.h for the definition of eastl_size_t, which defaults to size_t.
@@ -642,9 +642,9 @@ namespace nodecpp
 		void shrink_to_fit();
 
 		// Raw access
-		const_pointer data() const  EA_NOEXCEPT;
-		      pointer data()        EA_NOEXCEPT;
-		const_pointer c_str() const EA_NOEXCEPT;
+		// const_pointer data() const  EA_NOEXCEPT;
+		//       pointer data()        EA_NOEXCEPT;
+		// const_pointer c_str() const EA_NOEXCEPT;
 
 		// Element access
 		reference       operator[](size_type n);
@@ -784,6 +784,8 @@ namespace nodecpp
 		// this_type    right(size_type n) const;
 		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type&   sprintf(const_pointer pFormat, ...);
+
+		size_t hash() const EA_NOEXCEPT;
 
 		bool validate() const EA_NOEXCEPT;
 		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
@@ -1059,27 +1061,27 @@ namespace nodecpp
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_pointer
-	basic_string<T, Allocator>::data()  const EA_NOEXCEPT
-	{
-		return internalLayout().BeginPtr();
-	}
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::const_pointer
+	// basic_string<T, Allocator>::data()  const EA_NOEXCEPT
+	// {
+	// 	return internalLayout().BeginPtr();
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_pointer
-	basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
-	{
-		return internalLayout().BeginPtr();
-	}
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::const_pointer
+	// basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
+	// {
+	// 	return internalLayout().BeginPtr();
+	// }
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::pointer
-	basic_string<T, Allocator>::data() EA_NOEXCEPT
-	{
-		return internalLayout().BeginPtr();
-	}
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::pointer
+	// basic_string<T, Allocator>::data() EA_NOEXCEPT
+	// {
+	// 	return internalLayout().BeginPtr();
+	// }
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
@@ -3758,6 +3760,18 @@ namespace nodecpp
 		return std::move(a);
 	}
 
+	template <typename T, typename Allocator>
+	inline size_t basic_string<T, Allocator>::hash() const EA_NOEXCEPT
+	{
+		// To consider: limit p to at most 256 chars.
+		auto p = begin();
+		auto e = end();
+		unsigned int result = 2166136261U;
+//			while((c = *p++) != 0) // Using '!=' disables compiler warnings.
+		for(; p != e; ++p) 
+			result = (result * 16777619) ^ static_cast<unsigned int>(*p);
+		return static_cast<size_t>(result);
+	}
 
 	template <typename T, typename Allocator>
 	inline bool basic_string<T, Allocator>::validate() const EA_NOEXCEPT
@@ -3935,7 +3949,6 @@ namespace nodecpp
 		a.swap(b);
 	}
 
-
 	/// string / wstring
 	typedef basic_string<char>    string;
 	typedef basic_string<wchar_t> wstring;
@@ -3966,11 +3979,7 @@ namespace nodecpp
 	{
 		size_t operator()(const string& x) const
 		{
-			const unsigned char* p = (const unsigned char*)x.c_str(); // To consider: limit p to at most 256 chars.
-			unsigned int c, result = 2166136261U; // We implement an FNV-like string hash.
-			while((c = *p++) != 0) // Using '!=' disables compiler warnings.
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			return x.hash();
 		}
 	};
 
@@ -3979,11 +3988,7 @@ namespace nodecpp
 	{
 		size_t operator()(const string16& x) const
 		{
-			const char16_t* p = x.c_str();
-			unsigned int c, result = 2166136261U;
-			while((c = *p++) != 0)
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			return x.hash();
 		}
 	};
 
@@ -3992,27 +3997,19 @@ namespace nodecpp
 	{
 		size_t operator()(const string32& x) const
 		{
-			const char32_t* p = x.c_str();
-			unsigned int c, result = 2166136261U;
-			while((c = (unsigned int)*p++) != 0)
-				result = (result * 16777619) ^ c;
-			return (size_t)result;
+			return x.hash();
 		}
 	};
 
 	// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		template <>
-		struct hash<wstring>
+	template <>
+	struct hash<wstring>
+	{
+		size_t operator()(const wstring& x) const
 		{
-			size_t operator()(const wstring& x) const
-			{
-				const wchar_t* p = x.c_str();
-				unsigned int c, result = 2166136261U;
-				while((c = (unsigned int)*p++) != 0)
-					result = (result * 16777619) ^ c;
-				return (size_t)result;
-			}
-		};
+			return x.hash();
+		}
+	};
 	// #endif
 
 
