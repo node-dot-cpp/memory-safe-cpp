@@ -122,6 +122,7 @@
 
 #include <EASTL/internal/__undef_macros.h>
 #include <EASTL/internal/config.h>
+#include <string_internal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
@@ -291,105 +292,6 @@ namespace nodecpp
 	// #endif
 
 
-	/// reverse_iterator
-	///
-	/// From the C++ standard:
-	/// Bidirectional and random access iterators have corresponding reverse 
-	/// iterator adaptors that iterate through the data structure in the 
-	/// opposite direction. They have the same signatures as the corresponding 
-	/// iterators. The fundamental relation between a reverse iterator and its 
-	/// corresponding iterator i is established by the identity:
-	///     &*(reverse_iterator(i)) == &*(i - 1).
-	/// This mapping is dictated by the fact that while there is always a pointer 
-	/// past the end of an array, there might not be a valid pointer before the
-	/// beginning of an array.
-	///
-	template <typename T, typename Ptr, typename Ref>
-	class unsafe_iterator
-	{
-	public:
-		typedef std::random_access_iterator_tag  iterator_category;
-		typedef T         value_type;
-		typedef std::ptrdiff_t                              difference_type;
-		typedef Ptr   pointer;
-		typedef Ref reference;
-
-	// protected:
-		pointer mIterator;
-
-	public:
-		EA_CPP14_CONSTEXPR unsafe_iterator()
-			: mIterator(nullptr) { }
-
-		EA_CPP14_CONSTEXPR explicit unsafe_iterator(pointer i)
-			: mIterator(i) { }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator& ri)
-			: mIterator(ri.mIterator) { }
-
-		// template <typename U>
-		// EA_CPP14_CONSTEXPR unsafe_iterator(const unsafe_iterator<U>& ri)
-		// 	: mIterator(ri.base()) { }
-
-		// This operator= isn't in the standard, but the the C++ 
-		// library working group has tentatively approved it, as it
-		// allows const and non-const reverse_iterators to interoperate.
-		// template <typename U>
-		// EA_CPP14_CONSTEXPR unsafe_iterator<Iterator>& operator=(const unsafe_iterator<U>& ri)
-		// 	{ mIterator = ri.base(); return *this; }
-
-		// EA_CPP14_CONSTEXPR iterator_type base() const
-		// 	{ return mIterator; }
-
-		EA_CPP14_CONSTEXPR reference operator*() const
-		{
-			return *mIterator;
-		}
-
-		EA_CPP14_CONSTEXPR pointer operator->() const
-			{ return &(operator*()); }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator++()
-			{ ++mIterator; return *this; }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator operator++(int)
-		{
-			unsafe_iterator ri(*this);
-			++mIterator;
-			return ri;
-		}
-
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator--()
-			{ --mIterator; return *this; }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator operator--(int)
-		{
-			unsafe_iterator ri(*this);
-			--mIterator;
-			return ri;
-		}
-
-		EA_CPP14_CONSTEXPR unsafe_iterator operator+(difference_type n) const
-			{ return unsafe_iterator(mIterator + n); }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator+=(difference_type n)
-			{ mIterator += n; return *this; }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator operator-(difference_type n) const
-			{ return unsafe_iterator(mIterator - n); }
-
-		EA_CPP14_CONSTEXPR unsafe_iterator& operator-=(difference_type n)
-			{ mIterator -= n; return *this; }
-
-		EA_CPP14_CONSTEXPR reference operator[](difference_type n) const
-			{ return mIterator[n]; }
-
-		EA_CPP14_CONSTEXPR bool operator==(const unsafe_iterator& ri) const
-			{ return mIterator == ri.mIterator; }
-
-		EA_CPP14_CONSTEXPR bool operator!=(const unsafe_iterator& ri) const
-			{ return !operator==(ri); }
-	};
 
 
 
