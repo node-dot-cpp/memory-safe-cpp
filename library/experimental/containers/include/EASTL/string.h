@@ -273,7 +273,7 @@
 
 
 
-namespace nodecpp
+namespace nodecpp::safememory
 {
 
 	/// EASTL_BASIC_STRING_DEFAULT_NAME
@@ -4093,7 +4093,7 @@ namespace nodecpp
 	// 	EA_RESTORE_VC_WARNING()  // warning: 4455
 	// #endif
 
-} // namespace nodecpp
+} // namespace nodecpp::safememory
 
 
 #ifdef _MSC_VER

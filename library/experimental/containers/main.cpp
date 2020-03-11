@@ -123,7 +123,7 @@ void mainForMap() {
 
 void testString() {
 
-    nodecpp::string s = "hola mundo";
+    nodecpp::safememory::string s = "hola mundo";
 
 
 }

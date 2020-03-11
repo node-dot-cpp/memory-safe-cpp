@@ -28,16 +28,33 @@
 #ifndef SAFEMEMORY_STRING_INTERNAL_H
 #define SAFEMEMORY_STRING_INTERNAL_H
 
-// #include "safe_ptr.h"
+#include <safe_ptr.h>
 // #include "safe_ptr_with_zero_offset.h"
 #include <iterator>
 
-namespace nodecpp
+namespace safememory
 {
 
+
+namespace memsf = ::nodecpp::safememory;
+
+namespace detail {
+
+struct StackPtrForMakeOwningCallRiia {
+	void* stackTmp = nodecpp::safememory::thg_stackPtrForMakeOwningCall;
+	StackPtrForMakeOwningCallRiia(void* dataForObj) {
+		nodecpp::safememory::thg_stackPtrForMakeOwningCall = dataForObj;
+	}
+	~StackPtrForMakeOwningCallRiia() {
+		nodecpp::safememory::thg_stackPtrForMakeOwningCall = stackTmp;
+	}
+};
+
 template<class T>
-class array_helper
+class alignas(T) array_helper
 {
+	typedef array_helper<T> this_type;
+
 	T* _begin = nullptr;
 	T* _end = nullptr;
 	T* _capacity_end = nullptr;
@@ -61,10 +78,19 @@ class array_helper
 	}
 
 public:
-
-	array_helper( T* ptr, size_t size ): 
+	array_helper(size_t size): 
 		_begin(ptr), _end(ptr), _capacity_end(ptr + size)
-		{}
+		{
+			 //TODO add alignment check
+			auto b = reinterpret_cast<uintptr_t>(this) + sizeof(array_helper<T>);
+			_begin = reinterpret_cast<T*>(b);
+			_end = begin;
+			_capacity_end = ptr + size;
+		}
+
+	// array_helper( T* ptr, size_t size ): 
+	// 	_begin(ptr), _end(ptr), _capacity_end(ptr + size)
+	// 	{}
 
 	array_helper(const array_helper&) = delete;
 	array_helper(array_helper&&) = default;
@@ -72,10 +98,7 @@ public:
 	array_helper& operator=(const array_helper&) = delete;
 	array_helper& operator=(array_helper&&) = default;
 
-	~array_helper()
-	{
-		delete _begin;
-	}
+	~array_helper() {}
 
 	void swap( array_helper<T>& other )
 	{
@@ -84,15 +107,8 @@ public:
 		swap(_capacity_end, other._capacity_end);
 	}
 
-	T& operator[] (size_t ix)
-	{
-		return *checkPtrRange(_begin + ix);
-	}
-
-	const T& operator[] (size_t ix) const
-	{
-		return *checkPtrRange(_begin + ix);
-	}
+	T& at(size_t ix) { return *checkPtrRange(_begin + ix); }
+	const T& const_at(size_t ix) const { return *checkPtrRange(_begin + ix); }
 
 	template<class... ARGS>
 	void emplace_back(ARGS&&... args)
@@ -100,6 +116,7 @@ public:
 		if(_end == _capacity_end)
 			throwPointerOutOfRange();
 
+		StackPtrForMakeOwningCallRiia Riia(_end);
 		::new (static_cast<void*>(_end)) T(std::forward<Args>(args)...);
 		++_end;
 	}
@@ -121,6 +138,7 @@ public:
 		T* prev = _end;// keep a copy in case of exception
 		try {
 			for(;_end != last; ++_end) {
+				StackPtrForMakeOwningCallRiia Riia(_end);
 				::new (static_cast<void*>(_end)) T(value);
 			}
 		}
@@ -172,6 +190,7 @@ public:
 		T* prev = _end;// keep a copy in case of exception
 		try {
 			for(;from_begin != from_end; ++from_begin, ++_end) {
+				StackPtrForMakeOwningCallRiia Riia(_end);
 				::new (static_cast<void*>(_end)) T(*from_begin);
 			}
 		}
@@ -188,92 +207,132 @@ public:
 		return _begin != nullptr;
 	}
 
+	T* begin() { return _begin; }
+	const T* const_begin() const { return _begin; }
+	T* end() { return _end; }
+	const T* const_end() const { return _end; }
+	
+	// memsf::soft_ptr<T> begin_safe(const this_type& own) { return memsf::soft_ptr<T>(own, _begin); }
+	// memsf::soft_ptr<T> end_safe(const this_type& own) { return memsf::soft_ptr<T>(own, _end); }
+
 
 };
 
 
-
-
-	template <typename T>
-	class unsafe_iterator
+template<class _Ty>
+	NODISCARD nodecpp::safememory::owning_ptr_impl<array_helper<_Ty>> make_owning_array_impl(size_t size)
 	{
-	public:
-		typedef std::random_access_iterator_tag  	iterator_category;
-		// typedef typename std::remove_const<T>::type value_type;
-		typedef T									value_type;
-		typedef std::ptrdiff_t                      difference_type;
-		typedef T*   								pointer;
-		typedef T&	 								reference;
 
-	// protected:
-		pointer mIterator;
-
-	public:
-		constexpr unsafe_iterator()
-			: mIterator(nullptr) { }
-
-		constexpr explicit unsafe_iterator(pointer i)
-			: mIterator(i) { }
-
-		constexpr unsafe_iterator(const unsafe_iterator& ri)
-			: mIterator(ri.mIterator) { }
-
-		constexpr reference operator*() const
-		{
-			return *mIterator;
-		}
-
-		constexpr pointer operator->() const
-			{ return &(operator*()); }
-
-		constexpr unsafe_iterator& operator++()
-			{ ++mIterator; return *this; }
-
-		constexpr unsafe_iterator operator++(int)
-		{
-			unsafe_iterator ri(*this);
-			++mIterator;
-			return ri;
-		}
-
-		constexpr unsafe_iterator& operator--()
-			{ --mIterator; return *this; }
-
-		constexpr unsafe_iterator operator--(int)
-		{
-			unsafe_iterator ri(*this);
-			--mIterator;
-			return ri;
-		}
-
-		constexpr unsafe_iterator operator+(difference_type n) const
-			{ return unsafe_iterator(mIterator + n); }
-
-		constexpr unsafe_iterator& operator+=(difference_type n)
-			{ mIterator += n; return *this; }
-
-		constexpr unsafe_iterator operator-(difference_type n) const
-			{ return unsafe_iterator(mIterator - n); }
-
-		constexpr unsafe_iterator& operator-=(difference_type n)
-			{ mIterator -= n; return *this; }
-
-		constexpr reference operator[](difference_type n) const
-			{ return mIterator[n]; }
-
-		constexpr bool operator==(const unsafe_iterator& ri) const
-			{ return mIterator == ri.mIterator; }
-
-		constexpr bool operator!=(const unsafe_iterator& ri) const
-			{ return !operator==(ri); }
-	};
-
- 	template <typename T>
- 	typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& l, const unsafe_iterator<T>& r) {
-
-		 return l.mIterator - r.mIterator;
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() +
+					sizeof(array_helper<_Ty>) ) + (sizeof(T) * size));
+	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+	owning_ptr_impl<array_helper<_Ty>> op(make_owning_t(), (array_helper<_Ty>)(uintptr_t)(dataForObj));
+	// void* stackTmp = thg_stackPtrForMakeOwningCall;
+	// thg_stackPtrForMakeOwningCall = dataForObj;
+	array_helper<_Ty>* objPtr = new ( dataForObj ) array_helper<_Ty>(size);
+	// thg_stackPtrForMakeOwningCall = stackTmp;
+	//return owning_ptr_impl<_Ty>(objPtr);
+	return op;
 	}
-} // namespace nodecpp
 
+template<class _Ty>
+	NODISCARD 
+	nodecpp::safememory::owning_ptr<array_helper<_Ty>> make_owning_array(size_t size) {
+		return make_owning_array_impl<_Ty>(size);
+	}
+
+} //namespace detail
+
+template <typename T>
+class unsafe_iterator
+{
+public:
+	typedef std::random_access_iterator_tag  	iterator_category;
+	// typedef typename std::remove_const<T>::type value_type;
+	typedef T									value_type;
+	typedef std::ptrdiff_t                      difference_type;
+	typedef T*   								pointer;
+	typedef T&	 								reference;
+
+// protected:
+	pointer mIterator;
+
+public:
+	constexpr unsafe_iterator()
+		: mIterator(nullptr) { }
+
+	constexpr explicit unsafe_iterator(pointer i)
+		: mIterator(i) { }
+
+	constexpr unsafe_iterator(const unsafe_iterator& ri)
+		: mIterator(ri.mIterator) { }
+
+	constexpr reference operator*() const
+	{
+		return *mIterator;
+	}
+
+	constexpr pointer operator->() const
+		{ return &(operator*()); }
+
+	constexpr unsafe_iterator& operator++()
+		{ ++mIterator; return *this; }
+
+	constexpr unsafe_iterator operator++(int)
+	{
+		unsafe_iterator ri(*this);
+		++mIterator;
+		return ri;
+	}
+
+	constexpr unsafe_iterator& operator--()
+		{ --mIterator; return *this; }
+
+	constexpr unsafe_iterator operator--(int)
+	{
+		unsafe_iterator ri(*this);
+		--mIterator;
+		return ri;
+	}
+
+	constexpr unsafe_iterator operator+(difference_type n) const
+		{ return unsafe_iterator(mIterator + n); }
+
+	constexpr unsafe_iterator& operator+=(difference_type n)
+		{ mIterator += n; return *this; }
+
+	constexpr unsafe_iterator operator-(difference_type n) const
+		{ return unsafe_iterator(mIterator - n); }
+
+	constexpr unsafe_iterator& operator-=(difference_type n)
+		{ mIterator -= n; return *this; }
+
+	constexpr reference operator[](difference_type n) const
+		{ return mIterator[n]; }
+
+	constexpr bool operator==(const unsafe_iterator& ri) const
+		{ return mIterator == ri.mIterator; }
+
+	constexpr bool operator!=(const unsafe_iterator& ri) const
+		{ return !operator==(ri); }
+};
+
+template <typename T>
+typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& l, const unsafe_iterator<T>& r) {
+
+		return l.mIterator - r.mIterator;
+}
+
+} // namespace safememory
+
+namespace nodecpp::safememory {
+	using ::safememory::unsafe_iterator;
+	using ::safememory::distance;
+
+	namespace detail {
+		using ::safememory::detail::array_helper;
+		using ::safememory::detail::make_owning_array;
+	}
+}
 
 #endif // SAFEMEMORY_STRING_INTERNAL_H
