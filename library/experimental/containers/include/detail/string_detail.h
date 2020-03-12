@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_STRING_INTERNAL_H
-#define SAFEMEMORY_STRING_INTERNAL_H
+#ifndef SAFEMEMORY_DETAIL_STRING_DETAIL_H
+#define SAFEMEMORY_DETAIL_STRING_DETAIL_H
 
 #include <safe_ptr.h>
 // #include "safe_ptr_with_zero_offset.h"
@@ -34,9 +34,6 @@
 
 namespace safememory
 {
-
-
-namespace memsf = ::nodecpp::safememory;
 
 namespace detail {
 
@@ -337,4 +334,4 @@ namespace nodecpp::safememory {
 	}
 }
 
-#endif // SAFEMEMORY_STRING_INTERNAL_H
+#endif // SAFEMEMORY_DETAIL_STRING_DETAIL_H

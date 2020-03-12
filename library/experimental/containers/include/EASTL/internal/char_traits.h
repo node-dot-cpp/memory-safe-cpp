@@ -56,7 +56,7 @@
 #include <string.h>             // memset, etc.
 //EA_RESTORE_ALL_VC_WARNINGS()
 
-namespace nodecpp
+namespace safememory
 {
 	///////////////////////////////////////////////////////////////////////////////
 	/// DecodePart

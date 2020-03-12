@@ -122,7 +122,8 @@
 
 #include <EASTL/internal/__undef_macros.h>
 #include <EASTL/internal/config.h>
-#include <string_internal.h>
+#include <detail/string_detail.h>
+#include <string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
@@ -273,7 +274,7 @@
 
 
 
-namespace nodecpp::safememory
+namespace safememory
 {
 
 	/// EASTL_BASIC_STRING_DEFAULT_NAME
@@ -320,6 +321,7 @@ namespace nodecpp::safememory
 	public:
 		typedef basic_string<T, Allocator>                      this_type;
 		// typedef std::basic_string_view<T>                       view_type;
+		typedef basic_string_literal<T>                       	literal_type;
 		typedef T                                               value_type;
 		typedef T*                                              pointer;
 		typedef const T*                                        const_pointer;
@@ -420,7 +422,7 @@ namespace nodecpp::safememory
 	// 	// consistent string size than increasing the size of the string local data to accommodate a consistent number
 	// 	// of characters despite character width.
 
-		typedef owning_ptr<detail::array_of<T>> owning_heap_type;
+		typedef ::nodecpp::safememory::owning_ptr<detail::array_of<T>> owning_heap_type;
 
 		struct Layout
 		{
@@ -533,8 +535,9 @@ namespace nodecpp::safememory
 		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR));
 		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
+		basic_string(literal_type x);
 		basic_string(const_pointer p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-		EASTL_STRING_EXPLICIT basic_string(const_pointer p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+//		EASTL_STRING_EXPLICIT basic_string(const_pointer p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(size_type n, value_type c/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(const this_type& x);
 	    // basic_string(const this_type& x, const allocator_type& allocator);
@@ -570,7 +573,8 @@ namespace nodecpp::safememory
 
 		// Operator=
 		this_type& operator=(const this_type& x);
-		this_type& operator=(const_pointer p);
+		this_type& operator=(literal_type x);
+		// this_type& operator=(const_pointer p);
 		this_type& operator=(value_type c);
 		this_type& operator=(std::initializer_list<value_type> ilist);
 		// this_type& operator=(view_type v);
@@ -591,21 +595,25 @@ namespace nodecpp::safememory
 		// Assignment operations
 		this_type& assign(const this_type& x);
 		this_type& assign(const this_type& x, size_type position, size_type n = npos);
+		this_type& assign(literal_type x);
 		this_type& assign(const_pointer p, size_type n);
-		this_type& assign(const_pointer p);
+//		this_type& assign(const_pointer p);
 		this_type& assign(size_type n, value_type c);
 		this_type& assign(const_pointer pBegin, const_pointer pEnd);
 		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 		this_type& assign(std::initializer_list<value_type>);
 
-		template <typename OtherCharType>
-		this_type& assign_convert(const OtherCharType* p);
+		// template <typename OtherCharType>
+		// this_type& assign_convert_internal(const OtherCharType* p);
 
 		template <typename OtherCharType>
 		this_type& assign_convert(const OtherCharType* p, size_type n);
 
 		template <typename OtherStringType>
 		this_type& assign_convert(const OtherStringType& x);
+
+		template <typename OtherCharType>
+		this_type& assign_convert(basic_string_literal<OtherCharType> p);
 
 		// Iterators.
 		iterator       begin() EA_NOEXCEPT;                 // Expanded in source code as: mpBegin
@@ -636,12 +644,12 @@ namespace nodecpp::safememory
 		void      reserve(size_type = 0);
 		void      set_capacity(size_type n = npos); // Revises the capacity to the user-specified value. Resizes the container to match the capacity if the requested capacity n is less than the current size. If n == npos then the capacity is reallocated (if necessary) such that capacity == size.
 		void      force_size(size_type n);          // Unilaterally moves the string end position (mpEnd) to the given location. Useful for when the user writes into the string via some extenal means such as C strcpy or sprintf. This allows for more efficient use than using resize to achieve this.
-		void shrink_to_fit();
+		void 	  shrink_to_fit();
 
 		// Raw access
-		// const_pointer data() const  EA_NOEXCEPT;
-		//       pointer data()        EA_NOEXCEPT;
-		// const_pointer c_str() const EA_NOEXCEPT;
+		const_pointer data() const  EA_NOEXCEPT;
+		      pointer data()        EA_NOEXCEPT;
+		const_pointer c_str() const EA_NOEXCEPT;
 
 		// Element access
 		reference       operator[](size_type n);
@@ -655,27 +663,32 @@ namespace nodecpp::safememory
 
 		// Append operations
 		this_type& operator+=(const this_type& x);
-		this_type& operator+=(const_pointer p);
+		this_type& operator+=(literal_type p);
+		// this_type& operator+=(const_pointer p);
 		this_type& operator+=(value_type c);
 
 		this_type& append(const this_type& x);
 		this_type& append(const this_type& x,  size_type position, size_type n = npos);
+		this_type& append(literal_type x);
 		this_type& append(const_pointer p, size_type n);
-		this_type& append(const_pointer p);
+//		this_type& append(const_pointer p);
 		this_type& append(size_type n, value_type c);
 		this_type& append(const_pointer pBegin, const_pointer pEnd);
 
 		// this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type& append_sprintf(const_pointer pFormat, ...);
 
-		template <typename OtherCharType>
-		this_type& append_convert(const OtherCharType* p);
+		// template <typename OtherCharType>
+		// this_type& append_convert(const OtherCharType* p);
 
 		template <typename OtherCharType>
 		this_type& append_convert(const OtherCharType* p, size_type n);
 
 		template <typename OtherStringType>
 		this_type& append_convert(const OtherStringType& x);
+
+		template <typename OtherCharType>
+		this_type& append_convert(basic_string_literal<OtherCharType> x);
 
 		void push_back(value_type c);
 		void pop_back();
@@ -684,7 +697,8 @@ namespace nodecpp::safememory
 		this_type& insert(size_type position, const this_type& x);
 		this_type& insert(size_type position, const this_type& x, size_type beg, size_type n);
 		this_type& insert(size_type position, const_pointer p, size_type n);
-		this_type& insert(size_type position, const_pointer p);
+		// this_type& insert(size_type position, const_pointer p);
+		this_type& insert(size_type position, literal_type x);
 		this_type& insert(size_type position, size_type n, value_type c);
 		iterator   insert(const_iterator p, value_type c);
 		iterator   insert(const_iterator p, size_type n, value_type c);
@@ -706,11 +720,13 @@ namespace nodecpp::safememory
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
 		this_type&  replace(size_type pos1,     size_type n1, const this_type& x,  size_type pos2, size_type n2 = npos);
 		this_type&  replace(size_type position, size_type n1, const_pointer p, size_type n2);
-		this_type&  replace(size_type position, size_type n1, const_pointer p);
+		// this_type&  replace(size_type position, size_type n1, const_pointer p);
+		this_type&  replace(size_type position, size_type n1, literal_type x);
 		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c);
 		this_type&  replace(const_iterator first, const_iterator last, const this_type& x);
 		this_type&  replace(const_iterator first, const_iterator last, const_pointer p, size_type n);
-		this_type&  replace(const_iterator first, const_iterator last, const_pointer p);
+//		this_type&  replace(const_iterator first, const_iterator last, const_pointer p);
+		this_type&  replace(const_iterator first, const_iterator last, literal_type x);
 		this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c);
 		this_type&  replace(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
 		size_type   copy(pointer p, size_type n, size_type position = 0) const;
@@ -718,36 +734,42 @@ namespace nodecpp::safememory
 		// Find operations
 		size_type find(const this_type& x,  size_type position = 0) const EA_NOEXCEPT;
 		size_type find(const_pointer p, size_type position = 0) const;
+		size_type find(literal_type x, size_type position = 0) const;
 		size_type find(const_pointer p, size_type position, size_type n) const;
 		size_type find(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Reverse find operations
 		size_type rfind(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
 		size_type rfind(const_pointer p, size_type position = npos) const;
+		size_type rfind(literal_type x, size_type position = npos) const;
 		size_type rfind(const_pointer p, size_type position, size_type n) const;
 		size_type rfind(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first-of operations
 		size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
 		size_type find_first_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_of(literal_type x, size_type position = 0) const;
 		size_type find_first_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last-of operations
 		size_type find_last_of(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
 		size_type find_last_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_of(literal_type x, size_type position = npos) const;
 		size_type find_last_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first not-of operations
 		size_type find_first_not_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
 		size_type find_first_not_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_not_of(literal_type x, size_type position = 0) const;
 		size_type find_first_not_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_not_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last not-of operations
 		size_type find_last_not_of(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
 		size_type find_last_not_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_not_of(literal_type x, size_type position = npos) const;
 		size_type find_last_not_of(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_not_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
@@ -758,8 +780,10 @@ namespace nodecpp::safememory
 		int        compare(const this_type& x) const EA_NOEXCEPT;
 		int        compare(size_type pos1, size_type n1, const this_type& x) const;
 		int        compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const;
-		int        compare(const_pointer p) const;
-		int        compare(size_type pos1, size_type n1, const_pointer p) const;
+//		int        compare(const_pointer p) const;
+		int        compare(literal_type x) const;
+		// int        compare(size_type pos1, size_type n1, const_pointer p) const;
+		int        compare(size_type pos1, size_type n1, literal_type x) const;
 		int        compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const;
 		static int compare(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
@@ -774,9 +798,12 @@ namespace nodecpp::safememory
 		void         ltrim();
 		void         rtrim();
 		void         trim();
-		void         ltrim(const_pointer p);
-		void         rtrim(const_pointer p);
-		void         trim(const_pointer p);
+		// void         ltrim(const_pointer p);
+		void         ltrim(literal_type x);
+		// void         rtrim(const_pointer p);
+		void         rtrim(literal_type x);
+		// void         trim(const_pointer p);
+		void         trim(literal_type x);
 		this_type    left(size_type n) const;
 		this_type    right(size_type n) const;
 		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
@@ -900,6 +927,11 @@ namespace nodecpp::safememory
         #endif
 	}
 
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>::basic_string(literal_type x)
+	{
+		RangeInitialize(x.c_str());
+	}
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
@@ -943,12 +975,12 @@ namespace nodecpp::safememory
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const_pointer p/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		RangeInitialize(p);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>::basic_string(const_pointer p/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	RangeInitialize(p);
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1059,27 +1091,27 @@ namespace nodecpp::safememory
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::const_pointer
-	// basic_string<T, Allocator>::data()  const EA_NOEXCEPT
-	// {
-	// 	return internalLayout().BeginPtr();
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::data()  const EA_NOEXCEPT
+	{
+		return internalLayout().BeginPtr();
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::const_pointer
-	// basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
-	// {
-	// 	return internalLayout().BeginPtr();
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_pointer
+	basic_string<T, Allocator>::c_str() const EA_NOEXCEPT
+	{
+		return internalLayout().BeginPtr();
+	}
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::pointer
-	// basic_string<T, Allocator>::data() EA_NOEXCEPT
-	// {
-	// 	return internalLayout().BeginPtr();
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::data() EA_NOEXCEPT
+	{
+		return internalLayout().BeginPtr();
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
@@ -1328,12 +1360,18 @@ namespace nodecpp::safememory
 	// 	}
 	// #endif
 
-
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const_pointer p)
+	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(literal_type x)
 	{
+		const T* p = x.c_str();
 		return assign(p, p + CharStrlen(p));
 	}
+
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(const_pointer p)
+	// {
+	// 	return assign(p, p + CharStrlen(p));
+	// }
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(value_type c)
@@ -1630,12 +1668,17 @@ namespace nodecpp::safememory
 		return append(x);
 	}
 
-
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::operator+=(const_pointer p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::operator+=(literal_type x)
 	{
-		return append(p);
+		return append(x);
 	}
+
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::operator+=(const_pointer p)
+	// {
+	// 	return append(p);
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1667,25 +1710,32 @@ namespace nodecpp::safememory
 
 
 	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(literal_type x)
+	{
+		const T* p = x.c_str();
+		return append(p, p + CharStrlen(p));
+	}
+
+	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p, size_type n)
 	{
 		return append(p, p + n);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p)
-	{
-		return append(p, p + CharStrlen(p));
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p)
+	// {
+	// 	return append(p, p + CharStrlen(p));
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
-	{
-		return append_convert(pOther, (size_type)CharStrlen(pOther));
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
+	// {
+	// 	return append_convert(pOther, (size_type)CharStrlen(pOther));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1720,6 +1770,14 @@ namespace nodecpp::safememory
 		}
 
 		return *this;
+	}
+
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(basic_string_literal<OtherCharType> x)
+	{
+		const T* p = x.c_str();
+		return append_convert(p, CharStrlen(p));
 	}
 
 
@@ -1954,6 +2012,13 @@ namespace nodecpp::safememory
 		        x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
 	}
 
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(literal_type x)
+	{
+		const T* p = x.c_str();
+		return assign(p, p + CharStrlen(p));
+	}
+
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p, size_type n)
@@ -1962,11 +2027,11 @@ namespace nodecpp::safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p)
-	{
-		return assign(p, p + CharStrlen(p));
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p)
+	// {
+	// 	return assign(p, p + CharStrlen(p));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2025,14 +2090,14 @@ namespace nodecpp::safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
-	{
-		clear();
-		append_convert(p);
-		return *this;
-	}
+	// template <typename T, typename Allocator>
+	// template <typename OtherCharType>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
+	// {
+	// 	clear();
+	// 	append_convert(p);
+	// 	return *this;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2051,6 +2116,15 @@ namespace nodecpp::safememory
 	{
 		clear();
 		append_convert(x.data(), x.length());
+		return *this;
+	}
+
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(basic_string_literal<OtherCharType> x)
+	{
+		clear();
+		append_convert(x.c_str());
 		return *this;
 	}
 
@@ -2111,15 +2185,35 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p)
+	// {
+	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
+	// 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+	// 			ThrowRangeException();
+	// 	#endif
+
+	// 	size_type nLength = (size_type)CharStrlen(p);
+
+	// 	#if EASTL_STRING_OPT_LENGTH_ERRORS
+	// 		if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
+	// 			ThrowLengthException();
+	// 	#endif
+
+	// 	insert(internalLayout().BeginPtr() + position, p, p + nLength);
+	// 	return *this;
+	// }
+
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, literal_type x)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
 				ThrowRangeException();
 		#endif
 
-		size_type nLength = (size_type)CharStrlen(p);
+		const T* p = x.c_str();
+		size_type nLength = CharStrlen(p);
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
@@ -2487,8 +2581,27 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p)
+	// {
+	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
+	// 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+	// 			ThrowRangeException();
+	// 	#endif
+
+	// 	const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
+
+	// 	#if EASTL_STRING_OPT_LENGTH_ERRORS
+	// 		const size_type n2 = (size_type)CharStrlen(p);
+	// 		if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
+	// 			ThrowLengthException();
+	// 	#endif
+
+	// 	return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, literal_type x)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2496,6 +2609,7 @@ namespace nodecpp::safememory
 		#endif
 
 		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
+		const T* p = x.c_str();
 
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			const size_type n2 = (size_type)CharStrlen(p);
@@ -2505,7 +2619,6 @@ namespace nodecpp::safememory
 
 		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, size_type n2, value_type c)
@@ -2540,12 +2653,18 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p)
+	// {
+	// 	return replace(pBegin, pEnd, p, p + CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, literal_type x)
 	{
+		const T* p = x.c_str();
 		return replace(pBegin, pEnd, p, p + CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
@@ -2670,13 +2789,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::find(const_pointer p, size_type position) const
+	// {
+	// 	return find(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::find(literal_type x, size_type position) const
 	{
-		return find(p, position, (size_type)CharStrlen(p));
+		const T* p = x.c_str();
+		return find(p, position, CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -2730,13 +2856,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::rfind(const_pointer p, size_type position) const
+	// {
+	// 	return rfind(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::rfind(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::rfind(literal_type x, size_type position) const
 	{
-		return rfind(p, position, (size_type)CharStrlen(p));
+		const T* p = x.c_str();
+		return rfind(p, position, CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -2801,13 +2934,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position) const
+	// {
+	// 	return find_first_of(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::find_first_of(literal_type x, size_type position) const
 	{
-		return find_first_of(p, position, (size_type)CharStrlen(p));
+		const T* p = x.c_str();
+		return find_first_of(p, position, CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -2842,13 +2982,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position) const
+	// {
+	// 	return find_last_of(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::find_last_of(literal_type x, size_type position) const
 	{
-		return find_last_of(p, position, (size_type)CharStrlen(p));
+		const T* p = x.c_str();
+		return find_last_of(p, position, CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -2885,13 +3032,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position) const
+	// {
+	// 	return find_first_not_of(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::find_first_not_of(literal_type x, size_type position) const
 	{
-		return find_first_not_of(p, position, (size_type)CharStrlen(p));
+		const T* p = x.c_str();
+		return find_first_not_of(p, position, CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -2934,13 +3088,20 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::size_type
+	// basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position) const
+	// {
+	// 	return find_last_not_of(p, position, (size_type)CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position) const
+	basic_string<T, Allocator>::find_last_not_of(literal_type x, size_type position) const
 	{
+		const T* p = x.c_str();
 		return find_last_not_of(p, position, (size_type)CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
@@ -3036,27 +3197,47 @@ namespace nodecpp::safememory
 	}
 
 
+	// template <typename T, typename Allocator>
+	// inline int basic_string<T, Allocator>::compare(const_pointer p) const
+	// {
+	// 	return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
+	// }
+
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(const_pointer p) const
+	inline int basic_string<T, Allocator>::compare(literal_type x) const
 	{
+		const T* p = x.c_str();
 		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
+	// template <typename T, typename Allocator>
+	// inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p) const
+	// {
+	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
+	// 		if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+	// 			ThrowRangeException();
+	// 	#endif
+
+	// 	return compare(internalLayout().BeginPtr() + pos1,
+	// 				   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+	// 				   p,
+	// 				   p + CharStrlen(p));
+	// }
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p) const
+	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, literal_type x) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
 				ThrowRangeException();
 		#endif
 
+		const T* p = x.c_str();
 		return compare(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
 					   p,
 					   p + CharStrlen(p));
 	}
-
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const
@@ -3119,27 +3300,43 @@ namespace nodecpp::safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::ltrim(const_pointer p)
-	{
-		erase(0, find_first_not_of(p));
-	}
-
-
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::rtrim(const_pointer p)
-	{
-		erase(find_last_not_of(p) + 1);
-	}
-
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::ltrim(const_pointer p)
+	// {
+	// 	erase(0, find_first_not_of(p));
+	// }
 
 	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::trim(const_pointer p)
+	inline void basic_string<T, Allocator>::ltrim(literal_type x)
 	{
-		ltrim(p);
-		rtrim(p);
+		erase(0, find_first_not_of(x));
 	}
 
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::rtrim(const_pointer p)
+	// {
+	// 	erase(find_last_not_of(p) + 1);
+	// }
+
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::rtrim(literal_type x)
+	{
+		erase(find_last_not_of(x) + 1);
+	}
+
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::trim(const_pointer p)
+	// {
+	// 	ltrim(p);
+	// 	rtrim(p);
+	// }
+
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::trim(literal_type x)
+	{
+		ltrim(x);
+		rtrim(_xabort);
+	}
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator> basic_string<T, Allocator>::left(size_type n) const
@@ -4091,7 +4288,12 @@ namespace nodecpp::safememory
 	// 	EA_RESTORE_VC_WARNING()  // warning: 4455
 	// #endif
 
-} // namespace nodecpp::safememory
+} // namespace safememory
+
+namespace nodecpp::safememory {
+	using ::safememory::string;
+}
+
 
 
 #ifdef _MSC_VER
