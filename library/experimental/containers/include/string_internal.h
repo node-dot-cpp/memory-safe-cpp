@@ -51,13 +51,13 @@ struct StackPtrForMakeOwningCallRiia {
 };
 
 template<class T>
-class alignas(T) array_helper
+class alignas(T) alignas(T*) array_of
 {
-	typedef array_helper<T> this_type;
+	typedef array_of<T> this_type;
 
-	T* _begin = nullptr;
-	T* _end = nullptr;
-	T* _capacity_end = nullptr;
+	T* _begin;
+	T* _end;
+	T* _capacity_end;
 
 	T* checkPtrRange(T* ptr) const {
 
@@ -78,29 +78,27 @@ class alignas(T) array_helper
 	}
 
 public:
-	array_helper(size_t size): 
-		_begin(ptr), _end(ptr), _capacity_end(ptr + size)
+	array_of(size_t capacity)
 		{
-			 //TODO add alignment check
-			auto b = reinterpret_cast<uintptr_t>(this) + sizeof(array_helper<T>);
+			auto b = reinterpret_cast<uintptr_t>(this) + sizeof(array_of<T>);
 			_begin = reinterpret_cast<T*>(b);
-			_end = begin;
-			_capacity_end = ptr + size;
+			_end = _begin;
+			_capacity_end = _begin + capacity;
 		}
 
-	// array_helper( T* ptr, size_t size ): 
+	// array_of( T* ptr, size_t size ): 
 	// 	_begin(ptr), _end(ptr), _capacity_end(ptr + size)
 	// 	{}
 
-	array_helper(const array_helper&) = delete;
-	array_helper(array_helper&&) = default;
+	array_of(const array_of&) = delete;
+	array_of(array_of&&) = default;
 
-	array_helper& operator=(const array_helper&) = delete;
-	array_helper& operator=(array_helper&&) = default;
+	array_of& operator=(const array_of&) = delete;
+	array_of& operator=(array_of&&) = default;
 
-	~array_helper() {}
+	~array_of() {}
 
-	void swap( array_helper<T>& other )
+	void swap( array_of<T>& other )
 	{
 		swap(_begin, other._begin);
 		swap(_end, other._end);
@@ -163,6 +161,10 @@ public:
 	size_t size() const {
 		return static_cast<size_t>((_end - _begin) / sizeof(T));
 	}
+	void set_size_unsafe(size_t sz) {
+		_end = _begin + sz;
+	}
+
 	size_t capacity() const {
 		return static_cast<size_t>((_capacity_end - _begin) / sizeof(T));
 	}
@@ -175,12 +177,12 @@ public:
 		destroy_n(size());
 	}
 
-	void uninitialized_copy(const array_helper& from) {
+	void uninitialized_copy(const array_of& from) {
 		
 		uninitialized_copy(from, 0, from.size());
 	}
 
-	void uninitialized_copy_n(const array_helper& from, size_t first, size_t count) {
+	void uninitialized_copy_n(const array_of& from, size_t first, size_t count) {
 
 		T* from_begin = from.checkPtrRange(from._begin + first);
 		T* from_end = from.checkPtrRange(from_begin + count);
@@ -220,24 +222,24 @@ public:
 
 
 template<class _Ty>
-	NODISCARD nodecpp::safememory::owning_ptr_impl<array_helper<_Ty>> make_owning_array_impl(size_t size)
+	NODISCARD nodecpp::safememory::owning_ptr_impl<array_of<_Ty>> make_owning_array_impl(size_t size)
 	{
-
-	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() +
-					sizeof(array_helper<_Ty>) ) + (sizeof(T) * size));
-	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr_impl<array_helper<_Ty>> op(make_owning_t(), (array_helper<_Ty>)(uintptr_t)(dataForObj));
-	// void* stackTmp = thg_stackPtrForMakeOwningCall;
-	// thg_stackPtrForMakeOwningCall = dataForObj;
-	array_helper<_Ty>* objPtr = new ( dataForObj ) array_helper<_Ty>(size);
-	// thg_stackPtrForMakeOwningCall = stackTmp;
-	//return owning_ptr_impl<_Ty>(objPtr);
-	return op;
+		using namespace nodecpp::safememory;
+		size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
+		void* data = zombieAllocate( head + sizeof(array_of<_Ty>) + (sizeof(_Ty) * size));
+		array_of<_Ty>* dataForObj = reinterpret_cast<array_of<_Ty>*>(reinterpret_cast<uintptr_t>(data) + head);
+		owning_ptr_impl<array_of<_Ty>> op(make_owning_t(), dataForObj);
+		// void* stackTmp = thg_stackPtrForMakeOwningCall;
+		// thg_stackPtrForMakeOwningCall = dataForObj;
+		array_of<_Ty>* objPtr = new ( dataForObj ) array_of<_Ty>(size);
+		// thg_stackPtrForMakeOwningCall = stackTmp;
+		//return owning_ptr_impl<_Ty>(objPtr);
+		return op;
 	}
 
 template<class _Ty>
 	NODISCARD 
-	nodecpp::safememory::owning_ptr<array_helper<_Ty>> make_owning_array(size_t size) {
+	nodecpp::safememory::owning_ptr<array_of<_Ty>> make_owning_array(size_t size) {
 		return make_owning_array_impl<_Ty>(size);
 	}
 
@@ -330,7 +332,7 @@ namespace nodecpp::safememory {
 	using ::safememory::distance;
 
 	namespace detail {
-		using ::safememory::detail::array_helper;
+		using ::safememory::detail::array_of;
 		using ::safememory::detail::make_owning_array;
 	}
 }

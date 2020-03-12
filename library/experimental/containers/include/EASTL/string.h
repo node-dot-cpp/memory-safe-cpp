@@ -319,7 +319,7 @@ namespace nodecpp::safememory
 	{
 	public:
 		typedef basic_string<T, Allocator>                      this_type;
-		typedef std::basic_string_view<T>                       view_type;
+		// typedef std::basic_string_view<T>                       view_type;
 		typedef T                                               value_type;
 		typedef T*                                              pointer;
 		typedef const T*                                        const_pointer;
@@ -336,9 +336,9 @@ namespace nodecpp::safememory
 	static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
 
 	public:
-		// CtorDoNotInitialize exists so that we can create a constructor that allocates but doesn't
+		// CtorReserve exists so that we can create a constructor that allocates but doesn't
 		// initialize and also doesn't collide with any other constructor declaration.
-		struct CtorDoNotInitialize{};
+		struct CtorReserve{};
 
 		// CtorSprintf exists so that we can create a constructor that accepts printf-style
 		// arguments but also doesn't collide with any other constructor declaration.
@@ -346,181 +346,178 @@ namespace nodecpp::safememory
 
 		// CtorConvert exists so that we can have a constructor that implements string encoding
 		// conversion, such as between UCS2 char16_t and UTF8 char8_t.
-		struct CtorConvert{};
+//		struct CtorConvert{};
 
 	protected:
-		// Masks used to determine if we are in SSO or Heap
-		#ifdef EA_SYSTEM_BIG_ENDIAN
-			// Big Endian use LSB, unless we want to reorder struct layouts on endianness, Bit is set when we are in Heap
-			static constexpr size_type kHeapMask = 0x1;
-			static constexpr size_type kSSOMask  = 0x1;
-		#else
-			// Little Endian use MSB
-			static constexpr size_type kHeapMask = ~(size_type(~size_type(0)) >> 1);
-			static constexpr size_type kSSOMask  = 0x80;
-		#endif
+	// 	// Masks used to determine if we are in SSO or Heap
+	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
+	// 		// Big Endian use LSB, unless we want to reorder struct layouts on endianness, Bit is set when we are in Heap
+	// 		static constexpr size_type kHeapMask = 0x1;
+	// 		static constexpr size_type kSSOMask  = 0x1;
+	// 	#else
+	// 		// Little Endian use MSB
+	// 		static constexpr size_type kHeapMask = ~(size_type(~size_type(0)) >> 1);
+	// 		static constexpr size_type kSSOMask  = 0x80;
+	// 	#endif
 
-	public:
-		#ifdef EA_SYSTEM_BIG_ENDIAN
-			static constexpr size_type kMaxSize = (~kHeapMask) >> 1;
-		#else
-			static constexpr size_type kMaxSize = ~kHeapMask;
-		#endif
+	// public:
+	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
+	// 		static constexpr size_type kMaxSize = (~kHeapMask) >> 1;
+	// 	#else
+	// 		static constexpr size_type kMaxSize = ~kHeapMask;
+	// 	#endif
 
-	protected:
-		// The view of memory when the string data is obtained from the allocator.
-		struct HeapLayout
-		{
-			pointer mpBegin;  // Begin of string.
-			size_type mnSize;     // Size of the string. Number of characters currently in the string, not including the trailing '0'
-			size_type mnCapacity; // Capacity of the string. Number of characters string can hold, not including the trailing '0'
-		};
+	// protected:
+	// 	// The view of memory when the string data is obtained from the allocator.
+	// 	struct HeapLayout
+	// 	{
+	// 		pointer mpBegin;  // Begin of string.
+	// 		size_type mnSize;     // Size of the string. Number of characters currently in the string, not including the trailing '0'
+	// 		size_type mnCapacity; // Capacity of the string. Number of characters string can hold, not including the trailing '0'
+	// 	};
 
-		template <typename CharT, size_t = sizeof(CharT)>
-		struct SSOPadding
-		{
-			char padding[sizeof(CharT) - sizeof(char)];
-		};
+	// 	template <typename CharT, size_t = sizeof(CharT)>
+	// 	struct SSOPadding
+	// 	{
+	// 		char padding[sizeof(CharT) - sizeof(char)];
+	// 	};
 
-		template <typename CharT>
-		struct SSOPadding<CharT, 1>
-		{
-			// template specialization to remove the padding structure to avoid warnings on zero length arrays
-			// also, this allows us to take advantage of the empty-base-class optimization.
-		};
+	// 	template <typename CharT>
+	// 	struct SSOPadding<CharT, 1>
+	// 	{
+	// 		// template specialization to remove the padding structure to avoid warnings on zero length arrays
+	// 		// also, this allows us to take advantage of the empty-base-class optimization.
+	// 	};
 
-		// The view of memory when the string data is able to store the string data locally (without a heap allocation).
-		struct SSOLayout
-		{
-			static constexpr size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
+	// 	// The view of memory when the string data is able to store the string data locally (without a heap allocation).
+	// 	struct SSOLayout
+	// 	{
+	// 		static constexpr size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
 
-			// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
-			// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.
-			struct SSOSize : SSOPadding<value_type>
-			{
-				char mnRemainingSize;
-			};
+	// 		// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
+	// 		// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.
+	// 		struct SSOSize : SSOPadding<value_type>
+	// 		{
+	// 			char mnRemainingSize;
+	// 		};
 
-			value_type mData[SSO_CAPACITY]; // Local buffer for string data.
-			SSOSize mRemainingSizeField;
-		};
+	// 		value_type mData[SSO_CAPACITY]; // Local buffer for string data.
+	// 		SSOSize mRemainingSizeField;
+	// 	};
 
-		// This view of memory is a utility structure for easy copying of the string data.
-		struct RawLayout
-		{
-			char mBuffer[sizeof(HeapLayout)];
-		};
+	// 	// This view of memory is a utility structure for easy copying of the string data.
+	// 	struct RawLayout
+	// 	{
+	// 		char mBuffer[sizeof(HeapLayout)];
+	// 	};
 
-		static_assert(sizeof(SSOLayout)  == sizeof(HeapLayout), "heap and sso layout structures must be the same size");
-		static_assert(sizeof(HeapLayout) == sizeof(RawLayout),  "heap and raw layout structures must be the same size");
+	// 	static_assert(sizeof(SSOLayout)  == sizeof(HeapLayout), "heap and sso layout structures must be the same size");
+	// 	static_assert(sizeof(HeapLayout) == sizeof(RawLayout),  "heap and raw layout structures must be the same size");
 
-		// This implements the 'short string optimization' or SSO. SSO reuses the existing storage of string class to
-		// hold string data short enough to fit therefore avoiding a heap allocation. The number of characters stored in
-		// the string SSO buffer is variable and depends on the string character width. This implementation favors a
-		// consistent string size than increasing the size of the string local data to accommodate a consistent number
-		// of characters despite character width.
+	// 	// This implements the 'short string optimization' or SSO. SSO reuses the existing storage of string class to
+	// 	// hold string data short enough to fit therefore avoiding a heap allocation. The number of characters stored in
+	// 	// the string SSO buffer is variable and depends on the string character width. This implementation favors a
+	// 	// consistent string size than increasing the size of the string local data to accommodate a consistent number
+	// 	// of characters despite character width.
+
+		typedef owning_ptr<detail::array_of<T>> owning_heap_type;
+
 		struct Layout
 		{
-			union
-			{
-				HeapLayout heap;
-				SSOLayout sso;
-				RawLayout raw;
-			};
+			owning_heap_type heap;
 
-			Layout()                                                  { ResetToSSO(); SetSSOSize(0); } // start as SSO by default
-			Layout(const Layout& other)                               { Copy(*this, other); }
+			Layout()                                                  { }
+//			Layout(const Layout& other)                                { Copy(*this, other); }
 			Layout(Layout&& other)                                    { Move(*this, other); }
-			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
+//			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
 			Layout& operator=(Layout&& other)                         { Move(*this, other); return *this; }
 
 			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
-			inline bool IsHeap() const EA_NOEXCEPT                    { return !!(sso.mRemainingSizeField.mnRemainingSize & kSSOMask); }
+			inline bool IsHeap() const EA_NOEXCEPT                    { return true; }
 			inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
-			inline pointer SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
-			inline const_pointer SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
+			// inline pointer SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
+			// inline const_pointer SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
 
 			// Largest value for SSO.mnSize == 23, which has two LSB bits set, but on big-endian (BE)
 			// use least significant bit (LSB) to denote heap so shift.
-			inline size_type GetSSOSize() const EA_NOEXCEPT
-			{
-				#ifdef EA_SYSTEM_BIG_ENDIAN
-					return SSOLayout::SSO_CAPACITY - (sso.mRemainingSizeField.mnRemainingSize >> 2);
-				#else
-					return (SSOLayout::SSO_CAPACITY - sso.mRemainingSizeField.mnRemainingSize);
-				#endif
-			}
-			inline size_type GetHeapSize() const EA_NOEXCEPT { return heap.mnSize; }
-			inline size_type GetSize() const EA_NOEXCEPT     { return IsHeap() ? GetHeapSize() : GetSSOSize(); }
+			// inline size_type GetSSOSize() const EA_NOEXCEPT
+			// {
+			// 	#ifdef EA_SYSTEM_BIG_ENDIAN
+			// 		return SSOLayout::SSO_CAPACITY - (sso.mRemainingSizeField.mnRemainingSize >> 2);
+			// 	#else
+			// 		return (SSOLayout::SSO_CAPACITY - sso.mRemainingSizeField.mnRemainingSize);
+			// 	#endif
+			// }
+//			inline size_type GetHeapSize() const EA_NOEXCEPT { return heap.mnSize; }
+			inline size_type GetSize() const EA_NOEXCEPT     { return heap->size(); }
 
-			inline void SetSSOSize(size_type size) EA_NOEXCEPT
-			{
-				#ifdef EA_SYSTEM_BIG_ENDIAN
-					sso.mRemainingSizeField.mnRemainingSize = (char)((SSOLayout::SSO_CAPACITY - size) << 2);
-				#else
-					sso.mRemainingSizeField.mnRemainingSize = (char)(SSOLayout::SSO_CAPACITY - size);
-				#endif
-			}
+			// inline void SetSSOSize(size_type size) EA_NOEXCEPT
+			// {
+			// 	#ifdef EA_SYSTEM_BIG_ENDIAN
+			// 		sso.mRemainingSizeField.mnRemainingSize = (char)((SSOLayout::SSO_CAPACITY - size) << 2);
+			// 	#else
+			// 		sso.mRemainingSizeField.mnRemainingSize = (char)(SSOLayout::SSO_CAPACITY - size);
+			// 	#endif
+			// }
 
-			inline void SetHeapSize(size_type size) EA_NOEXCEPT          { heap.mnSize = size; }
-			inline void SetSize(size_type size) EA_NOEXCEPT              { IsHeap() ? SetHeapSize(size) : SetSSOSize(size); }
+//			inline void SetHeapSize(size_type size) EA_NOEXCEPT          { heap->set_size_unsafe(size); }
+			inline void SetSize(size_type size) EA_NOEXCEPT              { heap->set_size_unsafe(size); }
 
-			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return size_type(CapacityPtr() - EndPtr()); }
+			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return heap->remaining_capacity(); }
 
-			inline pointer HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
-			inline const_pointer HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
+			// inline pointer HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
+			// inline const_pointer HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
 
-			inline pointer SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
-			inline const_pointer SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
+			// inline pointer SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
+			// inline const_pointer SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
 
-			inline pointer BeginPtr() EA_NOEXCEPT                    { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
-			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return IsHeap() ? HeapBeginPtr() : SSOBeginPtr(); }
+			inline pointer BeginPtr() EA_NOEXCEPT                    { return heap->begin(); }
+			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return heap->const_begin(); }
 
-			inline pointer HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
-			inline const_pointer HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
+			// inline pointer HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
+			// inline const_pointer HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
 
-			inline pointer SSOEndPtr() EA_NOEXCEPT                   { return sso.mData + GetSSOSize(); }
-			inline const_pointer SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
+			// inline pointer SSOEndPtr() EA_NOEXCEPT                   { return sso.mData + GetSSOSize(); }
+			// inline const_pointer SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
 
 			// Points to end of character stream, *ptr == '0'
-			inline pointer EndPtr() EA_NOEXCEPT                      { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
-			inline const_pointer EndPtr() const EA_NOEXCEPT          { return IsHeap() ? HeapEndPtr() : SSOEndPtr(); }
+			inline pointer EndPtr() EA_NOEXCEPT                      { return heap->end(); }
+			inline const_pointer EndPtr() const EA_NOEXCEPT          { return heap->const_end(); }
 
-			inline pointer HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
-			inline const_pointer HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
+			// inline pointer HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
+			// inline const_pointer HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
 
-			inline pointer SSOCapcityPtr() EA_NOEXCEPT               { return sso.mData + SSOLayout::SSO_CAPACITY; }
-			inline const_pointer SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
+			// inline pointer SSOCapcityPtr() EA_NOEXCEPT               { return sso.mData + SSOLayout::SSO_CAPACITY; }
+			// inline const_pointer SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- only true when size() == capacity()
-			inline pointer CapacityPtr() EA_NOEXCEPT                 { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
-			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return IsHeap() ? HeapCapacityPtr() : SSOCapcityPtr(); }
+			inline pointer CapacityPtr() EA_NOEXCEPT                 { return BeginPtr() + GetHeapCapacity(); }
+			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return BeginPtr() + GetHeapCapacity(); }
 
-			inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
+			inline void SetNewHeap(owning_heap_type&& new_heap) { heap = std::move(new_heap); }
+			// inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
 
-			inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
-			{
-			#ifdef EA_SYSTEM_BIG_ENDIAN
-				heap.mnCapacity = (cap << 1) | kHeapMask;
-			#else
-				heap.mnCapacity = (cap | kHeapMask);
-			#endif
-			}
+			// inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
+			// {
+			// #ifdef EA_SYSTEM_BIG_ENDIAN
+			// 	heap.mnCapacity = (cap << 1) | kHeapMask;
+			// #else
+			// 	heap.mnCapacity = (cap | kHeapMask);
+			// #endif
+			// }
 
 			inline size_type GetHeapCapacity() const EA_NOEXCEPT
 			{
-			#ifdef EA_SYSTEM_BIG_ENDIAN
-				return (heap.mnCapacity >> 1);
-			#else
-				return (heap.mnCapacity & ~kHeapMask);
-			#endif
+				return heap->capacity() - 1;
 			}
 
-			inline void Copy(Layout& dst, const Layout& src) EA_NOEXCEPT { dst.raw = src.raw; }
+			// inline void Copy(Layout& dst, const Layout& src) { dst.raw = src.raw; }
 			inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { std::swap(dst.raw, src.raw); }
 			inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { std::swap(a.raw, b.raw); }
 
-			inline void ResetToSSO() EA_NOEXCEPT { memset(&raw, 0, sizeof(RawLayout)); }
+			inline void Reset() EA_NOEXCEPT { 
+				heap = detail::make_owning_array<T>(32);
+			}
 		};
 
 		Layout          mPair_first;
@@ -542,9 +539,9 @@ namespace nodecpp::safememory
 		basic_string(const this_type& x);
 	    // basic_string(const this_type& x, const allocator_type& allocator);
 		basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
-//		basic_string(CtorDoNotInitialize, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		basic_string(CtorReserve, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 //		basic_string(CtorSprintf, const_pointer pFormat, ...);
-		// basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
 		basic_string(this_type&& x) EA_NOEXCEPT;
 		// basic_string(this_type&& x, const allocator_type& allocator);
@@ -569,13 +566,13 @@ namespace nodecpp::safememory
 		// void                  set_allocator(const allocator_type& allocator);
 
 		// Implicit conversion operator
-		operator std::basic_string_view<T>() const EA_NOEXCEPT;
+		// operator std::basic_string_view<T>() const EA_NOEXCEPT;
 
 		// Operator=
 		this_type& operator=(const this_type& x);
 		this_type& operator=(const_pointer p);
 		this_type& operator=(value_type c);
-		// this_type& operator=(std::initializer_list<value_type> ilist);
+		this_type& operator=(std::initializer_list<value_type> ilist);
 		// this_type& operator=(view_type v);
 		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 
@@ -599,16 +596,16 @@ namespace nodecpp::safememory
 		this_type& assign(size_type n, value_type c);
 		this_type& assign(const_pointer pBegin, const_pointer pEnd);
 		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
-		// this_type& assign(std::initializer_list<value_type>);
+		this_type& assign(std::initializer_list<value_type>);
 
-		// template <typename OtherCharType>
-		// this_type& assign_convert(const OtherCharType* p);
+		template <typename OtherCharType>
+		this_type& assign_convert(const OtherCharType* p);
 
-		// template <typename OtherCharType>
-		// this_type& assign_convert(const OtherCharType* p, size_type n);
+		template <typename OtherCharType>
+		this_type& assign_convert(const OtherCharType* p, size_type n);
 
-		// template <typename OtherStringType>
-		// this_type& assign_convert(const OtherStringType& x);
+		template <typename OtherStringType>
+		this_type& assign_convert(const OtherStringType& x);
 
 		// Iterators.
 		iterator       begin() EA_NOEXCEPT;                 // Expanded in source code as: mpBegin
@@ -671,14 +668,14 @@ namespace nodecpp::safememory
 		// this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type& append_sprintf(const_pointer pFormat, ...);
 
-		// template <typename OtherCharType>
-		// this_type& append_convert(const OtherCharType* p);
+		template <typename OtherCharType>
+		this_type& append_convert(const OtherCharType* p);
 
-		// template <typename OtherCharType>
-		// this_type& append_convert(const OtherCharType* p, size_type n);
+		template <typename OtherCharType>
+		this_type& append_convert(const OtherCharType* p, size_type n);
 
-		// template <typename OtherStringType>
-		// this_type& append_convert(const OtherStringType& x);
+		template <typename OtherStringType>
+		this_type& append_convert(const OtherStringType& x);
 
 		void push_back(value_type c);
 		void pop_back();
@@ -692,7 +689,7 @@ namespace nodecpp::safememory
 		iterator   insert(const_iterator p, value_type c);
 		iterator   insert(const_iterator p, size_type n, value_type c);
 		iterator   insert(const_iterator p, const_pointer pBegin, const_pointer pEnd);
-		// iterator   insert(const_iterator p, std::initializer_list<value_type>);
+		iterator   insert(const_iterator p, std::initializer_list<value_type>);
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos);
@@ -703,7 +700,7 @@ namespace nodecpp::safememory
 		void             clear() EA_NOEXCEPT;
 
 		// Detach memory
-		pointer detach() EA_NOEXCEPT;
+		// pointer detach() EA_NOEXCEPT;
 
 		// Replacement operations
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
@@ -772,16 +769,16 @@ namespace nodecpp::safememory
 		// static int comparei(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
 		// Misc functionality, not part of C++ this_type.
-		// void         make_lower();
-		// void         make_upper();
-		// void         ltrim();
-		// void         rtrim();
-		// void         trim();
-		// void         ltrim(const_pointer p);
-		// void         rtrim(const_pointer p);
-		// void         trim(const_pointer p);
-		// this_type    left(size_type n) const;
-		// this_type    right(size_type n) const;
+		void         make_lower();
+		void         make_upper();
+		void         ltrim();
+		void         rtrim();
+		void         trim();
+		void         ltrim(const_pointer p);
+		void         rtrim(const_pointer p);
+		void         trim(const_pointer p);
+		this_type    left(size_type n) const;
+		this_type    right(size_type n) const;
 		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type&   sprintf(const_pointer pFormat, ...);
 
@@ -793,13 +790,14 @@ namespace nodecpp::safememory
 
 	protected:
 		// Helper functions for initialization/insertion operations.
-		pointer DoAllocate(size_type n);
-		void        DoFree(pointer p, size_type n);
+
+		owning_heap_type DoAllocate(size_type n);
+		// void        DoFree(pointer p, size_type n);
 		size_type   GetNewCapacity(size_type currentCapacity);
 		size_type   GetNewCapacity(size_type currentCapacity, size_type minimumGrowSize);
 		void        AllocateSelf();
 		void        AllocateSelf(size_type n);
-		void        DeallocateSelf();
+		// void        DeallocateSelf();
 		iterator    InsertInternal(const_iterator p, value_type c);
 		void        RangeInitialize(const_pointer pBegin, const_pointer pEnd);
 		void        RangeInitialize(const_pointer pBegin);
@@ -969,16 +967,16 @@ namespace nodecpp::safememory
 	}
 
 
-	// // CtorDoNotInitialize exists so that we can create a version that allocates but doesn't
-	// // initialize but also doesn't collide with any other constructor declaration.
-	// template <typename T, typename Allocator>
-	// basic_string<T, Allocator>::basic_string(CtorDoNotInitialize /*unused*/, size_type n/*, const allocator_type& allocator*/)
-	// 	// : mPair_second(allocator)
-	// {
-	// 	// Note that we do not call SizeInitialize here.
-	// 	AllocateSelf(n);
-	// 	*internalLayout().EndPtr() = 0;
-	// }
+	// CtorReserve exists so that we can create a version that allocates but doesn't
+	// initialize but also doesn't collide with any other constructor declaration.
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>::basic_string(CtorReserve /*unused*/, size_type n/*, const allocator_type& allocator*/)
+		// : mPair_second(allocator)
+	{
+		// Note that we do not call SizeInitialize here.
+		AllocateSelf(n);
+		*internalLayout().EndPtr() = 0;
+	}
 
 
 	// // CtorSprintf exists so that we can create a version that does a variable argument
@@ -997,12 +995,12 @@ namespace nodecpp::safememory
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// basic_string<T, Allocator>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
-	// 	// : mPair_second(allocator)
-	// {
-	// 	RangeInitialize(init.begin(), init.end());
-	// }
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
+		// : mPair_second(allocator)
+	{
+		RangeInitialize(init.begin(), init.end());
+	}
 
 
 	template <typename T, typename Allocator>
@@ -1034,7 +1032,7 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::~basic_string()
 	{
-		DeallocateSelf();
+		// DeallocateSelf();
 	}
 
 
@@ -1221,11 +1219,11 @@ namespace nodecpp::safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::capacity() const EA_NOEXCEPT
 	{
-		if (internalLayout().IsHeap())
-		{
+		// if (internalLayout().IsHeap())
+		// {
 			return internalLayout().GetHeapCapacity();
-		}
-		return SSOLayout::SSO_CAPACITY;
+		// }
+		// return SSOLayout::SSO_CAPACITY;
 	}
 
 
@@ -1351,11 +1349,11 @@ namespace nodecpp::safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
-	// {
-	// 	return assign(ilist.begin(), ilist.end());
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
+	{
+		return assign(ilist.begin(), ilist.end());
+	}
 
 
 	// template <typename T, typename Allocator>
@@ -1442,39 +1440,39 @@ namespace nodecpp::safememory
 			if(EASTL_LIKELY(n))
 			{
 
-				if(n <= SSOLayout::SSO_CAPACITY)
-				{
-					// heap->sso
-					// A heap based layout wants to reduce its size to within sso capacity
-					// An sso layout wanting to reduce its capacity will not get in here
-					pointer pOldBegin = internalLayout().BeginPtr();
-					const size_type nOldCap = internalLayout().GetHeapCapacity();
+				// if(n <= SSOLayout::SSO_CAPACITY)
+				// {
+				// 	// heap->sso
+				// 	// A heap based layout wants to reduce its size to within sso capacity
+				// 	// An sso layout wanting to reduce its capacity will not get in here
+				// 	pointer pOldBegin = internalLayout().BeginPtr();
+				// 	const size_type nOldCap = internalLayout().GetHeapCapacity();
 
-					internalLayout().ResetToSSO(); // reset layout to sso
-					CharStringUninitializedCopy(pOldBegin, pOldBegin + n, internalLayout().BeginPtr());
-					// *EndPtr() = 0 is already done by the ResetToSSO
-					internalLayout().SetSSOSize(n);
+				// 	internalLayout().ResetToSSO(); // reset layout to sso
+				// 	CharStringUninitializedCopy(pOldBegin, pOldBegin + n, internalLayout().BeginPtr());
+				// 	// *EndPtr() = 0 is already done by the ResetToSSO
+				// 	internalLayout().SetSSOSize(n);
 
-					DoFree(pOldBegin, nOldCap + 1);
+				// 	DoFree(pOldBegin, nOldCap + 1);
 
-					return;
-				}
+				// 	return;
+				// }
 
-				pointer pNewBegin = DoAllocate(n + 1); // We need the + 1 to accomodate the trailing 0.
+				owning_heap_type pNewBegin = DoAllocate(n + 1); // We need the + 1 to accomodate the trailing 0.
 				size_type nSavedSize = internalLayout().GetSize(); // save the size in case we transition from sso->heap
 
-				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin);
+				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin->begin());
 				*pNewEnd = 0;
 
-				DeallocateSelf();
+				// DeallocateSelf();
 
-				internalLayout().SetHeapBeginPtr(pNewBegin);
-				internalLayout().SetHeapCapacity(n);
-				internalLayout().SetHeapSize(nSavedSize);
+				internalLayout().SetNewHeap(std::move(pNewBegin));
+//				internalLayout().SetHeapCapacity(n);
+				internalLayout().SetSize(nSavedSize);
 			}
 			else
 			{
-				DeallocateSelf();
+				// DeallocateSelf();
 				AllocateSelf();
 			}
 		}
@@ -1504,34 +1502,34 @@ namespace nodecpp::safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::pointer
-	basic_string<T, Allocator>::detach() EA_NOEXCEPT
-	{
-		// The detach function is an extension function which simply forgets the
-		// owned pointer. It doesn't free it but rather assumes that the user
-		// does. If the string is utilizing the short-string-optimization when a
-		// detach is requested, a copy of the string into a seperate memory
-		// allocation occurs and the owning pointer is given to the user who is
-		// responsible for freeing the memory.
+	// template <typename T, typename Allocator>
+	// inline typename basic_string<T, Allocator>::pointer
+	// basic_string<T, Allocator>::detach() EA_NOEXCEPT
+	// {
+	// 	// The detach function is an extension function which simply forgets the
+	// 	// owned pointer. It doesn't free it but rather assumes that the user
+	// 	// does. If the string is utilizing the short-string-optimization when a
+	// 	// detach is requested, a copy of the string into a seperate memory
+	// 	// allocation occurs and the owning pointer is given to the user who is
+	// 	// responsible for freeing the memory.
 
-		pointer pDetached = nullptr;
+	// 	pointer pDetached = nullptr;
 
-		if (internalLayout().IsSSO())
-		{
-			const size_type n = internalLayout().GetSize() + 1; // +1' so that we have room for the terminating 0.
-			pDetached = DoAllocate(n);
-			pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pDetached);
-			*pNewEnd = 0;
-		}
-		else
-		{
-			pDetached = internalLayout().BeginPtr();
-		}
+	// 	if (internalLayout().IsSSO())
+	// 	{
+	// 		const size_type n = internalLayout().GetSize() + 1; // +1' so that we have room for the terminating 0.
+	// 		pDetached = DoAllocate(n);
+	// 		pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pDetached);
+	// 		*pNewEnd = 0;
+	// 	}
+	// 	else
+	// 	{
+	// 		pDetached = internalLayout().BeginPtr();
+	// 	}
 
-		AllocateSelf(); // reset to string to empty
-		return pDetached;
-	}
+	// 	AllocateSelf(); // reset to string to empty
+	// 	return pDetached;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1682,47 +1680,47 @@ namespace nodecpp::safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
-	// {
-	// 	return append_convert(pOther, (size_type)CharStrlen(pOther));
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
+	{
+		return append_convert(pOther, (size_type)CharStrlen(pOther));
+	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherStringType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
-	// {
-	// 	return append_convert(x.c_str(), x.length());
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherStringType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
+	{
+		return append_convert(x.c_str(), x.length());
+	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther, size_type n)
-	// {
-	// 	// Question: What do we do in the case that we have an illegally encoded source string?
-	// 	// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
-	// 	// One argument is that it's not a string class' job to handle the security aspects of a
-	// 	// program and the higher level application code should be verifying UTF8 string validity,
-	// 	// and thus we should do the friendly thing and ignore the invalid characters as opposed
-	// 	// to making the user of this function handle exceptions that are easily forgotten.
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther, size_type n)
+	{
+		// Question: What do we do in the case that we have an illegally encoded source string?
+		// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
+		// One argument is that it's not a string class' job to handle the security aspects of a
+		// program and the higher level application code should be verifying UTF8 string validity,
+		// and thus we should do the friendly thing and ignore the invalid characters as opposed
+		// to making the user of this function handle exceptions that are easily forgotten.
 
-	// 	const size_t         kBufferSize = 512;
-	// 	value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
-	// 	pointer const    selfBufferEnd = selfBuffer + kBufferSize;
-	// 	const OtherCharType* pOtherEnd = pOther + n;
+		const size_t         kBufferSize = 512;
+		value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
+		pointer const    selfBufferEnd = selfBuffer + kBufferSize;
+		const OtherCharType* pOtherEnd = pOther + n;
 
-	// 	while(pOther != pOtherEnd)
-	// 	{
-	// 		pointer pSelfBufferCurrent = selfBuffer;
-	// 		DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
-	// 		append(selfBuffer, pSelfBufferCurrent);
-	// 	}
+		while(pOther != pOtherEnd)
+		{
+			pointer pSelfBufferCurrent = selfBuffer;
+			DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
+			append(selfBuffer, pSelfBufferCurrent);
+		}
 
-	// 	return *this;
-	// }
+		return *this;
+	}
 
 
 	template <typename T, typename Allocator>
@@ -1759,16 +1757,16 @@ namespace nodecpp::safememory
 			{
 				const size_type nLength = GetNewCapacity(nCapacity, nNewSize - nCapacity);
 
-				pointer pNewBegin = DoAllocate(nLength + 1);
+				owning_heap_type pNewBegin = DoAllocate(nLength + 1);
 
-				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin);
+				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pNewBegin->begin());
 				pNewEnd         = CharStringUninitializedCopy(pBegin,  pEnd,  pNewEnd);
 			   *pNewEnd         = 0;
 
-				DeallocateSelf();
-				internalLayout().SetHeapBeginPtr(pNewBegin);
-				internalLayout().SetHeapCapacity(nLength);
-				internalLayout().SetHeapSize(nNewSize);
+				// DeallocateSelf();
+				internalLayout().SetNewHeap(std::move(pNewBegin));
+//				internalLayout().SetHeapCapacity(nLength);
+				internalLayout().SetSize(nNewSize);
 			}
 			else
 			{
@@ -2006,11 +2004,11 @@ namespace nodecpp::safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(std::initializer_list<value_type> ilist)
-	// {
-	// 	return assign(ilist.begin(), ilist.end());
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(std::initializer_list<value_type> ilist)
+	{
+		return assign(ilist.begin(), ilist.end());
+	}
 
 
 	template <typename T, typename Allocator>
@@ -2027,34 +2025,34 @@ namespace nodecpp::safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
-	// {
-	// 	clear();
-	// 	append_convert(p);
-	// 	return *this;
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
+	{
+		clear();
+		append_convert(p);
+		return *this;
+	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p, size_type n)
-	// {
-	// 	clear();
-	// 	append_convert(p, n);
-	// 	return *this;
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p, size_type n)
+	{
+		clear();
+		append_convert(p, n);
+		return *this;
+	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherStringType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
-	// {
-	// 	clear();
-	// 	append_convert(x.data(), x.length());
-	// 	return *this;
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherStringType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
+	{
+		clear();
+		append_convert(x.data(), x.length());
+		return *this;
+	}
 
 
 	template <typename T, typename Allocator>
@@ -2226,17 +2224,17 @@ namespace nodecpp::safememory
 				const size_type nOldCap  = capacity();
 				const size_type nLength  = GetNewCapacity(nOldCap, (nOldSize + n) - nOldCap);
 
-				iterator pNewBegin = DoAllocate(nLength + 1);
+				owning_heap_type pNewBegin = DoAllocate(nLength + 1);
 
-				iterator pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin);
+				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin->begin());
 				pNewEnd          = CharStringUninitializedFillN(pNewEnd, n, c);
 				pNewEnd          = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 			   *pNewEnd          = 0;
 
-				DeallocateSelf();
-				internalLayout().SetHeapBeginPtr(pNewBegin);
-				internalLayout().SetHeapCapacity(nLength);
-				internalLayout().SetHeapSize(nOldSize + n);
+				// DeallocateSelf();
+				internalLayout().SetNewHeap(std::move(pNewBegin));
+				// internalLayout().SetHeapCapacity(nLength);
+				internalLayout().SetSize(nOldSize + n);
 			}
 		}
 
@@ -2334,17 +2332,17 @@ namespace nodecpp::safememory
 				else
 					nLength = GetNewCapacity(nOldCap, (nOldSize + n) - nOldCap);
 
-				pointer pNewBegin = DoAllocate(nLength + 1);
+				owning_heap_type pNewBegin = DoAllocate(nLength + 1);
 
-				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin);
+				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin->begin());
 				pNewEnd         = CharStringUninitializedCopy(pBegin, pEnd, pNewEnd);
 				pNewEnd         = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 			   *pNewEnd         = 0;
 
-				DeallocateSelf();
-				internalLayout().SetHeapBeginPtr(pNewBegin);
-				internalLayout().SetHeapCapacity(nLength);
-				internalLayout().SetHeapSize(nOldSize + n);
+				// DeallocateSelf();
+				internalLayout().SetNewHeap(std::move(pNewBegin));
+				// internalLayout().SetHeapCapacity(nLength);
+				internalLayout().SetSize(nOldSize + n);
 			}
 		}
 
@@ -2352,12 +2350,12 @@ namespace nodecpp::safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// typename basic_string<T, Allocator>::iterator
-	// basic_string<T, Allocator>::insert(const_iterator p, std::initializer_list<value_type> ilist)
-	// {
-	// 	return insert(p, ilist.begin(), ilist.end());
-	// }
+	template <typename T, typename Allocator>
+	typename basic_string<T, Allocator>::iterator
+	basic_string<T, Allocator>::insert(const_iterator p, std::initializer_list<value_type> ilist)
+	{
+		return insert(p, ilist.begin(), ilist.end());
+	}
 
 
 	template <typename T, typename Allocator>
@@ -2613,17 +2611,17 @@ namespace nodecpp::safememory
 				const size_type nOldCap      = capacity();
 				const size_type nNewCapacity = GetNewCapacity(nOldCap, (nOldSize + (nLength2 - nLength1)) - nOldCap);
 
-				pointer pNewBegin = DoAllocate(nNewCapacity + 1);
+				owning_heap_type pNewBegin = DoAllocate(nNewCapacity + 1);
 
-				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), pBegin1, pNewBegin);
+				pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), pBegin1, pNewBegin->begin());
 				pNewEnd         = CharStringUninitializedCopy(pBegin2, pEnd2,   pNewEnd);
 				pNewEnd         = CharStringUninitializedCopy(pEnd1,   internalLayout().EndPtr(),   pNewEnd);
 			   *pNewEnd         = 0;
 
-				DeallocateSelf();
-				internalLayout().SetHeapBeginPtr(pNewBegin);
-				internalLayout().SetHeapCapacity(nNewCapacity);
-				internalLayout().SetHeapSize(nOldSize + (nLength2 - nLength1));
+				// DeallocateSelf();
+				internalLayout().SetNewHeap(std::move(pNewBegin));
+//				internalLayout().SetHeapCapacity(nNewCapacity);
+				internalLayout().SetSize(nOldSize + (nLength2 - nLength1));
 			}
 		}
 		return *this;
@@ -3078,93 +3076,93 @@ namespace nodecpp::safememory
 	// make_lower
 	// This is a very simple ASCII-only case conversion function
 	// Anything more complicated should use a more powerful separate library.
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::make_lower()
-	// {
-	// 	for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
-	// 		*p = (value_type)CharToLower(*p);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::make_lower()
+	{
+		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
+			*p = (value_type)CharToLower(*p);
+	}
 
 
-	// // make_upper
-	// // This is a very simple ASCII-only case conversion function
-	// // Anything more complicated should use a more powerful separate library.
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::make_upper()
-	// {
-	// 	for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
-	// 		*p = (value_type)CharToUpper(*p);
-	// }
+	// make_upper
+	// This is a very simple ASCII-only case conversion function
+	// Anything more complicated should use a more powerful separate library.
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::make_upper()
+	{
+		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
+			*p = (value_type)CharToUpper(*p);
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::ltrim()
-	// {
-	// 	const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-	// 	erase(0, find_first_not_of(array));
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::ltrim()
+	{
+		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
+		erase(0, find_first_not_of(array));
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::rtrim()
-	// {
-	// 	const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-	// 	erase(find_last_not_of(array) + 1);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::rtrim()
+	{
+		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
+		erase(find_last_not_of(array) + 1);
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::trim()
-	// {
-	// 	ltrim();
-	// 	rtrim();
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::trim()
+	{
+		ltrim();
+		rtrim();
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::ltrim(const_pointer p)
-	// {
-	// 	erase(0, find_first_not_of(p));
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::ltrim(const_pointer p)
+	{
+		erase(0, find_first_not_of(p));
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::rtrim(const_pointer p)
-	// {
-	// 	erase(find_last_not_of(p) + 1);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::rtrim(const_pointer p)
+	{
+		erase(find_last_not_of(p) + 1);
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::trim(const_pointer p)
-	// {
-	// 	ltrim(p);
-	// 	rtrim(p);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::trim(const_pointer p)
+	{
+		ltrim(p);
+		rtrim(p);
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator> basic_string<T, Allocator>::left(size_type n) const
-	// {
-	// 	const size_type nLength = length();
-	// 	if(n < nLength)
-	// 		return substr(0, n);
-	// 	// C++ std says that substr must return default constructed allocated, but we do not.
-	// 	// Instead it is much more practical to provide the copy of the current allocator
-	// 	return basic_string(*this/*, get_allocator()*/);
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator> basic_string<T, Allocator>::left(size_type n) const
+	{
+		const size_type nLength = length();
+		if(n < nLength)
+			return substr(0, n);
+		// C++ std says that substr must return default constructed allocated, but we do not.
+		// Instead it is much more practical to provide the copy of the current allocator
+		return basic_string(*this/*, get_allocator()*/);
+	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator> basic_string<T, Allocator>::right(size_type n) const
-	// {
-	// 	const size_type nLength = length();
-	// 	if(n < nLength)
-	// 		return substr(nLength - n, n);
-	// 	// C++ std says that substr must return default constructed allocated, but we do not.
-	// 	// Instead it is much more practical to provide the copy of the current allocator
-	// 	return basic_string(*this/*, get_allocator()*/);
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator> basic_string<T, Allocator>::right(size_type n) const
+	{
+		const size_type nLength = length();
+		if(n < nLength)
+			return substr(nLength - n, n);
+		// C++ std says that substr must return default constructed allocated, but we do not.
+		// Instead it is much more practical to provide the copy of the current allocator
+		return basic_string(*this/*, get_allocator()*/);
+	}
 
 
 	// template <typename T, typename Allocator>
@@ -3249,19 +3247,19 @@ namespace nodecpp::safememory
 			const size_type nOldCap  = capacity();
 			const size_type nLength = GetNewCapacity(nOldCap, 1);
 
-			iterator pNewBegin = DoAllocate(nLength + 1);
+			owning_heap_type pNewBegin = DoAllocate(nLength + 1);
 
-			pNewPosition = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin);
+			pNewPosition = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin->begin());
 		   *pNewPosition = c;
 
 			iterator pNewEnd = pNewPosition + 1;
 			pNewEnd          = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 		   *pNewEnd          = 0;
 
-			DeallocateSelf();
-			internalLayout().SetHeapBeginPtr(pNewBegin);
-			internalLayout().SetHeapCapacity(nLength);
-			internalLayout().SetHeapSize(nOldSize + 1);
+			// DeallocateSelf();
+			internalLayout().SetNewHeap(std::move(pNewBegin));
+//			internalLayout().SetHeapCapacity(nLength);
+			internalLayout().SetSize(nOldSize + 1);
 		}
 		return pNewPosition;
 	}
@@ -3309,19 +3307,19 @@ namespace nodecpp::safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::pointer
+	inline typename basic_string<T, Allocator>::owning_heap_type
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
-		return reinterpret_cast<pointer>(safememory::lib_helpers::EASTLAlloc(/*get_allocator(), */n * sizeof(value_type)));
+		return detail::make_owning_array<T>(n);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::DoFree(pointer p, size_type n)
-	{
-		if(p)
-			safememory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::DoFree(pointer p, size_type n)
+	// {
+	// 	if(p)
+	// 		safememory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3353,8 +3351,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::AllocateSelf()
 	{
-		internalLayout().ResetToSSO();
-		internalLayout().SetSSOSize(0);
+		internalLayout().Reset();
+//		internalLayout().SetSSOSize(0);
 	}
 
 
@@ -3371,26 +3369,26 @@ namespace nodecpp::safememory
 				ThrowLengthException();
 		#endif
 
-		if(n > SSOLayout::SSO_CAPACITY)
-		{
-			pointer pBegin = DoAllocate(n + 1);
-			internalLayout().SetHeapBeginPtr(pBegin);
-			internalLayout().SetHeapCapacity(n);
-			internalLayout().SetHeapSize(0);
-		}
-		else
-			AllocateSelf();
+		// if(n > SSOLayout::SSO_CAPACITY)
+		// {
+			owning_heap_type pBegin = DoAllocate(n + 1);
+			internalLayout().SetNewHeap(std::move(pBegin));
+//			internalLayout().SetHeapCapacity(n);
+			internalLayout().SetSize(0);
+		// }
+		// else
+		// 	AllocateSelf();
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void basic_string<T, Allocator>::DeallocateSelf()
-	{
-		if(internalLayout().IsHeap())
-		{
-			DoFree(internalLayout().BeginPtr(), internalLayout().GetHeapCapacity() + 1);
-		}
-	}
+	// template <typename T, typename Allocator>
+	// inline void basic_string<T, Allocator>::DeallocateSelf()
+	// {
+	// 	internalLayout().DoFree();
+	// 	{
+	// 		DoFree(internalLayout().BeginPtr(), internalLayout().GetHeapCapacity() + 1);
+	// 	}
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3666,8 +3664,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, const basic_string<T, Allocator>& b)
 	{
-		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
-		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
+		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
+		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
 		basic_string<T, Allocator> result(cDNI, a.size() + b.size()/*, const_cast<basic_string<T, Allocator>&>(a).get_allocator()*/); // Note that we choose to assign a's allocator.
 		result.append(a);
 		result.append(b);
@@ -3678,8 +3676,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
 	{
-		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
-		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
+		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
+		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
 		const typename basic_string<T, Allocator>::size_type n = (typename basic_string<T, Allocator>::size_type)CharStrlen(p);
 		basic_string<T, Allocator> result(cDNI, n + b.size()/*, const_cast<basic_string<T, Allocator>&>(b).get_allocator()*/);
 		result.append(p, p + n);
@@ -3691,8 +3689,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::value_type c, const basic_string<T, Allocator>& b)
 	{
-		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
-		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
+		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
+		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
 		basic_string<T, Allocator> result(cDNI, 1 + b.size()/*, const_cast<basic_string<T, Allocator>&>(b).get_allocator()*/);
 		result.push_back(c);
 		result.append(b);
@@ -3703,8 +3701,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
 	{
-		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
-		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
+		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
+		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
 		const typename basic_string<T, Allocator>::size_type n = (typename basic_string<T, Allocator>::size_type)CharStrlen(p);
 		basic_string<T, Allocator> result(cDNI, a.size() + n/*, const_cast<basic_string<T, Allocator>&>(a).get_allocator()*/);
 		result.append(a);
@@ -3716,8 +3714,8 @@ namespace nodecpp::safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::value_type c)
 	{
-		typedef typename basic_string<T, Allocator>::CtorDoNotInitialize CtorDoNotInitialize;
-		CtorDoNotInitialize cDNI; // GCC 2.x forces us to declare a named temporary like this.
+		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
+		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
 		basic_string<T, Allocator> result(cDNI, a.size() + 1/*, const_cast<basic_string<T, Allocator>&>(a).get_allocator()*/);
 		result.append(a);
 		result.push_back(c);
