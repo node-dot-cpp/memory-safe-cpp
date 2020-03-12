@@ -453,7 +453,7 @@ namespace nodecpp
 		// Rebalance the tree.
 		while((pNode != pNodeAnchor->mpNodeLeft) && (pNode->mpNodeParent->mColor == kRBTreeColorRed)) 
 		{
-			EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
+//			EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
 			rbtree_soft0_ptr pNodeParentParent = pNode->mpNodeParent->mpNodeParent;
 
 			if(pNode->mpNodeParent == pNodeParentParent->mpNodeLeft) 
@@ -476,7 +476,7 @@ namespace nodecpp
 						RBTreeRotateLeft<rbtree_soft0_ptr, rbtree_owning_ptr>(pNode);
 					}
 
-					EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
+					// EA_ANALYSIS_ASSUME(pNode->mpNodeParent != nullptr);
 					pNode->mpNodeParent->mColor = kRBTreeColorBlack;
 					pNodeParentParent->mColor = kRBTreeColorRed;
 					// pNodeRootRef = RBTreeRotateRight(pNodeParentParent, pNodeRootRef);
@@ -496,7 +496,7 @@ namespace nodecpp
 				}
 				else 
 				{
-					EA_ANALYSIS_ASSUME(pNode != nullptr && pNode->mpNodeParent != nullptr);
+					// EA_ANALYSIS_ASSUME(pNode != nullptr && pNode->mpNodeParent != nullptr);
 
 					if(pNode == pNode->mpNodeParent->mpNodeLeft) 
 					{
@@ -513,7 +513,7 @@ namespace nodecpp
 			}
 		}
 
-		EA_ANALYSIS_ASSUME(pNodeAnchor->mpNodeLeft != nullptr);
+		// EA_ANALYSIS_ASSUME(pNodeAnchor->mpNodeLeft != nullptr);
 		pNodeAnchor->mpNodeLeft->mColor = kRBTreeColorBlack;
 
 	} // RBTreeInsert

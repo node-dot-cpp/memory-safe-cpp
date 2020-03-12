@@ -542,7 +542,6 @@
 		#define EASTL_ASSERT(expression) \
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
-				EA_ANALYSIS_ASSUME(expression); \
 				(void)((expression) || (eastl::AssertionFailure(#expression), 0)); \
 			} while (0) \
 			EA_RESTORE_VC_WARNING()
@@ -558,7 +557,6 @@
 		#define EASTL_DEV_ASSERT(expression) \
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
-				EA_ANALYSIS_ASSUME(expression); \
 				(void)((expression) || (eastl::AssertionFailure(#expression), 0)); \
 			} while(0) \
 			EA_RESTORE_VC_WARNING()
@@ -581,7 +579,6 @@
 		#define EASTL_ASSERT_MSG(expression, message) \
 			EA_DISABLE_VC_WARNING(4127) \
 			do { \
-				EA_ANALYSIS_ASSUME(expression); \
 				(void)((expression) || (eastl::AssertionFailure(message), 0)); \
 			} while (0) \
 			EA_RESTORE_VC_WARNING()
