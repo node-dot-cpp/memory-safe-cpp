@@ -56,11 +56,16 @@ class alignas(T) alignas(T*) array_of
 	T* _end;
 	T* _capacity_end;
 
+	void throwPointerOutOfRange() const {
+		//TODO
+		throw 0;
+	}
+
 	T* checkPtrRange(T* ptr) const {
 
 		if(ptr < _begin)
 			throwPointerOutOfRange();
-		if(ptr >= _end);
+		if(ptr >= _end)
 			throwPointerOutOfRange();
 		return ptr;
 	}
@@ -69,7 +74,7 @@ class alignas(T) alignas(T*) array_of
 
 		if(ptr < _begin)
 			throwPointerOutOfRange();
-		if(ptr >= _capacity_end);
+		if(ptr > _capacity_end)
 			throwPointerOutOfRange();
 		return ptr;
 	}
@@ -160,6 +165,10 @@ public:
 	}
 	void set_size_unsafe(size_t sz) {
 		_end = _begin + sz;
+	}
+
+	T* get_raw_ptr(size_t sz) const {
+		return checkCapacityRange(_begin + sz);
 	}
 
 	size_t capacity() const {
@@ -253,7 +262,7 @@ public:
 	typedef T*   								pointer;
 	typedef T&	 								reference;
 
-// protected:
+//private:
 	pointer mIterator;
 
 public:
@@ -322,10 +331,97 @@ typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& 
 		return l.mIterator - r.mIterator;
 }
 
+
+template <typename T, typename T2>
+class safe_iterator_impl
+{
+public:
+	typedef std::random_access_iterator_tag  	iterator_category;
+	// typedef typename std::remove_const<T>::type value_type;
+	typedef T									value_type;
+	typedef std::ptrdiff_t                      difference_type;
+	typedef T2*   								pointer;
+	typedef T2&									reference;
+
+	typedef ::nodecpp::safememory::soft_ptr<detail::array_of<T>> soft_ptr_type;
+//private:
+	soft_ptr_type ptr;
+	size_t ix = 0;
+
+
+public:
+	constexpr safe_iterator_impl() {}
+
+	constexpr explicit safe_iterator_impl(soft_ptr_type ptr, size_t ix) : ptr(ptr), ix(ix) {}
+
+	constexpr safe_iterator_impl(const safe_iterator_impl& ri) = default;
+
+	constexpr pointer get_raw_ptr() const
+	{
+		return ptr->get_raw_ptr(ix);
+	}
+
+	constexpr reference operator*() const
+	{
+		return ptr->at(ix);
+	}
+
+	constexpr pointer operator->() const
+		{ return &(operator*()); }
+
+	constexpr safe_iterator_impl& operator++()
+		{ ++ix; return *this; }
+
+	constexpr safe_iterator_impl operator++(int)
+	{
+		safe_iterator_impl ri(*this);
+		++ix;
+		return ri;
+	}
+
+	constexpr safe_iterator_impl& operator--()
+		{ --ix; return *this; }
+
+	constexpr safe_iterator_impl operator--(int)
+	{
+		safe_iterator_impl ri(*this);
+		--ix;
+		return ri;
+	}
+
+	constexpr safe_iterator_impl operator+(difference_type n) const
+		{ return safe_iterator_impl(ptr, ix + n); }
+
+	constexpr safe_iterator_impl& operator+=(difference_type n)
+		{ ix += n; return *this; }
+
+	constexpr safe_iterator_impl operator-(difference_type n) const
+		{ return safe_iterator_impl(ptr, ix - n); }
+
+	constexpr safe_iterator_impl& operator-=(difference_type n)
+		{ ix -= n; return *this; }
+
+	constexpr reference operator[](difference_type n) const
+		{ return ptr->at(ix + n); }
+
+	constexpr bool operator==(const safe_iterator_impl& ri) const
+		{ return ptr == ri.ptr && ix == ri.ix; }
+
+	constexpr bool operator!=(const safe_iterator_impl& ri) const
+		{ return !operator==(ri); }
+};
+
+template <typename T, typename T2>
+typename safe_iterator_impl<T, T2>::difference_type distance(const safe_iterator_impl<T, T2>& l, const safe_iterator_impl<T, T2>& r) {
+
+		return (l.ptr == r.ptr)? l.ix - r.ix : 0;
+}
+
 } // namespace safememory
 
 namespace nodecpp::safememory {
 	using ::safememory::unsafe_iterator;
+	using ::safememory::safe_iterator_impl;
 	using ::safememory::distance;
 
 	namespace detail {
