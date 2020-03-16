@@ -219,13 +219,7 @@ public:
 	const T* const_begin() const { return _begin; }
 	T* end() { return _end; }
 	const T* const_end() const { return _end; }
-	
-	// memsf::soft_ptr<T> begin_safe(const this_type& own) { return memsf::soft_ptr<T>(own, _begin); }
-	// memsf::soft_ptr<T> end_safe(const this_type& own) { return memsf::soft_ptr<T>(own, _end); }
-
-
 };
-
 
 template<class _Ty>
 	NODISCARD nodecpp::safememory::owning_ptr_impl<array_of<_Ty>> make_owning_array_impl(size_t size)
@@ -247,6 +241,97 @@ template<class _Ty>
 	NODISCARD 
 	nodecpp::safememory::owning_ptr<array_of<_Ty>> make_owning_array(size_t size) {
 		return make_owning_array_impl<_Ty>(size);
+	}
+
+template<class T>
+class alignas(T) alignas(T*) array_of2
+{
+	typedef array_of2<T> this_type;
+
+	size_t _capacity = 0;
+
+	//TODO fix sizeof(this) used for allocation
+	T _begin[1];
+
+	void throwPointerOutOfRange() const {
+		//TODO
+		throw 0;
+	}
+
+	void checkIndex(size_t ix) const {
+
+		if(ix >= _capacity)
+			throwPointerOutOfRange();
+	}
+
+	void checkCapacityIndex(size_t ix) const {
+		if(ix > _capacity)
+			throwPointerOutOfRange();
+	}
+
+public:
+	array_of2(size_t capacity) :_capacity(capacity)
+		{
+		}
+
+	array_of2(const array_of2&) = delete;
+	array_of2(array_of2&&) = delete;
+
+	array_of2& operator=(const array_of2&) = delete;
+	array_of2& operator=(array_of2&&) = delete;
+
+	~array_of2() {}
+
+	T& at(size_t ix) {
+		if(ix >= _capacity)
+			throwPointerOutOfRange();
+
+		return _begin[ix];
+	}
+	
+	const T& at(size_t ix) const {
+		if(ix >= _capacity)
+			throwPointerOutOfRange();
+
+		return _begin[ix];
+	}
+
+	T* get_raw_ptr(size_t ix) {
+		// allow returning 'end()' pointer
+		// caller is responsible of not dereferencing it
+		if(ix > _capacity)
+			throwPointerOutOfRange();
+		
+		return _begin + ix;
+	}
+
+	size_t capacity() const { return _capacity; }
+
+	T* begin() { return _begin; }
+	const T* begin() const { return _begin; }
+};
+
+
+template<class _Ty>
+	NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<_Ty>> make_owning_array_of_impl(size_t size)
+	{
+		using namespace nodecpp::safememory;
+		size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
+		void* data = zombieAllocate( head + sizeof(array_of2<_Ty>) + (sizeof(_Ty) * size));
+		array_of2<_Ty>* dataForObj = reinterpret_cast<array_of2<_Ty>*>(reinterpret_cast<uintptr_t>(data) + head);
+		owning_ptr_impl<array_of2<_Ty>> op(make_owning_t(), dataForObj);
+		// void* stackTmp = thg_stackPtrForMakeOwningCall;
+		// thg_stackPtrForMakeOwningCall = dataForObj;
+		array_of2<_Ty>* objPtr = new ( dataForObj ) array_of2<_Ty>(size);
+		// thg_stackPtrForMakeOwningCall = stackTmp;
+		//return owning_ptr_impl<_Ty>(objPtr);
+		return op;
+	}
+
+template<class _Ty>
+	NODISCARD 
+	nodecpp::safememory::owning_ptr<array_of2<_Ty>> make_owning_array_of(size_t size) {
+		return make_owning_array_of_impl<_Ty>(size);
 	}
 
 } //namespace detail
@@ -332,7 +417,7 @@ typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& 
 }
 
 
-template <typename T, typename T2>
+template <typename T, typename SoftArrayOfPtr>
 class safe_iterator_impl
 {
 public:
@@ -340,19 +425,19 @@ public:
 	// typedef typename std::remove_const<T>::type value_type;
 	typedef T									value_type;
 	typedef std::ptrdiff_t                      difference_type;
-	typedef T2*   								pointer;
-	typedef T2&									reference;
+	typedef T*   								pointer;
+	typedef T&									reference;
 
-	typedef ::nodecpp::safememory::soft_ptr<detail::array_of<T>> soft_ptr_type;
+	typedef SoftArrayOfPtr 						soft_array_of_ptr_type;
 //private:
-	soft_ptr_type ptr;
+	soft_array_of_ptr_type ptr;
 	size_t ix = 0;
 
 
 public:
 	constexpr safe_iterator_impl() {}
 
-	constexpr explicit safe_iterator_impl(soft_ptr_type ptr, size_t ix) : ptr(ptr), ix(ix) {}
+	constexpr explicit safe_iterator_impl(soft_array_of_ptr_type ptr, size_t ix) : ptr(ptr), ix(ix) {}
 
 	constexpr safe_iterator_impl(const safe_iterator_impl& ri) = default;
 

@@ -335,12 +335,17 @@ namespace safememory
 		typedef std::ptrdiff_t                                  difference_type;
 		// typedef Allocator                                       allocator_type;
 
-		typedef safe_iterator_impl<T, T>						safe_iterator;
-		typedef safe_iterator_impl<T, const T>					const_safe_iterator;
+
+
+		typedef ::nodecpp::safememory::owning_ptr<detail::array_of2<T>> owning_heap_type;
+		typedef ::nodecpp::safememory::soft_ptr<detail::array_of2<T>> soft_heap_type;
+
+		typedef safe_iterator_impl<T, soft_heap_type>			safe_iterator;
+		typedef safe_iterator_impl<const T, soft_heap_type>		const_safe_iterator;
 		typedef const const_safe_iterator&						csafe_it_arg;
 		typedef std::pair<const_pointer, const_pointer>			const_pointer_pair;
 
-	static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
+		static const size_type npos     = static_cast<size_type>(-1);      /// 'npos' means non-valid position or simply non-position.
 
 	public:
 		// CtorReserve exists so that we can create a constructor that allocates but doesn't
@@ -427,18 +432,18 @@ namespace safememory
 	// 	// consistent string size than increasing the size of the string local data to accommodate a consistent number
 	// 	// of characters despite character width.
 
-		typedef ::nodecpp::safememory::owning_ptr<detail::array_of<T>> owning_heap_type;
-		typedef ::nodecpp::safememory::soft_ptr<detail::array_of<T>> soft_heap_type;
 
 		struct Layout
 		{
-			owning_heap_type heap;
+			size_t _size = 0;
+			owning_heap_type _heap;
 
-			Layout()                                                  { }
-//			Layout(const Layout& other)                                { Copy(*this, other); }
-			Layout(Layout&& other)                                    { Move(*this, other); }
-//			Layout& operator=(const Layout& other)                    { Copy(*this, other); return *this; }
-			Layout& operator=(Layout&& other)                         { Move(*this, other); return *this; }
+
+			Layout() { }
+			Layout(const Layout& other) = delete; //                                { Copy(*this, other); }
+			Layout(Layout&& other) = default; //                                    { Move(*this, other); }
+			Layout& operator=(const Layout& other) = delete; //                    { Copy(*this, other); return *this; }
+			Layout& operator=(Layout&& other) = default; //                        { Move(*this, other); return *this; }
 
 			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
 			inline bool IsHeap() const EA_NOEXCEPT                    { return true; }
@@ -457,7 +462,7 @@ namespace safememory
 			// 	#endif
 			// }
 //			inline size_type GetHeapSize() const EA_NOEXCEPT { return heap.mnSize; }
-			inline size_type GetSize() const EA_NOEXCEPT     { return heap->size(); }
+			inline size_type GetSize() const EA_NOEXCEPT     { return _size; }
 
 			// inline void SetSSOSize(size_type size) EA_NOEXCEPT
 			// {
@@ -469,9 +474,9 @@ namespace safememory
 			// }
 
 //			inline void SetHeapSize(size_type size) EA_NOEXCEPT          { heap->set_size_unsafe(size); }
-			inline void SetSize(size_type size) EA_NOEXCEPT              { heap->set_size_unsafe(size); }
+			inline void SetSize(size_type size) EA_NOEXCEPT              { _size = size; }
 
-			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return heap->remaining_capacity(); }
+			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return GetHeapCapacity() - _size; }
 
 			// inline pointer HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
 			// inline const_pointer HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
@@ -479,8 +484,8 @@ namespace safememory
 			// inline pointer SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
 			// inline const_pointer SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
 
-			inline pointer BeginPtr() EA_NOEXCEPT                    { return heap->begin(); }
-			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return heap->const_begin(); }
+			inline pointer BeginPtr() EA_NOEXCEPT                    { return _heap->begin(); }
+			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return _heap->begin(); }
 
 			// inline pointer HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
 			// inline const_pointer HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
@@ -489,8 +494,8 @@ namespace safememory
 			// inline const_pointer SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
 
 			// Points to end of character stream, *ptr == '0'
-			inline pointer EndPtr() EA_NOEXCEPT                      { return heap->end(); }
-			inline const_pointer EndPtr() const EA_NOEXCEPT          { return heap->const_end(); }
+			inline pointer EndPtr() EA_NOEXCEPT                      { return _heap->begin() + _size; }
+			inline const_pointer EndPtr() const EA_NOEXCEPT          { return _heap->begin() + _size; }
 
 			// inline pointer HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
 			// inline const_pointer HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
@@ -499,13 +504,13 @@ namespace safememory
 			// inline const_pointer SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- only true when size() == capacity()
-			inline pointer CapacityPtr() EA_NOEXCEPT                 { return BeginPtr() + GetHeapCapacity(); }
-			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return BeginPtr() + GetHeapCapacity(); }
+			inline pointer CapacityPtr() EA_NOEXCEPT                 { return _heap->begin() + GetHeapCapacity(); }
+			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return _heap->begin() + GetHeapCapacity(); }
 
-			inline void SetNewHeap(owning_heap_type&& new_heap) { heap = std::move(new_heap); }
+			inline void SetNewHeap(owning_heap_type&& new_heap) { _heap = std::move(new_heap); }
 			// inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
-			inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(heap); }
-			inline bool IsSoftHeapPtr(const soft_heap_type& soft) const EA_NOEXCEPT { return soft == heap; }
+			inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(_heap); }
+			inline bool IsSoftHeapPtr(const soft_heap_type& soft) const EA_NOEXCEPT { return soft == _heap; }
 
 			// inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
 			// {
@@ -518,15 +523,16 @@ namespace safememory
 
 			inline size_type GetHeapCapacity() const EA_NOEXCEPT
 			{
-				return heap->capacity() - 1;
+				return _heap ? _heap->capacity() - 1 : 0;
 			}
 
 			// inline void Copy(Layout& dst, const Layout& src) { dst.raw = src.raw; }
-			inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { std::swap(dst.raw, src.raw); }
-			inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { std::swap(a.raw, b.raw); }
+			// inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { std::swap(dst.raw, src.raw); }
+			// inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { std::swap(a.raw, b.raw); }
 
 			inline void Reset() EA_NOEXCEPT { 
-				heap = detail::make_owning_array<T>(32);
+				_heap = nullptr;
+				_size = 0;
 			}
 		};
 
@@ -540,7 +546,7 @@ namespace safememory
 
 	public:
 		// Constructor, destructor
-		basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR));
+		basic_string() EA_NOEXCEPT;
 		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(literal_type x);
@@ -599,7 +605,7 @@ namespace safememory
 		// 	this_type& operator=(const OtherStringType& x);
 		// #endif
 
-		void swap(this_type& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_swap::value || allocator_traits<Allocator>::is_always_equal::value);
+		void swap(this_type& x) EA_NOEXCEPT;
 
 		// Assignment operations
 		this_type& assign(const this_type& x);
@@ -904,7 +910,7 @@ namespace safememory
 	///////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_BASIC_STRING_DEFAULT_ALLOCATOR))
+	inline basic_string<T, Allocator>::basic_string() EA_NOEXCEPT
 	    /*: mPair_second(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))*/
 	{
 		AllocateSelf();
@@ -2955,7 +2961,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	void basic_string<T, Allocator>::swap(this_type& x)
+	void basic_string<T, Allocator>::swap(this_type& x) EA_NOEXCEPT
 	{
 		// if(get_allocator() == x.get_allocator() || (internalLayout().IsSSO() && x.internalLayout().IsSSO())) // If allocators are equivalent...
 		// {
@@ -3582,7 +3588,7 @@ namespace safememory
 		const difference_type n1   = pEnd1 - pBegin1;
 		const difference_type n2   = pEnd2 - pBegin2;
 		const difference_type nMin = std::min(n1, n2);
-		const int       cmp  = Compare(pBegin1, pBegin2, (size_t)nMin);
+		const int       cmp  = Compare(pBegin1, pBegin2, static_cast<size_t>(nMin));
 
 		return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
 	}
@@ -3709,7 +3715,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::owning_heap_type
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
-		return detail::make_owning_array<T>(n);
+		return detail::make_owning_array_of<T>(n);
 	}
 
 
@@ -4114,13 +4120,13 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		const typename basic_string<T, Allocator>::size_type n = (typename basic_string<T, Allocator>::size_type)CharStrlen(p);
+		const typename basic_string<T, Allocator>::size_type n = CharStrlen(l.c_str());
 		basic_string<T, Allocator> result(cDNI, n + b.size()/*, const_cast<basic_string<T, Allocator>&>(b).get_allocator()*/);
-		result.append(p, p + n);
+		result.append(l.c_str(), l.c_str() + n);
 		result.append(b);
 		return result;
 	}
@@ -4139,14 +4145,14 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	basic_string<T, Allocator> operator+(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
 		typedef typename basic_string<T, Allocator>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		const typename basic_string<T, Allocator>::size_type n = (typename basic_string<T, Allocator>::size_type)CharStrlen(p);
+		const typename basic_string<T, Allocator>::size_type n = CharStrlen(l.c_str());
 		basic_string<T, Allocator> result(cDNI, a.size() + n/*, const_cast<basic_string<T, Allocator>&>(a).get_allocator()*/);
 		result.append(a);
-		result.append(p, p + n);
+		result.append(l.c_str(), l.c_str() + n);
 		return result;
 	}
 
@@ -4178,16 +4184,16 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::const_pointer p, basic_string<T, Allocator>&& b)
+	basic_string<T, Allocator> operator+(typename basic_string<T, Allocator>::literal_type l, basic_string<T, Allocator>&& b)
 	{
-		b.insert(0, p);
+		b.insert(0, l);
 		return std::move(b);
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::const_pointer p)
+	basic_string<T, Allocator> operator+(basic_string<T, Allocator>&& a, typename basic_string<T, Allocator>::literal_type l)
 	{
-		a.append(p);
+		a.append(l);
 		return std::move(a);
 	}
 
@@ -4250,25 +4256,30 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline bool operator==(const basic_string<T, Allocator>& a, const basic_string<T, Allocator>& b)
 	{
-		return ((a.size() == b.size()) && (memcmp(a.data(), b.data(), (size_t)a.size() * sizeof(typename basic_string<T, Allocator>::value_type)) == 0));
+		return (a.size() == b.size()) && //(memcmp(a.data(), b.data(), (size_t)a.size() * sizeof(typename basic_string<T, Allocator>::value_type)) == 0));
+			(basic_string<T, Allocator>::compare(a.begin(), a.end(), b.begin(), b.end()) == 0);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator==(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	inline bool operator==(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
+		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return ((n == b.size()) && (memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
+		return (n == b.size()) && //(memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
+			(basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) == 0);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator==(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	inline bool operator==(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
+		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return ((a.size() == n) && (memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
+		return (a.size() == n) && //(memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
+			(basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) == 0);
 	}
 
 
@@ -4301,18 +4312,20 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	inline bool operator<(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
+		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) < 0;
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	inline bool operator<(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
 		typedef typename basic_string<T, Allocator>::size_type size_type;
+		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) < 0;
 	}
@@ -4326,16 +4339,16 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	inline bool operator>(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
-		return b < p;
+		return b < l;
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	inline bool operator>(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
-		return p < a;
+		return l < a;
 	}
 
 
@@ -4347,16 +4360,16 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<=(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	inline bool operator<=(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
-		return !(b < p);
+		return !(b < l);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator<=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	inline bool operator<=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
-		return !(p < a);
+		return !(l < a);
 	}
 
 
@@ -4368,16 +4381,16 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>=(typename basic_string<T, Allocator>::const_pointer p, const basic_string<T, Allocator>& b)
+	inline bool operator>=(typename basic_string<T, Allocator>::literal_type l, const basic_string<T, Allocator>& b)
 	{
-		return !(p < b);
+		return !(l < b);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator>=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::const_pointer p)
+	inline bool operator>=(const basic_string<T, Allocator>& a, typename basic_string<T, Allocator>::literal_type l)
 	{
-		return !(a < p);
+		return !(a < l);
 	}
 
 
