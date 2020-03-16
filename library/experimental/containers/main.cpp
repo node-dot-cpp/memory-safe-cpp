@@ -133,13 +133,13 @@ void testString() {
     for(auto it = s.begin(); it != s.end(); ++it)
         s2 += *it;
 
-    for(auto its = s2.begin_safe(); its != s2.end_safe(); ++its) {
+    for(auto its = s2.begin(); its != s2.end(); ++its) {
         s += *its;
     }
 
     printf(s2.c_str());
 
-    s2.erase(s2.cbegin_safe() + 7, s2.cend_safe());
+    s2.erase(s2.cbegin() + 7, s2.cend());
     printf(s2.c_str());
 
 }

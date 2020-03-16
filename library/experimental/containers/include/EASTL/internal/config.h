@@ -51,8 +51,10 @@
 //     - Predefine individual defines (e.g. EASTL_ASSERT).
 //
 ///////////////////////////////////////////////////////////////////////////////
-
-
+#define EASTL_EXCEPTIONS_ENABLED 1
+#define EA_NOEXCEPT noexcept
+#define EA_NOEXCEPT_IF(predicate) noexcept(predicate)
+#define EA_NOEXCEPT_EXPR(expression) noexcept(expression)
 
 
 // ///////////////////////////////////////////////////////////////////////////////
@@ -154,9 +156,9 @@
 // EABase versions prior to 2.00.40 that don't yet define it themselves.
 //
 #if !defined(EA_NOEXCEPT)
-	#define EA_NOEXCEPT
-	#define EA_NOEXCEPT_IF(predicate)
-	#define EA_NOEXCEPT_EXPR(expression) false
+ 	#define EA_NOEXCEPT
+ 	#define EA_NOEXCEPT_IF(predicate)
+ 	#define EA_NOEXCEPT_EXPR(expression) false
 #endif
 
 
@@ -779,8 +781,6 @@
 // manually set it to 1.
 //
 ///////////////////////////////////////////////////////////////////////////////
-#define EASTL_EXCEPTIONS_ENABLED 1
-
 #if !defined(EASTL_EXCEPTIONS_ENABLED) || ((EASTL_EXCEPTIONS_ENABLED == 1) && defined(EA_COMPILER_NO_EXCEPTIONS))
 	#define EASTL_EXCEPTIONS_ENABLED 0
 #endif
@@ -811,33 +811,33 @@
 // 	#define EASTL_STRING_OPT_EXPLICIT_CTORS 0
 // #endif
 
-// #ifndef EASTL_STRING_OPT_LENGTH_ERRORS
-// 	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
-// 	// Defines if we check for string values going beyond kMaxSize
-// 	// (a very large value) and throw exections if so.
-// 	// C++ standard strings are expected to do such checks.
-// 	#define EASTL_STRING_OPT_LENGTH_ERRORS EASTL_EXCEPTIONS_ENABLED
-// #endif
+#ifndef EASTL_STRING_OPT_LENGTH_ERRORS
+	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
+	// Defines if we check for string values going beyond kMaxSize
+	// (a very large value) and throw exections if so.
+	// C++ standard strings are expected to do such checks.
+	#define EASTL_STRING_OPT_LENGTH_ERRORS EASTL_EXCEPTIONS_ENABLED
+#endif
 
-// #ifndef EASTL_STRING_OPT_RANGE_ERRORS
-// 	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
-// 	// Defines if we check for out-of-bounds references to string
-// 	// positions and throw exceptions if so. Well-behaved code shouldn't
-// 	// refence out-of-bounds positions and so shouldn't need these checks.
-// 	// C++ standard strings are expected to do such range checks.
-// 	#define EASTL_STRING_OPT_RANGE_ERRORS EASTL_EXCEPTIONS_ENABLED
-// #endif
+#ifndef EASTL_STRING_OPT_RANGE_ERRORS
+	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
+	// Defines if we check for out-of-bounds references to string
+	// positions and throw exceptions if so. Well-behaved code shouldn't
+	// refence out-of-bounds positions and so shouldn't need these checks.
+	// C++ standard strings are expected to do such range checks.
+	#define EASTL_STRING_OPT_RANGE_ERRORS EASTL_EXCEPTIONS_ENABLED
+#endif
 
-// #ifndef EASTL_STRING_OPT_ARGUMENT_ERRORS
-// 	// Defined as 0 or 1. Default is 0.
-// 	// Defines if we check for NULL ptr arguments passed to string
-// 	// functions by the user and throw exceptions if so. Well-behaved code
-// 	// shouldn't pass bad arguments and so shouldn't need these checks.
-// 	// Also, some users believe that strings should check for NULL pointers
-// 	// in all their arguments and do no-ops if so. This is very debatable.
-// 	// C++ standard strings are not required to check for such argument errors.
-// 	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
-// #endif
+#ifndef EASTL_STRING_OPT_ARGUMENT_ERRORS
+	// Defined as 0 or 1. Default is 0.
+	// Defines if we check for NULL ptr arguments passed to string
+	// functions by the user and throw exceptions if so. Well-behaved code
+	// shouldn't pass bad arguments and so shouldn't need these checks.
+	// Also, some users believe that strings should check for NULL pointers
+	// in all their arguments and do no-ops if so. This is very debatable.
+	// C++ standard strings are not required to check for such argument errors.
+	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
+#endif
 
 
 

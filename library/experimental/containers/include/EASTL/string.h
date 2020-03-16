@@ -164,10 +164,9 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-#define EA_WCHAR_UNIQUE
 
 #include <EASTL/internal/char_traits.h>
-#include <string_view>
+//#include <string_view>
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -175,11 +174,11 @@
 //
 // See EASTL_STRING_OPT_EXPLICIT_CTORS for documentation.
 //
-#if EASTL_STRING_OPT_EXPLICIT_CTORS
-	#define EASTL_STRING_EXPLICIT explicit
-#else
-	#define EASTL_STRING_EXPLICIT
-#endif
+// #if EASTL_STRING_OPT_EXPLICIT_CTORS
+// 	#define EASTL_STRING_EXPLICIT explicit
+// #else
+// 	#define EASTL_STRING_EXPLICIT
+// #endif
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -372,9 +371,10 @@ namespace safememory
 	// 		static constexpr size_type kSSOMask  = 0x80;
 	// 	#endif
 
-	// public:
+	//  public:
 	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
-	// 		static constexpr size_type kMaxSize = (~kHeapMask) >> 1;
+	static_assert(sizeof(size_type) >= sizeof(int), "Fix size!");
+	 		static constexpr size_type kMaxSize = static_cast<size_type>(INT_MAX);
 	// 	#else
 	// 		static constexpr size_type kMaxSize = ~kHeapMask;
 	// 	#endif
@@ -550,12 +550,12 @@ namespace safememory
 		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(literal_type x);
-		basic_string(const_pointer p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// basic_string(const_pointer p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 //		EASTL_STRING_EXPLICIT basic_string(const_pointer p/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(size_type n, value_type c/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(const this_type& x);
 	    // basic_string(const this_type& x, const allocator_type& allocator);
-		basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
+		// basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 		basic_string(csafe_it_arg pBegin, csafe_it_arg pEnd);
 		basic_string(CtorReserve, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 //		basic_string(CtorSprintf, const_pointer pFormat, ...);
@@ -611,19 +611,19 @@ namespace safememory
 		this_type& assign(const this_type& x);
 		this_type& assign(const this_type& x, size_type position, size_type n = npos);
 		this_type& assign(literal_type x);
-		this_type& assign(const_pointer p, size_type n);
-//		this_type& assign(const_pointer p);
+		this_type& assign_unsafe(const_pointer p, size_type n);
+		this_type& assign_unsafe(const_pointer p);
 		this_type& assign(size_type n, value_type c);
-		this_type& assign(const_pointer pBegin, const_pointer pEnd);
+		this_type& assign_unsafe(const_pointer pBegin, const_pointer pEnd);
 		this_type& assign(csafe_it_arg itBegin, csafe_it_arg itEnd);
 		this_type& assign(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value);
 		this_type& assign(std::initializer_list<value_type>);
 
-		// template <typename OtherCharType>
-		// this_type& assign_convert_internal(const OtherCharType* p);
+		template <typename OtherCharType>
+		this_type& assign_convert_unsafe(const OtherCharType* p);
 
 		template <typename OtherCharType>
-		this_type& assign_convert(const OtherCharType* p, size_type n);
+		this_type& assign_convert_unsafe(const OtherCharType* p, size_type n);
 
 		template <typename OtherStringType>
 		this_type& assign_convert(const OtherStringType& x);
@@ -632,29 +632,29 @@ namespace safememory
 		this_type& assign_convert(basic_string_literal<OtherCharType> p);
 
 		// Iterators.
-		iterator       begin() EA_NOEXCEPT;
-		const_iterator begin() const EA_NOEXCEPT;
-		const_iterator cbegin() const EA_NOEXCEPT;
+		iterator       begin_unsafe() EA_NOEXCEPT;
+		const_iterator begin_unsafe() const EA_NOEXCEPT;
+		const_iterator cbegin_unsafe() const EA_NOEXCEPT;
 
-		iterator       end() EA_NOEXCEPT;
-		const_iterator end() const EA_NOEXCEPT;
-		const_iterator cend() const EA_NOEXCEPT;
+		iterator       end_unsafe() EA_NOEXCEPT;
+		const_iterator end_unsafe() const EA_NOEXCEPT;
+		const_iterator cend_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin() const EA_NOEXCEPT;
+		reverse_iterator       rbegin_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator rbegin_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator crbegin_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rend() EA_NOEXCEPT;
-		const_reverse_iterator rend() const EA_NOEXCEPT;
-		const_reverse_iterator crend() const EA_NOEXCEPT;
+		reverse_iterator       rend_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator rend_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator crend_unsafe() const EA_NOEXCEPT;
 
-		safe_iterator       begin_safe() EA_NOEXCEPT;
-		const_safe_iterator begin_safe() const EA_NOEXCEPT;
-		const_safe_iterator cbegin_safe() const EA_NOEXCEPT;
+		safe_iterator       begin() EA_NOEXCEPT;
+		const_safe_iterator begin() const EA_NOEXCEPT;
+		const_safe_iterator cbegin() const EA_NOEXCEPT;
 
-		safe_iterator       end_safe() EA_NOEXCEPT;
-		const_safe_iterator end_safe() const EA_NOEXCEPT;
-		const_safe_iterator cend_safe() const EA_NOEXCEPT;
+		safe_iterator       end() EA_NOEXCEPT;
+		const_safe_iterator end() const EA_NOEXCEPT;
+		const_safe_iterator cend() const EA_NOEXCEPT;
 
 
 		// Size-related functionality
@@ -694,20 +694,20 @@ namespace safememory
 		this_type& append(const this_type& x);
 		this_type& append(const this_type& x,  size_type position, size_type n = npos);
 		this_type& append(literal_type x);
-		this_type& append(const_pointer p, size_type n);
-//		this_type& append(const_pointer p);
+		this_type& append_unsafe(const_pointer p, size_type n);
+		this_type& append_unsafe(const_pointer p);
 		this_type& append(size_type n, value_type c);
-		this_type& append(const_pointer pBegin, const_pointer pEnd);
+		this_type& append_unsafe(const_pointer pBegin, const_pointer pEnd);
 		this_type& append(csafe_it_arg itBegin, csafe_it_arg itEnd);
 
 		// this_type& append_sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type& append_sprintf(const_pointer pFormat, ...);
 
-		// template <typename OtherCharType>
-		// this_type& append_convert(const OtherCharType* p);
+		template <typename OtherCharType>
+		this_type& append_convert_unsafe(const OtherCharType* p);
 
 		template <typename OtherCharType>
-		this_type& append_convert(const OtherCharType* p, size_type n);
+		this_type& append_convert_unsafe(const OtherCharType* p, size_type n);
 
 		template <typename OtherStringType>
 		this_type& append_convert(const OtherStringType& x);
@@ -721,14 +721,14 @@ namespace safememory
 		// Insertion operations
 		this_type& insert(size_type position, const this_type& x);
 		this_type& insert(size_type position, const this_type& x, size_type beg, size_type n);
-		this_type& insert(size_type position, const_pointer p, size_type n);
-		// this_type& insert(size_type position, const_pointer p);
+		this_type& insert_unsafe(size_type position, const_pointer p, size_type n);
+		this_type& insert_unsafe(size_type position, const_pointer p);
 		this_type& insert(size_type position, literal_type x);
 		this_type& insert(size_type position, size_type n, value_type c);
-		iterator   insert(const_iterator p, value_type c);
-		iterator   insert(const_iterator p, size_type n, value_type c);
-		iterator   insert(const_iterator p, const_pointer pBegin, const_pointer pEnd);
-		iterator   insert(const_iterator p, std::initializer_list<value_type>);
+		iterator   insert_unsafe(const_iterator p, value_type c);
+		iterator   insert_unsafe(const_iterator p, size_type n, value_type c);
+		iterator   insert_unsafe(const_iterator p, const_pointer pBegin, const_pointer pEnd);
+		iterator   insert_unsafe(const_iterator p, std::initializer_list<value_type>);
 		iterator   insert(csafe_it_arg it, value_type c);
 		iterator   insert(csafe_it_arg it, size_type n, value_type c);
 		iterator   insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd);
@@ -736,12 +736,12 @@ namespace safememory
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos);
-		iterator         erase(const_iterator p);
-		iterator         erase(const_iterator pBegin, const_iterator pEnd);
+		iterator         erase_unsafe(const_iterator p);
+		iterator         erase_unsafe(const_iterator pBegin, const_iterator pEnd);
 		safe_iterator    erase(csafe_it_arg it);
 		safe_iterator    erase(csafe_it_arg itBegin, csafe_it_arg itEnd);
-		reverse_iterator erase(reverse_iterator position);
-		reverse_iterator erase(reverse_iterator first, reverse_iterator last);
+		reverse_iterator erase_unsafe(reverse_iterator position);
+		reverse_iterator erase_unsafe(reverse_iterator first, reverse_iterator last);
 		void             clear() EA_NOEXCEPT;
 
 		// Detach memory
@@ -750,19 +750,19 @@ namespace safememory
 		// Replacement operations
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
 		this_type&  replace(size_type pos1,     size_type n1, const this_type& x,  size_type pos2, size_type n2 = npos);
-		this_type&  replace(size_type position, size_type n1, const_pointer p, size_type n2);
-		// this_type&  replace(size_type position, size_type n1, const_pointer p);
+		this_type&  replace_unsafe(size_type position, size_type n1, const_pointer p, size_type n2);
+		this_type&  replace_unsafe(size_type position, size_type n1, const_pointer p);
 		this_type&  replace(size_type position, size_type n1, literal_type x);
 		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c);
-		this_type&  replace(const_iterator first, const_iterator last, const this_type& x);
-		this_type&  replace(const_iterator first, const_iterator last, const_pointer p, size_type n);
-//		this_type&  replace(const_iterator first, const_iterator last, const_pointer p);
-		this_type&  replace(const_iterator first, const_iterator last, literal_type x);
-		this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c);
-		this_type&  replace(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const this_type& x);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p, size_type n);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, literal_type x);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, size_type n, value_type c);
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
 
 		this_type&  replace(csafe_it_arg first, csafe_it_arg last, const this_type& x);
-		this_type&  replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n);
+//		this_type&  replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n);
 //		this_type&  replace(const_iterator first, const_iterator last, const_pointer p);
 		this_type&  replace(csafe_it_arg first, csafe_it_arg last, literal_type x);
 		this_type&  replace(csafe_it_arg first, csafe_it_arg last, size_type n, value_type c);
@@ -772,44 +772,44 @@ namespace safememory
 
 		// Find operations
 		size_type find(const this_type& x,  size_type position = 0) const EA_NOEXCEPT;
-		// size_type find(const_pointer p, size_type position = 0) const;
+		size_type find_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find(literal_type x, size_type position = 0) const;
-		size_type find(const_pointer p, size_type position, size_type n) const;
+		size_type find_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type find(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Reverse find operations
 		size_type rfind(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
-		// size_type rfind(const_pointer p, size_type position = npos) const;
+		size_type rfind_unsafe(const_pointer p, size_type position = npos) const;
 		size_type rfind(literal_type x, size_type position = npos) const;
-		size_type rfind(const_pointer p, size_type position, size_type n) const;
+		size_type rfind_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type rfind(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first-of operations
 		size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
-		// size_type find_first_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_of_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find_first_of(literal_type x, size_type position = 0) const;
-		size_type find_first_of(const_pointer p, size_type position, size_type n) const;
+		size_type find_first_of_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last-of operations
 		size_type find_last_of(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
-		// size_type find_last_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_of_unsafe(const_pointer p, size_type position = npos) const;
 		size_type find_last_of(literal_type x, size_type position = npos) const;
-		size_type find_last_of(const_pointer p, size_type position, size_type n) const;
+		size_type find_last_of_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Find first not-of operations
 		size_type find_first_not_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
-		// size_type find_first_not_of(const_pointer p, size_type position = 0) const;
+		size_type find_first_not_of_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find_first_not_of(literal_type x, size_type position = 0) const;
-		size_type find_first_not_of(const_pointer p, size_type position, size_type n) const;
+		size_type find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type find_first_not_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
 
 		// Find last not-of operations
 		size_type find_last_not_of(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
-		// size_type find_last_not_of(const_pointer p, size_type position = npos) const;
+		size_type find_last_not_of_unsafe(const_pointer p, size_type position = npos) const;
 		size_type find_last_not_of(literal_type x, size_type position = npos) const;
-		size_type find_last_not_of(const_pointer p, size_type position, size_type n) const;
+		size_type find_last_not_of_unsafe(const_pointer p, size_type position, size_type n) const;
 		size_type find_last_not_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
 
 		// Substring functionality
@@ -819,12 +819,12 @@ namespace safememory
 		int        compare(const this_type& x) const EA_NOEXCEPT;
 		int        compare(size_type pos1, size_type n1, const this_type& x) const;
 		int        compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const;
-//		int        compare(const_pointer p) const;
+		int        compare_unsafe(const_pointer p) const;
 		int        compare(literal_type x) const;
-		// int        compare(size_type pos1, size_type n1, const_pointer p) const;
+		int        compare_unsafe(size_type pos1, size_type n1, const_pointer p) const;
 		int        compare(size_type pos1, size_type n1, literal_type x) const;
-		int        compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const;
-		static int compare(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
+		int        compare_unsafe(size_type pos1, size_type n1, const_pointer p, size_type n2) const;
+		static int compare_unsafe(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 		static int compare(csafe_it_arg itBegin1, csafe_it_arg itEnd1, csafe_it_arg itBegin2, csafe_it_arg itEnd2);
 
 		// Case-insensitive comparison functions. Not part of C++ this_type. Only ASCII-level locale functionality is supported. Thus this is not suitable for localization purposes.
@@ -838,11 +838,11 @@ namespace safememory
 		void         ltrim();
 		void         rtrim();
 		void         trim();
-		// void         ltrim(const_pointer p);
+		void         ltrim_unsafe(const_pointer p);
 		void         ltrim(literal_type x);
-		// void         rtrim(const_pointer p);
+		void         rtrim_unsafe(const_pointer p);
 		void         rtrim(literal_type x);
-		// void         trim(const_pointer p);
+		void         trim_unsafe(const_pointer p);
 		void         trim(literal_type x);
 		this_type    left(size_type n) const;
 		this_type    right(size_type n) const;
@@ -875,6 +875,8 @@ namespace safememory
 		[[noreturn]] void        ThrowLengthException() const;
 		[[noreturn]] void        ThrowRangeException() const;
 		[[noreturn]] void        ThrowInvalidArgumentException() const;
+		[[noreturn]] void        ThrowMaxSizeException() const;
+		
 
 		static
 		std::pair<const_pointer, const_pointer> checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd);
@@ -978,12 +980,12 @@ namespace safememory
 		RangeInitialize(x.c_str());
 	}
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		RangeInitialize(p, p + n);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	RangeInitialize(p, p + n);
+	// }
 
 
 	// template <typename T, typename Allocator>
@@ -1036,12 +1038,12 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>::basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator*/)
-		// : mPair_second(allocator)
-	{
-		RangeInitialize(pBegin, pEnd);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>::basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator*/)
+	// 	// : mPair_second(allocator)
+	// {
+	// 	RangeInitialize(pBegin, pEnd);
+	// }
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>::basic_string(csafe_it_arg itBegin, csafe_it_arg itEnd)
@@ -1168,7 +1170,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::begin() EA_NOEXCEPT
+	basic_string<T, Allocator>::begin_unsafe() EA_NOEXCEPT
 	{
 		return iterator(internalLayout().BeginPtr());
 	}
@@ -1176,7 +1178,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::end() EA_NOEXCEPT
+	basic_string<T, Allocator>::end_unsafe() EA_NOEXCEPT
 	{
 		return iterator(internalLayout().EndPtr());
 	}
@@ -1184,7 +1186,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_iterator
-	basic_string<T, Allocator>::begin() const EA_NOEXCEPT
+	basic_string<T, Allocator>::begin_unsafe() const EA_NOEXCEPT
 	{
 		return const_iterator(internalLayout().BeginPtr());
 	}
@@ -1192,7 +1194,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_iterator
-	basic_string<T, Allocator>::cbegin() const EA_NOEXCEPT
+	basic_string<T, Allocator>::cbegin_unsafe() const EA_NOEXCEPT
 	{
 		return const_iterator(internalLayout().BeginPtr());
 	}
@@ -1200,7 +1202,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_iterator
-	basic_string<T, Allocator>::end() const EA_NOEXCEPT
+	basic_string<T, Allocator>::end_unsafe() const EA_NOEXCEPT
 	{
 		return const_iterator(internalLayout().EndPtr());
 	}
@@ -1208,7 +1210,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_iterator
-	basic_string<T, Allocator>::cend() const EA_NOEXCEPT
+	basic_string<T, Allocator>::cend_unsafe() const EA_NOEXCEPT
 	{
 		return const_iterator(internalLayout().EndPtr());
 	}
@@ -1216,54 +1218,54 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::rbegin() EA_NOEXCEPT
+	basic_string<T, Allocator>::rbegin_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(end());
+		return reverse_iterator(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::rend() EA_NOEXCEPT
+	basic_string<T, Allocator>::rend_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(begin());
+		return reverse_iterator(begin_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
-	basic_string<T, Allocator>::rbegin() const EA_NOEXCEPT
+	basic_string<T, Allocator>::rbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(end());
+		return const_reverse_iterator(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
-	basic_string<T, Allocator>::crbegin() const EA_NOEXCEPT
+	basic_string<T, Allocator>::crbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(end());
+		return const_reverse_iterator(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
-	basic_string<T, Allocator>::rend() const EA_NOEXCEPT
+	basic_string<T, Allocator>::rend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(begin());
+		return const_reverse_iterator(begin_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_reverse_iterator
-	basic_string<T, Allocator>::crend() const EA_NOEXCEPT
+	basic_string<T, Allocator>::crend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(begin());
+		return const_reverse_iterator(begin_unsafe());
 	}
 
 		template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::safe_iterator
-	basic_string<T, Allocator>::begin_safe() EA_NOEXCEPT
+	basic_string<T, Allocator>::begin() EA_NOEXCEPT
 	{
 		return safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
 	}
@@ -1271,7 +1273,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::safe_iterator
-	basic_string<T, Allocator>::end_safe() EA_NOEXCEPT
+	basic_string<T, Allocator>::end() EA_NOEXCEPT
 	{
 		return safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
 	}
@@ -1279,7 +1281,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_safe_iterator
-	basic_string<T, Allocator>::begin_safe() const EA_NOEXCEPT
+	basic_string<T, Allocator>::begin() const EA_NOEXCEPT
 	{
 		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
 	}
@@ -1287,7 +1289,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_safe_iterator
-	basic_string<T, Allocator>::cbegin_safe() const EA_NOEXCEPT
+	basic_string<T, Allocator>::cbegin() const EA_NOEXCEPT
 	{
 		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
 	}
@@ -1295,7 +1297,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_safe_iterator
-	basic_string<T, Allocator>::end_safe() const EA_NOEXCEPT
+	basic_string<T, Allocator>::end() const EA_NOEXCEPT
 	{
 		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
 	}
@@ -1303,7 +1305,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_safe_iterator
-	basic_string<T, Allocator>::cend_safe() const EA_NOEXCEPT
+	basic_string<T, Allocator>::cend() const EA_NOEXCEPT
 	{
 		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
 	}
@@ -1412,7 +1414,7 @@ namespace safememory
 			// 	#endif
 			// }
 
-			assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+			assign_unsafe(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 		}
 		return *this;
 	}
@@ -1464,7 +1466,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(literal_type x)
 	{
 		const T* p = x.c_str();
-		return assign(p, p + CharStrlen(p));
+		return assign_unsafe(p, p + CharStrlen(p));
 	}
 
 	// template <typename T, typename Allocator>
@@ -1476,7 +1478,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(value_type c)
 	{
-		return assign((size_type)1, c);
+		return assign(static_cast<size_type>(1), c);
 	}
 
 
@@ -1490,7 +1492,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::this_type& basic_string<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
 	{
-		return assign(ilist.begin(), ilist.end());
+		return assign_unsafe(ilist.begin(), ilist.end());
 	}
 
 
@@ -1507,7 +1509,7 @@ namespace safememory
 		const size_type s = internalLayout().GetSize();
 
 		if(n < s)
-			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
+			erase_unsafe(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		else if(n > s)
 			append(n - s, c);
 	}
@@ -1524,7 +1526,7 @@ namespace safememory
 		const size_type s = internalLayout().GetSize();
 
 		if(n < s)
-			erase(begin() + n, end());
+			erase_unsafe(begin_unsafe() + n, end_unsafe());
 		else if(n > s)
 		{
 			append(n - s, value_type());
@@ -1792,7 +1794,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const this_type& x)
 	{
-		return append(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return append_unsafe(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -1804,7 +1806,7 @@ namespace safememory
 				ThrowRangeException();
 		#endif
 
-		    return append(x.internalLayout().BeginPtr() + position,
+		    return append_unsafe(x.internalLayout().BeginPtr() + position,
 				          x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
 	}
 
@@ -1813,42 +1815,42 @@ namespace safememory
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(literal_type x)
 	{
 		const T* p = x.c_str();
-		return append(p, p + CharStrlen(p));
+		return append_unsafe(p, p + CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append_unsafe(const_pointer p, size_type n)
 	{
-		return append(p, p + n);
+		return append_unsafe(p, p + n);
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer p)
-	// {
-	// 	return append(p, p + CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append_unsafe(const_pointer p)
+	{
+		return append_unsafe(p, p + CharStrlen(p));
+	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther)
-	// {
-	// 	return append_convert(pOther, (size_type)CharStrlen(pOther));
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert_unsafe(const OtherCharType* pOther)
+	{
+		return append_convert_unsafe(pOther, (size_type)CharStrlen(pOther));
+	}
 
 
 	template <typename T, typename Allocator>
 	template <typename OtherStringType>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
 	{
-		return append_convert(x.c_str(), x.length());
+		return append_convert_unsafe(x.c_str(), x.length());
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherCharType* pOther, size_type n)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert_unsafe(const OtherCharType* pOther, size_type n)
 	{
 		// Question: What do we do in the case that we have an illegally encoded source string?
 		// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
@@ -1877,7 +1879,7 @@ namespace safememory
 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(basic_string_literal<OtherCharType> x)
 	{
 		const T* p = x.c_str();
-		return append_convert(p, CharStrlen(p));
+		return append_convert_unsafe(p, CharStrlen(p));
 	}
 
 
@@ -1902,7 +1904,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append(const_pointer pBegin, const_pointer pEnd)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		if(pBegin != pEnd)
 		{
@@ -1942,7 +1944,7 @@ namespace safememory
 	basic_string<T, Allocator>& basic_string<T, Allocator>::append(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkAndGet(itBegin, itEnd);
-		return append(p.first, p.second);
+		return append_unsafe(p.first, p.second);
 	}
 // 	template <typename T, typename Allocator>
 // 	basic_string<T, Allocator>& basic_string<T, Allocator>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
@@ -2100,7 +2102,7 @@ namespace safememory
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const this_type& x)
 	{
 		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator.
-		return assign(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return assign_unsafe(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2113,7 +2115,7 @@ namespace safememory
 		#endif
 
 		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator.
-		    return assign(
+		    return assign_unsafe(
 		        x.internalLayout().BeginPtr() + position,
 		        x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
 	}
@@ -2122,22 +2124,22 @@ namespace safememory
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(literal_type x)
 	{
 		const T* p = x.c_str();
-		return assign(p, p + CharStrlen(p));
+		return assign_unsafe(p, p + CharStrlen(p));
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign_unsafe(const_pointer p, size_type n)
 	{
-		return assign(p, p + n);
+		return assign_unsafe(p, p + n);
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer p)
-	// {
-	// 	return assign(p, p + CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign_unsafe(const_pointer p)
+	{
+		return assign_unsafe(p, p + CharStrlen(p));
+	}
 
 
 	template <typename T, typename Allocator>
@@ -2146,7 +2148,7 @@ namespace safememory
 		if(n <= internalLayout().GetSize())
 		{
 			CharTypeAssignN(internalLayout().BeginPtr(), n, c);
-			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
+			erase_unsafe(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else
 		{
@@ -2158,13 +2160,13 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const_pointer pBegin, const_pointer pEnd)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		const size_type n = (size_type)(pEnd - pBegin);
 		if(n <= internalLayout().GetSize())
 		{
 			memmove(internalLayout().BeginPtr(), pBegin, (size_t)n * sizeof(value_type));
-			erase(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
+			erase_unsafe(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else
 		{
@@ -2178,13 +2180,13 @@ namespace safememory
 	basic_string<T, Allocator>& basic_string<T, Allocator>::assign(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkAndGet(itBegin, itEnd);
-		return assign(p.first, p.second);
+		return assign_unsafe(p.first, p.second);
 	}
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(std::initializer_list<value_type> ilist)
 	{
-		return assign(ilist.begin(), ilist.end());
+		return assign_unsafe(ilist.begin(), ilist.end());
 	}
 
 
@@ -2202,22 +2204,22 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// template <typename OtherCharType>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p)
-	// {
-	// 	clear();
-	// 	append_convert(p);
-	// 	return *this;
-	// }
+	template <typename T, typename Allocator>
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert_unsafe(const OtherCharType* p)
+	{
+		clear();
+		append_convert_unsafe(p);
+		return *this;
+	}
 
 
 	template <typename T, typename Allocator>
 	template <typename OtherCharType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherCharType* p, size_type n)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert_unsafe(const OtherCharType* p, size_type n)
 	{
 		clear();
-		append_convert(p, n);
+		append_convert_unsafe(p, n);
 		return *this;
 	}
 
@@ -2227,7 +2229,7 @@ namespace safememory
 	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
 	{
 		clear();
-		append_convert(x.data(), x.length());
+		append_convert_unsafe(x.data(), x.length());
 		return *this;
 	}
 
@@ -2236,7 +2238,7 @@ namespace safememory
 	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(basic_string_literal<OtherCharType> x)
 	{
 		clear();
-		append_convert(x.c_str());
+		append_convert_unsafe(x.c_str());
 		return *this;
 	}
 
@@ -2254,7 +2256,7 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		insert_unsafe(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 		return *this;
 	}
 
@@ -2274,13 +2276,13 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr() + beg, x.internalLayout().BeginPtr() + beg + nLength);
+		insert_unsafe(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr() + beg, x.internalLayout().BeginPtr() + beg + nLength);
 		return *this;
 	}
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p, size_type n)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::insert_unsafe(size_type position, const_pointer p, size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2292,29 +2294,29 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().BeginPtr() + position, p, p + n);
+		insert_unsafe(internalLayout().BeginPtr() + position, p, p + n);
 		return *this;
 	}
 
 
-	// template <typename T, typename Allocator>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const_pointer p)
-	// {
-	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
-	// 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-	// 			ThrowRangeException();
-	// 	#endif
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::insert_unsafe(size_type position, const_pointer p)
+	{
+		#if EASTL_STRING_OPT_RANGE_ERRORS
+			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+				ThrowRangeException();
+		#endif
 
-	// 	size_type nLength = (size_type)CharStrlen(p);
+		size_type nLength = (size_type)CharStrlen(p);
 
-	// 	#if EASTL_STRING_OPT_LENGTH_ERRORS
-	// 		if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
-	// 			ThrowLengthException();
-	// 	#endif
+		#if EASTL_STRING_OPT_LENGTH_ERRORS
+			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
+				ThrowLengthException();
+		#endif
 
-	// 	insert(internalLayout().BeginPtr() + position, p, p + nLength);
-	// 	return *this;
-	// }
+		insert_unsafe(internalLayout().BeginPtr() + position, p, p + nLength);
+		return *this;
+	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, literal_type x)
@@ -2332,7 +2334,7 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().BeginPtr() + position, p, p + nLength);
+		insert_unsafe(internalLayout().BeginPtr() + position, p, p + nLength);
 		return *this;
 	}
 
@@ -2350,14 +2352,14 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		insert(internalLayout().BeginPtr() + position, n, c);
+		insert_unsafe(internalLayout().BeginPtr() + position, n, c);
 		return *this;
 	}
 
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, value_type c)
+	basic_string<T, Allocator>::insert_unsafe(const_iterator p, value_type c)
 	{
 		if(p == const_iterator(internalLayout().EndPtr()))
 		{
@@ -2370,7 +2372,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, size_type n, value_type c)
+	basic_string<T, Allocator>::insert_unsafe(const_iterator p, size_type n, value_type c)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2450,7 +2452,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, const_pointer pBegin, const_pointer pEnd)
+	basic_string<T, Allocator>::insert_unsafe(const_iterator p, const_pointer pBegin, const_pointer pEnd)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2558,9 +2560,9 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert(const_iterator p, std::initializer_list<value_type> ilist)
+	basic_string<T, Allocator>::insert_unsafe(const_iterator p, std::initializer_list<value_type> ilist)
 	{
-		return insert(p, ilist.begin(), ilist.end());
+		return insert_unsafe(p, ilist.begin(), ilist.end());
 	}
 
 	template <typename T, typename Allocator>
@@ -2568,7 +2570,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert(p, c);
+		return insert_unsafe(p, c);
 	}
 
 	template <typename T, typename Allocator>
@@ -2576,7 +2578,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, size_type n, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert(p, n, c);
+		return insert_unsafe(p, n, c);
 	}
 
 	template <typename T, typename Allocator>
@@ -2585,7 +2587,7 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		const_pointer p2 = checkAndGet(itBegin, itEnd);
-		return insert(p, p2.first, p2.second);
+		return insert_unsafe(p, p2.first, p2.second);
 	}
 
 	template <typename T, typename Allocator>
@@ -2593,7 +2595,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert(p, ilist.begin(), ilist.end());
+		return insert_unsafe(p, ilist.begin(), ilist.end());
 	}
 
 	template <typename T, typename Allocator>
@@ -2609,7 +2611,7 @@ namespace safememory
 				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
-		erase(internalLayout().BeginPtr() + position,
+		erase_unsafe(internalLayout().BeginPtr() + position,
 			  internalLayout().BeginPtr() + position + std::min(n, internalLayout().GetSize() - position));
 
 		return *this;
@@ -2618,7 +2620,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::erase(const_iterator p)
+	basic_string<T, Allocator>::erase_unsafe(const_iterator p)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p >= internalLayout().EndPtr())))
@@ -2633,7 +2635,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::erase(const_iterator pBegin, const_iterator pEnd)
+	basic_string<T, Allocator>::erase_unsafe(const_iterator pBegin, const_iterator pEnd)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2655,31 +2657,33 @@ namespace safememory
 	basic_string<T, Allocator>::erase(csafe_it_arg it)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return safe_iterator(internalLayout().GetSoftHeapPtr(), std::distance(begin(), erase(p)));
+		iterator i = erase_unsafe(p);
+		size_t dst = std::distance(begin_unsafe(),  i);
+		return safe_iterator(internalLayout().GetSoftHeapPtr(), static_cast<size_t>(dst));
 	}
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::erase(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
-		iterator i = erase(p.first, p.second);
-		difference_type dst = std::distance(begin(),  i);
+		iterator i = erase_unsafe(p.first, p.second);
+		difference_type dst = std::distance(begin_unsafe(),  i);
 		return safe_iterator(internalLayout().GetSoftHeapPtr(), static_cast<size_t>(dst));
 	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::erase(reverse_iterator position)
+	basic_string<T, Allocator>::erase_unsafe(reverse_iterator position)
 	{
-		return reverse_iterator(erase((++position).base()));
+		return reverse_iterator(erase_unsafe((++position).base()));
 	}
 
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::erase(reverse_iterator first, reverse_iterator last)
+	basic_string<T, Allocator>::erase_unsafe(reverse_iterator first, reverse_iterator last)
 	{
-		return reverse_iterator(erase((++last).base(), (++first).base()));
+		return reverse_iterator(erase_unsafe((++last).base(), (++first).base()));
 	}
 
 
@@ -2698,7 +2702,7 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -2718,12 +2722,12 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
+		return replace_unsafe(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
 	}
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p, size_type n2)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(size_type position, size_type n1, const_pointer p, size_type n2)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2737,28 +2741,28 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + n2);
+		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + n2);
 	}
 
 
-	// template <typename T, typename Allocator>
-	// basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, const_pointer p)
-	// {
-	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
-	// 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-	// 			ThrowRangeException();
-	// 	#endif
+	template <typename T, typename Allocator>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(size_type position, size_type n1, const_pointer p)
+	{
+		#if EASTL_STRING_OPT_RANGE_ERRORS
+			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+				ThrowRangeException();
+		#endif
 
-	// 	const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
+		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
 
-	// 	#if EASTL_STRING_OPT_LENGTH_ERRORS
-	// 		const size_type n2 = (size_type)CharStrlen(p);
-	// 		if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
-	// 			ThrowLengthException();
-	// 	#endif
+		#if EASTL_STRING_OPT_LENGTH_ERRORS
+			const size_type n2 = (size_type)CharStrlen(p);
+			if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
+				ThrowLengthException();
+		#endif
 
-	// 	return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
-	// }
+		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, literal_type x)
@@ -2777,7 +2781,7 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
+		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
@@ -2795,39 +2799,39 @@ namespace safememory
 				ThrowLengthException();
 		#endif
 
-		return replace(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, n2, c);
+		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, n2, c);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const this_type& x)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const this_type& x)
 	{
-		return replace(pBegin, pEnd, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return replace_unsafe(pBegin, pEnd, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const_pointer p, size_type n)
 	{
-		return replace(pBegin, pEnd, p, p + n);
+		return replace_unsafe(pBegin, pEnd, p, p + n);
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, const_pointer p)
-	// {
-	// 	return replace(pBegin, pEnd, p, p + CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const_pointer p)
+	{
+		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, literal_type x)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, literal_type x)
 	{
 		const T* p = x.c_str();
-		return replace(pBegin, pEnd, p, p + CharStrlen(p));
+		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2852,7 +2856,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(const_iterator pBegin1, const_iterator pEnd1, const_pointer pBegin2, const_pointer pEnd2)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin1, const_iterator pEnd1, const_pointer pBegin2, const_pointer pEnd2)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin1 < internalLayout().BeginPtr()) || (pBegin1 > internalLayout().EndPtr()) ||
@@ -2911,28 +2915,28 @@ namespace safememory
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 
-		return replace(p.first, p.second, x);
+		return replace_unsafe(p.first, p.second, x);
 	}
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n)
-	{
-		const_pointer_pair p = checkMineAndGet(first, last);
-		return replace(p.first, p.second, p, n);
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n)
+	// {
+	// 	const_pointer_pair p = checkMineAndGet(first, last);
+	// 	return replace_unsafe(p.first, p.second, p, n);
+	// }
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(csafe_it_arg first, csafe_it_arg last, literal_type x)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
-		return replace(p.first, p.second, x);
+		return replace_unsafe(p.first, p.second, x);
 	}
 
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace(csafe_it_arg first, csafe_it_arg last, size_type n, value_type c)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
-		return replace(p.first, p.second, n, c);
+		return replace_unsafe(p.first, p.second, n, c);
 	}
 
 	template <typename T, typename Allocator>
@@ -2940,7 +2944,7 @@ namespace safememory
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 		const_pointer_pair it = checkMineAndGet(itBegin, itEnd);
-		return replace(p.first, p.second, it.first, it.second);
+		return replace_unsafe(p.first, p.second, it.first, it.second);
 	}
 
 	template <typename T, typename Allocator>
@@ -2981,28 +2985,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return find_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::find(const_pointer p, size_type position) const
-	// {
-	// 	return find(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::find_unsafe(const_pointer p, size_type position) const
+	{
+		return find_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return find(p, position, CharStrlen(p));
+		return find_unsafe(p, position, CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// It is not clear what the requirements are for position, but since the C++ standard
 		// appears to be silent it is assumed for now that position can be any value.
@@ -3048,28 +3052,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::rfind(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return rfind(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return rfind_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::rfind(const_pointer p, size_type position) const
-	// {
-	// 	return rfind(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::rfind_unsafe(const_pointer p, size_type position) const
+	{
+		return rfind_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::rfind(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return rfind(p, position, CharStrlen(p));
+		return rfind_unsafe(p, position, CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::rfind(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::rfind_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// Disabled because it's not clear what values are valid for position.
 		// It is documented that npos is a valid value, though. We return npos and
@@ -3126,28 +3130,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_first_of(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return find_first_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position) const
-	// {
-	// 	return find_first_of(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::find_first_of_unsafe(const_pointer p, size_type position) const
+	{
+		return find_first_of_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return find_first_of(p, position, CharStrlen(p));
+		return find_first_of_unsafe(p, position, CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_of(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_first_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// If position is >= size, we return npos.
 		if(EASTL_LIKELY((position < internalLayout().GetSize())))
@@ -3174,28 +3178,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_last_of(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return find_last_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position) const
-	// {
-	// 	return find_last_of(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::find_last_of_unsafe(const_pointer p, size_type position) const
+	{
+		return find_last_of_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return find_last_of(p, position, CharStrlen(p));
+		return find_last_of_unsafe(p, position, CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_of(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_last_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
@@ -3224,28 +3228,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_first_not_of(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return find_first_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position) const
-	// {
-	// 	return find_first_not_of(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::find_first_not_of_unsafe(const_pointer p, size_type position) const
+	{
+		return find_first_not_of_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_first_not_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return find_first_not_of(p, position, CharStrlen(p));
+		return find_first_not_of_unsafe(p, position, CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_first_not_of(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
@@ -3280,28 +3284,28 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
-		return find_last_not_of(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
+		return find_last_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline typename basic_string<T, Allocator>::size_type
-	// basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position) const
-	// {
-	// 	return find_last_not_of(p, position, (size_type)CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::size_type
+	basic_string<T, Allocator>::find_last_not_of_unsafe(const_pointer p, size_type position) const
+	{
+		return find_last_not_of_unsafe(p, position, (size_type)CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::find_last_not_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
-		return find_last_not_of(p, position, (size_type)CharStrlen(p));
+		return find_last_not_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
 	typename basic_string<T, Allocator>::size_type
-	basic_string<T, Allocator>::find_last_not_of(const_pointer p, size_type position, size_type n) const
+	basic_string<T, Allocator>::find_last_not_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		const size_type nLength = internalLayout().GetSize();
 
@@ -3358,7 +3362,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(const this_type& x) const EA_NOEXCEPT
 	{
-		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
@@ -3370,7 +3374,7 @@ namespace safememory
 				ThrowRangeException();
 		#endif
 
-		return compare(
+		return compare_unsafe(
 			internalLayout().BeginPtr() + pos1,
 			internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
 			x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
@@ -3386,39 +3390,39 @@ namespace safememory
 				ThrowRangeException();
 		#endif
 
-		return compare(internalLayout().BeginPtr() + pos1,
+		return compare_unsafe(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
 					   x.internalLayout().BeginPtr() + pos2,
 					   x.internalLayout().BeginPtr() + pos2 + std::min(n2, x.internalLayout().GetSize() - pos2));
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline int basic_string<T, Allocator>::compare(const_pointer p) const
-	// {
-	// 	return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
-	// }
+	template <typename T, typename Allocator>
+	inline int basic_string<T, Allocator>::compare_unsafe(const_pointer p) const
+	{
+		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(literal_type x) const
 	{
 		const T* p = x.c_str();
-		return compare(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
+		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
-	// template <typename T, typename Allocator>
-	// inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p) const
-	// {
-	// 	#if EASTL_STRING_OPT_RANGE_ERRORS
-	// 		if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
-	// 			ThrowRangeException();
-	// 	#endif
+	template <typename T, typename Allocator>
+	inline int basic_string<T, Allocator>::compare_unsafe(size_type pos1, size_type n1, const_pointer p) const
+	{
+		#if EASTL_STRING_OPT_RANGE_ERRORS
+			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+				ThrowRangeException();
+		#endif
 
-	// 	return compare(internalLayout().BeginPtr() + pos1,
-	// 				   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
-	// 				   p,
-	// 				   p + CharStrlen(p));
-	// }
+		return compare_unsafe(internalLayout().BeginPtr() + pos1,
+					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+					   p,
+					   p + CharStrlen(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, literal_type x) const
@@ -3429,21 +3433,21 @@ namespace safememory
 		#endif
 
 		const T* p = x.c_str();
-		return compare(internalLayout().BeginPtr() + pos1,
+		return compare_unsafe(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
 					   p,
 					   p + CharStrlen(p));
 	}
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const_pointer p, size_type n2) const
+	inline int basic_string<T, Allocator>::compare_unsafe(size_type pos1, size_type n1, const_pointer p, size_type n2) const
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
 				ThrowRangeException();
 		#endif
 
-		return compare(internalLayout().BeginPtr() + pos1,
+		return compare_unsafe(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
 					   p,
 					   p + n2);
@@ -3476,7 +3480,7 @@ namespace safememory
 	inline void basic_string<T, Allocator>::ltrim()
 	{
 		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-		erase(0, find_first_not_of(array));
+		erase(0, find_first_not_of_unsafe(array));
 	}
 
 
@@ -3484,7 +3488,7 @@ namespace safememory
 	inline void basic_string<T, Allocator>::rtrim()
 	{
 		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
-		erase(find_last_not_of(array) + 1);
+		erase(find_last_not_of_unsafe(array) + 1);
 	}
 
 
@@ -3496,11 +3500,11 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::ltrim(const_pointer p)
-	// {
-	// 	erase(0, find_first_not_of(p));
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::ltrim_unsafe(const_pointer p)
+	{
+		erase(0, find_first_not_of_unsafe(p));
+	}
 
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::ltrim(literal_type x)
@@ -3508,11 +3512,11 @@ namespace safememory
 		erase(0, find_first_not_of(x));
 	}
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::rtrim(const_pointer p)
-	// {
-	// 	erase(find_last_not_of(p) + 1);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::rtrim_unsafe(const_pointer p)
+	{
+		erase(find_last_not_of_unsafe(p) + 1);
+	}
 
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::rtrim(literal_type x)
@@ -3520,18 +3524,18 @@ namespace safememory
 		erase(find_last_not_of(x) + 1);
 	}
 
-	// template <typename T, typename Allocator>
-	// inline void basic_string<T, Allocator>::trim(const_pointer p)
-	// {
-	// 	ltrim(p);
-	// 	rtrim(p);
-	// }
+	template <typename T, typename Allocator>
+	inline void basic_string<T, Allocator>::trim_unsafe(const_pointer p)
+	{
+		ltrim_unsafe(p);
+		rtrim_unsafe(p);
+	}
 
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::trim(literal_type x)
 	{
 		ltrim(x);
-		rtrim(_xabort);
+		rtrim(x);
 	}
 
 	template <typename T, typename Allocator>
@@ -3582,7 +3586,7 @@ namespace safememory
 
 	/* static */
 	template <typename T, typename Allocator>
-	int basic_string<T, Allocator>::compare(const_pointer pBegin1, const_pointer pEnd1,
+	int basic_string<T, Allocator>::compare_unsafe(const_pointer pBegin1, const_pointer pEnd1,
 											const_pointer pBegin2, const_pointer pEnd2)
 	{
 		const difference_type n1   = pEnd1 - pBegin1;
@@ -3601,7 +3605,7 @@ namespace safememory
 		const_pointer_pair p1 = checkAndGet(itBegin1, itEnd1);
 		const_pointer_pair p2 = checkAndGet(itBegin2, itEnd2);
 
-		return compare(p1.first, p1.second, p2.first, p2.second);
+		return compare_unsafe(p1.first, p1.second, p2.first, p2.second);
 	}
 
 
@@ -3715,6 +3719,9 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::owning_heap_type
 	basic_string<T, Allocator>::DoAllocate(size_type n)
 	{
+		if(EASTL_UNLIKELY(n > max_size()))
+			ThrowMaxSizeException();
+
 		return detail::make_owning_array_of<T>(n);
 	}
 
@@ -3830,6 +3837,18 @@ namespace safememory
 			EASTL_FAIL_MSG("basic_string -- invalid argument");
 		#endif
 	}
+
+	template <typename T, typename Allocator>
+	[[noreturn]]
+	inline void basic_string<T, Allocator>::ThrowMaxSizeException() const
+	{
+		#if EASTL_EXCEPTIONS_ENABLED
+			throw std::out_of_range("basic_string -- size too big");
+		#elif EASTL_ASSERT_ENABLED
+			EASTL_FAIL_MSG("basic_string -- invalid argument");
+		#endif
+	}
+
 
 	/* static */
 	template <typename T, typename Allocator>
@@ -4208,8 +4227,8 @@ namespace safememory
 	inline size_t basic_string<T, Allocator>::hash() const EA_NOEXCEPT
 	{
 		// To consider: limit p to at most 256 chars.
-		auto p = begin();
-		auto e = end();
+		auto p = begin_unsafe();
+		auto e = end_unsafe();
 		unsigned int result = 2166136261U;
 //			while((c = *p++) != 0) // Using '!=' disables compiler warnings.
 		for(; p != e; ++p) 
@@ -4257,7 +4276,7 @@ namespace safememory
 	inline bool operator==(const basic_string<T, Allocator>& a, const basic_string<T, Allocator>& b)
 	{
 		return (a.size() == b.size()) && //(memcmp(a.data(), b.data(), (size_t)a.size() * sizeof(typename basic_string<T, Allocator>::value_type)) == 0));
-			(basic_string<T, Allocator>::compare(a.begin(), a.end(), b.begin(), b.end()) == 0);
+			(basic_string<T, Allocator>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) == 0);
 	}
 
 
@@ -4268,7 +4287,7 @@ namespace safememory
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return (n == b.size()) && //(memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
-			(basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) == 0);
+			(basic_string<T, Allocator>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) == 0);
 	}
 
 
@@ -4279,7 +4298,7 @@ namespace safememory
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return (a.size() == n) && //(memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
-			(basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) == 0);
+			(basic_string<T, Allocator>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) == 0);
 	}
 
 
@@ -4308,7 +4327,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline bool operator<(const basic_string<T, Allocator>& a, const basic_string<T, Allocator>& b)
 	{
-		return basic_string<T, Allocator>::compare(a.begin(), a.end(), b.begin(), b.end()) < 0; }
+		return basic_string<T, Allocator>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) < 0; }
 
 
 	template <typename T, typename Allocator>
@@ -4317,7 +4336,7 @@ namespace safememory
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) < 0;
+		return basic_string<T, Allocator>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) < 0;
 	}
 
 
@@ -4327,7 +4346,7 @@ namespace safememory
 		typedef typename basic_string<T, Allocator>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) < 0;
+		return basic_string<T, Allocator>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) < 0;
 	}
 
 

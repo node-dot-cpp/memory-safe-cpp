@@ -71,6 +71,7 @@
 	#pragma warning(disable: 4571)  // catch(...) semantics changed since Visual C++ 7.1; structured exceptions (SEH) are no longer caught.
 #endif
 
+#define EA_NOEXCEPT noexcept
 
 namespace nodecpp
 {

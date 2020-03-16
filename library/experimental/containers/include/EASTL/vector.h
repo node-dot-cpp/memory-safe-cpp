@@ -236,7 +236,7 @@ namespace nodecpp
 		// using base_type::internalAllocator;
 
 	public:
-		vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR));
+		vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/;
 		// explicit vector(const allocator_type& allocator) EA_NOEXCEPT;
 		explicit vector(size_type n/*, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR*/);
 		vector(size_type n, const value_type& value/*, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR*/);
@@ -535,7 +535,7 @@ namespace nodecpp
 	///////////////////////////////////////////////////////////////////////
 
 	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector() EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))
+	inline vector<T, Allocator>::vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/
 		: base_type()
 	{
 		// Empty
