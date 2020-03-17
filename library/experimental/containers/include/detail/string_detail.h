@@ -258,21 +258,8 @@ class alignas(T) alignas(T*) array_of2
 		throw 0;
 	}
 
-	void checkIndex(size_t ix) const {
-
-		if(ix >= _capacity)
-			throwPointerOutOfRange();
-	}
-
-	void checkCapacityIndex(size_t ix) const {
-		if(ix > _capacity)
-			throwPointerOutOfRange();
-	}
-
 public:
-	array_of2(size_t capacity) :_capacity(capacity)
-		{
-		}
+	array_of2(size_t capacity) :_capacity(capacity) {}
 
 	array_of2(const array_of2&) = delete;
 	array_of2(array_of2&&) = delete;
