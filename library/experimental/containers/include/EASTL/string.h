@@ -757,7 +757,7 @@ namespace safememory
 		this_type&  replace_unsafe(const_iterator first, const_iterator last, const this_type& x);
 		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p, size_type n);
 		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, literal_type x);
+//		this_type&  replace_unsafe(const_iterator first, const_iterator last, literal_type x);
 		this_type&  replace_unsafe(const_iterator first, const_iterator last, size_type n, value_type c);
 		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
 
@@ -879,9 +879,16 @@ namespace safememory
 		
 
 		static
-		std::pair<const_pointer, const_pointer> checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd);
+		const_pointer_pair checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd);
+		
 		const_pointer checkMineAndGet(csafe_it_arg it) const;
-		std::pair<const_pointer, const_pointer> checkMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const;
+		const_pointer_pair checkMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const;
+
+		static
+		const_pointer_pair toPtrPair(literal_type x);
+		static
+		const_pointer_pair toPtrPair(const this_type& str, size_type pos, size_type n);
+
 
 		// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
 		// 	template <typename CharType>
@@ -957,21 +964,8 @@ namespace safememory
 	basic_string<T, Allocator>::basic_string(const this_type& x, size_type position, size_type n)
 		// : mPair_second(x.get_allocator())
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if (EASTL_UNLIKELY(position > x.internalLayout().GetSize())) // 21.4.2 p4
-			{
-				ThrowRangeException();
-				AllocateSelf();
-			}
-			else
-				RangeInitialize(
-					x.internalLayout().BeginPtr() + position,
-					x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
-        #else
-			RangeInitialize(
-				x.internalLayout().BeginPtr() + position,
-				x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
-        #endif
+		const_pointer_pair p = toPtrPair(x, position, n);
+		RangeInitialize(p.first, p.second);
 	}
 
 	template <typename T, typename Allocator>
@@ -1676,13 +1670,13 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_reference
 	basic_string<T, Allocator>::at(size_type n) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
 				ThrowRangeException();
-		#elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
-			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::at -- out of range");
-		#endif
+		// #elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
+		// 	if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::at -- out of range");
+		// #endif
 
 		return internalLayout().BeginPtr()[n];
 	}
@@ -1692,13 +1686,13 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::reference
 	basic_string<T, Allocator>::at(size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
 				ThrowRangeException();
-		#elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
-			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::at -- out of range");
-		#endif
+		// #elif EASTL_ASSERT_ENABLED                  // We assert if the user references the trailing 0 char.
+		// 	if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::at -- out of range");
+		// #endif
 
 		return internalLayout().BeginPtr()[n];
 	}
@@ -1801,13 +1795,8 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::append(const this_type& x, size_type position, size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position >= x.internalLayout().GetSize())) // position must be < x.mpEnd, but position + n may be > mpEnd.
-				ThrowRangeException();
-		#endif
-
-		    return append_unsafe(x.internalLayout().BeginPtr() + position,
-				          x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
+		const_pointer_pair p = toPtrPair(x, position, n);
+	    return append_unsafe(p.first, p.second);
 	}
 
 
@@ -2109,15 +2098,8 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::assign(const this_type& x, size_type position, size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > x.internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
-
-		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator.
-		    return assign_unsafe(
-		        x.internalLayout().BeginPtr() + position,
-		        x.internalLayout().BeginPtr() + position + std::min(n, x.internalLayout().GetSize() - position));
+		const_pointer_pair p = toPtrPair(x, position, n);
+		return assign_unsafe(p.first, p.second);
 	}
 
 	template <typename T, typename Allocator>
@@ -2246,15 +2228,11 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const this_type& x)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+			ThrowRangeException();
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - x.internalLayout().GetSize())))
-				ThrowLengthException();
-		#endif
+		// if(EASTL_UNLIKELY(internalLayout().GetSize() + x.internalLayout().GetSize() > max_size()))
+		// 	ThrowLengthException();
 
 		insert_unsafe(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 		return *this;
@@ -2264,19 +2242,19 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, const this_type& x, size_type beg, size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY((position > internalLayout().GetSize()) || (beg > x.internalLayout().GetSize())))
-				ThrowRangeException();
-		#endif
+		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+			ThrowRangeException();
 
-		size_type nLength = std::min(n, x.internalLayout().GetSize() - beg);
+		// size_type nLength = std::min(n, x.internalLayout().GetSize() - beg);
+		const_pointer_pair ot = toPtrPair(x, beg, n);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
+		// 		ThrowLengthException();
+		// #endif
 
-		insert_unsafe(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr() + beg, x.internalLayout().BeginPtr() + beg + nLength);
+//		insert_unsafe(internalLayout().BeginPtr() + position, x.internalLayout().BeginPtr() + beg, x.internalLayout().BeginPtr() + beg + nLength);
+		insert_unsafe(internalLayout().BeginPtr() + position, ot.first, ot.second);
 		return *this;
 	}
 
@@ -2284,15 +2262,15 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert_unsafe(size_type position, const_pointer p, size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - n)))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - n)))
+		// 		ThrowLengthException();
+		// #endif
 
 		insert_unsafe(internalLayout().BeginPtr() + position, p, p + n);
 		return *this;
@@ -2302,17 +2280,17 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert_unsafe(size_type position, const_pointer p)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		size_type nLength = (size_type)CharStrlen(p);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
+		// 		ThrowLengthException();
+		// #endif
 
 		insert_unsafe(internalLayout().BeginPtr() + position, p, p + nLength);
 		return *this;
@@ -2321,20 +2299,21 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, literal_type x)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
 				ThrowRangeException();
-		#endif
+		// #endif
 
-		const T* p = x.c_str();
-		size_type nLength = CharStrlen(p);
+		// const T* p = x.c_str();
+		// size_type nLength = CharStrlen(p);
+		const_pointer_pair p = toPtrPair(x);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - nLength)))
+		// 		ThrowLengthException();
+		// #endif
 
-		insert_unsafe(internalLayout().BeginPtr() + position, p, p + nLength);
+		insert_unsafe(internalLayout().BeginPtr() + position, p.first, p.second);
 		return *this;
 	}
 
@@ -2342,15 +2321,15 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::insert(size_type position, size_type n, value_type c)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
 				ThrowRangeException();
-		#endif
+		// #endif
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - n)))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY(internalLayout().GetSize() > (max_size() - n)))
+		// 		ThrowLengthException();
+		// #endif
 
 		insert_unsafe(internalLayout().BeginPtr() + position, n, c);
 		return *this;
@@ -2601,18 +2580,18 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator>& basic_string<T, Allocator>::erase(size_type position, size_type n)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+			// if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+			// 	ThrowRangeException();
+		// #endif
 
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
-		#endif
+		// #if EASTL_ASSERT_ENABLED
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::erase -- invalid position");
+		// #endif
 
-		erase_unsafe(internalLayout().BeginPtr() + position,
-			  internalLayout().BeginPtr() + position + std::min(n, internalLayout().GetSize() - position));
+		const_pointer_pair p = toPtrPair(*this, position, n);
+		erase_unsafe(p.first, p.second);
 
 		return *this;
 	}
@@ -2690,56 +2669,62 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n, const this_type& x)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
-		const size_type nLength = std::min(n, internalLayout().GetSize() - position);
+		// const size_type nLength = std::min(n, internalLayout().GetSize() - position);
+		const_pointer_pair m = toPtrPair(*this, position, n);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((internalLayout().GetSize() - nLength) >= (max_size() - x.internalLayout().GetSize())))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY((internalLayout().GetSize() - nLength) >= (max_size() - x.internalLayout().GetSize())))
+		// 		ThrowLengthException();
+		// #endif
 
-		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return replace_unsafe(m.first, m.second, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-		if(EASTL_UNLIKELY((pos1 > internalLayout().GetSize()) || (pos2 > x.internalLayout().GetSize())))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// if(EASTL_UNLIKELY((pos1 > internalLayout().GetSize()) || (pos2 > x.internalLayout().GetSize())))
+		// 		ThrowRangeException();
+		// #endif
 
-		const size_type nLength1 = std::min(n1, internalLayout().GetSize() - pos1);
-		const size_type nLength2 = std::min(n2, x.internalLayout().GetSize() - pos2);
+		// const size_type nLength1 = std::min(n1, internalLayout().GetSize() - pos1);
+		// const size_type nLength2 = std::min(n2, x.internalLayout().GetSize() - pos2);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((internalLayout().GetSize() - nLength1) >= (max_size() - nLength2)))
-				ThrowLengthException();
-		#endif
+		const_pointer_pair p1 = toPtrPair(*this, pos1, n1);
+		const_pointer_pair p2 = toPtrPair(x, pos2, n2);
 
-		return replace_unsafe(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
+
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY((internalLayout().GetSize() - nLength1) >= (max_size() - nLength2)))
+		// 		ThrowLengthException();
+		// #endif
+
+//		return replace_unsafe(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
+		return replace_unsafe(p1.fist, p1.second, p2.first, p2.second);
 	}
 
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(size_type position, size_type n1, const_pointer p, size_type n2)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
+		// 		ThrowLengthException();
+		// #endif
 
 		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + n2);
 	}
@@ -2748,18 +2733,18 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(size_type position, size_type n1, const_pointer p)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			const size_type n2 = (size_type)CharStrlen(p);
-			if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
-				ThrowLengthException();
-		#endif
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	const size_type n2 = (size_type)CharStrlen(p);
+		// 	if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
+		// 		ThrowLengthException();
+		// #endif
 
 		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
 	}
@@ -2767,39 +2752,44 @@ namespace safememory
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, literal_type x)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
+		const_pointer_pair t = toPtrPair(*this, position, n1);
+		// const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
+		// const T* p = x.c_str();
+		const_pointer_pair p = toPtrPair(x);
 
-		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
-		const T* p = x.c_str();
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	const size_type n2 = (size_type)CharStrlen(p);
+		// 	if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
+		// 		ThrowLengthException();
+		// #endif
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			const size_type n2 = (size_type)CharStrlen(p);
-			if(EASTL_UNLIKELY((n2 > max_size()) || ((internalLayout().GetSize() - nLength) >= (max_size() - n2))))
-				ThrowLengthException();
-		#endif
-
-		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
+//		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
+		return replace_unsafe(t.first, t.second, p.first, p.second);
 	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n1, size_type n2, value_type c)
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
-		const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
+		// const size_type nLength = std::min(n1, internalLayout().GetSize() - position);
 
-		#if EASTL_STRING_OPT_LENGTH_ERRORS
-			if(EASTL_UNLIKELY((n2 > max_size()) || (internalLayout().GetSize() - nLength) >= (max_size() - n2)))
-				ThrowLengthException();
-		#endif
+		const_pointer_pair p = toPtrPair(*this, position, n1);
 
-		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, n2, c);
+		// #if EASTL_STRING_OPT_LENGTH_ERRORS
+		// 	if(EASTL_UNLIKELY((n2 > max_size()) || (internalLayout().GetSize() - nLength) >= (max_size() - n2)))
+		// 		ThrowLengthException();
+		// #endif
+
+//		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, n2, c);
+		return replace_unsafe(p.first, p.second, n2, c);
 	}
 
 
@@ -2823,12 +2813,12 @@ namespace safememory
 		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
 	}
 
-	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, literal_type x)
-	{
-		const T* p = x.c_str();
-		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
-	}
+	// template <typename T, typename Allocator>
+	// inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, literal_type x)
+	// {
+	// 	const T* p = x.c_str();
+	// 	return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
+	// }
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
@@ -2844,12 +2834,12 @@ namespace safememory
 		if(nLength >= n)
 		{
 			CharTypeAssignN(const_cast<pointer>(pBegin), n, c);
-			erase(pBegin + n, pEnd);
+			erase_unsafe(pBegin + n, pEnd);
 		}
 		else
 		{
 			CharTypeAssignN(const_cast<pointer>(pBegin), nLength, c);
-			insert(pEnd, n - nLength, c);
+			insert_unsafe(pEnd, n - nLength, c);
 		}
 		return *this;
 	}
@@ -2873,7 +2863,7 @@ namespace safememory
 				memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
 			else
 				memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
-			erase(pBegin1 + nLength2, pEnd1);
+			erase_unsafe(pBegin1 + nLength2, pEnd1);
 		}
 		else // Else we are expanding.
 		{
@@ -2885,7 +2875,7 @@ namespace safememory
 					memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
 				else
 					memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
-				insert(pEnd1, pMid2, pEnd2);
+				insert_unsafe(pEnd1, pMid2, pEnd2);
 			}
 			else // else we have an overlapping operation.
 			{
@@ -2951,10 +2941,10 @@ namespace safememory
 	typename basic_string<T, Allocator>::size_type
 	basic_string<T, Allocator>::copy(pointer p, size_type n, size_type position) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		// C++ std says the effects of this function are as if calling char_traits::copy()
 		// thus the 'p' must not overlap *this string, so we can use memcpy
@@ -3343,19 +3333,21 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline basic_string<T, Allocator> basic_string<T, Allocator>::substr(size_type position, size_type n) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				ThrowRangeException();
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::substr -- invalid position");
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #elif EASTL_ASSERT_ENABLED
+		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::substr -- invalid position");
+		// #endif
 
+		const_pointer_pair p = toPtrPair(*this, position, n);
 			// C++ std says the return string allocator must be default constructed, not a copy of this->get_allocator()
-			return basic_string(
-				internalLayout().BeginPtr() + position,
-				internalLayout().BeginPtr() + position +
-					std::min(n, internalLayout().GetSize() - position)/*, get_allocator()*/);
+			// return basic_string(
+			// 	internalLayout().BeginPtr() + position,
+			// 	internalLayout().BeginPtr() + position +
+			// 		std::min(n, internalLayout().GetSize() - position)/*, get_allocator()*/);
+			return basic_string(p.first, p.second);
 	}
 
 
@@ -3369,14 +3361,18 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const this_type& x) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
-		return compare_unsafe(
-			internalLayout().BeginPtr() + pos1,
-			internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+		const_pointer_pair p = toPtrPair(*this, position, n);
+
+		// return compare_unsafe(
+		// 	internalLayout().BeginPtr() + pos1,
+		// 	internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+		// 	x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
+		return compare_unsafe(p.first, p.second,
 			x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
@@ -3384,16 +3380,20 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY((pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())) ||
-			                  (pos2 > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY((pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())) ||
+		// 	                  (pos2 > (size_type)(x.internalLayout().EndPtr() - x.internalLayout().BeginPtr()))))
+		// 		ThrowRangeException();
+		// #endif
 
-		return compare_unsafe(internalLayout().BeginPtr() + pos1,
-					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
-					   x.internalLayout().BeginPtr() + pos2,
-					   x.internalLayout().BeginPtr() + pos2 + std::min(n2, x.internalLayout().GetSize() - pos2));
+		const_pointer_pair p1 = toPtrPair(*this, pos1, n1);
+		const_pointer_pair p2 = toPtrPair(x, pos2, n2);
+
+		// return compare_unsafe(internalLayout().BeginPtr() + pos1,
+		// 			   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+		// 			   x.internalLayout().BeginPtr() + pos2,
+		// 			   x.internalLayout().BeginPtr() + pos2 + std::min(n2, x.internalLayout().GetSize() - pos2));
+		return compare_unsafe(p1.first, p1.second, p2.first, p2.second);
 	}
 
 
@@ -3406,17 +3406,17 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(literal_type x) const
 	{
-		const T* p = x.c_str();
-		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
+		const_pointer_pair p = toPtrPair(x);
+		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p.first, p.second);
 	}
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare_unsafe(size_type pos1, size_type n1, const_pointer p) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		return compare_unsafe(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
@@ -3427,25 +3427,28 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare(size_type pos1, size_type n1, literal_type x) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
-		const T* p = x.c_str();
-		return compare_unsafe(internalLayout().BeginPtr() + pos1,
-					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
-					   p,
-					   p + CharStrlen(p));
+		const_pointer_pair p1 = toPtrPair(*this, pos1, n1);
+		const_pointer_pair p2 = toPtrPair(x);
+
+		// return compare_unsafe(internalLayout().BeginPtr() + pos1,
+		// 			   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
+		// 			   p,
+		// 			   p + CharStrlen(p));
+		return compare_unsafe(p1.first, p1.second, p2.first, p2.second);
 	}
 
 	template <typename T, typename Allocator>
 	inline int basic_string<T, Allocator>::compare_unsafe(size_type pos1, size_type n1, const_pointer p, size_type n2) const
 	{
-		#if EASTL_STRING_OPT_RANGE_ERRORS
-			if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
-				ThrowRangeException();
-		#endif
+		// #if EASTL_STRING_OPT_RANGE_ERRORS
+		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
+		// 		ThrowRangeException();
+		// #endif
 
 		return compare_unsafe(internalLayout().BeginPtr() + pos1,
 					   internalLayout().BeginPtr() + pos1 + std::min(n1, internalLayout().GetSize() - pos1),
@@ -3688,10 +3691,10 @@ namespace safememory
 	template <typename T, typename Allocator>
 	void basic_string<T, Allocator>::RangeInitialize(const_pointer pBegin, const_pointer pEnd)
 	{
-		#if EASTL_STRING_OPT_ARGUMENT_ERRORS
-			if(EASTL_UNLIKELY(!pBegin && (pEnd < pBegin))) // 21.4.2 p7
-				ThrowInvalidArgumentException();
-		#endif
+		// #if EASTL_STRING_OPT_ARGUMENT_ERRORS
+		// 	if(EASTL_UNLIKELY(!pBegin && (pEnd < pBegin))) // 21.4.2 p7
+		// 		ThrowInvalidArgumentException();
+		// #endif
 
 		const size_type n = (size_type)(pEnd - pBegin);
 
@@ -3706,10 +3709,10 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::RangeInitialize(const_pointer pBegin)
 	{
-		#if EASTL_STRING_OPT_ARGUMENT_ERRORS
-			if(EASTL_UNLIKELY(!pBegin))
-				ThrowInvalidArgumentException();
-		#endif
+		// #if EASTL_STRING_OPT_ARGUMENT_ERRORS
+		// 	if(EASTL_UNLIKELY(!pBegin))
+		// 		ThrowInvalidArgumentException();
+		// #endif
 
 		RangeInitialize(pBegin, pBegin + CharStrlen(pBegin));
 	}
@@ -3887,6 +3890,31 @@ namespace safememory
 			ThrowInvalidArgumentException();
 
 		return const_pointer_pair(b, e);
+	}
+
+	/* static */
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_pointer_pair
+	basic_string<T, Allocator>::toPtrPair(literal_type lit)
+	{
+		//lit non-null warrantied
+
+		T* p = lit.c_str();
+		return const_pointer_pair(p, p + CharStrlen(p));
+	}
+
+	/* static */
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_pointer_pair
+	basic_string<T, Allocator>::toPtrPair(const typename basic_string<T, Allocator>::this_type& str, size_type pos, size_type n)
+	{
+		//lit non-null warrantied
+		if(EASTL_UNLIKELY(pos > str.internalLayout().GetSize()))
+			ThrowRangeException();
+
+		const_pointer b = str.internalLayout().BeginPtr() + pos;
+		size_type sz = std::min(n, internalLayout().GetSize() - pos)
+		return const_pointer_pair(b, b + sz);
 	}
 
 	// CharTypeStringFindEnd
