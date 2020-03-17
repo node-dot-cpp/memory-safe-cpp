@@ -1735,7 +1735,10 @@ class nullable_ptr_base_impl
 
 	T* t;
 
-	T* get_() const { if ( t != nullptr ) return t; throw ::nodecpp::error::zero_pointer_access; return t; }
+	T* get_() const { 
+		checkNotNullLargeSize( this->t );
+		return this->t;
+	}
 
 public:
 
@@ -1983,12 +1986,6 @@ template<class T>
 nullable_ptr_impl<T> nullable_cast_impl( T* p ) {
 	return nullable_ptr_impl<T>( p );
 }
-
-/*template<class T, class T1>
-soft_ptr_impl<T> nullable_cast_impl( soft_ptr_impl<T1> p ) {
-	soft_ptr_impl<T> ret(p,reinterpret_cast<T*>(p.getDereferencablePtr()));
-	return ret;
-}*/
 
 } // namespace nodecpp::safememory
 
