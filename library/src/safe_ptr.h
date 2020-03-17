@@ -50,10 +50,10 @@ template<class T> struct soft_this_ptr_type_<T, memory_safety::none> { typedef s
 template<class T> struct soft_this_ptr_type_<T, memory_safety::safe> { typedef soft_this_ptr_impl<T> type; };
 template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using soft_this_ptr = typename soft_this_ptr_type_<T, is_safe>::type;
 
-template<class T, memory_safety is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
-template<class T> struct naked_ptr_type_<T, memory_safety::none> { typedef naked_ptr_no_checks<T> type; };
-template<class T> struct naked_ptr_type_<T, memory_safety::safe> { typedef naked_ptr_impl<T> type; };
-template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using naked_ptr = typename naked_ptr_type_<T, is_safe>::type;
+template<class T, memory_safety is_safe> struct nullable_ptr_type_ { typedef nullable_ptr_impl<T> type; };
+template<class T> struct nullable_ptr_type_<T, memory_safety::none> { typedef nullable_ptr_no_checks<T> type; };
+template<class T> struct nullable_ptr_type_<T, memory_safety::safe> { typedef nullable_ptr_impl<T> type; };
+template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using nullable_ptr = typename nullable_ptr_type_<T, is_safe>::type;
 
 template<class _Ty,
 	class... _Types,
