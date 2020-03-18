@@ -12,7 +12,7 @@ struct MyServer2 : public NodeBase {
 
 	void good() {
 		//is ok because 'this' is derived from NodeBase
-		server->onEvent([this](naked_ptr<nodecpp::Socket> sock) {}); 
+		server->onEvent([this](nullable_ptr<nodecpp::Socket> sock) {}); 
 
 		// but creating instances is an error
 

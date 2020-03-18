@@ -207,7 +207,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
         continue;
 
       isNakedPointerType(Qt, Context, Dh); // for report
-      Dh.diag((*It)->getLocation(), "unsafe type at naked_ptr declaration");
+      Dh.diag((*It)->getLocation(), "unsafe type at nullable_ptr declaration");
       return false;
     }
 

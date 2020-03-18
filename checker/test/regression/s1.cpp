@@ -3,7 +3,7 @@
 
 void bad() {
 	int* a = nullptr;
-// CHECK: :[[@LINE-1]]:7: error: (S1.3)
+// CHECK: :[[@LINE-1]]:7: error: (RAW)
 
 	a = a + 1;
 // CHECK: :[[@LINE-1]]:8: error: (S1)

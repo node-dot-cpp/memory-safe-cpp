@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker -raw-ptr %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 
 void f() {

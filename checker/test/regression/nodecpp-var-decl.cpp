@@ -29,9 +29,9 @@ void safeFun() {
 
 
 struct [[nodecpp::naked_struct]] NakedStr {
-	naked_ptr<int> ptr;
+	nullable_ptr<int> ptr;
 
-	naked_ptr<int> get() const;
+	nullable_ptr<int> get() const;
 	NakedStr();
 	NakedStr(const NakedStr&);
 	NakedStr& operator=(const NakedStr&) = delete;
@@ -40,7 +40,7 @@ struct [[nodecpp::naked_struct]] NakedStr {
 void nakedFunc() {
 	
 	int* i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:7: error: (S1.3)
+// CHECK: :[[@LINE-1]]:7: error: (RAW)
 
 	NakedStr naked; //ok
 }
@@ -59,21 +59,15 @@ struct Bad3 {
 	int* ptr = nullptr;
 
 	void set(int* ptr);
-// CHECK: :[[@LINE-1]]:16: error: (S1.3)
+
 };
 
 void badFunc() {
 	int** i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:8: error: (S1.3)
+// CHECK: :[[@LINE-1]]:8: error: (S5.3)
 	NakedStr* nakedPtr = nullptr; // bad
-// CHECK: :[[@LINE-1]]:12: error: (S1.3)
+// CHECK: :[[@LINE-1]]:12: error: (S5.3)
 	Bad1 b1; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
-
-	Bad2 b2; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
-
-	Bad3 b3; //bad
 // CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }
 

@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker -no-raw-ptr %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_ptr.h>
 

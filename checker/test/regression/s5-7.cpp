@@ -11,25 +11,25 @@ struct MyServer {
 	nodecpp::SrvMember srv;
 
 	void good() {
-		srv.onEvent([this](naked_ptr<nodecpp::Socket> sock) {}); //is ok
+		srv.onEvent([this](nullable_ptr<nodecpp::Socket> sock) {}); //is ok
 	}
 
 	void good2() {
 		int i = 0;
-		auto l = [this, &i](naked_ptr<nodecpp::Socket> sock) {};
+		auto l = [this, &i](nullable_ptr<nodecpp::Socket> sock) {};
 		my_sort(l);
 	} 
 
 	void bad1() {
 		int i = 0;
-		auto l = [this, &i](naked_ptr<nodecpp::Socket> sock) {};
+		auto l = [this, &i](nullable_ptr<nodecpp::Socket> sock) {};
 // CHECK: :[[@LINE-1]]:20: error: (S5.7)
 		srv.onEvent(l);
 	} 
 
-	void bad2(naked_ptr<int> i) {
+	void bad2(nullable_ptr<int> i) {
 
-		auto l = [this, &i](naked_ptr<nodecpp::Socket> sock) {};
+		auto l = [this, &i](nullable_ptr<nodecpp::Socket> sock) {};
 // CHECK: :[[@LINE-1]]:20: error: (S5.7)
 		srv.onEvent(l);
 	} 
@@ -37,8 +37,8 @@ struct MyServer {
 
 
 class Bad {
-	void bad(naked_ptr<nodecpp::SrvMember> srv) {
-		auto l = [this](naked_ptr<nodecpp::Socket> sock) {};
+	void bad(nullable_ptr<nodecpp::SrvMember> srv) {
+		auto l = [this](nullable_ptr<nodecpp::Socket> sock) {};
 // CHECK: :[[@LINE-1]]:13: error: (S5.7)
 		srv->onEvent(l);
 	}

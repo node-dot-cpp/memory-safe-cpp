@@ -188,7 +188,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     auto Dh = DiagHelper(this);
-    Dh.diag(Var->getLocation(), "unsafe naked_ptr at variable declaration");
+    Dh.diag(Var->getLocation(), "unsafe nullable_ptr at variable declaration");
     isNakedPointerType(Qt, getContext(), Dh); // for report
     return;
   }

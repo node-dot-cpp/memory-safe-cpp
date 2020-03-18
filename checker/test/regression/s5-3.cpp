@@ -12,13 +12,13 @@ owning_ptr<int> func() {
 
 const int& func2(const int& i) {return i;}
 
-void func3(const naked_ptr<int>& i);
-void func4(naked_ptr<int>&);
-// CHECK: :[[@LINE-1]]:27: error: (S5.3)
+void func3(const nullable_ptr<int>& i);
+void func4(nullable_ptr<int>&);
+// CHECK: :[[@LINE-1]]:30: error: (S5.3)
 
 
-void func5(naked_ptr<naked_ptr<int>> i);
-// CHECK: :[[@LINE-1]]:38: error: unsafe naked_ptr at variable
+void func5(nullable_ptr<nullable_ptr<int>> i);
+// CHECK: :[[@LINE-1]]:44: error: unsafe
 
 int main() {
 	const int& i2;

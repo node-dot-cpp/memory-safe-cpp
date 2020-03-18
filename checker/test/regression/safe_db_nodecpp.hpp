@@ -49,8 +49,8 @@ namespace nodecpp {
 		// class soft_ptr_no_checks;
 		// class soft_this_ptr_impl;
 		// class soft_this_ptr_no_checks;
-		// class naked_ptr_impl;
-		// class naked_ptr_no_checks;
+		// class nullable_ptr_impl;
+		// class nullable_ptr_no_checks;
 	}
 }
 

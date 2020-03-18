@@ -9,9 +9,9 @@ class X { public: virtual ~X() {} };
 class Der :public X {};
 
 
-naked_ptr<int> rule_S51() {
+nullable_ptr<int> rule_S51() {
     int i = 0;
-    naked_ptr<int> np(i);
+    nullable_ptr<int> np(&i);
     return np;
 // CHECK: :[[@LINE-1]]:12: error: (S5.1)
 }
@@ -22,16 +22,16 @@ int* ruleX() {
 // CHECK: :[[@LINE-1]]:12: error: (S5.1)
 }
 
-naked_ptr<int> ff(naked_ptr<int> left, naked_ptr<int> right);
+nullable_ptr<int> ff(nullable_ptr<int> left, nullable_ptr<int> right);
 
 
 void rule_S52() {
 
     //PROHIBIT
     {
-        naked_ptr<int> i1;
+        nullable_ptr<int> i1;
         {
-            naked_ptr<int> i2;
+            nullable_ptr<int> i2;
             i1 = ff(i1, i2);
 // CHECK: :[[@LINE-1]]:16: error: (S5.1)
         }
@@ -39,9 +39,9 @@ void rule_S52() {
 
     //ALLOW
     {
-        naked_ptr<int> i1;
+        nullable_ptr<int> i1;
         {
-            naked_ptr<int> i2;
+            nullable_ptr<int> i2;
             i2 = ff(i1, i2);
         }
     }
@@ -49,28 +49,28 @@ void rule_S52() {
 
 
 //PROHIBIT
-void ff(naked_ptr<int>& x);
-// CHECK: :[[@LINE-1]]:25: error: (S5.3)
+void ff(nullable_ptr<int>& x);
+// CHECK: :[[@LINE-1]]:28: error: (S5.3)
 
 
 //ALLOW
 
-void ff(naked_ptr<int> np);
-//void ff(const_naked_ptr<int>& np);
+void ff(nullable_ptr<int> np);
+//void ff(const_nullable_ptr<int>& np);
 
 
 void rule_S53() {
 
     //PROHIBIT
     int* p = nullptr;
-// CHECK: :[[@LINE-1]]:10: error: (S1.3)
+// CHECK: :[[@LINE-1]]:10: error: (RAW)
     int** ipp = nullptr;
-// CHECK: :[[@LINE-1]]:11: error: (S1.3)
+// CHECK: :[[@LINE-1]]:11: error: (S5.3)
     int*& x = p;
 // CHECK: :[[@LINE-1]]:11: error: (S5.3)
 
-    naked_ptr<int*> npp;
-// CHECK: :[[@LINE-1]]:21: error: unsafe naked_ptr at variable declaration
+    nullable_ptr<int*> npp;
+// CHECK: :[[@LINE-1]]:24: error: unsafe nullable_ptr at variable declaration
 
 
     //ALLOW
@@ -83,10 +83,10 @@ void rule_S53() {
 
 //PROHIBIT
 
-struct X2 { naked_ptr<int> y; };
+struct X2 { nullable_ptr<int> y; };
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 
-struct [[nodecpp::naked_struct]] NSTR { naked_ptr<int> y; };
+struct [[nodecpp::naked_struct]] NSTR { nullable_ptr<int> y; };
 struct [[nodecpp::naked_struct]] NSTR2 { soft_ptr<NSTR> y; };
 // CHECK: :[[@LINE-1]]:34: error: unsafe naked_struct declaration
 
@@ -100,7 +100,7 @@ void rule_S54() {
 
 struct X1 { soft_ptr<int> y; };
 
-struct [[nodecpp::naked_struct]] NSTR1 { naked_ptr<int> y; };
+struct [[nodecpp::naked_struct]] NSTR1 { nullable_ptr<int> y; };
 
 
 //rule S5.5
@@ -109,8 +109,8 @@ void ff55(NSTR&);
 // CHECK: :[[@LINE-1]]:16: error: (S5.3)
 
 void func_S55() {
-    naked_ptr<NSTR> nstr;
-// CHECK: :[[@LINE-1]]:21: error: unsafe naked_ptr at variable declaration
+    nullable_ptr<NSTR> nstr;
+// CHECK: :[[@LINE-1]]:24: error: unsafe nullable_ptr at variable declaration
 }
 
 //ALLOW
@@ -118,6 +118,6 @@ void ff(const NSTR&);
 
 
 void func_S55A() {
-//    const_naked_ptr<NSTR> cnstr;
+//    const_nullable_ptr<NSTR> cnstr;
 }
 
