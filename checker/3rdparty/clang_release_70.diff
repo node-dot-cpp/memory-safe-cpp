@@ -458,20 +458,6 @@ index 4cf3abd..17bb5fb 100644
    }
  
    // Virtual overrides must have the same code_seg.
-diff --git a/lib/Sema/SemaStmtAttr.cpp b/lib/Sema/SemaStmtAttr.cpp
-index e39a65c..5b8ba77 100644
---- a/lib/Sema/SemaStmtAttr.cpp
-+++ b/lib/Sema/SemaStmtAttr.cpp
-@@ -304,6 +304,9 @@ static Attr *ProcessStmtAttribute(Sema &S, Stmt *St, const ParsedAttr &A,
-     return handleOpenCLUnrollHint(S, St, A, Range);
-   case ParsedAttr::AT_Suppress:
-     return handleSuppressAttr(S, St, A, Range);
-+  case ParsedAttr::AT_NodeCppNoAwait:
-+    return ::new (S.Context) NodeCppNoAwaitAttr(A.getRange(), S.Context,
-+                                        A.getAttributeSpellingListIndex());
-   default:
-     // if we're here, then we parsed a known attribute, but didn't recognize
-     // it as a statement attribute => it is declaration attribute
 diff --git a/lib/Tooling/CompilationDatabase.cpp b/lib/Tooling/CompilationDatabase.cpp
 index 31a769f..6bdcd8a 100644
 --- a/lib/Tooling/CompilationDatabase.cpp

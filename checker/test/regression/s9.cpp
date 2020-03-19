@@ -41,15 +41,10 @@ nodecpp::awaitable<void> func() {
 	co_await nodecpp::wait_for_all(std::move(var3), await_function()); //all ok
 
 	
-
-	[[nodecpp::no_await]] no_await_function();
-
-	no_await_function();
+	no_await_function(); //this is ok
 
 	co_await no_await_function(); //this is ok
 
-	[[nodecpp::no_await]] await_function();
-// CHECK: :[[@LINE-1]]:24: error: (S9)
 
 	co_return;
 }
