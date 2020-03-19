@@ -7,7 +7,7 @@ void bad1() {
 	(void*)i;
 // CHECK: :[[@LINE-1]]:2: error: (S1.1)
 	void* p = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (RAW)
+// CHECK: :[[@LINE-1]]:12: error: (S1.2)
 
 	static_cast<unsigned*>(p);
 // CHECK: :[[@LINE-1]]:2: error: (S1.1)

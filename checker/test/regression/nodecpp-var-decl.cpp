@@ -39,15 +39,13 @@ struct [[nodecpp::naked_struct]] NakedStr {
 
 void nakedFunc() {
 	
-	int* i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:7: error: (RAW)
-
 	NakedStr naked; //ok
 }
 
 struct Bad1 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 	int* ptr = nullptr;
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
 };
 
 struct Bad2 : public NakedStr {
@@ -57,16 +55,21 @@ struct Bad2 : public NakedStr {
 struct Bad3 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 	int* ptr = nullptr;
-
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
 	void set(int* ptr);
 
 };
 
 void badFunc() {
-	int** i = nullptr; //bad
+	int i0 = 0;
+	int* i1 = &i0;
+	int** i = &i1; //bad
 // CHECK: :[[@LINE-1]]:8: error: (S5.3)
-	NakedStr* nakedPtr = nullptr; // bad
+
+	NakedStr nstr;
+	NakedStr* nakedPtr = &nstr; // bad
 // CHECK: :[[@LINE-1]]:12: error: (S5.3)
+
 	Bad1 b1; //bad
 // CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }

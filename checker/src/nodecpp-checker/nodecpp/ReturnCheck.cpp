@@ -38,10 +38,10 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
 //  QualType Qt = Ex->getType().getCanonicalType();
   QualType Qt = Fd->getReturnType().getCanonicalType();
 
-  if(isRawPointerType(Qt) && isNullPtrValue(getASTContext(), Ex)) {
-    diag(Ex->getExprLoc(), "(RAW) raw pointer can't be null");
-    return;
-  }
+  // if(isRawPointerType(Qt) && isNullPtrValue(getASTContext(), Ex)) {
+  //   diag(Ex->getExprLoc(), "(S1.3) raw pointer can't be null");
+  //   return;
+  // }
 
   if (isRawPointerType(Qt) || isNakedPointerType(Qt, getContext()) ||
     isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {

@@ -23,7 +23,7 @@ void func() {
 // CHECK: :[[@LINE-1]]:2: error: (S4)
 
 	void* ptr = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (RAW)
+// CHECK: :[[@LINE-1]]:14: error: (S1.2)
 	delete ptr;
 // CHECK: :[[@LINE-1]]:2: error: (S4)
 
