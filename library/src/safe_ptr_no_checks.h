@@ -511,13 +511,13 @@ public:
 template<>
 class soft_ptr_no_checks<void> : public soft_ptr_base_no_checks<void>
 {
-	friend class owning_ptr_base_no_checks<void>;
 	template<class TT>
 	friend class owning_ptr_base_no_checks;
+	friend class owning_ptr_base_no_checks<void>;
 	template<class TT>
 	friend class owning_ptr_no_checks;
-	template<class TT>
-	friend class soft_ptr_base_no_checks;
+//	template<class TT>
+//	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
 	template<class TT, class TT1>
@@ -664,10 +664,10 @@ class nullable_ptr_base_no_checks
 	template<class TT>
 	friend class nullable_ptr_no_checks;
 
-	template<class T, class T1>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T1> p );
-	template<class T>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_no_checks( nullable_ptr_no_checks<T2> p );
+	template<class T1>
+	friend T1* nullable_cast_no_checks( nullable_ptr_no_checks<T1> p );
 
 	T* t;
 
@@ -750,10 +750,10 @@ class nullable_ptr_no_checks : public nullable_ptr_base_no_checks<T>
 	template<class TT>
 	friend class owning_ptr_no_checks;
 
-	template<class T, class T1>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T1> p );
-	template<class T>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_no_checks( nullable_ptr_no_checks<T2> p );
+	template<class T1>
+	friend T1* nullable_cast_no_checks( nullable_ptr_no_checks<T1> p );
 
 public:
 	nullable_ptr_no_checks() : nullable_ptr_base_no_checks<T>() {}
@@ -837,10 +837,9 @@ class nullable_ptr_no_checks<void> : public nullable_ptr_base_no_checks<void>
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 
-	template<class T, class T1>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T1> p );
-	template<class T>
-	friend T* nullable_cast_no_checks( nullable_ptr_no_checks<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_no_checks( nullable_ptr_no_checks<T2> p );
+	friend void* nullable_cast_no_checks( nullable_ptr_no_checks<void> p );
 
 public:
 	nullable_ptr_no_checks() : nullable_ptr_base_no_checks() {}

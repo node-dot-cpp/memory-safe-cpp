@@ -715,10 +715,6 @@ class soft_ptr_base_impl
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
 	friend struct FirstControlBlock;
 
@@ -1262,10 +1258,6 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
 	friend struct FirstControlBlock;
 
@@ -1275,7 +1267,7 @@ private:
 	friend class soft_this_ptr_impl;
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
-	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr);
+	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl<>(T* ptr);
 	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -1521,20 +1513,11 @@ class soft_ptr_impl<void> : public soft_ptr_base_impl<void>
 	friend class owning_ptr_base_impl;
 	template<class TT>
 	friend class owning_ptr_impl;
-	//template<class TT>
-	//friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
-	template<class TT, class TT1>
-	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
-	friend struct FirstControlBlock;
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_reinterpret_cast_impl( soft_ptr_impl<TT1> );
 	friend struct FirstControlBlock;
@@ -1728,10 +1711,10 @@ class nullable_ptr_base_impl
 	template<class TT>
 	friend class nullable_ptr_impl;
 
-	template<class T, class T1>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T1> p );
-	template<class T>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_impl( nullable_ptr_impl<T2> p );
+	template<class T1>
+	friend T1* nullable_cast_impl( nullable_ptr_impl<T1> p );
 
 	T* t;
 
@@ -1814,10 +1797,10 @@ class nullable_ptr_impl : public nullable_ptr_base_impl<T>
 	template<class TT>
 	friend class owning_ptr_impl;
 
-	template<class T, class T1>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T1> p );
-	template<class T>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_impl( nullable_ptr_impl<T2> p );
+	template<class T1>
+	friend T1* nullable_cast_impl( nullable_ptr_impl<T1> p );
 
 public:
 	nullable_ptr_impl() : nullable_ptr_base_impl<T>() {}
@@ -1900,10 +1883,9 @@ class nullable_ptr_impl<void> : public nullable_ptr_base_impl<void>
 	template<class TT>
 	friend class soft_ptr_base_impl;
 
-	template<class T, class T1>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T1> p );
-	template<class T>
-	friend T* nullable_cast_impl( nullable_ptr_impl<T> p );
+	template<class T1, class T2>
+	friend T1* nullable_cast_impl( nullable_ptr_impl<T2> p );
+	friend void* nullable_cast_impl( nullable_ptr_impl<void> p );
 
 public:
 	nullable_ptr_impl() : nullable_ptr_base_impl<void>() {}
