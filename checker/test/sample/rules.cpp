@@ -70,7 +70,7 @@ void func() {
 
     //[Rule S1.2]
     //PROHIBIT
-    *nullptr;
+    *nullptr = 123;
 // CHECK: :[[@LINE-1]]:5: error: indirection requires pointer operand
     *p;
 
