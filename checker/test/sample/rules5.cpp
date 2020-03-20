@@ -61,10 +61,10 @@ void ff(nullable_ptr<int> np);
 
 void rule_S53() {
 
+    int i = 0;
+    int* p = &i;
     //PROHIBIT
-    int* p = nullptr;
-// CHECK: :[[@LINE-1]]:10: error: (RAW)
-    int** ipp = nullptr;
+    int** ipp = &p;
 // CHECK: :[[@LINE-1]]:11: error: (S5.3)
     int*& x = p;
 // CHECK: :[[@LINE-1]]:11: error: (S5.3)

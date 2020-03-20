@@ -17,11 +17,11 @@ void func() {
 
     int i = 5;
     X* p = nullptr;
- // CHECK: :[[@LINE-1]]:8: error: (RAW)
+ // CHECK: :[[@LINE-1]]:12: error: (S1.2)
     X* p1 = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (RAW)
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
     X* p2 = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (RAW)
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
     nullable_ptr<X> np;
     soft_ptr<X> sp;
     owning_ptr<X> op;
@@ -79,7 +79,7 @@ void func() {
     //[Rule S1.3]
     //PROHIBIT
     int* x = nullptr;
-// CHECK: :[[@LINE-1]]:10: error: (RAW)
+// CHECK: :[[@LINE-1]]:14: error: (S1.2)
 
     //[Rule S1.4]
     //PROHIBIT
@@ -94,7 +94,7 @@ void func() {
 void rule_S2() {
 
     const X* cp = nullptr;
-// CHECK: :[[@LINE-1]]:14: error: (RAW)
+// CHECK: :[[@LINE-1]]:19: error: (S1.2)
 
     //[Rule S2.1]
     //PROHIBIT
