@@ -45,28 +45,28 @@ Consistency checks always apply (regardless of the command line, and any attribu
 
 ### Memory Safety Checks
   
-* Not allowing to create pointers except in an allowed manner
-  - **[Rule S1]** any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
-    + (sub)expression is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
-    + or (sub)expression is a `dynamic_cast<>` 
-      * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
-    + or (sub)expression is a function call
-      * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`nullable_ptr<T>` functions is necessary
-    + or (sub)expression is _nullptr_
-    + or (sub)expression is _this_
-    + or (sub)expression is dereferencing of a `nullable_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
-      - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
-    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `nullable_ptr<>`)
-    + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p` (necessary to ensure nullptr safety)
-    + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
-  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: if [Rule S1] is already enforced, this rule [Rule S1.1] (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
+* **[Rule S1]** Not allowing to create pointers except in an allowed manner. Any (sub)expression which has a type of T* (or T&) is prohibited unless it is one of the following:
+  + (sub)expressino is an assignment where the right side of (sub)expression is already a pointer/reference to T (or a child class of T).
+  + or (sub)expression is a `dynamic_cast<>` 
+    * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
+  + or (sub)expression is a function call
+  + or (sub)expression is _this_
+  + or (sub)expression is dereferencing of a `nullable_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
+  + or (sub)expression is a variable or function paramenter of type `T*`
+  + or (sub)expression is address of object `&i`
+  + NB: Convertion of literals `nullptr` and `0` to `T*` are prohibited and SHOULD be diagnosed as a separate **[Rule S1.2]**
+  + NB: dereferencing `*nullptr` is not allowed by languaje as `nullptr` is of type `nullptr_t` and doesn't have overload `operator*`. And implicit conversion from `nullptr_t` to any `T*` is prohibited by this rule.
+  + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr = 123`
+  + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`, `*p`
+  - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: if **[Rule S1]** is already enforced, this rule (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
     + **[Rule S1.1.1]** special casts, in particular `soft_ptr_static_cast<>`. are also prohibited in safe code 
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, `reinterpret_cast<int*>(p)`, `soft_ptr_static_cast<X*>(p)`   
-  - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
-    + TEST CASES/PROHIBIT: `*nullptr`, `*p`
-  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use `nullable_ptr<>` instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
+  - **[Rule S1.2]** Separate diagnostics for converting `nullptr` or `0` to any raw pointer type (see above)
+    + TEST CASES/PROHIBIT: `int* x = 0;`, `void fp(nullptr);`
+  - **[Rule S1.3]** raw pointer variables (of type T*) and raw pointer function parameters MUST be initialized to non-null value. NB: **[Rule S1]** already enforces that null values are not valid `T*` expressions.
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
+    + TEST CASES/ALLOW:`int* x = &i;`
   - **[Rule S1.4]**. Unions with any raw/naked/soft/owning pointers (including any classes containing any such pointers) are prohibited
     + TEST CASES/PROHIBIT: `union { nullable_ptr<X> x; int y; }`
     + TEST CASES/ALLOW: `union { int x; long y; }`
