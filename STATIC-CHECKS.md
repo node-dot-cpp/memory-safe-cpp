@@ -20,7 +20,7 @@ Legend for TEST CASES:
 * "i" - variable of integral type
 * "p" - variable of raw pointer type (T*)
 * "r" - variable of reference type (T&)
-* "np" - variable of `naked_ptr<T>` type
+* "np" - variable of `nullable_ptr<T>` type
 * "sp" - variable of `soft_ptr<T>` type
 * "op" - variable of `owning_ptr<T>` type
 * "fp()" - function taking raw pointer type (T*)
@@ -29,8 +29,8 @@ Legend for TEST CASES:
 * nstr - variable of naked_struct type
 * af(), af2() - asynchronous function returning nodecpp::awaitable<>
 
-* **IMPORTANT**: whenever we're speaking of `safe_ptr<T>` or `naked_ptr<T>`, then `not_null<safe_ptr<T>>` and `not_null<naked_ptr<T>>` are ALWAYS implied (and SHOULD be included into relevant test cases)
-* **IMPORTANT**: whenever we're speaking of `owning_ptr<T>`, `safe_ptr<T>` or `naked_ptr<T>`, then their short aliases (`optr<T>`, `sptr<T>`, and `nptr<T>`) are ALWAYS implied (and SHOULD be included into relevant test cases)
+* **IMPORTANT**: whenever we're speaking of `safe_ptr<T>` or `nullable_ptr<T>`, then `not_null<safe_ptr<T>>` and `not_null<nullable_ptr<T>>` are ALWAYS implied (and SHOULD be included into relevant test cases)
+* **IMPORTANT**: whenever we're speaking of `owning_ptr<T>`, `safe_ptr<T>` or `nullable_ptr<T>`, then their short aliases (`optr<T>`, `sptr<T>`, and `nptr<T>`) are ALWAYS implied (and SHOULD be included into relevant test cases)
 
 ### Consistency Checks
 
@@ -51,12 +51,12 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + or (sub)expression is a `dynamic_cast<>` 
       * NB: MOST of C-style casts, reinterpret_casts, and static_casts (formally - all such casts between different types) MUST be prohibited under generic **[Rule S1]**, but SHOULD be reported separately under **[Rule S1.1]**
     + or (sub)expression is a function call
-      * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`naked_ptr<T>` functions is necessary
+      * in practice, only unsafe functions can do it - but returning T* from `owning_ptr<T>`/`soft_ptr<T>`/`nullable_ptr<T>` functions is necessary
     + or (sub)expression is _nullptr_
     + or (sub)expression is _this_
-    + or (sub)expression is dereferencing of a `naked_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
+    + or (sub)expression is dereferencing of a `nullable_ptr<T>`, `soft_ptr<T>`, or `owning_ptr<T>`
       - dereferencing of raw pointers is prohibited - and SHOULD be diagnosed as a separate **[Rule S1.2]**
-    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `naked_ptr<>`)
+    + NB: taking a variable address ("&i") is not necessary (it is done via constructor of `nullable_ptr<>`)
     + TEST CASES/PROHIBIT: `(int*)p`, `p^p2`, `p+i`, `p[i]` (syntactic sugar for *(p+a) which is prohibited), `p1=p2=p+i`, `*nullptr`, `*p` (necessary to ensure nullptr safety)
     + TEST CASES/ALLOW: `dynamic_cast<X*>(p)`, `p=p2`, `p=np`, `p=sp`, `p=op`, `fp(p)`, `fp(np)`, `fp(sp)`, `fp(op)`, `&i`, `*np`, `*sp`, `*op`
   - **[Rule S1.1]** C-style casts, reinterpret_casts, and static_casts are prohibited. See NB in [Rule S1]. NB: if [Rule S1] is already enforced, this rule [Rule S1.1] (which effectively prohibits even casts from X* to X*) is NOT necessary to ensure safety, but significantly simplifies explaining and diagnostics.
@@ -64,11 +64,11 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + TEST CASES/PROHIBIT: `(int*)p`, `static_cast<int*>(p)`, `reinterpret_cast<int*>(p)`, `soft_ptr_static_cast<X*>(p)`   
   - **[Rule S1.2]** Separate diagnostics for dereferencing of raw pointers (see above)
     + TEST CASES/PROHIBIT: `*nullptr`, `*p`
-  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use `naked_ptr<>` instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
+  - **[Rule S1.3]** raw pointer variables (of type T*) are prohibited; raw pointer function parameters are also prohibited. Developers should use `nullable_ptr<>` instead. NB: this rule is NOT necessary to ensure safety, but [Rule S1] makes such variables perfectly useless (both calculating new values and dereferencing are prohibited on raw pointers) so it is better to prohibit them outright
     + NB: raw references are ok (we're ensuring that they're not null in the first place)
     + TEST CASES/PROHIBIT: `int* x;`
   - **[Rule S1.4]**. Unions with any raw/naked/soft/owning pointers (including any classes containing any such pointers) are prohibited
-    + TEST CASES/PROHIBIT: `union { naked_ptr<X> x; int y; }`
+    + TEST CASES/PROHIBIT: `union { nullable_ptr<X> x; int y; }`
     + TEST CASES/ALLOW: `union { int x; long y; }`
 * **[Rule S2]** const-ness is enforced
   + **[Rule S2.1]** const_cast is prohibited
@@ -87,7 +87,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + TEST CASES/PROHIBIT: `make_owning<X>();`, `soft_ptr<X> = make_owning<X>();`
     + TEST CASES/ALLOW: `auto x = make_owning<X>();`, `owning_ptr<X> x = make_owning<X>();`, `fop(make_owning<X>());`
 * **[Rule S5]** scope of raw pointer (T*) cannot expand [[**TODO/v0.5: CHANGE Rule S5 completely to rely on Herb Sutter's D1179: https://github.com/isocpp/CppCoreGuidelines/blob/master/docs/Lifetime.pdf; NB: SOME of the rules below may still be needed on top of D1179 **]]
-  + **[Rule S5.1]** each `naked_ptr<>`, reference (T&) or naked_struct is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
+  + **[Rule S5.1]** each `nullable_ptr<>`, reference (T&) or naked_struct is assigned a scope. If there is an assignment of an object of 'smaller' scope to an object of 'smaller' one, it is a violation of this rule. Returning of pointer to a local variable is also a violation of this rule.
     + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
@@ -101,31 +101,31 @@ Consistency checks always apply (regardless of the command line, and any attribu
       - in the future, we MAY add type-based analysis here
     + TEST CASES/PROHIBIT: `X* x = ff(x1,x2);` where x1 and x2 have different scope
     + TEST CASES/ALLOW: `X* x = ff(x1);`, `X* x = ff(x1,x2);` where x1 and x2 have the same scope
-  + **[Rule S5.3]** double raw/naked_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a `naked_ptr<>`).
+  + **[Rule S5.3]** double raw/nullable_ptrs where the outer pointer/ref is non-const, are prohibited, BOTH declared AND appearing implicitly within expressions. This also includes reference to a pointer (or to a `nullable_ptr<>`).
     - NB: it also applies to multi-level pointers: to be valid, ALL outer pointers/references except for last one, MUST be const
-    - NB: passing naked_ptrs by value is ok. Even if several naked_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
+    - NB: passing nullable_ptrs by value is ok. Even if several nullable_ptrs are passed to a function, there is still no way to mess their scopes up as long as there are no double pointers (there is no way to assign pointer to something with a larger scope).
     - NB: const reference to a pointer (and const pointer to pointer) is ok because of [Rule S2]
-    - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(naked_ptr<int>& x)`
-    - TEST CASES/ALLOW: `void ff(naked_ptr<int> np);`, `void ff(const_naked_ptr<int>& np);`, `const int *& x = p;`
-  + **[Rule S5.4]** by default, no struct/class may contain naked_ptrs, raw pointers or references  (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
-    - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain naked_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
+    - TEST CASES/PROHIBIT: `int** x;`, `&p`, `int *& x = p;`, `void ff(nullable_ptr<int>& x)`
+    - TEST CASES/ALLOW: `void ff(nullable_ptr<int> np);`, `void ff(const nullable_ptr<int>& np);`, `const int *& x = p;`
+  + **[Rule S5.4]** by default, no struct/class may contain nullable_ptrs, raw pointers or references  (neither struct/class can contain a naked_struct, neither even a safe/owning pointer to a naked_struct)
+    - if a struct/class is marked up as `[[nodespp::naked_struct]]`, it may contain nullable_ptrs (but not raw pointers), and other naked_structs by value; it still MUST NOT contain raw/naked/safe/owning pointers to a naked_struct
     - allocating naked_struct on heap is prohibited
     - NB: having raw pointers (T*) is prohibited by [Rule S1.3]
-    - TEST CASES/PROHIBIT: `struct X { naked_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { soft_ptr<NSTR> y; };`, `make_owning<NSTR>()`
-    - TEST CASES/ALLOW: `struct X { soft_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { naked_ptr<Y> y; };`
+    - TEST CASES/PROHIBIT: `struct X { nullable_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { soft_ptr<NSTR> y; };`, `make_owning<NSTR>()`
+    - TEST CASES/ALLOW: `struct X { soft_ptr<Y> y; };`, `[[nodecpp:naked_struct]] struct X { nullable_ptr<Y> y; };`
   + **[Rule S5.5]** Creating a non-const pointer/reference to a naked_struct (or passing naked_struct by reference) is prohibited (it would violate [Rule S5.1]).
     - This implies prohibition on member functions of naked_struct (as `this` parameter is always a pointer), except for `const` ones
-    - NB: passing naked_struct by value is ok - and should be treated as passing several naked_ptrs (with their respective scopes)
-    - TEST CASES/PROHIBIT: `naked_ptr<NSTR>`, `void ff(NSTR&)`
-    - TEST CASES/ALLOW: `const_naked_ptr<NSTR>`, `void ff(const NSTR&)`
-  + **[Rule S5.6]** Lambda is considered as an implicit _naked_struct_, captures may include local var references, _naked_ptrs_ and raw pointer `this`.
+    - NB: passing naked_struct by value is ok - and should be treated as passing several nullable_ptrs (with their respective scopes)
+    - TEST CASES/PROHIBIT: `nullable_ptr<NSTR>`, `void ff(NSTR&)`
+    - TEST CASES/ALLOW: `const_nullable_ptr<NSTR>`, `void ff(const NSTR&)`
+  + **[Rule S5.6]** Lambda is considered as an implicit _naked_struct_, captures may include local var references, _nullable_ptrs_ and raw pointer `this`.
     - TEST CASES/ALLOW: `sort()` passing lamda with local vars captured by reference
   + **[Rule S5.7]** There is special parameter mark-up `[[nodecpp::may_extend_to_this]]` that may be applied to method parameter of type `std::function` or _lambda_ on library code api (or `[[nodecpp::memory_unsafe]]` marked code), AND means that the scope of marked-up parameter MAY be extended to `this` of called instance. If such a parameter is specified, then the scope of the captures MUST be equal-or-larger-than the scope of the called instance.
     - When applied to parameter of type `std::function`, it means it can only be initialized with a lambda that verifies the mentioned retrictions.
     - In the future, we MAY introduce other similar mark-up (`[[nodecpp::may_extend_to_a]]`?)
     - TEST CASES/PROHIBIT: `this->on()` (which is marked as `[[nodecpp::may_extend_to_this]]`) passing lambda with local vars passed by reference
     - TEST CASES/ALLOW: `this->on()` passing lambda with `this->members` captured by reference
-  + **[Rule S5.8]** naked_ptr<>s and references MUST NOT survive over co_await
+  + **[Rule S5.8]** nullable_ptr<>s and references MUST NOT survive over co_await
       - TEST CASES/PROHIBIT: `co_await some_function(); auto x = *np;`, `co_await some_function(); auto x = r;`
       - TEST CASES/ALLOW: `co_await some_function(); auto x = *sp;`  
 * **[Rule S6]** Prohibit inherently unsafe things
