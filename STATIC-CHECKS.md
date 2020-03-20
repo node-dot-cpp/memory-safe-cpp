@@ -17,17 +17,18 @@ Mode of check (memory safety, determinism, or both) is specified in the command 
 ## List of checks
 
 Legend for TEST CASES:
-* "i" - variable of integral type
-* "p" - variable of raw pointer type (T*)
-* "r" - variable of reference type (T&)
-* "np" - variable of `nullable_ptr<T>` type
-* "sp" - variable of `soft_ptr<T>` type
-* "op" - variable of `owning_ptr<T>` type
-* "fp()" - function taking raw pointer type (T*)
-* "fop()" - function taking `owning_ptr<T>`
-* NSTR - naked_struct type
-* nstr - variable of naked_struct type
-* af(), af2() - asynchronous function returning nodecpp::awaitable<>
+* `i` - variable of integral type
+* `p` - variable of raw pointer type (`T*`)
+* `r` - variable of reference type (`T&`)
+* `np` - variable of `nullable_ptr<T>` type
+* `sp` - variable of `soft_ptr<T>` type
+* `op` - variable of `owning_ptr<T>` type
+* `fp()` - function taking raw pointer type (`T*`)
+* `fop()` - function taking `owning_ptr<T>`
+* `NSTR` - naked_struct type
+* `nstr` - variable of naked_struct type
+* `af()` - asynchronous function returning `nodecpp::awaitable<>`
+* `naf()` - function with `[[nodecpp::no_await]]` at its declaration
 
 * **IMPORTANT**: whenever we're speaking of `safe_ptr<T>` or `nullable_ptr<T>`, then `not_null<safe_ptr<T>>` and `not_null<nullable_ptr<T>>` are ALWAYS implied (and SHOULD be included into relevant test cases)
 * **IMPORTANT**: whenever we're speaking of `owning_ptr<T>`, `safe_ptr<T>` or `nullable_ptr<T>`, then their short aliases (`optr<T>`, `sptr<T>`, and `nptr<T>`) are ALWAYS implied (and SHOULD be included into relevant test cases)
@@ -41,7 +42,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
 * **[Rule C2]** use of [[nodecpp::]] attributes is allowed ONLY in those places specified by this document. Using of [[nodecpp::]] attributes in a wrong place is an error. 
   - TEST CASES/PROHIBIT: `[[nodecpp::naked_struct]] void f();`
 * **[Rule C3]** if some namespace has [[nodecpp::memory_unsafe]] or [[nodecpp::non_deterministic]] attribute, these attributes MUST be the same for ALL the instances of the same namespace. 
-  - TEST CASES/PROHINIT: `namespace [[nodecpp:memory_unsafe]] abc {}; namespace abc {};`
+  - TEST CASES/PROHIBIT: `namespace [[nodecpp:memory_unsafe]] abc {}; namespace abc {};`
 
 ### Memory Safety Checks
   
@@ -142,10 +143,15 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/PROHIBIT: `memset(p,1,1)`
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
-* **[Rule S9]** Miscellaneous checks
-  + **[Rule S9.1]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>, MUST be fed to co_await operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function wait_for_all())
-    - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); another_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
+* **[Rule S9]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). Corroutines must return `nodecpp::awaitable<>` only.
+  + **[Rule S9.1]** For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<> and NOT having `[[nodecpp::no_await]]` at their declaration, MUST be fed to `co_await` operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function `wait_for_all()`).
+    - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); anothre_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
     - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`, `co_await wait_for_all(af(), af2())`
+  + **[Rule S9.2]** All calls to library functions returning nodecpp::awaitable<> that DO have attribute [[nodecpp::no_await]] at their declaration can be optionally fed to co_await operator.
+    - TEST CASES/ALLOW: `co_await naf();`, `naf();`
+  + **[Rule S9.3]** Prohibit using `co_await` inside subexpression or at other places than root statement expression or root variable initializer.
+    - TEST CASES/PROHIBIT: `int j = (co_await af()) + 1;`, `if(co_await af()) { ... };`
+    - TEST CASES/ALLOW: `int i = co_await af();`, `co_await af();`
 * **[Rule S10]** Prohibit using unsafe collections and iterators
   + Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, nmust be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
     - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc; ` 
