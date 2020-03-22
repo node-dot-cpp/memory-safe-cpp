@@ -38,6 +38,7 @@ extern thread_local void* thg_stackPtrForMakeOwningCall;
 template<class T>
 void checkNotNullLargeSize( T* ptr )
 {
+#ifdef NODECPP_WINDOWS
 	if constexpr ( !std::is_same<T, void>::value )
 	{
 		if constexpr ( sizeof(T) <= NODECPP_MINIMUM_ZERO_GUARD_PAGE_SIZE ) ;
@@ -46,12 +47,18 @@ void checkNotNullLargeSize( T* ptr )
 				throw ::nodecpp::error::zero_pointer_access;
 		}
 	}
+#else
+	// due to problems with signal handling while LTO is enabled (both clang and gcc) we cannot rely on respective code on Linux
+	if ( ptr == nullptr )
+		throw ::nodecpp::error::zero_pointer_access;
+#endif
 }
 
 inline
 void checkNotNullLargeSize( void* )
 {
 	// do nothing
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, false, "not expected to be called" );
 }
 
 template<class T>
@@ -369,9 +376,9 @@ struct FirstControlBlock // not reallocatable
 
 
 inline
-FirstControlBlock* getControlBlock_(void* t) { return reinterpret_cast<FirstControlBlock*>(t) - 1; }
+FirstControlBlock* getControlBlock_(const void* t) { return reinterpret_cast<FirstControlBlock*>(const_cast<void*>(t)) - 1; }
 inline
-uint8_t* getAllocatedBlock_(void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
+uint8_t* getAllocatedBlock_(const void* t) { return reinterpret_cast<uint8_t*>(getControlBlock_(t)) + getPrefixByteCount(); }
 inline
 uint8_t* getAllocatedBlockFromControlBlock_(void* cb) { return reinterpret_cast<uint8_t*>(cb) + getPrefixByteCount(); }
 inline
@@ -411,7 +418,7 @@ class owning_ptr_base_impl
 	template<class TT>
 	struct ObjectPointer : base_pointer_t {
 	public:
-		void setPtr( void* ptr_ ) { base_pointer_t::init(ptr_); }
+		void setPtr( const void* ptr_ ) { base_pointer_t::init(ptr_); }
 		void setTypedPtr( T* ptr_ ) { base_pointer_t::init(ptr_); }
 		void* getPtr() const { return base_pointer_t::get_ptr(); }
 		TT* getTypedPtr() const { return reinterpret_cast<TT*>( base_pointer_t::get_ptr() ); }
@@ -1719,7 +1726,7 @@ class nullable_ptr_base_impl
 	T* t;
 
 	T* get_() const { 
-		checkNotNullLargeSize( this->t );
+		checkNotNullAllSizes( this->t );
 		return this->t;
 	}
 
