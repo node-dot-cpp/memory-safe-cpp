@@ -42,11 +42,11 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if(isNullPtrValue(getASTContext(), Ex->getRHS())) {
-    diag(Ex->getExprLoc(),
-         "(RAW) raw pointer variable can't be assigned to null");
-    return;
-  }
+  // if(isNullPtrValue(getASTContext(), Ex->getRHS())) {
+  //   diag(Ex->getExprLoc(),
+  //        "(S1.3) raw pointer variable can't be assigned to null");
+  //   return;
+  // }
 
   
 }

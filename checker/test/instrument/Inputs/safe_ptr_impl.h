@@ -84,8 +84,8 @@ void throwPointerOutOfRange()
 
 template<class T, bool isSafe> class soft_ptr_base_impl; // forward declaration
 template<class T, bool isSafe> class soft_ptr_impl; // forward declaration
-template<class T, bool isSafe> class naked_ptr_base_impl; // forward declaration
-template<class T, bool isSafe> class naked_ptr_impl; // forward declaration
+template<class T, bool isSafe> class nullable_ptr_base_impl; // forward declaration
+template<class T, bool isSafe> class nullable_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
 
 
@@ -160,9 +160,9 @@ public:
 	{
 	}
 
-	naked_ptr_impl<T, isSafe> get() const
+	nullable_ptr_impl<T, isSafe> get() const
 	{
-		naked_ptr_impl<T, isSafe> ret;
+		nullable_ptr_impl<T, isSafe> ret;
 		ret.t = t.getTypedPtr();
 		return ret;
 	}
@@ -221,12 +221,12 @@ class soft_ptr_base_impl
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_impl;
 
-	/*friend class naked_ptr_base_impl<T, isSafe>;
+	/*friend class nullable_ptr_base_impl<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base_impl;
-	friend class naked_ptr_impl<T, isSafe>;
+	friend class nullable_ptr_base_impl;
+	friend class nullable_ptr_impl<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_impl;*/
+	friend class nullable_ptr_impl;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr_impl<TT, isSafe1> soft_ptr_static_cast_impl( soft_ptr_impl<TT1, isSafe1> );
@@ -302,9 +302,9 @@ public:
 	{
 	}
 
-	naked_ptr_impl<T, isSafe> get() const
+	nullable_ptr_impl<T, isSafe> get() const
 	{
-		naked_ptr_impl<T, isSafe> ret;
+		nullable_ptr_impl<T, isSafe> ret;
 		ret.t = getDereferencablePtr();
 		return ret;
 	}
@@ -353,12 +353,12 @@ class soft_ptr_impl : public soft_ptr_base_impl<T, isSafe>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_base_impl;
 
-	/*friend class naked_ptr_base_impl<T, isSafe>;
-	friend class naked_ptr_impl<T, isSafe>;
+	/*friend class nullable_ptr_base_impl<T, isSafe>;
+	friend class nullable_ptr_impl<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_impl;
+	friend class nullable_ptr_impl;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base_impl;*/
+	friend class nullable_ptr_base_impl;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr_impl<TT, isSafe1> soft_ptr_static_cast_impl( soft_ptr_impl<TT1, isSafe1> );
@@ -437,7 +437,7 @@ public:
 		soft_ptr_base_impl<T, isSafe>::swap(other);
 	}
 
-	naked_ptr_impl<T, isSafe> get() const
+	nullable_ptr_impl<T, isSafe> get() const
 	{
 		return soft_ptr_base_impl<T, isSafe>::get();
 	}
@@ -499,12 +499,12 @@ class soft_ptr_impl<void, true> : public soft_ptr_base_impl<void, true>
 	template<class TT, bool isSafe1>
 	friend class soft_ptr_impl;
 
-	/*friend class naked_ptr_base_impl<void, true>;
-	friend class naked_ptr_impl<void, true>;
+	/*friend class nullable_ptr_base_impl<void, true>;
+	friend class nullable_ptr_impl<void, true>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_impl;
+	friend class nullable_ptr_impl;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base_impl;*/
+	friend class nullable_ptr_base_impl;*/
 
 	template<class TT, class TT1, bool isSafe1>
 	friend soft_ptr_impl<TT, isSafe1> soft_ptr_static_cast_impl( soft_ptr_impl<TT1, isSafe1> );
@@ -671,7 +671,7 @@ soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
 }
 
 template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/>
-class naked_ptr_base_impl
+class nullable_ptr_base_impl
 {
 	friend class owning_ptr_impl<T, isSafe>;
 	friend class soft_ptr_base_impl<T, isSafe>;
@@ -684,10 +684,10 @@ class naked_ptr_base_impl
 	//friend class soft_ptr_impl;
 
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_base_impl;
-	friend class naked_ptr_impl<T, isSafe>;
+	friend class nullable_ptr_base_impl;
+	friend class nullable_ptr_impl<T, isSafe>;
 	template<class TT, bool isSafe1>
-	friend class naked_ptr_impl;
+	friend class nullable_ptr_impl;
 
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 
@@ -697,32 +697,32 @@ public:
 
 	static constexpr bool is_safe = true;
 
-	naked_ptr_base_impl() { t = nullptr; }
+	nullable_ptr_base_impl() { t = nullptr; }
 
 	template<class T1>
-	naked_ptr_base_impl( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); }
+	nullable_ptr_base_impl( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); }
 
 	template<class T1>
-	naked_ptr_base_impl<T>& operator = ( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); return *this; }
+	nullable_ptr_base_impl<T>& operator = ( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_base_impl( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); }
-	naked_ptr_base_impl( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); }
+	nullable_ptr_base_impl( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); }
+	nullable_ptr_base_impl( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); }
 	template<class T1>
-	naked_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); return *this; }
-	naked_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_base_impl<T>& operator = ( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_base_impl( const naked_ptr_base_impl<T1, isSafe>& other ) { t = other.t; }
+	nullable_ptr_base_impl( const nullable_ptr_base_impl<T1, isSafe>& other ) { t = other.t; }
 	template<class T1>
-	naked_ptr_base_impl<T>& operator = ( const naked_ptr_base_impl<T1, isSafe>& other ) { t = other.t; return *this; }
-	naked_ptr_base_impl( const naked_ptr_base_impl<T, isSafe>& other ) = default;
-	naked_ptr_base_impl<T, isSafe>& operator = ( const naked_ptr_base_impl<T, isSafe>& other ) = default;
+	nullable_ptr_base_impl<T>& operator = ( const nullable_ptr_base_impl<T1, isSafe>& other ) { t = other.t; return *this; }
+	nullable_ptr_base_impl( const nullable_ptr_base_impl<T, isSafe>& other ) = default;
+	nullable_ptr_base_impl<T, isSafe>& operator = ( const nullable_ptr_base_impl<T, isSafe>& other ) = default;
 
-	naked_ptr_base_impl( naked_ptr_base_impl<T, isSafe>&& other ) = default;
-	naked_ptr_base_impl<T, isSafe>& operator = ( naked_ptr_base_impl<T, isSafe>&& other ) = default;
+	nullable_ptr_base_impl( nullable_ptr_base_impl<T, isSafe>&& other ) = default;
+	nullable_ptr_base_impl<T, isSafe>& operator = ( nullable_ptr_base_impl<T, isSafe>&& other ) = default;
 
-	void swap( naked_ptr_base_impl<T, isSafe>& other )
+	void swap( nullable_ptr_base_impl<T, isSafe>& other )
 	{
 		T* tmp = t;
 		t = other.t;
@@ -741,18 +741,18 @@ public:
 	}
 
 
-	bool operator == ( const naked_ptr_base_impl<T, isSafe>& other ) const { return t == other.t; }
+	bool operator == ( const nullable_ptr_base_impl<T, isSafe>& other ) const { return t == other.t; }
 	template<class T1, bool isSafe1>
-	bool operator == ( const naked_ptr_base_impl<T1, isSafe1>& other ) const { return t == other.t; }
+	bool operator == ( const nullable_ptr_base_impl<T1, isSafe1>& other ) const { return t == other.t; }
 
-	bool operator != ( const naked_ptr_base_impl<T, isSafe>& other ) const { return t != other.t; }
+	bool operator != ( const nullable_ptr_base_impl<T, isSafe>& other ) const { return t != other.t; }
 	template<class T1, bool isSafe1>
-	bool operator != ( const naked_ptr_base_impl<T1, isSafe1>& other ) const { return t != other.t; }
+	bool operator != ( const nullable_ptr_base_impl<T1, isSafe1>& other ) const { return t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { return t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { return t != nullptr; }
 
-	~naked_ptr_base_impl()
+	~nullable_ptr_base_impl()
 	{
 		t = nullptr;
 	}
@@ -760,7 +760,7 @@ public:
 
 
 template<class T, bool isSafe = true/*NODECPP_ISSAFE_DEFAULT*/>
-class naked_ptr_impl : public naked_ptr_base_impl<T, isSafe>
+class nullable_ptr_impl : public nullable_ptr_base_impl<T, isSafe>
 {
 	friend class owning_ptr_impl<T, isSafe>;
 	friend class soft_ptr_base_impl<T, isSafe>;
@@ -782,37 +782,37 @@ class naked_ptr_impl : public naked_ptr_base_impl<T, isSafe>
 	static_assert( isSafe ); // note: some compilers may check this even if this default specialization is not instantiated; if so, switch to the commented line above
 
 public:
-	naked_ptr_impl() : naked_ptr_base_impl<T, isSafe>() {}
+	nullable_ptr_impl() : nullable_ptr_base_impl<T, isSafe>() {}
 
-	naked_ptr_impl(T& t_) { this->t = &t_; }
-
-	template<class T1>
-	naked_ptr_impl( const owning_ptr_impl<T1, isSafe>& owner ) : naked_ptr_base_impl<T, isSafe>(owner) {}
-	naked_ptr_impl( const owning_ptr_impl<T, isSafe>& owner ) : naked_ptr_base_impl<T, isSafe>() {*this = owner.get();}
-	template<class T1>
-	naked_ptr_impl<T>& operator = ( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); return *this; }
-	naked_ptr_impl<T>& operator = ( const owning_ptr_impl<T, isSafe>& owner ) { *this = owner.get(); return *this; }
+	nullable_ptr_impl(T& t_) { this->t = &t_; }
 
 	template<class T1>
-	naked_ptr_impl( const soft_ptr_impl<T1, isSafe>& other ) : naked_ptr_base_impl<T, isSafe>(other) {}
-	naked_ptr_impl( const soft_ptr_impl<T, isSafe>& other ) : naked_ptr_base_impl<T, isSafe>(other) {}
+	nullable_ptr_impl( const owning_ptr_impl<T1, isSafe>& owner ) : nullable_ptr_base_impl<T, isSafe>(owner) {}
+	nullable_ptr_impl( const owning_ptr_impl<T, isSafe>& owner ) : nullable_ptr_base_impl<T, isSafe>() {*this = owner.get();}
 	template<class T1>
-	naked_ptr_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); return *this; }
-	naked_ptr_impl<T>& operator = ( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_impl<T>& operator = ( const owning_ptr_impl<T1, isSafe>& owner ) { *this = owner.get(); return *this; }
+	nullable_ptr_impl<T>& operator = ( const owning_ptr_impl<T, isSafe>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_impl( const naked_ptr_impl<T1, isSafe>& other ) : naked_ptr_base_impl<T, isSafe>(other) {}
+	nullable_ptr_impl( const soft_ptr_impl<T1, isSafe>& other ) : nullable_ptr_base_impl<T, isSafe>(other) {}
+	nullable_ptr_impl( const soft_ptr_impl<T, isSafe>& other ) : nullable_ptr_base_impl<T, isSafe>(other) {}
 	template<class T1>
-	naked_ptr_impl<T>& operator = ( const naked_ptr_impl<T1, isSafe>& other ) { this->t = other.t; return *this; }
-	naked_ptr_impl( const naked_ptr_impl<T, isSafe>& other ) = default;
-	naked_ptr_impl<T, isSafe>& operator = ( const naked_ptr_impl<T, isSafe>& other ) = default;
+	nullable_ptr_impl<T>& operator = ( const soft_ptr_impl<T1, isSafe>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_impl<T>& operator = ( const soft_ptr_impl<T, isSafe>& other ) { *this = other.get(); return *this; }
 
-	naked_ptr_impl( naked_ptr_impl<T, isSafe>&& other ) = default;
-	naked_ptr_impl<T, isSafe>& operator = ( naked_ptr_impl<T, isSafe>&& other ) = default;
+	template<class T1>
+	nullable_ptr_impl( const nullable_ptr_impl<T1, isSafe>& other ) : nullable_ptr_base_impl<T, isSafe>(other) {}
+	template<class T1>
+	nullable_ptr_impl<T>& operator = ( const nullable_ptr_impl<T1, isSafe>& other ) { this->t = other.t; return *this; }
+	nullable_ptr_impl( const nullable_ptr_impl<T, isSafe>& other ) = default;
+	nullable_ptr_impl<T, isSafe>& operator = ( const nullable_ptr_impl<T, isSafe>& other ) = default;
 
-	void swap( naked_ptr_impl<T, isSafe>& other )
+	nullable_ptr_impl( nullable_ptr_impl<T, isSafe>&& other ) = default;
+	nullable_ptr_impl<T, isSafe>& operator = ( nullable_ptr_impl<T, isSafe>&& other ) = default;
+
+	void swap( nullable_ptr_impl<T, isSafe>& other )
 	{
-		naked_ptr_base_impl<T, isSafe>::swap( other );
+		nullable_ptr_base_impl<T, isSafe>::swap( other );
 	}
 
 	T& operator * () const
@@ -838,18 +838,18 @@ public:
 		return this->t != nullptr;
 	}
 
-	bool operator == ( const naked_ptr_impl<T, isSafe>& other ) const { return this->t == other.t; }
+	bool operator == ( const nullable_ptr_impl<T, isSafe>& other ) const { return this->t == other.t; }
 	template<class T1, bool isSafe1>
-	bool operator == ( const naked_ptr_impl<T1, isSafe1>& other ) const { return this->t == other.t; }
+	bool operator == ( const nullable_ptr_impl<T1, isSafe1>& other ) const { return this->t == other.t; }
 
-	bool operator != ( const naked_ptr_impl<T, isSafe>& other ) const { return this->t != other.t; }
+	bool operator != ( const nullable_ptr_impl<T, isSafe>& other ) const { return this->t != other.t; }
 	template<class T1, bool isSafe1>
-	bool operator != ( const naked_ptr_impl<T1, isSafe1>& other ) const { return this->t != other.t; }
+	bool operator != ( const nullable_ptr_impl<T1, isSafe1>& other ) const { return this->t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { return this->t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { return this->t != nullptr; }
 
-	~naked_ptr_impl()
+	~nullable_ptr_impl()
 	{
 		this->t = nullptr;
 	}
@@ -857,7 +857,7 @@ public:
 
 
 template<>
-class naked_ptr_impl<void, true> : public naked_ptr_base_impl<void, true>
+class nullable_ptr_impl<void, true> : public nullable_ptr_base_impl<void, true>
 {
 	template<class TT, bool isSafe1>
 	friend class owning_ptr_impl;
@@ -869,36 +869,36 @@ class naked_ptr_impl<void, true> : public naked_ptr_base_impl<void, true>
 	//friend class soft_ptr_impl;
 
 public:
-	naked_ptr_impl() : naked_ptr_base_impl() {}
+	nullable_ptr_impl() : nullable_ptr_base_impl() {}
 
 	template<class T1>
-	naked_ptr_impl(T1& t_) : naked_ptr_base_impl<void>(t_) {}
+	nullable_ptr_impl(T1& t_) : nullable_ptr_base_impl<void>(t_) {}
 
 	template<class T1>
-	naked_ptr_impl( const owning_ptr_impl<T1, true>& owner ) : naked_ptr_base_impl(owner) {}
+	nullable_ptr_impl( const owning_ptr_impl<T1, true>& owner ) : nullable_ptr_base_impl(owner) {}
 	template<class T1>
-	naked_ptr_impl<void>& operator = ( const owning_ptr_impl<T1, true>& owner ) { *this = owner.get(); return *this; }
+	nullable_ptr_impl<void>& operator = ( const owning_ptr_impl<T1, true>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_impl( const soft_ptr_impl<T1, true>& other ) : naked_ptr_base_impl(other) {}
-	naked_ptr_impl( const soft_ptr_impl<void, true>& other ) : naked_ptr_base_impl(other) {}
+	nullable_ptr_impl( const soft_ptr_impl<T1, true>& other ) : nullable_ptr_base_impl(other) {}
+	nullable_ptr_impl( const soft_ptr_impl<void, true>& other ) : nullable_ptr_base_impl(other) {}
 	template<class T1>
-	naked_ptr_impl<void>& operator = ( const soft_ptr_impl<T1, true>& other ) { *this = other.get(); return *this; }
-	naked_ptr_impl<void>& operator = ( const soft_ptr_impl<void, true>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_impl<void>& operator = ( const soft_ptr_impl<T1, true>& other ) { *this = other.get(); return *this; }
+	nullable_ptr_impl<void>& operator = ( const soft_ptr_impl<void, true>& other ) { *this = other.get(); return *this; }
 
 	template<class T1>
-	naked_ptr_impl( const naked_ptr_impl<T1, true>& other ) : naked_ptr_base_impl(other) {}
+	nullable_ptr_impl( const nullable_ptr_impl<T1, true>& other ) : nullable_ptr_base_impl(other) {}
 	template<class T1>
-	naked_ptr_impl<void>& operator = ( const naked_ptr_impl<T1, true>& other ) { t = other.t; return *this; }
-	naked_ptr_impl( const naked_ptr_impl<void, true>& other ) = default;
-	naked_ptr_impl<void, true>& operator = ( naked_ptr_impl<void, true>& other ) = default;
+	nullable_ptr_impl<void>& operator = ( const nullable_ptr_impl<T1, true>& other ) { t = other.t; return *this; }
+	nullable_ptr_impl( const nullable_ptr_impl<void, true>& other ) = default;
+	nullable_ptr_impl<void, true>& operator = ( nullable_ptr_impl<void, true>& other ) = default;
 
-	naked_ptr_impl( naked_ptr_impl<void, true>&& other ) = default;
-	naked_ptr_impl<void, true>& operator = ( naked_ptr_impl<void, true>&& other ) = default;
+	nullable_ptr_impl( nullable_ptr_impl<void, true>&& other ) = default;
+	nullable_ptr_impl<void, true>& operator = ( nullable_ptr_impl<void, true>&& other ) = default;
 
-	void swap( naked_ptr_impl<void, true>& other )
+	void swap( nullable_ptr_impl<void, true>& other )
 	{
-		naked_ptr_base_impl::swap( other );
+		nullable_ptr_base_impl::swap( other );
 	}
 
 	void* get_dereferencable() const 
@@ -912,18 +912,18 @@ public:
 		return this->t != nullptr;
 	}
 
-	bool operator == ( const naked_ptr_impl<void, true>& other ) const { return this->t == other.t; }
+	bool operator == ( const nullable_ptr_impl<void, true>& other ) const { return this->t == other.t; }
 	template<class T1, bool isSafe1>
-	bool operator == ( const naked_ptr_impl<T1, isSafe1>& other ) const { return this->t == other.t; }
+	bool operator == ( const nullable_ptr_impl<T1, isSafe1>& other ) const { return this->t == other.t; }
 
-	bool operator != ( const naked_ptr_impl<void, true>& other ) const { return this->t != other.t; }
+	bool operator != ( const nullable_ptr_impl<void, true>& other ) const { return this->t != other.t; }
 	template<class T1, bool isSafe1>
-	bool operator != ( const naked_ptr_impl<T1, isSafe1>& other ) const { return this->t != other.t; }
+	bool operator != ( const nullable_ptr_impl<T1, isSafe1>& other ) const { return this->t != other.t; }
 
 	bool operator == (std::nullptr_t nullp ) const { return this->t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { return this->t != nullptr; }
 
-	~naked_ptr_impl()
+	~nullable_ptr_impl()
 	{
 		this->t = nullptr;
 	}

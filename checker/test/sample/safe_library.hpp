@@ -72,7 +72,7 @@ namespace safememory {
 	// osn ptrs are hardcoded with special safety rules
 	// class owning_ptr;
 	// class soft_ptr;
-	// class naked_ptr;
+	// class nullable_ptr;
 }
 namespace log {
 	void log();

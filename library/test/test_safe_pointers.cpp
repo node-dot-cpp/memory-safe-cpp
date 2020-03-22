@@ -304,13 +304,13 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT(  !(sp11 == sp21) );
 
 					// naked with naked
-					naked_ptr<int> np1( op1 );
-					naked_ptr<int> np2( sp11 );
-					naked_ptr<int> np3( op2 );
+					nullable_ptr<int> np1( op1 );
+					nullable_ptr<int> np2( sp11 );
+					nullable_ptr<int> np3( op2 );
 
-					naked_ptr<void> np1v( op1 );
-					naked_ptr<void> np2v( sp11 );
-					naked_ptr<void> np3v( op2 );
+					nullable_ptr<void> np1v( op1 );
+					nullable_ptr<void> np2v( sp11 );
+					nullable_ptr<void> np3v( op2 );
 
 					EXPECT(  np1 == np2 );
 					EXPECT(  np1 != np3 );
@@ -342,6 +342,29 @@ int testWithLest( int argc, char * argv[] )
 				soft_ptr<Derived> p3 = soft_ptr_reinterpret_cast<Derived>(p1);
 				EXPECT( p2->n == 11 );
 				EXPECT( p3->n == 11 );
+			}
+			killAllZombies();
+		},
+
+		CASE( "basic nullable pointer test" )
+		{
+			SETUP("basic nullable pointer test")
+			{
+				int i = 5;
+				nullable_ptr<int> vnp(&i);
+				int* pi = nullable_cast( vnp );
+				nullable_ptr<int> vnp2;
+				vnp2 = nullable_cast( &i );
+				EXPECT( vnp == vnp2 ); // enabled by default
+
+				vnp2 = nullptr;
+				int* pint;
+				pint = nullable_cast(vnp2);
+				EXPECT_THROWS( *pint = 6 );
+
+				testing::dummy_objects::LargeDerived* pl;
+				nullable_ptr<testing::dummy_objects::LargeDerived> npl;
+				EXPECT_THROWS( pl = nullable_cast(npl) );
 			}
 			killAllZombies();
 		},
@@ -714,13 +737,13 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == sp21) );
 
 					// naked with naked
-					naked_ptr<int> np1( op1 );
-					naked_ptr<int> np2( sp11 );
-					naked_ptr<int> np3( op2 );
+					nullable_ptr<int> np1( op1 );
+					nullable_ptr<int> np2( sp11 );
+					nullable_ptr<int> np3( op2 );
 
-					naked_ptr<void> np1v( op1 );
-					naked_ptr<void> np2v( sp11 );
-					naked_ptr<void> np3v( op2 );
+					nullable_ptr<void> np1v( op1 );
+					nullable_ptr<void> np2v( sp11 );
+					nullable_ptr<void> np3v( op2 );
 
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 == np2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 != np3 );

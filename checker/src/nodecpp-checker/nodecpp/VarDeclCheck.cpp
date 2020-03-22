@@ -154,28 +154,37 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    if (auto P = dyn_cast<ParmVarDecl>(Var)) {
-      // params check they don't have a null default initializer
-      auto Ex = P->getDefaultArg();
-      if(Ex && isNullPtrValue(getASTContext(), Ex)) {
-        diag(Var->getLocation(),
-             "(RAW) raw pointer variable can't be initialized to null");
-        return;
-      }
-    }
-    else {
+    if (!IsParam) {
       auto Ex = Var->getInit();
       if (!Ex) {
         diag(Var->getLocation(),
-             "(RAW) raw pointer variable type must have initializer");
-        return;
-      }
-      else if(isNullPtrValue(getASTContext(), Ex)) {
-        diag(Var->getLocation(),
-             "(RAW) raw pointer variable can't be initialized to null");
+             "(S1.3) raw pointer variable type must have initializer");
         return;
       }
     }
+
+    // if (auto P = dyn_cast<ParmVarDecl>(Var)) {
+    //   // params check they don't have a null default initializer
+    //   auto Ex = P->getDefaultArg();
+    //   if(Ex && isNullPtrValue(getASTContext(), Ex)) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer parameter can't be initialized to null");
+    //     return;
+    //   }
+    // }
+    // else {
+    //   auto Ex = Var->getInit();
+    //   if (!Ex) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer variable type must have initializer");
+    //     return;
+    //   }
+    //   else if(isNullPtrValue(getASTContext(), Ex)) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer variable can't be initialized to null");
+    //     return;
+    //   }
+    // }
 
     //this is all for raw pointer
     return;
@@ -188,7 +197,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     auto Dh = DiagHelper(this);
-    Dh.diag(Var->getLocation(), "unsafe naked_ptr at variable declaration");
+    Dh.diag(Var->getLocation(), "unsafe nullable_ptr at variable declaration");
     isNakedPointerType(Qt, getContext(), Dh); // for report
     return;
   }

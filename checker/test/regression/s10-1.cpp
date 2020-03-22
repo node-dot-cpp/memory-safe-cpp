@@ -9,7 +9,7 @@ void f(string_literal sl);
 void func() {
 
 	const char* cp = "Hello world!";
-// CHECK: :[[@LINE-1]]:14: error: (S1.3)
+
 	string_literal a = "Hello world!";
 	string_literal b = cp;
 // CHECK: :[[@LINE-1]]:21: error: (S10.1)
