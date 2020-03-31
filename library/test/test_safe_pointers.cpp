@@ -359,8 +359,7 @@ int testWithLest( int argc, char * argv[] )
 
 				vnp2 = nullptr;
 				int* pint;
-				pint = nullable_cast(vnp2);
-				EXPECT_THROWS( *pint = 6 );
+				EXPECT_THROWS( pint = nullable_cast(vnp2) );
 
 				testing::dummy_objects::LargeDerived* pl;
 				nullable_ptr<testing::dummy_objects::LargeDerived> npl;
