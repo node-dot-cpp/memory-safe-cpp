@@ -80,6 +80,13 @@ struct StructWithDtorRequiringValidSoftPtrsToItself
 	}
 };
 
+template<size_t minSz, size_t alignExp=0>
+struct LargeObjectWithControllableAlignment
+{
+	alignas(1<<alignExp) int i;
+	uint8_t dummyBytes[minSz];
+};
+
 } // namespace nodecpp::safememory::testing::dummy_objects
 
 
