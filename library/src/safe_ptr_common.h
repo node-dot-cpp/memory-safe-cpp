@@ -190,7 +190,7 @@ public:
 			size_t iniAlignment = alignment;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (sz >= std::_Big_allocation_threshold)
-				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
+				iniAlignment = _Max_value(alignment, alignment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
 			if constexpr ( iib )
@@ -230,7 +230,7 @@ public:
 			size_t iniAlignment = alignment;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (iniByteSz >= std::_Big_allocation_threshold)
-				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
+				iniAlignment = _Max_value(alignment, alignment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
 			if constexpr ( iib )

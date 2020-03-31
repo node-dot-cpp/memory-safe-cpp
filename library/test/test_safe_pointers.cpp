@@ -359,12 +359,32 @@ int testWithLest( int argc, char * argv[] )
 
 				vnp2 = nullptr;
 				int* pint;
-				pint = nullable_cast(vnp2);
-				EXPECT_THROWS( *pint = 6 );
+				EXPECT_THROWS( pint = nullable_cast(vnp2) );
 
 				testing::dummy_objects::LargeDerived* pl;
 				nullable_ptr<testing::dummy_objects::LargeDerived> npl;
 				EXPECT_THROWS( pl = nullable_cast(npl) );
+			}
+			killAllZombies();
+		},
+
+		CASE( "Large objects with large alignment test" )
+		{
+			SETUP("Large objects with large alignment test")
+			{
+				using LargeAlignedT = LargeObjectWithControllableAlignment<0x1000, 7>;
+				EXPECT( sizeof(LargeAlignedT) >= 0x1000 );
+				LargeAlignedT* ptr1 = new LargeAlignedT;
+				owning_ptr<LargeAlignedT>p4klarge128aligned = make_owning<LargeAlignedT>();
+				EXPECT( (( (uintptr_t)(ptr1) ) & ((1<<7)-1)) == 0 );
+				if ( ptr1 ) delete ptr1;
+
+				using ExLargeAlignedT = LargeObjectWithControllableAlignment<0x10000, 7>;
+				EXPECT( sizeof(ExLargeAlignedT) >= 0x10000 );
+				ExLargeAlignedT* ptr2 = new ExLargeAlignedT;
+				owning_ptr<ExLargeAlignedT>p64klarge128aligned = make_owning<ExLargeAlignedT>();
+				EXPECT( (( (uintptr_t)(ptr2) ) & ((1<<7)-1)) == 0 );
+				if ( ptr1 ) delete ptr2;
 			}
 			killAllZombies();
 		},
@@ -1308,7 +1328,7 @@ int main( int argc, char * argv[] )
 
 	testSoftPtrsWithZeroOffset();
 	testOwningPtrWithManDel();
-	return 0;
+//	return 0;
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
@@ -1356,5 +1376,6 @@ int main( int argc, char * argv[] )
 
 	nodecpp::log::default_log::info( "about to exit...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         " );
 
+	printf( "TESTING DONE\n" );
 	return 0;
 }
