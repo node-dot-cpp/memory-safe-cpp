@@ -14,3 +14,9 @@ library/samples/basic_sample/build/x64/
 library/samples/basic_sample/build/.vs/
 library/test/build/Debug/
 library/test/build/Release/
+/library/build/
+/checker/build/
+/checker/3rdparty/llvm/
+/checker/3rdparty/clang/
+/checker/3rdparty/clang-tools-extra/
+.vscode
