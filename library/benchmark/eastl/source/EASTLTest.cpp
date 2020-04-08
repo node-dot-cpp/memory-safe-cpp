@@ -97,21 +97,21 @@ void*  MallocAllocator::mpLastAllocation = NULL;
 ///////////////////////////////////////////////////////////////////////////////
 // InstanceAllocator
 //
-int InstanceAllocator::mMismatchCount = 0;
+// int InstanceAllocator::mMismatchCount = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // CountingAllocator
 //
-uint64_t CountingAllocator::activeAllocCount      = 0;
-uint64_t CountingAllocator::totalAllocCount       = 0;
-uint64_t CountingAllocator::totalDeallocCount     = 0;
-uint64_t CountingAllocator::totalCtorCount        = 0;
-uint64_t CountingAllocator::defaultCtorCount      = 0;
-uint64_t CountingAllocator::copyCtorCount         = 0;
-uint64_t CountingAllocator::assignOpCount         = 0;
-uint64_t CountingAllocator::totalAllocatedMemory  = 0;
-uint64_t CountingAllocator::activeAllocatedMemory = 0;
+// uint64_t CountingAllocator::activeAllocCount      = 0;
+// uint64_t CountingAllocator::totalAllocCount       = 0;
+// uint64_t CountingAllocator::totalDeallocCount     = 0;
+// uint64_t CountingAllocator::totalCtorCount        = 0;
+// uint64_t CountingAllocator::defaultCtorCount      = 0;
+// uint64_t CountingAllocator::copyCtorCount         = 0;
+// uint64_t CountingAllocator::assignOpCount         = 0;
+// uint64_t CountingAllocator::totalAllocatedMemory  = 0;
+// uint64_t CountingAllocator::activeAllocatedMemory = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -251,20 +251,20 @@ void* MallocAllocator::allocate(size_t n, size_t, size_t, int)
 // CustomAllocator
 ///////////////////////////////////////////////////////////////////////////////
 
-void* CustomAllocator::allocate(size_t n, int flags)
-{
-	return ::operator new[](n, get_name(), flags, 0, __FILE__, __LINE__);
-}
+// void* CustomAllocator::allocate(size_t n, int flags)
+// {
+// 	return ::operator new[](n, get_name(), flags, 0, __FILE__, __LINE__);
+// }
 
-void* CustomAllocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
-{
-	return ::operator new[](n, alignment, offset, get_name(), flags, 0, __FILE__, __LINE__);
-}
+// void* CustomAllocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
+// {
+// 	return ::operator new[](n, alignment, offset, get_name(), flags, 0, __FILE__, __LINE__);
+// }
 
-void  CustomAllocator::deallocate(void* p, size_t /*n*/)
-{
-	::operator delete((char*)p);
-}
+// void  CustomAllocator::deallocate(void* p, size_t /*n*/)
+// {
+// 	::operator delete((char*)p);
+// }
 
 
 

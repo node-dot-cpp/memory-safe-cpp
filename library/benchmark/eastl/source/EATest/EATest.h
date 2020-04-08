@@ -62,7 +62,7 @@
     #pragma warning(disable: 4251)  // class (some template) needs to have dll-interface to be used by clients.
 #endif
 
-
+#include <EASTL/internal/config.h>
 #include <EATest/internal/Config.h>
 #include <string>
 #include <vector>

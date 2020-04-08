@@ -8,7 +8,7 @@
 #if !EASTL_OPENSOURCE
     #include <PPMalloc/EAGeneralAllocatorDebug.h>
 #endif
-#include <EAStdC/EASprintf.h>
+// #include <EAStdC/EASprintf.h>
 #include <EAStdC/EAStopwatch.h>
 #include <EAStdC/EAString.h>
 #include <EASTL/internal/config.h>
@@ -42,24 +42,24 @@ namespace EA
 ///////////////////////////////////////////////////////////////////////////////
 // Required by EASTL.
 //
-#if !defined(EASTL_EASTDC_VSNPRINTF) || !EASTL_EASTDC_VSNPRINTF
-	int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t*  pFormat, va_list arguments)
-	{
-		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-	}
+// #if !defined(EASTL_EASTDC_VSNPRINTF) || !EASTL_EASTDC_VSNPRINTF
+// 	int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t*  pFormat, va_list arguments)
+// 	{
+// 		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
+// 	}
 
-	int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
-	{
-		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-	}
+// 	int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
+// 	{
+// 		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
+// 	}
 
-	#if (EASTDC_VERSION_N >= 10600)
-		int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
-		{
-			return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-		}
-	#endif
-#endif
+// 	#if (EASTDC_VERSION_N >= 10600)
+// 		int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
+// 		{
+// 			return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
+// 		}
+// 	#endif
+// #endif
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -145,18 +145,18 @@ int EAMain(int argc, char* argv[])
 
 	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsSeconds, true);     // Measure seconds, start the counting immediately.
 
-	BenchmarkAlgorithm();
-	BenchmarkList();
+	// BenchmarkAlgorithm();
+	// BenchmarkList();
 	BenchmarkString();
-	BenchmarkVector();
-	BenchmarkDeque();
-	BenchmarkSet();
-	BenchmarkMap();
-	BenchmarkHash();
-	BenchmarkHeap();
-	BenchmarkBitset();
-	BenchmarkSort();
-	BenchmarkTupleVector();
+	// BenchmarkVector();
+	// BenchmarkDeque();
+	// BenchmarkSet();
+	// BenchmarkMap();
+	// BenchmarkHash();
+	// BenchmarkHeap();
+	// BenchmarkBitset();
+	// BenchmarkSort();
+	// BenchmarkTupleVector();
 
 	stopwatch.Stop();
 
@@ -166,7 +166,7 @@ int EAMain(int argc, char* argv[])
 
 	Benchmark::PrintResults();
 
-	eastl::string sClockTime;
+	std::string sClockTime;
 	Benchmark::WriteTime(stopwatch.GetElapsedTime(), sClockTime);
 
 	EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());

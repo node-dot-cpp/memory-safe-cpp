@@ -61,7 +61,7 @@ namespace Benchmark
 		std::string msSTLName1;       // Name of competitor #1 (e.g. "EASTL").
 		std::string msSTLName2;       // Name of competitor #2 (e.g. "MS STL").
 
-		void clear() { msPlatform.set_capacity(0); msSTLName1.set_capacity(0); msSTLName2.set_capacity(0); }
+		void clear() { msPlatform.clear(); msSTLName1.clear(); msSTLName2.clear(); }
 	};
 
 	Environment& GetEnvironment();

@@ -6,7 +6,7 @@
 #ifndef EASTLTEST_H
 #define EASTLTEST_H
 
-
+#include <EASTL/internal/config.h>
 #include <EABase/eabase.h>
 #include <EATest/EATest.h>
 
@@ -496,7 +496,7 @@ inline bool operator<(const TestObject& t1, const TestObject& t2)
 // TestObject hash
 // Normally you don't want to put your hash functions in the eastl namespace, as that namespace is owned by EASTL.
 // However, these are the EASTL unit tests and we can say that they are also owned by EASTL.
-namespace eastl
+namespace std
 {
 	template <> 
 	struct hash<TestObject>
@@ -640,7 +640,7 @@ inline bool operator==(const Align64& a, const Align64& b)
 inline bool operator<(const Align64& a, const Align64& b)
 	{ return (a.mX < b.mX); }
 
-namespace eastl
+namespace std
 {
 	template <>
 	struct hash < Align64 >
@@ -1119,24 +1119,24 @@ inline bool operator!=(const MallocAllocator&, const MallocAllocator&) { return 
 // Example usage:
 //      vector<int, CustomAllocator> intVector;
 //
-class CustomAllocator
-{
-public:
-	CustomAllocator(const char* = NULL) {}
-	CustomAllocator(const CustomAllocator&) {}
-	CustomAllocator(const CustomAllocator&, const char*) {}
-	CustomAllocator& operator=(const CustomAllocator&) { return *this; }
+// class CustomAllocator
+// {
+// public:
+// 	CustomAllocator(const char* = NULL) {}
+// 	CustomAllocator(const CustomAllocator&) {}
+// 	CustomAllocator(const CustomAllocator&, const char*) {}
+// 	CustomAllocator& operator=(const CustomAllocator&) { return *this; }
 
-	void* allocate(size_t n, int flags = 0);
-	void* allocate(size_t n, size_t, size_t, int flags = 0);
-	void deallocate(void* p, size_t n);
+// 	void* allocate(size_t n, int flags = 0);
+// 	void* allocate(size_t n, size_t, size_t, int flags = 0);
+// 	void deallocate(void* p, size_t n);
 
-	const char* get_name() const { return "CustomAllocator"; }
-	void set_name(const char*) {}
-};
+// 	const char* get_name() const { return "CustomAllocator"; }
+// 	void set_name(const char*) {}
+// };
 
-inline bool operator==(const CustomAllocator&, const CustomAllocator&) { return true; }
-inline bool operator!=(const CustomAllocator&, const CustomAllocator&) { return false; }
+// inline bool operator==(const CustomAllocator&, const CustomAllocator&) { return true; }
+// inline bool operator!=(const CustomAllocator&, const CustomAllocator&) { return false; }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1145,33 +1145,33 @@ inline bool operator!=(const CustomAllocator&, const CustomAllocator&) { return 
 /// Acts the same as eastl::allocator, but always compares as unequal to an 
 /// instance of itself.
 ///
-class UnequalAllocator
-{
-public:
-	EASTL_ALLOCATOR_EXPLICIT UnequalAllocator(const char* pName = EASTL_NAME_VAL(EASTL_ALLOCATOR_DEFAULT_NAME))
-	    : mAllocator(pName) {}
+// class UnequalAllocator
+// {
+// public:
+// 	EASTL_ALLOCATOR_EXPLICIT UnequalAllocator(const char* pName = EASTL_NAME_VAL(EASTL_ALLOCATOR_DEFAULT_NAME))
+// 	    : mAllocator(pName) {}
 
-	UnequalAllocator(const UnequalAllocator& x) : mAllocator(x.mAllocator) {}
-	UnequalAllocator(const UnequalAllocator& x, const char* pName) : mAllocator(x.mAllocator) { set_name(pName); }
-	UnequalAllocator& operator=(const UnequalAllocator& x)
-	{
-		mAllocator = x.mAllocator;
-		return *this;
-	}
+// 	UnequalAllocator(const UnequalAllocator& x) : mAllocator(x.mAllocator) {}
+// 	UnequalAllocator(const UnequalAllocator& x, const char* pName) : mAllocator(x.mAllocator) { set_name(pName); }
+// 	UnequalAllocator& operator=(const UnequalAllocator& x)
+// 	{
+// 		mAllocator = x.mAllocator;
+// 		return *this;
+// 	}
 
-	void* allocate(size_t n, int flags = 0) { return mAllocator.allocate(n, flags); }
-	void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0) { return mAllocator.allocate(n, alignment, offset, flags); }
-	void deallocate(void* p, size_t n) { return mAllocator.deallocate(p, n); }
+// 	void* allocate(size_t n, int flags = 0) { return mAllocator.allocate(n, flags); }
+// 	void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0) { return mAllocator.allocate(n, alignment, offset, flags); }
+// 	void deallocate(void* p, size_t n) { return mAllocator.deallocate(p, n); }
 
-	const char* get_name() const { return mAllocator.get_name(); }
-	void set_name(const char* pName) { mAllocator.set_name(pName); }
+// 	const char* get_name() const { return mAllocator.get_name(); }
+// 	void set_name(const char* pName) { mAllocator.set_name(pName); }
 
-protected:
-	eastl::allocator mAllocator;
-};
+// protected:
+// 	eastl::allocator mAllocator;
+// };
 
-inline bool operator==(const UnequalAllocator&, const UnequalAllocator&) { return false; }
-inline bool operator!=(const UnequalAllocator&, const UnequalAllocator&) { return true; }
+// inline bool operator==(const UnequalAllocator&, const UnequalAllocator&) { return false; }
+// inline bool operator!=(const UnequalAllocator&, const UnequalAllocator&) { return true; }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1179,99 +1179,99 @@ inline bool operator!=(const UnequalAllocator&, const UnequalAllocator&) { retur
 ///
 /// Counts allocation events allowing unit tests to validate assumptions.
 ///
-class CountingAllocator : public eastl::allocator
-{
-public:
-	using base_type = eastl::allocator;
+// class CountingAllocator : public eastl::allocator
+// {
+// public:
+// 	using base_type = eastl::allocator;
 
-	EASTL_ALLOCATOR_EXPLICIT CountingAllocator(const char* pName = EASTL_NAME_VAL(EASTL_ALLOCATOR_DEFAULT_NAME))
-	    : base_type(pName)
-	{
-		totalCtorCount++;
-		defaultCtorCount++;
-	}
+// 	EASTL_ALLOCATOR_EXPLICIT CountingAllocator(const char* pName = EASTL_NAME_VAL(EASTL_ALLOCATOR_DEFAULT_NAME))
+// 	    : base_type(pName)
+// 	{
+// 		totalCtorCount++;
+// 		defaultCtorCount++;
+// 	}
 
-	CountingAllocator(const CountingAllocator& x) : base_type(x)
-	{
-		totalCtorCount++;
-		copyCtorCount++;
-	}
+// 	CountingAllocator(const CountingAllocator& x) : base_type(x)
+// 	{
+// 		totalCtorCount++;
+// 		copyCtorCount++;
+// 	}
 
-	CountingAllocator(const CountingAllocator& x, const char* pName) : base_type(x)
-	{
-		totalCtorCount++;
-		copyCtorCount++;
-		set_name(pName);
-	}
+// 	CountingAllocator(const CountingAllocator& x, const char* pName) : base_type(x)
+// 	{
+// 		totalCtorCount++;
+// 		copyCtorCount++;
+// 		set_name(pName);
+// 	}
 
-	CountingAllocator& operator=(const CountingAllocator& x)
-	{
-		base_type::operator=(x);
-		assignOpCount++;
-		return *this;
-	}
+// 	CountingAllocator& operator=(const CountingAllocator& x)
+// 	{
+// 		base_type::operator=(x);
+// 		assignOpCount++;
+// 		return *this;
+// 	}
 
-	virtual void* allocate(size_t n, int flags = 0)
-	{
-		activeAllocCount++;
-		totalAllocCount++;
-		totalAllocatedMemory += n;
-		activeAllocatedMemory += n;
-		return base_type::allocate(n, flags);
-	}
+// 	virtual void* allocate(size_t n, int flags = 0)
+// 	{
+// 		activeAllocCount++;
+// 		totalAllocCount++;
+// 		totalAllocatedMemory += n;
+// 		activeAllocatedMemory += n;
+// 		return base_type::allocate(n, flags);
+// 	}
 
-	virtual void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0)
-	{
-		activeAllocCount++;
-		totalAllocCount++;
-		totalAllocatedMemory += n;
-		activeAllocatedMemory += n;
-		return base_type::allocate(n, alignment, offset, flags);
-	}
+// 	virtual void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0)
+// 	{
+// 		activeAllocCount++;
+// 		totalAllocCount++;
+// 		totalAllocatedMemory += n;
+// 		activeAllocatedMemory += n;
+// 		return base_type::allocate(n, alignment, offset, flags);
+// 	}
 
-	void deallocate(void* p, size_t n)
-	{
-		activeAllocCount--;
-		totalDeallocCount--;
-		activeAllocatedMemory -= n;
-		return base_type::deallocate(p, n);
-	}
+// 	void deallocate(void* p, size_t n)
+// 	{
+// 		activeAllocCount--;
+// 		totalDeallocCount--;
+// 		activeAllocatedMemory -= n;
+// 		return base_type::deallocate(p, n);
+// 	}
 
-	const char* get_name() const          { return base_type::get_name(); }
-	void set_name(const char* pName)      { base_type::set_name(pName); }
+// 	const char* get_name() const          { return base_type::get_name(); }
+// 	void set_name(const char* pName)      { base_type::set_name(pName); }
 
-	static auto getTotalAllocationCount()  { return totalAllocCount; }
-	static auto getTotalAllocationSize()   { return totalAllocatedMemory; }
-	static auto getActiveAllocationSize()  { return activeAllocatedMemory; }
-	static auto getActiveAllocationCount() { return activeAllocCount; }
-	static auto neverUsed()				   { return totalAllocCount == 0; }
+// 	static auto getTotalAllocationCount()  { return totalAllocCount; }
+// 	static auto getTotalAllocationSize()   { return totalAllocatedMemory; }
+// 	static auto getActiveAllocationSize()  { return activeAllocatedMemory; }
+// 	static auto getActiveAllocationCount() { return activeAllocCount; }
+// 	static auto neverUsed()				   { return totalAllocCount == 0; }
 
-	static void resetCount()
-	{
-		activeAllocCount      = 0;
-		totalAllocCount       = 0;
-		totalDeallocCount     = 0;
-		totalCtorCount        = 0;
-		defaultCtorCount      = 0;
-		copyCtorCount         = 0;
-		assignOpCount         = 0;
-		totalAllocatedMemory  = 0;
-		activeAllocatedMemory = 0;
-	}
+// 	static void resetCount()
+// 	{
+// 		activeAllocCount      = 0;
+// 		totalAllocCount       = 0;
+// 		totalDeallocCount     = 0;
+// 		totalCtorCount        = 0;
+// 		defaultCtorCount      = 0;
+// 		copyCtorCount         = 0;
+// 		assignOpCount         = 0;
+// 		totalAllocatedMemory  = 0;
+// 		activeAllocatedMemory = 0;
+// 	}
 
-	static uint64_t activeAllocCount;
-	static uint64_t totalAllocCount;
-	static uint64_t totalDeallocCount;
-	static uint64_t totalCtorCount;
-	static uint64_t defaultCtorCount;
-	static uint64_t copyCtorCount;
-	static uint64_t assignOpCount;
-	static uint64_t totalAllocatedMemory;  // the total amount of memory allocated
-	static uint64_t activeAllocatedMemory; // currently allocated memory by allocator
-};
+// 	static uint64_t activeAllocCount;
+// 	static uint64_t totalAllocCount;
+// 	static uint64_t totalDeallocCount;
+// 	static uint64_t totalCtorCount;
+// 	static uint64_t defaultCtorCount;
+// 	static uint64_t copyCtorCount;
+// 	static uint64_t assignOpCount;
+// 	static uint64_t totalAllocatedMemory;  // the total amount of memory allocated
+// 	static uint64_t activeAllocatedMemory; // currently allocated memory by allocator
+// };
 
-inline bool operator==(const CountingAllocator& rhs, const CountingAllocator& lhs) { return operator==(CountingAllocator::base_type(rhs), CountingAllocator::base_type(lhs)); }
-inline bool operator!=(const CountingAllocator& rhs, const CountingAllocator& lhs) { return !(rhs == lhs); }
+// inline bool operator==(const CountingAllocator& rhs, const CountingAllocator& lhs) { return operator==(CountingAllocator::base_type(rhs), CountingAllocator::base_type(lhs)); }
+// inline bool operator!=(const CountingAllocator& rhs, const CountingAllocator& lhs) { return !(rhs == lhs); }
 
 
 
@@ -1294,80 +1294,80 @@ inline bool operator!=(const CountingAllocator& rhs, const CountingAllocator& lh
 // 
 //         list0 = list1; // list0 cannot free it's current contents with list1's allocator, and InstanceAllocator's purpose is to detect if it mistakenly does so.
 //
-class InstanceAllocator
-{
-public:
-	enum
-	{
-		kMultiplier = 16
-	}; // Use 16 because it's the highest currently known platform alignment requirement.
+// class InstanceAllocator
+// {
+// public:
+// 	enum
+// 	{
+// 		kMultiplier = 16
+// 	}; // Use 16 because it's the highest currently known platform alignment requirement.
 
-	InstanceAllocator(const char* = NULL, uint8_t instanceId = 0) : mInstanceId(instanceId) {}
-	InstanceAllocator(uint8_t instanceId) : mInstanceId(instanceId) {}
-	InstanceAllocator(const InstanceAllocator& x) : mInstanceId(x.mInstanceId) {}
-	InstanceAllocator(const InstanceAllocator& x, const char*) : mInstanceId(x.mInstanceId) {}
+// 	InstanceAllocator(const char* = NULL, uint8_t instanceId = 0) : mInstanceId(instanceId) {}
+// 	InstanceAllocator(uint8_t instanceId) : mInstanceId(instanceId) {}
+// 	InstanceAllocator(const InstanceAllocator& x) : mInstanceId(x.mInstanceId) {}
+// 	InstanceAllocator(const InstanceAllocator& x, const char*) : mInstanceId(x.mInstanceId) {}
 
-	InstanceAllocator& operator=(const InstanceAllocator& x)
-	{
-		mInstanceId = x.mInstanceId;
-		return *this;
-	}
+// 	InstanceAllocator& operator=(const InstanceAllocator& x)
+// 	{
+// 		mInstanceId = x.mInstanceId;
+// 		return *this;
+// 	}
 
-	void* allocate(size_t n, int = 0)
-	{ // +1 so that we always have space to write mInstanceId.
-		uint8_t* p8 =
-		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
-		                                                                          // different instances incompatible by
-		                                                                          // tweaking their return values.
-		std::fill(p8, p8 + kMultiplier, 0xff);
-		EA_ANALYSIS_ASSUME(p8 != NULL);
-		*p8 = mInstanceId;
-		return p8 + (kMultiplier * (mInstanceId + 1));
-	}
+// 	void* allocate(size_t n, int = 0)
+// 	{ // +1 so that we always have space to write mInstanceId.
+// 		uint8_t* p8 =
+// 		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
+// 		                                                                          // different instances incompatible by
+// 		                                                                          // tweaking their return values.
+// 		std::fill(p8, p8 + kMultiplier, 0xff);
+// 		EA_ANALYSIS_ASSUME(p8 != NULL);
+// 		*p8 = mInstanceId;
+// 		return p8 + (kMultiplier * (mInstanceId + 1));
+// 	}
 
-	void* allocate(size_t n, size_t, size_t, int = 0)
-	{ // +1 so that we always have space to write mInstanceId.
-		uint8_t* p8 =
-		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
-		                                                                          // different instances incompatible by
-		                                                                          // tweaking their return values.
-		std::fill(p8, p8 + kMultiplier, 0xff);
-		EA_ANALYSIS_ASSUME(p8 != NULL);
-		*p8 = mInstanceId;
-		return p8 + (kMultiplier * (mInstanceId + 1));
-	}
+// 	void* allocate(size_t n, size_t, size_t, int = 0)
+// 	{ // +1 so that we always have space to write mInstanceId.
+// 		uint8_t* p8 =
+// 		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
+// 		                                                                          // different instances incompatible by
+// 		                                                                          // tweaking their return values.
+// 		std::fill(p8, p8 + kMultiplier, 0xff);
+// 		EA_ANALYSIS_ASSUME(p8 != NULL);
+// 		*p8 = mInstanceId;
+// 		return p8 + (kMultiplier * (mInstanceId + 1));
+// 	}
 
-	void deallocate(void* p, size_t /*n*/)
-	{
-		uint8_t* p8 = static_cast<uint8_t*>(p) - (kMultiplier * (mInstanceId + 1));
-		EASTL_ASSERT(*p8 == mInstanceId); // mInstanceId must match the id used in allocate(), otherwise the behavior is
-		                                  // undefined (probably a heap assert).
-		if (*p8 == mInstanceId) // It's possible that *p8 coincidentally matches mInstanceId if p8 is offset into memory
-		                        // we don't control.
-			free(p8);
-		else
-			++mMismatchCount;
-	}
+// 	void deallocate(void* p, size_t /*n*/)
+// 	{
+// 		uint8_t* p8 = static_cast<uint8_t*>(p) - (kMultiplier * (mInstanceId + 1));
+// 		EASTL_ASSERT(*p8 == mInstanceId); // mInstanceId must match the id used in allocate(), otherwise the behavior is
+// 		                                  // undefined (probably a heap assert).
+// 		if (*p8 == mInstanceId) // It's possible that *p8 coincidentally matches mInstanceId if p8 is offset into memory
+// 		                        // we don't control.
+// 			free(p8);
+// 		else
+// 			++mMismatchCount;
+// 	}
 
-	const char* get_name()
-	{
-		sprintf(mName, "InstanceAllocator %u", mInstanceId);
-		return mName;
-	}
+// 	const char* get_name()
+// 	{
+// 		sprintf(mName, "InstanceAllocator %u", mInstanceId);
+// 		return mName;
+// 	}
 
-	void set_name(const char*) {}
+// 	void set_name(const char*) {}
 
-	static void reset_all() { mMismatchCount = 0; }
+// 	static void reset_all() { mMismatchCount = 0; }
 
-public:
-	uint8_t mInstanceId;
-	char mName[32];
+// public:
+// 	uint8_t mInstanceId;
+// 	char mName[32];
 
-	static int mMismatchCount;
-};
+// 	static int mMismatchCount;
+// };
 
-inline bool operator==(const InstanceAllocator& a, const InstanceAllocator& b) { return (a.mInstanceId == b.mInstanceId); }
-inline bool operator!=(const InstanceAllocator& a, const InstanceAllocator& b) { return (a.mInstanceId != b.mInstanceId); }
+// inline bool operator==(const InstanceAllocator& a, const InstanceAllocator& b) { return (a.mInstanceId == b.mInstanceId); }
+// inline bool operator!=(const InstanceAllocator& a, const InstanceAllocator& b) { return (a.mInstanceId != b.mInstanceId); }
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1380,71 +1380,71 @@ inline bool operator!=(const InstanceAllocator& a, const InstanceAllocator& b) {
 // Example usage:
 //      vector<int, ThrowingAllocator< false<> > intVector;
 //
-template <bool initialShouldThrow = true>
-class ThrowingAllocator
-{
-public:
-	ThrowingAllocator(const char* = EASTL_NAME_VAL("ThrowingAllocator")) : mbShouldThrow(initialShouldThrow) {}
-	ThrowingAllocator(const ThrowingAllocator& x) : mbShouldThrow(x.mbShouldThrow) {}
-	ThrowingAllocator(const ThrowingAllocator& x, const char*) : mbShouldThrow(x.mbShouldThrow) {}
+// template <bool initialShouldThrow = true>
+// class ThrowingAllocator
+// {
+// public:
+// 	ThrowingAllocator(const char* = EASTL_NAME_VAL("ThrowingAllocator")) : mbShouldThrow(initialShouldThrow) {}
+// 	ThrowingAllocator(const ThrowingAllocator& x) : mbShouldThrow(x.mbShouldThrow) {}
+// 	ThrowingAllocator(const ThrowingAllocator& x, const char*) : mbShouldThrow(x.mbShouldThrow) {}
 
-	ThrowingAllocator& operator=(const ThrowingAllocator& x)
-	{
-		mbShouldThrow = x.mbShouldThrow;
-		return *this;
-	}
+// 	ThrowingAllocator& operator=(const ThrowingAllocator& x)
+// 	{
+// 		mbShouldThrow = x.mbShouldThrow;
+// 		return *this;
+// 	}
 
-	void* allocate(size_t n, int = 0)
-	{
-#if EASTL_EXCEPTIONS_ENABLED
-		if (mbShouldThrow)
-			throw std::bad_alloc();
-#endif
-		return malloc(n);
-	}
+// 	void* allocate(size_t n, int = 0)
+// 	{
+// #if EASTL_EXCEPTIONS_ENABLED
+// 		if (mbShouldThrow)
+// 			throw std::bad_alloc();
+// #endif
+// 		return malloc(n);
+// 	}
 
-	void* allocate(size_t n, size_t, size_t, int = 0)
-	{
-#if EASTL_EXCEPTIONS_ENABLED
-		if (mbShouldThrow)
-			throw std::bad_alloc();
-#endif
-		return malloc(n); // We don't support alignment, so you can't use this class where alignment is required.
-	}
+// 	void* allocate(size_t n, size_t, size_t, int = 0)
+// 	{
+// #if EASTL_EXCEPTIONS_ENABLED
+// 		if (mbShouldThrow)
+// 			throw std::bad_alloc();
+// #endif
+// 		return malloc(n); // We don't support alignment, so you can't use this class where alignment is required.
+// 	}
 
-	void deallocate(void* p, size_t) { free(p); }
+// 	void deallocate(void* p, size_t) { free(p); }
 
-	const char* get_name() const { return "ThrowingAllocator"; }
-	void set_name(const char*) {}
+// 	const char* get_name() const { return "ThrowingAllocator"; }
+// 	void set_name(const char*) {}
 
-	void set_should_throw(bool shouldThrow) { mbShouldThrow = shouldThrow; }
-	bool get_should_throw() const { return mbShouldThrow; }
+// 	void set_should_throw(bool shouldThrow) { mbShouldThrow = shouldThrow; }
+// 	bool get_should_throw() const { return mbShouldThrow; }
 
-protected:
-	bool mbShouldThrow;
-};
+// protected:
+// 	bool mbShouldThrow;
+// };
 
-template <bool initialShouldThrow>
-inline bool operator==(const ThrowingAllocator<initialShouldThrow>&, const ThrowingAllocator<initialShouldThrow>&)
-{
-	return true;
-}
+// template <bool initialShouldThrow>
+// inline bool operator==(const ThrowingAllocator<initialShouldThrow>&, const ThrowingAllocator<initialShouldThrow>&)
+// {
+// 	return true;
+// }
 
-template <bool initialShouldThrow>
-inline bool operator!=(const ThrowingAllocator<initialShouldThrow>&, const ThrowingAllocator<initialShouldThrow>&)
-{
-	return false;
-}
+// template <bool initialShouldThrow>
+// inline bool operator!=(const ThrowingAllocator<initialShouldThrow>&, const ThrowingAllocator<initialShouldThrow>&)
+// {
+// 	return false;
+// }
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // Helper utility that does a case insensitive string comparsion with two sets of overloads
 //
-struct TestStrCmpI_2
-{
-	bool operator()(const char* pCStr, const std::string& str) const { return str.comparei(pCStr) == 0; }
-	bool operator()(const std::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
-};
+// struct TestStrCmpI_2
+// {
+// 	bool operator()(const char* pCStr, const std::string& str) const { return str.comparei(pCStr) == 0; }
+// 	bool operator()(const std::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
+// };
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1453,49 +1453,49 @@ struct TestStrCmpI_2
 // An allocator that has sentinal values surrounding its allocator in an 
 // effort to detected if its internal memory has been stomped.
 //
-static uint64_t STOMP_MAGIC_V1 = 0x0101DEC1A551F1ED;
-static uint64_t STOMP_MAGIC_V2 = 0x12345C1A551F1ED5;
+// static uint64_t STOMP_MAGIC_V1 = 0x0101DEC1A551F1ED;
+// static uint64_t STOMP_MAGIC_V2 = 0x12345C1A551F1ED5;
 
-struct StompDetectAllocator
-{
-	StompDetectAllocator() { Validate(); }
-	~StompDetectAllocator() { Validate(); }
+// struct StompDetectAllocator
+// {
+// 	StompDetectAllocator() { Validate(); }
+// 	~StompDetectAllocator() { Validate(); }
 
-	StompDetectAllocator(const char*) { Validate(); }
+// 	StompDetectAllocator(const char*) { Validate(); }
 
-	void* allocate(size_t n, int = 0) { return mMallocAllocator.allocate(n); }
-	void* allocate(size_t n, size_t, size_t, int = 0) { return mMallocAllocator.allocate(n); }
-	void deallocate(void* p, size_t n) { mMallocAllocator.deallocate(p, n); }
+// 	void* allocate(size_t n, int = 0) { return mMallocAllocator.allocate(n); }
+// 	void* allocate(size_t n, size_t, size_t, int = 0) { return mMallocAllocator.allocate(n); }
+// 	void deallocate(void* p, size_t n) { mMallocAllocator.deallocate(p, n); }
 
-	const char* get_name() const { return "FatAllocator"; }
-	void set_name(const char*) {}
+// 	const char* get_name() const { return "FatAllocator"; }
+// 	void set_name(const char*) {}
 
-	void Validate() const
-	{
-		EASTL_ASSERT(mSentinal1 == STOMP_MAGIC_V1);
-		EASTL_ASSERT(mSentinal2 == STOMP_MAGIC_V2);
-	}
+// 	void Validate() const
+// 	{
+// 		EASTL_ASSERT(mSentinal1 == STOMP_MAGIC_V1);
+// 		EASTL_ASSERT(mSentinal2 == STOMP_MAGIC_V2);
+// 	}
 
-	uint64_t mSentinal1 = STOMP_MAGIC_V1;
-	MallocAllocator mMallocAllocator;
-	uint64_t mSentinal2 = STOMP_MAGIC_V2;
-};
+// 	uint64_t mSentinal1 = STOMP_MAGIC_V1;
+// 	MallocAllocator mMallocAllocator;
+// 	uint64_t mSentinal2 = STOMP_MAGIC_V2;
+// };
 
-inline bool operator==(const StompDetectAllocator& a, const StompDetectAllocator& b)
-{
-	a.Validate();
-	b.Validate();
+// inline bool operator==(const StompDetectAllocator& a, const StompDetectAllocator& b)
+// {
+// 	a.Validate();
+// 	b.Validate();
 
-	return (a.mMallocAllocator == b.mMallocAllocator);
-}
+// 	return (a.mMallocAllocator == b.mMallocAllocator);
+// }
 
-inline bool operator!=(const StompDetectAllocator& a, const StompDetectAllocator& b)
-{
-	a.Validate();
-	b.Validate();
+// inline bool operator!=(const StompDetectAllocator& a, const StompDetectAllocator& b)
+// {
+// 	a.Validate();
+// 	b.Validate();
 
-	return (a.mMallocAllocator != b.mMallocAllocator);
-}
+// 	return (a.mMallocAllocator != b.mMallocAllocator);
+// }
 
 
 // Commonly used free-standing functions to test callables
@@ -1565,13 +1565,13 @@ struct MoveOnlyTypeDefaultCtor
 //////////////////////////////////////////////////////////////////////////////
 // Utility RAII class that sets a new default allocator for the scope
 //
-struct AutoDefaultAllocator
-{
-	eastl::allocator* mPrevAllocator = nullptr;
+// struct AutoDefaultAllocator
+// {
+// 	eastl::allocator* mPrevAllocator = nullptr;
 
-	AutoDefaultAllocator(eastl::allocator* nextAllocator) { mPrevAllocator = SetDefaultAllocator(nextAllocator); }
-	~AutoDefaultAllocator()                               { SetDefaultAllocator(mPrevAllocator); }
-};
+// 	AutoDefaultAllocator(eastl::allocator* nextAllocator) { mPrevAllocator = SetDefaultAllocator(nextAllocator); }
+// 	~AutoDefaultAllocator()                               { SetDefaultAllocator(mPrevAllocator); }
+// };
 
 
 #endif // Header include guard
