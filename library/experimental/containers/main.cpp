@@ -1,9 +1,9 @@
 
 
-#include "include/EASTL/map.h"
-#include "include/EASTL/unordered_map.h"
-#include "include/EASTL/string.h"
-#include "include/EASTL/vector.h"
+#include "include/safememory/EASTL/map.h"
+#include "include/safememory/EASTL/unordered_map.h"
+#include "include/safememory/EASTL/string.h"
+#include "include/safememory/EASTL/vector.h"
 
 #include <vector>
 #include <random>

@@ -117,13 +117,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_STRING_H
-#define EASTL_STRING_H
+#ifndef SAFEMEMORY_EASTL_STRING_H
+#define SAFEMEMORY_EASTL_STRING_H
 
-#include <EASTL/internal/__undef_macros.h>
-#include <EASTL/internal/config.h>
-#include <detail/string_detail.h>
-#include <string_literal.h>
+#include <safememory/EASTL/internal/__undef_macros.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/detail/string_detail.h>
+#include <safememory/string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
