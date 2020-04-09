@@ -5,7 +5,7 @@
 
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
-#include <EASTL/string.h>
+#include <string>
 #include <EAMain/EAMain.h>
 
 #ifdef _MSC_VER
@@ -58,16 +58,29 @@ namespace Benchmark
 		return valueDest;
 	}
 
-	void WriteTime(int64_t timeNS, eastl::string& sTime)
+	std::string WriteTime(int64_t timeNS)
 	{
+		// if(timeNS > 1000000000)
+		// 	sTime.sprintf(" %6.2f s",  (double)timeNS / 1000000000);
+		// else if(timeNS > 1000000)
+		// 	sTime.sprintf("%6.1f ms", (double)timeNS / 1000000);
+		// else if(timeNS > 1000)
+		// 	sTime.sprintf("%6.1f us", (double)timeNS / 1000);
+		// else
+		// 	sTime.sprintf("%6.1f ns", (double)timeNS / 1);
+
+		char buff[16] = {0};
+		int sz = 0;
 		if(timeNS > 1000000000)
-			sTime.sprintf(" %6.2f s",  (double)timeNS / 1000000000);
+			sz = snprintf(buff, sizeof(buff), " %6.2f s",  (double)timeNS / 1000000000);
 		else if(timeNS > 1000000)
-			sTime.sprintf("%6.1f ms", (double)timeNS / 1000000);
+			sz = snprintf(buff, sizeof(buff), "%6.1f ms", (double)timeNS / 1000000);
 		else if(timeNS > 1000)
-			sTime.sprintf("%6.1f us", (double)timeNS / 1000);
+			sz = snprintf(buff, sizeof(buff), "%6.1f us", (double)timeNS / 1000);
 		else
-			sTime.sprintf("%6.1f ns", (double)timeNS / 1);
+			sz = snprintf(buff, sizeof(buff), "%6.1f ns", (double)timeNS / 1);
+
+		return sz > 0 && sz < sizeof(buff) ? std::string(buff) : std::string("error");
 	}
 
 
@@ -126,10 +139,10 @@ namespace Benchmark
 		const bool   bDifference    = (result.mTime1 > 10) && (result.mTime2 > 10) && (fPercentChange > 0.25);
 		const char*  pDifference    = (bDifference ? (result.mTime1 < result.mTime2 ? "-" : "+") : "");
 
-		eastl::string sClockTime1, sClockTime2;
+		// std::string sClockTime1, sClockTime2;
 
-		WriteTime(result.mTime1NS, sClockTime1);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
-		WriteTime(result.mTime2NS, sClockTime2);
+		std::string sClockTime1 = WriteTime(result.mTime1NS);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
+		std::string sClockTime2 = WriteTime(result.mTime2NS);
 
 		EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
 
@@ -219,15 +232,15 @@ namespace Benchmark
 		EA::UnitTest::Report("%-43s%26s%26s%13s%13s\n", "Test", gEnvironment.msSTLName1.c_str(), gEnvironment.msSTLName2.c_str(), "Ratio", "Difference?");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
-		eastl::string sTestTypeLast;
-		eastl::string sTestTypeTemp;
+		std::string sTestTypeLast;
+		std::string sTestTypeTemp;
 
 		for(ResultSet::iterator it = gResultSet.begin(); it != gResultSet.end(); ++it)
 		{
 			const Result& result = *it;
 
 			eastl_size_t n = result.msName.find('/');
-			if(n == eastl::string::npos)
+			if(n == std::string::npos)
 				n = result.msName.length();
 			sTestTypeTemp.assign(result.msName, 0, n);
 

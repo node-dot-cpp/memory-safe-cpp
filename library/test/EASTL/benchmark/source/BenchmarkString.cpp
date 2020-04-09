@@ -6,9 +6,9 @@
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
 #include <EAStdC/EAStopwatch.h>
-#include <EASTL/algorithm.h>
-#include <EASTL/string.h>
-#include <EASTL/sort.h>
+#include <algorithm>
+#include <string>
+//#include <EASTL/sort.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <algorithm>
@@ -17,6 +17,15 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
+namespace eastl {
+	template<class T>
+	using basic_string = std::basic_string<T>;
+
+	using string = std::string;
+	using wstring = std::wstring;
+	using u16string = std::u16string;
+	using u32string = std::u32string;
+}
 
 using namespace EA;
 
@@ -104,7 +113,7 @@ namespace
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, *eastl::find(c.begin(), c.end(), (typename Container::value_type)~0));
+			Benchmark::DoNothing(&c, *std::find(c.begin(), c.end(), (typename Container::value_type)~0));
 		stopwatch.Stop();
 	}
 

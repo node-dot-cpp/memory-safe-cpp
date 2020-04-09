@@ -101,7 +101,7 @@ namespace Benchmark
 	void DoNothing(...);
 	void AddResult(const char* pName, int units, int64_t nTime1, int64_t nTime2, const char* pNotes = NULL);
 	void PrintResults();
-	void WriteTime(int64_t timeNS, std::string& sTime);
+	std::string WriteTime(int64_t timeNS);
 	
 
 } // namespace Benchmark

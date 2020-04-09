@@ -145,18 +145,18 @@ int EAMain(int argc, char* argv[])
 
 	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsSeconds, true);     // Measure seconds, start the counting immediately.
 
-	BenchmarkAlgorithm();
-	BenchmarkList();
+	// BenchmarkAlgorithm();
+	// BenchmarkList();
 	BenchmarkString();
-	BenchmarkVector();
-	BenchmarkDeque();
-	BenchmarkSet();
-	BenchmarkMap();
-	BenchmarkHash();
-	BenchmarkHeap();
-	BenchmarkBitset();
-	BenchmarkSort();
-	BenchmarkTupleVector();
+	// BenchmarkVector();
+	// BenchmarkDeque();
+	// BenchmarkSet();
+	// BenchmarkMap();
+	// BenchmarkHash();
+	// BenchmarkHeap();
+	// BenchmarkBitset();
+	// BenchmarkSort();
+	// BenchmarkTupleVector();
 
 	stopwatch.Stop();
 
@@ -166,8 +166,8 @@ int EAMain(int argc, char* argv[])
 
 	Benchmark::PrintResults();
 
-	eastl::string sClockTime;
-	Benchmark::WriteTime(stopwatch.GetElapsedTime(), sClockTime);
+	// eastl::string sClockTime;
+	std::string sClockTime = Benchmark::WriteTime(stopwatch.GetElapsedTime());
 
 	EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());
 

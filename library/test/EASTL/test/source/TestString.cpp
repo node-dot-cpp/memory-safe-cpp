@@ -19,6 +19,7 @@ namespace eastl {
 	using u16string = std::u16string;
 	using u32string = std::u32string;
 }
+
 template<typename StringType>
 bool validate(const StringType& /*str*/) {
 	return true;
