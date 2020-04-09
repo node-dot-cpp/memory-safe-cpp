@@ -17,7 +17,7 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-namespace eastl {
+namespace safememory {
 	template<class T>
 	using basic_string = std::basic_string<T>;
 
@@ -212,10 +212,10 @@ void BenchmarkString()
 		for(int i = 0; i < 2; i++)
 		{
 			std::basic_string<char8_t>    ss8(16, 0);   // We initialize to size of 16 because different implementations may make
-			eastl::basic_string<char8_t>  es8(16, 0);   // different tradeoffs related to startup size. Initial operations are faster
+			safememory::basic_string<char8_t>  es8(16, 0);   // different tradeoffs related to startup size. Initial operations are faster
 														// when strings start with a higher reserve, but they use more memory. 
 			std::basic_string<char16_t>   ss16(16, 0);  // We try to nullify this tradeoff for the tests below by starting all at 
-			eastl::basic_string<char16_t> es16(16, 0);  // the same baseline allocation.
+			safememory::basic_string<char16_t> es16(16, 0);  // the same baseline allocation.
 
 
 			///////////////////////////////
@@ -491,9 +491,9 @@ void BenchmarkString()
 			///////////////////////////////
 
 			std::basic_string<char8_t>    ss8X(ss8);
-			eastl::basic_string<char8_t>  es8X(es8);
+			safememory::basic_string<char8_t>  es8X(es8);
 			std::basic_string<char16_t>   ss16X(ss16);
-			eastl::basic_string<char16_t> es16X(es16);
+			safememory::basic_string<char16_t> es16X(es16);
 
 			TestCompare(stopwatch1, ss8, ss8X);
 			TestCompare(stopwatch2, es8, es8X);

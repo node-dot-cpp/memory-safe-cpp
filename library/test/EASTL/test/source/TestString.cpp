@@ -10,7 +10,7 @@
 #include <algorithm>
 #include <EASTL/allocator_malloc.h>
 
-namespace eastl {
+namespace safememory {
 	template<class T, class Alloc>
 	using basic_string = std::basic_string<T, Alloc>;
 
@@ -49,17 +49,17 @@ int TestString()
 	int nErrorCount = 0;
 
 	// nErrorCount += TestBasicString<eastl::basic_string<char, StompDetectAllocator>>();
-	nErrorCount += TestBasicString<eastl::string>();
+	nErrorCount += TestBasicString<safememory::string>();
 
 	// nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicStringW<eastl::wstring>();
+	nErrorCount += TestBasicStringW<safememory::wstring>();
 
 	// nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString16<eastl::u16string>();
+	nErrorCount += TestBasicString16<safememory::u16string>();
 
 #if EA_CHAR32_NATIVE
 	// nErrorCount += TestBasicString32<eastl::basic_string<char32_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString32<eastl::u32string>();
+	nErrorCount += TestBasicString32<safememory::u32string>();
 #endif
 
 	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.
