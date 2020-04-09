@@ -9,6 +9,7 @@
 
 #include <EABase/eabase.h>
 #include <EATest/EATest.h>
+#include <EASTL/allocator.h> // for eastl::allocator
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
@@ -144,8 +145,8 @@ int TestVectorSet();
 //
 // Intentionally keep these includes below the warning settings specified above.
 //
-#include <EASTL/iterator.h>
-#include <EASTL/algorithm.h>
+#include <iterator>
+#include <algorithm>
 
 
 
@@ -438,10 +439,11 @@ struct TestObject
 
 		if(&testObject != this)
 		{
-			eastl::swap(mX, testObject.mX);
+			using std::swap;
+			swap(mX, testObject.mX);
 			// Leave mId alone.
-			eastl::swap(mMagicValue, testObject.mMagicValue);
-			eastl::swap(mbThrowOnCopy, testObject.mbThrowOnCopy);
+			swap(mMagicValue, testObject.mMagicValue);
+			swap(mbThrowOnCopy, testObject.mbThrowOnCopy);
 
 			if(mbThrowOnCopy)
 			{
@@ -496,7 +498,7 @@ inline bool operator<(const TestObject& t1, const TestObject& t2)
 // TestObject hash
 // Normally you don't want to put your hash functions in the eastl namespace, as that namespace is owned by EASTL.
 // However, these are the EASTL unit tests and we can say that they are also owned by EASTL.
-namespace eastl
+namespace std
 {
 	template <> 
 	struct hash<TestObject>
@@ -640,7 +642,7 @@ inline bool operator==(const Align64& a, const Align64& b)
 inline bool operator<(const Align64& a, const Align64& b)
 	{ return (a.mX < b.mX); }
 
-namespace eastl
+namespace std
 {
 	template <>
 	struct hash < Align64 >
@@ -800,7 +802,7 @@ int CompareContainers(const T1& t1, const T2& t2, const char* ppName,
 template <typename InputIterator, typename StackValue>
 bool VerifySequence(InputIterator first, InputIterator last, StackValue /*unused*/, const char* pName, ...)
 {
-	typedef typename eastl::iterator_traits<InputIterator>::value_type value_type;
+	typedef typename std::iterator_traits<InputIterator>::value_type value_type;
 
 	int        argIndex = 0;
 	int        seqIndex = 0;
@@ -923,10 +925,10 @@ public:
 	typedef demoted_iterator<Iterator, IteratorCategory>                 this_type;
 	typedef Iterator                                                     iterator_type;
 	typedef IteratorCategory                                             iterator_category;
-	typedef typename eastl::iterator_traits<Iterator>::value_type        value_type;
-	typedef typename eastl::iterator_traits<Iterator>::difference_type   difference_type;
-	typedef typename eastl::iterator_traits<Iterator>::reference         reference;
-	typedef typename eastl::iterator_traits<Iterator>::pointer           pointer;
+	typedef typename std::iterator_traits<Iterator>::value_type        value_type;
+	typedef typename std::iterator_traits<Iterator>::difference_type   difference_type;
+	typedef typename std::iterator_traits<Iterator>::reference         reference;
+	typedef typename std::iterator_traits<Iterator>::pointer           pointer;
 
 	demoted_iterator()
 		: mIterator() { }
@@ -1319,7 +1321,7 @@ public:
 		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
 		                                                                          // different instances incompatible by
 		                                                                          // tweaking their return values.
-		eastl::fill(p8, p8 + kMultiplier, 0xff);
+		std::fill(p8, p8 + kMultiplier, static_cast<uint8_t>(0xff));
 		EA_ANALYSIS_ASSUME(p8 != NULL);
 		*p8 = mInstanceId;
 		return p8 + (kMultiplier * (mInstanceId + 1));
@@ -1331,7 +1333,7 @@ public:
 		    static_cast<uint8_t*>(malloc(n + (kMultiplier * (mInstanceId + 1)))); // We make allocations between
 		                                                                          // different instances incompatible by
 		                                                                          // tweaking their return values.
-		eastl::fill(p8, p8 + kMultiplier, 0xff);
+		std::fill(p8, p8 + kMultiplier, static_cast<uint8_t>(0xff));
 		EA_ANALYSIS_ASSUME(p8 != NULL);
 		*p8 = mInstanceId;
 		return p8 + (kMultiplier * (mInstanceId + 1));
@@ -1440,11 +1442,11 @@ inline bool operator!=(const ThrowingAllocator<initialShouldThrow>&, const Throw
 ///////////////////////////////////////////////////////////////////////////////
 // Helper utility that does a case insensitive string comparsion with two sets of overloads
 //
-struct TestStrCmpI_2
-{
-	bool operator()(const char* pCStr, const eastl::string& str) const { return str.comparei(pCStr) == 0; }
-	bool operator()(const eastl::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
-};
+// struct TestStrCmpI_2
+// {
+// 	bool operator()(const char* pCStr, const std::string& str) const { return str.comparei(pCStr) == 0; }
+// 	bool operator()(const std::string& str, const char* pCStr) const { return str.comparei(pCStr) == 0; }
+// };
 
 
 ///////////////////////////////////////////////////////////////////////////////

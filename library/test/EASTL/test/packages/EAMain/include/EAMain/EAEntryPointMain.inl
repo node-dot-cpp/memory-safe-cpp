@@ -156,7 +156,7 @@ namespace EA
         return returnValue;
     }
 
-    int WINAPI wWinMainShared(HINSTANCE /*instance*/, HINSTANCE /*prevInstance*/, LPWSTR wCmdLine, int /*cmdShow*/)
+    int WINAPI wWinMainShared(HINSTANCE /*instance*/, HINSTANCE /*prevInstance*/, LPWSTR /*wCmdLine*/, int /*cmdShow*/)
     {
         int       returnValue = 1;
         int       argc  = 0;

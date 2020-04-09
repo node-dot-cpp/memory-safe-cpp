@@ -797,7 +797,7 @@ EA::EAMain::ReportFunction Test::GetReportFunction() const
 }
 
 
-void Test::GetName(eastl::string& sName) const
+void Test::GetName(std::string& sName) const
 {
     sName.assign(msTestName.data(), msTestName.length());
 }
@@ -964,7 +964,7 @@ void TestCollection::AddTests(const TestCollection *pCollection)
 
     if(nTotalTests)
     {
-        eastl::vector<Test*> tests(nTotalTests);
+        std::vector<Test*> tests(nTotalTests);
         pCollection->EnumerateTests(tests.data(), nTotalTests);
 
         for(eastl_size_t i = 0; i < nTotalTests; ++i)
@@ -995,7 +995,7 @@ bool TestCollection::RemoveTest(Test* pTest, bool bDeleteIfOwned)
 
 bool TestCollection::RemoveTest(const char* pTestName, bool bDeleteIfOwned)
 {
-    eastl::string sName;
+    std::string sName;
 
     for(TestArray::iterator it(mTests.begin()); it != mTests.end(); ++it)
     {
@@ -1019,7 +1019,7 @@ Test* TestCollection::FindTest(const char* pTestName)
 
 TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bool bRecursive)
 {
-    eastl::string sNameCurrent;
+    std::string sNameCurrent;
 
     // Check each of our child tests directly against pTestName.
     for(TestArray::iterator it(mTests.begin()); it != mTests.end(); ++it)
@@ -1027,7 +1027,8 @@ TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bo
         TestInfo& testInfo = *it;
         testInfo.mpTest->GetName(sNameCurrent);
 
-        if(sNameCurrent.comparei(pTestName) == 0)
+        // if(sNameCurrent.comparei(pTestName) == 0)
+        if(sNameCurrent == pTestName)
             return &testInfo;
     }
 
@@ -1324,7 +1325,7 @@ void TestSuite::WriteReport()
 
             if(resultInfo.mnResult == kTestResultNone)
             {
-                eastl::string sName;
+                std::string sName;
                 pTest->GetName(sName);
                 EA::EAMain::Report("Test not run: %s\n", sName.c_str());
             }
@@ -1625,8 +1626,8 @@ Cleanup:
 
 void TestApplication::PrintUsage()
 {
-    eastl::string sTestName1("MyTest1"), sTestName2("MyTest2");
-    eastl::string sAppName("Tests.exe");
+    std::string sTestName1("MyTest1"), sTestName2("MyTest2");
+    std::string sAppName("Tests.exe");
 
     if(mTests.size() >= 1)
         mTests[0].mpTest->GetName(sTestName1); 
@@ -1661,7 +1662,7 @@ void TestApplication::PrintUsage()
 
 void TestApplication::PrintTestNames(bool /*bDetail*/)
 {
-    eastl::string sName;
+    std::string sName;
 
     // To do: We need top support the bDetailArgument. In doing so, 
     // we may want to have them print using our '/' notation to denote the 

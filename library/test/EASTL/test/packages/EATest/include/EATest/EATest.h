@@ -64,8 +64,9 @@
 
 
 #include <EATest/internal/Config.h>
-#include <EASTL/string.h>
-#include <EASTL/vector.h>
+#include <EASTL/internal/config.h> // for eastl_size_t
+#include <string>
+#include <vector>
 #include <stddef.h>
 #include <limits.h>
 #include "EAMain/EAMain.h"
@@ -641,7 +642,7 @@ namespace EA
             ///
             /// Returns the name of the Test as a string.
             ///
-            virtual void GetName(eastl::string& sName) const;
+            virtual void GetName(std::string& sName) const;
 
             /// GetParentSuite
             ///
@@ -714,7 +715,7 @@ namespace EA
         protected:
             friend class TestSuite;
 
-            eastl::string   msTestName;
+            std::string   msTestName;
             TestSuite*      mpParentSuite;
             size_t          mnSuccessCount;
             size_t          mnErrorCount;
@@ -1038,7 +1039,7 @@ namespace EA
                 Test* mpTest;        /// Pointer to test object itself.
                 bool  mbOwned;       /// If true, we delete mpTest on shutdown or test removal.
             };
-            typedef eastl::vector<TestInfo> TestArray;
+            typedef std::vector<TestInfo> TestArray;
 
             TestInfo* FindTestInfo(const char* pTestName, bool bRecursive);
 
@@ -1216,7 +1217,7 @@ namespace EA
                 Test* mpTest;       /// Pointer to test object itself.
                 int   mnResult;     /// Stores result of last Run of mpTest.
             };
-            typedef eastl::vector<ResultInfo> ResultArray;
+            typedef std::vector<ResultInfo> ResultArray;
 
             void Run(ResultInfo& resultInfo);
 

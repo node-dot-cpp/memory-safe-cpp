@@ -24,7 +24,7 @@ namespace EAMain
     public:
         virtual ~IChannel() {}
         virtual void Init() {}
-        virtual void Send(const char8_t* pData) {}
+        virtual void Send(const char8_t* /*pData*/) {}
         virtual void Shutdown() {}
     };
 
