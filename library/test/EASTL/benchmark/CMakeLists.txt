@@ -59,13 +59,13 @@ add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)  # silence std::has
 #-------------------------------------------------------------------------------------------
 add_executable(EASTLBenchmarks ${EASTLBENCHMARK_SOURCES})
 
-#set(THREADS_PREFER_PTHREAD_FLAG ON)
-#find_package(Threads REQUIRED)
+set(THREADS_PREFER_PTHREAD_FLAG ON)
+find_package(Threads REQUIRED)
 
-#set(EASTLBenchmark_Libraries
-#    EASTL
-#    EATest)
-#target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries} Threads::Threads)
+set(EASTLBenchmark_Libraries
+    EASTL
+    EATest)
+target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries} Threads::Threads)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
