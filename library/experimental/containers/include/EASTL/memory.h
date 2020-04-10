@@ -93,11 +93,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_MEMORY_H
-#define SAFEMEMORY_EASTL_MEMORY_H
+#ifndef EASTL_MEMORY_H
+#define EASTL_MEMORY_H
 
 
-#include <safememory/EASTL/internal/config.h>
+#include <EASTL/internal/config.h>
 // #include <EASTL/internal/memory_base.h>
 // #include <EASTL/internal/generic_iterator.h>
 // #include <EASTL/internal/pair_fwd_decls.h>
@@ -106,7 +106,7 @@
 // #include <EASTL/algorithm.h>
 // #include <EASTL/type_traits.h>
 // #include <EASTL/allocator.h>
-#include <safememory/EASTL/iterator.h>
+#include <EASTL/iterator.h>
 // #include <EASTL/utility.h>
 // #include <EASTL/numeric_limits.h>
 #include <memory>

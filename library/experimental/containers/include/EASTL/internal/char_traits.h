@@ -41,15 +41,15 @@
 // http://en.cppreference.com/w/cpp/string/char_traits
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
-#define SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
+#ifndef EASTL_INTERNAL_CHAR_TRAITS_H
+#define EASTL_INTERNAL_CHAR_TRAITS_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/type_traits.h>
+#include <EASTL/internal/config.h>
+#include <EASTL/type_traits.h>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <ctype.h>              // toupper, etc.
@@ -225,8 +225,8 @@ static_assert((sizeof(wchar_t) == sizeof(char16_t)) || (sizeof(wchar_t) == sizeo
 		for(; n > 0; ++p1, ++p2, --n)
 		{
 			if(*p1 != *p2)
-				return (static_cast<typename make_unsigned<T>::type>(*p1) < 
-						static_cast<typename make_unsigned<T>::type>(*p2)) ? -1 : 1;
+				return (static_cast<typename std::make_unsigned<T>::type>(*p1) < 
+						static_cast<typename std::make_unsigned<T>::type>(*p2)) ? -1 : 1;
 		}
 		return 0;
 	}
@@ -246,8 +246,8 @@ static_assert((sizeof(wchar_t) == sizeof(char16_t)) || (sizeof(wchar_t) == sizeo
 			const T c2 = CharToLower(*p2);
 
 			if(c1 != c2)
-				return (static_cast<typename make_unsigned<T>::type>(c1) < 
-						static_cast<typename make_unsigned<T>::type>(c2)) ? -1 : 1;
+				return (static_cast<typename std::make_unsigned<T>::type>(c1) < 
+						static_cast<typename std::make_unsigned<T>::type>(c2)) ? -1 : 1;
 		}
 		return 0;
 	}

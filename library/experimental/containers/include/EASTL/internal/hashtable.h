@@ -53,8 +53,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
-#define SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
+#ifndef EASTL_INTERNAL_HASHTABLE_H
+#define EASTL_INTERNAL_HASHTABLE_H
 
 
 //#include <EABase/eabase.h>
@@ -62,8 +62,8 @@
 	#pragma once
 #endif
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/type_traits.h>
+#include <EASTL/internal/config.h>
+#include <EASTL/type_traits.h>
 //#include <EASTL/allocator.h>
 //#include <EASTL/iterator.h>
 #include <functional>
@@ -72,7 +72,7 @@
 #include <initializer_list>
 #include <tuple>
 #include <string>
-#include <safe_ptr_for_map.h>
+#include <safememory/safe_ptr_for_map.h>
 
 // EA_DISABLE_ALL_VC_WARNINGS()
 // 	#include <new>

@@ -34,8 +34,8 @@
 /////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_INTERNAL_CONFIG_H
-#define SAFEMEMORY_EASTL_INTERNAL_CONFIG_H
+#ifndef EASTL_INTERNAL_CONFIG_H
+#define EASTL_INTERNAL_CONFIG_H
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -52,10 +52,13 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 #define EASTL_EXCEPTIONS_ENABLED 1
-#define EA_NOEXCEPT noexcept
-#define EA_NOEXCEPT_IF(predicate) noexcept(predicate)
-#define EA_NOEXCEPT_EXPR(expression) noexcept(expression)
+#define EASTL_ASSERT_ENABLED 0
 
+#if !defined(EA_NOEXCEPT)
+	#define EA_NOEXCEPT noexcept
+	#define EA_NOEXCEPT_IF(predicate) noexcept((predicate))
+	#define EA_NOEXCEPT_EXPR(expression) noexcept((expression))
+#endif
 
 // ///////////////////////////////////////////////////////////////////////////////
 // // EASTL_USER_CONFIG_HEADER
@@ -1089,15 +1092,15 @@
 // // having a lot of headers behind <iterator>.
 // ///////////////////////////////////////////////////////////////////////////////
 
-// #ifndef EASTL_STD_ITERATOR_CATEGORY_ENABLED
-// 	#define EASTL_STD_ITERATOR_CATEGORY_ENABLED 1
-// #endif
+#ifndef EASTL_STD_ITERATOR_CATEGORY_ENABLED
+	#define EASTL_STD_ITERATOR_CATEGORY_ENABLED 1
+#endif
 
-// #if EASTL_STD_ITERATOR_CATEGORY_ENABLED
-// 	#define EASTL_ITC_NS std
-// #else
-// 	#define EASTL_ITC_NS eastl
-// #endif
+#if EASTL_STD_ITERATOR_CATEGORY_ENABLED
+	#define EASTL_ITC_NS std
+#else
+	#define EASTL_ITC_NS eastl
+#endif
 
 
 

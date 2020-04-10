@@ -41,14 +41,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_HASH_MAP_H
-#define SAFEMEMORY_EASTL_HASH_MAP_H
+#ifndef EASTL_HASH_MAP_H
+#define EASTL_HASH_MAP_H
 
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/internal/hashtable.h>
+#include <EASTL/internal/config.h>
+#include <EASTL/internal/hashtable.h>
 #include <functional>
-#include <safememory/EASTL/utility.h>
+#include <EASTL/utility.h>
 #include <utility>
 
 // #if defined(EA_PRAGMA_ONCE_SUPPORTED)

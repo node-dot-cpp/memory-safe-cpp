@@ -28,10 +28,10 @@
 #ifndef SAFE_PTR_FOR_MAP_H
 #define SAFE_PTR_FOR_MAP_H
 
-#include "safe_ptr.h"
-#include "safe_ptr_with_zero_offset.h"
+#include <safe_ptr.h>
+#include <safe_ptr_with_zero_offset.h>
 
-namespace nodecpp::safememory::lib_helpers
+namespace safememory::lib_helpers
 {
 
 template<class _Ty>
@@ -74,6 +74,6 @@ void EASTLFree(void *ptr, size_t sz) {
 }
 
 
-} // namespace nodecpp::safememory::lib_helpers
+} // namespace safememory::lib_helpers
 
 #endif // SAFE_PTR_FOR_MAP_H

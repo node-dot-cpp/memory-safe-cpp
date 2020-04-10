@@ -33,8 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_UTILITY_H
-#define SAFEMEMORY_EASTL_UTILITY_H
+#ifndef EASTL_UTILITY_H
+#define EASTL_UTILITY_H
 
 
 // #include <EASTL/internal/config.h>
