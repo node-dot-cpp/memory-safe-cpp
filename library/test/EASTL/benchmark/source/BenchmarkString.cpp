@@ -8,6 +8,7 @@
 #include <EAStdC/EAStopwatch.h>
 #include <algorithm>
 #include <string>
+#include <safememory/string.h>
 //#include <EASTL/sort.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -17,15 +18,15 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-namespace safememory {
-	template<class T>
-	using basic_string = std::basic_string<T>;
+// namespace safememory {
+// 	template<class T>
+// 	using basic_string = std::basic_string<T>;
 
-	using string = std::string;
-	using wstring = std::wstring;
-	using u16string = std::u16string;
-	using u32string = std::u32string;
-}
+// 	using string = std::string;
+// 	using wstring = std::wstring;
+// 	using u16string = std::u16string;
+// 	using u32string = std::u32string;
+// }
 
 using namespace EA;
 
@@ -275,22 +276,22 @@ void BenchmarkString()
 			// Test replace(size_type position, size_type n1, const value_type* p, size_type n2)
 			///////////////////////////////
 
-			const int kReplace1Size = 8;
-			const char8_t pReplace1_8[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			// const int kReplace1Size = 8;
+			// const char8_t pReplace1_8[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			TestReplace1(stopwatch1, ss8, pReplace1_8, kReplace1Size);
-			TestReplace1(stopwatch2, es8, pReplace1_8, kReplace1Size);
+			// TestReplace1(stopwatch1, ss8, pReplace1_8, kReplace1Size);
+			// TestReplace1(stopwatch2, es8, pReplace1_8, kReplace1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			const char16_t pReplace1_16[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			// const char16_t pReplace1_16[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			TestReplace1(stopwatch1, ss16, pReplace1_16, kReplace1Size);
-			TestReplace1(stopwatch2, es16, pReplace1_16, kReplace1Size);
+			// TestReplace1(stopwatch1, ss16, pReplace1_16, kReplace1Size);
+			// TestReplace1(stopwatch2, es16, pReplace1_16, kReplace1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
@@ -365,47 +366,47 @@ void BenchmarkString()
 			// Test find(const value_type* p, size_type position, size_type n)
 			///////////////////////////////
 
-			const int kFind1Size = 7;
-			const char8_t pFind1_8[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			// const int kFind1Size = 7;
+			// const char8_t pFind1_8[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			ss8.insert(ss8.size() / 2, pFind1_8);
-			es8.insert(es8.size() / 2, pFind1_8);
+			// ss8.insert(ss8.size() / 2, pFind1_8);
+			// es8.insert(es8.size() / 2, pFind1_8);
 
-			TestFind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			TestFind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			// TestFind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
+			// TestFind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			const char16_t pFind1_16[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			// const char16_t pFind1_16[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			#if !defined(EA_PLATFORM_IPHONE) && (!defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_MINGW)) // Crashes on iPhone.
-			  ss16.insert(ss8.size() / 2, pFind1_16);
-			#endif
-			es16.insert(es8.size() / 2, pFind1_16);
+			// #if !defined(EA_PLATFORM_IPHONE) && (!defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_MINGW)) // Crashes on iPhone.
+			//   ss16.insert(ss8.size() / 2, pFind1_16);
+			// #endif
+			// es16.insert(es8.size() / 2, pFind1_16);
 
-			TestFind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			TestFind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			// TestFind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
+			// TestFind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
 			// Test rfind(const value_type* p, size_type position, size_type n)
 			///////////////////////////////
 
-			TestRfind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			TestRfind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			// TestRfind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
+			// TestRfind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			TestRfind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			TestRfind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			// TestRfind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
+			// TestRfind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			//NOTICE (RASHIN):
@@ -416,73 +417,73 @@ void BenchmarkString()
 			// Test find_first_of(const value_type* p, size_type position, size_type n
 			///////////////////////////////
 
-			const int kFindOf1Size = 7;
-			const char8_t pFindOf1_8[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
+			// const int kFindOf1Size = 7;
+			// const char8_t pFindOf1_8[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
 
-			TestFirstOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
-			TestFirstOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
+			// TestFirstOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
+			// TestFirstOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			const char16_t pFindOf1_16[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
+			// const char16_t pFindOf1_16[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
 
-			TestFirstOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
-			TestFirstOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
+			// TestFirstOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
+			// TestFirstOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
 			// Test find_last_of(const value_type* p, size_type position, size_type n
 			///////////////////////////////
 
-			TestLastOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
-			TestLastOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
+			// TestLastOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
+			// TestLastOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			TestLastOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
-			TestLastOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
+			// TestLastOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
+			// TestLastOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
 			// Test find_first_not_of(const value_type* p, size_type position, size_type n
 			///////////////////////////////
 
-			TestFirstNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			TestFirstNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			// TestFirstNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
+			// TestFirstNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			TestFirstNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			TestFirstNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			// TestFirstNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
+			// TestFirstNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
 			// Test find_last_of(const value_type* p, size_type position, size_type n
 			///////////////////////////////
 
-			TestLastNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			TestLastNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			// TestLastNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
+			// TestLastNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			TestLastNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			TestLastNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			// TestLastNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
+			// TestLastNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 		#endif
 

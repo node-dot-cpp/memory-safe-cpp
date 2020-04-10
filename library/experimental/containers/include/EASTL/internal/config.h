@@ -53,6 +53,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 #define EASTL_EXCEPTIONS_ENABLED 1
 #define EASTL_ASSERT_ENABLED 0
+#define EASTL_EASTDC_VSNPRINTF 0
 
 #if !defined(EA_NOEXCEPT)
 	#define EA_NOEXCEPT noexcept
@@ -103,31 +104,31 @@
 // #endif
 
 
-// ///////////////////////////////////////////////////////////////////////////////
-// // EASTL_VERSION
-// //
-// // We more or less follow the conventional EA packaging approach to versioning
-// // here. A primary distinction here is that minor versions are defined as two
-// // digit entities (e.g. .03") instead of minimal digit entities ".3"). The logic
-// // here is that the value is a counter and not a floating point fraction.
-// // Note that the major version doesn't have leading zeros.
-// //
-// // Example version strings:
-// //      "0.91.00"   // Major version 0, minor version 91, patch version 0.
-// //      "1.00.00"   // Major version 1, minor and patch version 0.
-// //      "3.10.02"   // Major version 3, minor version 10, patch version 02.
-// //     "12.03.01"   // Major version 12, minor version 03, patch version
-// //
-// // Example usage:
-// //     printf("EASTL version: %s", EASTL_VERSION);
-// //     printf("EASTL version: %d.%d.%d", EASTL_VERSION_N / 10000 % 100, EASTL_VERSION_N / 100 % 100, EASTL_VERSION_N % 100);
-// //
-// ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_VERSION
+//
+// We more or less follow the conventional EA packaging approach to versioning
+// here. A primary distinction here is that minor versions are defined as two
+// digit entities (e.g. .03") instead of minimal digit entities ".3"). The logic
+// here is that the value is a counter and not a floating point fraction.
+// Note that the major version doesn't have leading zeros.
+//
+// Example version strings:
+//      "0.91.00"   // Major version 0, minor version 91, patch version 0.
+//      "1.00.00"   // Major version 1, minor and patch version 0.
+//      "3.10.02"   // Major version 3, minor version 10, patch version 02.
+//     "12.03.01"   // Major version 12, minor version 03, patch version
+//
+// Example usage:
+//     printf("EASTL version: %s", EASTL_VERSION);
+//     printf("EASTL version: %d.%d.%d", EASTL_VERSION_N / 10000 % 100, EASTL_VERSION_N / 100 % 100, EASTL_VERSION_N % 100);
+//
+///////////////////////////////////////////////////////////////////////////////
 
-// #ifndef EASTL_VERSION
-// 	#define EASTL_VERSION   "3.15.00"
-// 	#define EASTL_VERSION_N  31500
-// #endif
+#ifndef EASTL_VERSION
+	#define EASTL_VERSION   "3.15.00"
+	#define EASTL_VERSION_N  31500
+#endif
 
 
 // ///////////////////////////////////////////////////////////////////////////////
@@ -475,33 +476,33 @@
 
 
 
-// ///////////////////////////////////////////////////////////////////////////////
-// // EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-// //
-// // Defined as 0 or non-zero. Default is same as EASTL_ASSERT_ENABLED.
-// // This is like EASTL_ASSERT_ENABLED, except it is for empty container
-// // references. Sometime people like to be able to take a reference to
-// // the front of the container, but not use it if the container is empty.
-// // In practice it's often easier and more efficient to do this than to write
-// // extra code to check if the container is empty.
-// //
-// // Example usage:
-// //     template <typename T, typename Allocator>
-// //     inline typename vector<T, Allocator>::reference
-// //     vector<T, Allocator>::front()
-// //     {
-// //         #if EASTL_ASSERT_ENABLED
-// //             EASTL_ASSERT(mpEnd > mpBegin);
-// //         #endif
-// //
-// //         return *mpBegin;
-// //     }
-// //
-// ///////////////////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+//
+// Defined as 0 or non-zero. Default is same as EASTL_ASSERT_ENABLED.
+// This is like EASTL_ASSERT_ENABLED, except it is for empty container
+// references. Sometime people like to be able to take a reference to
+// the front of the container, but not use it if the container is empty.
+// In practice it's often easier and more efficient to do this than to write
+// extra code to check if the container is empty.
+//
+// Example usage:
+//     template <typename T, typename Allocator>
+//     inline typename vector<T, Allocator>::reference
+//     vector<T, Allocator>::front()
+//     {
+//         #if EASTL_ASSERT_ENABLED
+//             EASTL_ASSERT(mpEnd > mpBegin);
+//         #endif
+//
+//         return *mpBegin;
+//     }
+//
+///////////////////////////////////////////////////////////////////////////////
 
-// #ifndef EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-// 	#define EASTL_EMPTY_REFERENCE_ASSERT_ENABLED EASTL_ASSERT_ENABLED
-// #endif
+#ifndef EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
+	#define EASTL_EMPTY_REFERENCE_ASSERT_ENABLED EASTL_ASSERT_ENABLED
+#endif
 
 
 
@@ -1469,19 +1470,19 @@
 // 	#endif
 // #endif
 
-// ///////////////////////////////////////////////////////////////////////////////
-// // EASTL_VARIABLE_TEMPLATES_ENABLED
-// //
-// // Defined as 0 or 1.
-// // If enabled then C++11-like functionality with variable templates is enabled.
-// ///////////////////////////////////////////////////////////////////////////////
-// #if !defined(EASTL_VARIABLE_TEMPLATES_ENABLED)
-// 	#if((EABASE_VERSION_N < 20605) || defined(EA_COMPILER_NO_VARIABLE_TEMPLATES))
-// 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 0
-// 	#else
-// 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
-// 	#endif
-// #endif
+///////////////////////////////////////////////////////////////////////////////
+// EASTL_VARIABLE_TEMPLATES_ENABLED
+//
+// Defined as 0 or 1.
+// If enabled then C++11-like functionality with variable templates is enabled.
+///////////////////////////////////////////////////////////////////////////////
+#if !defined(EASTL_VARIABLE_TEMPLATES_ENABLED)
+	#if((EABASE_VERSION_N < 20605) || defined(EA_COMPILER_NO_VARIABLE_TEMPLATES))
+		#define EASTL_VARIABLE_TEMPLATES_ENABLED 0
+	#else
+		#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
+	#endif
+#endif
 
 // ///////////////////////////////////////////////////////////////////////////////
 // // EASTL_INLINE_VARIABLE_ENABLED

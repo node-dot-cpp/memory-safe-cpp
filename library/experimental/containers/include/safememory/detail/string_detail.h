@@ -253,9 +253,9 @@ class alignas(T) alignas(T*) array_of2
 	//TODO fix sizeof(this) used for allocation
 	T _begin[1];
 
+	[[noreturn]]
 	void throwPointerOutOfRange() const {
-		//TODO
-		throw 0;
+		throw std::out_of_range("array_of2 -- out of range");
 	}
 
 public:
@@ -427,6 +427,7 @@ public:
 	constexpr explicit safe_iterator_impl(soft_array_of_ptr_type ptr, size_t ix) : ptr(ptr), ix(ix) {}
 
 	constexpr safe_iterator_impl(const safe_iterator_impl& ri) = default;
+	constexpr safe_iterator_impl& operator=(const safe_iterator_impl& ri) = default;
 
 	constexpr pointer get_raw_ptr() const
 	{
@@ -439,7 +440,7 @@ public:
 	}
 
 	constexpr pointer operator->() const
-		{ return &(operator*()); }
+		{ return get_raw_ptr(); }
 
 	constexpr safe_iterator_impl& operator++()
 		{ ++ix; return *this; }
