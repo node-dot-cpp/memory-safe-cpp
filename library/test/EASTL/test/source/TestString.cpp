@@ -9,16 +9,17 @@
 #include <string>
 #include <algorithm>
 #include <EASTL/allocator_malloc.h>
+#include <safememory/string.h>
 
-namespace safememory {
-	template<class T, class Alloc>
-	using basic_string = std::basic_string<T, Alloc>;
+// namespace safememory {
+// 	template<class T, class Alloc>
+// 	using basic_string = std::basic_string<T, Alloc>;
 
-	using string = std::string;
-	using wstring = std::wstring;
-	using u16string = std::u16string;
-	using u32string = std::u32string;
-}
+// 	using string = std::string;
+// 	using wstring = std::wstring;
+// 	using u16string = std::u16string;
+// 	using u32string = std::u32string;
+// }
 
 template<typename StringType>
 bool validate(const StringType& /*str*/) {

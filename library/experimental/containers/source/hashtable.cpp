@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <EASTL/internal/hashtable.h>
+#include <safememory/EASTL/internal/hashtable.h>
 #include <utility>
 #include <math.h>  // Not all compilers support <cmath> and std::ceilf(), which we need below.
 #include <stddef.h>
@@ -44,7 +44,7 @@
 #endif
 
 
-namespace nodecpp
+namespace safememory
 {
 
 	/// gpEmptyBucketArray
@@ -204,7 +204,7 @@ namespace nodecpp
 	}
 
 
-} // namespace nodecpp
+} // namespace safememory
 
 
 

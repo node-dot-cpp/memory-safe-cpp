@@ -9,6 +9,7 @@ project(SafeMemory CXX)
 #-------------------------------------------------------------------------------------------
 add_library(SafeMemory
   src/safe_ptr.cpp
+  experimental/containers/source/hashtable.cpp
   src/iibmalloc/src/iibmalloc.cpp
   src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
   src/iibmalloc/src/foundation/src/nodecpp_assert.cpp
@@ -25,10 +26,14 @@ set_target_properties(SafeMemory PROPERTIES CXX_STANDARD 17)
 #-------------------------------------------------------------------------------------------
 # Defines
 #-------------------------------------------------------------------------------------------
-#add_definitions(-D_CHAR16T)
 add_compile_options( /wd4996 )
 add_compile_options( /wd4267 )
 add_compile_options( /wd4535 )
+add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-D_SCL_SECURE_NO_WARNINGS)
+add_definitions(-DEASTL_OPENSOURCE=1)
+add_definitions(-D_CHAR16T)
+add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 
 #-------------------------------------------------------------------------------------------

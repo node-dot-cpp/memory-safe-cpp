@@ -117,7 +117,7 @@ public:
 			throwPointerOutOfRange();
 
 		StackPtrForMakeOwningCallRiia Riia(_end);
-		::new (static_cast<void*>(_end)) T(std::forward<Args>(args)...);
+		::new (static_cast<void*>(_end)) T(std::forward<ARGS>(args)...);
 		++_end;
 	}
 

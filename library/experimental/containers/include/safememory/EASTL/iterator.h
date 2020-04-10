@@ -33,11 +33,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_ITERATOR_H
-#define EASTL_ITERATOR_H
+#ifndef SAFEMEMORY_EASTL_ITERATOR_H
+#define SAFEMEMORY_EASTL_ITERATOR_H
 
 
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/config.h>
 // #include <EASTL/internal/move_help.h>
 // #include <EASTL/initializer_list.h>
 #include <iterator>
@@ -79,25 +79,25 @@
 
 
 
-namespace nodecpp
+namespace safememory
 {
-	// /// iterator_status_flag
-	// /// 
-	// /// Defines the validity status of an iterator. This is primarily used for 
-	// /// iterator validation in debug builds. These are implemented as OR-able 
-	// /// flags (as opposed to mutually exclusive values) in order to deal with 
-	// /// the nature of iterator status. In particular, an iterator may be valid
-	// /// but not dereferencable, as in the case with an iterator to container end().
-	// /// An iterator may be valid but also dereferencable, as in the case with an
-	// /// iterator to container begin().
-	// ///
-	// enum iterator_status_flag
-	// {
-	// 	isf_none            = 0x00, /// This is called none and not called invalid because it is not strictly the opposite of invalid.
-	// 	isf_valid           = 0x01, /// The iterator is valid, which means it is in the range of [begin, end].
-	// 	isf_current         = 0x02, /// The iterator is valid and points to the same element it did when created. For example, if an iterator points to vector::begin() but an element is inserted at the front, the iterator is valid but not current. Modification of elements in place do not make iterators non-current.
-	// 	isf_can_dereference = 0x04  /// The iterator is dereferencable, which means it is in the range of [begin, end). It may or may not be current.
-	// };
+	/// iterator_status_flag
+	/// 
+	/// Defines the validity status of an iterator. This is primarily used for 
+	/// iterator validation in debug builds. These are implemented as OR-able 
+	/// flags (as opposed to mutually exclusive values) in order to deal with 
+	/// the nature of iterator status. In particular, an iterator may be valid
+	/// but not dereferencable, as in the case with an iterator to container end().
+	/// An iterator may be valid but also dereferencable, as in the case with an
+	/// iterator to container begin().
+	///
+	enum iterator_status_flag
+	{
+		isf_none            = 0x00, /// This is called none and not called invalid because it is not strictly the opposite of invalid.
+		isf_valid           = 0x01, /// The iterator is valid, which means it is in the range of [begin, end].
+		isf_current         = 0x02, /// The iterator is valid and points to the same element it did when created. For example, if an iterator points to vector::begin() but an element is inserted at the front, the iterator is valid but not current. Modification of elements in place do not make iterators non-current.
+		isf_can_dereference = 0x04  /// The iterator is dereferencable, which means it is in the range of [begin, end). It may or may not be current.
+	};
 
 
 
@@ -1210,7 +1210,7 @@ namespace nodecpp
 
 // 	#endif // EASTL_BEGIN_END_ENABLED
 
-} // namespace nodecpp
+} // namespace safememory
 
 
 

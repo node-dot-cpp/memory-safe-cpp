@@ -127,6 +127,7 @@
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
+#include <safememory/EASTL/iterator.h>
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
@@ -165,7 +166,7 @@
 #endif
 
 
-#include <EASTL/internal/char_traits.h>
+#include <safememory/EASTL/internal/char_traits.h>
 //#include <string_view>
 
 
@@ -625,8 +626,8 @@ namespace safememory
 		template <typename OtherCharType>
 		this_type& assign_convert_unsafe(const OtherCharType* p, size_type n);
 
-		template <typename OtherStringType>
-		this_type& assign_convert(const OtherStringType& x);
+		template <typename OtherCharType>
+		this_type& assign_convert(const basic_string<OtherCharType>& x);
 
 		template <typename OtherCharType>
 		this_type& assign_convert(basic_string_literal<OtherCharType> p);
@@ -709,8 +710,8 @@ namespace safememory
 		template <typename OtherCharType>
 		this_type& append_convert_unsafe(const OtherCharType* p, size_type n);
 
-		template <typename OtherStringType>
-		this_type& append_convert(const OtherStringType& x);
+		template <typename OtherCharType>
+		this_type& append_convert(const basic_string<OtherCharType>& x);
 
 		template <typename OtherCharType>
 		this_type& append_convert(basic_string_literal<OtherCharType> x);
@@ -1828,10 +1829,9 @@ namespace safememory
 		return append_convert_unsafe(pOther, (size_type)CharStrlen(pOther));
 	}
 
-
 	template <typename T, typename Allocator>
-	template <typename OtherStringType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const OtherStringType& x)
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::append_convert(const basic_string<OtherCharType>& x)
 	{
 		return append_convert_unsafe(x.c_str(), x.length());
 	}
@@ -1857,7 +1857,7 @@ namespace safememory
 		{
 			pointer pSelfBufferCurrent = selfBuffer;
 			DecodePart(pOther, pOtherEnd, pSelfBufferCurrent, selfBufferEnd);   // Write pOther to pSelfBuffer, converting encoding as we go. We currently ignore the return value, as we don't yet have a plan for handling encoding errors.
-			append(selfBuffer, pSelfBufferCurrent);
+			append_unsafe(selfBuffer, pSelfBufferCurrent);
 		}
 
 		return *this;
@@ -2153,7 +2153,7 @@ namespace safememory
 		else
 		{
 			memmove(internalLayout().BeginPtr(), pBegin, (size_t)(internalLayout().GetSize()) * sizeof(value_type));
-			append(pBegin + internalLayout().GetSize(), pEnd);
+			append_unsafe(pBegin + internalLayout().GetSize(), pEnd);
 		}
 		return *this;
 	}
@@ -2205,10 +2205,9 @@ namespace safememory
 		return *this;
 	}
 
-
 	template <typename T, typename Allocator>
-	template <typename OtherStringType>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const OtherStringType& x)
+	template <typename OtherCharType>
+	basic_string<T, Allocator>& basic_string<T, Allocator>::assign_convert(const basic_string<OtherCharType>& x)
 	{
 		clear();
 		append_convert_unsafe(x.data(), x.length());
@@ -2707,7 +2706,7 @@ namespace safememory
 		// #endif
 
 //		return replace_unsafe(internalLayout().BeginPtr() + pos1, internalLayout().BeginPtr() + pos1 + nLength1, x.internalLayout().BeginPtr() + pos2, x.internalLayout().BeginPtr() + pos2 + nLength2);
-		return replace_unsafe(p1.fist, p1.second, p2.first, p2.second);
+		return replace_unsafe(p1.first, p1.second, p2.first, p2.second);
 	}
 
 
@@ -3341,13 +3340,12 @@ namespace safememory
 		// 		EASTL_FAIL_MSG("basic_string::substr -- invalid position");
 		// #endif
 
-		const_pointer_pair p = toPtrPair(*this, position, n);
 			// C++ std says the return string allocator must be default constructed, not a copy of this->get_allocator()
 			// return basic_string(
 			// 	internalLayout().BeginPtr() + position,
 			// 	internalLayout().BeginPtr() + position +
 			// 		std::min(n, internalLayout().GetSize() - position)/*, get_allocator()*/);
-			return basic_string(p.first, p.second);
+		return basic_string(*this, position, n);
 	}
 
 
@@ -3366,7 +3364,7 @@ namespace safememory
 		// 		ThrowRangeException();
 		// #endif
 
-		const_pointer_pair p = toPtrPair(*this, position, n);
+		const_pointer_pair p = toPtrPair(*this, pos1, n1);
 
 		// return compare_unsafe(
 		// 	internalLayout().BeginPtr() + pos1,
@@ -3899,7 +3897,7 @@ namespace safememory
 	{
 		//lit non-null warrantied
 
-		T* p = lit.c_str();
+		const_pointer p = lit.c_str();
 		return const_pointer_pair(p, p + CharStrlen(p));
 	}
 
@@ -3913,7 +3911,7 @@ namespace safememory
 			ThrowRangeException();
 
 		const_pointer b = str.internalLayout().BeginPtr() + pos;
-		size_type sz = std::min(n, internalLayout().GetSize() - pos)
+		size_type sz = std::min(n, internalLayout().GetSize() - pos);
 		return const_pointer_pair(b, b + sz);
 	}
 
@@ -4452,14 +4450,14 @@ namespace safememory
 	typedef basic_string<wchar_t> wstring;
 
 	/// string8 / string16 / string32
-	// typedef basic_string<char8_t>  string8;
+	typedef basic_string<char8_t>  string8;
 	typedef basic_string<char16_t> string16;
 	typedef basic_string<char32_t> string32;
 
 	// C++11 string types
-	// typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
-	// typedef basic_string<char16_t> u16string;
-	// typedef basic_string<char32_t> u32string;
+	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
+	typedef basic_string<char16_t> u16string;
+	typedef basic_string<char32_t> u32string;
 
 
 	/// hash<string>

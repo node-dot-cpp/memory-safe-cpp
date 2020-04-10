@@ -1,6 +1,5 @@
 
 
-#include "include/safememory/EASTL/map.h"
 #include "include/safememory/EASTL/unordered_map.h"
 #include "include/safememory/EASTL/string.h"
 #include "include/safememory/EASTL/vector.h"
@@ -23,9 +22,9 @@ void checkMap(T& testMap) {
 
 void randomCheckMap(int sz, int ini) {
 
-    nodecpp::unordered_map<int, bool> testMap;
+    safememory::unordered_map<int, bool> testMap;
 
-    nodecpp::vector<int> v;
+    safememory::vector<int> v;
     v.resize(sz);
     for(int i = 0; i != sz; ++i) {
         v[i] = i;
@@ -61,7 +60,7 @@ void randomCheckMap(int sz, int ini) {
 void mainForMap() {
 
 
-    nodecpp::unordered_map<int, int> aMap;
+    safememory::unordered_map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[2] = 2;

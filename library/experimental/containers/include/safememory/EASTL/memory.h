@@ -93,11 +93,11 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_MEMORY_H
-#define EASTL_MEMORY_H
+#ifndef SAFEMEMORY_EASTL_MEMORY_H
+#define SAFEMEMORY_EASTL_MEMORY_H
 
 
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/config.h>
 // #include <EASTL/internal/memory_base.h>
 // #include <EASTL/internal/generic_iterator.h>
 // #include <EASTL/internal/pair_fwd_decls.h>
@@ -106,7 +106,7 @@
 // #include <EASTL/algorithm.h>
 // #include <EASTL/type_traits.h>
 // #include <EASTL/allocator.h>
-#include <EASTL/iterator.h>
+#include <safememory/EASTL/iterator.h>
 // #include <EASTL/utility.h>
 // #include <EASTL/numeric_limits.h>
 #include <memory>
@@ -128,7 +128,7 @@
 #endif
 
 
-namespace nodecpp
+namespace safememory
 {
 
 	// /// EASTL_TEMP_DEFAULT_NAME
@@ -802,7 +802,7 @@ namespace nodecpp
 	template <typename InputIterator, typename ForwardIterator>
 	inline ForwardIterator uninitialized_move_if_noexcept(InputIterator first, InputIterator last, ForwardIterator dest)
 	{
-		return std::uninitialized_copy(nodecpp::make_move_if_noexcept_iterator(first), nodecpp::make_move_if_noexcept_iterator(last), dest);
+		return std::uninitialized_copy(safememory::make_move_if_noexcept_iterator(first), safememory::make_move_if_noexcept_iterator(last), dest);
 	}
 
 
@@ -812,7 +812,7 @@ namespace nodecpp
 	inline Result uninitialized_move_ptr_if_noexcept(First first, Last last, Result dest)
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
-			return nodecpp::uninitialized_move_if_noexcept(first, last, dest);
+			return safememory::uninitialized_move_if_noexcept(first, last, dest);
 		#else
 			return eastl::uninitialized_move_ptr(first, last, dest);
 		#endif
@@ -1705,7 +1705,7 @@ namespace nodecpp
 	// 		{ return eastl::addressof(r); } // 20.6.3.2: if element_type is (possibly cv-qualified) void, the type of r is unspecified; otherwise, it is T&.
 	// };
 
-} // namespace nodecpp
+} // namespace safememory
 
 // #include <EASTL/internal/allocator_traits.h>
 

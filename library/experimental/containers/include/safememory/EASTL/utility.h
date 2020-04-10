@@ -33,8 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_UTILITY_H
-#define EASTL_UTILITY_H
+#ifndef SAFEMEMORY_EASTL_UTILITY_H
+#define SAFEMEMORY_EASTL_UTILITY_H
 
 
 // #include <EASTL/internal/config.h>
@@ -62,7 +62,7 @@
 
 
 
-namespace nodecpp
+namespace safememory
 {
 
 	// /// swap
@@ -866,7 +866,7 @@ namespace nodecpp
 // #endif  // EASTL_TUPLE_ENABLED
 
 
-}  // namespace nodecpp
+}  // namespace safememory
 
 #ifdef _MSC_VER
 	#pragma warning(pop)

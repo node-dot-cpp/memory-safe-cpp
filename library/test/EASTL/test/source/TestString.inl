@@ -151,21 +151,21 @@ int TEST_STRING_NAME()
 	}
 
 	// explicit basic_string(const allocator_type& allocator);
-	{
-		typename StringType::allocator_type alloc;
-		StringType str(alloc);
-		VERIFY(validate(str));
-	}
+	// {
+	// 	typename StringType::allocator_type alloc;
+	// 	StringType str(alloc);
+	// 	VERIFY(validate(str));
+	// }
 
 	// basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 	{
-		{
-			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"), 26);
-			VERIFY(str[5] == LITERAL('f'));
-			VERIFY(!str.empty());
-			VERIFY(str.length() == 26);
-			VERIFY(validate(str));
-		}
+		// {
+		// 	StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"), 26);
+		// 	VERIFY(str[5] == LITERAL('f'));
+		// 	VERIFY(!str.empty());
+		// 	VERIFY(str.length() == 26);
+		// 	VERIFY(validate(str));
+		// }
 
 		{
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
@@ -231,17 +231,17 @@ int TEST_STRING_NAME()
 	}
 
 	// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-	{
-		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// {
+	// 	StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto* pStart = str1.data() + 5;
-		auto* pEnd = str1.data() + 20;
+	// 	auto* pStart = str1.data() + 5;
+	// 	auto* pEnd = str1.data() + 20;
 
-		StringType str(pStart, pEnd);
-		VERIFY(str == LITERAL("fghijklmnopqrst"));
-		VERIFY(!str.empty());
-		VERIFY(str.size() == 15);
-	}
+	// 	StringType str(pStart, pEnd);
+	// 	VERIFY(str == LITERAL("fghijklmnopqrst"));
+	// 	VERIFY(!str.empty());
+	// 	VERIFY(str.size() == 15);
+	// }
 
 	// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 	// {
@@ -468,16 +468,16 @@ int TEST_STRING_NAME()
 	}
 
 	// this_type& operator=(const value_type* p);
-	{
-		StringType str;
-		str = LITERAL("abcdefghijklmnopqrstuvwxyz");
+	// {
+	// 	StringType str;
+	// 	str = LITERAL("abcdefghijklmnopqrstuvwxyz");
 
-		VERIFY(str[5] == LITERAL('f'));
-		VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		VERIFY(!str.empty());
-		VERIFY(str.length() == 26);
-		VERIFY(validate(str));
-	}
+	// 	VERIFY(str[5] == LITERAL('f'));
+	// 	VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// 	VERIFY(!str.empty());
+	// 	VERIFY(str.length() == 26);
+	// 	VERIFY(validate(str));
+	// }
 
 	// this_type& operator=(value_type c);
 	{
@@ -686,19 +686,19 @@ int TEST_STRING_NAME()
 		VERIFY(validate(str2));
 	}
 
-	// this_type& assign(const value_type* p, size_type n);
+	// this_type& assign_unsafe(const value_type* p, size_type n);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.assign(LITERAL("123456789"), 5);
+		str.assign_unsafe(LITERAL("123456789"), 5);
 
 		VERIFY(str == LITERAL("12345"));
 		VERIFY(validate(str));
 	}
 
-	// this_type& assign(const value_type* p);
+	// this_type& assign_unsafe(const value_type* p);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.assign(LITERAL("123"));
+		str.assign_unsafe(LITERAL("123"));
 
 		VERIFY(str == LITERAL("123"));
 		VERIFY(validate(str));
@@ -713,7 +713,7 @@ int TEST_STRING_NAME()
 		VERIFY(validate(str));
 	}
 
-	// this_type& assign(const value_type* pBegin, const value_type* pEnd);
+	// this_type& assign_unsafe(const value_type* pBegin, const value_type* pEnd);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
@@ -721,7 +721,7 @@ int TEST_STRING_NAME()
 		auto* pBegin = pLiteral + 4;
 		auto* pEnd = pLiteral + 7;
 
-		str.assign(pBegin, pEnd);
+		str.assign_unsafe(pBegin, pEnd);
 
 		VERIFY(str == LITERAL("456"));
 		VERIFY(validate(str));
@@ -759,123 +759,123 @@ int TEST_STRING_NAME()
 	}
 
 	// template <typename OtherCharType>
-	// this_type& assign_convert(const OtherCharType* p);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR8("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR16("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR32("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 	//     str.assign_convert(EA_WCHAR("123456789"));
-	// 	//     VERIFY(str == LITERAL("123456789"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	}
-	// }
+	// this_type& assign_convert_unsafe(const OtherCharType* p);
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR8("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR16("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR32("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    str.assign_convert_unsafe(EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// template <typename OtherCharType>
-	// this_type& assign_convert(const OtherCharType* p, size_type n);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR8("123456789"), 3);
-	// 		VERIFY(str == LITERAL("123"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR16("123456789"), 3);
-	// 		VERIFY(str == LITERAL("123"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		str.assign_convert(EA_CHAR32("123456789"), 3);
-	// 		VERIFY(str == LITERAL("123"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 	//     str.assign_convert(EA_WCHAR("123456789"), 3);
-	// 	//     VERIFY(str == LITERAL("123"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	}
-	// }
+	// this_type& assign_convert_unsafe(const OtherCharType* p, size_type n);
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR8("123456789"), 3);
+			VERIFY(str == LITERAL("123"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR16("123456789"), 3);
+			VERIFY(str == LITERAL("123"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			str.assign_convert_unsafe(EA_CHAR32("123456789"), 3);
+			VERIFY(str == LITERAL("123"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    str.assign_convert_unsafe(EA_WCHAR("123456789"), 3);
+		    VERIFY(str == LITERAL("123"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// template <typename OtherStringType>
 	// this_type& assign_convert(const OtherStringType& x);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		eastl::basic_string<char8_t> str2(EA_CHAR8("123456789"));
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			safememory::basic_string<char8_t> str2(EA_CHAR8("123456789"));
 
-	// 		str.assign_convert(str2);
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		eastl::basic_string<char16_t> str2(EA_CHAR16("123456789"));
+			str.assign_convert(str2);
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			safememory::basic_string<char16_t> str2(EA_CHAR16("123456789"));
 
-	// 		str.assign_convert(str2);
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 		eastl::basic_string<char32_t> str2(EA_CHAR32("123456789"));
+			str.assign_convert(str2);
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+			safememory::basic_string<char32_t> str2(EA_CHAR32("123456789"));
 
-	// 		str.assign_convert(str2);
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 	//     eastl::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
+			str.assign_convert(str2);
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		    safememory::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
 
-	// 	//     str.assign_convert(str2);
-	// 	//     VERIFY(str == LITERAL("123456789"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	}
-	// }
+		    str.assign_convert(str2);
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// iterator       begin() EA_NOEXCEPT;
 	// const_iterator begin() const EA_NOEXCEPT;
@@ -918,7 +918,7 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto iRBegin = str.rbegin();
+		auto iRBegin = str.rbegin_unsafe();
 
 		VERIFY(*iRBegin++ == LITERAL('z'));
 		VERIFY(*iRBegin++ == LITERAL('y'));
@@ -926,7 +926,7 @@ int TEST_STRING_NAME()
 		VERIFY(*iRBegin++ == LITERAL('w'));
 		VERIFY(*iRBegin++ == LITERAL('v'));
 		VERIFY(*iRBegin++ == LITERAL('u'));
-		VERIFY(*(str.rbegin() + 25) == LITERAL('a'));
+		VERIFY(*(str.rbegin_unsafe() + 25) == LITERAL('a'));
 	}
 
 	// reverse_iterator       rend() EA_NOEXCEPT;
@@ -935,7 +935,7 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto iREnd = str.rend() - 1;
+		auto iREnd = str.rend_unsafe() - 1;
 
 		VERIFY(*iREnd-- == LITERAL('a'));
 		VERIFY(*iREnd-- == LITERAL('b'));
@@ -943,7 +943,7 @@ int TEST_STRING_NAME()
 		VERIFY(*iREnd-- == LITERAL('d'));
 		VERIFY(*iREnd-- == LITERAL('e'));
 		VERIFY(*iREnd-- == LITERAL('f'));
-		VERIFY(*(str.rend() - 26) == LITERAL('z'));
+		VERIFY(*(str.rend_unsafe() - 26) == LITERAL('z'));
 	}
 
 	// bool empty() const EA_NOEXCEPT;
@@ -1240,10 +1240,10 @@ int TEST_STRING_NAME()
 		StringType str;
 		str.append(StringType(LITERAL("abcd")));        // "abcd"
 		str.append(src, 4, 4); 		   					// "abcdefgh"
-		str.append(src.data() + 8, 4); 					// "abcdefghijkl"
-		str.append(LITERAL("mnop"));   					// "abcdefghijklmnop"
+		str.append_unsafe(src.data() + 8, 4); 					// "abcdefghijkl"
+		str.append_unsafe(LITERAL("mnop"));   					// "abcdefghijklmnop"
 		str.append(1, LITERAL('q'));   					// "abcdefghijklmnopq"
-		str.append(src.data() + 17, src.data() + 26);   // "abcdefghijklmnopqrstuvwxyz"
+		str.append_unsafe(src.data() + 17, src.data() + 26);   // "abcdefghijklmnopqrstuvwxyz"
 
 		VERIFY(str == src);
 	}
@@ -1261,115 +1261,115 @@ int TEST_STRING_NAME()
 	}
 
 	// template <typename OtherCharType>
-	// this_type& append_convert(const OtherCharType* p);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR8("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR16("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR32("123456789"));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str;
-	// 	//     str.append_convert(EA_WCHAR("123456789"));
-	// 	//     VERIFY(str == LITERAL("123456789"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	}
-	// }
+	// this_type& append_convert_unsafe(const OtherCharType* p);
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR8("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR16("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR32("123456789"));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert_unsafe(EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// template <typename OtherCharType>
-	// this_type& append_convert(const OtherCharType* p, size_type n);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR8("123456789"), 5);
-	// 		VERIFY(str == LITERAL("12345"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR16("123456789"), 5);
-	// 		VERIFY(str == LITERAL("12345"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str;
-	// 		str.append_convert(EA_CHAR32("123456789"), 5);
-	// 		VERIFY(str == LITERAL("12345"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	// {
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str;
-	// 	//     str.append_convert(EA_WCHAR("123456789"), 5);
-	// 	//     VERIFY(str == LITERAL("12345"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	// }
-	// }
+	// this_type& append_convert_unsafe(const OtherCharType* p, size_type n);
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR8("123456789"), 5);
+			VERIFY(str == LITERAL("12345"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR16("123456789"), 5);
+			VERIFY(str == LITERAL("12345"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str;
+			str.append_convert_unsafe(EA_CHAR32("123456789"), 5);
+			VERIFY(str == LITERAL("12345"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert_unsafe(EA_WCHAR("123456789"), 5);
+		    VERIFY(str == LITERAL("12345"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// template <typename OtherStringType>
 	// this_type& append_convert(const OtherStringType& x);
-	// {
-	// 	{
-	// 	#if defined(EA_CHAR8)
-	// 		StringType str; 
-	// 		str.append_convert(eastl::string8(EA_CHAR8("123456789")));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR16)
-	// 		StringType str; 
-	// 		str.append_convert(eastl::string16(EA_CHAR16("123456789")));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	{
-	// 	#if defined(EA_CHAR32)
-	// 		StringType str; 
-	// 		str.append_convert(eastl::string32(EA_CHAR32("123456789")));
-	// 		VERIFY(str == LITERAL("123456789"));
-	// 		VERIFY(validate(str));
-	// 	#endif
-	// 	}
-	// 	// {
-	// 	// #if defined(EA_WCHAR)
-	// 	//     StringType str = EA_WCHAR("123456789");
-	// 	//     str.append_convert(str, 5);
-	// 	//     VERIFY(str == LITERAL("12345"));
-	// 	//     VERIFY(validate(str));
-	// 	// #endif
-	// 	// }
-	// }
+	{
+		{
+		#if defined(EA_CHAR8)
+			StringType str; 
+			str.append_convert(safememory::string8(EA_CHAR8("123456789")));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR16)
+			StringType str; 
+			str.append_convert(safememory::string16(EA_CHAR16("123456789")));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_CHAR32)
+			StringType str; 
+			str.append_convert(safememory::string32(EA_CHAR32("123456789")));
+			VERIFY(str == LITERAL("123456789"));
+			VERIFY(validate(str));
+		#endif
+		}
+		{
+		#if defined(EA_WCHAR)
+		    StringType str;
+		    str.append_convert_unsafe(EA_WCHAR("123456789"));
+		    VERIFY(str == LITERAL("123456789"));
+		    VERIFY(validate(str));
+		#endif
+		}
+	}
 
 	// void push_back(value_type c);
 	{
@@ -1403,12 +1403,12 @@ int TEST_STRING_NAME()
 
 	// this_type& insert(size_type position, const this_type& x);
 	// this_type& insert(size_type position, const this_type& x, size_type beg, size_type n);
-	// this_type& insert(size_type position, const value_type* p, size_type n);
-	// this_type& insert(size_type position, const value_type* p);
+	// this_type& insert_unsafe(size_type position, const value_type* p, size_type n);
+	// this_type& insert_unsafe(size_type position, const value_type* p);
 	// this_type& insert(size_type position, size_type n, value_type c);
-	// iterator insert(const_iterator p, value_type c);
-	// iterator insert(const_iterator p, size_type n, value_type c);
-	// iterator insert(const_iterator p, const value_type* pBegin, const value_type* pEnd);
+	// iterator insert_unsafe(const_iterator p, value_type c);
+	// iterator insert_unsafe(const_iterator p, size_type n, value_type c);
+	// iterator insert_unsafe(const_iterator p, const value_type* pBegin, const value_type* pEnd);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
@@ -1424,45 +1424,45 @@ int TEST_STRING_NAME()
 		str.insert(30, StringType(LITERAL(" is an example of a substring")), 1, 14);
 		VERIFY(str == LITERAL("1a234bcdefghijk567lmnopqrstuvwis an example xyz"));
 
-		{
-			StringType strSSO;
-			auto nSSOCap = strSSO.capacity();
-			StringType strCheck;
-			strCheck.append(nSSOCap, LITERAL('a'));
+		// {
+		// 	StringType strSSO;
+		// 	auto nSSOCap = strSSO.capacity();
+		// 	StringType strCheck;
+		// 	strCheck.append(nSSOCap, LITERAL('a'));
 
-			strSSO.append(nSSOCap - 1, LITERAL('a'));
+		// 	strSSO.append(nSSOCap - 1, LITERAL('a'));
 
-			strSSO.insert(strSSO.size() - 1, LITERAL("a"));
-			VERIFY(validate(strSSO));
-			VERIFY(strSSO == strCheck);
-		}
+		// 	strSSO.insert(strSSO.size() - 1, LITERAL("a"));
+		// 	VERIFY(validate(strSSO));
+		// 	VERIFY(strSSO == strCheck);
+		// }
 
-		{
-			StringType strSSO;
-			auto nSSOCap = strSSO.capacity();
+		// {
+		// 	StringType strSSO;
+		// 	auto nSSOCap = strSSO.capacity();
 
-			// 32 bit platform with char32_t can only hold 2 characters in SSO
-			if (nSSOCap - 2 > 0)
-			{
-				StringType strCheck;
-				strCheck.append(nSSOCap, LITERAL('a'));
+		// 	// 32 bit platform with char32_t can only hold 2 characters in SSO
+		// 	if (nSSOCap - 2 > 0)
+		// 	{
+		// 		StringType strCheck;
+		// 		strCheck.append(nSSOCap, LITERAL('a'));
 
-				strSSO.append(nSSOCap - 2, LITERAL('a'));
+		// 		strSSO.append(nSSOCap - 2, LITERAL('a'));
 
-				strSSO.insert(strSSO.size() - 1, LITERAL("aa"));
-				VERIFY(validate(strSSO));
-				VERIFY(strSSO == strCheck);
-			}
-		}
+		// 		strSSO.insert(strSSO.size() - 1, LITERAL("aa"));
+		// 		VERIFY(validate(strSSO));
+		// 		VERIFY(strSSO == strCheck);
+		// 	}
+		// }
 	}
 
 	// iterator insert(const_iterator p, std::initializer_list<value_type>);
 	{
 	#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
 		StringType str;
-		str.insert(str.begin(),     {'a','b','c'});
-		str.insert(str.end(),       {'d','e','f'});
-		str.insert(str.begin() + 3, {'1','2','3'});
+		str.insert(str.cbegin(),     {'a','b','c'});
+		str.insert(str.cend(),       {'d','e','f'});
+		str.insert(str.cbegin() + 3, {'1','2','3'});
 
 		VERIFY(str == LITERAL("abc123def"));
 		VERIFY(validate(str));
@@ -1471,23 +1471,23 @@ int TEST_STRING_NAME()
 
 	// insert(const_iterator p, value_type c)
 	{
-		StringType str = LITERAL("aaa");
-		auto it = str.insert(str.end(), 'b');
+		StringType str(LITERAL("aaa"));
+		auto it = str.insert(str.cend(), 'b');
 		VERIFY(*it == LITERAL('b'));
 		VERIFY(str == LITERAL("aaab"));
-		it = str.insert(str.begin(), 'c');
+		it = str.insert(str.cbegin(), 'c');
 		VERIFY(*it == LITERAL('c'));
 		VERIFY(str == LITERAL("caaab"));
-		it = str.insert(str.begin() + 2, 'd');
+		it = str.insert(str.cbegin() + 2, 'd');
 		VERIFY(*it == LITERAL('d'));
 		VERIFY(str == LITERAL("cadaab"));
 	}
 
 	// this_type&       erase(size_type position = 0, size_type n = npos);
-	// iterator         erase(const_iterator p);
-	// iterator         erase(const_iterator pBegin, const_iterator pEnd);
-	// reverse_iterator erase(reverse_iterator position);
-	// reverse_iterator erase(reverse_iterator first, reverse_iterator last);
+	// iterator         erase_unsafe(const_iterator p);
+	// iterator         erase_unsafe(const_iterator pBegin, const_iterator pEnd);
+	// reverse_iterator erase_unsafe(reverse_iterator position);
+	// reverse_iterator erase_unsafe(reverse_iterator first, reverse_iterator last);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
@@ -1503,7 +1503,7 @@ int TEST_STRING_NAME()
 		str.erase(str.find(LITERAL('g')), str.find(LITERAL('i')));
 		VERIFY(str == LITERAL("fju"));
 
-		typename StringType::const_iterator it = str.begin() + 1; // 'j'
+		auto it = str.cbegin() + 1; // 'j'
 		str.erase(it);
 		VERIFY(str == LITERAL("fu"));
 
@@ -1592,14 +1592,14 @@ int TEST_STRING_NAME()
 
 	// this_type&  replace(size_type position, size_type n, const this_type& x);
 	// this_type&  replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2);
-	// this_type&  replace(size_type position, size_type n1, const value_type* p, size_type n2);
-	// this_type&  replace(size_type position, size_type n1, const value_type* p);
+	// this_type&  replace_unsafe(size_type position, size_type n1, const value_type* p, size_type n2);
+	// this_type&  replace_unsafe(size_type position, size_type n1, const value_type* p);
 	// this_type&  replace(size_type position, size_type n1, size_type n2, value_type c);
-	// this_type&  replace(const_iterator first, const_iterator last, const this_type& x);
-	// this_type&  replace(const_iterator first, const_iterator last, const value_type* p, size_type n);
-	// this_type&  replace(const_iterator first, const_iterator last, const value_type* p);
-	// this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c);
-	// this_type&  replace(const_iterator first, const_iterator last, const value_type* pBegin, const value_type* pEnd);
+	// this_type&  replace_unsafe(const_iterator first, const_iterator last, const this_type& x);
+	// this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* p, size_type n);
+	// this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* p);
+	// this_type&  replace_unsafe(const_iterator first, const_iterator last, size_type n, value_type c);
+	// this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* pBegin, const value_type* pEnd);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
@@ -1685,8 +1685,8 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_first_of(LITERAL("aab")) == 0);
 		VERIFY(str.find_first_of(LITERAL("baab")) == 0);
 		VERIFY(str.find_first_of(LITERAL("ceg")) == 10);
-		VERIFY(str.find_first_of(LITERAL("eeef"), 1, 2) == 18);
-		VERIFY(str.find_first_of(LITERAL("eeef"), 1, 4) == 18);
+		// VERIFY(str.find_first_of(LITERAL("eeef"), 1, 2) == 18);
+		// VERIFY(str.find_first_of(LITERAL("eeef"), 1, 4) == 18);
 		VERIFY(str.find_first_of(LITERAL('g')) == 26);
 		VERIFY(str.find_first_of(LITERAL('$')) == StringType::npos);
 	}

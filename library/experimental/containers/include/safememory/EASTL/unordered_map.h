@@ -32,17 +32,17 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_UNORDERED_MAP_H
-#define EASTL_UNORDERED_MAP_H
+#ifndef SAFEMEMORY_EASTL_UNORDERED_MAP_H
+#define SAFEMEMORY_EASTL_UNORDERED_MAP_H
 
-#include <EASTL/internal/config.h>
-#include <EASTL/hash_map.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/EASTL/hash_map.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-namespace nodecpp
+namespace safememory
 {
 	/// unordered_map 
 	///
@@ -78,7 +78,7 @@ namespace nodecpp
 		using unordered_multimap = hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>;
     #endif
 
-} // namespace nodecpp
+} // namespace safememory
 
 #endif // Header include guard
 

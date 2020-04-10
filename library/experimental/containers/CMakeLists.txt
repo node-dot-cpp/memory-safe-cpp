@@ -10,3 +10,5 @@ add_executable(container-test
   )
 
 target_link_libraries(container-test SafeMemory)
+
+set_target_properties(container-test PROPERTIES CXX_STANDARD 17)

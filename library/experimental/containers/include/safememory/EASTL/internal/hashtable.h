@@ -53,8 +53,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_INTERNAL_HASHTABLE_H
-#define EASTL_INTERNAL_HASHTABLE_H
+#ifndef SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
+#define SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
 
 
 //#include <EABase/eabase.h>
@@ -62,8 +62,8 @@
 	#pragma once
 #endif
 
-#include <EASTL/internal/config.h>
-#include <EASTL/type_traits.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/EASTL/type_traits.h>
 //#include <EASTL/allocator.h>
 //#include <EASTL/iterator.h>
 #include <functional>
@@ -87,7 +87,7 @@
 #endif
 
 
-namespace nodecpp
+namespace safememory
 {
 
 	/// EASTL_HASHTABLE_DEFAULT_NAME
@@ -187,10 +187,10 @@ namespace nodecpp
 		struct has_hashcode_member 
 		{
 		private:
-			template <class U> static nodecpp::no_type test(...);
-			template <class U> static nodecpp::yes_type test(decltype(U::mnHashCode)* = 0);
+			template <class U> static safememory::no_type test(...);
+			template <class U> static safememory::yes_type test(decltype(U::mnHashCode)* = 0);
 		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(nodecpp::yes_type);
+			static const bool value = sizeof(test<T>(0)) == sizeof(safememory::yes_type);
 		};
 	}
 	
@@ -902,7 +902,7 @@ namespace nodecpp
 		enum
 		{
 			// This enumeration is deprecated in favor of eastl::kHashtableAllocFlagBuckets.
-			kAllocFlagBuckets = nodecpp::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
+			kAllocFlagBuckets = safememory::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
 		};
 
 	protected:
@@ -1405,7 +1405,7 @@ namespace nodecpp
 	{
 		if(nBucketCount < 2)
 		{
-			const size_type nElementCount = (size_type)nodecpp::ht_distance(first, last);
+			const size_type nElementCount = (size_type)safememory::ht_distance(first, last);
 			mnBucketCount = (size_type)mRehashPolicy.GetBucketCount((uint32_t)nElementCount);
 		}
 		else
@@ -1835,7 +1835,7 @@ namespace nodecpp
 	// template <typename U>
 	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other)
-	// 	{ return nodecpp::hashtable_find(*this, other); }
+	// 	{ return safememory::hashtable_find(*this, other); }
 	// 	// VC++ doesn't appear to like the following, though it seems correct to me.
 	// 	// So we implement the workaround above until we can straighten this out.
 	// 	//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
@@ -2878,7 +2878,7 @@ namespace nodecpp
 	void
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(InputIterator first, InputIterator last)
 	{
-		const uint32_t nElementAdd = (uint32_t)nodecpp::ht_distance(first, last);
+		const uint32_t nElementAdd = (uint32_t)safememory::ht_distance(first, last);
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, nElementAdd);
 
 		if(bRehash.first)
@@ -3261,7 +3261,7 @@ namespace nodecpp
 	}
 
 
-} // namespace nodecpp
+} // namespace safememory
 
 
 #ifdef _MSC_VER

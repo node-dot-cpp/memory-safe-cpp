@@ -66,6 +66,7 @@ target_link_libraries(EASTLTest EASTL)
 target_link_libraries(EASTLTest EAStdC)
 target_link_libraries(EASTLTest EATest)
 target_link_libraries(EASTLTest EAThread)
+target_link_libraries(EASTLTest SafeMemory)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

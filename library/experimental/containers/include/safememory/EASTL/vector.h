@@ -59,17 +59,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_VECTOR_H
-#define EASTL_VECTOR_H
+#ifndef SAFEMEMORY_EASTL_VECTOR_H
+#define SAFEMEMORY_EASTL_VECTOR_H
 
-#include <EASTL/internal/__undef_macros.h>
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/__undef_macros.h>
+#include <safememory/EASTL/internal/config.h>
 //#include <EASTL/allocator.h>
-#include <EASTL/type_traits.h>
+#include <safememory/EASTL/type_traits.h>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
-#include <EASTL/memory.h>
+#include <safememory/EASTL/memory.h>
 #include <memory>
 //#include <EASTL/bonus/compressed_pair.h>
 
@@ -105,7 +105,7 @@
 // 	#endif
 // #endif
 
-namespace nodecpp
+namespace safememory
 {
 
 	/// EASTL_VECTOR_DEFAULT_NAME
@@ -1433,7 +1433,7 @@ namespace nodecpp
 	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
 	{
 		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
-		nodecpp::uninitialized_move_ptr_if_noexcept(first, last, p); // move-constructs p from [first,last).
+		safememory::uninitialized_move_ptr_if_noexcept(first, last, p); // move-constructs p from [first,last).
 		return p;
 	}
 
@@ -1654,10 +1654,10 @@ namespace nodecpp
 					pointer pNewEnd = pNewData;
 					try
 					{
-						pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+						pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
 						// pNewEnd = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
 						pNewEnd = std::uninitialized_copy(first, last, pNewEnd);
-						pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
+						pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
 					}
 					catch(...)
 					{
@@ -1731,10 +1731,10 @@ namespace nodecpp
 				pointer pNewEnd = pNewData;
 				try
 				{
-					pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
 					// eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
 					std::uninitialized_fill_n(pNewEnd, n, value);
-					pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
 				}
 				catch(...)
 				{
@@ -1772,7 +1772,7 @@ namespace nodecpp
 	{
 		pointer const pNewData = DoAllocate(n);
 
-		pointer pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+		pointer pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 
 		std::destroy(mpBegin, mpEnd);
 		DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
@@ -1807,7 +1807,7 @@ namespace nodecpp
 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 				try
 				{
-					pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 				}
 				catch(...)
 				{
@@ -1850,7 +1850,7 @@ namespace nodecpp
 
 			#if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
-				try { pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
+				try { pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
 				catch (...)
 				{
 					std::destroy(pNewData, pNewEnd);
@@ -1928,8 +1928,8 @@ namespace nodecpp
 					// call eastl::destruct on the entire range if only the first part of the range was costructed.
 					::new((void*)(pNewData + nPosSize)) value_type(std::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
 					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
-					pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
-					pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);
 				}
 				catch(...)
 				{
@@ -1968,7 +1968,7 @@ namespace nodecpp
 			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 			try
 			{
-				pNewEnd = nodecpp::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 				::new((void*)pNewEnd) value_type(std::forward<Args>(args)...);
 				pNewEnd++;
 			}
@@ -2074,7 +2074,7 @@ namespace nodecpp
 	}
 
 
-} // namespace nodecpp
+} // namespace safememory
 
 
 #ifdef _MSC_VER

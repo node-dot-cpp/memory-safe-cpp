@@ -264,8 +264,8 @@
 
 
 
-#ifndef EASTL_TYPE_TRAITS_H
-#define EASTL_TYPE_TRAITS_H
+#ifndef SAFEMEMORY_EASTL_TYPE_TRAITS_H
+#define SAFEMEMORY_EASTL_TYPE_TRAITS_H
 
 
 
@@ -278,7 +278,7 @@
 
 
 
-namespace nodecpp
+namespace safememory
 {
 
 	// ///////////////////////////////////////////////////////////////////////
@@ -1076,7 +1076,7 @@ namespace nodecpp
 	// };
 	// EA_RESTORE_VC_WARNING();
 
-} // namespace nodecpp
+} // namespace safememory
 
 
 // The following files implement the type traits themselves.

@@ -41,15 +41,15 @@
 // http://en.cppreference.com/w/cpp/string/char_traits
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_CHAR_TRAITS_H
-#define EASTL_CHAR_TRAITS_H
+#ifndef SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
+#define SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif
 
-#include <EASTL/internal/config.h>
-#include <EASTL/type_traits.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/EASTL/type_traits.h>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <ctype.h>              // toupper, etc.
@@ -86,6 +86,8 @@ namespace safememory
 	#endif
 
 	// #if EA_WCHAR_UNIQUE
+		bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, wchar_t*& pDest, wchar_t* pDestEnd);
+
 		bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, char*&     pDest, char*     pDestEnd);
 		bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd);
 		bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd);
@@ -103,6 +105,15 @@ namespace safememory
 static_assert((sizeof(wchar_t) == sizeof(char16_t)) || (sizeof(wchar_t) == sizeof(char32_t)), "bad sizeof(wchar_t)"); 
 
 	// #if EA_WCHAR_UNIQUE
+
+		inline bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, wchar_t*& pDest, wchar_t* pDestEnd)
+		{
+		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
+			return DecodePart(reinterpret_cast<const char16_t*&>(pSrc), reinterpret_cast<const char16_t*>(pSrcEnd), reinterpret_cast<char16_t*&>(pDest), reinterpret_cast<char16_t*>(pDestEnd));
+		else
+			return DecodePart(reinterpret_cast<const char32_t*&>(pSrc), reinterpret_cast<const char32_t*>(pSrcEnd), reinterpret_cast<char32_t*&>(pDest), reinterpret_cast<char32_t*>(pDestEnd));
+		}
+
 		inline bool DecodePart(const wchar_t*& pSrc, const wchar_t* pSrcEnd, char*& pDest, char* pDestEnd)
 		{
 		if constexpr (sizeof(wchar_t) == sizeof(char16_t))
@@ -451,6 +462,6 @@ static_assert((sizeof(wchar_t) == sizeof(char16_t)) || (sizeof(wchar_t) == sizeo
 			*pDest++ = c;
 		return pDestination;
 	}
-} // namespace nodecpp
+} // namespace safememory
 
 #endif // EASTL_CHAR_TRAITS_H
