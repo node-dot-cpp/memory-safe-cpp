@@ -960,14 +960,14 @@ void TestCollection::AddTest(const char* pTestName, TestFunction::FunctionPtr pF
 
 void TestCollection::AddTests(const TestCollection *pCollection)
 {
-    const eastl_size_t nTotalTests = (eastl_size_t)pCollection->EnumerateTests(NULL, 0);
+    const size_t nTotalTests = (size_t)pCollection->EnumerateTests(NULL, 0);
 
     if(nTotalTests)
     {
         std::vector<Test*> tests(nTotalTests);
         pCollection->EnumerateTests(tests.data(), nTotalTests);
 
-        for(eastl_size_t i = 0; i < nTotalTests; ++i)
+        for(size_t i = 0; i < nTotalTests; ++i)
             AddTest(tests[i]);
     }
 }
@@ -1045,7 +1045,7 @@ TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bo
             // In this case, pTestName was passed in as a name like "Math Suite/Vector Test"
             // and we may have a child test called "Math Suite" which itself is a suite
             // and has a child test called "Vector Test". So we recursively call ourself.
-            sNameCurrent.assign(pTestName, (eastl_size_t)(pSeparator - pTestName));
+            sNameCurrent.assign(pTestName, (size_t)(pSeparator - pTestName));
 
             TestInfo* const pTestInfo = FindTestInfo(sNameCurrent.c_str(), false); // Use 'false' here to try to match just "Math Suite", for example.
 
@@ -1075,7 +1075,7 @@ size_t TestCollection::EnumerateTests(Test* pTestArray[], size_t nTestArrayCapac
 
         memset(pTestArray, 0, nTestArrayCapacity * sizeof(Test*));
 
-        for(eastl_size_t i = 0; i < nTestArrayCapacity; ++i)
+        for(size_t i = 0; i < nTestArrayCapacity; ++i)
             pTestArray[i] = mTests[i].mpTest;
     }
 
@@ -1677,7 +1677,7 @@ void TestApplication::PrintTestNames(bool /*bDetail*/)
     //     Math Suite/Matrix Test
     //     Math Suite/Quaternion Test
 
-    for(eastl_size_t i = 0, iEnd = mTests.size(); i < iEnd; ++i)
+    for(size_t i = 0, iEnd = mTests.size(); i < iEnd; ++i)
     {
         Test* const pTest = mTests[i].mpTest;
 

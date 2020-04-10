@@ -8,7 +8,7 @@
 #include <EAStdC/EAString.h>
 #include <string>
 #include <algorithm>
-#include <EASTL/allocator_malloc.h>
+//#include <EASTL/allocator_malloc.h>
 #include <safememory/string.h>
 
 // namespace safememory {
@@ -26,7 +26,7 @@ bool validate(const StringType& /*str*/) {
 	return true;
 }
 
-using namespace eastl;
+//using namespace eastl;
 
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
@@ -125,7 +125,7 @@ int TestString()
 	// 	// CustomAllocator has no data members which reduces the size of an eastl::basic_string via the empty base class optimization.
 	// 	typedef eastl::basic_string<char, CustomAllocator> EboString;
 
-	// 	// this must match the eastl::basic_string heap memory layout struct which is a pointer and 2 eastl_size_t.
+	// 	// this must match the eastl::basic_string heap memory layout struct which is a pointer and 2 size_t.
 	// 	const int expectedSize = sizeof(EboString::pointer) + (2 * sizeof(EboString::size_type));
 
 	// 	static_assert(sizeof(EboString) == expectedSize, "unexpected layout size of basic_string");

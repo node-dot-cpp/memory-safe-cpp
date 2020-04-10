@@ -239,7 +239,7 @@ namespace Benchmark
 		{
 			const Result& result = *it;
 
-			eastl_size_t n = result.msName.find('/');
+			size_t n = result.msName.find('/');
 			if(n == std::string::npos)
 				n = result.msName.length();
 			sTestTypeTemp.assign(result.msName, 0, n);

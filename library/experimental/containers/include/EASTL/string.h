@@ -117,17 +117,17 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_STRING_H
-#define SAFEMEMORY_EASTL_STRING_H
+#ifndef EASTL_STRING_H
+#define EASTL_STRING_H
 
-#include <safememory/EASTL/internal/__undef_macros.h>
-#include <safememory/EASTL/internal/config.h>
+#include <EASTL/internal/__undef_macros.h>
+#include <EASTL/internal/config.h>
 #include <safememory/detail/string_detail.h>
 #include <safememory/string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
-#include <safememory/EASTL/iterator.h>
+#include <EASTL/iterator.h>
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
@@ -166,7 +166,7 @@
 #endif
 
 
-#include <safememory/EASTL/internal/char_traits.h>
+#include <EASTL/internal/char_traits.h>
 //#include <string_view>
 
 
@@ -331,7 +331,7 @@ namespace safememory
 		typedef const_pointer									const_iterator;
 		typedef std::reverse_iterator<iterator>                 reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>           const_reverse_iterator;
-		typedef std::size_t                                     size_type;          // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::size_t                                     size_type;
 		typedef std::ptrdiff_t                                  difference_type;
 		// typedef Allocator                                       allocator_type;
 
@@ -873,10 +873,10 @@ namespace safememory
 
 		bool        IsSSO() const EA_NOEXCEPT;
 
-		[[noreturn]] void        ThrowLengthException() const;
-		[[noreturn]] void        ThrowRangeException() const;
-		[[noreturn]] void        ThrowInvalidArgumentException() const;
-		[[noreturn]] void        ThrowMaxSizeException() const;
+		[[noreturn]] static void ThrowLengthException();
+		[[noreturn]] static void ThrowRangeException();
+		[[noreturn]] static void ThrowInvalidArgumentException();
+		[[noreturn]] static void ThrowMaxSizeException();
 		
 
 		static
@@ -1568,7 +1568,7 @@ namespace safememory
 			*internalLayout().EndPtr() = 0;
 		}
 
-		if((n < capacity() && internalLayout().IsHeap()) || (n > capacity()))
+		if((n < capacity() /*&& internalLayout().IsHeap()*/) || (n > capacity()))
 		{
 			// In here the string is transition from heap->heap, heap->sso or sso->heap
 
@@ -2446,16 +2446,16 @@ namespace safememory
 			const bool bCapacityIsSufficient = (internalLayout().GetRemainingCapacity() >= n);
 			const bool bSourceIsFromSelf     = ((pEnd >= internalLayout().BeginPtr()) && (pBegin <= internalLayout().EndPtr()));
 
-			if(bSourceIsFromSelf && internalLayout().IsSSO())
-			{
-				// pBegin to pEnd will be <= this->GetSize(), so stackTemp will guaranteed be an SSO String
-				// If we are inserting ourself into ourself and we are SSO, then on the recursive call we can
-				// guarantee 0 or 1 allocation depending if we need to realloc
-				// We don't do this for Heap strings as then this path may do 1 or 2 allocations instead of
-				// only 1 allocation when we fall through to the last else case below
-				const this_type stackTemp(pBegin, pEnd/*, get_allocator()*/);
-				return insert(p, stackTemp.data(), stackTemp.data() + stackTemp.size());
-			}
+			// if(bSourceIsFromSelf && internalLayout().IsSSO())
+			// {
+			// 	// pBegin to pEnd will be <= this->GetSize(), so stackTemp will guaranteed be an SSO String
+			// 	// If we are inserting ourself into ourself and we are SSO, then on the recursive call we can
+			// 	// guarantee 0 or 1 allocation depending if we need to realloc
+			// 	// We don't do this for Heap strings as then this path may do 1 or 2 allocations instead of
+			// 	// only 1 allocation when we fall through to the last else case below
+			// 	const this_type stackTemp(pBegin, pEnd/*, get_allocator()*/);
+			// 	return insert(p, stackTemp.data(), stackTemp.data() + stackTemp.size());
+			// }
 
 			// If bSourceIsFromSelf is true, then we reallocate. This is because we are
 			// inserting ourself into ourself and thus both the source and destination
@@ -3764,7 +3764,8 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void basic_string<T, Allocator>::AllocateSelf()
 	{
-		internalLayout().Reset();
+		AllocateSelf(16);//TODO
+//		internalLayout().Reset();
 //		internalLayout().SetSSOSize(0);
 	}
 
@@ -3804,9 +3805,10 @@ namespace safememory
 	// }
 
 
+	/* static */
 	template <typename T, typename Allocator>
 	[[noreturn]]
-	inline void basic_string<T, Allocator>::ThrowLengthException() const
+	inline void basic_string<T, Allocator>::ThrowLengthException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::length_error("basic_string -- length_error");
@@ -3816,9 +3818,10 @@ namespace safememory
 	}
 
 
+	/* static */
 	template <typename T, typename Allocator>
 	[[noreturn]]
-	inline void basic_string<T, Allocator>::ThrowRangeException() const
+	inline void basic_string<T, Allocator>::ThrowRangeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("basic_string -- out of range");
@@ -3828,9 +3831,10 @@ namespace safememory
 	}
 
 
+	/* static */
 	template <typename T, typename Allocator>
 	[[noreturn]]
-	inline void basic_string<T, Allocator>::ThrowInvalidArgumentException() const
+	inline void basic_string<T, Allocator>::ThrowInvalidArgumentException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::invalid_argument("basic_string -- invalid argument");
@@ -3839,9 +3843,10 @@ namespace safememory
 		#endif
 	}
 
+	/* static */
 	template <typename T, typename Allocator>
 	[[noreturn]]
-	inline void basic_string<T, Allocator>::ThrowMaxSizeException() const
+	inline void basic_string<T, Allocator>::ThrowMaxSizeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("basic_string -- size too big");
@@ -3911,7 +3916,7 @@ namespace safememory
 			ThrowRangeException();
 
 		const_pointer b = str.internalLayout().BeginPtr() + pos;
-		size_type sz = std::min(n, internalLayout().GetSize() - pos);
+		size_type sz = std::min(n, str.internalLayout().GetSize() - pos);
 		return const_pointer_pair(b, b + sz);
 	}
 
@@ -4450,12 +4455,12 @@ namespace safememory
 	typedef basic_string<wchar_t> wstring;
 
 	/// string8 / string16 / string32
-	typedef basic_string<char8_t>  string8;
+	// typedef basic_string<char8_t>  string8;
 	typedef basic_string<char16_t> string16;
 	typedef basic_string<char32_t> string32;
 
 	// C++11 string types
-	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
+//	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
 

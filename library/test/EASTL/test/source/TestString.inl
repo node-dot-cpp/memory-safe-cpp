@@ -61,7 +61,7 @@ int TEST_STRING_NAME()
 	// 		VERIFY(str.IsSSO());
 	// 	}
 
-	// 	EA_CONSTEXPR_IF(EA_PLATFORM_WORD_SIZE == 8 && EASTL_SIZE_T_32BIT == 0)
+	// 	EA_CONSTEXPR_IF(EA_PLATFORM_WORD_SIZE == 8 && size_t_32BIT == 0)
 	// 	{
 	// 		// test SSO size on 64 bit platforms
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 1)
@@ -838,7 +838,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			safememory::basic_string<char8_t> str2(EA_CHAR8("123456789"));
+			safememory::string str2(EA_CHAR8("123456789"));
 
 			str.assign_convert(str2);
 			VERIFY(str == LITERAL("123456789"));
@@ -1340,7 +1340,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str; 
-			str.append_convert(safememory::string8(EA_CHAR8("123456789")));
+			str.append_convert(safememory::string(EA_CHAR8("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -1519,7 +1519,6 @@ int TEST_STRING_NAME()
 		VERIFY(str.empty());
 		VERIFY(validate(str));
 	}
-
 
 	// pointer detach() EA_NOEXCEPT;
 	// {

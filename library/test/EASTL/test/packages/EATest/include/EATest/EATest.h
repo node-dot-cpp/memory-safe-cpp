@@ -64,7 +64,7 @@
 
 
 #include <EATest/internal/Config.h>
-#include <EASTL/internal/config.h> // for eastl_size_t
+//#include <safememory/EASTL/internal/config.h> // for size_t
 #include <string>
 #include <vector>
 #include <stddef.h>
@@ -1491,7 +1491,7 @@ namespace EA
             /// Identical to RandLimit().
             /// Returns a pseudorandom value in range of [0, nLimit)
             ///
-            uint32_t operator()(eastl_size_t n)
+            uint32_t operator()(size_t n)
                 { return RandLimit((uint32_t)n); }
 
         protected:

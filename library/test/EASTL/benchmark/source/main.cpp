@@ -16,7 +16,7 @@
 #include <stdio.h>
 EA_DISABLE_VC_WARNING(4946)
 #include "EAMain/EAEntryPointMain.inl"
-#include "EASTLTestAllocator.h"
+//#include "EASTLTestAllocator.h"
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -106,7 +106,7 @@ int EAMain(int argc, char* argv[])
 		}
 		else if(strstr(argv[i], "-s:") == argv[i])
 		{
-			uint32_t seed = (eastl_size_t)atoi(argv[i] + 3);
+			uint32_t seed = (size_t)atoi(argv[i] + 3);
 			EA::UnitTest::SetRandSeed(seed);
 			nOptionCount++;
 		}

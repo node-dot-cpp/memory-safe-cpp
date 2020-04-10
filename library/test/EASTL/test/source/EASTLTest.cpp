@@ -4,7 +4,8 @@
 
 
 #include <EABase/eabase.h>
-#include <EASTL/version.h>
+//#include <memorysafe/EASTL/version.h>
+#include <EASTL/internal/config.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -36,7 +37,7 @@
 #endif
 
 
-#include "EASTLTestAllocator.h"
+//#include "EASTLTestAllocator.h"
 #include "EASTLTest.h"  // Include this last, as it enables compiler warnings.
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -88,30 +89,30 @@ int     TestObject::sMagicErrorCount    = 0;
 ///////////////////////////////////////////////////////////////////////////////
 // MallocAllocator
 //
-int    MallocAllocator::mAllocCountAll   = 0;
-int    MallocAllocator::mFreeCountAll    = 0;
-size_t MallocAllocator::mAllocVolumeAll  = 0;
-void*  MallocAllocator::mpLastAllocation = NULL;
+// int    MallocAllocator::mAllocCountAll   = 0;
+// int    MallocAllocator::mFreeCountAll    = 0;
+// size_t MallocAllocator::mAllocVolumeAll  = 0;
+// void*  MallocAllocator::mpLastAllocation = NULL;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // InstanceAllocator
 //
-int InstanceAllocator::mMismatchCount = 0;
+// int InstanceAllocator::mMismatchCount = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
 // CountingAllocator
 //
-uint64_t CountingAllocator::activeAllocCount      = 0;
-uint64_t CountingAllocator::totalAllocCount       = 0;
-uint64_t CountingAllocator::totalDeallocCount     = 0;
-uint64_t CountingAllocator::totalCtorCount        = 0;
-uint64_t CountingAllocator::defaultCtorCount      = 0;
-uint64_t CountingAllocator::copyCtorCount         = 0;
-uint64_t CountingAllocator::assignOpCount         = 0;
-uint64_t CountingAllocator::totalAllocatedMemory  = 0;
-uint64_t CountingAllocator::activeAllocatedMemory = 0;
+// uint64_t CountingAllocator::activeAllocCount      = 0;
+// uint64_t CountingAllocator::totalAllocCount       = 0;
+// uint64_t CountingAllocator::totalDeallocCount     = 0;
+// uint64_t CountingAllocator::totalCtorCount        = 0;
+// uint64_t CountingAllocator::defaultCtorCount      = 0;
+// uint64_t CountingAllocator::copyCtorCount         = 0;
+// uint64_t CountingAllocator::assignOpCount         = 0;
+// uint64_t CountingAllocator::totalAllocatedMemory  = 0;
+// uint64_t CountingAllocator::activeAllocatedMemory = 0;
 
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -133,10 +134,10 @@ int EASTLTest_CheckMemory_Imp(const char* pFile, int nLine)
 			bMemoryOK = false;
 	#endif
 
-	#ifdef EA_DEBUG
-		if(!EASTLTest_ValidateHeap())
-			bMemoryOK = false;
-	#endif
+	// #ifdef EA_DEBUG
+	// 	if(!EASTLTest_ValidateHeap())
+	// 		bMemoryOK = false;
+	// #endif
 
 	if(!bMemoryOK)
 	{
@@ -225,25 +226,25 @@ const char* GetStdSTLName()
 // generates a bogus warning about freeing a non-heap pointer when this function
 // is declared inline.
 
-void MallocAllocator::deallocate(void *p, size_t n)
-{ 
-	++mFreeCount;
-	mAllocVolume -= n;
-	++mFreeCountAll;
-	mAllocVolumeAll -= n;
+// void MallocAllocator::deallocate(void *p, size_t n)
+// { 
+// 	++mFreeCount;
+// 	mAllocVolume -= n;
+// 	++mFreeCountAll;
+// 	mAllocVolumeAll -= n;
 
-	return free(p);
-}
+// 	return free(p);
+// }
 
-void* MallocAllocator::allocate(size_t n, int)
-{
-	++mAllocCount; mAllocVolume += n; ++mAllocCountAll; mAllocVolumeAll += n; mpLastAllocation = malloc(n); return mpLastAllocation;
-}
+// void* MallocAllocator::allocate(size_t n, int)
+// {
+// 	++mAllocCount; mAllocVolume += n; ++mAllocCountAll; mAllocVolumeAll += n; mpLastAllocation = malloc(n); return mpLastAllocation;
+// }
 
-void* MallocAllocator::allocate(size_t n, size_t, size_t, int)
-{
-	++mAllocCount; mAllocVolume += n; ++mAllocCountAll; mAllocVolumeAll += n; mpLastAllocation = malloc(n); return mpLastAllocation;
-}
+// void* MallocAllocator::allocate(size_t n, size_t, size_t, int)
+// {
+// 	++mAllocCount; mAllocVolume += n; ++mAllocCountAll; mAllocVolumeAll += n; mpLastAllocation = malloc(n); return mpLastAllocation;
+// }
 
 
 
@@ -251,20 +252,20 @@ void* MallocAllocator::allocate(size_t n, size_t, size_t, int)
 // CustomAllocator
 ///////////////////////////////////////////////////////////////////////////////
 
-void* CustomAllocator::allocate(size_t n, int flags)
-{
-	return ::operator new[](n, get_name(), flags, 0, __FILE__, __LINE__);
-}
+// void* CustomAllocator::allocate(size_t n, int flags)
+// {
+// 	return ::operator new[](n, get_name(), flags, 0, __FILE__, __LINE__);
+// }
 
-void* CustomAllocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
-{
-	return ::operator new[](n, alignment, offset, get_name(), flags, 0, __FILE__, __LINE__);
-}
+// void* CustomAllocator::allocate(size_t n, size_t alignment, size_t offset, int flags)
+// {
+// 	return ::operator new[](n, alignment, offset, get_name(), flags, 0, __FILE__, __LINE__);
+// }
 
-void  CustomAllocator::deallocate(void* p, size_t /*n*/)
-{
-	::operator delete((char*)p);
-}
+// void  CustomAllocator::deallocate(void* p, size_t /*n*/)
+// {
+// 	::operator delete((char*)p);
+// }
 
 
 

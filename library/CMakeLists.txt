@@ -10,6 +10,7 @@ project(SafeMemory CXX)
 add_library(SafeMemory
   src/safe_ptr.cpp
   experimental/containers/source/hashtable.cpp
+  experimental/containers/source/string.cpp
   src/iibmalloc/src/iibmalloc.cpp
   src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
   src/iibmalloc/src/foundation/src/nodecpp_assert.cpp
