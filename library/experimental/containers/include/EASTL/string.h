@@ -340,8 +340,8 @@ namespace safememory
 		typedef ::nodecpp::safememory::owning_ptr<detail::array_of2<T>> owning_heap_type;
 		typedef ::nodecpp::safememory::soft_ptr<detail::array_of2<T>> soft_heap_type;
 
-		typedef safe_iterator_impl<T, soft_heap_type>			safe_iterator;
-		typedef safe_iterator_impl<const T, soft_heap_type>		const_safe_iterator;
+		typedef detail::safe_iterator<T, soft_heap_type>			safe_iterator;
+		typedef detail::safe_iterator<const T, soft_heap_type>		const_safe_iterator;
 		typedef const const_safe_iterator&						csafe_it_arg;
 		typedef std::pair<const_pointer, const_pointer>			const_pointer_pair;
 
@@ -3861,38 +3861,38 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_pointer_pair
 	basic_string<T, Allocator>::checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
-		if(EASTL_UNLIKELY(itBegin.ptr != itEnd.ptr))
-			ThrowInvalidArgumentException();
+		if(NODECPP_LIKELY(itBegin <= itEnd)) {
+			const_pointer b = itBegin.get_raw_ptr();
+			const_pointer e = itEnd.get_raw_ptr();
 
-		const_pointer b = itBegin.get_raw_ptr();
-		const_pointer e = itEnd.get_raw_ptr();
+			return const_pointer_pair(b, e);
+		}
 
-		if(EASTL_UNLIKELY(e < b))
-			ThrowInvalidArgumentException();
-
-		return const_pointer_pair(b, e);
+		ThrowInvalidArgumentException();
 	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_pointer basic_string<T, Allocator>::checkMineAndGet(csafe_it_arg it) const
 	{
-		if(EASTL_UNLIKELY(!internalLayout().IsSoftHeapPtr(it.ptr)))
-			ThrowInvalidArgumentException();
+		if(NODECPP_LIKELY(it <= end())) {
+			return it.get_raw_ptr();
+		}
 
-		return it.get_raw_ptr();
+		ThrowInvalidArgumentException();
 	}
 
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::const_pointer_pair
 	basic_string<T, Allocator>::checkMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
 	{
-		const_pointer b = checkMineAndGet(itBegin);
-		const_pointer e = checkMineAndGet(itEnd);
+		if(NODECPP_LIKELY(itBegin <= itEnd && itEnd <= end())) {
+			const_pointer b = itBegin.get_raw_ptr();
+			const_pointer e = itEnd.get_raw_ptr();
 
-		if(EASTL_UNLIKELY(e < b))
-			ThrowInvalidArgumentException();
+			return const_pointer_pair(b, e);
+		}
 
-		return const_pointer_pair(b, e);
+		ThrowInvalidArgumentException();
 	}
 
 	/* static */
@@ -3911,13 +3911,14 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_pointer_pair
 	basic_string<T, Allocator>::toPtrPair(const typename basic_string<T, Allocator>::this_type& str, size_type pos, size_type n)
 	{
-		//lit non-null warrantied
-		if(EASTL_UNLIKELY(pos > str.internalLayout().GetSize()))
-			ThrowRangeException();
+		if(NODECPP_LIKELY(pos <= str.internalLayout().GetSize())) {
+			const_pointer b = str.internalLayout().BeginPtr() + pos;
 
-		const_pointer b = str.internalLayout().BeginPtr() + pos;
-		size_type sz = std::min(n, str.internalLayout().GetSize() - pos);
-		return const_pointer_pair(b, b + sz);
+			size_type sz = std::min(n, str.internalLayout().GetSize() - pos);
+			return const_pointer_pair(b, b + sz);
+		}
+
+		ThrowRangeException();
 	}
 
 	// CharTypeStringFindEnd

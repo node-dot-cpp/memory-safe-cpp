@@ -32,9 +32,7 @@
 // #include "safe_ptr_with_zero_offset.h"
 #include <iterator>
 
-namespace safememory
-{
-
+namespace safememory {
 namespace detail {
 
 struct StackPtrForMakeOwningCallRiia {
@@ -244,7 +242,7 @@ template<class _Ty>
 	}
 
 template<class T>
-class alignas(T) alignas(T*) array_of2
+struct array_of2
 {
 	typedef array_of2<T> this_type;
 
@@ -321,9 +319,8 @@ template<class _Ty>
 		return make_owning_array_of_impl<_Ty>(size);
 	}
 
-} //namespace detail
 
-template <typename T>
+template <typename T, typename SoftArrayOfPtr>
 class unsafe_iterator
 {
 public:
@@ -334,18 +331,22 @@ public:
 	typedef T*   								pointer;
 	typedef T&	 								reference;
 
-//private:
-	pointer mIterator;
+// private:
+	pointer mIterator = nullptr;
 
 public:
-	constexpr unsafe_iterator()
-		: mIterator(nullptr) { }
+	// constexpr unsafe_iterator()
+	// 	: mIterator(nullptr) { }
 
-	constexpr explicit unsafe_iterator(pointer i)
-		: mIterator(i) { }
+	constexpr explicit unsafe_iterator(SoftArrayOfPtr ptr, size_t ix)
+		: mIterator(ptr->_begin + ix) {}
 
-	constexpr unsafe_iterator(const unsafe_iterator& ri)
-		: mIterator(ri.mIterator) { }
+	constexpr unsafe_iterator(const unsafe_iterator& ri) = default;
+	constexpr unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
+
+	constexpr pointer get_raw_ptr() const {
+		return mIterator;
+	}
 
 	constexpr reference operator*() const
 	{
@@ -353,7 +354,7 @@ public:
 	}
 
 	constexpr pointer operator->() const
-		{ return &(operator*()); }
+		{ return mIterator; }
 
 	constexpr unsafe_iterator& operator++()
 		{ ++mIterator; return *this; }
@@ -395,17 +396,40 @@ public:
 
 	constexpr bool operator!=(const unsafe_iterator& ri) const
 		{ return !operator==(ri); }
+
+
+	constexpr pointer _Unwrapped() const {
+		return mIterator;
+	}
+
+	constexpr void _Seek_to(pointer ptr) {
+		mIterator = ptr;
+	}
+
+	constexpr bool operator<(const unsafe_iterator& ri) const {
+		return mIterator < ri.mIterator;
+	}
+
+	constexpr bool operator<=(const unsafe_iterator& ri) const {
+		return mIterator <= ri.mIterator;
+	}
+
+	// constexpr bool operator>=(const unsafe_iterator& ri) const {
+	// 	return !operator<(ri);
+	// }
+
+
 };
 
-template <typename T>
-typename unsafe_iterator<T>::difference_type distance(const unsafe_iterator<T>& l, const unsafe_iterator<T>& r) {
+template <typename T, typename Arr>
+typename unsafe_iterator<T, Arr>::difference_type distance(const unsafe_iterator<T, Arr>& l, const unsafe_iterator<T, Arr>& r) {
 
 		return l.mIterator - r.mIterator;
 }
 
 
 template <typename T, typename SoftArrayOfPtr>
-class safe_iterator_impl
+class safe_iterator
 {
 public:
 	typedef std::random_access_iterator_tag  	iterator_category;
@@ -415,22 +439,21 @@ public:
 	typedef T*   								pointer;
 	typedef T&									reference;
 
-	typedef SoftArrayOfPtr 						soft_array_of_ptr_type;
-//private:
-	soft_array_of_ptr_type ptr;
+// private:
+	SoftArrayOfPtr ptr;
 	size_t ix = 0;
 
 
 public:
-	constexpr safe_iterator_impl() {}
+	// constexpr safe_iterator() {}
 
-	constexpr explicit safe_iterator_impl(soft_array_of_ptr_type ptr, size_t ix) : ptr(ptr), ix(ix) {}
+	constexpr explicit safe_iterator(SoftArrayOfPtr ptr, size_t ix)
+		: ptr(ptr), ix(ix) {}
 
-	constexpr safe_iterator_impl(const safe_iterator_impl& ri) = default;
-	constexpr safe_iterator_impl& operator=(const safe_iterator_impl& ri) = default;
+	constexpr safe_iterator(const safe_iterator& ri) = default;
+	constexpr safe_iterator& operator=(const safe_iterator& ri) = default;
 
-	constexpr pointer get_raw_ptr() const
-	{
+	constexpr pointer get_raw_ptr() const {
 		return ptr->get_raw_ptr(ix);
 	}
 
@@ -440,67 +463,122 @@ public:
 	}
 
 	constexpr pointer operator->() const
-		{ return get_raw_ptr(); }
+		{ return ptr->get_raw_ptr(ix); }
 
-	constexpr safe_iterator_impl& operator++()
+	constexpr safe_iterator& operator++()
 		{ ++ix; return *this; }
 
-	constexpr safe_iterator_impl operator++(int)
+	constexpr safe_iterator operator++(int)
 	{
-		safe_iterator_impl ri(*this);
+		safe_iterator ri(*this);
 		++ix;
 		return ri;
 	}
 
-	constexpr safe_iterator_impl& operator--()
+	constexpr safe_iterator& operator--()
 		{ --ix; return *this; }
 
-	constexpr safe_iterator_impl operator--(int)
+	constexpr safe_iterator operator--(int)
 	{
-		safe_iterator_impl ri(*this);
+		safe_iterator ri(*this);
 		--ix;
 		return ri;
 	}
 
-	constexpr safe_iterator_impl operator+(difference_type n) const
-		{ return safe_iterator_impl(ptr, ix + n); }
+	constexpr safe_iterator operator+(difference_type n) const
+		{ return safe_iterator(ptr, ix + n); }
 
-	constexpr safe_iterator_impl& operator+=(difference_type n)
+	constexpr safe_iterator& operator+=(difference_type n)
 		{ ix += n; return *this; }
 
-	constexpr safe_iterator_impl operator-(difference_type n) const
-		{ return safe_iterator_impl(ptr, ix - n); }
+	constexpr safe_iterator operator-(difference_type n) const
+		{ return safe_iterator(ptr, ix - n); }
 
-	constexpr safe_iterator_impl& operator-=(difference_type n)
+	constexpr safe_iterator& operator-=(difference_type n)
 		{ ix -= n; return *this; }
 
 	constexpr reference operator[](difference_type n) const
 		{ return ptr->at(ix + n); }
 
-	constexpr bool operator==(const safe_iterator_impl& ri) const
+	constexpr bool operator==(const safe_iterator& ri) const
 		{ return ptr == ri.ptr && ix == ri.ix; }
 
-	constexpr bool operator!=(const safe_iterator_impl& ri) const
+	constexpr bool operator!=(const safe_iterator& ri) const
 		{ return !operator==(ri); }
+
+	constexpr pointer _Unwrapped() const {
+		return get_raw_ptr();
+	}
+
+	constexpr void _Seek_to(pointer to) {
+		ix = (to - ptr->get_raw_ptr(0)) / sizeof(T);
+	}
+
+	constexpr bool operator<(const safe_iterator& ri) const {
+		return ptr == ri.ptr && ix < ri.ix;
+	}
+
+	constexpr bool operator<=(const safe_iterator& ri) const {
+		return ptr == ri.ptr && ix <= ri.ix;
+	}
+
+	// constexpr bool operator>=(const safe_iterator& ri) const {
+	// 	return !operator<(ri);
+	// }
+	
 };
 
-template <typename T, typename T2>
-typename safe_iterator_impl<T, T2>::difference_type distance(const safe_iterator_impl<T, T2>& l, const safe_iterator_impl<T, T2>& r) {
+template <typename T, typename Arr>
+typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, Arr>& l, const safe_iterator<T, Arr>& r) {
 
 		return (l.ptr == r.ptr)? l.ix - r.ix : 0;
 }
 
+} //namespace detail
 } // namespace safememory
 
-namespace nodecpp::safememory {
-	using ::safememory::unsafe_iterator;
-	using ::safememory::safe_iterator_impl;
-	using ::safememory::distance;
+namespace std {
 
-	namespace detail {
-		using ::safememory::detail::array_of;
-		using ::safememory::detail::make_owning_array;
-	}
+	namespace sfd = safememory::detail;	
+// this is to allow MS to optimize algorightms like std::find
+
+template <typename T, typename Arr>
+struct _Unwrappable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
+};
+
+template <typename T, typename Arr>
+struct _Wrapped_seekable<sfd::unsafe_iterator<T, Arr>, T*> : std::true_type {
+};
+
+template <typename T, typename Arr>
+struct _Range_verifiable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
+};
+
+template <typename T, typename Arr>
+constexpr void _Verify_range(const sfd::unsafe_iterator<T, Arr>& _First, const sfd::unsafe_iterator<T, Arr>& _Last) {
+	if(!(_First <= _Last))
+		throw std::out_of_range("_Verify_range");
 }
+
+template <typename T, typename Arr>
+struct _Unwrappable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
+};
+
+template <typename T, typename Arr>
+struct _Wrapped_seekable<sfd::safe_iterator<T, Arr>, T*> : std::true_type {
+};
+
+template <typename T, typename Arr>
+struct _Range_verifiable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
+};
+
+template <typename T, typename Arr>
+constexpr void _Verify_range(const sfd::safe_iterator<T, Arr>& _First, const sfd::safe_iterator<T, Arr>& _Last) {
+	if(!(_First <= _Last))
+		throw std::out_of_range("_Verify_range");
+}
+
+} //namespace std
+
 
 #endif // SAFEMEMORY_DETAIL_STRING_DETAIL_H
