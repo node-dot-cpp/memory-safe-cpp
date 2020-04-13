@@ -309,7 +309,7 @@ template<class _Ty>
 		owning_ptr_impl<array_of2<_Ty>> op(make_owning_t(), dataForObj);
 		// void* stackTmp = thg_stackPtrForMakeOwningCall;
 		// thg_stackPtrForMakeOwningCall = dataForObj;
-		array_of2<_Ty>* objPtr = new ( dataForObj ) array_of2<_Ty>(size);
+		/*array_of2<_Ty>* objPtr = */new ( dataForObj ) array_of2<_Ty>(size);
 		// thg_stackPtrForMakeOwningCall = stackTmp;
 		//return owning_ptr_impl<_Ty>(objPtr);
 		return op;

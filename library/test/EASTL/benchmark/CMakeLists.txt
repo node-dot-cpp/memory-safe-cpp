@@ -42,7 +42,7 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp" "../test/source/EASTLTestAllocator.cpp" "../test/source/EASTLTest.cpp")
+file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp" "../test/source/EASTLTest.cpp")
 set(SOURCES ${EASTLBENCHMARK_SOURCES})
 
 #-------------------------------------------------------------------------------------------
@@ -50,9 +50,9 @@ set(SOURCES ${EASTLBENCHMARK_SOURCES})
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
+
 add_definitions(-DEASTL_OPENSOURCE=1)
-add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)  # silence std::hash_map deprecation warnings
+
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
@@ -63,7 +63,7 @@ set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(EASTLBenchmark_Libraries
-    EASTL
+
     EATest)
 target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries} Threads::Threads)
 

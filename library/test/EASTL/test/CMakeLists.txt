@@ -16,7 +16,7 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
-add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
+
 
 #-------------------------------------------------------------------------------------------
 # Compiler Flags

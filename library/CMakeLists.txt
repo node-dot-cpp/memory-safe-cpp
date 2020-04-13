@@ -3,6 +3,7 @@
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.1)
 project(SafeMemory CXX)
+set(CMAKE_CXX_STANDARD 17)
 
 #-------------------------------------------------------------------------------------------
 # Library definition
@@ -12,7 +13,7 @@ add_library(SafeMemory
   experimental/containers/source/hashtable.cpp
   experimental/containers/source/string.cpp
   src/iibmalloc/src/iibmalloc.cpp
-  src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
+#  src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
   src/iibmalloc/src/foundation/src/nodecpp_assert.cpp
   src/iibmalloc/src/foundation/src/page_allocator.cpp
   src/iibmalloc/src/foundation/src/log.cpp
@@ -21,8 +22,6 @@ add_library(SafeMemory
   src/iibmalloc/src/foundation/src/safe_memory_error.cpp
   src/iibmalloc/src/foundation/src/cpu_exceptions_translator.cpp
   )
-
-set_target_properties(SafeMemory PROPERTIES CXX_STANDARD 17)
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -34,7 +33,7 @@ add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
-add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
+#add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 
 #-------------------------------------------------------------------------------------------
@@ -42,7 +41,6 @@ add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 #-------------------------------------------------------------------------------------------
 target_include_directories(SafeMemory
   PUBLIC experimental/containers/include
-  PUBLIC src/iibmalloc/src/foundation/3rdparty/fmt/include
   PUBLIC src/iibmalloc/src/foundation/include
   PUBLIC src/iibmalloc/src
   PUBLIC src
@@ -52,8 +50,11 @@ target_include_directories(SafeMemory
 #-------------------------------------------------------------------------------------------
 # Package Dependencies 
 #-------------------------------------------------------------------------------------------
-#target_link_libraries(SafeMemory Iibmalloc Foundation)
+#target_link_libraries(SafeMemory Iibmalloc Foundation )
+target_link_libraries(SafeMemory fmt::fmt)
 
+
+add_subdirectory(src/iibmalloc/src/foundation/3rdparty/fmt)
 add_subdirectory(test/EASTL)
 add_subdirectory(experimental/containers)
 
