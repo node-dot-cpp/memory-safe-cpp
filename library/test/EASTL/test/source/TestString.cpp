@@ -22,8 +22,8 @@
 // }
 
 template<typename StringType>
-bool validate(const StringType& /*str*/) {
-	return true;
+bool validate(const StringType& str) {
+	return str.validate();
 }
 
 //using namespace eastl;

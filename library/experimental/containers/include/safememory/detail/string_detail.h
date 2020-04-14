@@ -344,6 +344,10 @@ public:
 	constexpr unsafe_iterator(const unsafe_iterator& ri) = default;
 	constexpr unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
 
+	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
+	constexpr unsafe_iterator(const unsafe_iterator<NonConstT, SoftArrayOfPtr>& ri)
+		: mIterator(ri.mIterator) {}
+
 	constexpr pointer get_raw_ptr() const {
 		return mIterator;
 	}
@@ -453,6 +457,11 @@ public:
 	constexpr safe_iterator(const safe_iterator& ri) = default;
 	constexpr safe_iterator& operator=(const safe_iterator& ri) = default;
 
+	// allow non-const to const convertion
+	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
+	constexpr safe_iterator(const safe_iterator<NonConstT, SoftArrayOfPtr>& ri)
+		: ptr(ri.ptr), ix(ri.ix) {}
+
 	constexpr pointer get_raw_ptr() const {
 		return ptr->get_raw_ptr(ix);
 	}
@@ -511,7 +520,7 @@ public:
 	}
 
 	constexpr void _Seek_to(pointer to) {
-		ix = (to - ptr->get_raw_ptr(0)) / sizeof(T);
+		ix = std::distance(ptr->get_raw_ptr(0), to);
 	}
 
 	constexpr bool operator<(const safe_iterator& ri) const {

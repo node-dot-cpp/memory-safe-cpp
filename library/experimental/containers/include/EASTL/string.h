@@ -342,8 +342,12 @@ namespace safememory
 
 		typedef detail::safe_iterator<T, soft_heap_type>			safe_iterator;
 		typedef detail::safe_iterator<const T, soft_heap_type>		const_safe_iterator;
-		typedef const const_safe_iterator&						csafe_it_arg;
-		typedef std::pair<const_pointer, const_pointer>			const_pointer_pair;
+		typedef std::reverse_iterator<safe_iterator>                safe_reverse_iterator;
+		typedef std::reverse_iterator<const_safe_iterator>          const_safe_reverse_iterator;
+		typedef const const_safe_iterator&							csafe_it_arg;
+		typedef const const_safe_reverse_iterator&					crsafe_it_arg;
+		
+		typedef std::pair<const_pointer, const_pointer>				const_pointer_pair;
 
 		static const size_type npos     = static_cast<size_type>(-1);      /// 'npos' means non-valid position or simply non-position.
 
@@ -354,7 +358,7 @@ namespace safememory
 
 		// CtorSprintf exists so that we can create a constructor that accepts printf-style
 		// arguments but also doesn't collide with any other constructor declaration.
-		struct CtorSprintf{};
+//		struct CtorSprintf{};
 
 		// CtorConvert exists so that we can have a constructor that implements string encoding
 		// conversion, such as between UCS2 char16_t and UTF8 char8_t.
@@ -447,8 +451,8 @@ namespace safememory
 			Layout& operator=(Layout&& other) = default; //                        { Move(*this, other); return *this; }
 
 			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
-			inline bool IsHeap() const EA_NOEXCEPT                    { return true; }
-			inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
+			// inline bool IsHeap() const EA_NOEXCEPT                    { return true; }
+			// inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
 			// inline pointer SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
 			// inline const_pointer SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
 
@@ -511,7 +515,7 @@ namespace safememory
 			inline void SetNewHeap(owning_heap_type&& new_heap) { _heap = std::move(new_heap); }
 			// inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
 			inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(_heap); }
-			inline bool IsSoftHeapPtr(const soft_heap_type& soft) const EA_NOEXCEPT { return soft == _heap; }
+			// inline bool IsSoftHeapPtr(const soft_heap_type& soft) const EA_NOEXCEPT { return soft == _heap; }
 
 			// inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
 			// {
@@ -531,10 +535,10 @@ namespace safememory
 			// inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { std::swap(dst.raw, src.raw); }
 			// inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { std::swap(a.raw, b.raw); }
 
-			inline void Reset() EA_NOEXCEPT { 
-				_heap = nullptr;
-				_size = 0;
-			}
+			// inline void Reset() EA_NOEXCEPT { 
+			// 	_heap = nullptr;
+			// 	_size = 0;
+			// }
 		};
 
 		Layout          mPair_first;
@@ -657,6 +661,14 @@ namespace safememory
 		const_safe_iterator end() const EA_NOEXCEPT;
 		const_safe_iterator cend() const EA_NOEXCEPT;
 
+		safe_reverse_iterator       rbegin() EA_NOEXCEPT;
+		const_safe_reverse_iterator rbegin() const EA_NOEXCEPT;
+		const_safe_reverse_iterator crbegin() const EA_NOEXCEPT;
+
+		safe_reverse_iterator       rend() EA_NOEXCEPT;
+		const_safe_reverse_iterator rend() const EA_NOEXCEPT;
+		const_safe_reverse_iterator crend() const EA_NOEXCEPT;
+
 
 		// Size-related functionality
 		bool      empty() const EA_NOEXCEPT;
@@ -743,6 +755,8 @@ namespace safememory
 		safe_iterator    erase(csafe_it_arg itBegin, csafe_it_arg itEnd);
 		reverse_iterator erase_unsafe(reverse_iterator position);
 		reverse_iterator erase_unsafe(reverse_iterator first, reverse_iterator last);
+		safe_reverse_iterator erase(crsafe_it_arg position);
+		safe_reverse_iterator erase(crsafe_it_arg first, crsafe_it_arg last);
 		void             clear() EA_NOEXCEPT;
 
 		// Detach memory
@@ -871,7 +885,7 @@ namespace safememory
 		void        RangeInitialize(const_pointer pBegin);
 		void        SizeInitialize(size_type n, value_type c);
 
-		bool        IsSSO() const EA_NOEXCEPT;
+		// bool        IsSSO() const EA_NOEXCEPT;
 
 		[[noreturn]] static void ThrowLengthException();
 		[[noreturn]] static void ThrowRangeException();
@@ -1305,6 +1319,52 @@ namespace safememory
 		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
 	}
 
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::safe_reverse_iterator
+	basic_string<T, Allocator>::rbegin() EA_NOEXCEPT
+	{
+		return safe_reverse_iterator(end());
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::safe_reverse_iterator
+	basic_string<T, Allocator>::rend() EA_NOEXCEPT
+	{
+		return safe_reverse_iterator(begin());
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_safe_reverse_iterator
+	basic_string<T, Allocator>::rbegin() const EA_NOEXCEPT
+	{
+		return const_safe_reverse_iterator(end);
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_safe_reverse_iterator
+	basic_string<T, Allocator>::crbegin() const EA_NOEXCEPT
+	{
+		return const_safe_reverse_iterator(end());
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_safe_reverse_iterator
+	basic_string<T, Allocator>::rend() const EA_NOEXCEPT
+	{
+		return const_safe_reverse_iterator(begin());
+	}
+
+
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::const_safe_reverse_iterator
+	basic_string<T, Allocator>::crend() const EA_NOEXCEPT
+	{
+		return const_safe_reverse_iterator(begin());
+	}
 
 	template <typename T, typename Allocator>
 	inline bool basic_string<T, Allocator>::empty() const EA_NOEXCEPT
@@ -1313,11 +1373,11 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool basic_string<T, Allocator>::IsSSO() const EA_NOEXCEPT
-	{
-		return internalLayout().IsSSO();
-	}
+	// template <typename T, typename Allocator>
+	// inline bool basic_string<T, Allocator>::IsSSO() const EA_NOEXCEPT
+	// {
+	// 	return internalLayout().IsSSO();
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2664,6 +2724,20 @@ namespace safememory
 		return reverse_iterator(erase_unsafe((++last).base(), (++first).base()));
 	}
 
+	template <typename T, typename Allocator>
+	inline typename basic_string<T, Allocator>::safe_reverse_iterator
+	basic_string<T, Allocator>::erase(crsafe_it_arg position)
+	{
+		return safe_reverse_iterator(erase((++position).base()));
+	}
+
+
+	template <typename T, typename Allocator>
+	typename basic_string<T, Allocator>::safe_reverse_iterator
+	basic_string<T, Allocator>::erase(crsafe_it_arg first, crsafe_it_arg last)
+	{
+		return safe_reverse_iterator(erase((++last).base(), (++first).base()));
+	}
 
 	template <typename T, typename Allocator>
 	basic_string<T, Allocator>& basic_string<T, Allocator>::replace(size_type position, size_type n, const this_type& x)

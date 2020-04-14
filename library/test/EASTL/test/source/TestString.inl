@@ -7,11 +7,11 @@
 // Test StringHash
 // Test exceptions
 
-#if EASTL_OPENSOURCE
-	#define EASTL_SNPRINTF_TESTS_ENABLED 0
-#else
-	#define EASTL_SNPRINTF_TESTS_ENABLED 1
-#endif
+// #if EASTL_OPENSOURCE
+#define EASTL_SNPRINTF_TESTS_ENABLED 0
+// #else
+// 	#define EASTL_SNPRINTF_TESTS_ENABLED 1
+// #endif
 
 template<typename StringType>
 int TEST_STRING_NAME()
@@ -230,26 +230,26 @@ int TEST_STRING_NAME()
 		VERIFY(validate(str2));
 	}
 
-	// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-	// {
-	// 	StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// basic_string(csafe_it_arg pBegin, csafe_it_arg pEnd);
+	{
+		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-	// 	auto* pStart = str1.data() + 5;
-	// 	auto* pEnd = str1.data() + 20;
+		auto pStart = str1.begin() + 5;
+		auto pEnd = str1.begin() + 20;
 
-	// 	StringType str(pStart, pEnd);
-	// 	VERIFY(str == LITERAL("fghijklmnopqrst"));
-	// 	VERIFY(!str.empty());
-	// 	VERIFY(str.size() == 15);
-	// }
+		StringType str(pStart, pEnd);
+		VERIFY(str == LITERAL("fghijklmnopqrst"));
+		VERIFY(!str.empty());
+		VERIFY(str.size() == 15);
+	}
 
-	// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-	// {
-	// 	StringType str(typename StringType::CtorDoNotInitialize(), 42);
-	// 	VERIFY(str.size() == 0);
-	// 	VERIFY(str.length() == 0);
-	// 	VERIFY(str.capacity() == 42);
-	// }
+	// basic_string(CtorReserve, size_type n);
+	{
+		StringType str(typename StringType::CtorReserve(), 42);
+		VERIFY(str.size() == 0);
+		VERIFY(str.length() == 0);
+		VERIFY(str.capacity() == 42);
+	}
 
 	// basic_string(CtorSprintf, const value_type* pFormat, ...);
 	{
@@ -467,17 +467,17 @@ int TEST_STRING_NAME()
 		VERIFY(validate(str1_copy));
 	}
 
-	// this_type& operator=(const value_type* p);
-	// {
-	// 	StringType str;
-	// 	str = LITERAL("abcdefghijklmnopqrstuvwxyz");
+	// this_type& operator=(literal_type x);
+	{
+		StringType str;
+		str = LITERAL("abcdefghijklmnopqrstuvwxyz");
 
-	// 	VERIFY(str[5] == LITERAL('f'));
-	// 	VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
-	// 	VERIFY(!str.empty());
-	// 	VERIFY(str.length() == 26);
-	// 	VERIFY(validate(str));
-	// }
+		VERIFY(str[5] == LITERAL('f'));
+		VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
+		VERIFY(!str.empty());
+		VERIFY(str.length() == 26);
+		VERIFY(validate(str));
+	}
 
 	// this_type& operator=(value_type c);
 	{
