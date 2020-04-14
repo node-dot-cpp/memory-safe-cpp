@@ -65,13 +65,14 @@ namespace
 	}
 
 
-	template <typename Container, typename T> 
-	void TestReplace1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int n)
+	template <typename Container> 
+	void TestReplace1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p)
 	{
+		int n = p.size();
 		const typename Container::size_type s = c.size();
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			c.replace(s - (typename Container::size_type)(i * 5), ((n - 2) + (i & 3)), p, n); // The second argument rotates through n-2, n-1, n, n+1, n-2, etc.
+			c.replace(s - (typename Container::size_type)(i * 5), ((n - 2) + (i & 3)), p); // The second argument rotates through n-2, n-1, n, n+1, n-2, etc.
 		stopwatch.Stop();
 	}
 
@@ -92,7 +93,7 @@ namespace
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.size()); 
+			Benchmark::DoNothing(&c, c.size());
 		stopwatch.Stop();
 	}
 
@@ -119,58 +120,58 @@ namespace
 	}
 
 
-	template <typename Container, typename T> 
-	void TestFind1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestFind1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.find(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.find(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
 
-	template <typename Container, typename T> 
-	void TestRfind1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestRfind1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.rfind(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.rfind(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename T> 
-	void TestFirstOf1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestFirstOf1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.find_first_of(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.find_first_of(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename T> 
-	void TestLastOf1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestLastOf1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.find_last_of(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.find_last_of(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename T> 
-	void TestFirstNotOf1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestFirstNotOf1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.find_first_not_of(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.find_first_not_of(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename T> 
-	void TestLastNotOf1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p, int pos, int n)
+	template <typename Container> 
+	void TestLastNotOf1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p, int pos)
 	{
 		stopwatch.Restart();
 		for(int i = 0; i < 1000; i++)
-			Benchmark::DoNothing(&c, c.find_last_not_of(p, (typename Container::size_type)pos, (typename Container::size_type)n));
+			Benchmark::DoNothing(&c, c.find_last_not_of(p, (typename Container::size_type)pos));
 		stopwatch.Stop();
 	}
 
@@ -212,11 +213,15 @@ void BenchmarkString()
 	{
 		for(int i = 0; i < 2; i++)
 		{
-			std::basic_string<char8_t>    ss8(16, 0);   // We initialize to size of 16 because different implementations may make
-			safememory::basic_string<char8_t>  es8(16, 0);   // different tradeoffs related to startup size. Initial operations are faster
-														// when strings start with a higher reserve, but they use more memory. 
-			std::basic_string<char16_t>   ss16(16, 0);  // We try to nullify this tradeoff for the tests below by starting all at 
-			safememory::basic_string<char16_t> es16(16, 0);  // the same baseline allocation.
+			std::basic_string<char8_t>  		ss8(16, 0);
+			std::basic_string<char16_t>   		ss16(16, 0);
+
+
+			safememory::basic_string<char8_t>  	es8(16, 0);
+			safememory::basic_string<char16_t> 	es16(16, 0);
+
+			// std::basic_string<char8_t>  		es8(16, 0);
+			// std::basic_string<char16_t>   		es16(16, 0);
 
 
 			///////////////////////////////
@@ -273,25 +278,26 @@ void BenchmarkString()
 
 
 			///////////////////////////////            
-			// Test replace(size_type position, size_type n1, const value_type* p, size_type n2)
+			// Test replace(size_type position, size_type n1, const basic_string& str)
 			///////////////////////////////
 
-			// const int kReplace1Size = 8;
-			// const char8_t pReplace1_8[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			decltype(ss8) pReplace1_ss8 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			decltype(es8) pReplace1_es8 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			// TestReplace1(stopwatch1, ss8, pReplace1_8, kReplace1Size);
-			// TestReplace1(stopwatch2, es8, pReplace1_8, kReplace1Size);
+			TestReplace1(stopwatch1, ss8, pReplace1_ss8);
+			TestReplace1(stopwatch2, es8, pReplace1_es8);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/replace/pos,n,str", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			// const char16_t pReplace1_16[kReplace1Size] = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			decltype(ss16) pReplace1_ss16 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+			decltype(es16) pReplace1_es16 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			// TestReplace1(stopwatch1, ss16, pReplace1_16, kReplace1Size);
-			// TestReplace1(stopwatch2, es16, pReplace1_16, kReplace1Size);
+			TestReplace1(stopwatch1, ss16, pReplace1_ss16);
+			TestReplace1(stopwatch2, es16, pReplace1_es16);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/replace/pos,n,p,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/replace/pos,n,str", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
@@ -363,138 +369,133 @@ void BenchmarkString()
 
 
 			///////////////////////////////
-			// Test find(const value_type* p, size_type position, size_type n)
+			// Test find(const basic_string& str, size_type position)
 			///////////////////////////////
 
-			// const int kFind1Size = 7;
-			// const char8_t pFind1_8[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			decltype(ss8) pFind1_ss8 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			decltype(es8) pFind1_es8 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			// ss8.insert(ss8.size() / 2, pFind1_8);
-			// es8.insert(es8.size() / 2, pFind1_8);
+			ss8.insert(ss8.size() / 2, pFind1_ss8);
+			es8.insert(es8.size() / 2, pFind1_es8);
 
-			// TestFind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			// TestFind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			TestFind1(stopwatch1, ss8, pFind1_ss8, 15);
+			TestFind1(stopwatch2, es8, pFind1_es8, 15);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/find/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			// const char16_t pFind1_16[kFind1Size] = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			decltype(ss16) pFind1_ss16 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+			decltype(es16) pFind1_es16 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			// #if !defined(EA_PLATFORM_IPHONE) && (!defined(EA_COMPILER_CLANG) && defined(EA_PLATFORM_MINGW)) // Crashes on iPhone.
-			//   ss16.insert(ss8.size() / 2, pFind1_16);
-			// #endif
-			// es16.insert(es8.size() / 2, pFind1_16);
+			ss16.insert(ss16.size() / 2, pFind1_ss16);
+			es16.insert(es16.size() / 2, pFind1_es16);
 
-			// TestFind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			// TestFind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			TestFind1(stopwatch1, ss16, pFind1_ss16, 15);
+			TestFind1(stopwatch2, es16, pFind1_es16, 15);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/find/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test rfind(const value_type* p, size_type position, size_type n)
-			///////////////////////////////
-
-			// TestRfind1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			// TestRfind1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			// TestRfind1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			// TestRfind1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/rfind/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			//NOTICE (RASHIN):
-			//FindFirstOf variants are incredibly slow on palm pixi debug builds.
-			//Disabling for now...
-		#if !defined(EA_DEBUG)
-			///////////////////////////////
-			// Test find_first_of(const value_type* p, size_type position, size_type n
-			///////////////////////////////
-
-			// const int kFindOf1Size = 7;
-			// const char8_t pFindOf1_8[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
-
-			// TestFirstOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
-			// TestFirstOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			// const char16_t pFindOf1_16[kFindOf1Size] = { '~', '~', '~', '~', '~', '~', '~' };
-
-			// TestFirstOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
-			// TestFirstOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/find_first_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/find/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
-			// Test find_last_of(const value_type* p, size_type position, size_type n
+			// Test rfind(const basic_string& str, size_type position)
 			///////////////////////////////
 
-			// TestLastOf1(stopwatch1, ss8, pFindOf1_8, 15, kFindOf1Size);
-			// TestLastOf1(stopwatch2, es8, pFindOf1_8, 15, kFindOf1Size);
+			TestRfind1(stopwatch1, ss8, pFind1_ss8, 15);
+			TestRfind1(stopwatch2, es8, pFind1_es8, 15);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/rfind/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			// TestLastOf1(stopwatch1, ss16, pFindOf1_16, 15, kFindOf1Size);
-			// TestLastOf1(stopwatch2, es16, pFindOf1_16, 15, kFindOf1Size);
+			TestRfind1(stopwatch1, ss16, pFind1_ss16, 15);
+			TestRfind1(stopwatch2, es16, pFind1_es16, 15);
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test find_first_not_of(const value_type* p, size_type position, size_type n
-			///////////////////////////////
-
-			// TestFirstNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			// TestFirstNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			// TestFirstNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			// TestFirstNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/find_first_not_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/rfind/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////
-			// Test find_last_of(const value_type* p, size_type position, size_type n
+			// Test find_first_of(const basic_string& str, size_type position)
 			///////////////////////////////
 
-			// TestLastNotOf1(stopwatch1, ss8, pFind1_8, 15, kFind1Size);
-			// TestLastNotOf1(stopwatch2, es8, pFind1_8, 15, kFind1Size);
+			const int kFindOf1Size = 7;
+			decltype(ss8) pFindOf1_ss8 = { '~', '~', '~', '~', '~', '~', '~' };
+			decltype(es8) pFindOf1_es8 = { '~', '~', '~', '~', '~', '~', '~' };
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char8_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			TestFirstOf1(stopwatch1, ss8, pFindOf1_ss8, 15);
+			TestFirstOf1(stopwatch2, es8, pFindOf1_es8, 15);
 
-			// TestLastNotOf1(stopwatch1, ss16, pFind1_16, 15, kFind1Size);
-			// TestLastNotOf1(stopwatch2, es16, pFind1_16, 15, kFind1Size);
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/find_first_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
-			// if(i == 1)
-			// 	Benchmark::AddResult("string<char16_t>/find_last_of/p,pos,n", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			decltype(ss16) pFindOf1_ss16 = { '~', '~', '~', '~', '~', '~', '~' };
+			decltype(es16) pFindOf1_es16 = { '~', '~', '~', '~', '~', '~', '~' };
 
-		#endif
+			TestFirstOf1(stopwatch1, ss16, pFindOf1_ss16, 15);
+			TestFirstOf1(stopwatch2, es16, pFindOf1_es16, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/find_first_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test find_last_of(const basic_string& str, size_type position)
+			///////////////////////////////
+
+			TestLastOf1(stopwatch1, ss8, pFindOf1_ss8, 15);
+			TestLastOf1(stopwatch2, es8, pFindOf1_es8, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestLastOf1(stopwatch1, ss16, pFindOf1_ss16, 15);
+			TestLastOf1(stopwatch2, es16, pFindOf1_es16, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test find_first_not_of(const basic_string& str, size_type position)
+			///////////////////////////////
+
+			TestFirstNotOf1(stopwatch1, ss8, pFind1_ss8, 15);
+			TestFirstNotOf1(stopwatch2, es8, pFind1_es8, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/find_first_not_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestFirstNotOf1(stopwatch1, ss16, pFind1_ss16, 15);
+			TestFirstNotOf1(stopwatch2, es16, pFind1_es16, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/find_first_not_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+
+			///////////////////////////////
+			// Test find_last_of(const basic_string& str, size_type position)
+			///////////////////////////////
+
+			TestLastNotOf1(stopwatch1, ss8, pFind1_ss8, 15);
+			TestLastNotOf1(stopwatch2, es8, pFind1_es8, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+
+			TestLastNotOf1(stopwatch1, ss16, pFind1_ss16, 15);
+			TestLastNotOf1(stopwatch2, es16, pFind1_es16, 15);
+
+			if(i == 1)
+				Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			///////////////////////////////
 			// Test compare()
 			///////////////////////////////
 
-			std::basic_string<char8_t>    ss8X(ss8);
-			safememory::basic_string<char8_t>  es8X(es8);
-			std::basic_string<char16_t>   ss16X(ss16);
-			safememory::basic_string<char16_t> es16X(es16);
+			decltype(ss8)  ss8X(ss8);
+			decltype(es8)  es8X(es8);
+			decltype(ss16) ss16X(ss16);
+			decltype(es16) es16X(es16);
 
 			TestCompare(stopwatch1, ss8, ss8X);
 			TestCompare(stopwatch2, es8, es8X);
