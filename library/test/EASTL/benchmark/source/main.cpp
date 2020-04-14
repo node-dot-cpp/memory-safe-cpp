@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 // #if !EASTL_OPENSOURCE
 //     #include <PPMalloc/EAGeneralAllocatorDebug.h>
-#endif
+// #endif
 #include <EAStdC/EASprintf.h>
 #include <EAStdC/EAStopwatch.h>
 #include <EAStdC/EAString.h>

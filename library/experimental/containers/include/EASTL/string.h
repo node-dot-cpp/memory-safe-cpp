@@ -3078,12 +3078,13 @@ namespace safememory
 		//        EASTL_FAIL_MSG("basic_string::find -- invalid position");
 		//#endif
 
-		if(EASTL_LIKELY(((npos - n) >= position) && (position + n) <= internalLayout().GetSize())) // If the range is valid...
+		if(EASTL_LIKELY((position < internalLayout().GetSize())))
 		{
-			const_pointer const pTemp = std::search(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
+			const_pointer const pBegin = internalLayout().BeginPtr() + position;
+			const const_iterator pResult   = CharTypeStringSearch(pBegin, internalLayout().EndPtr(), p, p + n);
 
-			if((pTemp != internalLayout().EndPtr()) || (n == 0))
-				return (size_type)(pTemp - internalLayout().BeginPtr());
+			if(pResult != internalLayout().EndPtr())
+				return std::distance(internalLayout().BeginPtr(), pResult);
 		}
 		return npos;
 	}
