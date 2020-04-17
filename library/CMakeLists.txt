@@ -4,13 +4,6 @@
 
 
 #-------------------------------------------------------------------------------------------
-# Library definition
-#-------------------------------------------------------------------------------------------
-add_library(SafeMemory STATIC
-  src/safe_ptr.cpp
-  )
-
-#-------------------------------------------------------------------------------------------
 # Defines
 #-------------------------------------------------------------------------------------------
 
@@ -37,6 +30,13 @@ else()
 #	add_compile_options(-lpthread)
   add_compile_options( -O2 )
 endif()
+
+#-------------------------------------------------------------------------------------------
+# Library definition
+#-------------------------------------------------------------------------------------------
+add_library(SafeMemory STATIC
+  src/safe_ptr.cpp
+  )
 
 #-------------------------------------------------------------------------------------------
 # Export Include Directories
@@ -76,7 +76,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # using GCC
 
   add_library(gcc_lto_workaround SHARED
-    gcc_lto_workaround.cpp
+    gcc_lto_workaround/gcc_lto_workaround.cpp
     )
 
   add_compile_options(-fpic)
