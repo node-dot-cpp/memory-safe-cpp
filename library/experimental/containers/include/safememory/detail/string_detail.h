@@ -338,8 +338,11 @@ public:
 	// constexpr unsafe_iterator()
 	// 	: mIterator(nullptr) { }
 
-	constexpr explicit unsafe_iterator(SoftArrayOfPtr ptr, size_t ix)
+	constexpr unsafe_iterator(SoftArrayOfPtr ptr, size_t ix)
 		: mIterator(ptr->_begin + ix) {}
+
+	constexpr unsafe_iterator(pointer ptr)
+		: mIterator(ptr) {}
 
 	constexpr unsafe_iterator(const unsafe_iterator& ri) = default;
 	constexpr unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
