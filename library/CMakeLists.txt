@@ -65,8 +65,6 @@ add_executable(test_safe_memory
 
 target_link_libraries(test_safe_memory SafeMemory)
 
-add_test(Run_test_safe_memory test_safe_memory)
-
 
 #-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
@@ -100,6 +98,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
   add_test(Run_test_safe_memory_lto_wa test_safe_memory_lto_wa)
 
+  target_link_libraries(test_safe_memory gcc_lto_workaround)
+
 endif()
 
+#-------------------------------------------------------------------------------------------
 
+add_test(Run_test_safe_memory test_safe_memory)
