@@ -811,11 +811,11 @@ namespace safememory
 	template <typename First, typename Last, typename Result>
 	inline Result uninitialized_move_ptr_if_noexcept(First first, Last last, Result dest)
 	{
-		#if EASTL_EXCEPTIONS_ENABLED
+		// #if EASTL_EXCEPTIONS_ENABLED
 			return safememory::uninitialized_move_if_noexcept(first, last, dest);
-		#else
-			return eastl::uninitialized_move_ptr(first, last, dest);
-		#endif
+		// #else
+		// 	return eastl::uninitialized_move_ptr(first, last, dest);
+		// #endif
 	}
 
 

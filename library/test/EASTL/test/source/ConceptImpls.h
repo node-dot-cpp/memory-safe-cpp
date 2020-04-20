@@ -31,14 +31,14 @@ public:
 
 // Unfortunately not all compilers handle type_traits reliably correctly currently so we can't straightforwardly
 // static_assert everything that should be true of this class
-static_assert(eastl::is_destructible<Destructible>::value, "eastl::is_destructible<Destructible>::value");
+static_assert(std::is_destructible<Destructible>::value, "std::is_destructible<Destructible>::value");
 // static_assert(!eastl::is_default_constructible<Destructible>::value,
 // "!eastl::is_default_constructible<Destructible>::value");
 // static_assert(!is_copy_constructible<Destructible>::value, "!eastl::is_copy_constructible<Destructible>::value");
-static_assert(!eastl::is_copy_assignable<Destructible>::value, "!eastl::is_copy_assignable<Destructible>::value");
+static_assert(!std::is_copy_assignable<Destructible>::value, "!std::is_copy_assignable<Destructible>::value");
 // static_assert(!eastl::is_move_constructible<Destructible>::value,
 // "!eastl::is_move_constructible<Destructible>::value");
-static_assert(!eastl::is_move_assignable<Destructible>::value, "!eastl::is_move_assignable<Destructible>::value");
+static_assert(!std::is_move_assignable<Destructible>::value, "!std::is_move_assignable<Destructible>::value");
 
 class DefaultConstructible
 {
@@ -61,7 +61,7 @@ struct NotDefaultConstructible
 {
 	NotDefaultConstructible() = delete;
 };
-static_assert(!eastl::is_default_constructible<NotDefaultConstructible>::value, "'NotDefaultConstructible' is default constructible.");
+static_assert(!std::is_default_constructible<NotDefaultConstructible>::value, "'NotDefaultConstructible' is default constructible.");
 
 
 class CopyConstructible
@@ -88,18 +88,18 @@ private:
 
 // Unfortunately not all compilers handle type_traits reliably correctly currently so we can't straightforwardly
 // static_assert everything that should be true of this class
-static_assert(eastl::is_destructible<CopyConstructible>::value, "eastl::is_destructible<CopyConstructible>::value");
+static_assert(std::is_destructible<CopyConstructible>::value, "std::is_destructible<CopyConstructible>::value");
 // static_assert(!eastl::is_default_constructible<CopyConstructible>::value,
 // "!eastl::is_default_constructible<CopyConstructible>::value");
 // static_assert(is_copy_constructible<CopyConstructible>::value, "is_copy_constructible<CopyConstructible>::value");
-static_assert(eastl::is_copy_constructible<CopyConstructible>::value,
-			  "eastl::is_copy_constructible<CopyConstructible>::value");
-static_assert(!eastl::is_copy_assignable<CopyConstructible>::value,
-			  "!eastl::is_copy_assignable<CopyConstructible>::value");
+static_assert(std::is_copy_constructible<CopyConstructible>::value,
+			  "std::is_copy_constructible<CopyConstructible>::value");
+static_assert(!std::is_copy_assignable<CopyConstructible>::value,
+			  "!std::is_copy_assignable<CopyConstructible>::value");
 // static_assert(!eastl::is_move_constructible<CopyConstructible>::value,
 // "!eastl::is_move_constructible<CopyConstructible>::value");
-static_assert(!eastl::is_move_assignable<CopyConstructible>::value,
-			  "!eastl::is_move_assignable<CopyConstructible>::value");
+static_assert(!std::is_move_assignable<CopyConstructible>::value,
+			  "!std::is_move_assignable<CopyConstructible>::value");
 
 class MoveConstructible
 {

@@ -122,7 +122,7 @@
 
 #include <EASTL/internal/__undef_macros.h>
 #include <EASTL/internal/config.h>
-#include <safememory/detail/string_detail.h>
+#include <safememory/detail/safe_alloc.h>
 #include <safememory/string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>

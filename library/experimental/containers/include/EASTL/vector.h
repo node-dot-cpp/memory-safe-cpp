@@ -64,6 +64,7 @@
 
 #include <EASTL/internal/__undef_macros.h>
 #include <EASTL/internal/config.h>
+#include <safememory/detail/safe_alloc.h>
 //#include <EASTL/allocator.h>
 #include <EASTL/type_traits.h>
 #include <iterator>
@@ -76,9 +77,9 @@
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <new>
 #include <stddef.h>
-#if EASTL_EXCEPTIONS_ENABLED
+// #if EASTL_EXCEPTIONS_ENABLED
 	#include <stdexcept> // std::out_of_range, std::length_error.
-#endif
+// #endif
 //EA_RESTORE_ALL_VC_WARNINGS()
 
 
@@ -159,6 +160,9 @@ namespace safememory
 		typedef std::size_t       size_type;
 		typedef std::ptrdiff_t    difference_type;
 
+		typedef ::nodecpp::safememory::owning_ptr<detail::array_of2<T>> owning_heap_type;
+		typedef ::nodecpp::safememory::soft_ptr<detail::array_of2<T>> soft_heap_type;
+
 		#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (_MSC_VER <= 1600) && !EASTL_STD_CPP_ONLY  // _MSC_VER of 1400 means VS2005, 1600 means VS2010. VS2012 generates errors with usage of enum:size_type.
 			enum : size_type {                      // Use Microsoft enum language extension, allowing for smaller debug symbols than using a static const. Users have been affected by this.
 				npos     = (size_type)-1,
@@ -170,6 +174,7 @@ namespace safememory
 		#endif
 
 	protected:
+		owning_heap_type							mHeap;
 		T*                                          mpBegin;
 		T*                                          mpEnd;
 		// eastl::compressed_pair<T*, allocator_type>  mCapacityAllocator;
@@ -179,6 +184,14 @@ namespace safememory
 		T* const& internalCapacityPtr() const EA_NOEXCEPT { return mCapacity; }
 		// allocator_type&  internalAllocator() EA_NOEXCEPT { return mCapacityAllocator.second(); }
 		// const allocator_type&  internalAllocator() const EA_NOEXCEPT { return mCapacityAllocator.second(); }
+
+		inline void SetNewHeap(owning_heap_type&& new_heap) {
+			std::destroy(mpBegin, mpEnd);
+			mHeap = std::move(new_heap);
+			mpBegin = mHeap->begin();
+			mCapacity = mHeap->begin() + mHeap->capacity();
+		}
+		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(mHeap); }
 
 	public:
 		VectorBase();
@@ -192,7 +205,7 @@ namespace safememory
 		// void                  set_allocator(const allocator_type& allocator);
 
 	protected:
-		T*        DoAllocate(size_type n);
+		owning_heap_type  DoAllocate(size_type n);
 		void      DoFree(T* p, size_type n);
 		size_type GetNewCapacity(size_type currentCapacity);
 
@@ -357,10 +370,10 @@ namespace safememory
 		struct should_copy_tag{}; struct should_move_tag : public should_copy_tag{};
 
 		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		pointer DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
+		void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
 
 		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		pointer DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag);
+		void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag);
 
 		template <typename Integer>
 		void DoInit(Integer n, Integer value, std::true_type);
@@ -451,17 +464,18 @@ namespace safememory
 	inline VectorBase<T, Allocator>::VectorBase(size_type n/*, const allocator_type& allocator*/)
 		// : mCapacityAllocator(allocator)
 	{
-		mpBegin    = DoAllocate(n);
+		SetNewHeap(DoAllocate(n));
+		// mpBegin    = DoAllocate(n);
+		// internalCapacityPtr() = mpBegin + n;
 		mpEnd      = mpBegin;
-		internalCapacityPtr() = mpBegin + n;
 	}
 
 
 	template <typename T, typename Allocator>
 	inline VectorBase<T, Allocator>::~VectorBase()
 	{
-		if(mpBegin)
-			safememory::lib_helpers::EASTLFree(/*internalAllocator(), */mpBegin, (internalCapacityPtr() - mpBegin) * sizeof(T));
+
+
 	}
 
 
@@ -489,7 +503,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline T* VectorBase<T, Allocator>::DoAllocate(size_type n)
+	inline typename VectorBase<T, Allocator>::owning_heap_type VectorBase<T, Allocator>::DoAllocate(size_type n)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY(n >= 0x80000000))
@@ -500,13 +514,19 @@ namespace safememory
 		// This is fine, as our default ctor initializes with NULL pointers. 
 		if(EASTL_LIKELY(n))
 		{
-			auto* p = (T*)safememory::lib_helpers::allocate_memory(n * sizeof(T), alignof(T), 0);
-			EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
-			return p;
+			// auto* p = (T*)safememory::lib_helpers::allocate_memory(n * sizeof(T), alignof(T), 0);
+			// EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+			// return p;
+
+			//TODO
+			// if(EASTL_UNLIKELY(n > max_size()))
+			// 	ThrowMaxSizeException();
+
+			return detail::make_owning_array_of<T>(n);
 		}
 		else
 		{
-			return nullptr;
+			return owning_heap_type();
 		}
 	}
 
@@ -646,20 +666,20 @@ namespace safememory
 			// equal then we can use a more optimal algorithm that doesn't reallocate our elements
 			// but instead can copy them in place.
 
-			#if EASTL_ALLOCATOR_COPY_ENABLED
-				bool bSlowerPathwayRequired = (internalAllocator() != x.internalAllocator());
-			#else
-				bool bSlowerPathwayRequired = false;
-			#endif
+			// #if EASTL_ALLOCATOR_COPY_ENABLED
+			// 	bool bSlowerPathwayRequired = (internalAllocator() != x.internalAllocator());
+			// #else
+			// 	bool bSlowerPathwayRequired = false;
+			// #endif
 
-			if(bSlowerPathwayRequired)
-			{
-				DoClearCapacity(); // Must clear the capacity instead of clear because set_capacity frees our memory, unlike clear.
+			// if(bSlowerPathwayRequired)
+			// {
+			// 	DoClearCapacity(); // Must clear the capacity instead of clear because set_capacity frees our memory, unlike clear.
 
-				#if EASTL_ALLOCATOR_COPY_ENABLED
-					internalAllocator() = x.internalAllocator();
-				#endif
-			}
+			// 	#if EASTL_ALLOCATOR_COPY_ENABLED
+			// 		internalAllocator() = x.internalAllocator();
+			// 	#endif
+			// }
 
 			DoAssign<const_iterator, false>(x.begin(), x.end(), std::false_type());
 		}
@@ -890,14 +910,15 @@ namespace safememory
 		}
 		else // Else new capacity > size.
 		{
-			pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+			// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			const std::ptrdiff_t nPrevSize = mpEnd - mpBegin;
-			mpBegin    = pNewData;
-			mpEnd      = pNewData + nPrevSize;
-			internalCapacityPtr() = mpBegin + n;
+			// const std::ptrdiff_t nPrevSize = mpEnd - mpBegin;
+			// mpBegin    = pNewData;
+			// mpEnd      = pNewData + nPrevSize;
+			// internalCapacityPtr() = mpBegin + n;
 		}
 	}
 
@@ -968,13 +989,13 @@ namespace safememory
 		// the requested position is out of range by throwing an 
 		// out_of_range exception.
 
-		#if EASTL_EXCEPTIONS_ENABLED
+		// #if EASTL_EXCEPTIONS_ENABLED
 			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
 				throw std::out_of_range("vector::at -- out of range");
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				EASTL_FAIL_MSG("vector::at -- out of range");
-		#endif
+		// #elif EASTL_ASSERT_ENABLED
+		// 	if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
+		// 		EASTL_FAIL_MSG("vector::at -- out of range");
+		// #endif
 
 		return *(mpBegin + n);
 	}
@@ -984,13 +1005,13 @@ namespace safememory
 	inline typename vector<T, Allocator>::const_reference
 	vector<T, Allocator>::at(size_type n) const
 	{
-		#if EASTL_EXCEPTIONS_ENABLED
+		// #if EASTL_EXCEPTIONS_ENABLED
 			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
 				throw std::out_of_range("vector::at -- out of range");
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				EASTL_FAIL_MSG("vector::at -- out of range");
-		#endif
+		// #elif EASTL_ASSERT_ENABLED
+		// 	if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
+		// 		EASTL_FAIL_MSG("vector::at -- out of range");
+		// #endif
 
 		return *(mpBegin + n);
 	}
@@ -1417,24 +1438,54 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename ForwardIterator>
-	inline typename vector<T, Allocator>::pointer
+	inline void
 	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
 	{
-		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
+		const std::ptrdiff_t nPrevSize = last - first;
+		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
 		// eastl::uninitialized_copy_ptr(first, last, p); // copy-constructs p from [first,last).
-		std::uninitialized_copy(first, last, p); // copy-constructs p from [first,last).
-		return p;
+		std::uninitialized_copy(first, last, p->begin()); // copy-constructs p from [first,last).
+
+
+			// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+
+		SetNewHeap(std::move(p));
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+
+			// mpBegin    = pNewData;
+		mpEnd      = mpBegin + nPrevSize;
+			// internalCapacityPtr() = mpEnd;
+		// return p;
+
 	}
 
 
 	template <typename T, typename Allocator>
 	template <typename ForwardIterator>
-	inline typename vector<T, Allocator>::pointer
+	inline void
 	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
 	{
-		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
-		safememory::uninitialized_move_ptr_if_noexcept(first, last, p); // move-constructs p from [first,last).
-		return p;
+		// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+
+		const std::ptrdiff_t nPrevSize = last - first;
+
+		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
+		safememory::uninitialized_move_ptr_if_noexcept(first, last, p->begin()); // move-constructs p from [first,last).
+
+
+		
+		SetNewHeap(std::move(p));
+		// std::destroy(mpBegin, mpEnd);
+		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+
+		// mpBegin    = pNewData;
+		mpEnd      = mpBegin + nPrevSize;
+		// internalCapacityPtr() = mpBegin + n;
+
+
+
+		// return p;
 	}
 
 
@@ -1442,8 +1493,9 @@ namespace safememory
 	template <typename Integer>
 	inline void vector<T, Allocator>::DoInit(Integer n, Integer value, std::true_type)
 	{
-		mpBegin    = DoAllocate((size_type)n);
-		internalCapacityPtr() = mpBegin + n;
+		SetNewHeap(DoAllocate((size_type)n));
+		// mpBegin    = DoAllocate((size_type)n);
+		// internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
 		typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
@@ -1476,8 +1528,9 @@ namespace safememory
 	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
 	{
 		const size_type n = (size_type)std::distance(first, last);
-		mpBegin    = DoAllocate(n);
-		internalCapacityPtr() = mpBegin + n;
+		SetNewHeap(DoAllocate(n));
+		// mpBegin    = DoAllocate(n);
+		// internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
 		typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
@@ -1553,13 +1606,14 @@ namespace safememory
 
 		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
 		{
-			pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+			// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			mpBegin    = pNewData;
-			mpEnd      = mpBegin + n;
-			internalCapacityPtr() = mpEnd;
+			// mpBegin    = pNewData;
+			// mpEnd      = mpBegin + n;
+			// internalCapacityPtr() = mpEnd;
 		}
 		else if(n <= size_type(mpEnd - mpBegin)) // If n <= size ...
 		{
@@ -1648,9 +1702,10 @@ namespace safememory
 				const size_type nPrevSize = size_type(mpEnd - mpBegin);
 				const size_type nGrowSize = GetNewCapacity(nPrevSize);
 				const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-				pointer const   pNewData  = DoAllocate(nNewSize);
+				auto 			nNewHeap  = DoAllocate(nNewSize);
+				pointer const   pNewData  = nNewHeap->begin();
 
-				#if EASTL_EXCEPTIONS_ENABLED
+				// #if EASTL_EXCEPTIONS_ENABLED
 					pointer pNewEnd = pNewData;
 					try
 					{
@@ -1662,21 +1717,22 @@ namespace safememory
 					catch(...)
 					{
 						std::destroy(pNewData, pNewEnd);
-						DoFree(pNewData, nNewSize);
+						// DoFree(pNewData, nNewSize);
 						throw;
 					}
-				#else
-					pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-					pNewEnd         = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
-					pNewEnd         = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
-				#endif
+				// #else
+				// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+				// 	pNewEnd         = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
+				// 	pNewEnd         = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
+				// #endif
 
-				std::destroy(mpBegin, mpEnd);
-				DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+				SetNewHeap(std::move(nNewHeap));
+				// std::destroy(mpBegin, mpEnd);
+				// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-				mpBegin    = pNewData;
+				// mpBegin    = pNewData;
 				mpEnd      = pNewEnd;
-				internalCapacityPtr() = pNewData + nNewSize;
+				// internalCapacityPtr() = pNewData + nNewSize;
 			}
 		}
 	}
@@ -1725,9 +1781,10 @@ namespace safememory
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
 			const size_type nGrowSize = GetNewCapacity(nPrevSize);
 			const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-			pointer const pNewData    = DoAllocate(nNewSize);
+			auto			nNewHeap  = DoAllocate(nNewSize);
+			pointer const pNewData    = nNewHeap->begin();
 
-			#if EASTL_EXCEPTIONS_ENABLED
+			// #if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;
 				try
 				{
@@ -1739,21 +1796,22 @@ namespace safememory
 				catch(...)
 				{
 					std::destroy(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					// DoFree(pNewData, nNewSize);
 					throw;
 				}
-			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
-				eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
-			#endif
+			// #else
+			// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+			// 	eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
+			// 	pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
+			// #endif
 
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			SetNewHeap(std::move(nNewHeap));
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			mpBegin    = pNewData;
+			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			// internalCapacityPtr() = pNewData + nNewSize;
 		}
 	}
 
@@ -1770,16 +1828,19 @@ namespace safememory
 	template <typename T, typename Allocator>
 	void vector<T, Allocator>::DoGrow(size_type n)
 	{
-		pointer const pNewData = DoAllocate(n);
+		// TODO, review, if moved, sholdn't destroy...
+		auto nNewHeap = DoAllocate(n);
+		pointer const pNewData = nNewHeap->begin();
 
 		pointer pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 
-		std::destroy(mpBegin, mpEnd);
-		DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+		SetNewHeap(std::move(nNewHeap));
+		// std::destroy(mpBegin, mpEnd);
+		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-		mpBegin    = pNewData;
+		// mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		internalCapacityPtr() = pNewData + n;
+		// internalCapacityPtr() = pNewData + n;
 	}
 
 
@@ -1801,9 +1862,10 @@ namespace safememory
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
 			const size_type nGrowSize = GetNewCapacity(nPrevSize);
 			const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
-			pointer const pNewData = DoAllocate(nNewSize);
+			auto			nNewHeap = DoAllocate(nNewSize);
+			pointer const pNewData = nNewHeap->begin();
 
-			#if EASTL_EXCEPTIONS_ENABLED
+			// #if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 				try
 				{
@@ -1812,23 +1874,24 @@ namespace safememory
 				catch(...)
 				{
 					std::destroy(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					// DoFree(pNewData, nNewSize);
 					throw;
 				}
-			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
-			#endif
+			// #else
+			// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+			// #endif
 
 //			eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
 			std::uninitialized_fill_n(pNewEnd, n, value);
 			pNewEnd += n;
 
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			SetNewHeap(std::move(nNewHeap));
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			mpBegin    = pNewData;
+			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			// internalCapacityPtr() = pNewData + nNewSize;
 		}
 		else
 		{
@@ -1846,31 +1909,36 @@ namespace safememory
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
 			const size_type nGrowSize = GetNewCapacity(nPrevSize);
 			const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
-			pointer const pNewData = DoAllocate(nNewSize);
+			auto			nNewHeap = DoAllocate(nNewSize);
+			pointer const pNewData = nNewHeap->begin();
 
-			#if EASTL_EXCEPTIONS_ENABLED
+			// #if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
-				try { pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
+				try 
+				{
+					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				}
 				catch (...)
 				{
 					std::destroy(pNewData, pNewEnd);
-					DoFree(pNewData, nNewSize);
+					// DoFree(pNewData, nNewSize);
 					throw;
 				}
-			#else
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
-			#endif
+			// #else
+			// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+			// #endif
 
 //			eastl::uninitialized_default_fill_n(pNewEnd, n);
 			std::uninitialized_value_construct_n(pNewEnd, n);
 			pNewEnd += n;
 
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			SetNewHeap(std::move(nNewHeap));
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			mpBegin = pNewData;
+			// mpBegin = pNewData;
 			mpEnd = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			// internalCapacityPtr() = pNewData + nNewSize;
 		}
 		else
 		{
@@ -1919,9 +1987,10 @@ namespace safememory
 			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
 			const size_type nNewSize  = GetNewCapacity(nPrevSize);
-			pointer const   pNewData  = DoAllocate(nNewSize);
+			auto			nNewHeap  = DoAllocate(nNewSize);
+			pointer const   pNewData  = nNewHeap->begin();
 
-			#if EASTL_EXCEPTIONS_ENABLED
+			// #if EASTL_EXCEPTIONS_ENABLED
 				pointer pNewEnd = pNewData;
 				try
 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
@@ -1937,21 +2006,22 @@ namespace safememory
 						std::destroy(pNewData, pNewEnd);                                         // Destroy what has been constructed so far.
 					else
 						std::destroy_at(pNewData + nPosSize);                                       // The exception occurred during the first unintialized move, so destroy only the value at nPosSize.
-					DoFree(pNewData, nNewSize);
+					// DoFree(pNewData, nNewSize);
 					throw;
 				}
-			#else
-				::new((void*)(pNewData + nPosSize)) value_type(std::forward<Args>(args)...);                  // Because the old data is potentially being moved rather than copied, we need to move 
-				pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);   // the value first, because it might possibly be a reference to the old data being moved.
-				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we asssume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
-			#endif
+			// #else
+			// 	::new((void*)(pNewData + nPosSize)) value_type(std::forward<Args>(args)...);                  // Because the old data is potentially being moved rather than copied, we need to move 
+			// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);   // the value first, because it might possibly be a reference to the old data being moved.
+			// 	pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we asssume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
+			// #endif
 
-			std::destroy(mpBegin, mpEnd);
-			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			SetNewHeap(std::move(nNewHeap));
+			// std::destroy(mpBegin, mpEnd);
+			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-			mpBegin    = pNewData;
+			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			internalCapacityPtr() = pNewData + nNewSize;
+			// internalCapacityPtr() = pNewData + nNewSize;
 		}
 	}
 
@@ -1962,9 +2032,10 @@ namespace safememory
 	{
 		const size_type nPrevSize = size_type(mpEnd - mpBegin);
 		const size_type nNewSize  = GetNewCapacity(nPrevSize);
-		pointer const   pNewData  = DoAllocate(nNewSize);
+		auto 			nNewHeap  = DoAllocate(nNewSize);
+		pointer const   pNewData  = nNewHeap->begin();
 
-		#if EASTL_EXCEPTIONS_ENABLED
+		// #if EASTL_EXCEPTIONS_ENABLED
 			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 			try
 			{
@@ -1975,21 +2046,22 @@ namespace safememory
 			catch(...)
 			{
 				std::destroy(pNewData, pNewEnd);
-				DoFree(pNewData, nNewSize);
+				// DoFree(pNewData, nNewSize);
 				throw;
 			}
-		#else
-			pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
-			::new((void*)pNewEnd) value_type(std::forward<Args>(args)...);
-			pNewEnd++;
-		#endif
+		// #else
+		// 	pointer pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+		// 	::new((void*)pNewEnd) value_type(std::forward<Args>(args)...);
+		// 	pNewEnd++;
+		// #endif
 
-		std::destroy(mpBegin, mpEnd);
-		DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+		SetNewHeap(std::move(nNewHeap));
+		// std::destroy(mpBegin, mpEnd);
+		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
-		mpBegin    = pNewData;
+		// mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		internalCapacityPtr() = pNewData + nNewSize;
+		// internalCapacityPtr() = pNewData + nNewSize;
 	}
 
 

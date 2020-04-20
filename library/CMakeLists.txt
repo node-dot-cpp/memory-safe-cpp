@@ -1,6 +1,10 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (c) 2020, OLogN Technologies AG
 #-------------------------------------------------------------------------------------------
+cmake_minimum_required(VERSION 3.0)
+project(safememory CXX)
+set(CMAKE_CXX_STANDARD 17)
+include(CTest)
 
 
 #-------------------------------------------------------------------------------------------
@@ -36,6 +40,8 @@ endif()
 #-------------------------------------------------------------------------------------------
 add_library(SafeMemory STATIC
   src/safe_ptr.cpp
+  experimental/containers/source/string.cpp
+  experimental/containers/source/hashtable.cpp
   )
 
 #-------------------------------------------------------------------------------------------
@@ -58,7 +64,6 @@ target_link_libraries(SafeMemory iibmalloc)
 #-------------------------------------------------------------------------------------------
 # Tests 
 #-------------------------------------------------------------------------------------------
-
 add_executable(test_safe_memory
   test/test_safe_pointers.cpp
   )
@@ -102,6 +107,12 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 
 endif()
 
-#-------------------------------------------------------------------------------------------
-
 add_test(Run_test_safe_memory test_safe_memory)
+
+
+#-------------------------------------------------------------------------------------------
+# Subdirectories 
+#-------------------------------------------------------------------------------------------
+add_subdirectory(examples/string)
+add_subdirectory(examples/vector)
+add_subdirectory(test/EASTL)

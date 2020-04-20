@@ -25,14 +25,18 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_DETAIL_STRING_DETAIL_H
-#define SAFEMEMORY_DETAIL_STRING_DETAIL_H
+#ifndef SAFEMEMORY_DETAIL_SAFE_ALLOC_H
+#define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_ptr.h>
 // #include "safe_ptr_with_zero_offset.h"
 #include <iterator>
 
 namespace safememory {
+
+using ::nodecpp::safememory::owning_ptr;
+using ::nodecpp::safememory::soft_ptr;
+
 namespace detail {
 
 struct StackPtrForMakeOwningCallRiia {
@@ -593,4 +597,4 @@ constexpr void _Verify_range(const sfd::safe_iterator<T, Arr>& _First, const sfd
 } //namespace std
 
 
-#endif // SAFEMEMORY_DETAIL_STRING_DETAIL_H
+#endif // SAFEMEMORY_DETAIL_SAFE_ALLOC_H

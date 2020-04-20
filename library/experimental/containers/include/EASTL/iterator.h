@@ -595,18 +595,18 @@ namespace safememory
 	// otherwise returns Iterator as-is. The point of this is to be able to avoid moves that can generate exceptions and instead 
 	// fall back to copies or whatever the default IteratorType::operator* returns for use by copy/move algorithms.
 	// To consider: merge the conditional expression usage here with the one used by move_if_noexcept, as they are the same condition.
-	#if EASTL_EXCEPTIONS_ENABLED
+	// #if EASTL_EXCEPTIONS_ENABLED
 		template <typename Iterator, typename IteratorType = typename std::conditional<std::is_nothrow_move_constructible<typename std::iterator_traits<Iterator>::value_type>::value || 
 																						 !std::is_copy_constructible<typename std::iterator_traits<Iterator>::value_type>::value, 
 																						 std::move_iterator<Iterator>, Iterator>::type>
 		inline IteratorType make_move_if_noexcept_iterator(Iterator i)
 			{ return IteratorType(i); }
-	#else
-		// Else there are no exceptions and thus we always return a move_iterator.
-		template <typename Iterator>
-		inline eastl::move_iterator<Iterator> make_move_if_noexcept_iterator(Iterator i)
-			{ return eastl::move_iterator<Iterator>(i); }
-	#endif
+	// #else
+	// 	// Else there are no exceptions and thus we always return a move_iterator.
+	// 	template <typename Iterator>
+	// 	inline eastl::move_iterator<Iterator> make_move_if_noexcept_iterator(Iterator i)
+	// 		{ return eastl::move_iterator<Iterator>(i); }
+	// #endif
 
 
 
