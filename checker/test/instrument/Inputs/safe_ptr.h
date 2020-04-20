@@ -44,8 +44,8 @@ template<class T, bool can_be_safe = false> using soft_ptr = typename soft_ptr_t
 template<class T, bool is_safe> struct soft_this_ptr_type_ { typedef soft_this_ptr_impl<T> type; };
 template<class T> using soft_this_ptr = typename soft_this_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
 
-template<class T, bool is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
-template<class T> using naked_ptr = typename naked_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
+template<class T, bool is_safe> struct nullable_ptr_type_ { typedef nullable_ptr_impl<T> type; };
+template<class T> using nullable_ptr = typename nullable_ptr_type_<T, safeness_declarator<T>::is_safe>::type;
 
 template<class _Ty,
 	class... _Types>

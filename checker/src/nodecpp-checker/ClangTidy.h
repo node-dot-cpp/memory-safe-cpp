@@ -193,6 +193,8 @@ protected:
   LangOptions getLangOpts() const { return Context->getLangOpts(); }
   /// \brief Returns the context.
   ClangTidyContext* getContext() const { return Context; }
+  /// \brief Returns the AST context.
+  ASTContext* getASTContext() const { return Context->getASTContext(); }
 };
 
 class ClangTidyCheckFactories;
@@ -237,8 +239,8 @@ void runClangTidy(ClangTidyContext &Context,
                   const tooling::CompilationDatabase &Compilations,
                   ArrayRef<std::string> InputFiles,
                   ProfileData *Profile,
-                  const cl::opt<bool>& ASTDump, const cl::opt<bool>& ASTList,
-                  const cl::opt<bool>& ASTPrint, const cl::opt<std::string>& ASTDumpFilter);
+                  bool ASTDump, 
+                  StringRef ASTDumpFilter);
 
 // FIXME: This interface will need to be significantly extended to be useful.
 // FIXME: Implement confidence levels for displaying/fixing errors.

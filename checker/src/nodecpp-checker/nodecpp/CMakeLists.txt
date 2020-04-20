@@ -3,16 +3,13 @@ set(LLVM_LINK_COMPONENTS support)
 add_clang_library(clangTidyNodeCppModule
   ArrayExprCheck.cpp
   AsmCheck.cpp
-  AwaitableCheck.cpp
   CallExprCheck.cpp
   ConstCheck.cpp
   CoroutineCheck.cpp
-  MayExtendDeclCheck.cpp
   MayExtendLambdaCheck.cpp
   NakedAssignmentCheck.cpp
   NakedPtrHelper.cpp
   NakedPtrFuncCheck.cpp
-  NakedPtrReturnCheck.cpp
   NewExprCheck.cpp
   NodeCppTidyModule.cpp
   PtrArithmeticCheck.cpp
@@ -20,8 +17,9 @@ add_clang_library(clangTidyNodeCppModule
   RawPointerDereferenceCheck.cpp
   RawPtrExprCheck.cpp
   RecordDeclCheck.cpp
+  ReturnCheck.cpp
   StaticStorageCheck.cpp
-  StdFunctionCheck.cpp
+  StringLiteralCheck.cpp
   TemporaryExprCheck.cpp
   VarDeclCheck.cpp
 
@@ -30,8 +28,5 @@ add_clang_library(clangTidyNodeCppModule
   clangASTMatchers
   clangBasic
   clangLex
-  clangTidy
-  clangTidyMiscModule
-  clangTidyUtils
   clangTooling
   )

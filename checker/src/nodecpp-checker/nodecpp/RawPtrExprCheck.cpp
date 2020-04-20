@@ -32,10 +32,18 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
   auto Ex = Result.Nodes.getNodeAs<Expr>("expr");
 
   //first ignore implicits and parens
-
-  if (isImplicitExpr(Ex))
+  if(auto Ic = dyn_cast<ImplicitCastExpr>(Ex)) {
+    auto K = Ic->getCastKind();
+    if(K == CK_NullToPointer || K == CK_NullToMemberPointer) {
+      diag(Ex->getExprLoc(), "(S1.2) null raw pointer expression not allowed");
+    }
+    return;
+  }
+  else if (isImplicitExpr(Ex))
     return;
   else if (isa<CXXDefaultArgExpr>(Ex))
+    return;
+  else if (isa<CXXDefaultInitExpr>(Ex))
     return;
 
   // now allow some explicits
@@ -43,8 +51,8 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   else if (isa<CallExpr>(Ex))
     return;
-  else if (isa<CXXNullPtrLiteralExpr>(Ex))
-    return;
+  // else if (isa<CXXNullPtrLiteralExpr>(Ex))
+  //   return;
   else if (isa<CXXDynamicCastExpr>(Ex))
     return;
 
@@ -93,6 +101,7 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
+  // Ex->dumpColor();
   diag(Ex->getExprLoc(), "(S1) raw pointer expression not allowed");
 }
 

@@ -1,37 +1,23 @@
 language: cpp
-matrix:
-  include:
-    - os: linux
-      dist: xenial
-
-      sudo: false # only for faster builds
-      addons:
-          apt:
-            sources:
-              - ubuntu-toolchain-r-test
-            packages:
-              - g++-7
-      env:
-        - MATRIX_EVAL="CC=gcc-7  && CXX=g++-7"
-      before_install:
-        - eval "${MATRIX_EVAL}"
-    - os: windows
-      before_install:
-        - choco install visualstudio2017-workload-vctools -y
-
-# Build steps
-script: 
-  - cd ${TRAVIS_BUILD_DIR}
+os: linux
+dist: bionic
+script:
   - mkdir build
   - cd build
-  - if [ $TRAVIS_OS_NAME == "windows" ] ; then
-      cmake .. -G "Visual Studio 15 2017 Win64";
-    else
-      cmake .. ;
-    fi
+  - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build .
-  - if [ $TRAVIS_OS_NAME == "windows" ] ; then
-      build\\bin\\Debug\\test_safe_memory_lto.bin.exe ;
-    else
-      make test ;
-    fi
+  - ctest
+jobs:
+  include:
+    - name: Linux Clang
+      compiler: clang
+    - name: Linux GCC
+      compiler: gcc
+    - name: Windows MSVC
+      os: windows
+      script:
+        - mkdir build
+        - cd build
+        - cmake -G "Visual Studio 15 2017 Win64" ..
+        - cmake --build . --config Release
+        - ctest -C Release

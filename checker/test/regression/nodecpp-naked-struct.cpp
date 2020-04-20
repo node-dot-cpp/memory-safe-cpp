@@ -5,18 +5,18 @@
 using namespace nodecpp::safememory;
 
 struct [[nodecpp::naked_struct]] NakedInner {
-    naked_ptr<long> l;
+    nullable_ptr<long> l;
 };
 
 
 struct [[nodecpp::naked_struct]] Naked {
 // CHECK: :[[@LINE-1]]:34: error: unsafe naked_struct declaration
-    naked_ptr<int> i; //ok
+    nullable_ptr<int> i; //ok
     int* bad1; //bad
 
     NakedInner inner;
 
-    naked_ptr<NakedInner> bad2; //TODO
+    nullable_ptr<NakedInner> bad2; //TODO
 
     Naked& operator=(const Naked&) = default;
 };

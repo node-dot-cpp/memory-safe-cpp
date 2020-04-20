@@ -138,37 +138,18 @@ index c957ccc..94a7802 100644
  
    class CastExprBitfields {
 diff --git a/include/clang/AST/Type.h b/include/clang/AST/Type.h
-index 9a8dd6f..95639fc 100644
+index 9a8dd6f..c403674 100644
 --- a/include/clang/AST/Type.h
 +++ b/include/clang/AST/Type.h
-@@ -3456,6 +3456,7 @@ public:
+@@ -3455,7 +3455,7 @@ public:
+       ABIMask         = 0x0F,
        IsConsumed      = 0x10,
        HasPassObjSize  = 0x20,
-       IsNoEscape      = 0x40,
-+      IsMayExtend     = 0x80,
+-      IsNoEscape      = 0x40,
++      IsNoEscape      = 0x40
      };
      unsigned char Data = 0;
  
-@@ -3509,6 +3510,19 @@ public:
-       return Copy;
-     }
- 
-+    bool isNodeCppMayExtend() const {
-+      return Data & IsMayExtend;
-+    }
-+
-+    ExtParameterInfo withNodeCppMayExtend(bool MayExtend) const {
-+      ExtParameterInfo Copy = *this;
-+      if (MayExtend)
-+        Copy.Data |= IsMayExtend;
-+      else
-+        Copy.Data &= ~IsMayExtend;
-+      return Copy;
-+    }
-+
-     unsigned char getOpaqueValue() const { return Data; }
-     static ExtParameterInfo getFromOpaqueValue(unsigned char data) {
-       ExtParameterInfo result;
 diff --git a/include/clang/ASTMatchers/ASTMatchers.h b/include/clang/ASTMatchers/ASTMatchers.h
 index 51f2ce2..b13de57 100644
 --- a/include/clang/ASTMatchers/ASTMatchers.h
@@ -193,36 +174,48 @@ index 51f2ce2..b13de57 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index dc9edac..dcae747 100644
+index dc9edac..cfe7969 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3004,3 +3004,21 @@ def InternalLinkage : InheritableAttr {
+@@ -3004,3 +3004,33 @@ def InternalLinkage : InheritableAttr {
    let Subjects = SubjectList<[Var, Function, CXXRecord]>;
    let Documentation = [InternalLinkageDocs];
  }
 +
 +def NodeCppNakedStruct : InheritableAttr {
 +  let Spellings = [CXX11<"nodecpp","naked_struct">];
-+  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppNoInstanceDocs];
++//  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [NodeCppNakedStructDocs];
 +}
 +
 +def NodeCppMayExtend : InheritableAttr {
 +  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
-+  let Subjects = SubjectList<[ParmVar]>;
++//  let Subjects = SubjectList<[ParmVar]>;
 +  let Documentation = [NodeCppMayExtendDocs];
 +}
 +
-+def NodeCppOwnedByThis : InheritableAttr {
-+  let Spellings = [CXX11<"nodecpp","owned_by_this">];
-+  let Subjects = SubjectList<[ParmVar]>;
-+  let Documentation = [NodeCppMayExtendDocs];
++def NodeCppNoAwait : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","no_await">];
++//  let Subjects = SubjectList<[ParmVar]>;
++  let Documentation = [NodeCppNoAwaitDocs];
++}
++
++def NodeCppMemoryUnsafe : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
++//  let Subjects = SubjectList<[Namespace]>;
++  let Documentation = [NodeCppMemoryUnsafeDocs];
++}
++
++def NodeCppNonDeterministic : InheritableAttr {
++  let Spellings = [CXX11<"nodecpp","non_deterministic">];
++//  let Subjects = SubjectList<[Namespace]>;
++  let Documentation = [NodeCppNonDeterministicDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..0028fa5 100644
+index 5a937b1..4819836 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,27 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,51 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -233,23 +226,59 @@ index 5a937b1..0028fa5 100644
 +}
 +
 +
-+def NodeCppNoInstanceDocs : Documentation {
++def NodeCppNakedStructDocs : Documentation {
 +  let Category = DocCatNodeCpp;
 +  let Content = [{
-+This attribute is used on class / struct declaration to indicate that safe code
-+shouldn't be allowed to create instances of it.
-+All instances are created by infraestructure only.
++This attribute is used on class / struct declaration.
++Such classes can be created only on the stack and may contain naked ptrs.
 +}];
 +}
 +
 +def NodeCppMayExtendDocs : Documentation {
 +  let Category = DocCatNodeCpp;
 +  let Content = [{
-+This attribute is used on parameter declaration to indicate that lifetime
-+of naked pointer arguments may be extended inside the function.
-+Checker must add extra validations to such arguments.
++This attribute is used on library parameter declaration to indicate that lifetime
++of the callable object may be extended beyond the time of the call.
++Checker will check that no reference to stack object is present in such arguments.
 +}];
 +}
++
++def NodeCppNoAwaitDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on library method declaration to indicate that returned
++awaitable doesn't need to be checked for co_await.
++}];
++}
++
++def NodeCppMemoryUnsafeDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on namespace declaration to indicate that
++elements inside such namespace shouln't be checked for memory safety.
++}];
++}
++
++def NodeCppNonDeterministicDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on namespace declaration to indicate that
++elements inside such namespace shouln't be checked for determinism.
++}];
++}
++
+diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
+index b241856..f33df4a 100644
+--- a/include/clang/Basic/DiagnosticSemaKinds.td
++++ b/include/clang/Basic/DiagnosticSemaKinds.td
+@@ -9438,4 +9438,7 @@ def err_std_compare_type_not_supported : Error<
+    "member '%2' is missing|"
+    "the type is not trivially copyable|"
+    "the type does not have the expected form}1">;
++
++def err_unknown_nodecpp_attribute : Error<
++  "(C1) unknown attribute %0">;   
+ } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
 index 50cff15..43048e1 100644
 --- a/lib/AST/Expr.cpp
@@ -262,21 +291,8 @@ index 50cff15..43048e1 100644
  
    computeDependence(Ctx);
  }
-diff --git a/lib/AST/TypePrinter.cpp b/lib/AST/TypePrinter.cpp
-index e032c31..6db41be 100644
---- a/lib/AST/TypePrinter.cpp
-+++ b/lib/AST/TypePrinter.cpp
-@@ -778,6 +778,8 @@ void TypePrinter::printFunctionProtoAfter(const FunctionProtoType *T,
-       if (EPI.isConsumed()) OS << "__attribute__((ns_consumed)) ";
-       if (EPI.isNoEscape())
-         OS << "__attribute__((noescape)) ";
-+      if (EPI.isNodeCppMayExtend())
-+        OS << "[[nodecpp::may_extend_to_this]] ";
-       auto ABI = EPI.getABI();
-       if (ABI != ParameterABI::Ordinary)
-         OS << "__attribute__((" << getParameterABISpelling(ABI) << ")) ";
 diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index 63f8395..5635cbd 100644
+index 63f8395..a749ff5 100644
 --- a/lib/ASTMatchers/ASTMatchFinder.cpp
 +++ b/lib/ASTMatchers/ASTMatchFinder.cpp
 @@ -389,6 +389,7 @@ public:
@@ -287,13 +303,17 @@ index 63f8395..5635cbd 100644
  
    // Matches children or descendants of 'Node' with 'BaseMatcher'.
    bool memoizedMatchesRecursively(const ast_type_traits::DynTypedNode &Node,
-@@ -842,6 +843,20 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
+@@ -842,6 +843,24 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
    if (!DeclNode) {
      return true;
    }
 +
 +  //mb: we don't traverse decls in system-headers
-+  if (!isa<TranslationUnitDecl>(DeclNode)) {
++  // nor namespaces with [[nodecpp::memory_unsafe]] attr
++  if(DeclNode->hasAttr<NodeCppMemoryUnsafeAttr>()) {
++    return true;
++  }
++  else if (!isa<TranslationUnitDecl>(DeclNode)) {
 +
 +    auto &SourceManager = getASTContext().getSourceManager();
 +    auto ExpansionLoc = SourceManager.getExpansionLoc(DeclNode->getLocStart());
@@ -308,7 +328,7 @@ index 63f8395..5635cbd 100644
    match(*DeclNode);
    return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
  }
-@@ -901,6 +916,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
+@@ -901,6 +920,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
        CtorInit);
  }
  
@@ -368,10 +388,31 @@ index 8a70404..113c960 100644
        AddPath("/usr/include/c++/v1", CXXSystem, false);
      } else {
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..2512058 100644
+index 77deed6..4f6779d 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
-@@ -6604,6 +6604,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+   // though they were unknown attributes.
+   if (AL.getKind() == ParsedAttr::UnknownAttribute ||
+       !AL.existsInTarget(S.Context.getTargetInfo())) {
+-    S.Diag(AL.getLoc(), AL.isDeclspecAttribute()
+-                            ? diag::warn_unhandled_ms_attribute_ignored
+-                            : diag::warn_unknown_attribute_ignored)
+-        << AL.getName();
++
++    if(AL.hasScope() && AL.getScopeName()->getName() == "nodecpp") {
++      S.Diag(AL.getLoc(), diag::err_unknown_nodecpp_attribute) << AL.getName();
++    }
++    else {
++      S.Diag(AL.getLoc(), AL.isDeclspecAttribute()
++                              ? diag::warn_unhandled_ms_attribute_ignored
++                              : diag::warn_unknown_attribute_ignored)
++          << AL.getName();
++    }
+     return;
+   }
+ 
+@@ -6604,6 +6610,22 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    case ParsedAttr::AT_XRayLogArgs:
      handleXRayLogArgsAttr(S, D, AL);
      break;
@@ -381,15 +422,21 @@ index 77deed6..2512058 100644
 +  case ParsedAttr::AT_NodeCppMayExtend:
 +    handleSimpleAttribute<NodeCppMayExtendAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppOwnedByThis:
-+    handleSimpleAttribute<NodeCppOwnedByThisAttr>(S, D, AL);
++  case ParsedAttr::AT_NodeCppNoAwait:
++    handleSimpleAttribute<NodeCppNoAwaitAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppMemoryUnsafe:
++    handleSimpleAttribute<NodeCppMemoryUnsafeAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppNonDeterministic:
++    handleSimpleAttribute<NodeCppNonDeterministicAttr>(S, D, AL);
 +    break;
 +
    }
  }
  
 diff --git a/lib/Sema/SemaDeclCXX.cpp b/lib/Sema/SemaDeclCXX.cpp
-index 4cf3abd..e0d60f6 100644
+index 4cf3abd..17bb5fb 100644
 --- a/lib/Sema/SemaDeclCXX.cpp
 +++ b/lib/Sema/SemaDeclCXX.cpp
 @@ -14551,8 +14551,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
@@ -403,41 +450,14 @@ index 4cf3abd..e0d60f6 100644
        // A parameter of the overriding method should be annotated with noescape
        // if the corresponding parameter of the overridden method is annotated.
        if (OldFT->getExtParameterInfo(I).isNoEscape() &&
-@@ -14562,6 +14562,18 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+@@ -14562,6 +14562,7 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
          Diag(Old->getParamDecl(I)->getLocation(),
               diag::note_overridden_marked_noescape);
        }
-+
-+      if (!OldFT->getExtParameterInfo(I).isNodeCppMayExtend() &&
-+          NewFT->getExtParameterInfo(I).isNodeCppMayExtend()) {
-+        Diag(New->getParamDecl(I)->getLocation(),
-+             diag::err_conflicting_overriding_cc_attributes)
-+            << New->getDeclName() << New->getType() << Old->getType();
-+        Diag(Old->getParamDecl(I)->getLocation(),
-+             diag::note_overridden_virtual_function);
-+
-+        return true;
-+      }
 +    }
    }
  
    // Virtual overrides must have the same code_seg.
-diff --git a/lib/Sema/SemaType.cpp b/lib/Sema/SemaType.cpp
-index 284d34b..6903dba 100644
---- a/lib/Sema/SemaType.cpp
-+++ b/lib/Sema/SemaType.cpp
-@@ -4690,6 +4690,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
-             HasAnyInterestingExtParameterInfos = true;
-           }
- 
-+          if (Param->hasAttr<NodeCppMayExtendAttr>()) {
-+            ExtParameterInfos[i] = ExtParameterInfos[i].withNodeCppMayExtend(true);
-+            HasAnyInterestingExtParameterInfos = true;
-+          }
-+
-           ParamTys.push_back(ParamTy);
-         }
- 
 diff --git a/lib/Tooling/CompilationDatabase.cpp b/lib/Tooling/CompilationDatabase.cpp
 index 31a769f..6bdcd8a 100644
 --- a/lib/Tooling/CompilationDatabase.cpp

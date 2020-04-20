@@ -2,8 +2,8 @@
 
 
 void bad() {
-	int* a = nullptr;
-// CHECK: :[[@LINE-1]]:7: error: (S1.3)
+	int i = 0;
+	int* a = &i;
 
 	a = a + 1;
 // CHECK: :[[@LINE-1]]:8: error: (S1)

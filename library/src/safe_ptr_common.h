@@ -52,13 +52,6 @@ namespace nodecpp
 #define NODISCARD
 #endif
 
-// NODECPP_CHECKER_EXTENSIONS is defined internally by nodecpp-checker tool
-#ifdef NODECPP_CHECKER_EXTENSIONS
-#define  NODECPP_OWNED_BY_THIS [[nodecpp::owned_by_this]]
-#else
-#define  NODECPP_OWNED_BY_THIS
-#endif
-
 
 #ifdef NODECPP_X64
 #define NODECPP_USE_IIBMALLOC
@@ -197,7 +190,7 @@ public:
 			size_t iniAlignment = alignment;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (sz >= std::_Big_allocation_threshold)
-				iniAlignment = _Max_value(alignment, std::alignment4BigAlloc);
+				iniAlignment = _Max_value(alignment, alignment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			::operator delete(ptr, sz, std::align_val_t{iniAlignment}, StdAllocEnforcer::enforce);
 			if constexpr ( iib )
@@ -237,7 +230,7 @@ public:
 			size_t iniAlignment = alignment;
 #if (defined NODECPP_X64) || (defined NODECPP_X86)
 			if (iniByteSz >= std::_Big_allocation_threshold)
-				iniAlignment = _Max_value(alignment, std::alignmentment4BigAlloc);
+				iniAlignment = _Max_value(alignment, alignment4BigAlloc);
 #endif // (defined NODECPP_X64) || (defined NODECPP_X86)
 //			return static_cast<_Ty *>(::operator new(iniByteSz, iniAlignment, StdAllocEnforcer::enforce));
 			if constexpr ( iib )

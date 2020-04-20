@@ -21,44 +21,79 @@ namespace checker {
 
 const char *DiagMsgSrc = "memory-safe-cpp";
 
-DiagHelper NullDiagHelper(nullptr);
+DiagHelper NullDiagHelper;
 
 bool isOwnerPtrName(const std::string &Name) {
-  return Name == "nodecpp::safememory::owning_ptr" ||
-         Name == "nodecpp::safememory::owning_ptr_impl" ||
-         Name == "nodecpp::safememory::owning_ptr_no_checks";
+  return Name == "nodecpp::safememory::owning_ptr_impl" ||
+          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
+          Name == "nodecpp::safememory::owning_ptr_no_checks" ||
+          Name == "nodecpp::safememory::owning_ptr_base_no_checks";
 }
 
 bool isOwnerPtrDecl(const NamedDecl *Dc) {
   if (!Dc)
     return false;
 
-  std::string Name = Dc->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Dc);
   return isOwnerPtrName(Name);
 }
 
 bool isSafePtrName(const std::string &Name) {
   return isOwnerPtrName(Name) ||
-    Name == "nodecpp::safememory::soft_ptr" ||
     Name == "nodecpp::safememory::soft_ptr_impl" ||
     Name == "nodecpp::safememory::soft_ptr_no_checks" ||
-    Name == "nodecpp::safememory::soft_this_ptr" ||
     Name == "nodecpp::safememory::soft_this_ptr_impl" ||
     Name == "nodecpp::safememory::soft_this_ptr_no_checks";
 }
+
+
+
 
 bool isAwaitableName(const std::string &Name) {
   return Name == "nodecpp::awaitable";
 }
 
 bool isNakedPtrName(const std::string &Name) {
-  return Name == "nodecpp::safememory::naked_ptr" ||
-         Name == "nodecpp::safememory::naked_ptr_impl" ||
-         Name == "nodecpp::safememory::naked_ptr_no_checks";
+  return Name == "nodecpp::safememory::naked_ptr_impl" ||
+         Name == "nodecpp::safememory::naked_ptr_no_checks" ||
+         Name == "nodecpp::safememory::nullable_ptr" ||
+         Name == "nodecpp::safememory::nullable_ptr_impl" ||
+         Name == "nodecpp::safememory::nullable_ptr_no_checks";
 }
 
-bool isConstNakedPtrName(const std::string &Name) {
-  return Name == "nodecpp::safememory::const_naked_ptr";
+bool isOsnMethodName(const std::string& Name) {
+
+  //hardcode methods that are very important for implementation
+
+  auto it = Name.rfind("::");
+  if(it != std::string::npos) {
+    std::string Prefix = Name.substr(0, it);
+    if (isSafePtrName(Prefix) || isNakedPtrName(Prefix)) {
+      std::string Post = Name.substr(it + 2);
+      return Post == "operator*" || 
+              Post == "operator->" ||
+              Post == "operator=" ||
+              Post == "operator bool" ||
+              Post == "get";
+    }
+  }
+
+  return false;
+}
+
+bool isSoftPtrCastName(const std::string& Name) {
+  return Name == "nodecpp::safememory::soft_ptr_static_cast" ||
+          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast";
+}
+
+bool isWaitForAllName(const std::string& Name) {
+  return Name == "nodecpp::wait_for_all";
+}
+
+bool isNodeBaseName(const std::string& Name) {
+  return Name == "NodeBase" || 
+    Name == "nodecpp::NodeBase" || 
+    Name == "nodecpp::net::NodeBase";
 }
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
@@ -72,12 +107,12 @@ bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 bool isSystemSafeTypeName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
-  //hardcode some names that are really important
-  if (Name == "nodecpp::safememory::make_owning")
-    return true;
-  else if (isSafePtrName(Name) || isNakedPtrName(Name) ||
-           isConstNakedPtrName(Name) || isAwaitableName(Name))
+  //hardcode some names that are really important, and have special rules
+  if (isSafePtrName(Name) || isNakedPtrName(Name) || isAwaitableName(Name))
     return false;
+
+  if(Context->getCheckerData().isFromUnsafeNamespace(Name))
+    return true;
 
   auto &Wl = Context->getGlobalOptions().SafeTypes;
   return (Wl.find(Name) != Wl.end());
@@ -87,8 +122,8 @@ bool isSystemSafeFunctionName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
   //hardcode some names that are really important
-  if (Name == "nodecpp::safememory::make_owning" ||
-      Name == "nodecpp::wait_for_all")
+  // and their types have special rules
+  if(isOsnMethodName(Name))
     return true;
 
   // coroutine automatically injected call
@@ -98,6 +133,51 @@ bool isSystemSafeFunctionName(const ClangTidyContext *Context,
   auto &Wl = Context->getGlobalOptions().SafeFunctions;
   return (Wl.find(Name) != Wl.end());
 }
+
+std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
+  
+  std::string QualName;
+  llvm::raw_string_ostream OS(QualName);
+
+  const DeclContext *Ctx = Decl->getDeclContext();
+
+  using ContextsTy = SmallVector<const DeclContext *, 8>;
+  ContextsTy NamedCtxs;
+
+  // Collect named contexts.
+  while (Ctx) {
+    if (isa<NamedDecl>(Ctx))
+      NamedCtxs.push_back(Ctx);
+    Ctx = Ctx->getParent();
+  }
+
+  for (const DeclContext *DC : llvm::reverse(NamedCtxs)) {
+    if (const auto *Spec = dyn_cast<ClassTemplateSpecializationDecl>(DC)) {
+      OS << Spec->getNameAsString();
+    } else if (const auto *ND = dyn_cast<NamespaceDecl>(DC)) {
+      OS <<  ND->getNameAsString();
+    } else if (const auto *RD = dyn_cast<RecordDecl>(DC)) {
+      OS << RD->getNameAsString();
+    } else if (const auto *FD = dyn_cast<FunctionDecl>(DC)) {
+      OS << FD->getNameAsString();
+    } else if (const auto *ED = dyn_cast<EnumDecl>(DC)) {
+      OS << ED->getNameAsString();
+    } else {
+      OS << cast<NamedDecl>(DC)->getNameAsString();
+    }
+    OS << "::";
+  }
+
+  // if (Decl->getDeclName() || isa<DecompositionDecl>(Decl))
+  OS << Decl->getNameAsString();
+  // else
+  //   return "";
+//    OS << "(anonymous)";
+
+  return OS.str();
+
+}
+
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc,
                             const ClangTidyContext *Context, DiagHelper &Dh) {
@@ -127,7 +207,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
         continue;
 
       isNakedPointerType(Qt, Context, Dh); // for report
-      Dh.diag((*It)->getLocation(), "unsafe type at naked_ptr declaration");
+      Dh.diag((*It)->getLocation(), "unsafe type at nullable_ptr declaration");
       return false;
     }
 
@@ -228,11 +308,11 @@ FunctionKind getFunctionKind(QualType Qt) {
 
   if (auto Ts = Qt->getAs<TemplateSpecializationType>()) {
 
-    auto Td = Ts->getTemplateName().getAsTemplateDecl();
-    if (Td) {
-      if (Td->getQualifiedNameAsString() == "nodecpp::function_owned_arg0")
-        return FunctionKind::OwnedArg0;
-    }
+    // auto Td = Ts->getTemplateName().getAsTemplateDecl();
+    // if (Td) {
+    //   if (getQnameForSystemSafeDb(Td) == "nodecpp::function_owned_arg0")
+    //     return FunctionKind::OwnedArg0;
+    // }
 
     return getFunctionKind(Ts->desugar());
   } else if (auto Rc = Qt->getAs<RecordType>()) {
@@ -242,7 +322,7 @@ FunctionKind getFunctionKind(QualType Qt) {
     if (Dc->isLambda())
       return FunctionKind::Lambda;
 
-    auto Name = Dc->getQualifiedNameAsString();
+    auto Name = getQnameForSystemSafeDb(Dc);
     if (Name == "std::function" || Name == "std::__1::function")
       return FunctionKind::StdFunction;
     
@@ -263,21 +343,39 @@ bool isLambdaType(QualType Qt) {
   return getFunctionKind(Qt) == FunctionKind::Lambda;
 }
 
-bool isNodecppFunctionOwnedArg0Type(QualType Qt) {
-
-  return getFunctionKind(Qt) == FunctionKind::OwnedArg0;
-}
-
-bool isAnyFunctorType(QualType Qt) {
-
-  auto Kind = getFunctionKind(Qt);
-  return Kind == FunctionKind::StdFunction || Kind == FunctionKind::OwnedArg0;
-}
-
 bool isRawPointerType(QualType Qt) {
   assert(Qt.isCanonical());
 
   return Qt->isPointerType();
+}
+
+bool isNullPtrValue(ASTContext *Context, const Expr *Ex) {
+    return Ex->isNullPointerConstant(*Context, 
+      Expr::NullPointerConstantValueDependence::NPC_NeverValueDependent);
+}
+
+bool isStringLiteralType(QualType Qt) {
+  
+  assert(Qt.isCanonical());
+
+  auto R = Qt->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  auto Name = getQnameForSystemSafeDb(R);
+  return Name == "nodecpp::string_literal" || Name == "nodecpp::StringLiteral";
+}
+
+
+bool isCharPointerType(QualType Qt) {
+  assert(Qt.isCanonical());
+
+  if(Qt->isPointerType()) {
+    auto Qt2 = Qt->getPointeeType();
+    if(Qt2->isAnyCharacterType())
+      return true;
+  }
+  return false;
 }
 
 const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
@@ -289,8 +387,8 @@ const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
   if (!Dc)
     return nullptr;
 
-  if (!Dc->hasDefinition())
-    return nullptr;
+  // if (!Dc->hasDefinition())
+  //   return nullptr;
 
   auto &Args = Dc->getTemplateArgs();
 
@@ -315,7 +413,7 @@ QualType getPointeeType(QualType Qt) {
   auto Dc = getTemplatePtrDecl(Qt);
 
   assert(Dc);
-  assert(Dc->hasDefinition());
+//  assert(Dc->hasDefinition());
 
   auto &Args = Dc->getTemplateArgs();
 
@@ -336,25 +434,13 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   if (!Dc)
     return KindCheck(false, false);
 
-  std::string Name = Dc->getQualifiedNameAsString();
-  if (isNakedPtrName(Name) || isConstNakedPtrName(Name)) {
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if (isNakedPtrName(Name)) {
     QualType Pointee = getPointeeType(Qt);
     return KindCheck(true, isSafeType(Pointee, Context, Dh));
   }
 
   return KindCheck(false, false);
-}
-
-bool isConstNakedPointerType(QualType Qt) {
-
-  assert(Qt.isCanonical());
-
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return false;
-
-  std::string Name = Dc->getQualifiedNameAsString();
-  return isConstNakedPtrName(Name);
 }
 
 bool isSafePtrType(QualType Qt) {
@@ -365,21 +451,38 @@ bool isSafePtrType(QualType Qt) {
   if (!Dc)
     return false;
 
-  std::string Name = Dc->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Dc);
   return isSafePtrName(Name);
 }
 
 bool isAwaitableType(QualType Qt) {
+
+  if(Qt.isNull())
+    return false;
 
   Qt = Qt.getCanonicalType();
   auto Dc = getTemplatePtrDecl(Qt);
   if (!Dc)
     return false;
 
-  std::string Name = Dc->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Dc);
   return isAwaitableName(Name);
 
 }
+
+bool isNodecppErrorType(QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+
+  auto Dc = Qt->getAsCXXRecordDecl();
+  if (!Dc)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  
+  return Name == "nodecpp::error";
+}
+
 
 struct SystemLocRiia {
   TypeChecker& Tc;
@@ -419,7 +522,7 @@ bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
   }
 
   // if database says is a safe name, then is safe
-  std::string Name = Dc->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Dc);
   if (isSystemSafeTypeName(Context, Name))
     return true;
 
@@ -495,6 +598,113 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
   }
 }
 
+bool TypeChecker::isDeterministicRecord(const CXXRecordDecl *Dc) {
+
+  if (!Dc) {
+    return false;
+  }
+
+  //can this happend?
+  if(Dc->getDefinition() != Dc)
+    return false;
+
+  if(!alreadyChecking.insert(Dc).second) {
+    //already checking this type (got recursive)
+    return true;
+  }
+
+  // if database says is a safe name, then is safe
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if (isSystemSafeTypeName(Context, Name))
+    return true;
+
+  bool sysLoc = false;
+
+  if (!isSystemLoc && isSystemLocation(Context, Dc->getLocation())) {
+    sysLoc = true;
+  }
+
+  SystemLocRiia riia(*this, sysLoc);
+
+  // if we don't have a definition, we can't check
+  if (!Dc->hasDefinition())
+    return false;
+
+  if (Dc->isUnion()) {
+
+    // for unions, one initializer is enought.
+    // the rest of the union is zero padded.
+
+    auto F = Dc->fields();
+    for (auto It = F.begin(); It != F.end(); ++It) {
+      if (It->hasInClassInitializer()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  auto F = Dc->fields();
+  for (auto It = F.begin(); It != F.end(); ++It) {
+    auto Ft = (*It)->getType().getCanonicalType();
+    if (!isDeterministicType(Ft) && !It->hasInClassInitializer()) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        std::string Msg =
+            "member '" + std::string((*It)->getName()) + "' is not deterministic";
+        Dh.diag((*It)->getLocation(), Msg);
+      }
+      return false;
+    }
+  }
+
+  auto B = Dc->bases();
+  for (auto It = B.begin(); It != B.end(); ++It) {
+
+    auto Bt = It->getType().getCanonicalType();
+    if (!isDeterministicType(Bt)) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        Dh.diag((*It).getBaseTypeLoc(), "base class is not deterministic");
+      }
+      return false;
+    }
+  }
+
+  // finally we are deterministic!
+  return true;
+}
+
+bool TypeChecker::isDeterministicType(const QualType& Qt) {
+
+  assert(Qt.isCanonical());
+
+  if (Qt->isReferenceType()) {
+    return true;
+  } else if (Qt->isPointerType()) {
+    return false;
+  } else if (Qt->isBuiltinType()) {
+    return false;
+  } else if (Qt->isEnumeralType()) {
+    return false;
+  } else if (isAwaitableType(Qt)) {//mb: check
+    return true;
+  } else if (isLambdaType(Qt)) {
+    return true;
+  } else if (isSafePtrType(Qt)) {
+    return true;
+  } else if (isNakedPointerType(Qt, Context)) {
+    return true;
+  } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
+    return isDeterministicRecord(Rd);
+  } else if (Qt->isTemplateTypeParmType()) {
+    // we will take care at instantiation
+    return true;
+  } else {
+    //t->dump();
+    return false;
+  }
+}
+
+
 const CXXRecordDecl *isUnionType(QualType Qt) {
 
   assert(Qt.isCanonical());
@@ -535,10 +745,9 @@ bool isOsnPtrRecord(const CXXRecordDecl *Dc) {
   if (!Dc)
     return false;
 
-  std::string Name = Dc->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Dc);
 
-  return isSafePtrName(Name) || isNakedPtrName(Name) ||
-         isConstNakedPtrName(Name);
+  return isSafePtrName(Name) || isNakedPtrName(Name);
 }
 
 const Expr *getBaseIfOsnPtrDerref(const Expr *Ex) {
@@ -607,6 +816,30 @@ const Expr *ignoreTemporaries(const Expr *Ex) {
   }
 } // namespace nodecpp
 
+DeclRefExpr *getStdMoveArg(Expr *Ex) {
+  
+  CXXConstructExpr *Ctor = dyn_cast<CXXConstructExpr>(Ex);
+
+  if(!Ctor)
+    return nullptr;
+  
+  if(Ctor->getNumArgs() != 1)
+    return nullptr;
+
+  CallExpr *Call = dyn_cast<CallExpr>(Ctor->getArg(0));
+  if(!Call)
+    return nullptr;
+  
+  if(!Call->isCallToStdMove())
+    return nullptr;
+
+  if(Call->getNumArgs() != 1)
+    return nullptr;
+
+  DeclRefExpr *Dre = dyn_cast<DeclRefExpr>(Call->getArg(0));
+  return Dre;
+}
+
 bool isFunctionPtr(const Expr *Ex) {
 
   if (!Ex)
@@ -651,6 +884,103 @@ const DeclStmt *getParentDeclStmt(ASTContext *Context, const Decl *Dc) {
     return L.begin()->get<DeclStmt>();
   else
     return nullptr;
+}
+
+
+const FunctionDecl *getEnclosingFunctionDecl(ASTContext *Context, const Stmt *St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getEnclosingFunctionDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<FunctionDecl>())
+      return Ch;
+  }
+
+  return nullptr;
+}
+
+const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  if (L.begin() != L.end()) {
+    if (auto Ch = L.begin()->get<Stmt>())
+      return getEnclosingCXXRecordDecl(Context, Ch);
+    else if(auto Ch = L.begin()->get<CXXMethodDecl>())
+      return Ch->getParent();
+  }
+
+  return nullptr;
+}
+
+
+
+bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
+  
+  assert(D);
+
+  if(isa<ParmVarDecl>(D))
+    return true;
+
+  auto L = Context->getParents(*D);
+
+  if (L.begin() != L.end())
+    return L.begin()->get<CXXCatchStmt>();
+  else
+    return false;
+}
+
+bool isDerivedFromNodeBase(QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(R);
+  if(isNodeBaseName(Name))
+    return true;
+
+  for(auto Each : R->bases()) {
+    if(isDerivedFromNodeBase(Each.getType()))
+      return true;
+  }
+
+  return false;
+}
+
+bool isEmptyClass(QualType Qt) {
+
+  auto T = Qt.getCanonicalType().getTypePtr();
+
+  if(!T)
+    return false;
+
+  auto R = T->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  if(!R->field_empty())
+    return false;
+
+  for(auto Each : R->bases()) {
+    if(!isEmptyClass(Each.getType()))
+      return false;
+  }
+
+  return true;
 }
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,

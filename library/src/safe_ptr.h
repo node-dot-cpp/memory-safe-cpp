@@ -50,10 +50,10 @@ template<class T> struct soft_this_ptr_type_<T, memory_safety::none> { typedef s
 template<class T> struct soft_this_ptr_type_<T, memory_safety::safe> { typedef soft_this_ptr_impl<T> type; };
 template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using soft_this_ptr = typename soft_this_ptr_type_<T, is_safe>::type;
 
-template<class T, memory_safety is_safe> struct naked_ptr_type_ { typedef naked_ptr_impl<T> type; };
-template<class T> struct naked_ptr_type_<T, memory_safety::none> { typedef naked_ptr_no_checks<T> type; };
-template<class T> struct naked_ptr_type_<T, memory_safety::safe> { typedef naked_ptr_impl<T> type; };
-template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using naked_ptr = typename naked_ptr_type_<T, is_safe>::type;
+template<class T, memory_safety is_safe> struct nullable_ptr_type_ { typedef nullable_ptr_impl<T> type; };
+template<class T> struct nullable_ptr_type_<T, memory_safety::none> { typedef nullable_ptr_no_checks<T> type; };
+template<class T> struct nullable_ptr_type_<T, memory_safety::safe> { typedef nullable_ptr_impl<T> type; };
+template<class T, memory_safety is_safe = safeness_declarator<T>::is_safe> using nullable_ptr = typename nullable_ptr_type_<T, is_safe>::type;
 
 template<class _Ty,
 	class... _Types,
@@ -119,6 +119,56 @@ soft_ptr_impl<T> soft_ptr_reinterpret_cast( soft_ptr_impl<T1> p ) {
 template<class T, class T1>
 soft_ptr_no_checks<T> soft_ptr_reinterpret_cast( soft_ptr_no_checks<T1> p ) {
 	return soft_ptr_reinterpret_cast_no_checks<T, T1>( p );
+}
+
+
+template<class T, class T1>
+T* nullable_cast( nullable_ptr_impl<T1> p ) {
+	return nullable_cast_impl<T>( p );
+}
+
+template<class T, class T1>
+T* nullable_cast( nullable_ptr_no_checks<T1> p ) {
+	return nullable_cast_no_checks<T>( p );
+}
+
+template<class T>
+T* nullable_cast( nullable_ptr_impl<T> p ) {
+	return nullable_cast_impl( p );
+}
+
+template<class T>
+T* nullable_cast( nullable_ptr_no_checks<T> p ) {
+	return nullable_cast_no_checks( p );
+}
+
+
+template<class T, class T1>
+nullable_ptr<T1> nullable_cast( T* p ) {
+	if constexpr ( safeness_declarator<T1>::is_safe == memory_safety::safe )
+	{
+		static_assert( owning_ptr<T1>::is_safe == memory_safety::safe );
+		return nullable_ptr_impl<T1>( p );
+	}
+	else
+	{
+		static_assert( owning_ptr<T1>::is_safe == memory_safety::none );
+		return nullable_ptr_no_checks<T1>( p );
+	}
+}
+
+template<class T>
+nullable_ptr<T> nullable_cast( T* p ) {
+	if constexpr ( safeness_declarator<T>::is_safe == memory_safety::safe )
+	{
+		static_assert( owning_ptr<T>::is_safe == memory_safety::safe );
+		return nullable_ptr_impl<T>( p );
+	}
+	else
+	{
+		static_assert( owning_ptr<T>::is_safe == memory_safety::none );
+		return nullable_ptr_no_checks<T>( p );
+	}
 }
 
 } // namespace nodecpp::safememory

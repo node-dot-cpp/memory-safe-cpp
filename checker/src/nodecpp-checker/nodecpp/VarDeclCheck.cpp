@@ -72,7 +72,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
   }
 
-  bool IsParam = isa<ParmVarDecl>(Var);
+  bool IsParam = isParmVarOrCatchVar(Result.Context, Var);
   auto Qt = Var->getType().getCanonicalType();
 
   //first check references initializers
@@ -94,8 +94,9 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   //unwrap const ref
   if (Qt->isReferenceType()) {
-    if (Qt.isConstQualified() || isConstNakedPointerType(Qt)) {
+    if (Qt->getPointeeType().isConstQualified()) {
       Qt = Qt->getPointeeType().getCanonicalType();
+      Qt.removeLocalConst();
     }
   }
 
@@ -124,21 +125,23 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if (isAnyFunctorType(Var->getType())) // don't use canonical type here
+  if (isStdFunctionType(Qt))
     return;
 
   if (isAwaitableType(Qt)) {
-    if(IsParam)
-      diag(Var->getLocation(), "(S9.1) awaitable parameter not allowed");
-    else
-      diag(Var->getLocation(), "(S9.1) awaitable variable not allowed (yet)");
+
+    //don't diagnose here
+    // if(IsParam)
+    //   diag(Var->getLocation(), "(S9) awaitable parameter not allowed");
+    // else
+    //   diag(Var->getLocation(), "(S9) awaitable variable not allowed (yet)");
 
     return;
   }
 
   if (isRawPointerType(Qt)) {
-    //getContext()->getGlobalOptions().SafeFunctions;
-    bool Allow = false;
+
+    bool Allow = getContext()->getGlobalOptions().AllowRawPointers;
     if (!Allow) {
       diag(Var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
       return;
@@ -151,15 +154,37 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    // //params don't need initializer
     if (!IsParam) {
-      auto E = Var->getInit();
-      if (!E) {
+      auto Ex = Var->getInit();
+      if (!Ex) {
         diag(Var->getLocation(),
-             "(S5.3) raw pointer variable type must have initializer");
+             "(S1.3) raw pointer variable type must have initializer");
         return;
       }
     }
+
+    // if (auto P = dyn_cast<ParmVarDecl>(Var)) {
+    //   // params check they don't have a null default initializer
+    //   auto Ex = P->getDefaultArg();
+    //   if(Ex && isNullPtrValue(getASTContext(), Ex)) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer parameter can't be initialized to null");
+    //     return;
+    //   }
+    // }
+    // else {
+    //   auto Ex = Var->getInit();
+    //   if (!Ex) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer variable type must have initializer");
+    //     return;
+    //   }
+    //   else if(isNullPtrValue(getASTContext(), Ex)) {
+    //     diag(Var->getLocation(),
+    //          "(S1.3) raw pointer variable can't be initialized to null");
+    //     return;
+    //   }
+    // }
 
     //this is all for raw pointer
     return;
@@ -172,7 +197,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     auto Dh = DiagHelper(this);
-    Dh.diag(Var->getLocation(), "unsafe naked_ptr at variable declaration");
+    Dh.diag(Var->getLocation(), "unsafe nullable_ptr at variable declaration");
     isNakedPointerType(Qt, getContext(), Dh); // for report
     return;
   }

@@ -1,7 +1,7 @@
 /*******************************************************************************
-  Copyright (C) 2019 OLogN Technologies AG
+  Copyright (C) 2020 OLogN Technologies AG
 *******************************************************************************/
-//===--- MayExtendDeclCheck.h - clang-tidy-----------------------*- C++ -*-===//
+//===--- StringLiteralCheck.h - clang-tidy-------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,8 +10,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef NODECPP_CHECKER_NODECPP_MAYEXTENDDECLCHECK_H
-#define NODECPP_CHECKER_NODECPP_MAYEXTENDDECLCHECK_H
+#ifndef NODECPP_CHECKER_NODECPP_STRINGLITERALCHECK_H
+#define NODECPP_CHECKER_NODECPP_STRINGLITERALCHECK_H
 
 #include "../ClangTidy.h"
 
@@ -21,10 +21,10 @@ namespace checker {
 /// FIXME: Write a short description.
 ///
 /// For the user-facing documentation see:
-/// http://clang.llvm.org/extra/clang-tidy/checks/nodecpp-may-extend-decl.html
-class MayExtendDeclCheck : public ClangTidyCheck {
+/// http://clang.llvm.org/extra/clang-tidy/checks/nodecpp-std-function.html
+class StringLiteralCheck : public ClangTidyCheck {
 public:
-  MayExtendDeclCheck(StringRef Name, ClangTidyContext *Context)
+  StringLiteralCheck(StringRef Name, ClangTidyContext *Context)
       : ClangTidyCheck(Name, Context) {}
   void registerMatchers(ast_matchers::MatchFinder *Finder) override;
   void check(const ast_matchers::MatchFinder::MatchResult &Result) override;
@@ -33,4 +33,4 @@ public:
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_NODECPP_MAYEXTENDDECLCHECK_H
+#endif // NODECPP_CHECKER_NODECPP_STRINGLITERALCHECK_H

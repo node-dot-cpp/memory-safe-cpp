@@ -29,6 +29,8 @@ void CoroutineCheck::registerMatchers(MatchFinder *Finder) {
 
 void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
 
+  // mb: this check requires matching implicit code, and we don't do that on
+  // RuleS9 check, so we keep this part here
   if(auto Co = Result.Nodes.getNodeAs<CoroutineBodyStmt>("coro")) {
 
     auto L = Result.Context->getParents(*Co);
@@ -42,7 +44,7 @@ void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
 
     auto Qt = Fd->getReturnType();
     if(!isAwaitableType(Qt)) {
-      diag(Fd->getLocStart(), "(S9.1) coroutines must return nodecpp::awaitable");
+      diag(Fd->getLocStart(), "(S9) coroutines must return nodecpp::awaitable");
     }
   }
   // else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {

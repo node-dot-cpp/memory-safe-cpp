@@ -4,12 +4,12 @@
 
 using namespace nodecpp::safememory;
 
+
 class X { public: virtual ~X() {} };
 
 class Der :public X {};
 
 void fp(X* p);
-// CHECK: :[[@LINE-1]]:12: error: (S1.3)
 
 void fop(owning_ptr<X> op);
 
@@ -17,12 +17,12 @@ void func() {
 
     int i = 5;
     X* p = nullptr;
- // CHECK: :[[@LINE-1]]:8: error: (S1.3)
+ // CHECK: :[[@LINE-1]]:12: error: (S1.2)
     X* p1 = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (S1.3)
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
     X* p2 = nullptr;
-// CHECK: :[[@LINE-1]]:8: error: (S1.3)
-    naked_ptr<X> np;
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
+    nullable_ptr<X> np;
     soft_ptr<X> sp;
     owning_ptr<X> op;
 
@@ -45,13 +45,13 @@ void func() {
     //ALLOW
     dynamic_cast<Der*>(p);
     p=p2;
-    p=np.get_dereferencable();
-    p=sp.get().get_dereferencable();
-    p=op.get().get_dereferencable();
+    // p=np.get_dereferencable();
+    // p=sp.get().get_dereferencable();
+    // p=op.get().get_dereferencable();
     fp(p);
-    fp(np.get_dereferencable());
-    fp(sp.get().get_dereferencable());
-    fp(op.get().get_dereferencable());
+    // fp(np.get_dereferencable());
+    // fp(sp.get().get_dereferencable());
+    // fp(op.get().get_dereferencable());
     &i;
     *np;
     *sp;
@@ -70,22 +70,22 @@ void func() {
 
     //[Rule S1.2]
     //PROHIBIT
-    *nullptr;
+    *nullptr = 123;
 // CHECK: :[[@LINE-1]]:5: error: indirection requires pointer operand
     *p;
-// CHECK: :[[@LINE-1]]:5: error: (S1.2)
+
 
 
     //[Rule S1.3]
     //PROHIBIT
     int* x = nullptr;
-// CHECK: :[[@LINE-1]]:10: error: (S1.3)
+// CHECK: :[[@LINE-1]]:14: error: (S1.2)
 
     //[Rule S1.4]
     //PROHIBIT
-    union Prohibit { naked_ptr<X> x; int y; };
+    union Prohibit { nullable_ptr<X> x; int y; };
 // CHECK: :[[@LINE-1]]:11: error: unsafe type declaration
-// CHECK: :[[@LINE-2]]:35: note: (S1.4)
+// CHECK: :[[@LINE-2]]:38: note: (S1.4)
 
     //ALLOW
     union Allow { int x; long y; };
@@ -94,7 +94,7 @@ void func() {
 void rule_S2() {
 
     const X* cp = nullptr;
-// CHECK: :[[@LINE-1]]:14: error: (S1.3)
+// CHECK: :[[@LINE-1]]:19: error: (S1.2)
 
     //[Rule S2.1]
     //PROHIBIT
@@ -125,7 +125,7 @@ class ProhibitS3 {
 
 void rule_S3() {
 
-    static int x;
+    static int x = 0;
 // CHECK: :[[@LINE-1]]:16: error: (S3)
 }
 
@@ -163,7 +163,7 @@ void rule_S7() {
     //PROHIBIT: 
 
     auto fp = &rule_S7;
-// CHECK: :[[@LINE-1]]:10: error: (S1.3)    
+// CHECK: :[[@LINE-1]]:10: error: (S5.3)    
 }
 
 

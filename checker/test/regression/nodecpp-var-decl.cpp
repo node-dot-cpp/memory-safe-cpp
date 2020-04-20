@@ -5,7 +5,7 @@
 using namespace nodecpp::safememory;
 
 struct Safe1 {
-	int i;
+	int i = 0;
 };
 
 struct Safe2 {
@@ -29,9 +29,9 @@ void safeFun() {
 
 
 struct [[nodecpp::naked_struct]] NakedStr {
-	naked_ptr<int> ptr;
+	nullable_ptr<int> ptr;
 
-	naked_ptr<int> get() const;
+	nullable_ptr<int> get() const;
 	NakedStr();
 	NakedStr(const NakedStr&);
 	NakedStr& operator=(const NakedStr&) = delete;
@@ -39,15 +39,13 @@ struct [[nodecpp::naked_struct]] NakedStr {
 
 void nakedFunc() {
 	
-	int* i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:7: error: (S1.3)
-
 	NakedStr naked; //ok
 }
 
 struct Bad1 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
+	int* ptr = nullptr;
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
 };
 
 struct Bad2 : public NakedStr {
@@ -56,38 +54,23 @@ struct Bad2 : public NakedStr {
 
 struct Bad3 {
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
-	int* ptr;
-
+	int* ptr = nullptr;
+// CHECK: :[[@LINE-1]]:13: error: (S1.2)
 	void set(int* ptr);
-// CHECK: :[[@LINE-1]]:16: error: (S1.3)
+
 };
 
 void badFunc() {
-	int** i = nullptr; //bad
-// CHECK: :[[@LINE-1]]:8: error: (S1.3)
-	NakedStr* nakedPtr = nullptr; // bad
-// CHECK: :[[@LINE-1]]:12: error: (S1.3)
+	int i0 = 0;
+	int* i1 = &i0;
+	int** i = &i1; //bad
+// CHECK: :[[@LINE-1]]:8: error: (S5.3)
+
+	NakedStr nstr;
+	NakedStr* nakedPtr = &nstr; // bad
+// CHECK: :[[@LINE-1]]:12: error: (S5.3)
+
 	Bad1 b1; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
-
-	Bad2 b2; //bad
-// CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
-
-	Bad3 b3; //bad
 // CHECK: :[[@LINE-1]]:7: error: unsafe type at variable declaration
 }
 
-class Sock {};
-
-class Safe {
-
-	void mayExtendCallback(Sock* dontExtend, Sock* sock [[nodecpp::may_extend_to_this]]) {
-// CHECK: :[[@LINE-1]]:31: error: (S1.3)
-// CHECK: :[[@LINE-2]]:49: error: (S1.3)
-		Sock* other [[nodecpp::may_extend_to_this]] = sock;
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-		Sock* other2 [[nodecpp::may_extend_to_this]] = dontExtend; //bad donExtend is not valid initializer
-// CHECK: :[[@LINE-1]]:9: error: (S1.3)
-	}
-
-};

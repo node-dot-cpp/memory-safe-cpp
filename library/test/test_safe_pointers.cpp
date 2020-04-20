@@ -304,13 +304,13 @@ int testWithLest( int argc, char * argv[] )
 					EXPECT(  !(sp11 == sp21) );
 
 					// naked with naked
-					naked_ptr<int> np1( op1 );
-					naked_ptr<int> np2( sp11 );
-					naked_ptr<int> np3( op2 );
+					nullable_ptr<int> np1( op1 );
+					nullable_ptr<int> np2( sp11 );
+					nullable_ptr<int> np3( op2 );
 
-					naked_ptr<void> np1v( op1 );
-					naked_ptr<void> np2v( sp11 );
-					naked_ptr<void> np3v( op2 );
+					nullable_ptr<void> np1v( op1 );
+					nullable_ptr<void> np2v( sp11 );
+					nullable_ptr<void> np3v( op2 );
 
 					EXPECT(  np1 == np2 );
 					EXPECT(  np1 != np3 );
@@ -342,6 +342,49 @@ int testWithLest( int argc, char * argv[] )
 				soft_ptr<Derived> p3 = soft_ptr_reinterpret_cast<Derived>(p1);
 				EXPECT( p2->n == 11 );
 				EXPECT( p3->n == 11 );
+			}
+			killAllZombies();
+		},
+
+		CASE( "basic nullable pointer test" )
+		{
+			SETUP("basic nullable pointer test")
+			{
+				int i = 5;
+				nullable_ptr<int> vnp(&i);
+				int* pi = nullable_cast( vnp );
+				nullable_ptr<int> vnp2;
+				vnp2 = nullable_cast( &i );
+				EXPECT( vnp == vnp2 ); // enabled by default
+
+				vnp2 = nullptr;
+				int* pint;
+				EXPECT_THROWS( pint = nullable_cast(vnp2) );
+
+				testing::dummy_objects::LargeDerived* pl;
+				nullable_ptr<testing::dummy_objects::LargeDerived> npl;
+				EXPECT_THROWS( pl = nullable_cast(npl) );
+			}
+			killAllZombies();
+		},
+
+		CASE( "Large objects with large alignment test" )
+		{
+			SETUP("Large objects with large alignment test")
+			{
+				using LargeAlignedT = LargeObjectWithControllableAlignment<0x1000, 7>;
+				EXPECT( sizeof(LargeAlignedT) >= 0x1000 );
+				LargeAlignedT* ptr1 = new LargeAlignedT;
+				owning_ptr<LargeAlignedT>p4klarge128aligned = make_owning<LargeAlignedT>();
+				EXPECT( (( (uintptr_t)(ptr1) ) & ((1<<7)-1)) == 0 );
+				if ( ptr1 ) delete ptr1;
+
+				using ExLargeAlignedT = LargeObjectWithControllableAlignment<0x10000, 7>;
+				EXPECT( sizeof(ExLargeAlignedT) >= 0x10000 );
+				ExLargeAlignedT* ptr2 = new ExLargeAlignedT;
+				owning_ptr<ExLargeAlignedT>p64klarge128aligned = make_owning<ExLargeAlignedT>();
+				EXPECT( (( (uintptr_t)(ptr2) ) & ((1<<7)-1)) == 0 );
+				if ( ptr1 ) delete ptr2;
 			}
 			killAllZombies();
 		},
@@ -714,13 +757,13 @@ int testWithLest( int argc, char * argv[] )
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  !(sp11 == sp21) );
 
 					// naked with naked
-					naked_ptr<int> np1( op1 );
-					naked_ptr<int> np2( sp11 );
-					naked_ptr<int> np3( op2 );
+					nullable_ptr<int> np1( op1 );
+					nullable_ptr<int> np2( sp11 );
+					nullable_ptr<int> np3( op2 );
 
-					naked_ptr<void> np1v( op1 );
-					naked_ptr<void> np2v( sp11 );
-					naked_ptr<void> np3v( op2 );
+					nullable_ptr<void> np1v( op1 );
+					nullable_ptr<void> np2v( sp11 );
+					nullable_ptr<void> np3v( op2 );
 
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 == np2 );
 					NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  np1 != np3 );
@@ -1247,7 +1290,7 @@ void temptest()
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 }
 
-void testSptrsWithZeroOffset()
+void testSoftPtrsWithZeroOffset()
 {
 	owning_ptr<int> op = make_owning<int>(17);
 	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
@@ -1255,6 +1298,19 @@ void testSptrsWithZeroOffset()
 	soft_ptr<int> sp1 = spz2.get();
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+}
+
+void testOwningPtrWithManDel()
+{
+	lib_helpers::owning_ptr_with_manual_delete<int> op = lib_helpers::make_owning_with_manual_delete<int>(17);
+	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+	soft_ptr<int> sp1 = spz2.get();
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+
+	soft_ptr<int> sp2( op );
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp2 );
 }
 
 
@@ -1270,7 +1326,8 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
-	testSptrsWithZeroOffset();
+	testSoftPtrsWithZeroOffset();
+	testOwningPtrWithManDel();
 //	return 0;
 
 //temptest(); return 0;
@@ -1319,5 +1376,6 @@ int main( int argc, char * argv[] )
 
 	nodecpp::log::default_log::info( "about to exit...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         " );
 
+	printf( "TESTING DONE\n" );
 	return 0;
 }

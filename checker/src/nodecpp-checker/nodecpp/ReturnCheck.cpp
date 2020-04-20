@@ -1,7 +1,7 @@
 /*******************************************************************************
   Copyright (C) 2019 OLogN Technologies AG
 *******************************************************************************/
-//===--- NakedPtrReturnCheck.cpp - clang-tidy------------------------------===//
+//===--- ReturnCheck.cpp - clang-tidy------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -10,7 +10,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "NakedPtrReturnCheck.h"
+#include "ReturnCheck.h"
 #include "NakedPtrHelper.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
@@ -20,37 +20,37 @@ using namespace clang::ast_matchers;
 namespace nodecpp {
 namespace checker {
 
-void NakedPtrReturnCheck::registerMatchers(MatchFinder *Finder) {
+void ReturnCheck::registerMatchers(MatchFinder *Finder) {
   Finder->addMatcher(returnStmt().bind("stmt"), this);
 }
 
-void NakedPtrReturnCheck::check(const MatchFinder::MatchResult &Result) {
+void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   auto St = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
 
   auto Ex = St->getRetValue();
   if (!Ex)
     return;
 
-  QualType Qt = Ex->getType().getCanonicalType();
-  if (isRawPointerType(Qt)) {
+  auto Fd = getEnclosingFunctionDecl(Result.Context, St);
+  if(!Fd)
+    return;
+
+//  QualType Qt = Ex->getType().getCanonicalType();
+  QualType Qt = Fd->getReturnType().getCanonicalType();
+
+  // if(isRawPointerType(Qt) && isNullPtrValue(getASTContext(), Ex)) {
+  //   diag(Ex->getExprLoc(), "(S1.3) raw pointer can't be null");
+  //   return;
+  // }
+
+  if (isRawPointerType(Qt) || isNakedPointerType(Qt, getContext()) ||
+    isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {
+
     auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
     if (!Ch.checkExpr(Ex))
-      diag(Ex->getExprLoc(), "(S5.1) return of raw pointer may extend scope");
-  } else if (isNakedPointerType(Qt, getContext())) {
-    auto Checker =
-        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if (!Checker.checkExpr(Ex))
-      diag(Ex->getExprLoc(),
-           "(S5.1) return of naked pointer may extend scope");
-  } else if (isNakedStructType(Qt, getContext())) {
-    auto Checker =
-        NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
-
-    if (!Checker.checkExpr(Ex))
-      diag(Ex->getExprLoc(),
-           "(S5.1) return of naked struct may extend scope");
+      diag(Ex->getExprLoc(), "(S5.1) return value may extend scope");
   }
+
 }
 
 } // namespace checker

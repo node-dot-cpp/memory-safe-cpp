@@ -23,18 +23,35 @@ namespace checker {
 void TemporaryExprCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(cxxTemporaryObjectExpr().bind("tmp"), this);
+  Finder->addMatcher(materializeTemporaryExpr().bind("tmp2"), this);
 }
 
 void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
 
+  QualType Qt;
+  SourceLocation Loc;
   if (auto Tmp = Result.Nodes.getNodeAs<CXXTemporaryObjectExpr>("tmp")) {
+    Qt = Tmp->getType();
+    Loc = Tmp->getExprLoc();
+  }
 
-    QualType Qt = Tmp->getType().getCanonicalType();
+  else if (auto Tmp2 = Result.Nodes.getNodeAs<MaterializeTemporaryExpr>("tmp2")) {
+    Qt = Tmp2->getType();
+    Loc = Tmp2->getExprLoc();
+  }
+
+  if (!Qt.isNull()) {
+
+    Qt = Qt.getCanonicalType();
+    if (isStdFunctionType(Qt))
+      return;
+
     if (isSafeType(Qt, getContext()))
       return;
-    if (isAnyFunctorType(Tmp->getType())) // don't use cannonical type here
-      return;
 
+    if (isAwaitableType(Qt))
+      return;
+      
     if (isRawPointerType(Qt))
       return;
 
@@ -43,7 +60,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
         return;
 
       auto Dh = DiagHelper(this);
-      Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
+      Dh.diag(Loc, "unsafe type at temporary expression");
       isNakedPointerType(Qt, getContext(), Dh); // for report
       return;
     }
@@ -53,7 +70,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
         return;
 
       auto Dh = DiagHelper(this);
-      Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
+      Dh.diag(Loc, "unsafe type at temporary expression");
       isNakedStructType(Qt, getContext(), Dh); // for report
       return;
     }
@@ -62,9 +79,9 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       return;
 
 //    tmp->dump();
-auto Dh = DiagHelper(this);
-Dh.diag(Tmp->getExprLoc(), "unsafe type at temporary expression");
-isSafeType(Qt, getContext(), Dh);
+    auto Dh = DiagHelper(this);
+    Dh.diag(Loc, "unsafe type at temporary expression");
+    isSafeType(Qt, getContext(), Dh);
   }
 }
 

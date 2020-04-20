@@ -175,7 +175,35 @@ T wait_for_all(T t, T t2, T t3) { return t; }
 template<typename T>
 T wait_for_all(T t, T t2, T t3, T t4) { return t; }
 
-} // namespace nodecpp::awaitable
+nodecpp::awaitable<void> await_function();
+[[nodecpp::no_await]] nodecpp::awaitable<void> no_await_function();
 
+} // namespace nodecpp
+
+namespace std {
+	namespace experimental {
+
+		template<>
+		struct coroutine_traits<void> {
+
+				using promise_type = nodecpp::promise_type_struct<void>;
+		};
+	}
+}
+
+namespace nodecpp {
+	auto hidden_await_function() {
+		struct HiddenAwaitable  {
+
+			bool await_ready() noexcept { 
+				return false;
+			}
+			void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
+			void await_resume() { }
+		};
+
+		return HiddenAwaitable();
+	}
+}
 
 #endif // NODECPP_AWAITABLE_H

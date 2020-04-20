@@ -1,60 +1,107 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (c) 2020, OLogN Technologies AG
 #-------------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.1)
-project(SafeMemory CXX)
-set(CMAKE_CXX_STANDARD 17)
 
-#-------------------------------------------------------------------------------------------
-# Library definition
-#-------------------------------------------------------------------------------------------
-add_library(SafeMemory
-  src/safe_ptr.cpp
-  experimental/containers/source/hashtable.cpp
-  experimental/containers/source/string.cpp
-  src/iibmalloc/src/iibmalloc.cpp
-#  src/iibmalloc/src/foundation/3rdparty/fmt/src/format.cc
-  src/iibmalloc/src/foundation/src/nodecpp_assert.cpp
-  src/iibmalloc/src/foundation/src/page_allocator.cpp
-  src/iibmalloc/src/foundation/src/log.cpp
-  src/iibmalloc/src/foundation/src/std_error.cpp
-  src/iibmalloc/src/foundation/src/tagged_ptr_impl.cpp
-  src/iibmalloc/src/foundation/src/safe_memory_error.cpp
-  src/iibmalloc/src/foundation/src/cpu_exceptions_translator.cpp
-  )
 
 #-------------------------------------------------------------------------------------------
 # Defines
 #-------------------------------------------------------------------------------------------
-add_compile_options( /wd4996 )
-add_compile_options( /wd4267 )
-add_compile_options( /wd4535 )
+
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-add_definitions(-DEASTL_OPENSOURCE=1)
+#add_definitions(-DEASTL_OPENSOURCE=1)
 add_definitions(-D_CHAR16T)
-#add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
+add_definitions(-DUSING_T_SOCKETS)
+
+if(MSVC)
+  add_compile_options( /wd4996 )
+  add_compile_options( /wd4267 )
+  add_compile_options( /wd4535 )
+	add_compile_options(/W3)
+	add_compile_options(/EHa)
+#	add_compile_options(/MD)
+else()
+	add_compile_options( -Wall )
+	add_compile_options( -Wextra )
+	add_compile_options( -Wno-unused-variable )
+	add_compile_options( -Wno-unused-parameter )
+	add_compile_options( -Wno-empty-body )
+#	add_compile_options(-lpthread)
+  add_compile_options( -O2 )
+endif()
+
+#-------------------------------------------------------------------------------------------
+# Library definition
+#-------------------------------------------------------------------------------------------
+add_library(SafeMemory STATIC
+  src/safe_ptr.cpp
+  )
 
 #-------------------------------------------------------------------------------------------
 # Export Include Directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(SafeMemory
   PUBLIC experimental/containers/include
-  PUBLIC src/iibmalloc/src/foundation/include
-  PUBLIC src/iibmalloc/src
+  PUBLIC include
   PUBLIC src
   )
-
 
 #-------------------------------------------------------------------------------------------
 # Package Dependencies 
 #-------------------------------------------------------------------------------------------
-#target_link_libraries(SafeMemory Iibmalloc Foundation )
-target_link_libraries(SafeMemory fmt::fmt)
+add_subdirectory(src/iibmalloc)
+
+target_link_libraries(SafeMemory iibmalloc)
 
 
-add_subdirectory(src/iibmalloc/src/foundation/3rdparty/fmt)
-add_subdirectory(test/EASTL)
-add_subdirectory(experimental/containers)
+#-------------------------------------------------------------------------------------------
+# Tests 
+#-------------------------------------------------------------------------------------------
 
+add_executable(test_safe_memory
+  test/test_safe_pointers.cpp
+  )
+
+target_link_libraries(test_safe_memory SafeMemory)
+
+
+#-------------------------------------------------------------------------------------------
+# gcc_lto_workaround
+#-------------------------------------------------------------------------------------------
+
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  # using GCC
+
+  add_library(gcc_lto_workaround SHARED
+    gcc_lto_workaround/gcc_lto_workaround.cpp
+    )
+
+  add_compile_options(-fpic)
+
+  target_link_libraries(gcc_lto_workaround foundation)
+  
+  add_executable(test_safe_memory_lto
+    test/test_safe_pointers.cpp
+    gcc_lto_workaround/gcc_lto_workaround.cpp
+    )
+
+  target_link_libraries(test_safe_memory_lto SafeMemory)
+
+  add_test(Run_test_safe_memory_lto test_safe_memory_lto)
+
+  add_executable(test_safe_memory_lto_wa
+    test/test_safe_pointers.cpp
+    )
+
+  target_link_libraries(test_safe_memory_lto_wa SafeMemory gcc_lto_workaround)
+
+  add_test(Run_test_safe_memory_lto_wa test_safe_memory_lto_wa)
+
+  target_link_libraries(test_safe_memory gcc_lto_workaround)
+
+endif()
+
+#-------------------------------------------------------------------------------------------
+
+add_test(Run_test_safe_memory test_safe_memory)

@@ -14,7 +14,7 @@ thread_local int bad4;
 // CHECK: :[[@LINE-1]]:18: error: (S3)
 
 void func() {
-	static int bad;
+	static int bad = 0;
 // CHECK: :[[@LINE-1]]:13: error: (S3)
 }
 
@@ -36,3 +36,6 @@ static
 void func2() {
 	//this is ok
 }
+
+Good ok; //ok, because is empty
+

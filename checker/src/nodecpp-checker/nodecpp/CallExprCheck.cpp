@@ -32,21 +32,24 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
   if (!Decl)
     return;
 
-  if (isa<CXXMethodDecl>(Decl))
-    return;
-
   SourceManager *Manager = Result.SourceManager;
   auto ELoc = Manager->getExpansionLoc(Decl->getLocation());
 
   if(!isSystemLocation(getContext(), ELoc))
-    return; // this is in safe code, then is ok
+    return; // this is in user code, then is ok
 
-  std::string Name = Decl->getQualifiedNameAsString();
+  std::string Name = getQnameForSystemSafeDb(Decl);
+
+  if(isSoftPtrCastName(Name)) {
+    diag(Ex->getExprLoc(), "(S1.1.1) soft_ptr cast is prohibited in safe code");
+    return;
+  }
+
   if(isSystemSafeFunctionName(getContext(), Name))
     return;
 
   diag(Ex->getExprLoc(),
-       "(S8) unsafe function call '" + Name + "' is prohibited");
+       "(S8) function call '" + Name + "' is not listed as safe, therefore is prohibited");
 }
 
 } // namespace checker

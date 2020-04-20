@@ -19,6 +19,10 @@
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
 #include "CoroutineASTVisitor.h"
+#include "RuleC.h"
+#include "RuleD.h"
+#include "RuleM1.h"
+#include "RuleS9.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -367,10 +371,16 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   }
 
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
+
+  Consumers.push_back(llvm::make_unique<RuleCASTConsumer>(Context));
+
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
   Consumers.push_back(llvm::make_unique<CoroutineASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<RuleDASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<RuleS9ASTConsumer>(Context));
 
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));
@@ -461,8 +471,7 @@ ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options) {
 void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
                   const CompilationDatabase &Compilations,
                   ArrayRef<std::string> InputFiles, ProfileData *Profile,
-                  const cl::opt<bool>& ASTDump, const cl::opt<bool>& ASTList,
-                  const cl::opt<bool>& ASTPrint, const cl::opt<std::string>& ASTDumpFilter) {
+                  bool ASTDump, StringRef ASTDumpFilter) {
   ClangTool Tool(Compilations, InputFiles);
 
   // Add extra arguments passed by the clang-tidy command-line.
@@ -502,6 +511,8 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
 
   Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DNODECPP_CHECKER_EXTENSIONS",
          ArgumentInsertPosition::BEGIN));
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-fsyntax-only",
+         ArgumentInsertPosition::BEGIN));
   Tool.appendArgumentsAdjuster(PerFileExtraArgumentsInserter);
   Tool.appendArgumentsAdjuster(PluginArgumentsRemover);
   if (Profile)
@@ -532,34 +543,26 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
     ClangTidyASTConsumerFactory ConsumerFactory;
   };
 
-
-  class ClangASTListActionFactory {
+  class ASTDumpActionFactory {
+    StringRef ASTDumpFilter;
   public:
+    ASTDumpActionFactory(StringRef ASTDumpFilter) :ASTDumpFilter(ASTDumpFilter) {}
     std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
-      return clang::CreateASTDeclNodeLister();
+      return clang::CreateASTDumper(nullptr /*Dump to stdout.*/,
+                                    ASTDumpFilter,
+                                    /*DumpDecls=*/true,
+                                    /*Deserialize=*/false,
+                                    /*DumpLookups=*/false);
     }
   };
 
-  class ClangASTPrintActionFactory {
-    StringRef FilterString;
-  public:
-    ClangASTPrintActionFactory(StringRef FilterString) :FilterString(FilterString) {}
-    std::unique_ptr<clang::ASTConsumer> newASTConsumer() {
-      return clang::CreateASTPrinter(nullptr, FilterString);
-    }
-  };
 
-  ClangASTListActionFactory ListFactory;
-  ClangASTPrintActionFactory PrintFactory(ASTDumpFilter);
+  ASTDumpActionFactory DumpFactory(ASTDumpFilter);
   std::unique_ptr<FrontendActionFactory> FrontendFactory;
 
 
-  if (ASTList)
-    FrontendFactory = newFrontendActionFactory(&ListFactory);
-  else if (ASTDump) 
-    FrontendFactory = newFrontendActionFactory<ASTDumpAction>();
-  else if (ASTPrint) 
-    FrontendFactory = newFrontendActionFactory(&PrintFactory);
+  if (ASTDump) 
+    FrontendFactory = newFrontendActionFactory(&DumpFactory);
   else
     FrontendFactory = make_unique<ActionFactory>(Context);
 
