@@ -1,7 +1,7 @@
+/library/build/
 build/.vs/TestSafePointers/v15/.suo
 build/x64/
 build/.vs/
-/build/
 test/build/x64/Debug/page_allocator_windows.obj
 test/build/x64/
 test/build/.vs/TestSafePointers/v15/ipch/AutoPCH/4f99c76cc18822cb/IIBMALLOC_WITH_ID_LINUX.ipch
@@ -14,9 +14,7 @@ library/samples/basic_sample/build/x64/
 library/samples/basic_sample/build/.vs/
 library/test/build/Debug/
 library/test/build/Release/
-/library/build/
+.vscode
 /checker/build/
 /checker/3rdparty/llvm/
 /checker/3rdparty/clang/
-/checker/3rdparty/clang-tools-extra/
-.vscode
