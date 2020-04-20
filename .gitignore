@@ -1,4 +1,4 @@
-library/build/
+/library/build/
 build/.vs/TestSafePointers/v15/.suo
 build/x64/
 build/.vs/
@@ -14,3 +14,7 @@ library/samples/basic_sample/build/x64/
 library/samples/basic_sample/build/.vs/
 library/test/build/Debug/
 library/test/build/Release/
+.vscode
+/checker/build/
+/checker/3rdparty/llvm/
+/checker/3rdparty/clang/
