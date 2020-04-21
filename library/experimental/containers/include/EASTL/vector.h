@@ -605,6 +605,9 @@ namespace safememory
 	inline typename VectorBase<T, Allocator>::size_type
 	VectorBase<T, Allocator>::GetNewCapacity(size_type currentCapacity)
 	{
+		// TODO: mb update this to better take use of iibmalloc discrete allocation
+		// sizes
+		
 		// This needs to return a value of at least currentCapacity and at least 1.
 		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
 	}
