@@ -189,8 +189,15 @@ namespace safememory
 		inline void SetNewHeap(owning_heap_type&& new_heap) {
 			std::destroy(mpBegin, mpEnd);
 			mHeap = std::move(new_heap);
-			mpBegin = mHeap->begin();
-			mCapacity = mHeap->begin() + mHeap->capacity();
+			if(mHeap) {
+				mpBegin = mHeap->begin();
+				mCapacity = mHeap->begin() + mHeap->capacity();
+			}
+			else {
+				mpBegin = nullptr;
+				mCapacity = nullptr;
+			}
+
 		}
 		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(mHeap); }
 
@@ -1404,16 +1411,16 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::swap(this_type& x)
 	{
-	#if defined(EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
-		if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
-			DoSwap(x);
-		else // else swap the contents.
-		{
-			const this_type temp(*this); // Can't call eastl::swap because that would
-			*this = x;                   // itself call this member swap function.
-			x     = temp;
-		}
-	#else
+	// #if defined(EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
+	// 	if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
+	// 		DoSwap(x);
+	// 	else // else swap the contents.
+	// 	{
+	// 		const this_type temp(*this); // Can't call eastl::swap because that would
+	// 		*this = x;                   // itself call this member swap function.
+	// 		x     = temp;
+	// 	}
+	// #else
 		// NOTE(rparolin): The previous implementation required T to be copy-constructible in the fall-back case where
 		// allocators with unique instances copied elements.  This was an unnecessary restriction and prevented the common
 		// usage of vector with non-copyable types (eg. eastl::vector<non_copyable> or eastl::vector<unique_ptr>). 
@@ -1433,7 +1440,7 @@ namespace safememory
 	    // behavior."
 
 		DoSwap(x);
-	#endif
+	// #endif
 	}
 
 
@@ -1848,9 +1855,10 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::DoSwap(this_type& x)
 	{
+		std::swap(mHeap,      x.mHeap);
 		std::swap(mpBegin,    x.mpBegin);
 		std::swap(mpEnd,      x.mpEnd);
-		std::swap(mCapacity, x.mCapacity); // We do this even if EASTL_ALLOCATOR_COPY_ENABLED is 0.
+		std::swap(mCapacity,  x.mCapacity); // We do this even if EASTL_ALLOCATOR_COPY_ENABLED is 0.
 	}
 
 	// The code duplication between this and the version that takes no value argument and default constructs the values
