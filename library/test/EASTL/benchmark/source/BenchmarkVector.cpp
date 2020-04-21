@@ -207,8 +207,8 @@ namespace
 	void TestFind(EA::StdC::Stopwatch& stopwatch, Container& c)
 	{
 		stopwatch.Restart();
-		typedef typename Container::iterator iterator_t;  // This typedef is required to get this code to compile on RVCT
-		iterator_t it = std::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
+		// typedef typename Container::iterator iterator_t;  // This typedef is required to get this code to compile on RVCT
+		auto it = std::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
 		stopwatch.Stop();
 		if(it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);
@@ -230,11 +230,12 @@ namespace
 	template <typename Container>
 	void TestInsert(EA::StdC::Stopwatch& stopwatch, Container& c)
 	{
-		typename Container::size_type j, jEnd;
-		typename Container::iterator it;
+		// typename Container::size_type j, jEnd;
+		// typename Container::iterator it;
 
 		stopwatch.Restart();
-		for(j = 0, jEnd = 100, it = c.begin(); j < jEnd; ++j)
+		auto it = c.begin();
+		for(size_t j = 0; j < 100; ++j)
 		{
 			it = c.insert(it, UINT64_C(0xffffffffffff));
 
@@ -252,11 +253,12 @@ namespace
 	template <typename Container>
 	void TestErase(EA::StdC::Stopwatch& stopwatch, Container& c)
 	{
-		typename Container::size_type j, jEnd;
-		typename Container::iterator it;
+		// typename Container::size_type j, jEnd;
+		// typename Container::iterator it;
 
 		stopwatch.Restart();
-		for(j = 0, jEnd = 100, it = c.begin(); j < jEnd; ++j)
+		auto it = c.begin();
+		for(size_t j = 0; j < 100; ++j)
 		{
 			it = c.erase(it);
 

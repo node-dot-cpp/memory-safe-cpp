@@ -548,6 +548,7 @@ namespace safememory
 		inline const Layout& internalLayout() const EA_NOEXCEPT            { return mPair_first; }
 		// inline allocator_type& internalAllocator() EA_NOEXCEPT             { return mPair_second; }
 		// inline const allocator_type& internalAllocator() const EA_NOEXCEPT { return mPair_second; }
+		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return internalLayout().GetSoftHeapPtr(); }
 
 	public:
 		// Constructor, destructor
@@ -742,10 +743,10 @@ namespace safememory
 		iterator   insert_unsafe(const_iterator p, size_type n, value_type c);
 		iterator   insert_unsafe(const_iterator p, const_pointer pBegin, const_pointer pEnd);
 		iterator   insert_unsafe(const_iterator p, std::initializer_list<value_type>);
-		iterator   insert(csafe_it_arg it, value_type c);
-		iterator   insert(csafe_it_arg it, size_type n, value_type c);
-		iterator   insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd);
-		iterator   insert(csafe_it_arg it, std::initializer_list<value_type>);
+		safe_iterator   insert(csafe_it_arg it, value_type c);
+		safe_iterator   insert(csafe_it_arg it, size_type n, value_type c);
+		safe_iterator   insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd);
+		safe_iterator   insert(csafe_it_arg it, std::initializer_list<value_type>);
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos);
@@ -1276,7 +1277,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::begin() EA_NOEXCEPT
 	{
-		return safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
+		return safe_iterator(GetSoftHeapPtr());
 	}
 
 
@@ -1284,7 +1285,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::end() EA_NOEXCEPT
 	{
-		return safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
+		return safe_iterator(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1292,7 +1293,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_safe_iterator
 	basic_string<T, Allocator>::begin() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
+		return const_safe_iterator(GetSoftHeapPtr());
 	}
 
 
@@ -1300,7 +1301,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_safe_iterator
 	basic_string<T, Allocator>::cbegin() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), 0);
+		return const_safe_iterator(GetSoftHeapPtr());
 	}
 
 
@@ -1308,7 +1309,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_safe_iterator
 	basic_string<T, Allocator>::end() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
+		return const_safe_iterator(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1316,7 +1317,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_safe_iterator
 	basic_string<T, Allocator>::cend() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(internalLayout().GetSoftHeapPtr(), internalLayout().GetSize());
+		return const_safe_iterator(GetSoftHeapPtr(), size());
 	}
 
 	template <typename T, typename Allocator>
@@ -1339,7 +1340,7 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_safe_reverse_iterator
 	basic_string<T, Allocator>::rbegin() const EA_NOEXCEPT
 	{
-		return const_safe_reverse_iterator(end);
+		return const_safe_reverse_iterator(end());
 	}
 
 
@@ -1369,7 +1370,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline bool basic_string<T, Allocator>::empty() const EA_NOEXCEPT
 	{
-		return (internalLayout().GetSize() == 0);
+		return (size() == 0);
 	}
 
 
@@ -1420,12 +1421,13 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::const_reference
 	basic_string<T, Allocator>::operator[](size_type n) const
 	{
-		#if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
-			if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
-		#endif
+		// #if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
+		// 	if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
+		// #endif
 
-		return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
+		// return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
+		return at(n);
 	}
 
 
@@ -1433,12 +1435,13 @@ namespace safememory
 	inline typename basic_string<T, Allocator>::reference
 	basic_string<T, Allocator>::operator[](size_type n)
 	{
-		#if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
-			if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
-				EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
-		#endif
+		// #if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
+		// 	if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
+		// 		EASTL_FAIL_MSG("basic_string::operator[] -- out of range");
+		// #endif
 
-		return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
+		// return internalLayout().BeginPtr()[n]; // Sometimes done as *(mpBegin + n)
+		return at(n);
 	}
 
 
@@ -2604,36 +2607,40 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
+	typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::insert(csafe_it_arg it, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert_unsafe(p, c);
+		iterator r = insert_unsafe(p, c);
+		return safe_iterator(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
+	typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::insert(csafe_it_arg it, size_type n, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert_unsafe(p, n, c);
+		iterator r = insert_unsafe(p, n, c);
+		return safe_iterator(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
+	typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer p = checkMineAndGet(it);
 		const_pointer p2 = checkAndGet(itBegin, itEnd);
-		return insert_unsafe(p, p2.first, p2.second);
+		iterator r = insert_unsafe(p, p2.first, p2.second);
+		return safe_iterator(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
+	typename basic_string<T, Allocator>::safe_iterator
 	basic_string<T, Allocator>::insert(csafe_it_arg it, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = checkMineAndGet(it);
-		return insert_unsafe(p, ilist.begin(), ilist.end());
+		iterator r = insert_unsafe(p, ilist.begin(), ilist.end());
+		return safe_iterator(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, typename Allocator>
@@ -2696,8 +2703,8 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		iterator i = erase_unsafe(p);
-		size_t dst = std::distance(begin_unsafe(),  i);
-		return safe_iterator(internalLayout().GetSoftHeapPtr(), static_cast<size_t>(dst));
+		// size_t dst = std::distance(begin_unsafe(),  i);
+		return safe_iterator(GetSoftHeapPtr(), i);
 	}
 	template <typename T, typename Allocator>
 	inline typename basic_string<T, Allocator>::safe_iterator
@@ -2705,8 +2712,8 @@ namespace safememory
 	{
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
 		iterator i = erase_unsafe(p.first, p.second);
-		difference_type dst = std::distance(begin_unsafe(),  i);
-		return safe_iterator(internalLayout().GetSoftHeapPtr(), static_cast<size_t>(dst));
+		// difference_type dst = std::distance(begin_unsafe(),  i);
+		return safe_iterator(GetSoftHeapPtr(), i);
 	}
 
 	template <typename T, typename Allocator>

@@ -251,13 +251,13 @@ int TestVector()
 		// EATEST_VERIFY(MallocAllocator::mAllocCountAll == 3);
 
 		// vector(InputIterator first, InputIterator last)
-		std::deque<int> intDeque(3);
-		std::deque<TestObject> toDeque(3);
-		std::deque<std::list<TestObject> > toListDeque(3);
+		// std::deque<int> intDeque(3);
+		// std::deque<TestObject> toDeque(3);
+		// std::deque<std::list<TestObject> > toListDeque(3);
 
-		vector<int> intArray5(intDeque.begin(), intDeque.end());
-		vector<TestObject> toArray5(toDeque.begin(), toDeque.end());
-		vector<std::list<TestObject> > toListArray5(toListDeque.begin(), toListDeque.end());
+		// vector<int> intArray5(intDeque.begin(), intDeque.end());
+		// vector<TestObject> toArray5(toDeque.begin(), toDeque.end());
+		// vector<std::list<TestObject> > toListArray5(toListDeque.begin(), toListDeque.end());
 
 		// vector(std::initializer_list<T> ilist, const Allocator& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		{
@@ -359,17 +359,17 @@ int TestVector()
 		// reverse_iterator       rend();
 		// const_reverse_iterator rend() const;
 
-		vector<int> intArray(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int)i;
+		// vector<int> intArray(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int)i;
 
-		i = 0;
-		for (vector<int>::iterator it = intArray.begin(); it != intArray.end(); ++it, ++i)
-			EATEST_VERIFY(*it == (int)i);
+		// i = 0;
+		// for (vector<int>::iterator it = intArray.begin(); it != intArray.end(); ++it, ++i)
+		// 	EATEST_VERIFY(*it == (int)i);
 
-		i = intArray.size() - 1;
-		for (vector<int>::reverse_iterator itr = intArray.rbegin(); itr != intArray.rend(); ++itr, --i)
-			EATEST_VERIFY(*itr == (int)i);
+		// i = intArray.size() - 1;
+		// for (vector<int>::reverse_iterator itr = intArray.rbegin(); itr != intArray.rend(); ++itr, --i)
+		// 	EATEST_VERIFY(*itr == (int)i);
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -389,7 +389,7 @@ int TestVector()
 
 		// assign from pointer range
 		vector<int> v3;
-		v3.assign(A, A + N);
+		v3.assign_unsafe(A, A + N);
 		EATEST_VERIFY(std::equal(v3.begin(), v3.end(), A));
 		EATEST_VERIFY(v3.size() == N);
 
@@ -633,167 +633,167 @@ int TestVector()
 		EATEST_VERIFY(toArray.size() == 0);
 
 		// iterator erase_unsorted(iterator position);
-		intArray.resize(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int)i;
+		// intArray.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int)i;
 
-		intArray.erase_unsorted(intArray.begin() + 0);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 19);
-		EATEST_VERIFY(intArray[0] == 19);
-		EATEST_VERIFY(intArray[1] == 1);
-		EATEST_VERIFY(intArray[18] == 18);
+		// intArray.erase_unsorted(intArray.begin() + 0);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 19);
+		// EATEST_VERIFY(intArray[0] == 19);
+		// EATEST_VERIFY(intArray[1] == 1);
+		// EATEST_VERIFY(intArray[18] == 18);
 
-		intArray.erase_unsorted(intArray.begin() + 10);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 18);
-		EATEST_VERIFY(intArray[0] == 19);
-		EATEST_VERIFY(intArray[10] == 18);
-		EATEST_VERIFY(intArray[17] == 17);
+		// intArray.erase_unsorted(intArray.begin() + 10);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 18);
+		// EATEST_VERIFY(intArray[0] == 19);
+		// EATEST_VERIFY(intArray[10] == 18);
+		// EATEST_VERIFY(intArray[17] == 17);
 
-		intArray.erase_unsorted(intArray.begin() + 17);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 17);
-		EATEST_VERIFY(intArray[0] == 19);
-		EATEST_VERIFY(intArray[10] == 18);
-		EATEST_VERIFY(intArray[16] == 16);
+		// intArray.erase_unsorted(intArray.begin() + 17);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 17);
+		// EATEST_VERIFY(intArray[0] == 19);
+		// EATEST_VERIFY(intArray[10] == 18);
+		// EATEST_VERIFY(intArray[16] == 16);
 
 		// iterator erase_first(iterator position);
-		intArray.resize(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
+		// intArray.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
 
-		intArray.erase_first(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 19);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 2);
-		EATEST_VERIFY(intArray[2] == 0);
-		EATEST_VERIFY(intArray[3] == 1);
-		EATEST_VERIFY(intArray[18] == 1);
+		// intArray.erase_first(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 19);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 2);
+		// EATEST_VERIFY(intArray[2] == 0);
+		// EATEST_VERIFY(intArray[3] == 1);
+		// EATEST_VERIFY(intArray[18] == 1);
 
-		intArray.erase_first(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 18);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 2);
-		EATEST_VERIFY(intArray[2] == 0);
-		EATEST_VERIFY(intArray[3] == 2);
-		EATEST_VERIFY(intArray[17] == 1);
+		// intArray.erase_first(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 18);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 2);
+		// EATEST_VERIFY(intArray[2] == 0);
+		// EATEST_VERIFY(intArray[3] == 2);
+		// EATEST_VERIFY(intArray[17] == 1);
 
-		intArray.erase_first(0);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 17);
-		EATEST_VERIFY(intArray[0] == 2);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 2);
-		EATEST_VERIFY(intArray[3] == 0);
-		EATEST_VERIFY(intArray[16] == 1);
+		// intArray.erase_first(0);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 17);
+		// EATEST_VERIFY(intArray[0] == 2);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 2);
+		// EATEST_VERIFY(intArray[3] == 0);
+		// EATEST_VERIFY(intArray[16] == 1);
 
 		// iterator erase_first_unsorted(const T& val);
-		intArray.resize(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int) i/2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
+		// intArray.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int) i/2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
 
-		intArray.erase_first_unsorted(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 19);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 9);
-		EATEST_VERIFY(intArray[3] == 1);
-		EATEST_VERIFY(intArray[18] == 9);
+		// intArray.erase_first_unsorted(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 19);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 9);
+		// EATEST_VERIFY(intArray[3] == 1);
+		// EATEST_VERIFY(intArray[18] == 9);
 
-		intArray.erase_first_unsorted(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 18);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 9);
-		EATEST_VERIFY(intArray[3] == 9);
-		EATEST_VERIFY(intArray[17] == 8);
+		// intArray.erase_first_unsorted(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 18);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 9);
+		// EATEST_VERIFY(intArray[3] == 9);
+		// EATEST_VERIFY(intArray[17] == 8);
 
-		intArray.erase_first_unsorted(0);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 17);
-		EATEST_VERIFY(intArray[0] == 8);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 9);
-		EATEST_VERIFY(intArray[3] == 9);
-		EATEST_VERIFY(intArray[16] == 8);
+		// intArray.erase_first_unsorted(0);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 17);
+		// EATEST_VERIFY(intArray[0] == 8);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 9);
+		// EATEST_VERIFY(intArray[3] == 9);
+		// EATEST_VERIFY(intArray[16] == 8);
 
 		// iterator erase_last(const T& val);
-		intArray.resize(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
+		// intArray.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int)i % 3; // (i.e. 0,1,2,0,1,2...)
 
-		intArray.erase_last(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 19);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 1);
-		EATEST_VERIFY(intArray[2] == 2);
-		EATEST_VERIFY(intArray[3] == 0);
-		EATEST_VERIFY(intArray[15] == 0);
-		EATEST_VERIFY(intArray[16] == 1);
-		EATEST_VERIFY(intArray[17] == 2);
-		EATEST_VERIFY(intArray[18] == 0);
+		// intArray.erase_last(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 19);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 1);
+		// EATEST_VERIFY(intArray[2] == 2);
+		// EATEST_VERIFY(intArray[3] == 0);
+		// EATEST_VERIFY(intArray[15] == 0);
+		// EATEST_VERIFY(intArray[16] == 1);
+		// EATEST_VERIFY(intArray[17] == 2);
+		// EATEST_VERIFY(intArray[18] == 0);
 
-		intArray.erase_last(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 18);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 1);
-		EATEST_VERIFY(intArray[2] == 2);
-		EATEST_VERIFY(intArray[3] == 0);
-		EATEST_VERIFY(intArray[14] == 2);
-		EATEST_VERIFY(intArray[15] == 0);
-		EATEST_VERIFY(intArray[16] == 2);
-		EATEST_VERIFY(intArray[17] == 0);
+		// intArray.erase_last(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 18);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 1);
+		// EATEST_VERIFY(intArray[2] == 2);
+		// EATEST_VERIFY(intArray[3] == 0);
+		// EATEST_VERIFY(intArray[14] == 2);
+		// EATEST_VERIFY(intArray[15] == 0);
+		// EATEST_VERIFY(intArray[16] == 2);
+		// EATEST_VERIFY(intArray[17] == 0);
 
-		intArray.erase_last(0);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 17);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 1);
-		EATEST_VERIFY(intArray[2] == 2);
-		EATEST_VERIFY(intArray[3] == 0);
-		EATEST_VERIFY(intArray[13] == 1);
-		EATEST_VERIFY(intArray[14] == 2);
-		EATEST_VERIFY(intArray[15] == 0);
-		EATEST_VERIFY(intArray[16] == 2);
+		// intArray.erase_last(0);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 17);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 1);
+		// EATEST_VERIFY(intArray[2] == 2);
+		// EATEST_VERIFY(intArray[3] == 0);
+		// EATEST_VERIFY(intArray[13] == 1);
+		// EATEST_VERIFY(intArray[14] == 2);
+		// EATEST_VERIFY(intArray[15] == 0);
+		// EATEST_VERIFY(intArray[16] == 2);
 
 		// iterator erase_last_unsorted(const T& val);
-		intArray.resize(20);
-		for (i = 0; i < 20; i++)
-			intArray[i] = (int)i / 2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
+		// intArray.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intArray[i] = (int)i / 2; // every two values are the same (i.e. 0,0,1,1,2,2,3,3...)
 
-		intArray.erase_last_unsorted(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 19);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 1);
-		EATEST_VERIFY(intArray[3] == 9);
-		EATEST_VERIFY(intArray[18] == 9);
+		// intArray.erase_last_unsorted(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 19);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 1);
+		// EATEST_VERIFY(intArray[3] == 9);
+		// EATEST_VERIFY(intArray[18] == 9);
 
-		intArray.erase_last_unsorted(1);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 18);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 0);
-		EATEST_VERIFY(intArray[2] == 9);
-		EATEST_VERIFY(intArray[3] == 9);
-		EATEST_VERIFY(intArray[17] == 8);
+		// intArray.erase_last_unsorted(1);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 18);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 0);
+		// EATEST_VERIFY(intArray[2] == 9);
+		// EATEST_VERIFY(intArray[3] == 9);
+		// EATEST_VERIFY(intArray[17] == 8);
 
-		intArray.erase_last_unsorted(0);
-		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.size() == 17);
-		EATEST_VERIFY(intArray[0] == 0);
-		EATEST_VERIFY(intArray[1] == 8);
-		EATEST_VERIFY(intArray[2] == 9);
-		EATEST_VERIFY(intArray[3] == 9);
-		EATEST_VERIFY(intArray[16] == 8);
+		// intArray.erase_last_unsorted(0);
+		// EATEST_VERIFY(intArray.validate());
+		// EATEST_VERIFY(intArray.size() == 17);
+		// EATEST_VERIFY(intArray[0] == 0);
+		// EATEST_VERIFY(intArray[1] == 8);
+		// EATEST_VERIFY(intArray[2] == 9);
+		// EATEST_VERIFY(intArray[3] == 9);
+		// EATEST_VERIFY(intArray[16] == 8);
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -806,68 +806,68 @@ int TestVector()
 		// iterator erase(reverse_iterator first, reverse_iterator last);
 		// iterator erase_unsorted(reverse_iterator position);
 
-		vector<int> intVector;
+		// vector<int> intVector;
 
-		for (i = 0; i < 20; i++)
-			intVector.push_back((int)i);
-		EATEST_VERIFY((intVector.size() == 20) && (intVector[0] == 0) && (intVector[19] == 19));
+		// for (i = 0; i < 20; i++)
+		// 	intVector.push_back((int)i);
+		// EATEST_VERIFY((intVector.size() == 20) && (intVector[0] == 0) && (intVector[19] == 19));
 
-		vector<int>::reverse_iterator r2A = intVector.rbegin();
-		vector<int>::reverse_iterator r2B = r2A + 3;
-		intVector.erase(r2A, r2B);
-		EATEST_VERIFY((intVector.size() == 17));
-		EATEST_VERIFY((intVector[0] == 0));
-		EATEST_VERIFY((intVector[16] == 16));
+		// vector<int>::reverse_iterator r2A = intVector.rbegin();
+		// vector<int>::reverse_iterator r2B = r2A + 3;
+		// intVector.erase(r2A, r2B);
+		// EATEST_VERIFY((intVector.size() == 17));
+		// EATEST_VERIFY((intVector[0] == 0));
+		// EATEST_VERIFY((intVector[16] == 16));
 
-		r2B = intVector.rend();
-		r2A = r2B - 3;
-		intVector.erase(r2A, r2B);
-		EATEST_VERIFY((intVector.size() == 14));
-		EATEST_VERIFY((intVector[0] == 3));
-		EATEST_VERIFY((intVector[13] == 16));
+		// r2B = intVector.rend();
+		// r2A = r2B - 3;
+		// intVector.erase(r2A, r2B);
+		// EATEST_VERIFY((intVector.size() == 14));
+		// EATEST_VERIFY((intVector[0] == 3));
+		// EATEST_VERIFY((intVector[13] == 16));
 
-		r2B = intVector.rend() - 1;
-		intVector.erase(r2B);
-		EATEST_VERIFY((intVector.size() == 13));
-		EATEST_VERIFY((intVector[0] == 4));
-		EATEST_VERIFY((intVector[12] == 16));
+		// r2B = intVector.rend() - 1;
+		// intVector.erase(r2B);
+		// EATEST_VERIFY((intVector.size() == 13));
+		// EATEST_VERIFY((intVector[0] == 4));
+		// EATEST_VERIFY((intVector[12] == 16));
 
-		r2B = intVector.rbegin();
-		intVector.erase(r2B);
-		EATEST_VERIFY((intVector.size() == 12));
-		EATEST_VERIFY((intVector[0] == 4));
-		EATEST_VERIFY((intVector[11] == 15));
+		// r2B = intVector.rbegin();
+		// intVector.erase(r2B);
+		// EATEST_VERIFY((intVector.size() == 12));
+		// EATEST_VERIFY((intVector[0] == 4));
+		// EATEST_VERIFY((intVector[11] == 15));
 
-		r2A = intVector.rbegin();
-		r2B = intVector.rend();
-		intVector.erase(r2A, r2B);
-		EATEST_VERIFY(intVector.size() == 0);
+		// r2A = intVector.rbegin();
+		// r2B = intVector.rend();
+		// intVector.erase(r2A, r2B);
+		// EATEST_VERIFY(intVector.size() == 0);
 
-		// iterator erase_unsorted(iterator position);
-		intVector.resize(20);
-		for (i = 0; i < 20; i++)
-			intVector[i] = (int)i;
+		// // iterator erase_unsorted(iterator position);
+		// intVector.resize(20);
+		// for (i = 0; i < 20; i++)
+		// 	intVector[i] = (int)i;
 
-		intVector.erase_unsorted(intVector.rbegin() + 0);
-		EATEST_VERIFY(intVector.validate());
-		EATEST_VERIFY(intVector.size() == 19);
-		EATEST_VERIFY(intVector[0] == 0);
-		EATEST_VERIFY(intVector[10] == 10);
-		EATEST_VERIFY(intVector[18] == 18);
+		// intVector.erase_unsorted(intVector.rbegin() + 0);
+		// EATEST_VERIFY(intVector.validate());
+		// EATEST_VERIFY(intVector.size() == 19);
+		// EATEST_VERIFY(intVector[0] == 0);
+		// EATEST_VERIFY(intVector[10] == 10);
+		// EATEST_VERIFY(intVector[18] == 18);
 
-		intVector.erase_unsorted(intVector.rbegin() + 10);
-		EATEST_VERIFY(intVector.validate());
-		EATEST_VERIFY(intVector.size() == 18);
-		EATEST_VERIFY(intVector[0] == 0);
-		EATEST_VERIFY(intVector[8] == 18);
-		EATEST_VERIFY(intVector[17] == 17);
+		// intVector.erase_unsorted(intVector.rbegin() + 10);
+		// EATEST_VERIFY(intVector.validate());
+		// EATEST_VERIFY(intVector.size() == 18);
+		// EATEST_VERIFY(intVector[0] == 0);
+		// EATEST_VERIFY(intVector[8] == 18);
+		// EATEST_VERIFY(intVector[17] == 17);
 
-		intVector.erase_unsorted(intVector.rbegin() + 17);
-		EATEST_VERIFY(intVector.validate());
-		EATEST_VERIFY(intVector.size() == 17);
-		EATEST_VERIFY(intVector[0] == 17);
-		EATEST_VERIFY(intVector[8] == 18);
-		EATEST_VERIFY(intVector[16] == 16);
+		// intVector.erase_unsorted(intVector.rbegin() + 17);
+		// EATEST_VERIFY(intVector.validate());
+		// EATEST_VERIFY(intVector.size() == 17);
+		// EATEST_VERIFY(intVector[0] == 17);
+		// EATEST_VERIFY(intVector[8] == 18);
+		// EATEST_VERIFY(intVector[16] == 16);
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -885,7 +885,7 @@ int TestVector()
 		// remove 'valueToRemove' from the container
 		auto iterToRemove = std::find_if(v.begin(), v.end(), [&](std::unique_ptr<int>& e)
 		                                   { return *e == valueToRemove; });
-		v.erase_unsorted(iterToRemove); 
+		v.erase(iterToRemove); 
 		EATEST_VERIFY(v.size() == 5);
 
 		// verify 'valueToRemove' is no longer in the container
@@ -930,7 +930,7 @@ int TestVector()
 			VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 13, 13, 13, 13, 13, 13, 99, 999, -1));
 
 		// Insert in middle.
-		vector<int>::iterator it = v.begin() + 7;
+		auto it = v.begin() + 7;
 		it = v.insert(it, 49);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(
@@ -943,24 +943,24 @@ int TestVector()
 									 49, 99, 999, -1));
 
         // Insert multiple copies with count == 0
-        vector<int>::iterator at = v.end();
+        auto at = v.end();
         it = v.insert(at, 0, 666);
         EATEST_VERIFY(it == at);
         EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 13, 13, 13, 13, 42, 42, 42, 13, 13,
                                      49, 99, 999, -1));
-		// Insert iterator range
-		const int data[] = {2, 3, 4, 5};
-		it = v.insert(v.begin() + 1, data, data + 4);
+		// Insert init list
+		// const int data[] = {2, 3, 4, 5};
+		it = v.insert(v.begin() + 1, {2, 3, 4, 5});
         EATEST_VERIFY(it == v.begin() + 1);
 		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 2, 3, 4, 5, 13, 13, 13, 13, 42, 42,
 									 42, 13, 13, 49, 99, 999, -1));
 
         // Insert empty iterator range
-        at = v.begin() + 1;
-		it = v.insert(at, data + 4, data + 4);
-        EATEST_VERIFY(it == at);
-		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 2, 3, 4, 5, 13, 13, 13, 13, 42, 42,
-									 42, 13, 13, 49, 99, 999, -1));
+        // at = v.begin() + 1;
+		// it = v.insert(at, data + 4, data + 4);
+        // EATEST_VERIFY(it == at);
+		// EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.insert", 13, 2, 3, 4, 5, 13, 13, 13, 13, 42, 42,
+		// 							 42, 13, 13, 49, 99, 999, -1));
 
 		// Insert with reallocation
 		it = v.insert(v.end() - 3, 6, 17);
@@ -992,23 +992,23 @@ int TestVector()
 									 42, 13, 13, 17, 17, 17, 17, 17, 17, 17, 17, 49, 99, 999, 999, 49, 49, 49, 99, 999,
 									 -1));
 
-#if !defined(EASTL_STD_ITERATOR_CATEGORY_ENABLED) && !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
-		// std::vector / safememory::vector
-		std::vector<TestObject> stdV(10);
-		safememory::vector<TestObject> eastlV(10);
+// #if !defined(EASTL_STD_ITERATOR_CATEGORY_ENABLED) && !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
+// 		// std::vector / safememory::vector
+// 		std::vector<TestObject> stdV(10);
+// 		safememory::vector<TestObject> eastlV(10);
 
-		eastlV.insert(eastlV.end(), stdV.begin(), stdV.end());
-		stdV.insert(stdV.end(), eastlV.begin(), eastlV.end());
+// 		eastlV.insert(eastlV.end(), stdV.begin(), stdV.end());
+// 		stdV.insert(stdV.end(), eastlV.begin(), eastlV.end());
 
-		EATEST_VERIFY(eastlV.size() == 20);
-		EATEST_VERIFY(stdV.size() == 30);
+// 		EATEST_VERIFY(eastlV.size() == 20);
+// 		EATEST_VERIFY(stdV.size() == 30);
 
-		// std::string / safememory::vector
-		std::string stdString("blah");
-		safememory::vector<char8_t> eastlVString;
+// 		// std::string / safememory::vector
+// 		std::string stdString("blah");
+// 		safememory::vector<char8_t> eastlVString;
 
-		eastlVString.assign(stdString.begin(), stdString.end());
-#endif
+// 		eastlVString.assign(stdString.begin(), stdString.end());
+// #endif
 
 // iterator insert(const_iterator position, std::initializer_list<T> ilist);
 #if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
@@ -1037,8 +1037,8 @@ int TestVector()
 
 		// Insert more objects than the existing number using insert with iterator
 		TestObject::Reset();
-        safememory::vector<TestObject>::iterator it;
-		it = toVector1.insert(toVector1.begin(), toVector2.begin(), toVector2.end());
+        // safememory::vector<TestObject>::iterator it;
+		auto it = toVector1.insert(toVector1.begin(), toVector2.begin(), toVector2.end());
         EATEST_VERIFY(it == toVector1.begin());
 		EATEST_VERIFY(VerifySequence(toVector1.begin(), toVector1.end(), int(), "vector.insert", 10, 11, 12, 0, 1, -1));
 		EATEST_VERIFY(TestObject::sTOMoveCtorCount + TestObject::sTOMoveAssignCount == 2 &&
@@ -1132,7 +1132,7 @@ int TestVector()
 		vector<int> v(30);
 		EATEST_VERIFY(v.capacity() >= 30);
 
-		v.assign(intArray, intArray + kIntArraySize);
+		v.assign_unsafe(intArray, intArray + kIntArraySize);
 		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.assign", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
 									 13, 14, 15, 16, 17, -1));
 
@@ -1320,23 +1320,23 @@ int TestVector()
 
 		// InputIterator
 		demoted_iterator<TestObject*, std::forward_iterator_tag> toInput(&to);
-		toTest.assign(toInput, toInput);
+		toTest.assign_unsafe(toInput, toInput);
 
 		// ForwardIterator
 		std::list<TestObject> toSList;
-		toTest.assign(toSList.begin(), toSList.end());
+		toTest.assign_unsafe(toSList.begin(), toSList.end());
 
 		// BidirectionalIterator
 		std::list<TestObject> toList;
-		toTest.assign(toList.begin(), toList.end());
+		toTest.assign_unsafe(toList.begin(), toList.end());
 
 		// RandomAccessIterator
 		std::deque<TestObject> toDeque;
-		toTest.assign(toDeque.begin(), toDeque.end());
+		toTest.assign_unsafe(toDeque.begin(), toDeque.end());
 
 		// ContiguousIterator    (note: as of this writing, vector doesn't actually use contiguous_iterator_tag)
 		safememory::vector<TestObject> toArray;
-		toTest.assign(toArray.begin(), toArray.end());
+		toTest.assign_unsafe(toArray.begin(), toArray.end());
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -1358,22 +1358,22 @@ int TestVector()
 	TestObject::Reset();
 
 	{  // Regression of user error report for the case of vector<const type>.
-		safememory::vector<int> ctorValues;
+		// safememory::vector<int> ctorValues;
 
-		for (int v = 0; v < 10; v++)
-			ctorValues.push_back(v);
+		// for (int v = 0; v < 10; v++)
+		// 	ctorValues.push_back(v);
 
-		safememory::vector<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
-		safememory::vector<const int> testInt(ctorValues.begin(), ctorValues.end());
+//		safememory::vector<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
+//		safememory::vector<const int> testInt(ctorValues.begin(), ctorValues.end());
 	}
 
 	{  // Regression to verify that const vector works.
 		const safememory::vector<int> constIntVector1;
 		EATEST_VERIFY(constIntVector1.empty());
 
-		int intArray[3] = {37, 38, 39};
-		const safememory::vector<int> constIntVector2(intArray, intArray + 3);
-		EATEST_VERIFY(constIntVector2.size() == 3);
+		// int intArray[3] = {37, 38, 39};
+		// const safememory::vector<int> constIntVector2(intArray, intArray + 3);
+		// EATEST_VERIFY(constIntVector2.size() == 3);
 
 		const safememory::vector<int> constIntVector3(4, 37);
 		EATEST_VERIFY(constIntVector3.size() == 4);
@@ -1578,25 +1578,25 @@ int TestVector()
 
 	{
 		// vector::reserve() should only require MoveInsertible
-		safememory::vector<MoveConstructible> v5;
-		v5.reserve(2);
-		v5.push_back(MoveConstructible::Create());
-		v5.push_back(MoveConstructible::Create());
-		EATEST_VERIFY(v5.size() == 2 && v5[0].value == v5[1].value && v5[0].value == MoveConstructible::defaultValue);
-		v5.pop_back();
+		// safememory::vector<MoveConstructible> v5;
+		// v5.reserve(2);
+		// v5.push_back(MoveConstructible::Create());
+		// v5.push_back(MoveConstructible::Create());
+		// EATEST_VERIFY(v5.size() == 2 && v5[0].value == v5[1].value && v5[0].value == MoveConstructible::defaultValue);
+		// v5.pop_back();
 
-		// vector::shrink_to_fit() should only require MoveInsertible
-		v5.shrink_to_fit();
-		EATEST_VERIFY(v5.size() == 1 && v5.capacity() == 1 && v5[0].value == MoveConstructible::defaultValue);
+		// // vector::shrink_to_fit() should only require MoveInsertible
+		// v5.shrink_to_fit();
+		// EATEST_VERIFY(v5.size() == 1 && v5.capacity() == 1 && v5[0].value == MoveConstructible::defaultValue);
 	}
 
 	{
 		// vector constructor taking a pair of iterators should only require MoveConstructible
-		MoveConstructible moveConstructibleArray[] = {MoveConstructible::Create()};
-		safememory::vector<MoveConstructible> v7(
-			std::move_iterator<MoveConstructible*>(std::begin(moveConstructibleArray)),
-			std::move_iterator<MoveConstructible*>(std::end(moveConstructibleArray)));
-		EATEST_VERIFY(v7.size() == 1 && v7[0].value == MoveConstructible::defaultValue);
+		// MoveConstructible moveConstructibleArray[] = {MoveConstructible::Create()};
+		// safememory::vector<MoveConstructible> v7(
+		// 	std::move_iterator<MoveConstructible*>(std::begin(moveConstructibleArray)),
+		// 	std::move_iterator<MoveConstructible*>(std::end(moveConstructibleArray)));
+		// EATEST_VERIFY(v7.size() == 1 && v7[0].value == MoveConstructible::defaultValue);
 	}
 
 	{
@@ -1634,36 +1634,36 @@ int TestVector()
 	{
 		// validates our vector implementation does not use 'operator<' on input iterators during vector construction.
 		//
-		struct container_value_type { int data; };
-		struct container_with_custom_iterator
-		{
-			struct iterator
-			{
-				typedef std::input_iterator_tag iterator_category;
-				typedef int value_type;
-				typedef ptrdiff_t difference_type;
-				typedef int* pointer;
-				typedef int& reference;
+		// struct container_value_type { int data; };
+		// struct container_with_custom_iterator
+		// {
+		// 	struct iterator
+		// 	{
+		// 		typedef std::input_iterator_tag iterator_category;
+		// 		typedef int value_type;
+		// 		typedef ptrdiff_t difference_type;
+		// 		typedef int* pointer;
+		// 		typedef int& reference;
 
-				bool operator!=(const iterator&) const { return false; }
-				iterator& operator++()                 { return *this; }
-				iterator operator++(int)               { return *this; }
-				container_value_type operator*()       { return {};    }
-			};
+		// 		bool operator!=(const iterator&) const { return false; }
+		// 		iterator& operator++()                 { return *this; }
+		// 		iterator operator++(int)               { return *this; }
+		// 		container_value_type operator*()       { return {};    }
+		// 	};
 
-			container_with_custom_iterator() EA_NOEXCEPT {}
+		// 	container_with_custom_iterator() EA_NOEXCEPT {}
 
-			iterator begin() const { return {}; }
-			iterator end() const   { return {}; }
-			bool empty() const     { return false; }
+		// 	iterator begin() const { return {}; }
+		// 	iterator end() const   { return {}; }
+		// 	bool empty() const     { return false; }
 
-		private:
-			safememory::vector<container_value_type> m_vector;
-		};
+		// private:
+		// 	safememory::vector<container_value_type> m_vector;
+		// };
 
-		static_assert(!is_less_comparable<container_with_custom_iterator::iterator>::value, "type cannot support comparison by '<' for this test");
-		container_with_custom_iterator ci;
-		safememory::vector<container_value_type> v2(ci.begin(), ci.end()); 
+		// static_assert(!is_less_comparable<container_with_custom_iterator::iterator>::value, "type cannot support comparison by '<' for this test");
+		// container_with_custom_iterator ci;
+		// safememory::vector<container_value_type> v2(ci.begin(), ci.end()); 
 	}
 
 	// If the legacy code path is enabled we cannot handle non-copyable types

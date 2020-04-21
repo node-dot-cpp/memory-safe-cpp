@@ -344,9 +344,14 @@ public:
 public:
 	// constexpr unsafe_iterator()
 	// 	: mIterator(nullptr) { }
+	constexpr explicit unsafe_iterator(SoftArrayOfPtr ptr)
+		: mIterator(ptr->_begin) {}
 
 	constexpr unsafe_iterator(SoftArrayOfPtr ptr, size_t ix)
 		: mIterator(ptr->_begin + ix) {}
+
+	constexpr unsafe_iterator(SoftArrayOfPtr, pointer ptr)
+		: mIterator(ptr) {}
 
 	constexpr unsafe_iterator(pointer ptr)
 		: mIterator(ptr) {}
@@ -398,6 +403,9 @@ public:
 
 	constexpr unsafe_iterator operator-(difference_type n) const
 		{ return unsafe_iterator(mIterator - n); }
+
+	constexpr difference_type operator-(const unsafe_iterator& other) const
+		{ return distance(*this, other); }
 
 	constexpr unsafe_iterator& operator-=(difference_type n)
 		{ mIterator -= n; return *this; }
@@ -452,6 +460,7 @@ public:
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
 	typedef T&									reference;
+	// typedef safememory::soft_ptr<array_of2<std::remove_const<T>::type>>  soft_array_of_prt
 
 // private:
 	SoftArrayOfPtr ptr;
@@ -460,9 +469,16 @@ public:
 
 public:
 	// constexpr safe_iterator() {}
+	constexpr explicit safe_iterator(SoftArrayOfPtr ptr)
+		: ptr(ptr), ix(0) {}
 
-	constexpr explicit safe_iterator(SoftArrayOfPtr ptr, size_t ix)
+	constexpr safe_iterator(SoftArrayOfPtr ptr, size_t ix)
 		: ptr(ptr), ix(ix) {}
+
+	constexpr safe_iterator(SoftArrayOfPtr ptr, pointer to)
+		: ptr(ptr) {
+			ix = std::distance(ptr->begin(), to);
+		}
 
 	constexpr safe_iterator(const safe_iterator& ri) = default;
 	constexpr safe_iterator& operator=(const safe_iterator& ri) = default;
@@ -513,6 +529,9 @@ public:
 	constexpr safe_iterator operator-(difference_type n) const
 		{ return safe_iterator(ptr, ix - n); }
 
+	constexpr difference_type operator-(const safe_iterator& other) const
+		{ return distance(*this, other); }
+
 	constexpr safe_iterator& operator-=(difference_type n)
 		{ ix -= n; return *this; }
 
@@ -530,7 +549,7 @@ public:
 	}
 
 	constexpr void _Seek_to(pointer to) {
-		ix = std::distance(ptr->get_raw_ptr(0), to);
+		ix = std::distance(ptr->begin(), to);
 	}
 
 	constexpr bool operator<(const safe_iterator& ri) const {
@@ -559,6 +578,7 @@ typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, 
 namespace std {
 
 	namespace sfd = safememory::detail;	
+
 // this is to allow MS to optimize algorightms like std::find
 
 template <typename T, typename Arr>
