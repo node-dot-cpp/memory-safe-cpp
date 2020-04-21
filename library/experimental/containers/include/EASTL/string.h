@@ -327,10 +327,8 @@ namespace safememory
 		typedef const T*                                        const_pointer;
 		typedef T&                                              reference;
 		typedef const T&                                        const_reference;
-		typedef pointer											iterator;
-		typedef const_pointer									const_iterator;
-		typedef std::reverse_iterator<iterator>                 reverse_iterator;
-		typedef std::reverse_iterator<const_iterator>           const_reverse_iterator;
+		typedef std::reverse_iterator<pointer>                 reverse_iterator_unsafe;
+		typedef std::reverse_iterator<const_pointer>           const_reverse_iterator_unsafe;
 		typedef std::size_t                                     size_type;
 		typedef std::ptrdiff_t                                  difference_type;
 		// typedef Allocator                                       allocator_type;
@@ -348,6 +346,11 @@ namespace safememory
 		typedef const const_reverse_iterator_safe&					crsafe_it_arg;
 		
 		typedef std::pair<const_pointer, const_pointer>				const_pointer_pair;
+
+		typedef iterator_safe										iterator;
+		typedef const_iterator_safe									const_iterator;
+		typedef reverse_iterator_safe                 				reverse_iterator;
+		typedef const_reverse_iterator_safe							const_reverse_iterator;
 
 		static const size_type npos     = static_cast<size_type>(-1);      /// 'npos' means non-valid position or simply non-position.
 
@@ -638,21 +641,21 @@ namespace safememory
 		this_type& assign_convert(basic_string_literal<OtherCharType> p);
 
 		// Iterators.
-		iterator       begin_unsafe() EA_NOEXCEPT;
-		const_iterator begin_unsafe() const EA_NOEXCEPT;
-		const_iterator cbegin_unsafe() const EA_NOEXCEPT;
+		pointer       begin_unsafe() EA_NOEXCEPT;
+		const_pointer begin_unsafe() const EA_NOEXCEPT;
+		const_pointer cbegin_unsafe() const EA_NOEXCEPT;
 
-		iterator       end_unsafe() EA_NOEXCEPT;
-		const_iterator end_unsafe() const EA_NOEXCEPT;
-		const_iterator cend_unsafe() const EA_NOEXCEPT;
+		pointer       end_unsafe() EA_NOEXCEPT;
+		const_pointer end_unsafe() const EA_NOEXCEPT;
+		const_pointer cend_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator rbegin_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rbegin_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator_unsafe rbegin_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator_unsafe crbegin_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rend_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator rend_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator crend_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rend_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator_unsafe rend_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator_unsafe crend_unsafe() const EA_NOEXCEPT;
 
 		iterator_safe       begin() EA_NOEXCEPT;
 		const_iterator_safe begin() const EA_NOEXCEPT;
@@ -739,10 +742,10 @@ namespace safememory
 		this_type& insert_unsafe(size_type position, const_pointer p);
 		this_type& insert(size_type position, literal_type x);
 		this_type& insert(size_type position, size_type n, value_type c);
-		iterator   insert_unsafe(const_iterator p, value_type c);
-		iterator   insert_unsafe(const_iterator p, size_type n, value_type c);
-		iterator   insert_unsafe(const_iterator p, const_pointer pBegin, const_pointer pEnd);
-		iterator   insert_unsafe(const_iterator p, std::initializer_list<value_type>);
+		pointer   insert_unsafe(const_pointer p, value_type c);
+		pointer   insert_unsafe(const_pointer p, size_type n, value_type c);
+		pointer   insert_unsafe(const_pointer p, const_pointer pBegin, const_pointer pEnd);
+		pointer   insert_unsafe(const_pointer p, std::initializer_list<value_type>);
 		iterator_safe   insert(csafe_it_arg it, value_type c);
 		iterator_safe   insert(csafe_it_arg it, size_type n, value_type c);
 		iterator_safe   insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd);
@@ -750,12 +753,12 @@ namespace safememory
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos);
-		iterator         erase_unsafe(const_iterator p);
-		iterator         erase_unsafe(const_iterator pBegin, const_iterator pEnd);
+		pointer         erase_unsafe(const_pointer p);
+		pointer         erase_unsafe(const_pointer pBegin, const_pointer pEnd);
 		iterator_safe    erase(csafe_it_arg it);
 		iterator_safe    erase(csafe_it_arg itBegin, csafe_it_arg itEnd);
-		reverse_iterator erase_unsafe(reverse_iterator position);
-		reverse_iterator erase_unsafe(reverse_iterator first, reverse_iterator last);
+		reverse_iterator_unsafe erase_unsafe(reverse_iterator_unsafe position);
+		reverse_iterator_unsafe erase_unsafe(reverse_iterator_unsafe first, reverse_iterator_unsafe last);
 		reverse_iterator_safe erase(crsafe_it_arg position);
 		reverse_iterator_safe erase(crsafe_it_arg first, crsafe_it_arg last);
 		void             clear() EA_NOEXCEPT;
@@ -770,12 +773,12 @@ namespace safememory
 		this_type&  replace_unsafe(size_type position, size_type n1, const_pointer p);
 		this_type&  replace(size_type position, size_type n1, literal_type x);
 		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, const this_type& x);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p, size_type n);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer p);
+		this_type&  replace_unsafe(const_pointer first, const_pointer last, const this_type& x);
+		this_type&  replace_unsafe(const_pointer first, const_pointer last, const_pointer p, size_type n);
+		this_type&  replace_unsafe(const_pointer first, const_pointer last, const_pointer p);
 //		this_type&  replace_unsafe(const_iterator first, const_iterator last, literal_type x);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, size_type n, value_type c);
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, const_pointer pBegin, const_pointer pEnd);
+		this_type&  replace_unsafe(const_pointer first, const_pointer last, size_type n, value_type c);
+		this_type&  replace_unsafe(const_pointer first, const_pointer last, const_pointer pBegin, const_pointer pEnd);
 
 		this_type&  replace(csafe_it_arg first, csafe_it_arg last, const this_type& x);
 //		this_type&  replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n);
@@ -868,7 +871,7 @@ namespace safememory
 		size_t hash() const EA_NOEXCEPT;
 
 		bool validate() const EA_NOEXCEPT;
-		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
+		int  validate_iterator(const_pointer i) const EA_NOEXCEPT;
 
 
 	protected:
@@ -881,7 +884,7 @@ namespace safememory
 		void        AllocateSelf();
 		void        AllocateSelf(size_type n);
 		// void        DeallocateSelf();
-		iterator    InsertInternal(const_iterator p, value_type c);
+		pointer    InsertInternal(const_pointer p, value_type c);
 		void        RangeInitialize(const_pointer pBegin, const_pointer pEnd);
 		void        RangeInitialize(const_pointer pBegin);
 		void        SizeInitialize(size_type n, value_type c);
@@ -1179,98 +1182,98 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::iterator
+	inline typename basic_string<T, Allocator>::pointer
 	basic_string<T, Allocator>::begin_unsafe() EA_NOEXCEPT
 	{
-		return iterator(internalLayout().BeginPtr());
+		return pointer(internalLayout().BeginPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::iterator
+	inline typename basic_string<T, Allocator>::pointer
 	basic_string<T, Allocator>::end_unsafe() EA_NOEXCEPT
 	{
-		return iterator(internalLayout().EndPtr());
+		return pointer(internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_iterator
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::begin_unsafe() const EA_NOEXCEPT
 	{
-		return const_iterator(internalLayout().BeginPtr());
+		return const_pointer(internalLayout().BeginPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_iterator
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::cbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_iterator(internalLayout().BeginPtr());
+		return const_pointer(internalLayout().BeginPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_iterator
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::end_unsafe() const EA_NOEXCEPT
 	{
-		return const_iterator(internalLayout().EndPtr());
+		return const_pointer(internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_iterator
+	inline typename basic_string<T, Allocator>::const_pointer
 	basic_string<T, Allocator>::cend_unsafe() const EA_NOEXCEPT
 	{
-		return const_iterator(internalLayout().EndPtr());
+		return const_pointer(internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::reverse_iterator
+	inline typename basic_string<T, Allocator>::reverse_iterator_unsafe
 	basic_string<T, Allocator>::rbegin_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(end_unsafe());
+		return reverse_iterator_unsafe(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::reverse_iterator
+	inline typename basic_string<T, Allocator>::reverse_iterator_unsafe
 	basic_string<T, Allocator>::rend_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(begin_unsafe());
+		return reverse_iterator_unsafe(begin_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_reverse_iterator
+	inline typename basic_string<T, Allocator>::const_reverse_iterator_unsafe
 	basic_string<T, Allocator>::rbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(end_unsafe());
+		return const_reverse_iterator_unsafe(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_reverse_iterator
+	inline typename basic_string<T, Allocator>::const_reverse_iterator_unsafe
 	basic_string<T, Allocator>::crbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(end_unsafe());
+		return const_reverse_iterator_unsafe(end_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_reverse_iterator
+	inline typename basic_string<T, Allocator>::const_reverse_iterator_unsafe
 	basic_string<T, Allocator>::rend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(begin_unsafe());
+		return const_reverse_iterator_unsafe(begin_unsafe());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::const_reverse_iterator
+	inline typename basic_string<T, Allocator>::const_reverse_iterator_unsafe
 	basic_string<T, Allocator>::crend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(begin_unsafe());
+		return const_reverse_iterator_unsafe(begin_unsafe());
 	}
 
 		template <typename T, typename Allocator>
@@ -2399,10 +2402,10 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert_unsafe(const_iterator p, value_type c)
+	inline typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::insert_unsafe(const_pointer p, value_type c)
 	{
-		if(p == const_iterator(internalLayout().EndPtr()))
+		if(p == const_pointer(internalLayout().EndPtr()))
 		{
 			push_back(c);
 			return internalLayout().EndPtr() - 1;
@@ -2412,8 +2415,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert_unsafe(const_iterator p, size_type n, value_type c)
+	typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::insert_unsafe(const_pointer p, size_type n, value_type c)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2492,8 +2495,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert_unsafe(const_iterator p, const_pointer pBegin, const_pointer pEnd)
+	typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::insert_unsafe(const_pointer p, const_pointer pBegin, const_pointer pEnd)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2600,8 +2603,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::insert_unsafe(const_iterator p, std::initializer_list<value_type> ilist)
+	typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::insert_unsafe(const_pointer p, std::initializer_list<value_type> ilist)
 	{
 		return insert_unsafe(p, ilist.begin(), ilist.end());
 	}
@@ -2611,7 +2614,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		iterator r = insert_unsafe(p, c);
+		pointer r = insert_unsafe(p, c);
 		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
@@ -2620,7 +2623,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, size_type n, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
-		iterator r = insert_unsafe(p, n, c);
+		pointer r = insert_unsafe(p, n, c);
 		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
@@ -2630,7 +2633,7 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		const_pointer p2 = checkAndGet(itBegin, itEnd);
-		iterator r = insert_unsafe(p, p2.first, p2.second);
+		pointer r = insert_unsafe(p, p2.first, p2.second);
 		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
@@ -2639,7 +2642,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = checkMineAndGet(it);
-		iterator r = insert_unsafe(p, ilist.begin(), ilist.end());
+		pointer r = insert_unsafe(p, ilist.begin(), ilist.end());
 		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
@@ -2664,8 +2667,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::erase_unsafe(const_iterator p)
+	inline typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::erase_unsafe(const_pointer p)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p >= internalLayout().EndPtr())))
@@ -2679,8 +2682,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::erase_unsafe(const_iterator pBegin, const_iterator pEnd)
+	typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::erase_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2694,7 +2697,7 @@ namespace safememory
 			const size_type n = (size_type)(pEnd - pBegin);
 			internalLayout().SetSize(internalLayout().GetSize() - n);
 		}
-		return iterator(const_cast<pointer>(pBegin));
+		return pointer(const_cast<pointer>(pBegin));
 	}
 
 	template <typename T, typename Allocator>
@@ -2702,7 +2705,7 @@ namespace safememory
 	basic_string<T, Allocator>::erase(csafe_it_arg it)
 	{
 		const_pointer p = checkMineAndGet(it);
-		iterator i = erase_unsafe(p);
+		pointer i = erase_unsafe(p);
 		// size_t dst = std::distance(begin_unsafe(),  i);
 		return iterator_safe(GetSoftHeapPtr(), i);
 	}
@@ -2711,24 +2714,24 @@ namespace safememory
 	basic_string<T, Allocator>::erase(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
-		iterator i = erase_unsafe(p.first, p.second);
+		pointer i = erase_unsafe(p.first, p.second);
 		// difference_type dst = std::distance(begin_unsafe(),  i);
 		return iterator_safe(GetSoftHeapPtr(), i);
 	}
 
 	template <typename T, typename Allocator>
-	inline typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::erase_unsafe(reverse_iterator position)
+	inline typename basic_string<T, Allocator>::reverse_iterator_unsafe
+	basic_string<T, Allocator>::erase_unsafe(reverse_iterator_unsafe position)
 	{
-		return reverse_iterator(erase_unsafe((++position).base()));
+		return reverse_iterator_unsafe(erase_unsafe((++position).base()));
 	}
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::reverse_iterator
-	basic_string<T, Allocator>::erase_unsafe(reverse_iterator first, reverse_iterator last)
+	typename basic_string<T, Allocator>::reverse_iterator_unsafe
+	basic_string<T, Allocator>::erase_unsafe(reverse_iterator_unsafe first, reverse_iterator_unsafe last)
 	{
-		return reverse_iterator(erase_unsafe((++last).base(), (++first).base()));
+		return reverse_iterator_unsafe(erase_unsafe((++last).base(), (++first).base()));
 	}
 
 	template <typename T, typename Allocator>
@@ -2874,21 +2877,21 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const this_type& x)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const this_type& x)
 	{
 		return replace_unsafe(pBegin, pEnd, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const_pointer p, size_type n)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p, size_type n)
 	{
 		return replace_unsafe(pBegin, pEnd, p, p + n);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, const_pointer p)
+	inline basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p)
 	{
 		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
 	}
@@ -2901,7 +2904,7 @@ namespace safememory
 	// }
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, size_type n, value_type c)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, size_type n, value_type c)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2926,7 +2929,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_iterator pBegin1, const_iterator pEnd1, const_pointer pBegin2, const_pointer pEnd2)
+	basic_string<T, Allocator>& basic_string<T, Allocator>::replace_unsafe(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin1 < internalLayout().BeginPtr()) || (pBegin1 > internalLayout().EndPtr()) ||
@@ -3088,7 +3091,7 @@ namespace safememory
 		if(EASTL_LIKELY((position < internalLayout().GetSize())))
 		{
 			const_pointer const pBegin = internalLayout().BeginPtr() + position;
-			const const_iterator pResult   = CharTypeStringSearch(pBegin, internalLayout().EndPtr(), p, p + n);
+			const const_pointer pResult   = CharTypeStringSearch(pBegin, internalLayout().EndPtr(), p, p + n);
 
 			if(pResult != internalLayout().EndPtr())
 				return std::distance(internalLayout().BeginPtr(), pResult);
@@ -3110,7 +3113,7 @@ namespace safememory
 
 		if(EASTL_LIKELY(position < internalLayout().GetSize()))// If the position is valid...
 		{
-			const const_iterator pResult = std::find(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), c);
+			const const_pointer pResult = std::find(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), c);
 
 			if(pResult != internalLayout().EndPtr())
 				return (size_type)(pResult - internalLayout().BeginPtr());
@@ -3165,8 +3168,8 @@ namespace safememory
 		{
 			if(EASTL_LIKELY(n))
 			{
-				const const_iterator pEnd    = internalLayout().BeginPtr() + std::min(nLength - n, position) + n;
-				const const_iterator pResult = CharTypeStringRSearch(internalLayout().BeginPtr(), pEnd, p, p + n);
+				const const_pointer pEnd    = internalLayout().BeginPtr() + std::min(nLength - n, position) + n;
+				const const_pointer pResult = CharTypeStringRSearch(internalLayout().BeginPtr(), pEnd, p, p + n);
 
 				if(pResult != pEnd)
 					return (size_type)(pResult - internalLayout().BeginPtr());
@@ -3228,7 +3231,7 @@ namespace safememory
 		if(EASTL_LIKELY((position < internalLayout().GetSize())))
 		{
 			const_pointer const pBegin = internalLayout().BeginPtr() + position;
-			const const_iterator pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().EndPtr(), p, p + n);
+			const const_pointer pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().EndPtr(), p, p + n);
 
 			if(pResult != internalLayout().EndPtr())
 				return (size_type)(pResult - internalLayout().BeginPtr());
@@ -3324,7 +3327,7 @@ namespace safememory
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
-			const const_iterator pResult =
+			const const_pointer pResult =
 			    CharTypeStringFindFirstNotOf(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
 
 			if(pResult != internalLayout().EndPtr())
@@ -3341,7 +3344,7 @@ namespace safememory
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringFindFirstNotOf(pBegin, pEnd, c).
-			const const_iterator pResult =
+			const const_pointer pResult =
 			    CharTypeStringFindFirstNotOf(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), &c, &c + 1);
 
 			if(pResult != internalLayout().EndPtr())
@@ -3720,10 +3723,10 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	typename basic_string<T, Allocator>::iterator
-	basic_string<T, Allocator>::InsertInternal(const_iterator p, value_type c)
+	typename basic_string<T, Allocator>::pointer
+	basic_string<T, Allocator>::InsertInternal(const_pointer p, value_type c)
 	{
-		iterator pNewPosition = const_cast<pointer>(p);
+		pointer pNewPosition = const_cast<pointer>(p);
 
 		if((internalLayout().EndPtr() + 1) <= internalLayout().CapacityPtr())
 		{
@@ -3744,7 +3747,7 @@ namespace safememory
 			pNewPosition = CharStringUninitializedCopy(internalLayout().BeginPtr(), p, pNewBegin->begin());
 		   *pNewPosition = c;
 
-			iterator pNewEnd = pNewPosition + 1;
+			pointer pNewEnd = pNewPosition + 1;
 			pNewEnd          = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
 		   *pNewEnd          = 0;
 
@@ -4224,16 +4227,16 @@ namespace safememory
 
 	// iterator operators
 	template <typename T, typename Allocator>
-	inline bool operator==(const typename basic_string<T, Allocator>::reverse_iterator& r1,
-						   const typename basic_string<T, Allocator>::reverse_iterator& r2)
+	inline bool operator==(const typename basic_string<T, Allocator>::reverse_iterator_unsafe& r1,
+						   const typename basic_string<T, Allocator>::reverse_iterator_unsafe& r2)
 	{
 		return r1.mpCurrent == r2.mpCurrent;
 	}
 
 
 	template <typename T, typename Allocator>
-	inline bool operator!=(const typename basic_string<T, Allocator>::reverse_iterator& r1,
-						   const typename basic_string<T, Allocator>::reverse_iterator& r2)
+	inline bool operator!=(const typename basic_string<T, Allocator>::reverse_iterator_unsafe& r1,
+						   const typename basic_string<T, Allocator>::reverse_iterator_unsafe& r2)
 	{
 		return r1.mpCurrent != r2.mpCurrent;
 	}
@@ -4366,7 +4369,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::validate_iterator(const_iterator i) const EA_NOEXCEPT
+	inline int basic_string<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
 		if(i >= internalLayout().BeginPtr())
 		{
