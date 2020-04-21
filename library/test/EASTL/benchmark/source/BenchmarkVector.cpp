@@ -221,7 +221,7 @@ namespace
 		// Intentionally use eastl sort in order to measure just  
 		// vector access speed and not be polluted by sort speed.
 		stopwatch.Restart();
-		std::quick_sort(c.begin(), c.end()); 
+		std::sort(c.begin(), c.end()); 
 		stopwatch.Stop();
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(c[0] & 0xffffffff));
 	}
