@@ -213,7 +213,7 @@ namespace safememory
 
 	protected:
 		owning_heap_type  DoAllocate(size_type n);
-		void      DoFree(T* p, size_type n);
+		// void      DoFree(T* p, size_type n);
 		size_type GetNewCapacity(size_type currentCapacity);
 
 	}; // VectorBase
@@ -251,7 +251,7 @@ namespace safememory
 		using base_type::npos;
 		using base_type::GetNewCapacity;
 		using base_type::DoAllocate;
-		using base_type::DoFree;
+		// using base_type::DoFree;
 		using base_type::internalCapacityPtr;
 		// using base_type::internalAllocator;
 
@@ -538,12 +538,12 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void VectorBase<T, Allocator>::DoFree(T* p, size_type n)
-	{
-		if(p)
-			safememory::lib_helpers::EASTLFree(p, n * sizeof(T)); 
-	}
+	// template <typename T, typename Allocator>
+	// inline void VectorBase<T, Allocator>::DoFree(T* p, size_type n)
+	// {
+	// 	if(p)
+	// 		safememory::lib_helpers::EASTLFree(p, n * sizeof(T)); 
+	// }
 
 
 	template <typename T, typename Allocator>
