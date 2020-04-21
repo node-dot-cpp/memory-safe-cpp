@@ -577,11 +577,13 @@ typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, 
 } //namespace detail
 } // namespace safememory
 
+#ifdef NODECPP_WINDOWS
+// this is to allow MS to optimize algorightms like std::find using TMP
+
 namespace std {
 
 	namespace sfd = safememory::detail;	
 
-// this is to allow MS to optimize algorightms like std::find
 
 template <typename T, typename Arr>
 struct _Unwrappable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
@@ -620,6 +622,7 @@ constexpr void _Verify_range(const sfd::safe_iterator<T, Arr>& _First, const sfd
 }
 
 } //namespace std
+#endif //NODECPP_WINDOWS
 
 
 #endif // SAFEMEMORY_DETAIL_SAFE_ALLOC_H
