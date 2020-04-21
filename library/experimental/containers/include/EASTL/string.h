@@ -131,6 +131,7 @@
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
+#include <climits>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <stddef.h>             // size_t, ptrdiff_t, etc.
@@ -197,79 +198,79 @@
 // implementations, and may simply use C vsnprintf if desired, though it's not
 // completely portable between compilers.
 //
-#if EASTL_EASTDC_VSNPRINTF
-	namespace EA
-	{
-		namespace StdC
-		{
-			// Provided by the EAStdC package or by the user.
-			EASTL_EASTDC_API int Vsnprintf(char*  EA_RESTRICT pDestination, size_t n, const char*  EA_RESTRICT pFormat, va_list arguments);
-			EASTL_EASTDC_API int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments);
-			EASTL_EASTDC_API int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments);
-			#if EA_CHAR8_UNIQUE
-				EASTL_EASTDC_API int Vsnprintf(char8_t*  EA_RESTRICT pDestination, size_t n, const char8_t*  EA_RESTRICT pFormat, va_list arguments);
-			#endif
-//			#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-				EASTL_EASTDC_API int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments);
-//			#endif
-		}
-	}
+// #if EASTL_EASTDC_VSNPRINTF
+// 	namespace EA
+// 	{
+// 		namespace StdC
+// 		{
+// 			// Provided by the EAStdC package or by the user.
+// 			EASTL_EASTDC_API int Vsnprintf(char*  EA_RESTRICT pDestination, size_t n, const char*  EA_RESTRICT pFormat, va_list arguments);
+// 			EASTL_EASTDC_API int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments);
+// 			EASTL_EASTDC_API int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments);
+// 			#if EA_CHAR8_UNIQUE
+// 				EASTL_EASTDC_API int Vsnprintf(char8_t*  EA_RESTRICT pDestination, size_t n, const char8_t*  EA_RESTRICT pFormat, va_list arguments);
+// 			#endif
+// //			#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+// 				EASTL_EASTDC_API int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments);
+// //			#endif
+// 		}
+// 	}
 
-	namespace eastl
-	{
-		inline int Vsnprintf(char* EA_RESTRICT pDestination, size_t n, const char* EA_RESTRICT pFormat, va_list arguments)
-			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
+// 	namespace eastl
+// 	{
+// 		inline int Vsnprintf(char* EA_RESTRICT pDestination, size_t n, const char* EA_RESTRICT pFormat, va_list arguments)
+// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
 
-		inline int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments)
-			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
+// 		inline int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments)
+// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
 
-		inline int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments)
-			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
+// 		inline int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments)
+// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
 
-		#if EA_CHAR8_UNIQUE
-			inline int Vsnprintf(char8_t* EA_RESTRICT pDestination, size_t n, const char8_t* EA_RESTRICT pFormat, va_list arguments)
-				{ return EA::StdC::Vsnprintf((char*)pDestination, n, (const char*)pFormat, arguments); }
-		#endif
+// 		#if EA_CHAR8_UNIQUE
+// 			inline int Vsnprintf(char8_t* EA_RESTRICT pDestination, size_t n, const char8_t* EA_RESTRICT pFormat, va_list arguments)
+// 				{ return EA::StdC::Vsnprintf((char*)pDestination, n, (const char*)pFormat, arguments); }
+// 		#endif
 
-//		#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-			inline int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments)
-			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
-//		#endif
-	}
-#else
-	// User-provided functions.
-	extern int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arguments);
-	extern int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments);
-	extern int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments);
-	#if EA_CHAR8_UNIQUE
-		extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
-	#endif
-	// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-		extern int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments);
-	// #endif
+// //		#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+// 			inline int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments)
+// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
+// //		#endif
+// 	}
+// #else
+// 	// User-provided functions.
+// 	extern int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arguments);
+// 	extern int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments);
+// 	extern int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments);
+// 	#if EA_CHAR8_UNIQUE
+// 		extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
+// 	#endif
+// 	// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+// 		extern int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments);
+// 	// #endif
 
-	namespace nodecpp
-	{
-		inline int Vsnprintf(char* pDestination, size_t n, const char* pFormat, va_list arguments)
-			{ return std::vsnprintf(pDestination, n, pFormat, arguments); }
+// 	namespace nodecpp
+// 	{
+// 		inline int Vsnprintf(char* pDestination, size_t n, const char* pFormat, va_list arguments)
+// 			{ return std::vsnprintf(pDestination, n, pFormat, arguments); }
 
-		inline int Vsnprintf(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
-			{ throw std::exception("Not implemented yet!"); }
+// 		inline int Vsnprintf(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
+// 			{ throw std::exception("Not implemented yet!"); }
 
-		inline int Vsnprintf(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
-			{ throw std::exception("Not implemented yet!"); }
+// 		inline int Vsnprintf(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
+// 			{ throw std::exception("Not implemented yet!"); }
 
-		#if EA_CHAR8_UNIQUE
-			inline int Vsnprintf(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
-				{ return Vsnprintf8(pDestination, n, pFormat, arguments); }
-		#endif
+// 		#if EA_CHAR8_UNIQUE
+// 			inline int Vsnprintf(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
+// 				{ return Vsnprintf8(pDestination, n, pFormat, arguments); }
+// 		#endif
 
-		// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-			inline int Vsnprintf(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)
-				{ throw std::exception("Not implemented yet!"); }
-		// #endif
-	}
-#endif
+// 		// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
+// 			inline int Vsnprintf(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)
+// 				{ throw std::exception("Not implemented yet!"); }
+// 		// #endif
+// 	}
+// #endif
 ///////////////////////////////////////////////////////////////////////////////
 
 
