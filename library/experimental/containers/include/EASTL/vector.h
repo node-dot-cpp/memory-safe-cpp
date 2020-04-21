@@ -187,7 +187,6 @@ namespace safememory
 		// const allocator_type&  internalAllocator() const EA_NOEXCEPT { return mCapacityAllocator.second(); }
 
 		inline void SetNewHeap(owning_heap_type&& new_heap) {
-			std::destroy(mpBegin, mpEnd);
 			mHeap = std::move(new_heap);
 			if(mHeap) {
 				mpBegin = mHeap->begin();
@@ -1457,8 +1456,8 @@ namespace safememory
 
 			// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
 
+		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(p));
-			// std::destroy(mpBegin, mpEnd);
 			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 			// mpBegin    = pNewData;
@@ -1483,8 +1482,8 @@ namespace safememory
 
 
 		
+		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(p));
-		// std::destroy(mpBegin, mpEnd);
 		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 		// mpBegin    = pNewData;
@@ -1734,8 +1733,8 @@ namespace safememory
 				// 	pNewEnd         = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
 				// #endif
 
+				std::destroy(mpBegin, mpEnd);
 				SetNewHeap(std::move(nNewHeap));
-				// std::destroy(mpBegin, mpEnd);
 				// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 				// mpBegin    = pNewData;
@@ -1813,8 +1812,8 @@ namespace safememory
 			// 	pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
 			// #endif
 
+			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// std::destroy(mpBegin, mpEnd);
 			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 			// mpBegin    = pNewData;
@@ -1842,8 +1841,8 @@ namespace safememory
 
 		pointer pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
 
+		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(nNewHeap));
-		// std::destroy(mpBegin, mpEnd);
 		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 		// mpBegin    = pNewData;
@@ -1894,8 +1893,8 @@ namespace safememory
 			std::uninitialized_fill_n(pNewEnd, n, value);
 			pNewEnd += n;
 
+			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// std::destroy(mpBegin, mpEnd);
 			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 			// mpBegin    = pNewData;
@@ -1941,8 +1940,8 @@ namespace safememory
 			std::uninitialized_value_construct_n(pNewEnd, n);
 			pNewEnd += n;
 
+			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// std::destroy(mpBegin, mpEnd);
 			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 			// mpBegin = pNewData;
@@ -2024,8 +2023,8 @@ namespace safememory
 			// 	pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);            // Question: with exceptions disabled, do we asssume all operations are noexcept and thus there's no need for uninitialized_move_ptr_if_noexcept?
 			// #endif
 
+			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// std::destroy(mpBegin, mpEnd);
 			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 			// mpBegin    = pNewData;
@@ -2064,8 +2063,8 @@ namespace safememory
 		// 	pNewEnd++;
 		// #endif
 
+		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(nNewHeap));
-		// std::destroy(mpBegin, mpEnd);
 		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
 
 		// mpBegin    = pNewData;
