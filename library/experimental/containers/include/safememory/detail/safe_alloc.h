@@ -327,7 +327,7 @@ template<class _Ty>
 	}
 
 
-template <typename T, typename SoftArrayOfPtr>
+template <typename T, typename SoftArrayOfPtr = safememory::soft_ptr<array_of2<typename std::remove_const<T>::type>>>
 class unsafe_iterator
 {
 public:
@@ -337,6 +337,8 @@ public:
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
 	typedef T&	 								reference;
+	typedef SoftArrayOfPtr  					soft_array_of_prt;
+
 
 // private:
 	pointer mIterator = nullptr;
@@ -344,13 +346,13 @@ public:
 public:
 	// constexpr unsafe_iterator()
 	// 	: mIterator(nullptr) { }
-	constexpr explicit unsafe_iterator(SoftArrayOfPtr ptr)
+	constexpr explicit unsafe_iterator(soft_array_of_prt ptr)
 		: mIterator(ptr->_begin) {}
 
-	constexpr unsafe_iterator(SoftArrayOfPtr ptr, size_t ix)
+	constexpr unsafe_iterator(soft_array_of_prt ptr, size_t ix)
 		: mIterator(ptr->_begin + ix) {}
 
-	constexpr unsafe_iterator(SoftArrayOfPtr, pointer ptr)
+	constexpr unsafe_iterator(soft_array_of_prt, pointer ptr)
 		: mIterator(ptr) {}
 
 	constexpr unsafe_iterator(pointer ptr)
@@ -360,7 +362,7 @@ public:
 	constexpr unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
 
 	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
-	constexpr unsafe_iterator(const unsafe_iterator<NonConstT, SoftArrayOfPtr>& ri)
+	constexpr unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
 
 	constexpr pointer get_raw_ptr() const {
@@ -450,7 +452,7 @@ typename unsafe_iterator<T, Arr>::difference_type distance(const unsafe_iterator
 }
 
 
-template <typename T, typename SoftArrayOfPtr>
+template <typename T, typename SoftArrayOfPtr = safememory::soft_ptr<array_of2<typename std::remove_const<T>::type>>>
 class safe_iterator
 {
 public:
@@ -460,22 +462,22 @@ public:
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
 	typedef T&									reference;
-	// typedef safememory::soft_ptr<array_of2<std::remove_const<T>::type>>  soft_array_of_prt
+	typedef SoftArrayOfPtr 						soft_array_of_prt;
 
 // private:
-	SoftArrayOfPtr ptr;
+	soft_array_of_prt ptr;
 	size_t ix = 0;
 
 
 public:
 	// constexpr safe_iterator() {}
-	constexpr explicit safe_iterator(SoftArrayOfPtr ptr)
+	constexpr explicit safe_iterator(soft_array_of_prt ptr)
 		: ptr(ptr), ix(0) {}
 
-	constexpr safe_iterator(SoftArrayOfPtr ptr, size_t ix)
+	constexpr safe_iterator(soft_array_of_prt ptr, size_t ix)
 		: ptr(ptr), ix(ix) {}
 
-	constexpr safe_iterator(SoftArrayOfPtr ptr, pointer to)
+	constexpr safe_iterator(soft_array_of_prt ptr, pointer to)
 		: ptr(ptr) {
 			ix = std::distance(ptr->begin(), to);
 		}
@@ -485,7 +487,7 @@ public:
 
 	// allow non-const to const convertion
 	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
-	constexpr safe_iterator(const safe_iterator<NonConstT, SoftArrayOfPtr>& ri)
+	constexpr safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: ptr(ri.ptr), ix(ri.ix) {}
 
 	constexpr pointer get_raw_ptr() const {

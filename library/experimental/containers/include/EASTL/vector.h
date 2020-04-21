@@ -236,23 +236,26 @@ namespace safememory
 		typedef T*                                            pointer;
 		typedef const T*                                      const_pointer;
 		typedef T&                                            reference;
-		typedef const T&                                      const_reference;  // Maintainer note: We want to leave iterator defined as T* -- at least in release builds -- as this gives some algorithms an advantage that optimizers cannot get around.
-		typedef T*                                            iterator;         // Note: iterator is simply T* right now, but this will likely change in the future, at least for debug builds. 
-		typedef const T*                                      const_iterator;   //       Do not write code that relies on iterator being T*. The reason it will 
-		typedef std::reverse_iterator<iterator>             reverse_iterator; //       change in the future is that a debugging iterator system will be created.
-		typedef std::reverse_iterator<const_iterator>       const_reverse_iterator;    
+		typedef const T&                                      const_reference;
+		typedef std::reverse_iterator<pointer>        		  reverse_iterator_unsafe;
+		typedef std::reverse_iterator<const_pointer>          const_reverse_iterator_unsafe;    
 		typedef typename base_type::size_type                 size_type;
 		typedef typename base_type::difference_type           difference_type;
 		// typedef typename base_type::allocator_type            allocator_type;
 
-		typedef detail::safe_iterator<T, soft_heap_type>			safe_iterator;
-		typedef detail::safe_iterator<const T, soft_heap_type>		const_safe_iterator;
-		typedef std::reverse_iterator<safe_iterator>                reverse_safe_iterator;
-		typedef std::reverse_iterator<const_safe_iterator>          const_reverse_safe_iterator;
-		typedef const const_safe_iterator&							csafe_it_arg;
-		typedef const const_reverse_safe_iterator&					crsafe_it_arg;
+		typedef detail::safe_iterator<T>							iterator_safe;
+		typedef detail::safe_iterator<const T>						const_iterator_safe;
+		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
+		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
+		typedef const const_iterator_safe&							csafe_it_arg;
+		typedef const const_reverse_iterator_safe&					crsafe_it_arg;
 		
 		typedef std::pair<const_pointer, const_pointer>				const_pointer_pair;
+
+		typedef iterator_safe                                       iterator;
+		typedef const_iterator_safe                                 const_iterator;
+		typedef reverse_iterator_safe             					reverse_iterator;
+		typedef const_reverse_iterator_safe							const_reverse_iterator;    
 
 		using base_type::mpBegin;
 		using base_type::mpEnd;
@@ -296,37 +299,37 @@ namespace safememory
 
 		void assign(std::initializer_list<value_type> ilist);
 
-		iterator       begin_unsafe() EA_NOEXCEPT;
-		const_iterator begin_unsafe() const EA_NOEXCEPT;
-		const_iterator cbegin_unsafe() const EA_NOEXCEPT;
+		pointer       begin_unsafe() EA_NOEXCEPT;
+		const_pointer begin_unsafe() const EA_NOEXCEPT;
+		const_pointer cbegin_unsafe() const EA_NOEXCEPT;
 
-		iterator       end_unsafe() EA_NOEXCEPT;
-		const_iterator end_unsafe() const EA_NOEXCEPT;
-		const_iterator cend_unsafe() const EA_NOEXCEPT;
+		pointer       end_unsafe() EA_NOEXCEPT;
+		const_pointer end_unsafe() const EA_NOEXCEPT;
+		const_pointer cend_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rbegin_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator rbegin_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rbegin_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator_unsafe rbegin_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator_unsafe crbegin_unsafe() const EA_NOEXCEPT;
 
-		reverse_iterator       rend_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator rend_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator crend_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rend_unsafe() EA_NOEXCEPT;
+		const_reverse_iterator_unsafe rend_unsafe() const EA_NOEXCEPT;
+		const_reverse_iterator_unsafe crend_unsafe() const EA_NOEXCEPT;
 
-		safe_iterator       begin() EA_NOEXCEPT;
-		const_safe_iterator begin() const EA_NOEXCEPT;
-		const_safe_iterator cbegin() const EA_NOEXCEPT;
+		iterator_safe       begin() EA_NOEXCEPT;
+		const_iterator_safe begin() const EA_NOEXCEPT;
+		const_iterator_safe cbegin() const EA_NOEXCEPT;
 
-		safe_iterator       end() EA_NOEXCEPT;
-		const_safe_iterator end() const EA_NOEXCEPT;
-		const_safe_iterator cend() const EA_NOEXCEPT;
+		iterator_safe       end() EA_NOEXCEPT;
+		const_iterator_safe end() const EA_NOEXCEPT;
+		const_iterator_safe cend() const EA_NOEXCEPT;
 
-		reverse_safe_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_safe_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_safe_iterator crbegin() const EA_NOEXCEPT;
+		reverse_iterator_safe       rbegin() EA_NOEXCEPT;
+		const_reverse_iterator_safe rbegin() const EA_NOEXCEPT;
+		const_reverse_iterator_safe crbegin() const EA_NOEXCEPT;
 
-		reverse_safe_iterator       rend() EA_NOEXCEPT;
-		const_reverse_safe_iterator rend() const EA_NOEXCEPT;
-		const_reverse_safe_iterator crend() const EA_NOEXCEPT;
+		reverse_iterator_safe       rend() EA_NOEXCEPT;
+		const_reverse_iterator_safe rend() const EA_NOEXCEPT;
+		const_reverse_iterator_safe crend() const EA_NOEXCEPT;
 
 		bool      empty() const EA_NOEXCEPT;
 		size_type size() const EA_NOEXCEPT;
@@ -360,28 +363,28 @@ namespace safememory
 		void      pop_back();
 
 		template<class... Args>
-		iterator emplace_unsafe(const_iterator position, Args&&... args);
+		pointer emplace_unsafe(const_pointer position, Args&&... args);
 		template<class... Args>
-		safe_iterator emplace(csafe_it_arg position, Args&&... args);
+		iterator_safe emplace(csafe_it_arg position, Args&&... args);
 
 		template<class... Args>
 		reference emplace_back(Args&&... args);
 
-		iterator insert_unsafe(const_iterator position, const value_type& value);
-		iterator insert_unsafe(const_iterator position, size_type n, const value_type& value);
-		iterator insert_unsafe(const_iterator position, value_type&& value);
-		iterator insert_unsafe(const_iterator position, std::initializer_list<value_type> ilist);
+		pointer insert_unsafe(const_pointer position, const value_type& value);
+		pointer insert_unsafe(const_pointer position, size_type n, const value_type& value);
+		pointer insert_unsafe(const_pointer position, value_type&& value);
+		pointer insert_unsafe(const_pointer position, std::initializer_list<value_type> ilist);
 
 		template <typename InputIterator>
-		iterator insert_unsafe(const_iterator position, InputIterator first, InputIterator last);
+		pointer insert_unsafe(const_pointer position, InputIterator first, InputIterator last);
 
-		safe_iterator insert(csafe_it_arg position, const value_type& value);
-		safe_iterator insert(csafe_it_arg position, size_type n, const value_type& value);
-		safe_iterator insert(csafe_it_arg position, value_type&& value);
-		safe_iterator insert(csafe_it_arg position, std::initializer_list<value_type> ilist);
+		iterator_safe insert(csafe_it_arg position, const value_type& value);
+		iterator_safe insert(csafe_it_arg position, size_type n, const value_type& value);
+		iterator_safe insert(csafe_it_arg position, value_type&& value);
+		iterator_safe insert(csafe_it_arg position, std::initializer_list<value_type> ilist);
 
 		// template <typename InputIterator>
-		safe_iterator insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last);
+		iterator_safe insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last);
 
 //		template <typename = std::enable_if<std::has_equality_v<T>>>
 		// iterator erase_first(const T& value);
@@ -392,10 +395,10 @@ namespace safememory
 //		template <typename = std::enable_if<std::has_equality_v<T>>>
 		// reverse_iterator erase_last_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
 
-		iterator erase_unsafe(const_iterator position);
-		iterator erase_unsafe(const_iterator first, const_iterator last);
-		safe_iterator erase(csafe_it_arg position);
-		safe_iterator erase(csafe_it_arg first, csafe_it_arg last);
+		pointer erase_unsafe(const_pointer position);
+		pointer erase_unsafe(const_pointer first, const_pointer last);
+		iterator_safe erase(csafe_it_arg position);
+		iterator_safe erase(csafe_it_arg first, csafe_it_arg last);
 		// iterator erase_unsorted(const_iterator position);         // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
 
 		// reverse_iterator erase(const_reverse_iterator position);
@@ -406,7 +409,7 @@ namespace safememory
 		// void reset_lose_memory() EA_NOEXCEPT;                       // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 
 		bool validate() const EA_NOEXCEPT;
-		int  validate_iterator(const_iterator i) const EA_NOEXCEPT;
+		int  validate_iterator(const_pointer i) const EA_NOEXCEPT;
 		int  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
 
 	protected:
@@ -450,24 +453,24 @@ namespace safememory
 		void DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, std::random_access_iterator_tag);
 
 		template <typename Integer>
-		void DoInsert(const_iterator position, Integer n, Integer value, std::true_type);
+		void DoInsert(const_pointer position, Integer n, Integer value, std::true_type);
 
 		template <typename InputIterator>
-		void DoInsert(const_iterator position, InputIterator first, InputIterator last, std::false_type);
+		void DoInsert(const_pointer position, InputIterator first, InputIterator last, std::false_type);
 
 		template <typename InputIterator>
-		void DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag);
+		void DoInsertFromIterator(const_pointer position, InputIterator first, InputIterator last, std::input_iterator_tag);
 
 		template <typename BidirectionalIterator>
-		void DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag);
+		void DoInsertFromIterator(const_pointer position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag);
 
-		void DoInsertValues(const_iterator position, size_type n, const value_type& value);
+		void DoInsertValues(const_pointer position, size_type n, const value_type& value);
 
 		void DoInsertValuesEnd(size_type n); // Default constructs n values
 		void DoInsertValuesEnd(size_type n, const value_type& value);
 
 		template<typename... Args>
-		void DoInsertValue(const_iterator position, Args&&... args);
+		void DoInsertValue(const_pointer position, Args&&... args);
 
 		template<typename... Args>
 		void DoInsertValueEnd(Args&&... args);
@@ -607,7 +610,7 @@ namespace safememory
 	{
 		// TODO: mb update this to better take use of iibmalloc discrete allocation
 		// sizes
-		
+
 		// This needs to return a value of at least currentCapacity and at least 1.
 		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
 	}
@@ -754,7 +757,7 @@ namespace safememory
 			// 	#endif
 			// }
 
-			DoAssign<const_iterator, false>(x.begin_unsafe(), x.end_unsafe(), std::false_type());
+			DoAssign<const_pointer, false>(x.begin_unsafe(), x.end_unsafe(), std::false_type());
 		}
 
 		return *this;
@@ -819,7 +822,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
+	inline typename vector<T, Allocator>::pointer
 	vector<T, Allocator>::begin_unsafe() EA_NOEXCEPT
 	{
 		return mpBegin;
@@ -827,7 +830,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator
+	inline typename vector<T, Allocator>::const_pointer
 	vector<T, Allocator>::begin_unsafe() const EA_NOEXCEPT
 	{
 		return mpBegin;
@@ -835,7 +838,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator
+	inline typename vector<T, Allocator>::const_pointer
 	vector<T, Allocator>::cbegin_unsafe() const EA_NOEXCEPT
 	{
 		return mpBegin;
@@ -843,7 +846,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
+	inline typename vector<T, Allocator>::pointer
 	vector<T, Allocator>::end_unsafe() EA_NOEXCEPT
 	{
 		return mpEnd;
@@ -851,7 +854,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator
+	inline typename vector<T, Allocator>::const_pointer
 	vector<T, Allocator>::end_unsafe() const EA_NOEXCEPT
 	{
 		return mpEnd;
@@ -859,7 +862,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator
+	inline typename vector<T, Allocator>::const_pointer
 	vector<T, Allocator>::cend_unsafe() const EA_NOEXCEPT
 	{
 		return mpEnd;
@@ -867,147 +870,147 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator
+	inline typename vector<T, Allocator>::reverse_iterator_unsafe
 	vector<T, Allocator>::rbegin_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(mpEnd);
+		return reverse_iterator_unsafe(mpEnd);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
 	vector<T, Allocator>::rbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(mpEnd);
+		return const_reverse_iterator_unsafe(mpEnd);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
 	vector<T, Allocator>::crbegin_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(mpEnd);
+		return const_reverse_iterator_unsafe(mpEnd);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator
+	inline typename vector<T, Allocator>::reverse_iterator_unsafe
 	vector<T, Allocator>::rend_unsafe() EA_NOEXCEPT
 	{
-		return reverse_iterator(mpBegin);
+		return reverse_iterator_unsafe(mpBegin);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
 	vector<T, Allocator>::rend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(mpBegin);
+		return const_reverse_iterator_unsafe(mpBegin);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
 	vector<T, Allocator>::crend_unsafe() const EA_NOEXCEPT
 	{
-		return const_reverse_iterator(mpBegin);
+		return const_reverse_iterator_unsafe(mpBegin);
 	}
 
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::begin() EA_NOEXCEPT
 	{
-		return safe_iterator(GetSoftHeapPtr());
+		return iterator_safe(GetSoftHeapPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_safe_iterator
+	inline typename vector<T, Allocator>::const_iterator_safe
 	vector<T, Allocator>::begin() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(GetSoftHeapPtr());
+		return const_iterator_safe(GetSoftHeapPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_safe_iterator
+	inline typename vector<T, Allocator>::const_iterator_safe
 	vector<T, Allocator>::cbegin() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(GetSoftHeapPtr());
+		return const_iterator_safe(GetSoftHeapPtr());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::end() EA_NOEXCEPT
 	{
-		return safe_iterator(GetSoftHeapPtr(), size());
+		return iterator_safe(GetSoftHeapPtr(), size());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_safe_iterator
+	inline typename vector<T, Allocator>::const_iterator_safe
 	vector<T, Allocator>::end() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(GetSoftHeapPtr(), size());
+		return const_iterator_safe(GetSoftHeapPtr(), size());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_safe_iterator
+	inline typename vector<T, Allocator>::const_iterator_safe
 	vector<T, Allocator>::cend() const EA_NOEXCEPT
 	{
-		return const_safe_iterator(GetSoftHeapPtr(), size());
+		return const_iterator_safe(GetSoftHeapPtr(), size());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_safe_iterator
+	inline typename vector<T, Allocator>::reverse_iterator_safe
 	vector<T, Allocator>::rbegin() EA_NOEXCEPT
 	{
-		return reverse_safe_iterator(end());
+		return reverse_iterator_safe(end());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_safe_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_safe
 	vector<T, Allocator>::rbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_safe_iterator(end());
+		return const_reverse_iterator_safe(end());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_safe_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_safe
 	vector<T, Allocator>::crbegin() const EA_NOEXCEPT
 	{
-		return const_reverse_safe_iterator(end());
+		return const_reverse_iterator_safe(end());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_safe_iterator
+	inline typename vector<T, Allocator>::reverse_iterator_safe
 	vector<T, Allocator>::rend() EA_NOEXCEPT
 	{
-		return reverse_safe_iterator(begin());
+		return reverse_iterator_safe(begin());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_safe_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_safe
 	vector<T, Allocator>::rend() const EA_NOEXCEPT
 	{
-		return const_reverse_safe_iterator(begin());
+		return const_reverse_iterator_safe(begin());
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_safe_iterator
+	inline typename vector<T, Allocator>::const_reverse_iterator_safe
 	vector<T, Allocator>::crend() const EA_NOEXCEPT
 	{
-		return const_reverse_safe_iterator(begin());
+		return const_reverse_iterator_safe(begin());
 	}
 
 	template <typename T, typename Allocator>
@@ -1102,7 +1105,7 @@ namespace safememory
 	{
 		// This is the simplest way to accomplish this, and it is as efficient as any other.
 		this_type temp;
-		temp.assign_unsafe(std::move_iterator<iterator>(begin_unsafe()), std::move_iterator<iterator>(end_unsafe())/*, internalAllocator()*/);
+		temp.assign_unsafe(std::move_iterator<pointer>(begin_unsafe()), std::move_iterator<pointer>(end_unsafe())/*, internalAllocator()*/);
 
 		// Call DoSwap() rather than swap() as we know our allocators match and we don't want to invoke the code path
 		// handling non matching allocators as it imposes additional restrictions on the type of T to be copyable
@@ -1314,8 +1317,8 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template<class... Args>
-	inline typename vector<T, Allocator>::iterator 
-	vector<T, Allocator>::emplace_unsafe(const_iterator position, Args&&... args)
+	inline typename vector<T, Allocator>::pointer 
+	vector<T, Allocator>::emplace_unsafe(const_pointer position, Args&&... args)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 
@@ -1332,12 +1335,12 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template<class... Args>
-	inline typename vector<T, Allocator>::safe_iterator 
+	inline typename vector<T, Allocator>::iterator_safe 
 	vector<T, Allocator>::emplace(csafe_it_arg position, Args&&... args)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = emplace_unsafe(p, std::forward<Args>(args)...);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, typename Allocator>
@@ -1357,8 +1360,8 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::insert_unsafe(const_iterator position, const value_type& value)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::insert_unsafe(const_pointer position, const value_type& value)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -1381,16 +1384,16 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::insert_unsafe(const_iterator position, value_type&& value)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::insert_unsafe(const_pointer position, value_type&& value)
 	{
 		return emplace_unsafe(position, std::move(value));
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::insert_unsafe(const_iterator position, size_type n, const value_type& value)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::insert_unsafe(const_pointer position, size_type n, const value_type& value)
 	{
 		const std::ptrdiff_t p = position - mpBegin; // Save this because we might reallocate.
 		DoInsertValues(position, n, value);
@@ -1400,8 +1403,8 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::insert_unsafe(const_iterator position, InputIterator first, InputIterator last)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::insert_unsafe(const_pointer position, InputIterator first, InputIterator last)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 		DoInsert(position, first, last, std::is_integral<InputIterator>());
@@ -1410,8 +1413,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::insert_unsafe(const_iterator position, std::initializer_list<value_type> ilist)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::insert_unsafe(const_pointer position, std::initializer_list<value_type> ilist)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 		DoInsert(position, ilist.begin(), ilist.end(), std::false_type());
@@ -1419,59 +1422,59 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::insert(csafe_it_arg position, const value_type& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, value);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::insert(csafe_it_arg position, value_type&& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, std::move(value));
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::insert(csafe_it_arg position, size_type n, const value_type& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, n, value);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		const_pointer_pair other = CheckAndGet(first, last);
 		pointer r = insert_unsafe(p, other.first, other.second);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::insert(csafe_it_arg position, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, ilist);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::erase_unsafe(const_iterator position)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::erase_unsafe(const_pointer position)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
@@ -1479,7 +1482,7 @@ namespace safememory
 		#endif
 
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
-		iterator destPosition = const_cast<value_type*>(position);        
+		pointer destPosition = const_cast<value_type*>(position);        
 
 		if((position + 1) < mpEnd)
 			std::move(destPosition + 1, mpEnd, destPosition);
@@ -1490,8 +1493,8 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator
-	vector<T, Allocator>::erase_unsafe(const_iterator first, const_iterator last)
+	inline typename vector<T, Allocator>::pointer
+	vector<T, Allocator>::erase_unsafe(const_pointer first, const_pointer last)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((first < mpBegin) || (first > mpEnd) || (last < mpBegin) || (last > mpEnd) || (last < first)))
@@ -1500,7 +1503,7 @@ namespace safememory
  
 		if (first != last)
 		{
-			iterator const position = const_cast<value_type*>(std::move(const_cast<value_type*>(last), const_cast<value_type*>(mpEnd), const_cast<value_type*>(first)));
+			pointer const position = const_cast<value_type*>(std::move(const_cast<value_type*>(last), const_cast<value_type*>(mpEnd), const_cast<value_type*>(first)));
 			std::destroy(position, mpEnd);
 			mpEnd -= (last - first);
 		}
@@ -1509,22 +1512,22 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::erase(csafe_it_arg position)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = erase_unsafe(p);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 
 	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::safe_iterator
+	inline typename vector<T, Allocator>::iterator_safe
 	vector<T, Allocator>::erase(csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer_pair p = CheckMineAndGet(first, last);
 		pointer r = erase_unsafe(p.first, p.second);
-		return safe_iterator(GetSoftHeapPtr(), r);
+		return iterator_safe(GetSoftHeapPtr(), r);
 	}
 
 	// template <typename T, typename Allocator>
@@ -1837,7 +1840,7 @@ namespace safememory
 	template <typename InputIterator, bool bMove>
 	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
 	{
-		iterator position(mpBegin);
+		pointer position(mpBegin);
 
 		while((position != mpEnd) && (first != last))
 		{
@@ -1887,7 +1890,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename Integer>
-	inline void vector<T, Allocator>::DoInsert(const_iterator position, Integer n, Integer value, std::true_type)
+	inline void vector<T, Allocator>::DoInsert(const_pointer position, Integer n, Integer value, std::true_type)
 	{
 		DoInsertValues(position, static_cast<size_type>(n), static_cast<value_type>(value));
 	}
@@ -1895,7 +1898,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInsert(const_iterator position, InputIterator first, InputIterator last, std::false_type)
+	inline void vector<T, Allocator>::DoInsert(const_pointer position, InputIterator first, InputIterator last, std::false_type)
 	{
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
 		DoInsertFromIterator(position, first, last, IC());
@@ -1904,7 +1907,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, InputIterator first, InputIterator last, std::input_iterator_tag)
+	inline void vector<T, Allocator>::DoInsertFromIterator(const_pointer position, InputIterator first, InputIterator last, std::input_iterator_tag)
 	{
 		for(; first != last; ++first, ++position)
 			position = insert_unsafe(position, *first);
@@ -1913,7 +1916,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template <typename BidirectionalIterator>
-	void vector<T, Allocator>::DoInsertFromIterator(const_iterator position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag)
+	void vector<T, Allocator>::DoInsertFromIterator(const_pointer position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -1921,7 +1924,7 @@ namespace safememory
 		#endif
 
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
-		iterator destPosition = const_cast<value_type*>(position);
+		pointer destPosition = const_cast<value_type*>(position);
 
 		if(first != last)
 		{
@@ -1993,7 +1996,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoInsertValues(const_iterator position, size_type n, const value_type& value)
+	void vector<T, Allocator>::DoInsertValues(const_pointer position, size_type n, const value_type& value)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -2001,7 +2004,7 @@ namespace safememory
 		#endif
 
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
-		iterator destPosition = const_cast<value_type*>(position);
+		pointer destPosition = const_cast<value_type*>(position);
 
 		if(n <= size_type(internalCapacityPtr() - mpEnd)) // If n is <= capacity...
 		{
@@ -2205,7 +2208,7 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	template<typename... Args>
-	void vector<T, Allocator>::DoInsertValue(const_iterator position, Args&&... args)
+	void vector<T, Allocator>::DoInsertValue(const_pointer position, Args&&... args)
 	{
 		// To consider: It's feasible that the args is from a value_type comes from within the current sequence itself and 
 		// so we need to be sure to handle that case. This is different from insert(position, const value_type&) because in 
@@ -2217,7 +2220,7 @@ namespace safememory
 		#endif
 
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
-		iterator destPosition = const_cast<value_type*>(position);
+		pointer destPosition = const_cast<value_type*>(position);
 
 		if(mpEnd != internalCapacityPtr()) // If size < capacity ...
 		{
@@ -2421,7 +2424,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline int vector<T, Allocator>::validate_iterator(const_iterator i) const EA_NOEXCEPT
+	inline int vector<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
 		if(i >= mpBegin)
 		{
