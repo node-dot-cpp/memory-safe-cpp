@@ -67,6 +67,7 @@
 #include <safememory/detail/safe_alloc.h>
 //#include <EASTL/allocator.h>
 #include <EASTL/type_traits.h>
+#include <EASTL/iterator.h>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
@@ -338,13 +339,13 @@ namespace safememory
 		template <typename InputIterator>
 		iterator insert(const_iterator position, InputIterator first, InputIterator last);
 
-		template <typename = std::enable_if<std::has_equality_v<T>>>
+//		template <typename = std::enable_if<std::has_equality_v<T>>>
 		iterator erase_first(const T& value);
-		template <typename = std::enable_if<std::has_equality_v<T>>>
+//		template <typename = std::enable_if<std::has_equality_v<T>>>
 		iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
-		template <typename = std::enable_if<std::has_equality_v<T>>>
+//		template <typename = std::enable_if<std::has_equality_v<T>>>
 		reverse_iterator erase_last(const T& value);
-		template <typename = std::enable_if<std::has_equality_v<T>>>
+//		template <typename = std::enable_if<std::has_equality_v<T>>>
 		reverse_iterator erase_last_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
 
 		iterator erase(const_iterator position);
@@ -642,7 +643,7 @@ namespace safememory
 	inline vector<T, Allocator>::vector(InputIterator first, InputIterator last/*, const allocator_type& allocator*/)
 		: base_type(/*allocator*/)
 	{
-		DoInit(first, last, is_integral<InputIterator>());
+		DoInit(first, last, std::is_integral<InputIterator>());
 	}
 
 
@@ -726,7 +727,7 @@ namespace safememory
 		// It turns out that the C++ std::vector<int, int> specifies a two argument
 		// version of assign that takes (int size, int value). These are not iterators, 
 		// so we need to do a template compiler trick to do the right thing.
-		DoAssign<InputIterator, false>(first, last, is_integral<InputIterator>());
+		DoAssign<InputIterator, false>(first, last, std::is_integral<InputIterator>());
 	}
 
 
@@ -926,7 +927,7 @@ namespace safememory
 	inline void vector<T, Allocator>::shrink_to_fit()
 	{
 		// This is the simplest way to accomplish this, and it is as efficient as any other.
-		this_type temp = this_type(move_iterator<iterator>(begin()), move_iterator<iterator>(end())/*, internalAllocator()*/);
+		this_type temp = this_type(std::move_iterator<iterator>(begin()), std::move_iterator<iterator>(end())/*, internalAllocator()*/);
 
 		// Call DoSwap() rather than swap() as we know our allocators match and we don't want to invoke the code path
 		// handling non matching allocators as it imposes additional restrictions on the type of T to be copyable
@@ -1218,7 +1219,7 @@ namespace safememory
 	vector<T, Allocator>::insert(const_iterator position, InputIterator first, InputIterator last)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
-		DoInsert(position, first, last, is_integral<InputIterator>());
+		DoInsert(position, first, last, std::is_integral<InputIterator>());
 		return mpBegin + n;
 	}
 
@@ -1294,7 +1295,7 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
+//	template <typename>
 	inline typename vector<T, Allocator>::iterator vector<T, Allocator>::erase_first(const T& value)
 	{
 		iterator it = std::find(begin(), end(), value);
@@ -1306,7 +1307,7 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
+//	template <typename>
 	inline typename vector<T, Allocator>::iterator 
 	vector<T, Allocator>::erase_first_unsorted(const T& value)
 	{
@@ -1319,7 +1320,7 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
+//	template <typename>
 	inline typename vector<T, Allocator>::reverse_iterator 
 	vector<T, Allocator>::erase_last(const T& value)
 	{
@@ -1332,7 +1333,7 @@ namespace safememory
 	}
 
 	template <typename T, typename Allocator>
-	template <typename>
+//	template <typename>
 	inline typename vector<T, Allocator>::reverse_iterator 
 	vector<T, Allocator>::erase_last_unsorted(const T& value)
 	{
@@ -1498,9 +1499,9 @@ namespace safememory
 		// internalCapacityPtr() = mpBegin + n;
 		mpEnd      = internalCapacityPtr();
 
-		typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
+		// typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
 //		eastl::uninitialized_fill_n_ptr<value_type, Integer>((non_const_value_type*)mpBegin, n, value);
-		std::uninitialized_fill_n<value_type, Integer>((non_const_value_type*)mpBegin, n, value);
+		std::uninitialized_fill_n(mpBegin, n, value);
 	}
 
 
@@ -1978,7 +1979,7 @@ namespace safememory
 			#endif
 			::new(static_cast<void*>(mpEnd)) value_type(std::move(*(mpEnd - 1)));      // mpEnd is uninitialized memory, so we must construct into it instead of move into it like we do with the other elements below.
 			std::move_backward(destPosition, mpEnd - 1, mpEnd);           // We need to go backward because of potential overlap issues.
-			std::destroy(destPosition);
+			std::destroy_at(destPosition);
 			::new(static_cast<void*>(destPosition)) value_type(std::move(value));                             // Move the value argument to the given position.
 			++mpEnd;
 		}
@@ -2100,21 +2101,21 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline bool operator==(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return ((a.size() == b.size()) && equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() == b.size()) && std::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
 	template <typename T, typename Allocator>
 	inline bool operator!=(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return ((a.size() != b.size()) || !equal(a.begin(), a.end(), b.begin()));
+		return ((a.size() != b.size()) || !std::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
 	template <typename T, typename Allocator>
 	inline bool operator<(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
 	{
-		return lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
+		return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 

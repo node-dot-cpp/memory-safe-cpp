@@ -1153,13 +1153,13 @@ int TestVector()
 		EATEST_VERIFY(v.validate());
 
 		// reset_lose_memory
-		int* const pData = v.data();
-		vector<int>::size_type n = v.size();
-		vector<int>::allocator_type& allocator = v.get_allocator();
-		v.reset_lose_memory();
-		allocator.deallocate(pData, n);
-		EATEST_VERIFY(v.capacity() == 0);
-		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
+		// int* const pData = v.data();
+		// vector<int>::size_type n = v.size();
+		// vector<int>::allocator_type& allocator = v.get_allocator();
+		// v.reset_lose_memory();
+		// allocator.deallocate(pData, n);
+		// EATEST_VERIFY(v.capacity() == 0);
+		// EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
 
 		// Test set_capacity make a move when reducing size
 		vector<TestObject> toArray2(10, TestObject(7));
@@ -1224,8 +1224,8 @@ int TestVector()
 		vector<int> intArray(20);
 
 		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY((intArray.validate_iterator(intArray.begin()) & (isf_valid | isf_can_dereference)) != 0);
-		EATEST_VERIFY(intArray.validate_iterator(NULL) == isf_none);
+		EATEST_VERIFY((intArray.validate_iterator(intArray.begin()) & (safememory::isf_can_dereference)) != 0);
+		EATEST_VERIFY(intArray.validate_iterator(NULL) == safememory::isf_none);
 	}
 
 	{
@@ -1266,22 +1266,22 @@ int TestVector()
 
 		// Aligned objects should be CustomAllocator instead of the default, because the
 		// EASTL default might be unable to do aligned allocations, but CustomAllocator always can.
-		vector<Align64, CustomAllocator> vA64(10);
+		// vector<Align64, CustomAllocator> vA64(10);
 
-		vA64.resize(2);
-		EATEST_VERIFY(vA64.size() == 2);
+		// vA64.resize(2);
+		// EATEST_VERIFY(vA64.size() == 2);
 
-		vA64.push_back(Align64());
-		EATEST_VERIFY(vA64.size() == 3);
+		// vA64.push_back(Align64());
+		// EATEST_VERIFY(vA64.size() == 3);
 
-		vA64.resize(0);
-		EATEST_VERIFY(vA64.size() == 0);
+		// vA64.resize(0);
+		// EATEST_VERIFY(vA64.size() == 0);
 
-		vA64.insert(vA64.begin(), Align64());
-		EATEST_VERIFY(vA64.size() == 1);
+		// vA64.insert(vA64.begin(), Align64());
+		// EATEST_VERIFY(vA64.size() == 1);
 
-		vA64.resize(20);
-		EATEST_VERIFY(vA64.size() == 20);
+		// vA64.resize(20);
+		// EATEST_VERIFY(vA64.size() == 20);
 	}
 
 	{
@@ -1476,26 +1476,26 @@ int TestVector()
 		// because the existing elements of this were allocated by a different allocator and
 		// will be freed in the future with the allocator copied from x.
 		// The test below should work for the case of EASTL_ALLOCATOR_COPY_ENABLED == 0 or 1.
-		InstanceAllocator::reset_all();
+// 		InstanceAllocator::reset_all();
 
-		InstanceAllocator ia0((uint8_t)0);
-		InstanceAllocator ia1((uint8_t)1);
+// 		InstanceAllocator ia0((uint8_t)0);
+// 		InstanceAllocator ia1((uint8_t)1);
 
-		safememory::vector<int, InstanceAllocator> v0((std::size_t)1, (int)0, ia0);
-		safememory::vector<int, InstanceAllocator> v1((std::size_t)1, (int)1, ia1);
+// 		safememory::vector<int, InstanceAllocator> v0((std::size_t)1, (int)0, ia0);
+// 		safememory::vector<int, InstanceAllocator> v1((std::size_t)1, (int)1, ia1);
 
-		EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
-#if EASTL_ALLOCATOR_COPY_ENABLED
-		EATEST_VERIFY(v0.get_allocator() != v1.get_allocator());
-#endif
-		v0 = v1;
-		EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
-		EATEST_VERIFY(InstanceAllocator::mMismatchCount == 0);
-		EATEST_VERIFY(v0.validate());
-		EATEST_VERIFY(v1.validate());
-#if EASTL_ALLOCATOR_COPY_ENABLED
-		EATEST_VERIFY(v0.get_allocator() == v1.get_allocator());
-#endif
+// 		EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
+// #if EASTL_ALLOCATOR_COPY_ENABLED
+// 		EATEST_VERIFY(v0.get_allocator() != v1.get_allocator());
+// #endif
+// 		v0 = v1;
+// 		EATEST_VERIFY((v0.front() == 1) && (v1.front() == 1));
+// 		EATEST_VERIFY(InstanceAllocator::mMismatchCount == 0);
+// 		EATEST_VERIFY(v0.validate());
+// 		EATEST_VERIFY(v1.validate());
+// #if EASTL_ALLOCATOR_COPY_ENABLED
+// 		EATEST_VERIFY(v0.get_allocator() == v1.get_allocator());
+// #endif
 	}
 
 	{
@@ -1666,53 +1666,53 @@ int TestVector()
 	}
 
 	// If the legacy code path is enabled we cannot handle non-copyable types
-	#ifndef EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR 
+	// #ifndef EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR 
 		// unique_ptr tests
-		{
+		// {
 			// Simple move-assignment test to prevent regressions where safememory::vector utilizes operations on T that are not necessary.
-			{
-				safememory::vector<std::unique_ptr<int>> v1;
-				safememory::vector<std::unique_ptr<int>> v2;
-				v2 = std::move(v1);
-			}
+			// {
+				// safememory::vector<std::unique_ptr<int>> v1;
+				// safememory::vector<std::unique_ptr<int>> v2;
+				// v2 = std::move(v1);
+			// }
 
-			{
+			// {
 				// This test verifies that safememory::vector can handle the move-assignment case where its utilizes two
 				// different allocator instances that do not compare equal.  An example of an allocator that compares equal
 				// but isn't the same object instance is an allocator that shares the same memory allocation mechanism (eg.
 				// malloc).  The memory allocated from one instance can be freed by another instance in the case where
 				// allocators compare equal.  This test is verifying functionality in the opposite case where allocators
 				// instances do not compare equal and must clean up its own allocated memory.
-				InstanceAllocator::reset_all();
-				{
-					InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
-					safememory::vector<std::unique_ptr<int>, InstanceAllocator> v1(a1);
-					safememory::vector<std::unique_ptr<int>, InstanceAllocator> v2(a2);
+				// InstanceAllocator::reset_all();
+				// {
+				// 	InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
+				// 	safememory::vector<std::unique_ptr<int>, InstanceAllocator> v1(a1);
+				// 	safememory::vector<std::unique_ptr<int>, InstanceAllocator> v2(a2);
 
-					VERIFY(v1.get_allocator() != v2.get_allocator());
+				// 	VERIFY(v1.get_allocator() != v2.get_allocator());
 
-					// add some data in the vector so we can move it to the other vector.
-					v1.push_back(nullptr);
-					v1.push_back(nullptr);
-					v1.push_back(nullptr);
-					v1.push_back(nullptr);
+				// 	// add some data in the vector so we can move it to the other vector.
+				// 	v1.push_back(nullptr);
+				// 	v1.push_back(nullptr);
+				// 	v1.push_back(nullptr);
+				// 	v1.push_back(nullptr);
 
-					VERIFY(!v1.empty() && v2.empty());
-					v2 = std::move(v1);
-					VERIFY(v1.empty() && !v2.empty());
-					v1.swap(v2); 
-					VERIFY(!v1.empty() && v2.empty());
-				}
-				VERIFY(InstanceAllocator::mMismatchCount == 0);
-			}
-		}
-	#endif
+				// 	VERIFY(!v1.empty() && v2.empty());
+				// 	v2 = std::move(v1);
+				// 	VERIFY(v1.empty() && !v2.empty());
+				// 	v1.swap(v2); 
+				// 	VERIFY(!v1.empty() && v2.empty());
+				// }
+				// VERIFY(InstanceAllocator::mMismatchCount == 0);
+		// 	}
+		// }
+	// #endif
 
-	{
+	// {
 		// CustomAllocator has no data members which reduces the size of an safememory::vector via the empty base class optimization.
-		typedef safememory::vector<int, CustomAllocator> EboVector;
-		static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
-	}
+		// typedef safememory::vector<int, CustomAllocator> EboVector;
+		// static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
+	// }
 
 	return nErrorCount;
 }

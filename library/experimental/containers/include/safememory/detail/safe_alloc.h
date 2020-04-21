@@ -253,7 +253,10 @@ struct array_of2
 	size_t _capacity = 0;
 
 	//TODO fix sizeof(this) used for allocation
-	T _begin[1];
+	union {
+		T _begin[1];
+		size_t dummy;
+	};
 
 	[[noreturn]]
 	void throwPointerOutOfRange() const {
