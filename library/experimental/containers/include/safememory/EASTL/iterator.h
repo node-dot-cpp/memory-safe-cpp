@@ -37,7 +37,7 @@
 #define EASTL_ITERATOR_H
 
 
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/config.h>
 // #include <EASTL/internal/move_help.h>
 // #include <EASTL/initializer_list.h>
 #include <iterator>

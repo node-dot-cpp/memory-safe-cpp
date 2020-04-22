@@ -28,6 +28,6 @@
 #ifndef SAFEMEMORY_STRING_H
 #define SAFEMEMORY_STRING_H
 
-#include <EASTL/string.h>
+#include <safememory/EASTL/string.h>
 
 #endif //SAFEMEMORY_STRING_H

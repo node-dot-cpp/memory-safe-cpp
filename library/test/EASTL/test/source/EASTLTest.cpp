@@ -5,7 +5,7 @@
 
 #include <EABase/eabase.h>
 //#include <memorysafe/EASTL/version.h>
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/config.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)

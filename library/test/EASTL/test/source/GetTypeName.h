@@ -8,8 +8,8 @@
 
 
 #include <EABase/eabase.h>
-#include <EASTL/type_traits.h>
-#include <EASTL/string.h>
+#include <safememory/EASTL/type_traits.h>
+#include <safememory/EASTL/string.h>
 #include <stdlib.h>
 #include <typeinfo>
 

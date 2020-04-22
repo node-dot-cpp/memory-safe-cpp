@@ -33,8 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <EASTL/internal/config.h>
-#include <EASTL/string.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/EASTL/string.h>
 //#include <EABase/eabase.h>
 #include <string.h>
 

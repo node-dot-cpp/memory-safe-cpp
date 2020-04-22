@@ -62,8 +62,8 @@
 	#pragma once
 #endif
 
-#include <EASTL/internal/config.h>
-#include <EASTL/type_traits.h>
+#include <safememory/EASTL/internal/config.h>
+#include <safememory/EASTL/type_traits.h>
 //#include <EASTL/allocator.h>
 //#include <EASTL/iterator.h>
 #include <functional>

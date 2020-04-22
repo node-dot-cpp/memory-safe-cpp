@@ -62,16 +62,16 @@
 #ifndef EASTL_VECTOR_H
 #define EASTL_VECTOR_H
 
-#include <EASTL/internal/__undef_macros.h>
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/__undef_macros.h>
+#include <safememory/EASTL/internal/config.h>
 #include <safememory/detail/safe_alloc.h>
 //#include <EASTL/allocator.h>
-#include <EASTL/type_traits.h>
-#include <EASTL/iterator.h>
+#include <safememory/EASTL/type_traits.h>
+#include <safememory/EASTL/iterator.h>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
-#include <EASTL/memory.h>
+#include <safememory/EASTL/memory.h>
 #include <memory>
 //#include <EASTL/bonus/compressed_pair.h>
 

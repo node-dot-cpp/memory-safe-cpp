@@ -120,14 +120,14 @@
 #ifndef EASTL_STRING_H
 #define EASTL_STRING_H
 
-#include <EASTL/internal/__undef_macros.h>
-#include <EASTL/internal/config.h>
+#include <safememory/EASTL/internal/__undef_macros.h>
+#include <safememory/EASTL/internal/config.h>
 #include <safememory/detail/safe_alloc.h>
 #include <safememory/string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
-#include <EASTL/iterator.h>
+#include <safememory/EASTL/iterator.h>
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
@@ -167,7 +167,7 @@
 #endif
 
 
-#include <EASTL/internal/char_traits.h>
+#include <safememory/EASTL/internal/char_traits.h>
 //#include <string_view>
 
 
@@ -385,8 +385,9 @@ namespace safememory
 		static_assert(sizeof(size_type) >= sizeof(int), "Fix size!");
 		static constexpr size_type kMaxSize = static_cast<size_type>(INT_MAX);
 
-		static_assert(is_same<T, char>::value || is_same<T, wchar_t>::value ||
-			is_same<T, char16_t>::value || is_same<T, char32_t>::value, "Type not supported!"); 
+		static_assert(std::is_same<T, char>::value || std::is_same<T, wchar_t>::value ||
+			std::is_same<T, char16_t>::value || std::is_same<T, char32_t>::value,
+			"Type not supported!"); 
 	// 	#else
 	// 		static constexpr size_type kMaxSize = ~kHeapMask;
 	// 	#endif
