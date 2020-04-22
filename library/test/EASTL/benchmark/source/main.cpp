@@ -143,7 +143,7 @@ int EAMain(int argc, char* argv[])
 		EA::UnitTest::SetHighThreadPriority();
 	#endif
 
-	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsSeconds, true);     // Measure seconds, start the counting immediately.
+	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsNanoseconds, true);
 
 	// BenchmarkAlgorithm();
 	// BenchmarkList();

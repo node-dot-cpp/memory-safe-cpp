@@ -2633,7 +2633,7 @@ namespace safememory
 	basic_string<T, Allocator>::insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer p = checkMineAndGet(it);
-		const_pointer p2 = checkAndGet(itBegin, itEnd);
+		const_pointer_pair p2 = checkAndGet(itBegin, itEnd);
 		pointer r = insert_unsafe(p, p2.first, p2.second);
 		return iterator_safe(GetSoftHeapPtr(), r);
 	}
