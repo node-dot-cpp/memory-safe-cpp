@@ -72,6 +72,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     gcc_lto_workaround/gcc_lto_workaround.cpp
     )
 
+  target_link_libraries(gcc_lto_workaround foundation)
   target_link_libraries(SafeMemory gcc_lto_workaround)
 
 endif()
