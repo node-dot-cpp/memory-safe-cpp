@@ -346,95 +346,95 @@ public:
 public:
 	// constexpr unsafe_iterator()
 	// 	: mIterator(nullptr) { }
-	constexpr explicit unsafe_iterator(soft_array_of_prt ptr)
+	explicit unsafe_iterator(soft_array_of_prt ptr)
 		: mIterator(ptr->_begin) {}
 
-	constexpr unsafe_iterator(soft_array_of_prt ptr, size_t ix)
+	unsafe_iterator(soft_array_of_prt ptr, size_t ix)
 		: mIterator(ptr->_begin + ix) {}
 
-	constexpr unsafe_iterator(soft_array_of_prt, pointer ptr)
+	unsafe_iterator(soft_array_of_prt, pointer ptr)
 		: mIterator(ptr) {}
 
-	constexpr unsafe_iterator(pointer ptr)
+	explicit unsafe_iterator(pointer ptr)
 		: mIterator(ptr) {}
 
-	constexpr unsafe_iterator(const unsafe_iterator& ri) = default;
-	constexpr unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
+	unsafe_iterator(const unsafe_iterator& ri) = default;
+	unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
 
 	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
-	constexpr unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
+	unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
 
-	constexpr pointer get_raw_ptr() const {
+	pointer get_raw_ptr() const {
 		return mIterator;
 	}
 
-	constexpr reference operator*() const
+	reference operator*() const
 	{
 		return *mIterator;
 	}
 
-	constexpr pointer operator->() const
+	pointer operator->() const
 		{ return mIterator; }
 
-	constexpr unsafe_iterator& operator++()
+	unsafe_iterator& operator++()
 		{ ++mIterator; return *this; }
 
-	constexpr unsafe_iterator operator++(int)
+	unsafe_iterator operator++(int)
 	{
 		unsafe_iterator ri(*this);
 		++mIterator;
 		return ri;
 	}
 
-	constexpr unsafe_iterator& operator--()
+	unsafe_iterator& operator--()
 		{ --mIterator; return *this; }
 
-	constexpr unsafe_iterator operator--(int)
+	unsafe_iterator operator--(int)
 	{
 		unsafe_iterator ri(*this);
 		--mIterator;
 		return ri;
 	}
 
-	constexpr unsafe_iterator operator+(difference_type n) const
+	unsafe_iterator operator+(difference_type n) const
 		{ return unsafe_iterator(mIterator + n); }
 
-	constexpr unsafe_iterator& operator+=(difference_type n)
+	unsafe_iterator& operator+=(difference_type n)
 		{ mIterator += n; return *this; }
 
-	constexpr unsafe_iterator operator-(difference_type n) const
+	unsafe_iterator operator-(difference_type n) const
 		{ return unsafe_iterator(mIterator - n); }
 
-	constexpr difference_type operator-(const unsafe_iterator& other) const
+	difference_type operator-(const unsafe_iterator& other) const
 		{ return distance(*this, other); }
 
-	constexpr unsafe_iterator& operator-=(difference_type n)
+	unsafe_iterator& operator-=(difference_type n)
 		{ mIterator -= n; return *this; }
 
-	constexpr reference operator[](difference_type n) const
+	reference operator[](difference_type n) const
 		{ return mIterator[n]; }
 
-	constexpr bool operator==(const unsafe_iterator& ri) const
+	bool operator==(const unsafe_iterator& ri) const
 		{ return mIterator == ri.mIterator; }
 
-	constexpr bool operator!=(const unsafe_iterator& ri) const
+	bool operator!=(const unsafe_iterator& ri) const
 		{ return !operator==(ri); }
 
 
-	constexpr pointer _Unwrapped() const {
+	pointer _Unwrapped() const {
 		return mIterator;
 	}
 
-	constexpr void _Seek_to(pointer ptr) {
+	void _Seek_to(pointer ptr) {
 		mIterator = ptr;
 	}
 
-	constexpr bool operator<(const unsafe_iterator& ri) const {
+	bool operator<(const unsafe_iterator& ri) const {
 		return mIterator < ri.mIterator;
 	}
 
-	constexpr bool operator<=(const unsafe_iterator& ri) const {
+	bool operator<=(const unsafe_iterator& ri) const {
 		return mIterator <= ri.mIterator;
 	}
 
@@ -471,94 +471,94 @@ public:
 
 public:
 	// constexpr safe_iterator() {}
-	constexpr explicit safe_iterator(soft_array_of_prt ptr)
+	explicit safe_iterator(soft_array_of_prt ptr)
 		: ptr(ptr), ix(0) {}
 
-	constexpr safe_iterator(soft_array_of_prt ptr, size_t ix)
+	safe_iterator(soft_array_of_prt ptr, size_t ix)
 		: ptr(ptr), ix(ix) {}
 
-	constexpr safe_iterator(soft_array_of_prt ptr, pointer to)
+	safe_iterator(soft_array_of_prt ptr, pointer to)
 		: ptr(ptr) {
 			ix = std::distance(ptr->begin(), to);
 		}
 
-	constexpr safe_iterator(const safe_iterator& ri) = default;
-	constexpr safe_iterator& operator=(const safe_iterator& ri) = default;
+	safe_iterator(const safe_iterator& ri) = default;
+	safe_iterator& operator=(const safe_iterator& ri) = default;
 
 	// allow non-const to const convertion
 	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
-	constexpr safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
+	safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: ptr(ri.ptr), ix(ri.ix) {}
 
-	constexpr pointer get_raw_ptr() const {
+	pointer get_raw_ptr() const {
 		return ptr->get_raw_ptr(ix);
 	}
 
-	constexpr reference operator*() const
+	reference operator*() const
 	{
 		return ptr->at(ix);
 	}
 
-	constexpr pointer operator->() const
+	pointer operator->() const
 		{ return ptr->get_raw_ptr(ix); }
 
-	constexpr safe_iterator& operator++()
+	safe_iterator& operator++()
 		{ ++ix; return *this; }
 
-	constexpr safe_iterator operator++(int)
+	safe_iterator operator++(int)
 	{
 		safe_iterator ri(*this);
 		++ix;
 		return ri;
 	}
 
-	constexpr safe_iterator& operator--()
+	safe_iterator& operator--()
 		{ --ix; return *this; }
 
-	constexpr safe_iterator operator--(int)
+	safe_iterator operator--(int)
 	{
 		safe_iterator ri(*this);
 		--ix;
 		return ri;
 	}
 
-	constexpr safe_iterator operator+(difference_type n) const
+	safe_iterator operator+(difference_type n) const
 		{ return safe_iterator(ptr, ix + n); }
 
-	constexpr safe_iterator& operator+=(difference_type n)
+	safe_iterator& operator+=(difference_type n)
 		{ ix += n; return *this; }
 
-	constexpr safe_iterator operator-(difference_type n) const
+	safe_iterator operator-(difference_type n) const
 		{ return safe_iterator(ptr, ix - n); }
 
-	constexpr difference_type operator-(const safe_iterator& other) const
+	difference_type operator-(const safe_iterator& other) const
 		{ return distance(*this, other); }
 
-	constexpr safe_iterator& operator-=(difference_type n)
+	safe_iterator& operator-=(difference_type n)
 		{ ix -= n; return *this; }
 
-	constexpr reference operator[](difference_type n) const
+	reference operator[](difference_type n) const
 		{ return ptr->at(ix + n); }
 
-	constexpr bool operator==(const safe_iterator& ri) const
+	bool operator==(const safe_iterator& ri) const
 		{ return ptr == ri.ptr && ix == ri.ix; }
 
-	constexpr bool operator!=(const safe_iterator& ri) const
+	bool operator!=(const safe_iterator& ri) const
 		{ return !operator==(ri); }
 
-	constexpr pointer _Unwrapped() const {
+	pointer _Unwrapped() const {
 		return get_raw_ptr();
 	}
 
-	constexpr void _Seek_to(pointer to) {
+	void _Seek_to(pointer to) {
 		ix = std::distance(ptr->begin(), to);
 	}
 
-	constexpr bool operator<(const safe_iterator& ri) const {
+	bool operator<(const safe_iterator& ri) const {
 		return ptr == ri.ptr && ix < ri.ix;
 	}
 
-	constexpr bool operator<=(const safe_iterator& ri) const {
+	bool operator<=(const safe_iterator& ri) const {
 		return ptr == ri.ptr && ix <= ri.ix;
 	}
 
@@ -598,7 +598,7 @@ struct _Range_verifiable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, A
 };
 
 template <typename T, typename Arr>
-constexpr void _Verify_range(const sfd::unsafe_iterator<T, Arr>& _First, const sfd::unsafe_iterator<T, Arr>& _Last) {
+void _Verify_range(const sfd::unsafe_iterator<T, Arr>& _First, const sfd::unsafe_iterator<T, Arr>& _Last) {
 	if(!(_First <= _Last))
 		throw std::out_of_range("_Verify_range");
 }
