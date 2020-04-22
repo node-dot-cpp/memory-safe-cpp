@@ -36,7 +36,7 @@ namespace safememory
 	{
 		const T* str;
 	public:
-		basic_string_literal() : str( nullptr ) {}
+//		basic_string_literal() : str( nullptr ) {}
 		basic_string_literal( const T* str_) : str( str_ ) {}
 		basic_string_literal( const basic_string_literal& other ) = default;
 		basic_string_literal& operator = ( const basic_string_literal& other ) = default;

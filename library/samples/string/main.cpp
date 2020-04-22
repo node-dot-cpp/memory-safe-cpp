@@ -6,7 +6,8 @@
 int main() {
 
     safememory::string s = safememory::string_literal("hola mundo");
-    safememory::string s2 = "hola mundo";
+    safememory::string s2("hola mundo");
+//    safememory::string s3 = "hola mundo"; //error
 
     s.append("! - ");
 
