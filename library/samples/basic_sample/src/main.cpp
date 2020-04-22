@@ -19,7 +19,7 @@ void sampleTestCall()
 	printf( "throwing call (control value: %d)\n", *(any->softN) );
 
 	soft_ptr<int> softN;
-	naked_ptr<int> x = nullptr;
+	nullable_ptr<int> x = nullptr;
 	printf( "throwing call (control value: %d)\n", *x );
 
 }
