@@ -62,16 +62,6 @@ target_link_libraries(SafeMemory iibmalloc)
 
 
 #-------------------------------------------------------------------------------------------
-# Tests 
-#-------------------------------------------------------------------------------------------
-add_executable(test_safe_memory
-  test/test_safe_pointers.cpp
-  )
-
-target_link_libraries(test_safe_memory SafeMemory)
-
-
-#-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
 #-------------------------------------------------------------------------------------------
 
@@ -82,30 +72,18 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     gcc_lto_workaround/gcc_lto_workaround.cpp
     )
 
-  add_compile_options(-fpic)
-
-  target_link_libraries(gcc_lto_workaround foundation)
-  
-  add_executable(test_safe_memory_lto
-    test/test_safe_pointers.cpp
-    gcc_lto_workaround/gcc_lto_workaround.cpp
-    )
-
-  target_link_libraries(test_safe_memory_lto SafeMemory)
-
-  add_test(Run_test_safe_memory_lto test_safe_memory_lto)
-
-  add_executable(test_safe_memory_lto_wa
-    test/test_safe_pointers.cpp
-    )
-
-  target_link_libraries(test_safe_memory_lto_wa SafeMemory gcc_lto_workaround)
-
-  add_test(Run_test_safe_memory_lto_wa test_safe_memory_lto_wa)
-
-  target_link_libraries(test_safe_memory gcc_lto_workaround)
+  target_link_libraries(SafeMemory gcc_lto_workaround)
 
 endif()
+
+#-------------------------------------------------------------------------------------------
+# Tests 
+#-------------------------------------------------------------------------------------------
+add_executable(test_safe_memory
+  test/test_safe_pointers.cpp
+  )
+
+target_link_libraries(test_safe_memory SafeMemory)
 
 add_test(Run_test_safe_memory test_safe_memory)
 

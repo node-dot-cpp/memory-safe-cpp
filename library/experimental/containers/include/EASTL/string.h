@@ -382,8 +382,11 @@ namespace safememory
 
 	//  public:
 	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
-	static_assert(sizeof(size_type) >= sizeof(int), "Fix size!");
-	 		static constexpr size_type kMaxSize = static_cast<size_type>(INT_MAX);
+		static_assert(sizeof(size_type) >= sizeof(int), "Fix size!");
+		static constexpr size_type kMaxSize = static_cast<size_type>(INT_MAX);
+
+		static_assert(is_same<T, char>::value || is_same<T, wchar_t>::value ||
+			is_same<T, char16_t>::value || is_same<T, char32_t>::value, "Type not supported!"); 
 	// 	#else
 	// 		static constexpr size_type kMaxSize = ~kHeapMask;
 	// 	#endif
