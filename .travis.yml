@@ -21,3 +21,9 @@ jobs:
         - cmake -G "Visual Studio 15 2017 Win64" ..
         - cmake --build . --config Release
         - ctest -C Release --output-on-failure
+    - name: Windows Clang
+      os: windows
+      install: choco install ninja
+      script: ./library/tools/travis-windows-clang.bat
+  allow_failures:        
+    - name: Windows Clang
