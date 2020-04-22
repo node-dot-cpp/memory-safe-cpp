@@ -135,7 +135,7 @@ int EAMain(int argc, char* argv[])
 	Benchmark::Environment& environment = Benchmark::GetEnvironment();
 	environment.msPlatform = EA_PLATFORM_DESCRIPTION;
 	environment.msSTLName1 = GetStdSTLName();
-	environment.msSTLName2 = "EASTL";
+	environment.msSTLName2 = "Node.cpp";
 
 
 	// Run tests

@@ -217,15 +217,14 @@ namespace Benchmark
 		EA::UnitTest::Report("EASTL Benchmark test results\n");
 		EA::UnitTest::Report("****************************************************************************************\n");
 		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("EASTL version: %s\n", EASTL_VERSION);
+		// EA::UnitTest::Report("EASTL version: %s\n", EASTL_VERSION);
 		EA::UnitTest::Report("Platform: %s\n", gEnvironment.msPlatform.c_str());
 		EA::UnitTest::Report("Compiler: %s\n", EA_COMPILER_STRING);
+		EA::UnitTest::Report("Allocator: Node.cpp - IibMalloc.\n");
 		#if defined(EA_DEBUG) || defined(_DEBUG)
-		EA::UnitTest::Report("Allocator: PPMalloc::GeneralAllocatorDebug. Thread safety enabled.\n");
-		EA::UnitTest::Report("Build: Debug. Inlining disabled. STL debug features disabled.\n");
+		EA::UnitTest::Report("Build: Debug.\n");
 		#else
-		EA::UnitTest::Report("Allocator: PPMalloc::GeneralAllocator. Thread safety enabled.\n");
-		EA::UnitTest::Report("Build: Full optimization. Inlining enabled.\n");
+		EA::UnitTest::Report("Build: Full optimization.\n");
 		#endif
 		EA::UnitTest::Report("\n");
 		EA::UnitTest::Report("Values are ticks and time to complete tests; smaller values are better.\n");
