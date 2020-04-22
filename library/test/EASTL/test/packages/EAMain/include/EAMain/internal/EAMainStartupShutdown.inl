@@ -67,7 +67,7 @@ namespace EA
 
                     // Required so the EAMainPrintServer can terminate with the correct error code.
                     //
-                    EA::EAMain::Report("RETURNCODE=%d\n", errorCount);
+                    EA::EAMain::Report("\nRETURNCODE=%d\n", errorCount);
 
                     // Shutdown the EAMain print manager.
                     //
