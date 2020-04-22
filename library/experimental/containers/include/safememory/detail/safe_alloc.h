@@ -39,15 +39,19 @@ using ::nodecpp::safememory::soft_ptr;
 
 namespace detail {
 
-struct StackPtrForMakeOwningCallRiia {
-	void* stackTmp = nodecpp::safememory::thg_stackPtrForMakeOwningCall;
-	StackPtrForMakeOwningCallRiia(void* dataForObj) {
-		nodecpp::safememory::thg_stackPtrForMakeOwningCall = dataForObj;
+
+template< class InputIt, class ForwardIt >
+ForwardIt uninitialized_move_or_copy( InputIt first, InputIt last, ForwardIt d_first ) {
+	if constexpr (std::is_nothrow_move_constructible<typename std::iterator_traits<InputIt>::value_type>::value) {
+		return std::uninitialized_move(first, last, d_first);
 	}
-	~StackPtrForMakeOwningCallRiia() {
-		nodecpp::safememory::thg_stackPtrForMakeOwningCall = stackTmp;
+	else {
+		return std::uninitialized_copy(first, last, d_first);
 	}
-};
+}
+
+
+
 
 template<class T>
 struct array_of2
@@ -61,6 +65,18 @@ struct array_of2
 		T _begin[1];
 		size_t dummy;
 	};
+
+
+	struct StackPtrForMakeOwningCallRiia {
+		void* stackTmp = nodecpp::safememory::thg_stackPtrForMakeOwningCall;
+		StackPtrForMakeOwningCallRiia(void* dataForObj) {
+			nodecpp::safememory::thg_stackPtrForMakeOwningCall = dataForObj;
+		}
+		~StackPtrForMakeOwningCallRiia() {
+			nodecpp::safememory::thg_stackPtrForMakeOwningCall = stackTmp;
+		}
+	};
+
 
 	[[noreturn]]
 	void throwPointerOutOfRange() const {
@@ -392,11 +408,31 @@ typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, 
 		return (l.ptr == r.ptr)? l.ix - r.ix : 0;
 }
 
+
+
 } //namespace detail
 } // namespace safememory
 
 #ifdef NODECPP_WINDOWS
 // this is to allow MS to optimize algorightms like std::find using TMP
+
+namespace safememory {
+namespace detail {
+
+template <typename T, typename Arr>
+constexpr void _Verify_range(const unsafe_iterator<T, Arr>& _First, const unsafe_iterator<T, Arr>& _Last) {
+	if(!(_First <= _Last))
+		throw std::out_of_range("_Verify_range");
+}
+
+template <typename T, typename Arr>
+constexpr void _Verify_range(const safe_iterator<T, Arr>& _First, const safe_iterator<T, Arr>& _Last) {
+	if(!(_First <= _Last))
+		throw std::out_of_range("_Verify_range");
+}
+
+}
+}
 
 namespace std {
 
@@ -415,11 +451,6 @@ template <typename T, typename Arr>
 struct _Range_verifiable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
 };
 
-template <typename T, typename Arr>
-void _Verify_range(const sfd::unsafe_iterator<T, Arr>& _First, const sfd::unsafe_iterator<T, Arr>& _Last) {
-	if(!(_First <= _Last))
-		throw std::out_of_range("_Verify_range");
-}
 
 template <typename T, typename Arr>
 struct _Unwrappable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
@@ -433,11 +464,6 @@ template <typename T, typename Arr>
 struct _Range_verifiable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
 };
 
-template <typename T, typename Arr>
-void _Verify_range(const sfd::safe_iterator<T, Arr>& _First, const sfd::safe_iterator<T, Arr>& _Last) {
-	if(!(_First <= _Last))
-		throw std::out_of_range("_Verify_range");
-}
 
 } //namespace std
 #endif //NODECPP_WINDOWS
