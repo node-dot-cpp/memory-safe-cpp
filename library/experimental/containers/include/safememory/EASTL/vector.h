@@ -266,6 +266,8 @@ namespace safememory
 		// using base_type::DoFree;
 		using base_type::internalCapacityPtr;
 		// using base_type::internalAllocator;
+		using base_type::GetSoftHeapPtr;
+		using base_type::SetNewHeap;
 
 	public:
 		vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/;
@@ -2104,7 +2106,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::DoSwap(this_type& x)
 	{
-		std::swap(mHeap,      x.mHeap);
+		std::swap(base_type::mHeap,      x.base_type::mHeap);
 		std::swap(mpBegin,    x.mpBegin);
 		std::swap(mpEnd,      x.mpEnd);
 		std::swap(mCapacity,  x.mCapacity); // We do this even if EASTL_ALLOCATOR_COPY_ENABLED is 0.
