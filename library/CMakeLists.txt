@@ -113,6 +113,5 @@ add_test(Run_test_safe_memory test_safe_memory)
 #-------------------------------------------------------------------------------------------
 # Subdirectories 
 #-------------------------------------------------------------------------------------------
-add_subdirectory(examples/string)
-add_subdirectory(examples/vector)
+add_subdirectory(samples)
 add_subdirectory(test/EASTL)
