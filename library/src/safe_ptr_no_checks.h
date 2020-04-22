@@ -273,10 +273,10 @@ public:
 	template<class T1>
 	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_no_checks<T1>& other ) { t = other.t; return *this; }
 	soft_ptr_base_no_checks( const soft_ptr_base_no_checks<T>& other ) { t = other.t; }
-	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_no_checks<T>& other ) { t = other.t; return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>& other ) { t = other.t; return *this; }
 
 	soft_ptr_base_no_checks( const soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); }
-	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); return *this; }
 
 	soft_ptr_base_no_checks( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; }
 
@@ -410,14 +410,14 @@ public:
 		return *this;
 	}
 	soft_ptr_no_checks( const soft_ptr_no_checks<T>& other ) : soft_ptr_base_no_checks<T>(other) {}
-	soft_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other )
+	soft_ptr_no_checks<T>& operator = ( soft_ptr_no_checks<T>& other )
 	{
 		soft_ptr_base_no_checks<T>::operator = (other);
 		return *this;
 	}
 
 	soft_ptr_no_checks( const soft_ptr_impl<T>& other ) : soft_ptr_base_no_checks<T>(other) {}
-	soft_ptr_no_checks<T>& operator = ( const soft_ptr_impl<T>& other )
+	soft_ptr_no_checks<T>& operator = ( soft_ptr_impl<T>& other )
 	{
 		soft_ptr_base_no_checks<T>::operator = (other);
 		return *this;
