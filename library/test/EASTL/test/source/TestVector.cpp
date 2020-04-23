@@ -75,33 +75,33 @@ namespace
 			EA_DISABLE_VC_WARNING(4626) // disable warning : "assignment operator was implicitly defined as deleted"
 			EA_DISABLE_VC_WARNING(5027) // disable warning : "move assignment operator was implicitly defined as deleted"
 #endif
-struct ScenarioRefEntry
-{
-	ScenarioRefEntry(const std::string& contextDatabase) : ContextDatabase(contextDatabase) {}
+// struct ScenarioRefEntry
+// {
+// 	ScenarioRefEntry(const std::string& contextDatabase) : ContextDatabase(contextDatabase) {}
 
-	struct RowEntry
-	{
-		RowEntry(int levelId, int sceneId, int actorId, int partId, const std::string& controller)
-			: LevelId(levelId), SceneId(sceneId), ActorId(actorId), PartId(partId), Controller(controller)
-		{
-		}
+// 	struct RowEntry
+// 	{
+// 		RowEntry(int levelId, int sceneId, int actorId, int partId, const std::string& controller)
+// 			: LevelId(levelId), SceneId(sceneId), ActorId(actorId), PartId(partId), Controller(controller)
+// 		{
+// 		}
 
-		int LevelId;
-		int SceneId;
-		int ActorId;
-		int PartId;
-		const std::string& Controller;
-	};
-	const std::string& ContextDatabase;  // note:  const class members prohibits move semantics
-	typedef safememory::vector<RowEntry> RowData;
-	RowData Rows;
-};
-typedef safememory::vector<ScenarioRefEntry> ScenarRefData;
-struct AntMetaDataRecord
-{
-	ScenarRefData ScenarioRefs;
-};
-typedef safememory::vector<AntMetaDataRecord> MetadataRecords;
+// 		int LevelId;
+// 		int SceneId;
+// 		int ActorId;
+// 		int PartId;
+// 		const std::string& Controller;
+// 	};
+// 	const std::string& ContextDatabase;  // note:  const class members prohibits move semantics
+// 	typedef safememory::vector<RowEntry> RowData;
+// 	RowData Rows;
+// };
+// typedef safememory::vector<ScenarioRefEntry> ScenarRefData;
+// struct AntMetaDataRecord
+// {
+// 	ScenarRefData ScenarioRefs;
+// };
+// typedef safememory::vector<AntMetaDataRecord> MetadataRecords;
 
 struct StructWithConstInt
 {
@@ -313,10 +313,10 @@ int TestVector()
 		// EATEST_VERIFY((toVectorB.size() == 5) && (toVectorB.front().mX == 55) && (vector5TO55.size() == 0));
 
 		// Should be able to emplace_back an item with const members (non-copyable)
-		safememory::vector<ItemWithConst> myVec2;
-		ItemWithConst& ref = myVec2.emplace_back(42);
-		EATEST_VERIFY(myVec2.back().i == 42);
-		EATEST_VERIFY(ref.i == 42);
+		// safememory::vector<ItemWithConst> myVec2;
+		// ItemWithConst& ref = myVec2.emplace_back(42);
+		// EATEST_VERIFY(myVec2.back().i == 42);
+		// EATEST_VERIFY(ref.i == 42);
 	}
 
 	{
@@ -1518,13 +1518,13 @@ int TestVector()
 
 	{
 		// Regression for compilation errors found and fixed when integrating into Frostbite.
-		int j = 7;
+		// int j = 7;
 
-		safememory::vector<StructWithConstInt> v1;
-		v1.push_back(StructWithConstInt(j));
+		// safememory::vector<StructWithConstInt> v1;
+		// v1.push_back(StructWithConstInt(j));
 
-		safememory::vector<StructWithConstRefToInt> v2;
-		v2.push_back(StructWithConstRefToInt(j));
+		// safememory::vector<StructWithConstRefToInt> v2;
+		// v2.push_back(StructWithConstRefToInt(j));
 	}
 
 	{
@@ -1536,11 +1536,11 @@ int TestVector()
 
 	{
 		// Calling erase of empty range should not call a move assignment to self
-		safememory::vector<TestMoveAssignToSelf> v1;
-		v1.push_back(TestMoveAssignToSelf());
-		EATEST_VERIFY(!v1[0].mMovedToSelf);
-		v1.erase(v1.begin(), v1.begin());
-		EATEST_VERIFY(!v1[0].mMovedToSelf);
+		// safememory::vector<TestMoveAssignToSelf> v1;
+		// v1.push_back(TestMoveAssignToSelf());
+		// EATEST_VERIFY(!v1[0].mMovedToSelf);
+		// v1.erase(v1.begin(), v1.begin());
+		// EATEST_VERIFY(!v1[0].mMovedToSelf);
 	}
 
 #if defined(EASTL_TEST_CONCEPT_IMPLS)

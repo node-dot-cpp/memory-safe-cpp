@@ -212,8 +212,10 @@ namespace safememory
 	template <typename T, typename Allocator = std::allocator<T> >
 	class vector
 	{
-		static_assert(std::is_nothrow_move_constructible<T>::value ||
-			std::is_copy_constructible<T>::value, "T must be copiable or nothrow movable");
+		static_assert((std::is_nothrow_move_constructible<T>::value &&
+		std::is_nothrow_move_assignable<T>::value)  ||
+			(std::is_copy_constructible<T>::value && 
+			std::is_copy_assignable<T>::value), "T must be copiable or nothrow movable");
 
 
 		// typedef VectorBase<T, Allocator>                      base_type;
@@ -459,18 +461,18 @@ namespace safememory
 		// template <typename ForwardIterator>
 		// void DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
 
-		template <typename Integer, bool bMove>
-		void DoAssign(Integer n, Integer value, std::true_type);
+		// template <typename Integer, bool bMove>
+		// void DoAssign(Integer n, Integer value, std::true_type);
 
-		template <typename InputIterator, bool bMove>
-		void DoAssign(InputIterator first, InputIterator last, std::false_type);
+		// template <typename InputIterator, bool bMove>
+		// void DoAssign(InputIterator first, InputIterator last, std::false_type);
 
 		void DoAssignValues(size_type n, const value_type& value);
 
-		template <typename InputIterator, bool bMove>
+		template <typename InputIterator/*, bool bMove*/>
 		void DoAssignFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag);
 
-		template <typename RandomAccessIterator, bool bMove>
+		template <typename RandomAccessIterator/*, bool bMove*/>
 		void DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, std::random_access_iterator_tag);
 
 		template <typename Integer>
@@ -789,7 +791,10 @@ namespace safememory
 			// 	#endif
 			// }
 
-			DoAssign<const_pointer, false>(x.begin_unsafe(), x.end_unsafe(), std::false_type());
+			// DoAssign<const_pointer, false>(x.begin_unsafe(), x.end_unsafe(), std::false_type());
+			typedef typename std::iterator_traits<const_pointer>::iterator_category IC;
+			DoAssignFromIterator(x.begin_unsafe(), x.end_unsafe(), IC());
+
 		}
 
 		return *this;
@@ -802,7 +807,7 @@ namespace safememory
 	{
 		typedef typename std::initializer_list<value_type>::iterator InputIterator;
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
-		DoAssignFromIterator<InputIterator, false>(ilist.begin(), ilist.end(), IC()); // initializer_list has const elements and so we can't move from them.
+		DoAssignFromIterator(ilist.begin(), ilist.end(), IC()); // initializer_list has const elements and so we can't move from them.
 		return *this;
 	}
 
@@ -834,7 +839,10 @@ namespace safememory
 		// It turns out that the C++ std::vector<int, int> specifies a two argument
 		// version of assign that takes (int size, int value). These are not iterators, 
 		// so we need to do a template compiler trick to do the right thing.
-		DoAssign<InputIterator, false>(first, last, std::is_integral<InputIterator>());
+		// DoAssign<InputIterator, false>(first, last, std::is_integral<InputIterator>());
+		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
+		DoAssignFromIterator(first, last, IC());
+
 	}
 
 	template <typename T, typename Allocator>
@@ -849,7 +857,7 @@ namespace safememory
 	{
 		typedef typename std::initializer_list<value_type>::iterator InputIterator;
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
-		DoAssignFromIterator<InputIterator, false>(ilist.begin(), ilist.end(), IC()); // initializer_list has const elements and so we can't move from them.
+		DoAssignFromIterator(ilist.begin(), ilist.end(), IC()); // initializer_list has const elements and so we can't move from them.
 	}
 
 
@@ -1856,21 +1864,21 @@ namespace safememory
 // 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename Integer, bool bMove>
-	inline void vector<T, Allocator>::DoAssign(Integer n, Integer value, std::true_type)
-	{
-		DoAssignValues(static_cast<size_type>(n), static_cast<value_type>(value));
-	}
+	// template <typename T, typename Allocator>
+	// template <typename Integer, bool bMove>
+	// inline void vector<T, Allocator>::DoAssign(Integer n, Integer value, std::true_type)
+	// {
+	// 	DoAssignValues(static_cast<size_type>(n), static_cast<value_type>(value));
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename InputIterator, bool bMove>
-	inline void vector<T, Allocator>::DoAssign(InputIterator first, InputIterator last, std::false_type)
-	{
-		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
-		DoAssignFromIterator<InputIterator, bMove>(first, last, IC());
-	}
+	// template <typename T, typename Allocator>
+	// template <typename InputIterator, bool bMove>
+	// inline void vector<T, Allocator>::DoAssign(InputIterator first, InputIterator last, std::false_type)
+	// {
+	// 	typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
+	// 	DoAssignFromIterator<InputIterator, bMove>(first, last, IC());
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -1897,7 +1905,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	template <typename InputIterator, bool bMove>
+	template <typename InputIterator/*, bool bMove*/>
 	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
 	{
 		pointer position(mpBegin);
@@ -1916,7 +1924,7 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	template <typename RandomAccessIterator, bool bMove>
+	template <typename RandomAccessIterator/*, bool bMove*/>
 	void vector<T, Allocator>::DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, std::random_access_iterator_tag)
 	{
 		const size_type n = (size_type)std::distance(first, last);
@@ -1947,7 +1955,7 @@ namespace safememory
 
 
 		}
-		else if(n <= size_type(mpEnd - mpBegin)) // If n <= size ...
+		else if(n <= size()) // If n <= size ...
 		{
 			pointer const pNewEnd = std::copy(first, last, mpBegin); // Since we are copying to mpBegin, we don't have to worry about needing copy_backward or a memmove-like copy (as opposed to memcpy-like copy).
 			std::destroy(pNewEnd, mpEnd);
