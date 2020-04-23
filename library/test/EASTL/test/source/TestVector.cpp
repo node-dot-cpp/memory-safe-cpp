@@ -58,10 +58,10 @@ template class safememory::vector<HasAddressOfOperator>;  // force compile all f
 
 
 // Test compiler issue that appeared in VS2012 relating to kAlignment
-struct StructWithContainerOfStructs
-{
-	safememory::vector<StructWithContainerOfStructs> children;
-};
+// struct StructWithContainerOfStructs
+// {
+// 	safememory::vector<StructWithContainerOfStructs> children;
+// };
 
 		// This relatively complex test is to prevent a regression on VS2013.  The data types have what may appear to be
 		// strange names (for test code) because the code is based on a test case extracted from the Frostbite codebase.
@@ -533,9 +533,9 @@ int TestVector()
 					  (TestObject::sTOCtorCount == 1));
 		EATEST_VERIFY(ref.mX == (2 + 3 + 4));
 
-		toVectorA.emplace(toVectorA.begin(), 3, 4, 5);
-		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
-					  (TestObject::sTOCtorCount == 3));  // 3 because the original count of 1, plus the existing vector
+		// toVectorA.emplace(toVectorA.begin(), 3, 4, 5);
+		// EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
+		// 			  (TestObject::sTOCtorCount == 3));  // 3 because the original count of 1, plus the existing vector
 														 // element will be moved, plus the one being emplaced.
 
 		TestObject::Reset();
@@ -1114,7 +1114,7 @@ int TestVector()
 		vector<int>(v).swap(v);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v.empty());
-		EATEST_VERIFY(v.capacity() == v.size());
+		// EATEST_VERIFY(v.capacity() == v.size());
 
 		// How to completely clear a vector (size = 0, capacity = 0, no allocation).
 		vector<int>().swap(v);
@@ -1123,53 +1123,53 @@ int TestVector()
 		// EATEST_VERIFY(v.capacity() == 0);
 	}
 
-	{  // set_capacity / reset
-		// using namespace eastl;
+	// {  // set_capacity / reset
+	// 	// using namespace eastl;
 
-		const int intArray[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
-		const size_t kIntArraySize = sizeof(intArray) / sizeof(int);
+	// 	const int intArray[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
+	// 	const size_t kIntArraySize = sizeof(intArray) / sizeof(int);
 
-		vector<int> v(30);
-		EATEST_VERIFY(v.capacity() >= 30);
+	// 	vector<int> v(30);
+	// 	EATEST_VERIFY(v.capacity() >= 30);
 
-		v.assign_unsafe(intArray, intArray + kIntArraySize);
-		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.assign", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
-									 13, 14, 15, 16, 17, -1));
+	// 	v.assign_unsafe(intArray, intArray + kIntArraySize);
+	// 	EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.assign", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+	// 								 13, 14, 15, 16, 17, -1));
 
-		// set_capacity
-		v.set_capacity();
-		EATEST_VERIFY(v.capacity() == v.size());
-		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.set_capacity", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
-									 11, 12, 13, 14, 15, 16, 17, -1));
+	// 	// set_capacity
+	// 	v.set_capacity();
+	// 	EATEST_VERIFY(v.capacity() == v.size());
+	// 	EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.set_capacity", 1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+	// 								 11, 12, 13, 14, 15, 16, 17, -1));
 
-		v.set_capacity(0);
-		EATEST_VERIFY(v.size() == 0);
-		// EATEST_VERIFY(v.data() == NULL);
-		// EATEST_VERIFY(v.capacity() == v.size());
+	// 	v.set_capacity(0);
+	// 	EATEST_VERIFY(v.size() == 0);
+	// 	// EATEST_VERIFY(v.data() == NULL);
+	// 	// EATEST_VERIFY(v.capacity() == v.size());
 
-		// Test set_capacity doing a realloc of non-scalar class types.
-		safememory::vector<TestObject> toArray;
-		toArray.resize(16);
-		toArray.set_capacity(64);
-		EATEST_VERIFY(v.validate());
+	// 	// Test set_capacity doing a realloc of non-scalar class types.
+	// 	safememory::vector<TestObject> toArray;
+	// 	toArray.resize(16);
+	// 	toArray.set_capacity(64);
+	// 	EATEST_VERIFY(v.validate());
 
-		// reset_lose_memory
-		// int* const pData = v.data();
-		// vector<int>::size_type n = v.size();
-		// vector<int>::allocator_type& allocator = v.get_allocator();
-		// v.reset_lose_memory();
-		// allocator.deallocate(pData, n);
-		// EATEST_VERIFY(v.capacity() == 0);
-		// EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
+	// 	// reset_lose_memory
+	// 	// int* const pData = v.data();
+	// 	// vector<int>::size_type n = v.size();
+	// 	// vector<int>::allocator_type& allocator = v.get_allocator();
+	// 	// v.reset_lose_memory();
+	// 	// allocator.deallocate(pData, n);
+	// 	// EATEST_VERIFY(v.capacity() == 0);
+	// 	// EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
 
-		// Test set_capacity make a move when reducing size
-		vector<TestObject> toArray2(10, TestObject(7));
-		TestObject::Reset();
-		toArray2.set_capacity(5);
-		EATEST_VERIFY(TestObject::sTOMoveCtorCount == 5 &&
-					  TestObject::sTOCopyCtorCount + TestObject::sTOCopyAssignCount == 0); // Move the 5 existing elements, no copy
-		EATEST_VERIFY(VerifySequence(toArray2.begin(), toArray2.end(), int(), "vector.set_capacity", 7, 7, 7, 7, 7, -1));
-	}
+	// 	// Test set_capacity make a move when reducing size
+	// 	vector<TestObject> toArray2(10, TestObject(7));
+	// 	TestObject::Reset();
+	// 	toArray2.set_capacity(5);
+	// 	EATEST_VERIFY(TestObject::sTOMoveCtorCount == 5 &&
+	// 				  TestObject::sTOCopyCtorCount + TestObject::sTOCopyAssignCount == 0); // Move the 5 existing elements, no copy
+	// 	EATEST_VERIFY(VerifySequence(toArray2.begin(), toArray2.end(), int(), "vector.set_capacity", 7, 7, 7, 7, 7, -1));
+	// }
 
 	TestObject::Reset();
 
@@ -1539,42 +1539,42 @@ int TestVector()
 	}
 
 #if defined(EASTL_TEST_CONCEPT_IMPLS)
-	{
-		// vector default constructor should require no more than Destructible
-		safememory::vector<Destructible> v1;
-		EATEST_VERIFY(v1.empty());
+	// {
+	// 	// vector default constructor should require no more than Destructible
+	// 	safememory::vector<Destructible> v1;
+	// 	EATEST_VERIFY(v1.empty());
 
-		// some basic vector operations (data(), capacity(), size(), empty(), clear(), erase()) should impose no
-		// requirements beyond Destructible
-		EATEST_VERIFY(v1.empty());
-		EATEST_VERIFY(v1.size() == 0);
-		// EATEST_VERIFY(v1.capacity() == 0);
-		EATEST_VERIFY(std::distance(v1.data(), v1.data() + v1.size()) == 0);
-		v1.clear();
-	}
+	// 	// some basic vector operations (data(), capacity(), size(), empty(), clear(), erase()) should impose no
+	// 	// requirements beyond Destructible
+	// 	EATEST_VERIFY(v1.empty());
+	// 	EATEST_VERIFY(v1.size() == 0);
+	// 	// EATEST_VERIFY(v1.capacity() == 0);
+	// 	EATEST_VERIFY(std::distance(v1.data(), v1.data() + v1.size()) == 0);
+	// 	v1.clear();
+	// }
 
-	{
-		// vector default constructor should work with DefaultConstructible T
-		safememory::vector<DefaultConstructible> v1;
-		EATEST_VERIFY(v1.empty());
-	}
+	// {
+	// 	// vector default constructor should work with DefaultConstructible T
+	// 	safememory::vector<DefaultConstructible> v1;
+	// 	EATEST_VERIFY(v1.empty());
+	// }
 
-	{
-		// vector constructor that takes an initial size should only require DefaultConstructible T
-		safememory::vector<DefaultConstructible> v2(2);
-		EATEST_VERIFY(v2.size() == 2 && v2[0].value == v2[1].value &&
-					  v2[0].value == DefaultConstructible::defaultValue);
-	}
+	// {
+	// 	// vector constructor that takes an initial size should only require DefaultConstructible T
+	// 	safememory::vector<DefaultConstructible> v2(2);
+	// 	EATEST_VERIFY(v2.size() == 2 && v2[0].value == v2[1].value &&
+	// 				  v2[0].value == DefaultConstructible::defaultValue);
+	// }
 
-	{
-		// vector constructor taking an initial size and a value should only require CopyConstructible
-		safememory::vector<CopyConstructible> v3(2, CopyConstructible::Create());
-		EATEST_VERIFY(v3.size() == 2 && v3[0].value == v3[1].value && v3[0].value == CopyConstructible::defaultValue);
+	// {
+	// 	// vector constructor taking an initial size and a value should only require CopyConstructible
+	// 	safememory::vector<CopyConstructible> v3(2, CopyConstructible::Create());
+	// 	EATEST_VERIFY(v3.size() == 2 && v3[0].value == v3[1].value && v3[0].value == CopyConstructible::defaultValue);
 
-		// vector constructor taking a pair of iterators should work for CopyConstructible
-		safememory::vector<CopyConstructible> v4(cbegin(v3), cend(v3));
-		EATEST_VERIFY(v4.size() == 2 && v4[0].value == v4[1].value && v4[0].value == CopyConstructible::defaultValue);
-	}
+	// 	// vector constructor taking a pair of iterators should work for CopyConstructible
+	// 	safememory::vector<CopyConstructible> v4(cbegin(v3), cend(v3));
+	// 	EATEST_VERIFY(v4.size() == 2 && v4[0].value == v4[1].value && v4[0].value == CopyConstructible::defaultValue);
+	// }
 
 	{
 		// vector::reserve() should only require MoveInsertible
@@ -1599,36 +1599,36 @@ int TestVector()
 		// EATEST_VERIFY(v7.size() == 1 && v7[0].value == MoveConstructible::defaultValue);
 	}
 
-	{
-		// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
-		// testable result.
+	// {
+	// 	// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
+	// 	// testable result.
 
-		safememory::vector<Destructible> v4, v5;
-		std::swap(v4, v5);
-		EATEST_VERIFY(v4.empty() && v5.empty());
+	// 	safememory::vector<Destructible> v4, v5;
+	// 	std::swap(v4, v5);
+	// 	EATEST_VERIFY(v4.empty() && v5.empty());
 
-		safememory::vector<DefaultConstructible> v6(1), v7(2);
-		std::swap(v6, v7);
-		EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
-	}
+	// 	safememory::vector<DefaultConstructible> v6(1), v7(2);
+	// 	std::swap(v6, v7);
+	// 	EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
+	// }
 
-	{
-		// vector::resize() should only require MoveInsertable and DefaultInsertable
-		safememory::vector<MoveAndDefaultConstructible> v8;
-		v8.resize(2);
-		EATEST_VERIFY(v8.size() == 2 && v8[0].value == v8[1].value && v8[0].value ==
-		MoveAndDefaultConstructible::defaultValue);
-	}
+	// {
+	// 	// vector::resize() should only require MoveInsertable and DefaultInsertable
+	// 	safememory::vector<MoveAndDefaultConstructible> v8;
+	// 	v8.resize(2);
+	// 	EATEST_VERIFY(v8.size() == 2 && v8[0].value == v8[1].value && v8[0].value ==
+	// 	MoveAndDefaultConstructible::defaultValue);
+	// }
 
-	{
-		safememory::vector<MoveAssignable> v1;
-		// vector::insert(pos, rv) should only require MoveAssignable
-		v1.insert(begin(v1), MoveAssignable::Create());
-		EATEST_VERIFY(v1.size() == 1 && v1.front().value == MoveAssignable::defaultValue);
-		// vector::erase(pos) should only require MoveAssignable
-		v1.erase(begin(v1));
-		EATEST_VERIFY(v1.empty());
-	}
+	// {
+	// 	safememory::vector<MoveAssignable> v1;
+	// 	// vector::insert(pos, rv) should only require MoveAssignable
+	// 	v1.insert(begin(v1), MoveAssignable::Create());
+	// 	EATEST_VERIFY(v1.size() == 1 && v1.front().value == MoveAssignable::defaultValue);
+	// 	// vector::erase(pos) should only require MoveAssignable
+	// 	v1.erase(begin(v1));
+	// 	EATEST_VERIFY(v1.empty());
+	// }
 #endif // EASTL_TEST_CONCEPT_IMPLS
 
 	{

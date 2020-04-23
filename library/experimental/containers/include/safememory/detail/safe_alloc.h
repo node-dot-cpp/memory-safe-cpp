@@ -63,7 +63,7 @@ struct array_of2
 	//TODO fix sizeof(this) used for allocation
 	union {
 		T _begin[1];
-		size_t dummy;
+		char dummy;
 	};
 
 
@@ -134,7 +134,14 @@ template<class _Ty>
 	{
 		using namespace nodecpp::safememory;
 		size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
-		void* data = zombieAllocate( head + sizeof(array_of2<_Ty>) + (sizeof(_Ty) * size));
+		
+		// TODO here we should fine tune the sizes of array_of2<T> 
+		size_t total = head + sizeof(array_of2<_Ty>) + (sizeof(_Ty) * size);
+		void* data = zombieAllocate(total);
+
+		if constexpr (!std::is_trivial<_Ty>::value)
+			std::memset(data, 0, total);
+
 		array_of2<_Ty>* dataForObj = reinterpret_cast<array_of2<_Ty>*>(reinterpret_cast<uintptr_t>(data) + head);
 		owning_ptr_impl<array_of2<_Ty>> op(make_owning_t(), dataForObj);
 		// void* stackTmp = thg_stackPtrForMakeOwningCall;

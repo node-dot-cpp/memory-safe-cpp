@@ -154,69 +154,53 @@ namespace safememory
 	///     be destroyed before entering the handler of a function-try-block
 	///     of a constructor or destructor for that block."
 	///
-	template <typename T, typename Allocator>
-	struct VectorBase
-	{
-		// typedef Allocator    allocator_type;
-		typedef std::size_t       size_type;
-		typedef std::ptrdiff_t    difference_type;
+	// template <typename T, typename Allocator>
+	// struct VectorBase
+	// {
+	// 	// typedef Allocator    allocator_type;
+	// 	// typedef std::size_t       size_type;
+	// 	// typedef std::ptrdiff_t    difference_type;
 
-		typedef owning_ptr<detail::array_of2<T>> owning_heap_type;
-		typedef soft_ptr<detail::array_of2<T>> soft_heap_type;
 
-		#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (_MSC_VER <= 1600) && !EASTL_STD_CPP_ONLY  // _MSC_VER of 1400 means VS2005, 1600 means VS2010. VS2012 generates errors with usage of enum:size_type.
-			enum : size_type {                      // Use Microsoft enum language extension, allowing for smaller debug symbols than using a static const. Users have been affected by this.
-				npos     = (size_type)-1,
-				kMaxSize = (size_type)-2
-			};
-		#else
-			static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
-			static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
-		#endif
+	// 	#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (_MSC_VER <= 1600) && !EASTL_STD_CPP_ONLY  // _MSC_VER of 1400 means VS2005, 1600 means VS2010. VS2012 generates errors with usage of enum:size_type.
+	// 		enum : size_type {                      // Use Microsoft enum language extension, allowing for smaller debug symbols than using a static const. Users have been affected by this.
+	// 			npos     = (size_type)-1,
+	// 			kMaxSize = (size_type)-2
+	// 		};
+	// 	#else
+	// 		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
+	// 		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
+	// 	#endif
 
-	protected:
-		owning_heap_type							mHeap;
-		T*                                          mpBegin;
-		T*                                          mpEnd;
+	// protected:
+	// 	owning_heap_type							mHeap;
+	// 	T*                                          mpBegin;
+	// 	T*                                          mpEnd;
 		// eastl::compressed_pair<T*, allocator_type>  mCapacityAllocator;
-		T*	                                        mCapacity;
+		// T*	                                        mCapacity;
 
-		T*& internalCapacityPtr() EA_NOEXCEPT { return mCapacity; }
-		T* const& internalCapacityPtr() const EA_NOEXCEPT { return mCapacity; }
+		// T*& internalCapacityPtr() EA_NOEXCEPT { return mCapacity; }
+		// T* const& internalCapacityPtr() const EA_NOEXCEPT { return mCapacity; }
 		// allocator_type&  internalAllocator() EA_NOEXCEPT { return mCapacityAllocator.second(); }
 		// const allocator_type&  internalAllocator() const EA_NOEXCEPT { return mCapacityAllocator.second(); }
 
-		inline void SetNewHeap(owning_heap_type&& new_heap) {
-			mHeap = std::move(new_heap);
-			if(mHeap) {
-				mpBegin = mHeap->begin();
-				mCapacity = mHeap->begin() + mHeap->capacity();
-			}
-			else {
-				mpBegin = nullptr;
-				mCapacity = nullptr;
-			}
+	// public:
+	// 	VectorBase();
+	// 	// VectorBase(const allocator_type& allocator);
+	// 	VectorBase(size_type n/*, const allocator_type& allocator*/);
 
-		}
-		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(mHeap); }
-
-	public:
-		VectorBase();
-		// VectorBase(const allocator_type& allocator);
-		VectorBase(size_type n/*, const allocator_type& allocator*/);
-
-	   ~VectorBase();
+	//    ~VectorBase();
 
 		// const allocator_type& get_allocator() const EA_NOEXCEPT;
 		// allocator_type&       get_allocator() EA_NOEXCEPT;
 		// void                  set_allocator(const allocator_type& allocator);
 
-	protected:
-		owning_heap_type  DoAllocate(size_type n);
+	// protected:
+		// owning_heap_type  DoAllocate(size_type n);
 		// void      DoFree(T* p, size_type n);
-		size_type GetNewCapacity(size_type currentCapacity);
+		// size_type GetNewCapacity(size_type currentCapacity);
 
-	}; // VectorBase
+	// }; // VectorBase
 
 
 
@@ -226,9 +210,13 @@ namespace safememory
 	/// Implements a dynamic array.
 	///
 	template <typename T, typename Allocator = std::allocator<T> >
-	class vector : public VectorBase<T, Allocator>
+	class vector
 	{
-		typedef VectorBase<T, Allocator>                      base_type;
+		static_assert(std::is_nothrow_move_constructible<T>::value ||
+			std::is_copy_constructible<T>::value, "T must be copiable or nothrow movable");
+
+
+		// typedef VectorBase<T, Allocator>                      base_type;
 		typedef vector<T, Allocator>                          this_type;
 
 	public:
@@ -239,9 +227,12 @@ namespace safememory
 		typedef const T&                                      const_reference;
 		typedef std::reverse_iterator<pointer>        		  reverse_iterator_unsafe;
 		typedef std::reverse_iterator<const_pointer>          const_reverse_iterator_unsafe;    
-		typedef typename base_type::size_type                 size_type;
-		typedef typename base_type::difference_type           difference_type;
+		typedef std::size_t								      size_type;
+		typedef std::ptrdiff_t    							  difference_type;
 		// typedef typename base_type::allocator_type            allocator_type;
+
+		typedef owning_ptr<detail::array_of2<T>> 					owning_heap_type;
+		typedef soft_ptr<detail::array_of2<T>> 						soft_heap_type;
 
 		typedef detail::safe_iterator<T>							iterator_safe;
 		typedef detail::safe_iterator<const T>						const_iterator_safe;
@@ -257,17 +248,25 @@ namespace safememory
 		typedef reverse_iterator_safe             					reverse_iterator;
 		typedef const_reverse_iterator_safe							const_reverse_iterator;    
 
-		using base_type::mpBegin;
-		using base_type::mpEnd;
-		using base_type::mCapacity;
-		using base_type::npos;
-		using base_type::GetNewCapacity;
-		using base_type::DoAllocate;
+		// using base_type::mpBegin;
+		// using base_type::mpEnd;
+		// using base_type::mCapacity;
+		// using base_type::npos;
+		// using base_type::GetNewCapacity;
+		// using base_type::DoAllocate;
 		// using base_type::DoFree;
-		using base_type::internalCapacityPtr;
+		// using base_type::internalCapacityPtr;
 		// using base_type::internalAllocator;
-		using base_type::GetSoftHeapPtr;
-		using base_type::SetNewHeap;
+
+		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
+		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
+
+	private:
+		owning_heap_type							mHeap;
+		T*                                          mpBegin;
+		T*                                          mpEnd;
+		// eastl::compressed_pair<T*, allocator_type>  mCapacityAllocator;
+		T*	                                        mCapacity;
 
 	public:
 		vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/;
@@ -336,11 +335,12 @@ namespace safememory
 		bool      empty() const EA_NOEXCEPT;
 		size_type size() const EA_NOEXCEPT;
 		size_type capacity() const EA_NOEXCEPT;
+		size_type max_size() const EA_NOEXCEPT;
 
 		void resize(size_type n, const value_type& value);
 		void resize(size_type n);
 		void reserve(size_type n);
-		void set_capacity(size_type n = base_type::npos);   // Revises the capacity to the user-specified value. Resizes the container to match the capacity if the requested capacity n is less than the current size. If n == npos then the capacity is reallocated (if necessary) such that capacity == size.
+		// void set_capacity(size_type n = base_type::npos);   // Revises the capacity to the user-specified value. Resizes the container to match the capacity if the requested capacity n is less than the current size. If n == npos then the capacity is reallocated (if necessary) such that capacity == size.
 		void shrink_to_fit();                               // C++11 function which is the same as set_capacity().
 
 		pointer       data() EA_NOEXCEPT;
@@ -420,25 +420,44 @@ namespace safememory
 		// (iterator categories). This is because in these cases there is an optimized
 		// implementation that can be had for some cases relative to others. Functions
 		// which aren't referenced are neither compiled nor linked into the application.
-		struct should_copy_tag{}; struct should_move_tag : public should_copy_tag{};
 
-		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
+		/// Allocates a new heap of at least \c n elements in size
+		/// The actual allocated size depends on grow policy, and also
+		/// depend on iibmalloc discrete posible sizes of allocation.
+		owning_heap_type  DoAllocate(size_type n);
 
-		template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
-		void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag);
+		/// Set a newly allocated heap, we currently don't support
+		/// not having an allocated heap
+		inline void SetNewHeap(owning_heap_type&& new_heap) {
+			mHeap = std::move(new_heap);
+			mpBegin = mHeap->begin();
+			mCapacity = mHeap->begin() + mHeap->capacity();
+		}
 
-		template <typename Integer>
-		void DoInit(Integer n, Integer value, std::true_type);
+		/// Set a soft_ptr to the heap, mostly used by safe iterators
+		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT {
+			return soft_heap_type(mHeap);
+		}
 
-		template <typename InputIterator>
-		void DoInit(InputIterator first, InputIterator last, std::false_type);
+		// struct should_copy_tag{}; struct should_move_tag : public should_copy_tag{};
 
-		template <typename InputIterator>
-		void DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag);
+		// template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
+		// void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag);
 
-		template <typename ForwardIterator>
-		void DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
+		// template <typename ForwardIterator> // Allocates a pointer of array count n and copy-constructs it with [first,last).
+		// void DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag);
+
+		// template <typename Integer>
+		// void DoInit(Integer n, Integer value, std::true_type);
+
+		// template <typename InputIterator>
+		// void DoInit(InputIterator first, InputIterator last, std::false_type);
+
+		// template <typename InputIterator>
+		// void DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag);
+
+		// template <typename ForwardIterator>
+		// void DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag);
 
 		template <typename Integer, bool bMove>
 		void DoAssign(Integer n, Integer value, std::true_type);
@@ -477,7 +496,7 @@ namespace safememory
 		template<typename... Args>
 		void DoInsertValueEnd(Args&&... args);
 
-		void DoClearCapacity();
+		// void DoClearCapacity();
 
 		void DoGrow(size_type n);
 
@@ -506,44 +525,44 @@ namespace safememory
 	// VectorBase
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename T, typename Allocator>
-	inline VectorBase<T, Allocator>::VectorBase()
-// 		: mpBegin(NULL), 
-// 		  mpEnd(NULL),
-// //		  mCapacityAllocator(NULL, allocator_type(EASTL_VECTOR_DEFAULT_NAME))
-// 		  mCapacity(NULL)
-	{
-		SetNewHeap(DoAllocate(GetNewCapacity(0)));
-		mpEnd      = mpBegin;
-	}
+// 	template <typename T, typename Allocator>
+// 	inline VectorBase<T, Allocator>::VectorBase()
+// // 		: mpBegin(NULL), 
+// // 		  mpEnd(NULL),
+// // //		  mCapacityAllocator(NULL, allocator_type(EASTL_VECTOR_DEFAULT_NAME))
+// // 		  mCapacity(NULL)
+// 	{
+// 		SetNewHeap(DoAllocate(0));
+// 		mpEnd      = mpBegin;
+// 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline VectorBase<T, Allocator>::VectorBase(const allocator_type& allocator)
-	// 	: mpBegin(NULL), 
-	// 	  mpEnd(NULL),
-	// 	  mCapacityAllocator(NULL, allocator)
-	// {
-	// }
+// 	// template <typename T, typename Allocator>
+// 	// inline VectorBase<T, Allocator>::VectorBase(const allocator_type& allocator)
+// 	// 	: mpBegin(NULL), 
+// 	// 	  mpEnd(NULL),
+// 	// 	  mCapacityAllocator(NULL, allocator)
+// 	// {
+// 	// }
 
 
-	template <typename T, typename Allocator>
-	inline VectorBase<T, Allocator>::VectorBase(size_type n/*, const allocator_type& allocator*/)
-		// : mCapacityAllocator(allocator)
-	{
-		SetNewHeap(DoAllocate(n));
-		// mpBegin    = DoAllocate(n);
-		// internalCapacityPtr() = mpBegin + n;
-		mpEnd      = mpBegin;
-	}
+// 	template <typename T, typename Allocator>
+// 	inline VectorBase<T, Allocator>::VectorBase(size_type n/*, const allocator_type& allocator*/)
+// 		// : mCapacityAllocator(allocator)
+// 	{
+// 		SetNewHeap(DoAllocate(n));
+// 		// mpBegin    = DoAllocate(n);
+// 		// mCapacity = mpBegin + n;
+// 		mpEnd      = mpBegin;
+// 	}
 
 
-	template <typename T, typename Allocator>
-	inline VectorBase<T, Allocator>::~VectorBase()
-	{
+// 	template <typename T, typename Allocator>
+// 	inline VectorBase<T, Allocator>::~VectorBase()
+// 	{
 
 
-	}
+// 	}
 
 
 	// template <typename T, typename Allocator>
@@ -569,33 +588,33 @@ namespace safememory
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline typename VectorBase<T, Allocator>::owning_heap_type VectorBase<T, Allocator>::DoAllocate(size_type n)
-	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= 0x80000000))
-				EASTL_FAIL_MSG("vector::DoAllocate -- improbably large request.");
-		#endif
+	// template <typename T, typename Allocator>
+	// inline typename VectorBase<T, Allocator>::owning_heap_type VectorBase<T, Allocator>::DoAllocate(size_type n)
+	// {
+	// 	#if EASTL_ASSERT_ENABLED
+	// 		if(EASTL_UNLIKELY(n >= 0x80000000))
+	// 			EASTL_FAIL_MSG("vector::DoAllocate -- improbably large request.");
+	// 	#endif
 
-		// If n is zero, then we allocate no memory and just return nullptr. 
-		// This is fine, as our default ctor initializes with NULL pointers. 
-		if(EASTL_LIKELY(n))
-		{
-			// auto* p = (T*)safememory::lib_helpers::allocate_memory(n * sizeof(T), alignof(T), 0);
-			// EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
-			// return p;
+	// 	// If n is zero, then we allocate no memory and just return nullptr. 
+	// 	// This is fine, as our default ctor initializes with NULL pointers. 
+	// 	if(EASTL_LIKELY(n))
+	// 	{
+	// 		// auto* p = (T*)safememory::lib_helpers::allocate_memory(n * sizeof(T), alignof(T), 0);
+	// 		// EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
+	// 		// return p;
 
-			//TODO
-			// if(EASTL_UNLIKELY(n > max_size()))
-			// 	ThrowMaxSizeException();
+	// 		//TODO
+	// 		// if(EASTL_UNLIKELY(n > max_size()))
+	// 		// 	ThrowMaxSizeException();
 
-			return detail::make_owning_array_of<T>(n);
-		}
-		else
-		{
-			return owning_heap_type();
-		}
-	}
+	// 		return detail::make_owning_array_of<T>(n);
+	// 	}
+	// 	else
+	// 	{
+	// 		return owning_heap_type();
+	// 	}
+	// }
 
 
 	// template <typename T, typename Allocator>
@@ -606,16 +625,16 @@ namespace safememory
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline typename VectorBase<T, Allocator>::size_type
-	VectorBase<T, Allocator>::GetNewCapacity(size_type currentCapacity)
-	{
-		// TODO: mb update this to better take use of iibmalloc discrete allocation
-		// sizes
+	// template <typename T, typename Allocator>
+	// inline typename VectorBase<T, Allocator>::size_type
+	// VectorBase<T, Allocator>::GetNewCapacity(size_type currentCapacity)
+	// {
+	// 	// TODO: mb update this to better take use of iibmalloc discrete allocation
+	// 	// sizes
 
-		// This needs to return a value of at least currentCapacity and at least 1.
-		return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
-	}
+	// 	// This needs to return a value of at least currentCapacity and at least 1.
+	// 	return (currentCapacity > 0) ? (2 * currentCapacity) : 1;
+	// }
 
 
 
@@ -626,9 +645,10 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/
-		: base_type()
+		/*: base_type()*/
 	{
-		// Empty
+		SetNewHeap(DoAllocate(0));
+		mpEnd      = mpBegin;
 	}
 
 
@@ -642,8 +662,9 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(size_type n/*, const allocator_type& allocator*/)
-		: base_type(n/*, allocator*/)
+		// : base_type(n/*, allocator*/)
 	{
+		SetNewHeap(DoAllocate(n));
 		// eastl::uninitialized_default_fill_n(mpBegin, n);
 		std::uninitialized_value_construct_n(mpBegin, n);
 		mpEnd = mpBegin + n;
@@ -652,8 +673,9 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(size_type n, const value_type& value/*, const allocator_type& allocator*/)
-		: base_type(n/*, allocator*/)
+		// : base_type(n/*, allocator*/)
 	{
+		SetNewHeap(DoAllocate(n));
 //		eastl::uninitialized_fill_n_ptr(mpBegin, n, value);
 		std::uninitialized_fill_n(mpBegin, n, value);
 		mpEnd = mpBegin + n;
@@ -662,8 +684,9 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(const this_type& x)
-		: base_type(x.size()/*, x.internalAllocator()*/)
+//		: base_type(x.size()/*, x.internalAllocator()*/)
 	{
+		SetNewHeap(DoAllocate(x.size()));
 //		mpEnd = eastl::uninitialized_copy_ptr(x.mpBegin, x.mpEnd, mpBegin);
 		mpEnd = std::uninitialized_copy(x.mpBegin, x.mpEnd, mpBegin);
 	}
@@ -679,8 +702,10 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(this_type&& x) EA_NOEXCEPT
-		: base_type(/*std::move(x.internalAllocator())*/)  // vector requires move-construction of allocator in this case.
+		// : base_type(/*std::move(x.internalAllocator())*/)  // vector requires move-construction of allocator in this case.
 	{
+		SetNewHeap(DoAllocate(0));
+		mpEnd      = mpBegin;
 		DoSwap(x);
 	}
 
@@ -701,9 +726,10 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(std::initializer_list<value_type> ilist/*, const allocator_type& allocator*/)
-		: base_type(/*allocator*/)
+//		: base_type(/*allocator*/)
 	{
-		DoInit(ilist.begin(), ilist.end(), std::false_type());
+		SetNewHeap(DoAllocate(ilist.size()));
+		mpEnd = std::uninitialized_copy(ilist.begin(), ilist.end(), mpBegin);
 	}
 
 
@@ -717,9 +743,13 @@ namespace safememory
 
 	template <typename T, typename Allocator>
 	inline vector<T, Allocator>::vector(csafe_it_arg first, csafe_it_arg last)
-		: base_type()
+//		: base_type()
 	{
-		DoInit(first, last, std::false_type());
+		const_pointer_pair p = CheckAndGet(first, last);
+		size_type sz = static_cast<size_type>(p.second - p.first);
+
+		SetNewHeap(DoAllocate(sz));
+		mpEnd = std::uninitialized_copy(p.first, p.second, mpBegin);
 	}
 
 
@@ -783,8 +813,8 @@ namespace safememory
 	{
 		if(this != &x)
 		{
-			DoClearCapacity(); // To consider: Are we really required to clear here? x is going away soon and will clear itself in its dtor.
-			swap(x);           // member swap handles the case that x has a different allocator than our allocator by doing a copy.
+//			DoClearCapacity(); // To consider: Are we really required to clear here? x is going away soon and will clear itself in its dtor.
+			DoSwap(x);          // member swap handles the case that x has a different allocator than our allocator by doing a copy.
 		}
 		return *this; 
 	}
@@ -1034,9 +1064,15 @@ namespace safememory
 	inline typename vector<T, Allocator>::size_type
 	vector<T, Allocator>::capacity() const EA_NOEXCEPT
 	{
-		return (size_type)(internalCapacityPtr() - mpBegin);
+		return (size_type)(mCapacity - mpBegin);
 	}
 
+	template <typename T, typename Allocator>
+	inline typename vector<T, Allocator>::size_type
+	vector<T, Allocator>::max_size() const EA_NOEXCEPT
+	{
+		return kMaxSize;
+	}
 
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::resize(size_type n, const value_type& value)
@@ -1071,36 +1107,36 @@ namespace safememory
 	void vector<T, Allocator>::reserve(size_type n)
 	{
 		// If the user wants to reduce the reserved memory, there is the set_capacity function.
-		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
+		if(n > capacity()) // If n > capacity ...
 			DoGrow(n);
 	}
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::set_capacity(size_type n)
-	{
-		if((n == npos) || (n <= (size_type)(mpEnd - mpBegin))) // If new capacity <= size...
-		{
-			if(n == 0)  // Very often n will be 0, and clear will be faster than resize and use less stack space.
-				clear();
-			else if(n < (size_type)(mpEnd - mpBegin))
-				resize(n);
+	// template <typename T, typename Allocator>
+	// void vector<T, Allocator>::set_capacity(size_type n)
+	// {
+	// 	if((n == npos) || (n <= (size_type)(mpEnd - mpBegin))) // If new capacity <= size...
+	// 	{
+	// 		if(n == 0)  // Very often n will be 0, and clear will be faster than resize and use less stack space.
+	// 			clear();
+	// 		else if(n < (size_type)(mpEnd - mpBegin))
+	// 			resize(n);
 
-			shrink_to_fit();
-		}
-		else // Else new capacity > size.
-		{
-			DoRealloc(n, mpBegin, mpEnd, should_move_tag());
-			// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
-			// std::destroy(mpBegin, mpEnd);
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+	// 		shrink_to_fit();
+	// 	}
+	// 	else // Else new capacity > size.
+	// 	{
+	// 		DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+	// 		// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+	// 		// std::destroy(mpBegin, mpEnd);
+	// 		// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
-			// const std::ptrdiff_t nPrevSize = mpEnd - mpBegin;
-			// mpBegin    = pNewData;
-			// mpEnd      = pNewData + nPrevSize;
-			// internalCapacityPtr() = mpBegin + n;
-		}
-	}
+	// 		// const std::ptrdiff_t nPrevSize = mpEnd - mpBegin;
+	// 		// mpBegin    = pNewData;
+	// 		// mpEnd      = pNewData + nPrevSize;
+	// 		// mCapacity = mpBegin + n;
+	// 	}
+	// }
 
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::shrink_to_fit()
@@ -1261,7 +1297,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::push_back(const value_type& value)
 	{
-		if(mpEnd < internalCapacityPtr())
+		if(mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type(value);
 		else
 			DoInsertValueEnd(value);
@@ -1271,7 +1307,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::push_back(value_type&& value)
 	{
-		if (mpEnd < internalCapacityPtr())
+		if (mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type(std::move(value));
 		else
 			DoInsertValueEnd(std::move(value));
@@ -1282,7 +1318,7 @@ namespace safememory
 	inline typename vector<T, Allocator>::reference
 	vector<T, Allocator>::push_back()
 	{
-		if(mpEnd < internalCapacityPtr())
+		if(mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type();
 		else // Note that in this case we create a temporary, which is less desirable.
 			DoInsertValueEnd(value_type());
@@ -1294,7 +1330,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline void* vector<T, Allocator>::push_back_uninitialized()
 	{
-		if(mpEnd == internalCapacityPtr())
+		if(mpEnd == mCapacity)
 		{
 			const size_type newSize = (size_type)(mpEnd - mpBegin) + 1;
 			reserve(newSize);
@@ -1324,7 +1360,7 @@ namespace safememory
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 
-		if((mpEnd == internalCapacityPtr()) || (position != mpEnd))
+		if((mpEnd == mCapacity) || (position != mpEnd))
 			DoInsertValue(position, std::forward<Args>(args)...);
 		else
 		{
@@ -1350,7 +1386,7 @@ namespace safememory
 	inline typename vector<T, Allocator>::reference
 	vector<T, Allocator>::emplace_back(Args&&... args)
 	{
-		if(mpEnd < internalCapacityPtr())
+		if(mpEnd < mCapacity)
 		{
 			::new((void*)mpEnd) value_type(std::forward<Args>(args)...);  // If value_type has a move constructor, it will use it and this operation may be faster than otherwise.
 			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
@@ -1373,7 +1409,7 @@ namespace safememory
 		// We implment a quick pathway for the case that the insertion position is at the end and we have free capacity for it.
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 
-		if((mpEnd == internalCapacityPtr()) || (position != mpEnd))
+		if((mpEnd == mCapacity) || (position != mpEnd))
 			DoInsertValue(position, value);
 		else
 		{
@@ -1649,7 +1685,7 @@ namespace safememory
 	// 	// resets the container to an empty state without freeing the memory of 
 	// 	// the contained objects. This is useful for very quickly tearing down a 
 	// 	// container built into scratch memory.
-	// 	mpBegin = mpEnd = internalCapacityPtr() = NULL;
+	// 	mpBegin = mpEnd = mCapacity = NULL;
 	// }
 
 
@@ -1694,108 +1730,130 @@ namespace safememory
 	// #endif
 	}
 
-
 	template <typename T, typename Allocator>
-	template <typename ForwardIterator>
-	inline void
-	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
+	inline typename vector<T, Allocator>::owning_heap_type vector<T, Allocator>::DoAllocate(size_type n)
 	{
-		const std::ptrdiff_t nPrevSize = last - first;
-		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
-		// eastl::uninitialized_copy_ptr(first, last, p); // copy-constructs p from [first,last).
-		std::uninitialized_copy(first, last, p->begin()); // copy-constructs p from [first,last).
+		// TODO, allocated heap should be zeroed 
 
+		if(EASTL_UNLIKELY(n > kMaxSize))
+			ThrowMaxSizeException();
 
-			// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+		// TODO remove this once we are correctly asking iibmalloc
+		// about possible allocation sizes. Since iibmalloc usually
+		// allocates on power of 2 sizes
+		size_type currentCapacity = mHeap ? mHeap->capacity() : 0;
+		n = std::max(n, (2 * currentCapacity));
 
-		std::destroy(mpBegin, mpEnd);
-		SetNewHeap(std::move(p));
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
-
-			// mpBegin    = pNewData;
-		mpEnd      = mpBegin + nPrevSize;
-			// internalCapacityPtr() = mpEnd;
-		// return p;
-
+		//mb: we currently don't support NULL alloc
+		n = std::max(n, static_cast<size_type>(4));
+		
+		// mb: make_owning_array_of may return an array bigger
+		// than requested because allocation has discrete possible
+		// values under iibmalloc and we don't want to waste space
+		return detail::make_owning_array_of<T>(n);
 	}
 
+	// template <typename T, typename Allocator>
+	// template <typename ForwardIterator>
+	// inline void
+	// vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
+	// {
+	// 	const std::ptrdiff_t nPrevSize = last - first;
+	// 	auto p = DoAllocate(n); // p is of type T* but is not constructed. 
+	// 	// eastl::uninitialized_copy_ptr(first, last, p); // copy-constructs p from [first,last).
+	// 	std::uninitialized_copy(first, last, p->begin()); // copy-constructs p from [first,last).
 
-	template <typename T, typename Allocator>
-	template <typename ForwardIterator>
-	inline void
-	vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
-	{
-		// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
 
-		const std::ptrdiff_t nPrevSize = last - first;
+	// 		// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
 
-		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
-		safememory::uninitialized_move_ptr_if_noexcept(first, last, p->begin()); // move-constructs p from [first,last).
+	// 	std::destroy(mpBegin, mpEnd);
+	// 	SetNewHeap(std::move(p));
+	// 		// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
+
+	// 		// mpBegin    = pNewData;
+	// 	mpEnd      = mpBegin + nPrevSize;
+	// 		// mCapacity = mpEnd;
+	// 	// return p;
+
+	// }
+
+
+	// template <typename T, typename Allocator>
+	// template <typename ForwardIterator>
+	// inline void
+	// vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
+	// {
+	// 	// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
+
+	// 	const std::ptrdiff_t nPrevSize = last - first;
+
+	// 	auto p = DoAllocate(n); // p is of type T* but is not constructed. 
+	// 	safememory::uninitialized_move_ptr_if_noexcept(first, last, p->begin()); // move-constructs p from [first,last).
 
 
 		
-		std::destroy(mpBegin, mpEnd);
-		SetNewHeap(std::move(p));
-		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+	// 	std::destroy(mpBegin, mpEnd);
+	// 	SetNewHeap(std::move(p));
+	// 	// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
-		// mpBegin    = pNewData;
-		mpEnd      = mpBegin + nPrevSize;
-		// internalCapacityPtr() = mpBegin + n;
-
-
-
-		// return p;
-	}
+	// 	// mpBegin    = pNewData;
+	// 	mpEnd      = mpBegin + nPrevSize;
+	// 	// mCapacity = mpBegin + n;
 
 
-	template <typename T, typename Allocator>
-	template <typename Integer>
-	inline void vector<T, Allocator>::DoInit(Integer n, Integer value, std::true_type)
-	{
-		SetNewHeap(DoAllocate((size_type)n));
-		// mpBegin    = DoAllocate((size_type)n);
-		// internalCapacityPtr() = mpBegin + n;
-		mpEnd      = internalCapacityPtr();
 
-		// typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
-//		eastl::uninitialized_fill_n_ptr<value_type, Integer>((non_const_value_type*)mpBegin, n, value);
-		std::uninitialized_fill_n(mpBegin, n, value);
-	}
+	// 	// return p;
+	// }
 
 
-	template <typename T, typename Allocator>
-	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInit(InputIterator first, InputIterator last, std::false_type)
-	{
-		typedef typename std::iterator_traits<InputIterator>:: iterator_category IC;
-		DoInitFromIterator(first, last, IC());
-	}
+// 	template <typename T, typename Allocator>
+// 	template <typename Integer>
+// 	inline void vector<T, Allocator>::DoInit(Integer n, Integer value, std::true_type)
+// 	{
+// 		SetNewHeap(DoAllocate((size_type)n));
+// 		// mpBegin    = DoAllocate((size_type)n);
+// 		// mCapacity = mpBegin + n;
+// //		mpEnd      = mCapacity;
+
+// 		// typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
+// //		eastl::uninitialized_fill_n_ptr<value_type, Integer>((non_const_value_type*)mpBegin, n, value);
+// 		mpEnd = std::uninitialized_fill_n(mpBegin, n, value);
+// 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
-	{
-		// To do: Use emplace_back instead of push_back(). Our emplace_back will work below without any ifdefs.
-		for(; first != last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
-			push_back(*first);        // Thus the standard *requires* that we do this (inefficient) implementation.
-	}                                 // Luckily, InputIterators are in practice almost never used, so this code will likely never get executed.
+// 	template <typename T, typename Allocator>
+// 	template <typename InputIterator>
+// 	inline void vector<T, Allocator>::DoInit(InputIterator first, InputIterator last, std::false_type)
+// 	{
+// 		typedef typename std::iterator_traits<InputIterator>:: iterator_category IC;
+// 		DoInitFromIterator(first, last, IC());
+// 	}
 
 
-	template <typename T, typename Allocator>
-	template <typename ForwardIterator>
-	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
-	{
-		const size_type n = (size_type)std::distance(first, last);
-		SetNewHeap(DoAllocate(n));
-		// mpBegin    = DoAllocate(n);
-		// internalCapacityPtr() = mpBegin + n;
-		mpEnd      = internalCapacityPtr();
+// 	template <typename T, typename Allocator>
+// 	template <typename InputIterator>
+// 	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
+// 	{
+// 		// To do: Use emplace_back instead of push_back(). Our emplace_back will work below without any ifdefs.
+// 		for(; first != last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
+// 			push_back(*first);        // Thus the standard *requires* that we do this (inefficient) implementation.
+// 	}                                 // Luckily, InputIterators are in practice almost never used, so this code will likely never get executed.
 
-		typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
-//		eastl::uninitialized_copy_ptr(first, last, (non_const_value_type*)mpBegin);
-		std::uninitialized_copy(first, last, (non_const_value_type*)mpBegin);
-	}
+
+// 	template <typename T, typename Allocator>
+// 	template <typename ForwardIterator>
+// 	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+// 	{
+// 		const size_type n = (size_type)std::distance(first, last);
+// 		SetNewHeap(DoAllocate(n));
+// 		// mpBegin    = DoAllocate(n);
+// 		// mCapacity = mpBegin + n;
+// 		// mpEnd      = mCapacity;
+
+// 		typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
+// //		eastl::uninitialized_copy_ptr(first, last, (non_const_value_type*)mpBegin);
+// 		mpEnd = std::uninitialized_copy(first, last, (non_const_value_type*)mpBegin);
+// 	}
 
 
 	template <typename T, typename Allocator>
@@ -1818,7 +1876,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	void vector<T, Allocator>::DoAssignValues(size_type n, const value_type& value)
 	{
-		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
+		if(n > capacity()) // If n > capacity ...
 		{
 			this_type temp(n, value/*, internalAllocator()*/); // We have little choice but to reallocate with new memory.
 			swap(temp);
@@ -1863,16 +1921,31 @@ namespace safememory
 	{
 		const size_type n = (size_type)std::distance(first, last);
 
-		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
+		if(n > capacity()) // If n > capacity ...
 		{
-			DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
+			// DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
 			// pointer const pNewData = DoRealloc(n, first, last, bMove ? should_move_tag() : should_copy_tag());
 			// std::destroy(mpBegin, mpEnd);
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 			// mpBegin    = pNewData;
 			// mpEnd      = mpBegin + n;
-			// internalCapacityPtr() = mpEnd;
+			// mCapacity = mpEnd;
+			auto 			nNewHeap  = DoAllocate(n);
+			pointer 		pNewData  = nNewHeap->begin();
+
+			typedef typename std::remove_const<T>::type non_const_value_type; // If T is a const type (e.g. const int) then we need to initialize it as if it were non-const.
+			pNewData =std::uninitialized_copy(first, last, (non_const_value_type*)pNewData);
+
+			std::destroy(mpBegin, mpEnd);
+			SetNewHeap(std::move(nNewHeap));
+			// mpBegin    = DoAllocate(n);
+			// mCapacity = mpBegin + n;
+			mpEnd      = pNewData;
+
+	//		eastl::uninitialized_copy_ptr(first, last, (non_const_value_type*)mpBegin);
+
+
 		}
 		else if(n <= size_type(mpEnd - mpBegin)) // If n <= size ...
 		{
@@ -1932,7 +2005,7 @@ namespace safememory
 		{
 			const size_type n = (size_type)std::distance(first, last);  // n is the number of elements we are inserting.
 
-			if(n <= size_type(internalCapacityPtr() - mpEnd)) // If n fits within the existing capacity...
+			if(n <= size_type(mCapacity - mpEnd)) // If n fits within the existing capacity...
 			{
 				const size_type nExtra = static_cast<size_type>(mpEnd - destPosition);
 
@@ -1959,9 +2032,9 @@ namespace safememory
 			else // else we need to expand our capacity.
 			{
 				const size_type nPrevSize = size_type(mpEnd - mpBegin);
-				const size_type nGrowSize = GetNewCapacity(nPrevSize);
-				const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-				auto 			nNewHeap  = DoAllocate(nNewSize);
+				// const size_type nGrowSize = GetNewCapacity(nPrevSize);
+				// const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
+				auto 			nNewHeap  = DoAllocate(nPrevSize + n);
 				pointer const   pNewData  = nNewHeap->begin();
 
 				// #if EASTL_EXCEPTIONS_ENABLED
@@ -1987,11 +2060,11 @@ namespace safememory
 
 				std::destroy(mpBegin, mpEnd);
 				SetNewHeap(std::move(nNewHeap));
-				// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+				// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 				// mpBegin    = pNewData;
 				mpEnd      = pNewEnd;
-				// internalCapacityPtr() = pNewData + nNewSize;
+				// mCapacity = pNewData + nNewSize;
 			}
 		}
 	}
@@ -2008,7 +2081,7 @@ namespace safememory
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);
 
-		if(n <= size_type(internalCapacityPtr() - mpEnd)) // If n is <= capacity...
+		if(n <= size_type(mCapacity - mpEnd)) // If n is <= capacity...
 		{
 			if(n > 0) // To do: See if there is a way we can eliminate this 'if' statement.
 			{
@@ -2038,9 +2111,9 @@ namespace safememory
 		else // else n > capacity
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
-			auto			nNewHeap  = DoAllocate(nNewSize);
+			// const size_type nGrowSize = GetNewCapacity(nPrevSize);
+			// const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
+			auto			nNewHeap  = DoAllocate(nPrevSize + n);
 			pointer const pNewData    = nNewHeap->begin();
 
 			// #if EASTL_EXCEPTIONS_ENABLED
@@ -2066,22 +2139,22 @@ namespace safememory
 
 			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			// internalCapacityPtr() = pNewData + nNewSize;
+			// mCapacity = pNewData + nNewSize;
 		}
 	}
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoClearCapacity() // This function exists because set_capacity() currently indirectly requires value_type to be default-constructible, 
-	{                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
-		clear();
-		this_type temp(std::move(*this));  // This is the simplest way to accomplish this, 
-		swap(temp);             // and it is as efficient as any other.
-	}
+	// template <typename T, typename Allocator>
+	// void vector<T, Allocator>::DoClearCapacity() // This function exists because set_capacity() currently indirectly requires value_type to be default-constructible, 
+	// {                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
+	// 	clear();
+	// 	this_type temp(std::move(*this));  // This is the simplest way to accomplish this, 
+	// 	swap(temp);             // and it is as efficient as any other.
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -2095,18 +2168,18 @@ namespace safememory
 
 		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(nNewHeap));
-		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+		// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 		// mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		// internalCapacityPtr() = pNewData + n;
+		// mCapacity = pNewData + n;
 	}
 
 
 	template <typename T, typename Allocator>
 	inline void vector<T, Allocator>::DoSwap(this_type& x)
 	{
-		std::swap(base_type::mHeap,      x.base_type::mHeap);
+		std::swap(mHeap,      x.mHeap);
 		std::swap(mpBegin,    x.mpBegin);
 		std::swap(mpEnd,      x.mpEnd);
 		std::swap(mCapacity,  x.mCapacity); // We do this even if EASTL_ALLOCATOR_COPY_ENABLED is 0.
@@ -2117,12 +2190,12 @@ namespace safememory
 	template <typename T, typename Allocator>
 	void vector<T, Allocator>::DoInsertValuesEnd(size_type n, const value_type& value)
 	{
-		if(n > size_type(internalCapacityPtr() - mpEnd))
+		if(n > size_type(mCapacity - mpEnd))
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
-			auto			nNewHeap = DoAllocate(nNewSize);
+			// const size_type nGrowSize = GetNewCapacity(nPrevSize);
+			// const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
+			auto			nNewHeap = DoAllocate(nPrevSize + n);
 			pointer const pNewData = nNewHeap->begin();
 
 			// #if EASTL_EXCEPTIONS_ENABLED
@@ -2147,11 +2220,11 @@ namespace safememory
 
 			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			// internalCapacityPtr() = pNewData + nNewSize;
+			// mCapacity = pNewData + nNewSize;
 		}
 		else
 		{
@@ -2164,12 +2237,12 @@ namespace safememory
 	template <typename T, typename Allocator>
 	void vector<T, Allocator>::DoInsertValuesEnd(size_type n)
 	{
-		if (n > size_type(internalCapacityPtr() - mpEnd))
+		if (n > size_type(mCapacity - mpEnd))
 		{
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nGrowSize = GetNewCapacity(nPrevSize);
-			const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
-			auto			nNewHeap = DoAllocate(nNewSize);
+			// const size_type nGrowSize = GetNewCapacity(nPrevSize);
+			// const size_type nNewSize = std::max(nGrowSize, nPrevSize + n);
+			auto			nNewHeap = DoAllocate(nPrevSize + n);
 			pointer const pNewData = nNewHeap->begin();
 
 			// #if EASTL_EXCEPTIONS_ENABLED
@@ -2194,11 +2267,11 @@ namespace safememory
 
 			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 			// mpBegin = pNewData;
 			mpEnd = pNewEnd;
-			// internalCapacityPtr() = pNewData + nNewSize;
+			// mCapacity = pNewData + nNewSize;
 		}
 		else
 		{
@@ -2224,7 +2297,7 @@ namespace safememory
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);
 
-		if(mpEnd != internalCapacityPtr()) // If size < capacity ...
+		if(mpEnd != mCapacity) // If size < capacity ...
 		{
 			// We need to take into account the possibility that args is a value_type that comes from within the vector itself.
 			// creating a temporary value on the stack here is not an optimal way to solve this because sizeof(value_type) may be
@@ -2246,8 +2319,8 @@ namespace safememory
 		{
 			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
-			const size_type nNewSize  = GetNewCapacity(nPrevSize);
-			auto			nNewHeap  = DoAllocate(nNewSize);
+			// const size_type nNewSize  = GetNewCapacity(nPrevSize);
+			auto			nNewHeap  = DoAllocate(nPrevSize + 1);
 			pointer const   pNewData  = nNewHeap->begin();
 
 			// #if EASTL_EXCEPTIONS_ENABLED
@@ -2277,11 +2350,11 @@ namespace safememory
 
 			std::destroy(mpBegin, mpEnd);
 			SetNewHeap(std::move(nNewHeap));
-			// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+			// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 			// mpBegin    = pNewData;
 			mpEnd      = pNewEnd;
-			// internalCapacityPtr() = pNewData + nNewSize;
+			// mCapacity = pNewData + nNewSize;
 		}
 	}
 
@@ -2291,8 +2364,8 @@ namespace safememory
 	void vector<T, Allocator>::DoInsertValueEnd(Args&&... args)
 	{
 		const size_type nPrevSize = size_type(mpEnd - mpBegin);
-		const size_type nNewSize  = GetNewCapacity(nPrevSize);
-		auto 			nNewHeap  = DoAllocate(nNewSize);
+		// const size_type nNewSize  = GetNewCapacity(nPrevSize);
+		auto 			nNewHeap  = DoAllocate(nPrevSize + 1);
 		pointer const   pNewData  = nNewHeap->begin();
 
 		// #if EASTL_EXCEPTIONS_ENABLED
@@ -2317,11 +2390,11 @@ namespace safememory
 
 		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(nNewHeap));
-		// DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
+		// DoFree(mpBegin, (size_type)(mCapacity - mpBegin));
 
 		// mpBegin    = pNewData;
 		mpEnd      = pNewEnd;
-		// internalCapacityPtr() = pNewData + nNewSize;
+		// mCapacity = pNewData + nNewSize;
 	}
 
 	/* static */
@@ -2419,7 +2492,7 @@ namespace safememory
 	{
 		if(mpEnd < mpBegin)
 			return false;
-		if(internalCapacityPtr() < mpEnd)
+		if(mCapacity < mpEnd)
 			return false;
 		return true;
 	}
