@@ -527,16 +527,21 @@ int TestVector()
 		TestObject::Reset();
 
 		vector<TestObject> toVectorA;
+		toVectorA.reserve(2);
 
 		TestObject& ref = toVectorA.emplace_back(2, 3, 4);
 		EATEST_VERIFY((toVectorA.size() == 1) && (toVectorA.back().mX == (2 + 3 + 4)) &&
 					  (TestObject::sTOCtorCount == 1));
 		EATEST_VERIFY(ref.mX == (2 + 3 + 4));
 
-		// toVectorA.emplace(toVectorA.begin(), 3, 4, 5);
-		// EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
-		// 			  (TestObject::sTOCtorCount == 3));  // 3 because the original count of 1, plus the existing vector
-														 // element will be moved, plus the one being emplaced.
+		toVectorA.emplace(toVectorA.begin(), 3, 4, 5);
+		EATEST_VERIFY((toVectorA.size() == 2) && (toVectorA.front().mX == (3 + 4 + 5)) &&
+					  (TestObject::sTOCtorCount == 4));
+					    // mb: 4 because emplace has some logic where first constructs the element
+						// on the stack and later moves into its place at the vector.
+
+						//plus the original count of 1, plus the existing vector
+							// element will be moved
 
 		TestObject::Reset();
 

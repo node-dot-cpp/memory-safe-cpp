@@ -66,18 +66,6 @@ struct array_of2
 		char dummy;
 	};
 
-
-	struct StackPtrForMakeOwningCallRiia {
-		void* stackTmp = nodecpp::safememory::thg_stackPtrForMakeOwningCall;
-		StackPtrForMakeOwningCallRiia(void* dataForObj) {
-			nodecpp::safememory::thg_stackPtrForMakeOwningCall = dataForObj;
-		}
-		~StackPtrForMakeOwningCallRiia() {
-			nodecpp::safememory::thg_stackPtrForMakeOwningCall = stackTmp;
-		}
-	};
-
-
 	[[noreturn]]
 	void throwPointerOutOfRange() const {
 		throw std::out_of_range("array_of2 -- out of range");
@@ -121,11 +109,6 @@ public:
 
 	T* begin() { return _begin; }
 	const T* begin() const { return _begin; }
-
-	StackPtrForMakeOwningCallRiia makeRiia() const {
-		return StackPtrForMakeOwningCallRiia(const_cast<void*>(this));
-	}
-
 };
 
 
