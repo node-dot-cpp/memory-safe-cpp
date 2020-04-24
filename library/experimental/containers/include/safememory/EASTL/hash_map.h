@@ -548,7 +548,7 @@ namespace safememory
 			{
 				// Check to see if these aRange and bRange are any permutation of each other. 
 				// This check gets slower as there are more elements in the range.
-				if(!eastl::is_permutation(aRange.first, aRange.second, bRange.first))
+				if(!std::is_permutation(aRange.first, aRange.second, bRange.first))
 					return false;
 			}
 		}

@@ -152,7 +152,7 @@ int EAMain(int argc, char* argv[])
 	// BenchmarkDeque();
 	// BenchmarkSet();
 	// BenchmarkMap();
-	// BenchmarkHash();
+	BenchmarkHash();
 	// BenchmarkHeap();
 	// BenchmarkBitset();
 	// BenchmarkSort();
