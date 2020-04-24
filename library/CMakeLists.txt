@@ -41,7 +41,7 @@ endif()
 add_library(SafeMemory STATIC
   src/safe_ptr.cpp
   experimental/containers/source/string.cpp
-#  experimental/containers/source/hashtable.cpp
+  experimental/containers/source/hashtable.cpp
   )
 
 #-------------------------------------------------------------------------------------------

@@ -1,8 +1,6 @@
 
 
-#include "include/EASTL/unordered_map.h"
-#include "include/safememory/string.h"
-#include "include/EASTL/vector.h"
+#include <safememory/unordered_map.h>
 
 #include <vector>
 #include <random>
@@ -24,7 +22,7 @@ void randomCheckMap(int sz, int ini) {
 
     safememory::unordered_map<int, bool> testMap;
 
-    safememory::vector<int> v;
+    std::vector<int> v;
     v.resize(sz);
     for(int i = 0; i != sz; ++i) {
         v[i] = i;
@@ -119,34 +117,9 @@ void mainForMap() {
 
 }
 
-
-void testString() {
-
-    safememory::string s = safememory::string_literal("hola mundo");
-    safememory::string s2 = "hola mundo";
-
-    s.append("! - ");
-
-    s2 += " cruel! - ";
-
-    for(auto it = s.begin(); it != s.end(); ++it)
-        s2 += *it;
-
-    for(auto its = s2.begin(); its != s2.end(); ++its) {
-        s += *its;
-    }
-
-    printf(s2.c_str());
-
-    s2.erase(s2.cbegin() + 7, s2.cend());
-    printf(s2.c_str());
-
-}
-
 int main() {
 
-    testString();
-    // mainForMap();
+    mainForMap();
     printf("done\n");
     return 0;
 }
