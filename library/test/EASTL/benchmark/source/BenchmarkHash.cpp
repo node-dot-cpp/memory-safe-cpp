@@ -79,7 +79,7 @@ namespace
 	void TestIteration(EA::StdC::Stopwatch& stopwatch, const Container& c, const Value& findValue)
 	{
 		stopwatch.Restart();
-		typename Container::const_iterator it = eastl::find(c.begin(), c.end(), findValue); // It shouldn't matter what find implementation we use here, as it merely iterates values.
+		typename Container::const_iterator it = std::find(c.begin(), c.end(), findValue); // It shouldn't matter what find implementation we use here, as it merely iterates values.
 		stopwatch.Stop();
 		if(it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%p", &*it);
@@ -113,32 +113,32 @@ namespace
 	}
 
 
-	template <typename Container, typename Value>
-	void TestFindAsStd(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
-	{
-		stopwatch.Restart();
-		while(pArrayBegin != pArrayEnd)
-		{
-			typename Container::iterator it = c.find(pArrayBegin->first.c_str());
-			Benchmark::DoNothing(&it);
-			++pArrayBegin;
-		}
-		stopwatch.Stop();
-	}
+	// template <typename Container, typename Value>
+	// void TestFindAsStd(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
+	// {
+	// 	stopwatch.Restart();
+	// 	while(pArrayBegin != pArrayEnd)
+	// 	{
+	// 		typename Container::iterator it = c.find(pArrayBegin->first.c_str());
+	// 		Benchmark::DoNothing(&it);
+	// 		++pArrayBegin;
+	// 	}
+	// 	stopwatch.Stop();
+	// }
 
 
-	template <typename Container, typename Value>
-	void TestFindAsEa(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
-	{
-		stopwatch.Restart();
-		while(pArrayBegin != pArrayEnd)
-		{
-			typename Container::iterator it = c.find_as(pArrayBegin->first.c_str());
-			Benchmark::DoNothing(&it);
-			++pArrayBegin;
-		}
-		stopwatch.Stop();
-	}
+	// template <typename Container, typename Value>
+	// void TestFindAsEa(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
+	// {
+	// 	stopwatch.Restart();
+	// 	while(pArrayBegin != pArrayEnd)
+	// 	{
+	// 		typename Container::iterator it = c.find_as(pArrayBegin->first.c_str());
+	// 		Benchmark::DoNothing(&it);
+	// 		++pArrayBegin;
+	// 	}
+	// 	stopwatch.Stop();
+	// }
 
 
 	template <typename Container, typename Value>
@@ -173,24 +173,27 @@ namespace
 	template <typename Container>
 	void TestErasePosition(EA::StdC::Stopwatch& stopwatch, Container& c)
 	{
-		typename Container::size_type j, jEnd;
-		typename Container::iterator it;
+		// typename Container::size_type j, jEnd;
+		// typename Container::iterator it;
 
 		stopwatch.Restart();
-		for(j = 0, jEnd = c.size() / 3, it = c.begin(); j < jEnd; ++j)
+		typename Container::size_type j = 0;
+		typename Container::size_type jEnd = c.size() / 3;
+		typename Container::iterator it = c.begin();
+		for(; j < jEnd; ++j)
 		{
 			// The erase fucntion is supposed to return an iterator, but the C++ standard was 
 			// not initially clear about it and some STL implementations don't do it correctly.
-			#if (defined(_MSC_VER) || defined(_CPPLIB_VER)) // _CPPLIB_VER is something defined by Dinkumware STL.
+			// #if (defined(_MSC_VER) || defined(_CPPLIB_VER)) // _CPPLIB_VER is something defined by Dinkumware STL.
 				it = c.erase(it);
-			#else
-				// This pathway may execute at a slightly different speed than the 
-				// standard behaviour, but that's fine for the benchmark because the
-				// benchmark is measuring the speed of erasing while iterating, and 
-				// however it needs to get done by the given STL is how it is measured.
-				const typename Container::iterator itErase(it++);
-				c.erase(itErase);
-			#endif
+			// #else
+			// 	// This pathway may execute at a slightly different speed than the 
+			// 	// standard behaviour, but that's fine for the benchmark because the
+			// 	// benchmark is measuring the speed of erasing while iterating, and 
+			// 	// however it needs to get done by the given STL is how it is measured.
+			// 	const typename Container::iterator itErase(it++);
+			// 	c.erase(itErase);
+			// #endif
 
 			++it;
 			++it;
@@ -241,25 +244,25 @@ void BenchmarkHash()
 	EA::StdC::Stopwatch stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
 
 	{
-		eastl::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
-		eastl::vector< eastl::pair<uint32_t, TestObject> >  eaVectorUT(10000);
+		std::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
+		std::vector< std::pair<uint32_t, TestObject> >  eaVectorUT(10000);
 
-		eastl::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
-		eastl::vector< eastl::pair<std::string, uint32_t> >  eaVectorSU(10000);
+		std::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
+		std::vector< std::pair<std::string, uint32_t> >  eaVectorSU(10000);
 
-		for(eastl_size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
+		for(std::size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
 		{
 			const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
 			const uint32_t n2 = rng.RandValue();
 
 			stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
-			eaVectorUT[i]  = eastl::pair<uint32_t, TestObject>(n1, TestObject(n2));
+			eaVectorUT[i]  = std::pair<uint32_t, TestObject>(n1, TestObject(n2));
 
 			char str_n1[32];
 			sprintf(str_n1, "%u", (unsigned)n1);
 
 			stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
-			eaVectorSU[i]  = eastl::pair<std::string, uint32_t>(std::string(str_n1), n2);
+			eaVectorSU[i]  = std::pair<std::string, uint32_t>(std::string(str_n1), n2);
 		}
 
 		for(int i = 0; i < 2; i++)
@@ -343,11 +346,11 @@ void BenchmarkHash()
 			// Test find_as
 			///////////////////////////////
 
-			TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+			// TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+			// TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
 
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+			// if(i == 1)
+			// 	Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 
 			///////////////////////////////

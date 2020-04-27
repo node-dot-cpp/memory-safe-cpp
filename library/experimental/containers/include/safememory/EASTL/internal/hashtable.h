@@ -65,7 +65,7 @@
 #include <safememory/EASTL/internal/config.h>
 #include <safememory/EASTL/type_traits.h>
 //#include <EASTL/allocator.h>
-//#include <EASTL/iterator.h>
+#include <safememory/EASTL/iterator.h>
 #include <safe_ptr.h>
 #include <safememory/detail/safe_alloc.h>
 #include <functional>
@@ -156,8 +156,16 @@ namespace safememory
 				std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
 				:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
 				{}
-			hash_node(const Value&) :mValue(Value) {}
-			hash_node(Value&&) :mValue(std::move(mValue)) {}
+			hash_node(const Value& value) :mValue(value) {}
+			hash_node(Value&& value) :mValue(std::move(value)) {}
+			// template<class Arg1, class Arg2>
+			// hash_node(Arg1&& arg1, Arg2&& arg2)
+			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
+			// 	{}
+			template<class... Args>
+			hash_node(Args&&... args)
+				:mValue(std::forward<Args>(args)...) 
+				{}
 
 			Value        mValue;
 			owning_ptr<hash_node>   mpNext;
@@ -176,8 +184,16 @@ namespace safememory
 				std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
 				:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
 				{}
-			hash_node(const Value&) :mValue(Value) {}
-			hash_node(Value&&) :mValue(std::move(mValue)) {}
+			hash_node(const Value& value) :mValue(value) {}
+			hash_node(Value&& value) :mValue(std::move(value)) {}
+			// template<class Arg1, class Arg2>
+			// hash_node(Arg1&& arg1, Arg2&& arg2)
+			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
+			// 	{}
+			template<class... Args>
+			hash_node(Args&&... args)
+				:mValue(std::forward<Args>(args)...) 
+				{}
 
 		    Value      mValue;
 			owning_ptr<hash_node> mpNext;
@@ -378,8 +394,28 @@ namespace safememory
 		hashtable_iterator(detail::safe_iterator<owning_ptr<node_type>> pBucket)
 			: base_type(*pBucket, pBucket) { }
 
-		hashtable_iterator(const this_type_non_const& x)
+		hashtable_iterator(const hashtable_iterator& x)
 			: base_type(x.mpNode, x.mpBucket) { }
+
+		template<typename NonConst = std::enable_if_t<bConst, this_type_non_const>>
+		hashtable_iterator(const NonConst& x)
+			: base_type(x.mpNode, x.mpBucket) { }
+
+		hashtable_iterator& operator=(const hashtable_iterator& x) {
+			if(this != &x) {
+				this->mpNode = x.mpNode;
+				this->mpBucket = x.mpBucket;
+			}
+			return *this;
+		}
+
+		template<typename NonConst = std::enable_if_t<bConst, this_type_non_const>>
+		hashtable_iterator& operator=(const NonConst& x) {
+			this->mpNode = x.mpNode;
+			this->mpBucket = x.mpBucket;
+
+			return *this;
+		}
 
 		reference operator*() const
 			{ return base_type::mpNode->mValue; }
@@ -1009,13 +1045,13 @@ namespace safememory
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
 		local_iterator end(size_type) EA_NOEXCEPT
-			{ return local_iterator({nullptr}); }
+			{ return local_iterator(soft_ptr<node_type>()); }
 
 		const_local_iterator end(size_type) const EA_NOEXCEPT
-			{ return const_local_iterator({nullptr}); }
+			{ return const_local_iterator(soft_ptr<node_type>()); }
 
 		const_local_iterator cend(size_type) const EA_NOEXCEPT
-			{ return const_local_iterator({nullptr}); }
+			{ return const_local_iterator(soft_ptr<node_type>()); }
 
 		bool empty() const EA_NOEXCEPT
 			{ return mnElementCount == 0; }
@@ -1496,7 +1532,7 @@ namespace safememory
 						while(pNodeSource)
 						{
 							ppNodeDest->mpNext = DoAllocateNode(pNodeSource->mValue);
-							copy_code(*ppNodeDest->mpNext, pNodeSource);
+							copy_code(*ppNodeDest->mpNext, *pNodeSource);
 							ppNodeDest = ppNodeDest->mpNext;
 							pNodeSource = pNodeSource->mpNext;
 						}
@@ -1506,7 +1542,7 @@ namespace safememory
 				catch(...)
 				{
 					clear();
-					DoFreeBuckets(mpBucketArray, mnBucketCount);
+					DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
 					throw;
 				}
 			// #endif
@@ -1660,7 +1696,7 @@ namespace safememory
 // 				throw;
 // 			}
 // 		#endif
-		return ::nodecpp::safememory::make_owning<node_type>(value_type(key, mapped_type()));
+		return ::nodecpp::safememory::make_owning<node_type>(key, typename value_type::second_type());
 	}
 
 
@@ -1690,7 +1726,7 @@ namespace safememory
 // 			}
 // 		#endif
 
-		return ::nodecpp::safememory::make_owning<node_type>(value_type(std::move(key), mapped_type()));
+		return ::nodecpp::safememory::make_owning<node_type>(std::move(key), typename value_type::second_type());
 	}
 
 
@@ -1913,7 +1949,7 @@ namespace safememory
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
 	{
 		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type> pNodeStart = mpBucketArray[start];
+		soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
 
 		if (pNodeStart)
 		{
@@ -1935,7 +1971,7 @@ namespace safememory
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
 	{
 		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type> pNodeStart = mpBucketArray[start];
+		soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
 
 		if (pNodeStart)
 		{
@@ -2822,8 +2858,8 @@ namespace safememory
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(std::move(key)),
-		                     forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), std::piecewise_construct_t(), std::forward_as_tuple(std::move(key)),
+		                     std::forward_as_tuple(std::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
@@ -2834,7 +2870,7 @@ namespace safememory
 	{
 		insert_return_type result = DoInsertValue(
 		    has_unique_keys_type(),
-		    value_type(piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...)));
+		    value_type(std::piecewise_construct_t(), std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
@@ -2846,8 +2882,8 @@ namespace safememory
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
 	{
 		insert_return_type result =
-		    DoInsertValue(has_unique_keys_type(), value_type(piecewise_construct, forward_as_tuple(std::move(key)),
-		                                                     forward_as_tuple(forward<Args>(args)...)));
+		    DoInsertValue(has_unique_keys_type(), value_type(std::piecewise_construct_t(), std::forward_as_tuple(std::move(key)),
+		                                                     std::forward_as_tuple(std::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
@@ -2978,7 +3014,7 @@ namespace safememory
 		auto iter = find(k);
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(std::move(k)), forward_as_tuple(std::forward<M>(obj))));
+			return insert(value_type(std::piecewise_construct_t(), std::forward_as_tuple(std::move(k)), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{

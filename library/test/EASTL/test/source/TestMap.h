@@ -39,7 +39,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2A(new T2);
 	// 	T1& t1A = *pt1A;
 	// 	T2& t2A = *pt2A;
-	// 	nErrorCount += CompareContainers(t1A, t2A, "Map ctor", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1A, t2A, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 	// 	EATEST_VERIFY(t1A.validate());
 
 
@@ -47,7 +47,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2B(new T2);
 	// 	T1& t1B = *pt1B;
 	// 	T2& t2B = *pt2B;
-	// 	nErrorCount += CompareContainers(t1B, t2B, "Map ctor", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1B, t2B, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1C(new T1);
@@ -59,7 +59,7 @@ int TestMapConstruction()
 	// 		t1C.insert(typename T1::value_type(typename T1::key_type(i), typename T1::mapped_type(i)));
 	// 		t2C.insert(typename T2::value_type(typename T2::key_type(i), typename T2::mapped_type(i)));
 	// 		EATEST_VERIFY(t1C.validate());
-	// 		nErrorCount += CompareContainers(t1C, t2C, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 		nErrorCount += CompareContainers(t1C, t2C, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 	// 	}
 
 
@@ -67,7 +67,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2D(new T2);
 	// 	T1& t1D = *pt1D;
 	// 	T2& t2D = *pt2D;
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map ctor", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1E(new T1(t1C));
@@ -75,7 +75,7 @@ int TestMapConstruction()
 	// 	T1& t1E = *pt1E;
 	// 	T2& t2E = *pt2E;
 	// 	EATEST_VERIFY(t1E.validate());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map ctor", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1F(new T1(t1C.begin(), t1C.end()));
@@ -83,14 +83,14 @@ int TestMapConstruction()
 	// 	T1& t1F = *pt1F;
 	// 	T2& t2F = *pt2F;
 	// 	EATEST_VERIFY(t1F.validate());
-	// 	nErrorCount += CompareContainers(t1F, t2F, "Map ctor", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1F, t2F, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	// operator=(const map&)
 	// 	t1E = t1D;
 	// 	t2E = t2D;
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map operator=", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map operator=", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map operator=", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map operator=", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	// operator=(map&&)
@@ -132,20 +132,20 @@ int TestMapConstruction()
 	// 	t2E.swap(t2D);
 	// 	EATEST_VERIFY(t1D.validate());
 	// 	EATEST_VERIFY(t1E.validate());
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map swap", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map swap", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map swap", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map swap", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	// clear
 	// 	t1A.clear();
 	// 	t2A.clear();
 	// 	EATEST_VERIFY(t1A.validate());
-	// 	nErrorCount += CompareContainers(t1A, t2A, "Map clear", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1A, t2A, "Map clear", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 	// 	t1B.clear();
 	// 	t2B.clear();
 	// 	EATEST_VERIFY(t1B.validate());
-	// 	nErrorCount += CompareContainers(t1B, t2B, "Map clear", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1B, t2B, "Map clear", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 	// 	// global operators (==, !=, <, etc.)
@@ -200,14 +200,14 @@ int TestMapMutation()
 	TestObject::Reset();
 
 	{
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-		eastl::scoped_ptr<T2> pt2A(new T2);
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T2> pt2A(new T2);
 		T1&                   t1A = *pt1A;
 		T2&                   t2A = *pt2A;
 		int                   i, iEnd, p;
 
 		// Set up an array of values to randomize / permute.
-		eastl::vector<typename T1::key_type> valueArrayInsert;
+		std::vector<typename T1::key_type> valueArrayInsert;
 
 		if(gEASTL_TestLevel >= kEASTL_TestLevelLow)
 		{
@@ -229,7 +229,7 @@ int TestMapMutation()
 
 			for(p = 0; p < gEASTL_TestLevel * 100; p++) // For each permutation...
 			{
-				eastl::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+				std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 				// insert
 				for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -240,7 +240,7 @@ int TestMapMutation()
 					t2A.insert(typename T2::value_type(k, k));
 
 					EATEST_VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 				}
 
 
@@ -266,7 +266,7 @@ int TestMapMutation()
 
 					EATEST_VERIFY(n1 == n2);
 					EATEST_VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Map erase", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Map erase", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 				}
 
 				EATEST_VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -299,7 +299,7 @@ int TestMapMutation()
 						t2A.insert(typename T2::value_type(k, k));
 
 						EATEST_VERIFY(t1A.validate());
-						nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+						nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 					}
 
 					for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -310,7 +310,7 @@ int TestMapMutation()
 						t2A.erase(k);
 
 						EATEST_VERIFY(t1A.validate());
-						nErrorCount += CompareContainers(t1A, t2A, "Map erase", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+						nErrorCount += CompareContainers(t1A, t2A, "Map erase", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 					}
 
 					EATEST_VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -329,15 +329,15 @@ int TestMapMutation()
 	{  // Other insert and erase operations
 
 		#ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
-			eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-			eastl::scoped_ptr<T2> pt2A(new T2);
+			std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+			std::unique_ptr<T2> pt2A(new T2);
 			T1& t1A = *pt1A;
 			T2& t2A = *pt2A;
 			int i;
 
 			// Set up an array of values to randomize / permute.
-			eastl::vector<eastl::pair<typename T1::key_type, typename T1::mapped_type> > valueArrayInsert1;
-			eastl::vector<  std::pair<typename T2::key_type, typename T2::mapped_type> > valueArrayInsert2;
+			std::vector<std::pair<typename T1::key_type, typename T1::mapped_type> > valueArrayInsert1;
+			std::vector<  std::pair<typename T2::key_type, typename T2::mapped_type> > valueArrayInsert2;
 
 			EA::UnitTest::Rand rng(EA::UnitTest::GetRandSeed());
 
@@ -358,14 +358,14 @@ int TestMapMutation()
 			t1A.insert(valueArrayInsert1.begin(), valueArrayInsert1.end());
 			t2A.insert(valueArrayInsert2.begin(), valueArrayInsert2.end());
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 			// insert_return_type insert(const Key& key);
 			t1A.insert(typename T1::key_type(8888));
 			t2A.insert(typename T2::value_type(typename T2::key_type(8888), typename T2::mapped_type(0)));
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 			// iterator insert(iterator position, const value_type& value);
@@ -377,14 +377,14 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(1));
 			EATEST_VERIFY(it2->first == typename T2::key_type(1));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 			it1 = t1A.insert(t1A.end(), typename T1::value_type(typename T1::key_type(5), typename T1::mapped_type(5)));
 			it2 = t2A.insert(t2A.end(), typename T2::value_type(typename T2::key_type(5), typename T2::mapped_type(5)));
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(5));
 			EATEST_VERIFY(it2->first == typename T2::key_type(5));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 			// Now we remove these items so that the insertions above can succeed.
 			t1A.erase(t1A.find(typename T1::key_type(1)));
@@ -394,7 +394,7 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(1));
 			EATEST_VERIFY(it2->first == typename T2::key_type(1));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 			t1A.erase(t1A.find(typename T1::key_type(5)));
 			t2A.erase(t2A.find(typename T2::key_type(5)));
@@ -403,7 +403,7 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(5));
 			EATEST_VERIFY(it2->first == typename T2::key_type(5));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 			// iterator erase(iterator first, iterator last);
@@ -416,14 +416,14 @@ int TestMapMutation()
 			t2A.erase(it21, it22);
 
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 			// iterator erase(iterator position);
 			t1A.erase(t1A.find(typename T1::key_type(60)));
 			t2A.erase(t2A.find(typename T1::key_type(60)));
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 
 			// Disabled because this function isn't exposed outside the rbtree yet.
@@ -433,7 +433,7 @@ int TestMapMutation()
 			//t1A.erase(keyArray1 + 0, keyArray1 + 3);
 			//t2A.erase(keyArray2 + 0, keyArray2 + 3);
 			//EATEST_VERIFY(t1A.validate());
-			//nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", eastl::use_first<typename T1::value_type>(), eastl::use_first<typename T2::value_type>());
+			//nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
 
 		#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	}
@@ -476,7 +476,7 @@ int TestMapMutation()
 
 
 template <typename T1>
-int TestMapSpecific(T1& t1A, eastl::false_type) // false_type means this is a map and not a multimap.
+int TestMapSpecific(T1& t1A, std::false_type) // false_type means this is a map and not a multimap.
 {
 	int nErrorCount = 0;
 
@@ -495,12 +495,12 @@ int TestMapSpecific(T1& t1A, eastl::false_type) // false_type means this is a ma
 
 
 template <typename T1>
-int TestMapSpecific(T1& t1A, eastl::true_type) // true_type means this is a multimap and not a map.
+int TestMapSpecific(T1& t1A, std::true_type) // true_type means this is a multimap and not a map.
 {
 	int nErrorCount = 0;
 
 	// equal_range_small (multimap only)
-	eastl::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range_small(typename T1::key_type(499));
+	std::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range_small(typename T1::key_type(499));
 	EATEST_VERIFY(er.first->first  == typename T1::key_type(499));
 	EATEST_VERIFY(er.second->first == typename T1::key_type(501));
 
@@ -545,19 +545,19 @@ int TestMapSearch()
 	TestObject::Reset();
 
 	{  // Test find, lower_bound, upper_bound, etc..
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
 		T1& t1A = *pt1A;
 		int i, iEnd;
 		typename T1::iterator it;
 
 		// Set up an array of values to randomize / permute.
-		eastl::vector<typename T1::key_type> valueArrayInsert;
+		std::vector<typename T1::key_type> valueArrayInsert;
 
 		for(i = 0; i < 1000; i++)
 			valueArrayInsert.push_back(typename T1::key_type(i));
 
 		EASTLTest_Rand rng(EA::UnitTest::GetRandSeed());
-		eastl::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+		std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 
 		// insert
@@ -596,17 +596,17 @@ int TestMapSearch()
 		for(i = 0; i < 1000; i++)
 		{
 			TC k = typename T1::key_type(i);
-			it = t1A.find_as(k, eastl::less_2<typename T1::key_type, TC>());
+			it = t1A.find_as(k, std::less_2<typename T1::key_type, TC>());
 
 			EATEST_VERIFY(it != t1A.end());
 			EATEST_VERIFY(it->first  == k);
 			EATEST_VERIFY(it->second == k);
 		}
 
-		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(-1)), std::less_2<typename T1::key_type, TC>());
 		EATEST_VERIFY(it == t1A.end());
 
-		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(1001)), std::less_2<typename T1::key_type, TC>());
 		EATEST_VERIFY(it == t1A.end());
 
 
@@ -654,7 +654,7 @@ int TestMapSearch()
 
 
 		// equal_range
-		eastl::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range(typename T1::key_type(200));
+		std::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range(typename T1::key_type(200));
 		EATEST_VERIFY(er.first->first == typename T1::key_type(200));
 		EATEST_VERIFY(er.first->second == typename T1::key_type(200));
 
@@ -668,7 +668,7 @@ int TestMapSearch()
 
 
 		// Some tests need to be differently between map and multimap.
-		nErrorCount += TestMapSpecific(t1A, eastl::integral_constant<bool, bMultimap>());
+		nErrorCount += TestMapSpecific(t1A, std::integral_constant<bool, bMultimap>());
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -699,18 +699,18 @@ int TestMapCpp11()
 
 	typedef T1 TOMap;
 	typedef typename TOMap::value_type value_type;
-	typename TOMap::insert_return_type toMapInsertResult;
-	typename TOMap::iterator toMapIterator;
+	// typename TOMap::insert_return_type toMapInsertResult;
+	// typename TOMap::iterator toMapIterator;
 
 	TOMap      toMap;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	toMapInsertResult = toMap.emplace(value_type(0, to0));
+	typename TOMap::insert_return_type toMapInsertResult = toMap.emplace(value_type(0, to0));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-	toMapInsertResult = toMap.emplace(value_type(1, eastl::move(to1)));
+	toMapInsertResult = toMap.emplace(value_type(1, std::move(to1)));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 
 	// insert_return_type t1A.emplace(value_type&& value);
@@ -718,31 +718,31 @@ int TestMapCpp11()
 	value_type value40(4, to4);
 	EATEST_VERIFY(toMap.find(4) == toMap.end());
 	EATEST_VERIFY(value40.second.mX == 4); // It should change to 0 below during the move swap.
-	toMapInsertResult = toMap.emplace(eastl::move(value40));
+	toMapInsertResult = toMap.emplace(std::move(value40));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 	EATEST_VERIFY(value40.second.mX == 0);
 
 	value_type value41(4, to4);
-	toMapInsertResult = toMap.emplace(eastl::move(value41));
+	toMapInsertResult = toMap.emplace(std::move(value41));
 	EATEST_VERIFY(toMapInsertResult.second == false);
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to5(5);
 	value_type value50(5, to5);
-	toMapInsertResult = toMap.emplace(eastl::move(value50));
+	toMapInsertResult = toMap.emplace(std::move(value50));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	value_type value51(5, to5);
-	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, eastl::move(value51));
+	typename TOMap::iterator toMapIterator = toMap.emplace_hint(toMapInsertResult.first, std::move(value51));
 	EATEST_VERIFY(toMapIterator->first == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	TestObject to6(6);
 	value_type value6(6, to6);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value6)); // specify a bad hint. Insertion should still work.
+	toMapIterator = toMap.emplace_hint(toMap.begin(), std::move(value6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 6);
 	EATEST_VERIFY(toMap.find(6) != toMap.end());
 		
@@ -787,18 +787,18 @@ int TestMapCpp11()
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to9(9);
 	value_type value90(9, to9);
-	toMapInsertResult = toMap.emplace(eastl::move(value90));
+	toMapInsertResult = toMap.emplace(std::move(value90));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
 	value_type value91(9, to9);
-	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, eastl::move(value91));
+	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, std::move(value91));
 	EATEST_VERIFY(toMapIterator->first == 9);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
 	TestObject to10(10);
 	value_type value10(10, to10);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
+	toMapIterator = toMap.emplace_hint(toMap.begin(), std::move(value10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 10);
 	EATEST_VERIFY(toMap.find(10) != toMap.end());
 
@@ -856,17 +856,17 @@ int TestMultimapCpp11()
 
 	typedef T1 TOMap;
 	typedef typename TOMap::value_type value_type;
-	typename TOMap::iterator toMapIterator;
+	// typename TOMap::iterator toMapIterator;
 
 	TOMap      toMap;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	toMapIterator = toMap.emplace(value_type(0, to0));
+	TOMap::iterator toMapIterator = toMap.emplace(value_type(0, to0));
 	EATEST_VERIFY(toMapIterator->first == 0);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-	toMapIterator = toMap.emplace(value_type(1, eastl::move(to1)));
+	toMapIterator = toMap.emplace(value_type(1, std::move(to1)));
 	EATEST_VERIFY(toMapIterator->first == 1);
 
 	// insert_return_type t1A.emplace(value_type&& value);
@@ -874,31 +874,31 @@ int TestMultimapCpp11()
 	value_type value40(4, to4);
 	EATEST_VERIFY(toMap.find(4) == toMap.end());
 	EATEST_VERIFY(value40.second.mX == 4); // It should change to 0 below during the move swap.
-	toMapIterator = toMap.emplace(eastl::move(value40));
+	toMapIterator = toMap.emplace(std::move(value40));
 	EATEST_VERIFY(toMapIterator->first == 4);
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 	EATEST_VERIFY(value40.second.mX == 0);
 
 	value_type value41(4, to4);
-	toMapIterator = toMap.emplace(eastl::move(value41));
+	toMapIterator = toMap.emplace(std::move(value41));
 	EATEST_VERIFY(toMapIterator->first == 4);
 	EATEST_VERIFY(toMap.find(4) != toMap.end());
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to5(5);
 	value_type value50(5, to5);
-	toMapIterator = toMap.emplace(eastl::move(value50));
+	toMapIterator = toMap.emplace(std::move(value50));
 	EATEST_VERIFY(toMapIterator->first == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	value_type value51(5, to5);
-	toMapIterator = toMap.emplace_hint(toMapIterator, eastl::move(value51));
+	toMapIterator = toMap.emplace_hint(toMapIterator, std::move(value51));
 	EATEST_VERIFY(toMapIterator->first == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	TestObject to6(6);
 	value_type value6(6, to6);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value6)); // specify a bad hint. Insertion should still work.
+	toMapIterator = toMap.emplace_hint(toMap.begin(), std::move(value6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 6);
 	EATEST_VERIFY(toMap.find(6) != toMap.end());
 		
@@ -943,18 +943,18 @@ int TestMultimapCpp11()
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to9(9);
 	value_type value90(9, to9);
-	toMapIterator = toMap.emplace(eastl::move(value90));
+	toMapIterator = toMap.emplace(std::move(value90));
 	EATEST_VERIFY(toMapIterator->first == 9);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
 	value_type value91(9, to9);
-	toMapIterator = toMap.emplace_hint(toMapIterator, eastl::move(value91));
+	toMapIterator = toMap.emplace_hint(toMapIterator, std::move(value91));
 	EATEST_VERIFY(toMapIterator->first == 9);
 	EATEST_VERIFY(toMap.find(9) != toMap.end());
 
 	TestObject to10(10);
 	value_type value10(10, to10);
-	toMapIterator = toMap.emplace_hint(toMap.begin(), eastl::move(value10)); // specify a bad hint. Insertion should still work.
+	toMapIterator = toMap.emplace_hint(toMap.begin(), std::move(value10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(toMapIterator->first == 10);
 	EATEST_VERIFY(toMap.find(10) != toMap.end());
 
@@ -977,7 +977,7 @@ int TestMapCpp17()
 
 	typedef T1 TOMap;
 	typedef typename TOMap::mapped_type mapped_type;
-	typename TOMap::iterator toMapIterator;
+	// typename TOMap::iterator toMapIterator;
 
 
 	{

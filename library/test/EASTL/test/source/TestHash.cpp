@@ -5,7 +5,7 @@
 
 #include "EASTLTest.h"
 #include "TestMap.h"
-//#include "TestSet.h"
+#include "TestSet.h"
 #include <safememory/unordered_set.h>
 #include <safememory/unordered_map.h>
 // #include <EASTL/unordered_set.h>
@@ -101,27 +101,27 @@ struct HashtableValueHash
 // Explicit Template instantiations.
 // These tell the compiler to compile all the functions for the given class.
 template class safememory::hashtable<int,
-                                eastl::pair<const int, int>,
-                                eastl::allocator,
-                                safememory::use_first<eastl::pair<const int, int>>,
-                                eastl::equal_to<int>,
-                                eastl::hash<int>,
-                                mod_range_hashing,
-                                default_ranged_hash,
-                                prime_rehash_policy,
+                                std::pair<const int, int>,
+								std::allocator<std::pair<const int, int>>,
+                                safememory::use_first<std::pair<const int, int>>,
+                                std::equal_to<int>,
+                                std::hash<int>,
+                                safememory::mod_range_hashing,
+                                safememory::default_ranged_hash,
+                                safememory::prime_rehash_policy,
                                 true, // bCacheHashCode
                                 true, // bMutableIterators
                                 true  // bUniqueKeys
                                 >;
 template class safememory::hashtable<int,
-								eastl::pair<const int, int>,
-								eastl::allocator,
+								std::pair<const int, int>,
+								std::allocator<std::pair<const int, int>>,
 								safememory::use_first<std::pair<const int, int>>,
 								std::equal_to<int>,
 								std::hash<int>,
-								mod_range_hashing,
-								default_ranged_hash,
-								prime_rehash_policy,
+								safememory::mod_range_hashing,
+								safememory::default_ranged_hash,
+								safememory::prime_rehash_policy,
 								false, // bCacheHashCode
 								true,  // bMutableIterators
 								true   // bUniqueKeys
@@ -158,8 +158,8 @@ typedef safememory::hash_node<int, false> HashNode1;
 typedef safememory::hash_node<int, true> HashNode2;
 static_assert(std::is_default_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_default_constructible<HashNode2>::value, "hash_node static error");
-static_assert(std::is_copy_constructible<HashNode1>::value, "hash_node static error");
-static_assert(std::is_copy_constructible<HashNode2>::value, "hash_node static error");
+// static_assert(std::is_copy_constructible<HashNode1>::value, "hash_node static error");
+// static_assert(std::is_copy_constructible<HashNode2>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode2>::value, "hash_node static error");
 
@@ -201,9 +201,9 @@ int TestHash()
 
 		// allocator_type& get_allocator();
 		// void            set_allocator(const allocator_type& allocator);
-		hash_set<int>::allocator_type& allocator = hashSet.get_allocator();
-		hashSet.set_allocator(EASTLAllocatorType());
-		hashSet.set_allocator(allocator);
+		// hash_set<int>::allocator_type& allocator = hashSet.get_allocator();
+		// hashSet.set_allocator(EASTLAllocatorType());
+		// hashSet.set_allocator(allocator);
 		// To do: Try to find something better to test here.
 
 
@@ -301,14 +301,14 @@ int TestHash()
 		}
 
 		// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
-		HashSetInt::node_type* pNode = hashSet.allocate_uninitialized_node();
-		HashSetInt::insert_return_type r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
-		EATEST_VERIFY(r.second == true);
-		pNode = hashSet.allocate_uninitialized_node();
-		r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
-		EATEST_VERIFY(r.second == false);
-		hashSet.free_uninitialized_node(pNode);
-		hashSet.erase(999999);
+		// HashSetInt::node_type* pNode = hashSet.allocate_uninitialized_node();
+		// HashSetInt::insert_return_type r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
+		// EATEST_VERIFY(r.second == true);
+		// pNode = hashSet.allocate_uninitialized_node();
+		// r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
+		// EATEST_VERIFY(r.second == false);
+		// hashSet.free_uninitialized_node(pNode);
+		// hashSet.erase(999999);
 
 
 		// iterator       begin();
@@ -380,7 +380,7 @@ int TestHash()
 		// const_local_iterator end(size_type n) const;
 
 		HashSetInt::size_type b = hashSet.bucket_count() - 1;
-		hash<int> IntHash;
+		std::hash<int> IntHash;
 		for(HashSetInt::const_local_iterator cli = hashSet.begin(b); cli != hashSet.end(b); ++cli)
 		{
 			int v = *cli;
@@ -417,7 +417,7 @@ int TestHash()
 		// iterator       find(const key_type& k);
 		// const_iterator find(const key_type& k) const;
 
-		typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, true> HashSetIntC;
+		typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
 
 		HashSetIntC hashSet;
 		const int kCount = 10000;
@@ -472,11 +472,11 @@ int TestHash()
 			};
 
 			{
-				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, true> HashSetIntC;
+				typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
 				HashSetIntC hashSetC;
 				FindByHashTest(hashSetC);
 
-				typedef hash_set<int, hash<int>, equal_to<int>, EASTLAllocatorType, false> HashSetInt;
+				typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, false> HashSetInt;
 				HashSetInt hashSet;
 				FindByHashTest(hashSet);
 			}
@@ -485,25 +485,25 @@ int TestHash()
 	}
 
 
-	{
-		// hash_set(const allocator_type& allocator);
-		// hashtable& operator=(const this_type& x);
-		// bool validate() const;
+	// {
+	// 	// hash_set(const allocator_type& allocator);
+	// 	// hashtable& operator=(const this_type& x);
+	// 	// bool validate() const;
 
-		hash_set<int> hashSet1(EASTLAllocatorType("hash_set name"));
-		hash_set<int> hashSet2(hashSet1);
+	// 	hash_set<int> hashSet1(EASTLAllocatorType("hash_set name"));
+	// 	hash_set<int> hashSet2(hashSet1);
 
-		for(int i = 0; i < 10; i++)
-		{
-			hashSet1.insert(i);
-			hashSet2.insert(i);
-		}
+	// 	for(int i = 0; i < 10; i++)
+	// 	{
+	// 		hashSet1.insert(i);
+	// 		hashSet2.insert(i);
+	// 	}
 
-		hashSet1 = hashSet2;
+	// 	hashSet1 = hashSet2;
 
-		EATEST_VERIFY(hashSet1.validate());
-		EATEST_VERIFY(hashSet2.validate());
-	}
+	// 	EATEST_VERIFY(hashSet1.validate());
+	// 	EATEST_VERIFY(hashSet2.validate());
+	// }
 
 
 	{
@@ -562,28 +562,28 @@ int TestHash()
 		}
 		
 		// test hashtable::swap using different allocator instances
-		{
-			typedef hash_set<int, std::hash<int>, std::equal_to<int>, InstanceAllocator> HS;
-			HS hashSet1(InstanceAllocator("hash_set1 name", 111));
-			HS hashSet2(InstanceAllocator("hash_set2 name", 222));
+		// {
+		// 	typedef hash_set<int, std::hash<int>, std::equal_to<int>, InstanceAllocator> HS;
+		// 	HS hashSet1(InstanceAllocator("hash_set1 name", 111));
+		// 	HS hashSet2(InstanceAllocator("hash_set2 name", 222));
 
-			for(int i = 0; i < 10; i++)
-			{
-				hashSet1.insert(i);
-				hashSet2.insert(i+10);
-			}
+		// 	for(int i = 0; i < 10; i++)
+		// 	{
+		// 		hashSet1.insert(i);
+		// 		hashSet2.insert(i+10);
+		// 	}
 
-			hashSet2.swap(hashSet1);
+		// 	hashSet2.swap(hashSet1);
 
-			EATEST_VERIFY(hashSet1.validate());
-			EATEST_VERIFY(hashSet2.validate());
+		// 	EATEST_VERIFY(hashSet1.validate());
+		// 	EATEST_VERIFY(hashSet2.validate());
 
-			EATEST_VERIFY(hashSet1.get_allocator().mInstanceId == 222);
-			EATEST_VERIFY(hashSet2.get_allocator().mInstanceId == 111);
+		// 	EATEST_VERIFY(hashSet1.get_allocator().mInstanceId == 222);
+		// 	EATEST_VERIFY(hashSet2.get_allocator().mInstanceId == 111);
 
-			EATEST_VERIFY(std::all_of(std::begin(hashSet2), std::end(hashSet2), [](int i) { return i < 10; }));
-			EATEST_VERIFY(std::all_of(std::begin(hashSet1), std::end(hashSet1), [](int i) { return i >= 10; }));
-		}
+		// 	EATEST_VERIFY(std::all_of(std::begin(hashSet2), std::end(hashSet2), [](int i) { return i < 10; }));
+		// 	EATEST_VERIFY(std::all_of(std::begin(hashSet1), std::end(hashSet1), [](int i) { return i >= 10; }));
+		// }
 	}
 
 
@@ -591,7 +591,7 @@ int TestHash()
 		// hash_set(InputIterator first, InputIterator last, size_type nBucketCount = 8, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
 		// bool validate() const;
 
-		vector<int> intArray;
+		std::vector<int> intArray;
 		for(int i = 0; i < 1000; i++)
 			intArray.push_back(i);
 
@@ -607,50 +607,50 @@ int TestHash()
 
 
 		// bool validate_iterator(const_iterator i) const;
-		hash_set<int>::iterator it;
-		int result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == isf_none);
+		// hash_set<int>::iterator it;
+		// int result = hashSet1.validate_iterator(it);
+		// EATEST_VERIFY(result == isf_none);
 
-		it = hashSet1.begin();
-		result = hashSet2.validate_iterator(it);
-		EATEST_VERIFY(result == isf_none);
-		result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == (isf_valid | isf_current | isf_can_dereference));
+		// hash_set<int>::iterator it = hashSet1.begin();
+		// int result = hashSet2.validate_iterator(it);
+		// EATEST_VERIFY(result == isf_none);
+		// result = hashSet1.validate_iterator(it);
+		// EATEST_VERIFY(result == (isf_valid | isf_current | isf_can_dereference));
 
-		it = hashSet1.end();
-		result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == (isf_valid | isf_current));
+		// it = hashSet1.end();
+		// result = hashSet1.validate_iterator(it);
+		// EATEST_VERIFY(result == (isf_valid | isf_current));
 
 
 		// void reset_lose_memory();
-		hashSet1.reset_lose_memory();
-		hashSet1 = hashSet2;
+		// hashSet1.reset_lose_memory();
+		// hashSet1 = hashSet2;
 
-		EATEST_VERIFY(hashSet1.validate());
-		EATEST_VERIFY(hashSet2.validate());
+		// EATEST_VERIFY(hashSet1.validate());
+		// EATEST_VERIFY(hashSet2.validate());
 
-		hashSet3.reset_lose_memory();
-		hashSet4 = hashSet3;
+		// hashSet3.reset_lose_memory();
+		// hashSet4 = hashSet3;
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
+		// EATEST_VERIFY(hashSet3.validate());
+		// EATEST_VERIFY(hashSet4.validate());
 
-		hashSet2.reset_lose_memory();
-		hashSet3.reset_lose_memory();
-		swap(hashSet2, hashSet3);
+		// hashSet2.reset_lose_memory();
+		// hashSet3.reset_lose_memory();
+		// swap(hashSet2, hashSet3);
 
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
+		// EATEST_VERIFY(hashSet3.validate());
+		// EATEST_VERIFY(hashSet4.validate());
 
-		hashSet2 = hashSet3;
-		EATEST_VERIFY(hashSet2.validate());
+		// hashSet2 = hashSet3;
+		// EATEST_VERIFY(hashSet2.validate());
 	}
 
 
 	{
 		// void insert(InputIterator first, InputIterator last);
-		vector<int> intArray1;
-		vector<int> intArray2;
+		std::vector<int> intArray1;
+		std::vector<int> intArray2;
 
 		for(int i = 0; i < 1000; i++)
 		{
@@ -674,7 +674,7 @@ int TestHash()
 		for(int j = 0; j < 1000; j++)
 			hashSet1.insert(hashSet1.begin(), j);
 
-		insert_iterator< hash_set<int> > ii(hashSet1, hashSet1.begin());
+		std::insert_iterator< safememory::hash_set<int> > ii(hashSet1, hashSet1.begin());
 		for(int j = 0; j < 1000; j++)
 			*ii++ = j;
 	}
@@ -685,8 +685,8 @@ int TestHash()
 		nErrorCount += TestMapCpp11<safememory::hash_map<int, TestObject>>();
 		nErrorCount += TestMapCpp11<safememory::unordered_map<int, TestObject>>();
 
-		// nErrorCount += TestSetCpp11<safememory::hash_set<TestObject>>();
-		// nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safememory::hash_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
 
 		nErrorCount += TestMultimapCpp11<safememory::hash_multimap<int, TestObject>>();
 		nErrorCount += TestMultimapCpp11<safememory::unordered_multimap<int, TestObject>>();
@@ -812,8 +812,8 @@ int TestHash()
 			catch(const std::out_of_range) { }
 			catch(const std::exception& e)
 			{
-				string e_msg(e.what());
-				string msg = "wrong exception with message \"" + e_msg + "\" thrown";
+				std::string e_msg(e.what());
+				std::string msg = "wrong exception with message \"" + e_msg + "\" thrown";
 				EASTL_ASSERT_MSG(false, msg.c_str());
 			}
 		#endif
@@ -854,14 +854,14 @@ int TestHash()
 
 
 		// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
-		HashMapIntInt::node_type* pNode = hashMap.allocate_uninitialized_node();
-		HashMapIntInt::insert_return_type r = hashMap.insert(eastl::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
-		EATEST_VERIFY(r.second == true);
-		pNode = hashMap.allocate_uninitialized_node();
-		r = hashMap.insert(eastl::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
-		EATEST_VERIFY(r.second == false);
-		hashMap.free_uninitialized_node(pNode);
-		hashMap.erase(999999);
+		// HashMapIntInt::node_type* pNode = hashMap.allocate_uninitialized_node();
+		// HashMapIntInt::insert_return_type r = hashMap.insert(std::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
+		// EATEST_VERIFY(r.second == true);
+		// pNode = hashMap.allocate_uninitialized_node();
+		// r = hashMap.insert(std::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
+		// EATEST_VERIFY(r.second == false);
+		// hashMap.free_uninitialized_node(pNode);
+		// hashMap.erase(999999);
 
 
 		// mapped_type& operator[](const key_type& key)
@@ -884,102 +884,102 @@ int TestHash()
 	}
 
 
-	{   // Test hash_map
+	// {   // Test hash_map
 
-		// Aligned objects should be CustomAllocator instead of the default, because the 
-		// EASTL default might be unable to do aligned allocations, but CustomAllocator always can.
-		hash_map<Align32, int, eastl::hash<Align32>, eastl::equal_to<Align32>, CustomAllocator> hashMap;
-		const int kCount = 10000;
+	// 	// Aligned objects should be CustomAllocator instead of the default, because the 
+	// 	// EASTL default might be unable to do aligned allocations, but CustomAllocator always can.
+	// 	hash_map<Align32, int, std::hash<Align32>, std::equal_to<Align32>, CustomAllocator> hashMap;
+	// 	const int kCount = 10000;
 
-		for(int i = 0; i < kCount; i++)
-		{
-			Align32 a32(i); // GCC 2.x doesn't like the Align32 object being created in the ctor below.
-			hash_map<Align32, int>::value_type vt(a32, i);
-			hashMap.insert(vt);
-		}
+	// 	for(int i = 0; i < kCount; i++)
+	// 	{
+	// 		Align32 a32(i); // GCC 2.x doesn't like the Align32 object being created in the ctor below.
+	// 		hash_map<Align32, int>::value_type vt(a32, i);
+	// 		hashMap.insert(vt);
+	// 	}
 
-		for(hash_map<Align32, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
-		{
-			const Align32& k = (*it).first;
-			int            v = (*it).second;
-			EATEST_VERIFY(k.mX < 10000);
-			EATEST_VERIFY(v == k.mX);
-		}
+	// 	for(hash_map<Align32, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
+	// 	{
+	// 		const Align32& k = (*it).first;
+	// 		int            v = (*it).second;
+	// 		EATEST_VERIFY(k.mX < 10000);
+	// 		EATEST_VERIFY(v == k.mX);
+	// 	}
 
-		for(int i = 0; i < kCount * 2; i++)
-		{
-			hash_map<Align32, int>::iterator it = hashMap.find(Align32(i));
+	// 	for(int i = 0; i < kCount * 2; i++)
+	// 	{
+	// 		hash_map<Align32, int>::iterator it = hashMap.find(Align32(i));
 
-			if(i < kCount)
-			{
-				EATEST_VERIFY(it != hashMap.end());
+	// 		if(i < kCount)
+	// 		{
+	// 			EATEST_VERIFY(it != hashMap.end());
 
-				const Align32& k = (*it).first;
-				int            v = (*it).second;
-				EATEST_VERIFY(v == k.mX);
-			}
-			else
-				EATEST_VERIFY(it == hashMap.end());
-		}
-	}
+	// 			const Align32& k = (*it).first;
+	// 			int            v = (*it).second;
+	// 			EATEST_VERIFY(v == k.mX);
+	// 		}
+	// 		else
+	// 			EATEST_VERIFY(it == hashMap.end());
+	// 	}
+	// }
 
 
-	{   
-		// template <typename U, typename UHash, typename BinaryPredicate>
-		// iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate);
-		// template <typename U, typename UHash, typename BinaryPredicate>
-		// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
-		// template <typename U>
-		// iterator find_as(const U& u);
-		// template <typename U>
-		// const_iterator find_as(const U& u) const;
+	// {   
+	// 	// template <typename U, typename UHash, typename BinaryPredicate>
+	// 	// iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate);
+	// 	// template <typename U, typename UHash, typename BinaryPredicate>
+	// 	// const_iterator find_as(const U& u, UHash uhash, BinaryPredicate predicate) const;
+	// 	// template <typename U>
+	// 	// iterator find_as(const U& u);
+	// 	// template <typename U>
+	// 	// const_iterator find_as(const U& u) const;
 
-		typedef hash_set<string> HashSetString;
+	// 	typedef hash_set<std::string> HashSetString;
 
-		HashSetString hashSet;
-		const int kCount = 100;
+	// 	HashSetString hashSet;
+	// 	const int kCount = 100;
 
-		for(int i = 0; i < kCount; i++)
-		{
-			string::CtorSprintf cs; // GCC 2.x doesn't like this value being created in the ctor below.
-			string s(cs, "%d", i);
-			hashSet.insert(s);
-		}
+	// 	for(int i = 0; i < kCount; i++)
+	// 	{
+	// 		// string::CtorSprintf cs; // GCC 2.x doesn't like this value being created in the ctor below.
+	// 		std::string s = std::to_string(i);
+	// 		hashSet.insert(s);
+	// 	}
 
-		for(int i = 0; i < kCount * 2; i++)
-		{
-			char pString[32];
-			sprintf(pString, "%d", i);
+	// 	for(int i = 0; i < kCount * 2; i++)
+	// 	{
+	// 		char pString[32];
+	// 		sprintf(pString, "%d", i);
 
-			HashSetString::iterator it = hashSet.find_as(pString);
-			if(i < kCount)
-				EATEST_VERIFY(it != hashSet.end());
-			else
-				EATEST_VERIFY(it == hashSet.end());
+	// 		HashSetString::iterator it = hashSet.find_as(pString);
+	// 		if(i < kCount)
+	// 			EATEST_VERIFY(it != hashSet.end());
+	// 		else
+	// 			EATEST_VERIFY(it == hashSet.end());
 
-			it = hashSet.find_as(pString, hash<const char*>(), equal_to_2<string, const char*>());
-			if(i < kCount)
-				EATEST_VERIFY(it != hashSet.end());
-			else
-				EATEST_VERIFY(it == hashSet.end());
-		}
-	}
+	// 		it = hashSet.find_as(pString, hash<const char*>(), equal_to_2<string, const char*>());
+	// 		if(i < kCount)
+	// 			EATEST_VERIFY(it != hashSet.end());
+	// 		else
+	// 			EATEST_VERIFY(it == hashSet.end());
+	// 	}
+	// }
 
-	{
-		// Test const containers.
-		const hash_set<int> constHashSet;
+	// {
+	// 	// Test const containers.
+	// 	const hash_set<int> constHashSet;
 
-		hash_set<int>::const_iterator i = constHashSet.begin();
-		hash_set<int>::const_iterator i3 = i;
-		hash_set<int>::iterator i2;
-		i3 = i2;
+	// 	hash_set<int>::const_iterator i = constHashSet.begin();
+	// 	hash_set<int>::const_iterator i3 = i;
+	// 	hash_set<int>::iterator i2;
+	// 	i3 = i2;
 
-		EATEST_VERIFY(i3 == i2);
+	// 	EATEST_VERIFY(i3 == i2);
 
-		//const std::tr1::unordered_set<int> constUSet;
-		//std::tr1::unordered_set<int>::const_iterator i = constUSet.begin();
-		//*i = 0;
-	}
+	// 	//const std::tr1::unordered_set<int> constUSet;
+	// 	//std::tr1::unordered_set<int>::const_iterator i = constUSet.begin();
+	// 	//*i = 0;
+	// }
 
 	{
 		// global operator ==, !=
@@ -1142,19 +1142,19 @@ int TestHash()
 		}
 	}
 
-	{
-		typedef safememory::unordered_multimap<int> HashMultisetInt;
+	// {
+	// 	typedef safememory::unordered_multimap<int> HashMultisetInt;
 
-		HashMultisetInt hashMultiSet;
+	// 	HashMultisetInt hashMultiSet;
 
-		// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
-		HashMultisetInt::node_type* pNode = hashMultiSet.allocate_uninitialized_node();
-		HashMultisetInt::iterator it1 = hashMultiSet.insert(eastl::hash<int>()(999999), pNode, 999999);
-		EATEST_VERIFY(it1 != hashMultiSet.end());
-		pNode = hashMultiSet.allocate_uninitialized_node();
-		HashMultisetInt::iterator it2 = hashMultiSet.insert(eastl::hash<int>()(999999), pNode, 999999);
-		EATEST_VERIFY(it2 != hashMultiSet.end() && it2 != it1);
-	}
+	// 	// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
+	// 	HashMultisetInt::node_type* pNode = hashMultiSet.allocate_uninitialized_node();
+	// 	HashMultisetInt::iterator it1 = hashMultiSet.insert(std::hash<int>()(999999), pNode, 999999);
+	// 	EATEST_VERIFY(it1 != hashMultiSet.end());
+	// 	pNode = hashMultiSet.allocate_uninitialized_node();
+	// 	HashMultisetInt::iterator it2 = hashMultiSet.insert(std::hash<int>()(999999), pNode, 999999);
+	// 	EATEST_VERIFY(it2 != hashMultiSet.end() && it2 != it1);
+	// }
 
 	{ 
 		// Regression of compiler warning reported by Jeff Litz/Godfather regarding 
@@ -1166,9 +1166,9 @@ int TestHash()
 
 	{ 
 		// Regression of user-reported crash.
-		safememory::hash_map<int, eastl::string*>* _hmTextureList;
-		_hmTextureList = new safememory::hash_map<int, eastl::string*>();
-		eastl::string* a = NULL;
+		safememory::hash_map<int, std::string*>* _hmTextureList;
+		_hmTextureList = new safememory::hash_map<int, std::string*>();
+		std::string* a = NULL;
 		(*_hmTextureList)[0] = a;
 		delete _hmTextureList;
 	}
@@ -1184,7 +1184,7 @@ int TestHash()
 
 		// Section 2
 		HashRegressionA* pA = NULL;
-		eastl::pair<HMM::iterator, HMM::iterator> pair = m_hash.equal_range(pA);
+		std::pair<HMM::iterator, HMM::iterator> pair = m_hash.equal_range(pA);
 		(void)pair;
 	}
 
@@ -1214,14 +1214,14 @@ int TestHash()
 
 		// Try to find a hash value that doesn't exist
 		{
-			eastl::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1000);
+			std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1000);
 			EATEST_VERIFY(i.first == hashMap.end());
 			EATEST_VERIFY(i.second == hashMap.end());
 		}
 
 		{
 			int iterations = 0;
-			for(eastl::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1); i.first != i.second; i.first++)
+			for(std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1); i.first != i.second; i.first++)
 			{
 				int nodeValue = i.first.get_node()->mValue.first;
 				EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
@@ -1233,7 +1233,7 @@ int TestHash()
 		{
 			const HM &constHashMap = hashMap;
 			int iterations = 0;
-			for(eastl::pair<HM::const_iterator, HM::const_iterator> i = constHashMap.find_range_by_hash(1); i.first != i.second; i.first++)
+			for(std::pair<HM::const_iterator, HM::const_iterator> i = constHashMap.find_range_by_hash(1); i.first != i.second; i.first++)
 			{
 				int nodeValue = i.first.get_node()->mValue.first;
 				EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
@@ -1352,63 +1352,63 @@ int TestHash()
 
 		Key key1, key2;
 		safememory::hash_map<Key, int, Hash> hm;
-		hm[eastl::move(key1)] = 12345;
+		hm[std::move(key1)] = 12345;
 
-		EATEST_VERIFY(hm[eastl::move(key2)] == 12345);
+		EATEST_VERIFY(hm[std::move(key2)] == 12345);
 	}
 	#endif
 
-	{
-		using AllocatorType = CountingAllocator;
-		using String = eastl::basic_string<char8_t, AllocatorType>;
-		using StringStringMap = eastl::map<String, String, eastl::equal_to<String>, AllocatorType>;
-		using StringStringHashMap = safememory::hash_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
-		AllocatorType::resetCount();
+	// {
+	// 	using AllocatorType = CountingAllocator;
+	// 	using String = std::basic_string<char8_t, AllocatorType>;
+	// 	using StringStringMap = std::map<String, String, std::equal_to<String>, AllocatorType>;
+	// 	using StringStringHashMap = safememory::hash_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
+	// 	AllocatorType::resetCount();
 
-		{
-			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
-			String key("mykey01234567890000000000000000000000000000");
-			String value("myvalue01234567890000000000000000000000000000");
-			AllocatorType::resetCount();
+	// 	{
+	// 		StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+	// 		String key("mykey01234567890000000000000000000000000000");
+	// 		String value("myvalue01234567890000000000000000000000000000");
+	// 		AllocatorType::resetCount();
 
-			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
-			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
-		}
-		{
-			StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
-			String key("mykey01234567890000000000000000000000000000");
-			String value("myvalue01234567890000000000000000000000000000");
-			AllocatorType::resetCount();
+	// 		myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+	// 		EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
+	// 	}
+	// 	{
+	// 		StringStringHashMap myMap(5); // construct map with 5 buckets, so we don't rehash on insert
+	// 		String key("mykey01234567890000000000000000000000000000");
+	// 		String value("myvalue01234567890000000000000000000000000000");
+	// 		AllocatorType::resetCount();
 
-			myMap.emplace(eastl::move(key), eastl::move(value));
-			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
-		}
-		{
-			StringStringMap myMap;
-			String key("mykey01234567890000000000000000000000000000");
-			String value("myvalue01234567890000000000000000000000000000");
-			AllocatorType::resetCount();
+	// 		myMap.emplace(eastl::move(key), eastl::move(value));
+	// 		EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
+	// 	}
+	// 	{
+	// 		StringStringMap myMap;
+	// 		String key("mykey01234567890000000000000000000000000000");
+	// 		String value("myvalue01234567890000000000000000000000000000");
+	// 		AllocatorType::resetCount();
 
-			myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
-			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
-		}
-		{
-			StringStringMap myMap;
-			String key("mykey01234567890000000000000000000000000000");
-			String value("myvalue01234567890000000000000000000000000000");
-			AllocatorType::resetCount();
+	// 		myMap.insert(eastl::make_pair(eastl::move(key), eastl::move(value)));
+	// 		EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
+	// 	}
+	// 	{
+	// 		StringStringMap myMap;
+	// 		String key("mykey01234567890000000000000000000000000000");
+	// 		String value("myvalue01234567890000000000000000000000000000");
+	// 		AllocatorType::resetCount();
 
-			myMap.emplace(eastl::move(key), eastl::move(value));
-			EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
-		}
-	}
+	// 		myMap.emplace(eastl::move(key), eastl::move(value));
+	// 		EATEST_VERIFY(AllocatorType::getTotalAllocationCount() == 1);
+	// 	}
+	// }
 
 	
 	{
 
 		struct name_equals
 		{
-			bool operator()(const eastl::pair<int, const char*>& a, const eastl::pair<int, const char*>& b) const
+			bool operator()(const std::pair<int, const char*>& a, const std::pair<int, const char*>& b) const
 			{
 				if (a.first != b.first)
 					return false;
@@ -1420,10 +1420,10 @@ int TestHash()
 		{
 			int n = 42;
 			const char* pCStrName = "electronic arts";
-			safememory::hash_map<eastl::pair<int, const char*>, bool, eastl::hash<eastl::pair<int, const char*>>, name_equals, eastl::allocator> m_TempNames;
-			m_TempNames[eastl::make_pair(n, pCStrName)] = true;
+			safememory::hash_map<std::pair<int, const char*>, bool, std::hash<std::pair<int, const char*>>, name_equals> m_TempNames;
+			m_TempNames[std::make_pair(n, pCStrName)] = true;
 
-			auto isFound = (m_TempNames.find(eastl::make_pair(n, pCStrName)) != m_TempNames.end());
+			auto isFound = (m_TempNames.find(std::make_pair(n, pCStrName)) != m_TempNames.end());
 			VERIFY(isFound);
 		}
 	}

@@ -522,13 +522,15 @@ namespace safememory
 		// two elements in a has those same two elements in b but in different order (which should 
 		// still result in equality). Also it's possible that one bucket in a has two elements which 
 		// both match a solitary element in the equivalent bucket in b (which shouldn't result in equality).
-		std::pair<const_iterator, const_iterator> aRange;
-		std::pair<const_iterator, const_iterator> bRange;
+		// std::pair<const_iterator, const_iterator> aRange;
+		// std::pair<const_iterator, const_iterator> bRange;
 
-		for(const_iterator ai = a.begin(), aiEnd = a.end(); ai != aiEnd; ai = aRange.second) // For each element in a...
+		const_iterator ai = a.begin();
+		const_iterator aiEnd = a.end();
+		while(ai != aiEnd) // For each element in a...
 		{
-			aRange = a.equal_range(ai->first); // Get the range of elements in a that are equal to ai.
-			bRange = b.equal_range(ai->first); // Get the range of elements in b that are equal to ai.
+			std::pair<const_iterator, const_iterator> aRange = a.equal_range(ai->first); // Get the range of elements in a that are equal to ai.
+			std::pair<const_iterator, const_iterator> bRange = b.equal_range(ai->first); // Get the range of elements in b that are equal to ai.
 
 			// We need to verify that aRange == bRange. First make sure the range sizes are equivalent...
 			const difference_type aDistance = std::distance(aRange.first, aRange.second);
@@ -551,6 +553,8 @@ namespace safememory
 				if(!std::is_permutation(aRange.first, aRange.second, bRange.first))
 					return false;
 			}
+
+			ai = aRange.second;
 		}
 
 		return true;

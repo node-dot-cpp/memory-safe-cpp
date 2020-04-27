@@ -7,7 +7,7 @@
 #include <vector>
 #include <algorithm>
 #include <type_traits>
-#include <scoped_ptr>
+#include <memory>
 #include <random>
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -36,23 +36,23 @@ int TestSetConstruction()
 	TestObject::Reset();
 
 	{
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-		eastl::scoped_ptr<T2> pt2A(new T2);
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T2> pt2A(new T2);
 		T1& t1A = *pt1A;
 		T2& t2A = *pt2A;
-		nErrorCount += CompareContainers(t1A, t2A, "Set ctor", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 		VERIFY(t1A.validate());
 
 
-		eastl::scoped_ptr<T1> pt1B(new T1);
-		eastl::scoped_ptr<T2> pt2B(new T2);
+		std::unique_ptr<T1> pt1B(new T1);
+		std::unique_ptr<T2> pt2B(new T2);
 		T1& t1B = *pt1B;
 		T2& t2B = *pt2B;
-		nErrorCount += CompareContainers(t1B, t2B, "Set ctor", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1B, t2B, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
-		eastl::scoped_ptr<T1> pt1C(new T1);
-		eastl::scoped_ptr<T2> pt2C(new T2);
+		std::unique_ptr<T1> pt1C(new T1);
+		std::unique_ptr<T2> pt2C(new T2);
 		T1& t1C = *pt1C;
 		T2& t2C = *pt2C;
 		for(int i = 0; i < 1000; i++)
@@ -60,44 +60,44 @@ int TestSetConstruction()
 			t1C.insert(typename T1::value_type(typename T1::value_type(i)));
 			t2C.insert(typename T2::value_type(typename T2::value_type(i)));
 			VERIFY(t1C.validate());
-			nErrorCount += CompareContainers(t1C, t2C, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1C, t2C, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 		}
 
 
-		eastl::scoped_ptr<T1> pt1D(new T1);
-		eastl::scoped_ptr<T2> pt2D(new T2);
+		std::unique_ptr<T1> pt1D(new T1);
+		std::unique_ptr<T2> pt2D(new T2);
 		T1& t1D = *pt1D;
 		T2& t2D = *pt2D;
-		nErrorCount += CompareContainers(t1D, t2D, "Set ctor", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
-		eastl::scoped_ptr<T1> pt1E(new T1(t1C));
-		eastl::scoped_ptr<T2> pt2E(new T2(t2C));
+		std::unique_ptr<T1> pt1E(new T1(t1C));
+		std::unique_ptr<T2> pt2E(new T2(t2C));
 		T1& t1E = *pt1E;
 		T2& t2E = *pt2E;
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1E, t2E, "Set ctor", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
-		eastl::scoped_ptr<T1> pt1F(new T1(t1C.begin(), t1C.end()));
-		eastl::scoped_ptr<T2> pt2F(new T2(t2C.begin(), t2C.end()));
+		std::unique_ptr<T1> pt1F(new T1(t1C.begin(), t1C.end()));
+		std::unique_ptr<T2> pt2F(new T2(t2C.begin(), t2C.end()));
 		T1& t1F = *pt1F;
 		T2& t2F = *pt2F;
 		VERIFY(t1F.validate());
-		nErrorCount += CompareContainers(t1F, t2F, "Set ctor", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1F, t2F, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// operator=
 		t1E = t1D;
 		t2E = t2D;
-		nErrorCount += CompareContainers(t1D, t2D, "Set operator=", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Set operator=", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set operator=", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set operator=", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// operator=(set&&)
 		// We test just the EASTL container here.
-		eastl::scoped_ptr<T1> pT1P(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-		eastl::scoped_ptr<T1> pT1Q(new T1);
+		std::unique_ptr<T1> pT1P(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T1> pT1Q(new T1);
 		T1& t1P = *pT1P;
 		T1& t1Q = *pT1Q;
 
@@ -116,7 +116,7 @@ int TestSetConstruction()
 		t1Q.insert(v14);
 		t1Q.insert(v15);
 
-		t1Q = eastl::move(t1P); // We are effectively requesting to swap t1A with t1B.
+		t1Q = std::move(t1P); // We are effectively requesting to swap t1A with t1B.
 	  //EATEST_VERIFY((t1P.size() == 3) && (t1P.find(v13) != t1P.end()) && (t1P.find(v14) != t1P.end()) && (t1P.find(v15) != t1P.end()));  // Currently operator=(this_type&& x) clears x instead of swapping with it.
 
 
@@ -125,29 +125,29 @@ int TestSetConstruction()
 		t2E.swap(t2D);
 		VERIFY(t1D.validate());
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1D, t2D, "Set swap", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Set swap", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
-		// eastl::swap
-		eastl::swap(t1E, t1D);
+		// std::swap
+		std::swap(t1E, t1D);
 		  std::swap(t2E, t2D);
 		VERIFY(t1D.validate());
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1D, t2D, "Global swap", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Global swap", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Global swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Global swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// clear
 		t1A.clear();
 		t2A.clear();
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set clear", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set clear", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 		t1B.clear();
 		t2B.clear();
 		VERIFY(t1B.validate());
-		nErrorCount += CompareContainers(t1B, t2B, "Set clear", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1B, t2B, "Set clear", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// global operators (==, !=, <, etc.)
@@ -203,14 +203,14 @@ int TestSetMutation()
 	TestObject::Reset();
 
 	{
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-		eastl::scoped_ptr<T2> pt2A(new T2);
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T2> pt2A(new T2);
 		T1& t1A = *pt1A;
 		T2& t2A = *pt2A;
 		int i, iEnd, p;
 
 		// Set up an array of values to randomize / permute.
-		eastl::vector<typename T1::value_type> valueArrayInsert;
+		std::vector<typename T1::value_type> valueArrayInsert;
 
 		if(gEASTL_TestLevel >= kEASTL_TestLevelLow)
 		{
@@ -232,7 +232,7 @@ int TestSetMutation()
 
 			for(p = 0; p < gEASTL_TestLevel * 100; p++) // For each permutation...
 			{
-				eastl::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+				std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 				// insert
 				for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -243,7 +243,7 @@ int TestSetMutation()
 					t2A.insert(typename T2::value_type(k));
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 				}
 
 
@@ -269,7 +269,7 @@ int TestSetMutation()
 
 					VERIFY(n1 == n2);
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set erase", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set erase", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 				}
 
 				VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -300,7 +300,7 @@ int TestSetMutation()
 					t2A.insert(typename T2::value_type(k));
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 				}
 
 				for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -311,7 +311,7 @@ int TestSetMutation()
 					t2A.erase(k);
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set erase", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set erase", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 				}
 
 				VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -326,15 +326,15 @@ int TestSetMutation()
 
 	{  // Other insert and erase operations
 
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
-		eastl::scoped_ptr<T2> pt2A(new T2);
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T2> pt2A(new T2);
 		T1& t1A = *pt1A;
 		T2& t2A = *pt2A;
 		int i;
 
 		// Set up an array of values to randomize / permute.
-		eastl::vector<typename T1::value_type> valueArrayInsert1;
-		eastl::vector<typename T2::value_type> valueArrayInsert2;
+		std::vector<typename T1::value_type> valueArrayInsert1;
+		std::vector<typename T2::value_type> valueArrayInsert2;
 
 		EASTLTest_Rand rng(EA::UnitTest::GetRandSeed());
 
@@ -355,7 +355,7 @@ int TestSetMutation()
 		t1A.insert(valueArrayInsert1.begin(), valueArrayInsert1.end());
 		t2A.insert(valueArrayInsert2.begin(), valueArrayInsert2.end());
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// iterator insert(iterator position, const value_type& value);
@@ -367,14 +367,14 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(1));
 		VERIFY(*it2 == typename T2::value_type(1));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 		it1 = t1A.insert(t1A.end(), typename T1::value_type(5));
 		it2 = t2A.insert(t2A.end(), typename T2::value_type(5));
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(5));
 		VERIFY(*it2 == typename T2::value_type(5));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 		// Now we remove these items so that the insertions above can succeed.
 		t1A.erase(t1A.find(typename T1::value_type(1)));
@@ -384,7 +384,7 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(1));
 		VERIFY(*it2 == typename T2::value_type(1));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 		t1A.erase(t1A.find(typename T1::value_type(5)));
 		t2A.erase(t2A.find(typename T2::value_type(5)));
@@ -393,7 +393,7 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(5));
 		VERIFY(*it2 == typename T2::value_type(5));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 		// iterator erase(iterator first, iterator last);
 		typename T1::iterator it11 = t1A.find(typename T1::value_type(17));
@@ -405,14 +405,14 @@ int TestSetMutation()
 		t2A.erase(it21, it22);
 
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// iterator erase(iterator position);
 		t1A.erase(t1A.find(typename T1::value_type(60)));
 		t2A.erase(t2A.find(typename T1::value_type(60)));
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 
 
 		// Disabled because this function isn't exposed outside the rbtree yet.
@@ -422,7 +422,7 @@ int TestSetMutation()
 		//t1A.erase(keyArray1 + 0, keyArray1 + 3);
 		//t2A.erase(keyArray2 + 0, keyArray2 + 3);
 		//VERIFY(t1A.validate());
-		//nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", eastl::use_self<typename T1::value_type>(), eastl::use_self<typename T2::value_type>());
+		//nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
 	}
 
 	{
@@ -464,19 +464,19 @@ EA_RESTORE_VC_WARNING()
 
 
 template <typename T1>
-int TestSetSpecific(T1& /*t1A*/, eastl::false_type) // false_type means this is a map and not a multimap.
+int TestSetSpecific(T1& /*t1A*/, std::false_type) // false_type means this is a map and not a multimap.
 {
 	return 0;
 }
 
 
 template <typename T1>
-int TestSetSpecific(T1& t1A, eastl::true_type) // true_type means this is a multimap and not a map.
+int TestSetSpecific(T1& t1A, std::true_type) // true_type means this is a multimap and not a map.
 {
 	int nErrorCount = 0;
 
 	// equal_range_small (multiset only)
-	eastl::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range_small(typename T1::value_type(499));
+	std::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range_small(typename T1::value_type(499));
 	VERIFY(*er.first  == typename T1::value_type(499));
 	VERIFY(*er.second == typename T1::value_type(501));
 
@@ -521,19 +521,19 @@ int TestSetSearch()
 	TestObject::Reset();
 
 	{  // Test find, lower_bound, upper_bound, etc..
-		eastl::scoped_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
+		std::unique_ptr<T1> pt1A(new T1); // We use a pointers instead of concrete object because it's size may be huge.
 		T1& t1A = *pt1A;
 		int i, iEnd;
 		typename T1::iterator it;
 
 		// Set up an array of values to randomize / permute.
-		eastl::vector<typename T1::value_type> valueArrayInsert;
+		std::vector<typename T1::value_type> valueArrayInsert;
 
 		for(i = 0; i < 1000; i++)
 			valueArrayInsert.push_back(typename T1::value_type(i));
 
 		EASTLTest_Rand rng(EA::UnitTest::GetRandSeed());
-		eastl::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+		std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 
 		// insert
@@ -571,16 +571,16 @@ int TestSetSearch()
 		for(i = 0; i < 1000; i++)
 		{
 			TC k = typename T1::key_type(i);
-			it = t1A.find_as(k, eastl::less_2<typename T1::key_type, TC>());
+			it = t1A.find_as(k, std::less_2<typename T1::key_type, TC>());
 
 			VERIFY(it != t1A.end());
 			VERIFY(*it == k);
 		}
 
-		it = t1A.find_as(TC(typename T1::key_type(-1)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(-1)), std::less_2<typename T1::key_type, TC>());
 		VERIFY(it == t1A.end());
 
-		it = t1A.find_as(TC(typename T1::key_type(1001)), eastl::less_2<typename T1::key_type, TC>());
+		it = t1A.find_as(TC(typename T1::key_type(1001)), std::less_2<typename T1::key_type, TC>());
 		VERIFY(it == t1A.end());
 
 
@@ -628,7 +628,7 @@ int TestSetSearch()
 
 
 		// equal_range
-		eastl::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range(typename T1::value_type(200));
+		std::pair<typename T1::iterator, typename T1::iterator> er = t1A.equal_range(typename T1::value_type(200));
 		VERIFY(*er.first == typename T1::value_type(200));
 
 		er = t1A.equal_range(typename T1::value_type(499));
@@ -641,7 +641,7 @@ int TestSetSearch()
 
 
 		// Some tests need to be differently between map and multimap.
-		nErrorCount += TestSetSpecific(t1A, eastl::integral_constant<bool, bMultimap>());
+		nErrorCount += TestSetSpecific(t1A, std::integral_constant<bool, bMultimap>());
 	}
 
 	VERIFY(TestObject::IsClear());
@@ -673,47 +673,47 @@ int TestSetCpp11()
 	TestObject::Reset();
 
 	typedef T1 TOSet;
-	typename TOSet::insert_return_type toSetInsertResult;
-	typename TOSet::iterator toSetIterator;
+	// typename TOSet::insert_return_type toSetInsertResult;
+	// typename TOSet::iterator toSetIterator;
 
 	TOSet      toSet;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	toSetInsertResult = toSet.emplace(to0);
+	TOSet::insert_return_type toSetInsertResult = toSet.emplace(to0);
 	EATEST_VERIFY(toSetInsertResult.second == true);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-	toSetInsertResult = toSet.emplace(eastl::move(to1));
+	toSetInsertResult = toSet.emplace(std::move(to1));
 	EATEST_VERIFY(toSetInsertResult.second == true);
 
 	// insert_return_type t1A.emplace(value_type&& value);
 	TestObject to40(4);
 	EATEST_VERIFY(toSet.find(to40) == toSet.end());
 	EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
-	toSetInsertResult = toSet.emplace(eastl::move(to40));
+	toSetInsertResult = toSet.emplace(std::move(to40));
 	EATEST_VERIFY(toSetInsertResult.second == true);
 	EATEST_VERIFY(toSet.find(to40) != toSet.end());
 	EATEST_VERIFY(to40.mX == 0);
 
 	TestObject to41(4);
-	toSetInsertResult = toSet.emplace(eastl::move(to41));
+	toSetInsertResult = toSet.emplace(std::move(to41));
 	EATEST_VERIFY(toSetInsertResult.second == false);
 	EATEST_VERIFY(toSet.find(to41) != toSet.end());
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to50(5);
-	toSetInsertResult = toSet.emplace(eastl::move(to50));
+	toSetInsertResult = toSet.emplace(std::move(to50));
 	EATEST_VERIFY(toSetInsertResult.second == true);
 	EATEST_VERIFY(toSet.find(to50) != toSet.end());
 
 	TestObject to51(5);
-	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to51));
+	TOSet::iterator toSetIterator = toSet.emplace_hint(toSetInsertResult.first, std::move(to51));
 	EATEST_VERIFY(*toSetIterator == TestObject(5));
 	EATEST_VERIFY(toSet.find(to51) != toSet.end());
 
 	TestObject to6(6);
-	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
+	toSetIterator = toSet.emplace_hint(toSet.begin(), std::move(to6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(*toSetIterator == TestObject(6));
 	EATEST_VERIFY(toSet.find(to6) != toSet.end());
 		
@@ -755,17 +755,17 @@ int TestSetCpp11()
 
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to90(9);
-	toSetInsertResult = toSet.emplace(eastl::move(to90));
+	toSetInsertResult = toSet.emplace(std::move(to90));
 	EATEST_VERIFY(toSetInsertResult.second == true);
 	EATEST_VERIFY(toSet.find(to90) != toSet.end());
 
 	TestObject to91(9);
-	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, eastl::move(to91));
+	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, std::move(to91));
 	EATEST_VERIFY(*toSetIterator == TestObject(9));
 	EATEST_VERIFY(toSet.find(to91) != toSet.end());
 
 	TestObject to10(10);
-	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
+	toSetIterator = toSet.emplace_hint(toSet.begin(), std::move(to10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(*toSetIterator == TestObject(10));
 	EATEST_VERIFY(toSet.find(to10) != toSet.end());
 
@@ -801,46 +801,46 @@ int TestMultisetCpp11()
 	TestObject::Reset();
 
 	typedef T1 TOSet;
-	typename TOSet::iterator toSetIterator;
+	// typename TOSet::iterator toSetIterator;
 
 	TOSet      toSet;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	toSetIterator = toSet.emplace(to0);
+	typename TOSet::iterator toSetIterator = toSet.emplace(to0);
 	EATEST_VERIFY(*toSetIterator == TestObject(0));
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
-	toSetIterator = toSet.emplace(eastl::move(to1));
+	toSetIterator = toSet.emplace(std::move(to1));
 	EATEST_VERIFY(*toSetIterator == TestObject(1));
 
 	// insert_return_type t1A.emplace(value_type&& value);
 	TestObject to40(4);
 	EATEST_VERIFY(toSet.find(to40) == toSet.end());
 	EATEST_VERIFY(to40.mX == 4); // It should change to 0 below during the move swap.
-	toSetIterator = toSet.emplace(eastl::move(to40));
+	toSetIterator = toSet.emplace(std::move(to40));
 	EATEST_VERIFY(*toSetIterator == TestObject(4));
 	EATEST_VERIFY(toSet.find(to40) != toSet.end());
 	EATEST_VERIFY(to40.mX == 0);
 
 	TestObject to41(4);
-	toSetIterator = toSet.emplace(eastl::move(to41));  // multiset can insert another of these.
+	toSetIterator = toSet.emplace(std::move(to41));  // multiset can insert another of these.
 	EATEST_VERIFY(*toSetIterator == TestObject(4));
 	EATEST_VERIFY(toSet.find(to41) != toSet.end());
 
 	// iterator t1A.emplace_hint(const_iterator position, value_type&& value);
 	TestObject to50(5);
-	toSetIterator = toSet.emplace(eastl::move(to50));
+	toSetIterator = toSet.emplace(std::move(to50));
 	EATEST_VERIFY(*toSetIterator == TestObject(5));
 	EATEST_VERIFY(toSet.find(to50) != toSet.end());
 
 	TestObject to51(5);
-	toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to51));
+	toSetIterator = toSet.emplace_hint(toSetIterator, std::move(to51));
 	EATEST_VERIFY(*toSetIterator == TestObject(5));
 	EATEST_VERIFY(toSet.find(to51) != toSet.end());
 
 	TestObject to6(6);
-	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to6)); // specify a bad hint. Insertion should still work.
+	toSetIterator = toSet.emplace_hint(toSet.begin(), std::move(to6)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(*toSetIterator == TestObject(6));
 	EATEST_VERIFY(toSet.find(to6) != toSet.end());
 		
@@ -881,17 +881,17 @@ int TestMultisetCpp11()
 
 	// iterator t1A.insert(const_iterator position, value_type&& value);
 	TestObject to90(9);
-	toSetIterator = toSet.emplace(eastl::move(to90));
+	toSetIterator = toSet.emplace(std::move(to90));
 	EATEST_VERIFY(*toSetIterator == TestObject(9));
 	EATEST_VERIFY(toSet.find(to90) != toSet.end());
 
 	TestObject to91(9);
-	toSetIterator = toSet.emplace_hint(toSetIterator, eastl::move(to91));
+	toSetIterator = toSet.emplace_hint(toSetIterator, std::move(to91));
 	EATEST_VERIFY(*toSetIterator == TestObject(9));
 	EATEST_VERIFY(toSet.find(to91) != toSet.end());
 
 	TestObject to10(10);
-	toSetIterator = toSet.emplace_hint(toSet.begin(), eastl::move(to10)); // specify a bad hint. Insertion should still work.
+	toSetIterator = toSet.emplace_hint(toSet.begin(), std::move(to10)); // specify a bad hint. Insertion should still work.
 	EATEST_VERIFY(*toSetIterator == TestObject(10));
 	EATEST_VERIFY(toSet.find(to10) != toSet.end());
 
