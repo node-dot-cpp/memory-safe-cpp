@@ -96,6 +96,14 @@ public:
 		return _begin[ix];
 	}
 
+	T& at_unsafe(size_t ix) {
+		return _begin[ix];
+	}
+	
+	const T& at_unsafe(size_t ix) const {
+		return _begin[ix];
+	}
+
 	T* get_raw_ptr(size_t ix) {
 		// allow returning 'end()' pointer
 		// caller is responsible of not dereferencing it
@@ -122,6 +130,8 @@ template<class _Ty>
 		size_t total = head + sizeof(array_of2<_Ty>) + (sizeof(_Ty) * size);
 		void* data = zombieAllocate(total);
 
+		// non trivial types get zeroed memory, just in case we get to deref
+		// a non initialized position
 		if constexpr (!std::is_trivial<_Ty>::value)
 			std::memset(data, 0, total);
 
@@ -129,7 +139,7 @@ template<class _Ty>
 		owning_ptr_impl<array_of2<_Ty>> op(make_owning_t(), dataForObj);
 		// void* stackTmp = thg_stackPtrForMakeOwningCall;
 		// thg_stackPtrForMakeOwningCall = dataForObj;
-		/*array_of2<_Ty>* objPtr = */new ( dataForObj ) array_of2<_Ty>(size);
+		/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_of2<_Ty>(size);
 		// thg_stackPtrForMakeOwningCall = stackTmp;
 		//return owning_ptr_impl<_Ty>(objPtr);
 		return op;
