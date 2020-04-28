@@ -953,7 +953,7 @@ namespace safememory
 		// allocator_type  mAllocator;     // To do: Use base class optimization to make this go away.
 
 		//TODO move from here
-		detail::safe_iterator<owning_ptr<node_type>> getBucketArray() const { 
+		detail::safe_iterator<owning_ptr<node_type>> getBucketArrayIt() const { 
 			return detail::safe_iterator<owning_ptr<node_type>>(mpBucketArray);
 		}
 
@@ -988,7 +988,7 @@ namespace safememory
 
 		iterator begin() EA_NOEXCEPT
 		{
-			iterator i(getBucketArray());
+			iterator i(getBucketArrayIt());
 			if(!i.mpNode)
 				i.increment_bucket();
 			return i;
@@ -999,20 +999,20 @@ namespace safememory
 
 		const_iterator cbegin() const EA_NOEXCEPT
 		{
-			const_iterator i(getBucketArray());
+			const_iterator i(getBucketArrayIt());
 			if(!i.mpNode)
 				i.increment_bucket();
 			return i;
 		}
 
 		iterator end() EA_NOEXCEPT
-			{ return iterator(getBucketArray() + mnBucketCount); }
+			{ return iterator(getBucketArrayIt() + mnBucketCount); }
 
 		const_iterator end() const EA_NOEXCEPT
 			{ return cend(); }
 
 		const_iterator cend() const EA_NOEXCEPT
-			{ return const_iterator(getBucketArray() + mnBucketCount); }
+			{ return const_iterator(getBucketArrayIt() + mnBucketCount); }
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) EA_NOEXCEPT
@@ -1194,7 +1194,7 @@ namespace safememory
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), c);
 
-		// 	return pNode ? iterator(pNode, getBucketArray() + n) : end();
+		// 	return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
 		// }
 
 		// template<typename HashCodeT>
@@ -1210,7 +1210,7 @@ namespace safememory
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), c);
 
 		// 	return pNode ?
-		// 			   const_iterator(pNode, getBucketArray() + n) :
+		// 			   const_iterator(pNode, getBucketArrayIt() + n) :
 		// 			   cend();
 		// }
 
@@ -1219,7 +1219,7 @@ namespace safememory
 		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		// 	return pNode ? iterator(pNode, getBucketArray() + n) : end();
+		// 	return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
 		// }
 
 		// const_iterator find_by_hash(const key_type& k, hash_code_t c) const
@@ -1227,7 +1227,7 @@ namespace safememory
 		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		// 	return pNode ? const_iterator(pNode, getBucketArray() + n) : cend();
+		// 	return pNode ? const_iterator(pNode, getBucketArrayIt() + n) : cend();
 		// }
 
 		// Returns a pair that allows iterating over all nodes in a hash bucket
@@ -1622,7 +1622,7 @@ namespace safememory
 	{
 		if(this != &x)
 		{
-			clear();        // To consider: Are we really required to clear here? x is going away soon and will clear itself in its dtor.
+//			clear();        // To consider: Are we really required to clear here? x is going away soon and will clear itself in its dtor.
 			swap(x);        // member swap handles the case that x has a different allocator than our allocator by doing a copy.
 		}
 		return *this;
@@ -1727,16 +1727,18 @@ namespace safememory
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_ptr<detail::array_of2<owning_node_type>> pNodeArray, size_type n)
 	{
-		for(size_type i = 0; i < n; ++i)
-		{
-			owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
-			while(pNode)
+		if(pNodeArray) {
+			for(size_type i = 0; i < n; ++i)
 			{
-				owning_node_type pTempNode = std::move(pNode->mpNext);
-				DoFreeNode(std::move(pNode));
-				pNode = std::move(pTempNode);
+				owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
+				while(pNode)
+				{
+					owning_node_type pTempNode = std::move(pNode->mpNext);
+					DoFreeNode(std::move(pNode));
+					pNode = std::move(pTempNode);
+				}
+				pNodeArray->at_unsafe(i) = nullptr;
 			}
-			pNodeArray->at_unsafe(i) = nullptr;
 		}
 	}
 
@@ -1783,7 +1785,8 @@ namespace safememory
 		// 	// EASTLFree(mAllocator, pBucketArray, (n + 1) * sizeof(node_type*)); // '+1' because DoAllocateBuckets allocates nBucketCount + 1 buckets in order to have a NULL sentinel at the end.
 	
 		// destroy the fake end() node
-		pBucketArray->at(n) = nullptr;
+		if(pBucketArray)
+			pBucketArray->at(n) = nullptr;
 		
 		// pBucketArray will self destroy here
 	}
@@ -1829,7 +1832,7 @@ namespace safememory
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
 		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		return pNode ? iterator(pNode, getBucketArray() + n) : end();
+		return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
 	}
 
 
@@ -1843,7 +1846,7 @@ namespace safememory
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
 		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		return pNode ? const_iterator(pNode, getBucketArray() + n) : cend();
+		return pNode ? const_iterator(pNode, getBucketArrayIt() + n) : cend();
 	}
 
 
@@ -1935,8 +1938,8 @@ namespace safememory
 
 	// 	if (pNodeStart)
 	// 	{
-	// 		std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, getBucketArray() + start), 
-	// 														 const_iterator(pNodeStart, getBucketArray() + start));
+	// 		std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, getBucketArrayIt() + start), 
+	// 														 const_iterator(pNodeStart, getBucketArrayIt() + start));
 	// 		pair.second.increment_bucket();
 	// 		return pair;
 	// 	}
@@ -1957,8 +1960,8 @@ namespace safememory
 
 	// 	if (pNodeStart)
 	// 	{
-	// 		std::pair<iterator, iterator> pair(iterator(pNodeStart, getBucketArray() + start), 
-	// 											 iterator(pNodeStart, getBucketArray() + start));
+	// 		std::pair<iterator, iterator> pair(iterator(pNodeStart, getBucketArrayIt() + start), 
+	// 											 iterator(pNodeStart, getBucketArrayIt() + start));
 	// 		pair.second.increment_bucket();
 	// 		return pair;
 
@@ -1998,7 +2001,7 @@ namespace safememory
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		auto       head  = getBucketArray() + n;
+		auto       head  = getBucketArrayIt() + n;
 		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
@@ -2034,7 +2037,7 @@ namespace safememory
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		auto       head  = getBucketArray() + n;
+		auto       head  = getBucketArrayIt() + n;
 		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
@@ -2137,7 +2140,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArray() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 			// 	}
 			// 	catch(...)
@@ -2159,7 +2162,7 @@ namespace safememory
 		// 	// DoFreeNode(pNodeNew);
 		// }
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArray() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
 	}
 
 
@@ -2204,7 +2207,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArray() + n);
+		return iterator(pNodeIt, getBucketArrayIt() + n);
 	}
 
 
@@ -2301,7 +2304,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArray() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2314,7 +2317,7 @@ namespace safememory
 		}
 		// Else the value is already present, so don't add a new node. And don't free pNodeNew.
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArray() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
 	}
 
 
@@ -2375,7 +2378,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArray() + n);
+		return iterator(pNodeIt, getBucketArrayIt() + n);
 	}
 
 
@@ -2476,7 +2479,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArray() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2489,7 +2492,7 @@ namespace safememory
 		}
 		// Else the value is already present, so don't add a new node. And don't free pNodeNew.
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArray() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
 	}
 
 
@@ -2550,7 +2553,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArray() + n);
+		return iterator(pNodeIt, getBucketArrayIt() + n);
 	}
 
 
@@ -2654,7 +2657,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArray() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 			// 	}
 			// 	catch(...)
@@ -2665,7 +2668,7 @@ namespace safememory
 			// #endif
 		}
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArray() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
 	}
 
 
@@ -2708,7 +2711,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArray() + n);
+		return iterator(pNodeIt, getBucketArrayIt() + n);
 	}
 
 
@@ -2745,7 +2748,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArray() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2756,7 +2759,7 @@ namespace safememory
 			// #endif
 		}
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArray() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
 	}
 
 
@@ -2798,7 +2801,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArray() + n);
+		return iterator(pNodeIt, getBucketArrayIt() + n);
 	}
 
 
@@ -3281,7 +3284,7 @@ namespace safememory
 	{
 		if(i == const_iterator())
 			return detail::iterator_validity::Null;
-		else if(i.mpBucket == getBucketArray() ) {
+		else if(i.mpBucket.arr == mpBucketArray ) {
 			
 			//is mine and current
 			if(i == end())

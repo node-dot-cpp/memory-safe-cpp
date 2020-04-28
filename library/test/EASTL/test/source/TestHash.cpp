@@ -543,6 +543,7 @@ int TestHash()
 			EATEST_VERIFY(hashSet6.validate());
 			EATEST_VERIFY(hashSet7.validate());
 
+			using namespace std;
 			swap(hashSet4, hashSet3);
 			swap(hashSet6, hashSet5);
 			swap(hashSet3, hashSet7);
@@ -1263,6 +1264,7 @@ int TestHash()
 			};
 		};
 
+		using namespace std;
 		safememory::unordered_set<Movable, Movable::Hash> a, b;
 		swap(a,b);
 	}

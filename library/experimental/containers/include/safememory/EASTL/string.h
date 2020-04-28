@@ -1112,8 +1112,9 @@ namespace safememory
 	basic_string<T, Allocator>::basic_string(this_type&& x) EA_NOEXCEPT
 		// : mPair_second(x.get_allocator())
 	{
-		internalLayout() = std::move(x.internalLayout());
-		x.AllocateSelf();
+		// internalLayout() = std::move(x.internalLayout());
+		// x.AllocateSelf();
+		swap(x);
 	}
 
 
@@ -3879,6 +3880,7 @@ namespace safememory
 			internalLayout().SetNewHeap(std::move(pBegin));
 //			internalLayout().SetHeapCapacity(n);
 			internalLayout().SetSize(0);
+			*internalLayout().BeginPtr() = value_type(0);			
 		// }
 		// else
 		// 	AllocateSelf();
