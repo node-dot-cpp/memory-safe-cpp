@@ -109,7 +109,7 @@ namespace safememory
 	
 	/// kHashtableAllocFlagBuckets
 	/// Flag to allocator which indicates that we are allocating buckets and not nodes.
-	enum { kHashtableAllocFlagBuckets = 0x00400000 };
+	// enum { kHashtableAllocFlagBuckets = 0x00400000 };
 
 
 	/// gpEmptyBucketArray
@@ -938,11 +938,11 @@ namespace safememory
 
 		static const bool kCacheHashCode = bCacheHashCode;
 
-		enum
-		{
-			// This enumeration is deprecated in favor of eastl::kHashtableAllocFlagBuckets.
-			kAllocFlagBuckets = safememory::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
-		};
+		// enum
+		// {
+		// 	// This enumeration is deprecated in favor of eastl::kHashtableAllocFlagBuckets.
+		// 	kAllocFlagBuckets = safememory::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
+		// };
 
 	protected:
 		owning_bucket_type     mpBucketArray;
@@ -951,10 +951,6 @@ namespace safememory
 		RehashPolicy    mRehashPolicy;  // To do: Use base class optimization to make this go away.
 		// allocator_type  mAllocator;     // To do: Use base class optimization to make this go away.
 
-		//TODO move from here
-		detail::safe_iterator<owning_ptr<node_type>> getBucketArrayIt() const { 
-			return detail::safe_iterator<owning_ptr<node_type>>(mpBucketArray);
-		}
 
 	public:
 		hashtable(size_type nBucketCount, const H1&, const H2&, const H&, const Equal&, const ExtractKey&/*, 
@@ -987,7 +983,7 @@ namespace safememory
 
 		iterator begin() EA_NOEXCEPT
 		{
-			iterator i(getBucketArrayIt());
+			iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
 				i.increment_bucket();
 			return i;
@@ -998,20 +994,20 @@ namespace safememory
 
 		const_iterator cbegin() const EA_NOEXCEPT
 		{
-			const_iterator i(getBucketArrayIt());
+			const_iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
 				i.increment_bucket();
 			return i;
 		}
 
 		iterator end() EA_NOEXCEPT
-			{ return iterator(getBucketArrayIt() + mnBucketCount); }
+			{ return iterator(GetBucketArrayIt() + mnBucketCount); }
 
 		const_iterator end() const EA_NOEXCEPT
 			{ return cend(); }
 
 		const_iterator cend() const EA_NOEXCEPT
-			{ return const_iterator(getBucketArrayIt() + mnBucketCount); }
+			{ return const_iterator(GetBucketArrayIt() + mnBucketCount); }
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) EA_NOEXCEPT
@@ -1193,7 +1189,7 @@ namespace safememory
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), c);
 
-		// 	return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
+		// 	return pNode ? iterator(pNode, GetBucketArrayIt() + n) : end();
 		// }
 
 		// template<typename HashCodeT>
@@ -1209,7 +1205,7 @@ namespace safememory
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), c);
 
 		// 	return pNode ?
-		// 			   const_iterator(pNode, getBucketArrayIt() + n) :
+		// 			   const_iterator(pNode, GetBucketArrayIt() + n) :
 		// 			   cend();
 		// }
 
@@ -1218,7 +1214,7 @@ namespace safememory
 		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		// 	return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
+		// 	return pNode ? iterator(pNode, GetBucketArrayIt() + n) : end();
 		// }
 
 		// const_iterator find_by_hash(const key_type& k, hash_code_t c) const
@@ -1226,7 +1222,7 @@ namespace safememory
 		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		// 	return pNode ? const_iterator(pNode, getBucketArrayIt() + n) : cend();
+		// 	return pNode ? const_iterator(pNode, GetBucketArrayIt() + n) : cend();
 		// }
 
 		// Returns a pair that allows iterating over all nodes in a hash bucket
@@ -1247,6 +1243,10 @@ namespace safememory
 		detail::iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
+		detail::safe_iterator<owning_ptr<node_type>> GetBucketArrayIt() const { 
+			return detail::safe_iterator<owning_ptr<node_type>>(mpBucketArray);
+		}
+
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
 		// not compile successfully at the same time. The 'bUniqueKeys' template parameter chooses at compile-time the
 		// type of 'insert_return_type' between a pair<iterator,bool> and a raw iterator. We must pick between the two
@@ -1831,7 +1831,7 @@ namespace safememory
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
 		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		return pNode ? iterator(pNode, getBucketArrayIt() + n) : end();
+		return pNode ? iterator(pNode, GetBucketArrayIt() + n) : end();
 	}
 
 
@@ -1845,7 +1845,7 @@ namespace safememory
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
 		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		return pNode ? const_iterator(pNode, getBucketArrayIt() + n) : cend();
+		return pNode ? const_iterator(pNode, GetBucketArrayIt() + n) : cend();
 	}
 
 
@@ -1937,8 +1937,8 @@ namespace safememory
 
 	// 	if (pNodeStart)
 	// 	{
-	// 		std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, getBucketArrayIt() + start), 
-	// 														 const_iterator(pNodeStart, getBucketArrayIt() + start));
+	// 		std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, GetBucketArrayIt() + start), 
+	// 														 const_iterator(pNodeStart, GetBucketArrayIt() + start));
 	// 		pair.second.increment_bucket();
 	// 		return pair;
 	// 	}
@@ -1959,8 +1959,8 @@ namespace safememory
 
 	// 	if (pNodeStart)
 	// 	{
-	// 		std::pair<iterator, iterator> pair(iterator(pNodeStart, getBucketArrayIt() + start), 
-	// 											 iterator(pNodeStart, getBucketArrayIt() + start));
+	// 		std::pair<iterator, iterator> pair(iterator(pNodeStart, GetBucketArrayIt() + start), 
+	// 											 iterator(pNodeStart, GetBucketArrayIt() + start));
 	// 		pair.second.increment_bucket();
 	// 		return pair;
 
@@ -2000,7 +2000,7 @@ namespace safememory
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		auto       head  = getBucketArrayIt() + n;
+		auto       head  = GetBucketArrayIt() + n;
 		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
@@ -2036,7 +2036,7 @@ namespace safememory
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		auto       head  = getBucketArrayIt() + n;
+		auto       head  = GetBucketArrayIt() + n;
 		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
@@ -2139,7 +2139,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 			// 	}
 			// 	catch(...)
@@ -2161,7 +2161,7 @@ namespace safememory
 		// 	// DoFreeNode(pNodeNew);
 		// }
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt() + n), false);
 	}
 
 
@@ -2206,7 +2206,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArrayIt() + n);
+		return iterator(pNodeIt, GetBucketArrayIt() + n);
 	}
 
 
@@ -2303,7 +2303,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2316,7 +2316,7 @@ namespace safememory
 		}
 		// Else the value is already present, so don't add a new node. And don't free pNodeNew.
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt() + n), false);
 	}
 
 
@@ -2377,7 +2377,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArrayIt() + n);
+		return iterator(pNodeIt, GetBucketArrayIt() + n);
 	}
 
 
@@ -2478,7 +2478,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2491,7 +2491,7 @@ namespace safememory
 		}
 		// Else the value is already present, so don't add a new node. And don't free pNodeNew.
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt() + n), false);
 	}
 
 
@@ -2552,7 +2552,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArrayIt() + n);
+		return iterator(pNodeIt, GetBucketArrayIt() + n);
 	}
 
 
@@ -2656,7 +2656,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 			// 	}
 			// 	catch(...)
@@ -2667,7 +2667,7 @@ namespace safememory
 			// #endif
 		}
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt() + n), false);
 	}
 
 
@@ -2710,7 +2710,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArrayIt() + n);
+		return iterator(pNodeIt, GetBucketArrayIt() + n);
 	}
 
 
@@ -2747,7 +2747,7 @@ namespace safememory
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return std::pair<iterator, bool>(iterator(pNodeIt, getBucketArrayIt() + n), true);
+					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt() + n), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
 				// catch(...)
@@ -2758,7 +2758,7 @@ namespace safememory
 			// #endif
 		}
 
-		return std::pair<iterator, bool>(iterator(pNode, getBucketArrayIt() + n), false);
+		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt() + n), false);
 	}
 
 
@@ -2800,7 +2800,7 @@ namespace safememory
 
 		++mnElementCount;
 
-		return iterator(pNodeIt, getBucketArrayIt() + n);
+		return iterator(pNodeIt, GetBucketArrayIt() + n);
 	}
 
 
@@ -2842,7 +2842,7 @@ namespace safememory
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), std::piecewise_construct_t(), std::forward_as_tuple(std::move(key)),
+		return DoInsertValue(has_unique_keys_type(), std::piecewise_construct, std::forward_as_tuple(std::move(key)),
 		                     std::forward_as_tuple(std::forward<Args>(args)...));
 	}
 
@@ -2854,7 +2854,7 @@ namespace safememory
 	{
 		insert_return_type result = DoInsertValue(
 		    has_unique_keys_type(),
-		    value_type(std::piecewise_construct_t(), std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...)));
+		    value_type(std::piecewise_construct, std::forward_as_tuple(key), std::forward_as_tuple(std::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
@@ -2866,7 +2866,7 @@ namespace safememory
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
 	{
 		insert_return_type result =
-		    DoInsertValue(has_unique_keys_type(), value_type(std::piecewise_construct_t(), std::forward_as_tuple(std::move(key)),
+		    DoInsertValue(has_unique_keys_type(), value_type(std::piecewise_construct, std::forward_as_tuple(std::move(key)),
 		                                                     std::forward_as_tuple(std::forward<Args>(args)...)));
 
 		return DoGetResultIterator(has_unique_keys_type(), result);
@@ -2980,7 +2980,7 @@ namespace safememory
 		auto iter = find(k);
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(std::forward<M>(obj))));
+			return insert(value_type(std::piecewise_construct, std::forward_as_tuple(k), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
@@ -2998,7 +2998,7 @@ namespace safememory
 		auto iter = find(k);
 		if(iter == end())
 		{
-			return insert(value_type(std::piecewise_construct_t(), std::forward_as_tuple(std::move(k)), std::forward_as_tuple(std::forward<M>(obj))));
+			return insert(value_type(std::piecewise_construct, std::forward_as_tuple(std::move(k)), std::forward_as_tuple(std::forward<M>(obj))));
 		}
 		else
 		{
