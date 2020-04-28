@@ -876,8 +876,8 @@ namespace safememory
 		size_t hash() const EA_NOEXCEPT;
 
 		bool validate() const EA_NOEXCEPT;
-		int  validate_iterator(const_pointer i) const EA_NOEXCEPT;
-
+		detail::iterator_validity  validate_iterator(const_pointer i) const EA_NOEXCEPT;
+		detail::iterator_validity  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
 
 	protected:
 		// Helper functions for initialization/insertion operations.
@@ -4374,20 +4374,45 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline int basic_string<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	inline detail::iterator_validity basic_string<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
-		if(i >= internalLayout().BeginPtr())
+		if(i == nullptr)
+		 	return detail::iterator_validity::Null;
+		else if(i >= internalLayout().BeginPtr())
 		{
 			if(i < internalLayout().EndPtr())
-				return (isf_valid | isf_current | isf_can_dereference);
+				return detail::iterator_validity::ValidCanDeref;
 
-			if(i <= internalLayout().EndPtr())
-				return (isf_valid | isf_current);
+			else if(i == internalLayout().EndPtr())
+				return detail::iterator_validity::ValidEnd;
+
+			else if(i < internalLayout().CapacityPtr())
+				return detail::iterator_validity::InvalidZoombie;
 		}
 
-		return isf_none;
+		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
+	template <typename T, typename Allocator>
+	inline detail::iterator_validity basic_string<T, Allocator>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	{
+		if(i == const_iterator_safe())
+		 	return detail::iterator_validity::Null;
+		else if(i.arr == internalLayout().GetSoftHeapPtr()) {
+
+			const_pointer p = i.get_raw_ptr();
+			if(p < internalLayout().EndPtr())
+				return detail::iterator_validity::ValidCanDeref;
+
+			else if(p == internalLayout().EndPtr())
+				return detail::iterator_validity::ValidEnd;
+
+			else if(p < internalLayout().CapacityPtr())
+				return detail::iterator_validity::InvalidZoombie;
+		}
+
+		return detail::iterator_validity::InvalidZoombie;
+	}
 
 	///////////////////////////////////////////////////////////////////////
 	// global operators

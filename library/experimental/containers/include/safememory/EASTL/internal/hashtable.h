@@ -1269,7 +1269,7 @@ namespace safememory
 		std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
 		bool validate() const;
-		int  validate_iterator(const_iterator i) const;
+		detail::iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1422,11 +1422,11 @@ namespace safememory
 
 	template <typename Value, bool bCacheHashCode>
 	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode>& a, const hashtable_iterator_base<Value, bCacheHashCode>& b)
-		{ return a.mpNode == b.mpNode; }
+		{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
 
 	template <typename Value, bool bCacheHashCode>
 	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode>& a, const hashtable_iterator_base<Value, bCacheHashCode>& b)
-		{ return a.mpNode != b.mpNode; }
+		{ return !operator==(a, b); }
 
 
 
@@ -3300,20 +3300,24 @@ namespace safememory
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	int hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
+	detail::iterator_validity hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
 	{
-		// To do: Come up with a more efficient mechanism of doing this.
-
-		for(const_iterator temp = begin(), tempEnd = end(); temp != tempEnd; ++temp)
-		{
-			if(temp == i)
-				return isf_can_dereference;
+		if(i == const_iterator())
+			return detail::iterator_validity::Null;
+		else if(i.mpBucket == getBucketArray() ) {
+			
+			//is mine and current
+			if(i == end())
+				return detail::iterator_validity::ValidEnd; 
+			// To do: Come up with a more efficient mechanism of doing this.
+			for(const_iterator temp = begin(), tempEnd = end(); temp != tempEnd; ++temp)
+			{
+				if(temp == i)
+					return detail::iterator_validity::ValidCanDeref;
+			}
 		}
 
-		if(i == end())
-			return isf_end; 
-
-		return isf_none;
+		return detail::iterator_validity::InvalidZoombie;
 	}
 
 

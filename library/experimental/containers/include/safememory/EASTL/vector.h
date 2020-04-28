@@ -413,8 +413,8 @@ namespace safememory
 		// void reset_lose_memory() EA_NOEXCEPT;                       // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 
 		bool validate() const EA_NOEXCEPT;
-		int  validate_iterator(const_pointer i) const EA_NOEXCEPT;
-		int  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
+		detail::iterator_validity  validate_iterator(const_pointer i) const EA_NOEXCEPT;
+		detail::iterator_validity  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
 
 	protected:
 		// These functions do the real work of maintaining the vector. You will notice
@@ -2507,25 +2507,44 @@ namespace safememory
 
 
 	template <typename T, typename Allocator>
-	inline int vector<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
-		if(i >= mpBegin)
+		if(i == nullptr)
+		 	return detail::iterator_validity::Null;
+		else if(i >= mpBegin)
 		{
 			if(i < mpEnd)
-				return (isf_valid | isf_current | isf_can_dereference);
+				return detail::iterator_validity::ValidCanDeref;
 
-			if(i <= mpEnd)
-				return (isf_valid | isf_current);
+			else if(i == mpEnd)
+				return detail::iterator_validity::ValidEnd;
+
+			else if(i < mCapacity)
+				return detail::iterator_validity::InvalidZoombie;
 		}
 
-		return isf_none;
+		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
 	template <typename T, typename Allocator>
-	inline int vector<T, Allocator>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
-		auto p = CheckMineAndGet(i);
-		return validate_iterator(p);
+		if(i == const_iterator_safe())
+		 	return detail::iterator_validity::Null;
+		else if(i.arr == GetSoftHeapPtr()) {
+
+			const_pointer p = i.get_raw_ptr();
+			if(p < mpEnd)
+				return detail::iterator_validity::ValidCanDeref;
+
+			else if(p == mpEnd)
+				return detail::iterator_validity::ValidEnd;
+
+			else if(p < mCapacity)
+				return detail::iterator_validity::InvalidZoombie;
+		}
+
+		return detail::iterator_validity::InvalidZoombie;
 	}
 
 

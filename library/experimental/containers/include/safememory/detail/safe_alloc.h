@@ -39,6 +39,14 @@ using ::nodecpp::safememory::soft_ptr;
 
 namespace detail {
 
+enum class iterator_validity {
+	Null,                // default constructed iterator
+	ValidCanDeref,       // valid, pointing a current element in the container
+	ValidEnd,			 // valid, pointing to end()
+	InvalidZoombie,	     // invalid but not escaping safememory rules 
+	xxx_Broken_xxx       // invalid and escaping safety rules
+};
+
 
 template< class InputIt, class ForwardIt >
 ForwardIt uninitialized_move_or_copy( InputIt first, InputIt last, ForwardIt d_first ) {

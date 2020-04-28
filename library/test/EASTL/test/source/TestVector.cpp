@@ -24,6 +24,7 @@ EA_DISABLE_ALL_VC_WARNINGS()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 using safememory::vector;
+using safememory::detail::iterator_validity;
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
@@ -1230,8 +1231,8 @@ int TestVector()
 		vector<int> intArray(20);
 
 		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY((intArray.validate_iterator(intArray.begin()) & (safememory::isf_can_dereference)) != 0);
-		EATEST_VERIFY(intArray.validate_iterator(NULL) == safememory::isf_none);
+		EATEST_VERIFY(intArray.validate_iterator(intArray.begin()) == iterator_validity::ValidCanDeref);
+		EATEST_VERIFY(intArray.validate_iterator(NULL) == iterator_validity::Null);
 	}
 
 	{

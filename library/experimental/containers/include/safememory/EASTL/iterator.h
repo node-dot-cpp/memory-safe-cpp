@@ -91,14 +91,13 @@ namespace safememory
 	/// An iterator may be valid but also dereferencable, as in the case with an
 	/// iterator to container begin().
 	///
-	enum iterator_status_flag
-	{
-		isf_none            = 0x00, /// This is called none and not called invalid because it is not strictly the opposite of invalid.
-		isf_valid           = 0x01, /// The iterator is valid, which means it is in the range of [begin, end].
-		isf_current         = 0x02, /// The iterator is valid and points to the same element it did when created. For example, if an iterator points to vector::begin() but an element is inserted at the front, the iterator is valid but not current. Modification of elements in place do not make iterators non-current.
-		isf_can_dereference = 0x04, /// The iterator is dereferencable, which means it is in the range of [begin, end). It may or may not be current.
-		isf_end 			= 0x08  /// The iterator is the end iterator, valid but not dereferencable.
-	};
+	// enum iterator_status_flag
+	// {
+	// 	isf_none            = 0x00, /// This is called none and not called invalid because it is not strictly the opposite of invalid.
+	// 	isf_valid           = 0x01, /// The iterator is valid, which means it is in the range of [begin, end].
+	// 	isf_current         = 0x02, /// The iterator is valid and points to the same element it did when created. For example, if an iterator points to vector::begin() but an element is inserted at the front, the iterator is valid but not current. Modification of elements in place do not make iterators non-current.
+	// 	isf_can_dereference = 0x04  /// The iterator is dereferencable, which means it is in the range of [begin, end). It may or may not be current.
+	// };
 
 
 

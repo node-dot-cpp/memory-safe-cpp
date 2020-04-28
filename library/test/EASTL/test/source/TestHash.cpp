@@ -29,6 +29,7 @@ using safememory::unordered_set;
 using safememory::unordered_multiset;
 using safememory::hash_set;
 using safememory::hash_multiset;
+using safememory::detail::iterator_validity;
 
 namespace std
 {
@@ -608,18 +609,18 @@ int TestHash()
 
 		// bool validate_iterator(const_iterator i) const;
 		hash_set<int>::iterator it;
-		int result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == safememory::isf_none);
+		auto result = hashSet1.validate_iterator(it);
+		EATEST_VERIFY(result == iterator_validity::Null);
 
 		it = hashSet1.begin();
 		result = hashSet2.validate_iterator(it);
-		EATEST_VERIFY(result == safememory::isf_none);
+		EATEST_VERIFY(result == iterator_validity::InvalidZoombie);
 		result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == safememory::isf_can_dereference);
+		EATEST_VERIFY(result == iterator_validity::ValidCanDeref);
 
 		it = hashSet1.end();
 		result = hashSet1.validate_iterator(it);
-		EATEST_VERIFY(result == safememory::isf_end);
+		EATEST_VERIFY(result == iterator_validity::ValidEnd);
 
 
 		// void reset_lose_memory();
