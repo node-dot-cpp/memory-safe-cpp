@@ -41,8 +41,8 @@
 // http://en.cppreference.com/w/cpp/string/char_traits
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_INTERNAL_CHAR_TRAITS_H
-#define EASTL_INTERNAL_CHAR_TRAITS_H
+#ifndef SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
+#define SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once

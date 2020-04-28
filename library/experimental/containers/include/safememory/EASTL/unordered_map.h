@@ -32,8 +32,8 @@
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_UNORDERED_MAP_H
-#define EASTL_UNORDERED_MAP_H
+#ifndef SAFEMEMORY_EASTL_UNORDERED_MAP_H
+#define SAFEMEMORY_EASTL_UNORDERED_MAP_H
 
 #include <safememory/EASTL/internal/config.h>
 #include <safememory/EASTL/hash_map.h>

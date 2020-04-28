@@ -93,8 +93,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_MEMORY_H
-#define EASTL_MEMORY_H
+#ifndef SAFEMEMORY_EASTL_MEMORY_H
+#define SAFEMEMORY_EASTL_MEMORY_H
 
 
 #include <safememory/EASTL/internal/config.h>

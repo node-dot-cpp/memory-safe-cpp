@@ -33,8 +33,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_ITERATOR_H
-#define EASTL_ITERATOR_H
+#ifndef SAFEMEMORY_EASTL_ITERATOR_H
+#define SAFEMEMORY_EASTL_ITERATOR_H
 
 
 #include <safememory/EASTL/internal/config.h>

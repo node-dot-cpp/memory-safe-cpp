@@ -59,8 +59,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_VECTOR_H
-#define EASTL_VECTOR_H
+#ifndef SAFEMEMORY_EASTL_VECTOR_H
+#define SAFEMEMORY_EASTL_VECTOR_H
 
 #include <safememory/EASTL/internal/__undef_macros.h>
 #include <safememory/EASTL/internal/config.h>

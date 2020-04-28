@@ -53,8 +53,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef EASTL_INTERNAL_HASHTABLE_H
-#define EASTL_INTERNAL_HASHTABLE_H
+#ifndef SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
+#define SAFEMEMORY_EASTL_INTERNAL_HASHTABLE_H
 
 
 //#include <EABase/eabase.h>
