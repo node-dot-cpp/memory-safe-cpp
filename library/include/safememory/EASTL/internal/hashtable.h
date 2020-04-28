@@ -615,9 +615,9 @@ namespace safememory
 		hash_code_base(const ExtractKey& extractKey, const Equal& eq, const H1&, const H2&, const H& h)
 			: mExtractKey(extractKey), mEqual(eq), mRangedHash(h) { }
 
-		hash_code_t get_hash_code(const Key& key) const
+		hash_code_t get_hash_code(const Key&) const
 		{
-			EA_UNUSED(key);
+			// EA_UNUSED(key);
 			return 0;
 		}
 
@@ -636,10 +636,10 @@ namespace safememory
 		void copy_code(hash_node<Value, false>&, const hash_node<Value, false>&) const
 			{ } // Nothing to do.
 
-		void set_code(hash_node<Value, false>& pDest, hash_code_t c) const
+		void set_code(hash_node<Value, false>&, hash_code_t) const
 		{
-			EA_UNUSED(pDest);
-			EA_UNUSED(c);
+			// EA_UNUSED(pDest);
+			// EA_UNUSED(c);
 		}
 
 		void base_swap(hash_code_base& x)
