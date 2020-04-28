@@ -40,15 +40,14 @@ endif()
 #-------------------------------------------------------------------------------------------
 add_library(SafeMemory STATIC
   src/safe_ptr.cpp
-  experimental/containers/source/string.cpp
-  experimental/containers/source/hashtable.cpp
+  src/string.cpp
+  src/hashtable.cpp
   )
 
 #-------------------------------------------------------------------------------------------
 # Export Include Directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(SafeMemory
-  PUBLIC experimental/containers/include
   PUBLIC include
   PUBLIC src
   )
