@@ -157,7 +157,7 @@ class unsafe_iterator
 {
 public:
 	typedef std::random_access_iterator_tag  	iterator_category;
-	// typedef typename std::remove_const<T>::type value_type;
+	typedef typename std::remove_const<T>::type non_const_value_type;
 	typedef T									value_type;
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
@@ -186,9 +186,15 @@ public:
 	unsafe_iterator(const unsafe_iterator& ri) = default;
 	unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
 
-	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
+	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
 	unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
+
+	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	unsafe_iterator& operator=(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri) {
+		mIterator = ri.mIterator;
+	}
+
 
 	pointer get_raw_ptr() const {
 		return mIterator;
@@ -282,8 +288,8 @@ class safe_iterator
 {
 public:
 	typedef std::random_access_iterator_tag  	iterator_category;
-	// typedef typename std::remove_const<T>::type value_type;
 	typedef T									value_type;
+	typedef typename std::remove_const<T>::type non_const_value_type;
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
 	typedef T&									reference;
@@ -320,9 +326,20 @@ public:
 	}
 
 	// allow non-const to const convertion
-	template<class NonConstT, std::enable_if_t<std::is_same<T, const NonConstT>::value, int> = 0>
+	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
 	safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: ptr(ri.ptr), ix(ri.ix) {}
+
+	// allow non-const to const convertion
+	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	safe_iterator& operator=(const safe_iterator<NonConstT, soft_array_of_prt>& ri) {
+		if(this != &ri) {
+			this->ptr = ri.ptr;
+			this->ix = ri.ix;
+		}
+		return *this;
+	}
+
 
 	pointer get_raw_ptr() const {
 		return ptr->get_raw_ptr(ix);

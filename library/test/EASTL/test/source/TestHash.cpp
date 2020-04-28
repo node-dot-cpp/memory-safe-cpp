@@ -233,7 +233,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+		EATEST_VERIFY(hashSet.bucket_count() == 2);
 
 		for(int i = 0; i < 100; ++i)
 			hashSet.insert(i);
@@ -243,7 +243,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+		EATEST_VERIFY(hashSet.bucket_count() == 2);
 
 		for(int i = 0; i < 100; ++i)
 			hashSet.insert(i);
@@ -253,7 +253,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+		EATEST_VERIFY(hashSet.bucket_count() == 2);
 	}
 
 
@@ -398,7 +398,7 @@ int TestHash()
 
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+		EATEST_VERIFY(hashSet.bucket_count() == 2);
 	}
 
 
@@ -441,48 +441,48 @@ int TestHash()
 		}
 	}
 
-	{
-		// ENABLE_IF_HASHCODE_U32(HashCodeT, iterator)       find_by_hash(HashCodeT c)
-		// ENABLE_IF_HASHCODE_U32(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
-		{
-			// NOTE(rparolin):
-			// these overloads of find_by_hash contains a static assert that forces a compiler error in the event it is
-			// used with a hashtable configured to not cache the hash value in the node.
-		}
+	// {
+	// 	// ENABLE_IF_HASHCODE_U32(HashCodeT, iterator)       find_by_hash(HashCodeT c)
+	// 	// ENABLE_IF_HASHCODE_U32(HashCodeT, const_iterator) find_by_hash(HashCodeT c) const
+	// 	{
+	// 		// NOTE(rparolin):
+	// 		// these overloads of find_by_hash contains a static assert that forces a compiler error in the event it is
+	// 		// used with a hashtable configured to not cache the hash value in the node.
+	// 	}
 
-		// iterator                                          find_by_hash(const key_type& k, hash_code_t c)
-		// const_iterator                                    find_by_hash(const key_type& k, hash_code_t c) const
-		#ifdef EA_COMPILER_CPP14_ENABLED 
-		{
-			auto FindByHashTest = [&nErrorCount](auto& hashSet)
-			{
-				const int kCount = 10000;
-				for(int i = 0; i < kCount; i++)
-					hashSet.insert(i);
+	// 	// iterator                                          find_by_hash(const key_type& k, hash_code_t c)
+	// 	// const_iterator                                    find_by_hash(const key_type& k, hash_code_t c) const
+	// 	#ifdef EA_COMPILER_CPP14_ENABLED 
+	// 	{
+	// 		auto FindByHashTest = [&nErrorCount](auto& hashSet)
+	// 		{
+	// 			const int kCount = 10000;
+	// 			for(int i = 0; i < kCount; i++)
+	// 				hashSet.insert(i);
 
-				for(int i = 0; i < kCount * 2; i++)
-				{
-					auto it = hashSet.find_by_hash(i, i);
+	// 			for(int i = 0; i < kCount * 2; i++)
+	// 			{
+	// 				auto it = hashSet.find_by_hash(i, i);
 
-					if(i < kCount)
-						EATEST_VERIFY(it != hashSet.end());
-					else
-						EATEST_VERIFY(it == hashSet.end());
-				}
-			};
+	// 				if(i < kCount)
+	// 					EATEST_VERIFY(it != hashSet.end());
+	// 				else
+	// 					EATEST_VERIFY(it == hashSet.end());
+	// 			}
+	// 		};
 
-			{
-				typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
-				HashSetIntC hashSetC;
-				FindByHashTest(hashSetC);
+	// 		{
+	// 			typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
+	// 			HashSetIntC hashSetC;
+	// 			FindByHashTest(hashSetC);
 
-				typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, false> HashSetInt;
-				HashSetInt hashSet;
-				FindByHashTest(hashSet);
-			}
-		}
-		#endif
-	}
+	// 			typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, false> HashSetInt;
+	// 			HashSetInt hashSet;
+	// 			FindByHashTest(hashSet);
+	// 		}
+	// 	}
+	// 	#endif
+	// }
 
 
 	// {
@@ -1199,49 +1199,49 @@ int TestHash()
 		EATEST_VERIFY(auditBlazeIds.empty() && tempAuditBlazeIds.empty());
 	}
 
-	{
-		// This test is designed to designed to use the find_range_by_hash method to walk over all keys in a hash bucket (located by a hash value).
+	// {
+	// 	// This test is designed to designed to use the find_range_by_hash method to walk over all keys in a hash bucket (located by a hash value).
 		
-		// Use the 'colliding_hash' hash function to intentionally create lots of collisions in a predictable way.
-		typedef hash_map<int, int, colliding_hash> HM;
-		HM hashMap;
+	// 	// Use the 'colliding_hash' hash function to intentionally create lots of collisions in a predictable way.
+	// 	typedef hash_map<int, int, colliding_hash> HM;
+	// 	HM hashMap;
 
-		// Add some numbers to the hashMap.
-		for(int i=0; i<90; i++)
-		{
-			hashMap[i] = i;
-		}
+	// 	// Add some numbers to the hashMap.
+	// 	for(int i=0; i<90; i++)
+	// 	{
+	// 		hashMap[i] = i;
+	// 	}
 
-		// Try to find a hash value that doesn't exist
-		{
-			std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1000);
-			EATEST_VERIFY(i.first == hashMap.end());
-			EATEST_VERIFY(i.second == hashMap.end());
-		}
+	// 	// Try to find a hash value that doesn't exist
+	// 	{
+	// 		std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1000);
+	// 		EATEST_VERIFY(i.first == hashMap.end());
+	// 		EATEST_VERIFY(i.second == hashMap.end());
+	// 	}
 
-		{
-			int iterations = 0;
-			for(std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1); i.first != i.second; i.first++)
-			{
-				int nodeValue = i.first.get_node()->mValue.first;
-				EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
-				iterations++;
-			}
-			EATEST_VERIFY(iterations == 30);
-		}
+	// 	{
+	// 		int iterations = 0;
+	// 		for(std::pair<HM::iterator, HM::iterator> i = hashMap.find_range_by_hash(1); i.first != i.second; i.first++)
+	// 		{
+	// 			int nodeValue = i.first.get_node()->mValue.first;
+	// 			EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
+	// 			iterations++;
+	// 		}
+	// 		EATEST_VERIFY(iterations == 30);
+	// 	}
 
-		{
-			const HM &constHashMap = hashMap;
-			int iterations = 0;
-			for(std::pair<HM::const_iterator, HM::const_iterator> i = constHashMap.find_range_by_hash(1); i.first != i.second; i.first++)
-			{
-				int nodeValue = i.first.get_node()->mValue.first;
-				EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
-				iterations++;
-			}
-			EATEST_VERIFY(iterations == 30);
-		}
-	}
+	// 	{
+	// 		const HM &constHashMap = hashMap;
+	// 		int iterations = 0;
+	// 		for(std::pair<HM::const_iterator, HM::const_iterator> i = constHashMap.find_range_by_hash(1); i.first != i.second; i.first++)
+	// 		{
+	// 			int nodeValue = i.first.get_node()->mValue.first;
+	// 			EATEST_VERIFY(nodeValue % 3 == 1);   // Verify the hash of the node matches the expected value
+	// 			iterations++;
+	// 		}
+	// 		EATEST_VERIFY(iterations == 30);
+	// 	}
+	// }
 
 	// test hashtable holding move-only types
 	#if !defined(EA_COMPILER_MSVC_2013)

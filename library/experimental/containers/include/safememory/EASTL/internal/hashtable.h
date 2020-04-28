@@ -149,15 +149,15 @@ namespace safememory
 		struct hash_node<Value, true>
 		{
 			hash_node() = default;
-			hash_node(const hash_node&) = default;
-			hash_node(hash_node&&) = default;
-			template < class... Args1, class... Args2 >
-			hash_node(std::piecewise_construct_t pc, 
-				std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
-				:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
-				{}
-			hash_node(const Value& value) :mValue(value) {}
-			hash_node(Value&& value) :mValue(std::move(value)) {}
+			// hash_node(const hash_node&) = default;
+			// hash_node(hash_node&&) = default;
+			// template < class... Args1, class... Args2 >
+			// hash_node(std::piecewise_construct_t pc, 
+			// 	std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
+			// 	:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
+			// 	{}
+			// hash_node(const Value& value) :mValue(value) {}
+			// hash_node(Value&& value) :mValue(std::move(value)) {}
 			// template<class Arg1, class Arg2>
 			// hash_node(Arg1&& arg1, Arg2&& arg2)
 			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
@@ -177,15 +177,15 @@ namespace safememory
 		struct hash_node<Value, false>
 		{
 			hash_node() = default;
-			hash_node(const hash_node&) = default;
-			hash_node(hash_node&&) = default;
-			template < class... Args1, class... Args2 >
-			hash_node(std::piecewise_construct_t pc, 
-				std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
-				:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
-				{}
-			hash_node(const Value& value) :mValue(value) {}
-			hash_node(Value&& value) :mValue(std::move(value)) {}
+			// hash_node(const hash_node&) = default;
+			// hash_node(hash_node&&) = default;
+			// template < class... Args1, class... Args2 >
+			// hash_node(std::piecewise_construct_t pc, 
+			// 	std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
+			// 	:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
+			// 	{}
+			// hash_node(const Value& value) :mValue(value) {}
+			// hash_node(Value&& value) :mValue(std::move(value)) {}
 			// template<class Arg1, class Arg2>
 			// hash_node(Arg1&& arg1, Arg2&& arg2)
 			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
@@ -397,8 +397,8 @@ namespace safememory
 		hashtable_iterator(const hashtable_iterator& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
-		template<typename NonConst = std::enable_if_t<bConst, this_type_non_const>>
-		hashtable_iterator(const NonConst& x)
+		template<typename NonConstT = std::enable_if_t<bConst, this_type_non_const>>
+		hashtable_iterator(const NonConstT& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
 		hashtable_iterator& operator=(const hashtable_iterator& x) {
@@ -1160,7 +1160,6 @@ namespace safememory
 		void clear();
 		void clear(bool clearBuckets);                  // If clearBuckets is true, we free the bucket memory and set the bucket count back to the newly constructed count.
 		// void reset_lose_memory() EA_NOEXCEPT;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
-		void DoInit();
 		void rehash(size_type nBucketCount);
 		void reserve(size_type nElementCount);
 
@@ -1234,21 +1233,21 @@ namespace safememory
 		// 			   cend();
 		// }
 
-		iterator find_by_hash(const key_type& k, hash_code_t c)
-		{
-			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
+		// iterator find_by_hash(const key_type& k, hash_code_t c)
+		// {
+		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
-			soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-			return pNode ? iterator(pNode, getBucketArray() + n) : end();
-		}
+		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		// 	return pNode ? iterator(pNode, getBucketArray() + n) : end();
+		// }
 
-		const_iterator find_by_hash(const key_type& k, hash_code_t c) const
-		{
-			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
+		// const_iterator find_by_hash(const key_type& k, hash_code_t c) const
+		// {
+		// 	const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
-			soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-			return pNode ? const_iterator(pNode, getBucketArray() + n) : cend();
-		}
+		// 	soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		// 	return pNode ? const_iterator(pNode, getBucketArray() + n) : cend();
+		// }
 
 		// Returns a pair that allows iterating over all nodes in a hash bucket
 		//   first in the pair returned holds the iterator for the beginning of the bucket,
@@ -1256,8 +1255,8 @@ namespace safememory
 		// If no bucket is found, both values in the pair are set to end().
 		//
 		// See also the note above.
-		std::pair<iterator, iterator> find_range_by_hash(hash_code_t c);
-		std::pair<const_iterator, const_iterator> find_range_by_hash(hash_code_t c) const;
+		// std::pair<iterator, iterator> find_range_by_hash(hash_code_t c);
+		// std::pair<const_iterator, const_iterator> find_range_by_hash(hash_code_t c) const;
 
 		size_type count(const key_type& k) const EA_NOEXCEPT;
 
@@ -1373,6 +1372,7 @@ namespace safememory
 		std::pair<iterator, bool> DoInsertKey(std::true_type, key_type&& key)       { return DoInsertKey(std::true_type(),  std::move(key), get_hash_code(key)); }
 		iterator                    DoInsertKey(std::false_type, key_type&& key)      { return DoInsertKey(std::false_type(), std::move(key), get_hash_code(key)); }
 
+		void DoInit();
 		void       DoRehash(size_type nBucketCount);
 		soft_ptr<node_type> DoFindNode(soft_ptr<node_type> pNode, const key_type& k, hash_code_t c) const;
 
@@ -1725,8 +1725,8 @@ namespace safememory
 // 				throw;
 // 			}
 // 		#endif
-
-		return ::nodecpp::safememory::make_owning<node_type>(std::move(key), typename value_type::second_type());
+		// return ::nodecpp::safememory::make_owning<node_type>(std::move(key), typename value_type::second_type());
+		return {nullptr};
 	}
 
 
@@ -1942,48 +1942,48 @@ namespace safememory
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq, 
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
-				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
-	{
-		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
+	// template <typename K, typename V, typename A, typename EK, typename Eq, 
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
+	// 			typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
+	// {
+	// 	const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
+	// 	soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
 
-		if (pNodeStart)
-		{
-			std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, getBucketArray() + start), 
-															 const_iterator(pNodeStart, getBucketArray() + start));
-			pair.second.increment_bucket();
-			return pair;
-		}
+	// 	if (pNodeStart)
+	// 	{
+	// 		std::pair<const_iterator, const_iterator> pair(const_iterator(pNodeStart, getBucketArray() + start), 
+	// 														 const_iterator(pNodeStart, getBucketArray() + start));
+	// 		pair.second.increment_bucket();
+	// 		return pair;
+	// 	}
 
-		return std::pair<const_iterator, const_iterator>(cend(), cend());
-	}
+	// 	return std::pair<const_iterator, const_iterator>(cend(), cend());
+	// }
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq, 
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
-				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
-	{
-		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
+	// template <typename K, typename V, typename A, typename EK, typename Eq, 
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
+	// 			typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
+	// {
+	// 	const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
+	// 	soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
 
-		if (pNodeStart)
-		{
-			std::pair<iterator, iterator> pair(iterator(pNodeStart, getBucketArray() + start), 
-												 iterator(pNodeStart, getBucketArray() + start));
-			pair.second.increment_bucket();
-			return pair;
+	// 	if (pNodeStart)
+	// 	{
+	// 		std::pair<iterator, iterator> pair(iterator(pNodeStart, getBucketArray() + start), 
+	// 											 iterator(pNodeStart, getBucketArray() + start));
+	// 		pair.second.increment_bucket();
+	// 		return pair;
 
-		}
+	// 	}
 
-		return std::pair<iterator, iterator>(end(), end());
-	}
+	// 	return std::pair<iterator, iterator>(end(), end());
+	// }
 
 
 
@@ -3178,21 +3178,10 @@ namespace safememory
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInit()
-	{
-		mnBucketCount = (size_type)mRehashPolicy.GetNextBucketCount(1);
-		mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
-	}
-
-
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
 	{
 		rehash(mRehashPolicy.GetBucketCount(uint32_t(nElementCount)));
 	}
-
-
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -3203,6 +3192,14 @@ namespace safememory
 		DoRehash(nBucketCount);
 	}
 
+
+	template <typename K, typename V, typename A, typename EK, typename Eq,
+			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInit()
+	{
+		mnBucketCount = (size_type)mRehashPolicy.GetNextBucketCount(1);
+		mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
+	}
 
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
