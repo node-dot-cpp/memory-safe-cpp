@@ -149,19 +149,7 @@ namespace safememory
 		struct hash_node<Value, true>
 		{
 			hash_node() = default;
-			// hash_node(const hash_node&) = default;
-			// hash_node(hash_node&&) = default;
-			// template < class... Args1, class... Args2 >
-			// hash_node(std::piecewise_construct_t pc, 
-			// 	std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
-			// 	:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
-			// 	{}
-			// hash_node(const Value& value) :mValue(value) {}
-			// hash_node(Value&& value) :mValue(std::move(value)) {}
-			// template<class Arg1, class Arg2>
-			// hash_node(Arg1&& arg1, Arg2&& arg2)
-			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
-			// 	{}
+
 			template<class... Args>
 			hash_node(Args&&... args)
 				:mValue(std::forward<Args>(args)...) 
@@ -177,19 +165,7 @@ namespace safememory
 		struct hash_node<Value, false>
 		{
 			hash_node() = default;
-			// hash_node(const hash_node&) = default;
-			// hash_node(hash_node&&) = default;
-			// template < class... Args1, class... Args2 >
-			// hash_node(std::piecewise_construct_t pc, 
-			// 	std::tuple<Args1...> first_args, std::tuple<Args2...> second_args) 
-			// 	:mValue(pc, std::forward<Args1>(first_args)..., std::forward<Args2>(second_args)...)
-			// 	{}
-			// hash_node(const Value& value) :mValue(value) {}
-			// hash_node(Value&& value) :mValue(std::move(value)) {}
-			// template<class Arg1, class Arg2>
-			// hash_node(Arg1&& arg1, Arg2&& arg2)
-			// 	:mValue(std::forward<Arg1>(arg1), std::forward<Arg2>(arg2)) 
-			// 	{}
+
 			template<class... Args>
 			hash_node(Args&&... args)
 				:mValue(std::forward<Args>(args)...) 
@@ -1701,7 +1677,8 @@ namespace safememory
 // 				throw;
 // 			}
 // 		#endif
-		return ::nodecpp::safememory::make_owning<node_type>(key, typename value_type::second_type());
+
+		return ::nodecpp::safememory::make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
 	}
 
 
@@ -1730,8 +1707,8 @@ namespace safememory
 // 				throw;
 // 			}
 // 		#endif
-		// return ::nodecpp::safememory::make_owning<node_type>(std::move(key), typename value_type::second_type());
-		return {nullptr};
+
+		return ::nodecpp::safememory::make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
 	}
 
 
