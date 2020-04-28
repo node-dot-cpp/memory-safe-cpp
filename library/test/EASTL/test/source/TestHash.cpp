@@ -607,19 +607,19 @@ int TestHash()
 
 
 		// bool validate_iterator(const_iterator i) const;
-		// hash_set<int>::iterator it;
-		// int result = hashSet1.validate_iterator(it);
-		// EATEST_VERIFY(result == isf_none);
+		hash_set<int>::iterator it;
+		int result = hashSet1.validate_iterator(it);
+		EATEST_VERIFY(result == safememory::isf_none);
 
-		// hash_set<int>::iterator it = hashSet1.begin();
-		// int result = hashSet2.validate_iterator(it);
-		// EATEST_VERIFY(result == isf_none);
-		// result = hashSet1.validate_iterator(it);
-		// EATEST_VERIFY(result == (isf_valid | isf_current | isf_can_dereference));
+		it = hashSet1.begin();
+		result = hashSet2.validate_iterator(it);
+		EATEST_VERIFY(result == safememory::isf_none);
+		result = hashSet1.validate_iterator(it);
+		EATEST_VERIFY(result == safememory::isf_can_dereference);
 
-		// it = hashSet1.end();
-		// result = hashSet1.validate_iterator(it);
-		// EATEST_VERIFY(result == (isf_valid | isf_current));
+		it = hashSet1.end();
+		result = hashSet1.validate_iterator(it);
+		EATEST_VERIFY(result == safememory::isf_end);
 
 
 		// void reset_lose_memory();

@@ -339,6 +339,8 @@ namespace safememory
 		detail::safe_iterator<owning_ptr<node_type>> mpBucket;    // Current bucket.
 
 	public:
+		hashtable_iterator_base() { }
+
 		hashtable_iterator_base(soft_ptr<node_type> pNode, detail::safe_iterator<owning_ptr<node_type>> pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
 
@@ -388,6 +390,9 @@ namespace safememory
 		typedef std::forward_iterator_tag                                iterator_category;
 
 	public:
+		hashtable_iterator()
+			: base_type() { }
+
 		hashtable_iterator(soft_ptr<node_type> pNode, detail::safe_iterator<owning_ptr<node_type>> pBucket)
 			: base_type(pNode, pBucket) { }
 
@@ -3302,11 +3307,11 @@ namespace safememory
 		for(const_iterator temp = begin(), tempEnd = end(); temp != tempEnd; ++temp)
 		{
 			if(temp == i)
-				return (isf_valid | isf_current | isf_can_dereference);
+				return isf_can_dereference;
 		}
 
 		if(i == end())
-			return (isf_valid | isf_current); 
+			return isf_end; 
 
 		return isf_none;
 	}

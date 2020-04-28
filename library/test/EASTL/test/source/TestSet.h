@@ -673,14 +673,14 @@ int TestSetCpp11()
 	TestObject::Reset();
 
 	typedef T1 TOSet;
-	// typename TOSet::insert_return_type toSetInsertResult;
-	// typename TOSet::iterator toSetIterator;
+	typename TOSet::insert_return_type toSetInsertResult;
+	typename TOSet::iterator toSetIterator;
 
 	TOSet      toSet;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	TOSet::insert_return_type toSetInsertResult = toSet.emplace(to0);
+	toSetInsertResult = toSet.emplace(to0);
 	EATEST_VERIFY(toSetInsertResult.second == true);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
@@ -708,7 +708,7 @@ int TestSetCpp11()
 	EATEST_VERIFY(toSet.find(to50) != toSet.end());
 
 	TestObject to51(5);
-	TOSet::iterator toSetIterator = toSet.emplace_hint(toSetInsertResult.first, std::move(to51));
+	toSetIterator = toSet.emplace_hint(toSetInsertResult.first, std::move(to51));
 	EATEST_VERIFY(*toSetIterator == TestObject(5));
 	EATEST_VERIFY(toSet.find(to51) != toSet.end());
 
@@ -801,13 +801,13 @@ int TestMultisetCpp11()
 	TestObject::Reset();
 
 	typedef T1 TOSet;
-	// typename TOSet::iterator toSetIterator;
+	typename TOSet::iterator toSetIterator;
 
 	TOSet      toSet;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	typename TOSet::iterator toSetIterator = toSet.emplace(to0);
+	toSetIterator = toSet.emplace(to0);
 	EATEST_VERIFY(*toSetIterator == TestObject(0));
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 

@@ -699,14 +699,14 @@ int TestMapCpp11()
 
 	typedef T1 TOMap;
 	typedef typename TOMap::value_type value_type;
-	// typename TOMap::insert_return_type toMapInsertResult;
-	// typename TOMap::iterator toMapIterator;
+	typename TOMap::insert_return_type toMapInsertResult;
+	typename TOMap::iterator toMapIterator;
 
 	TOMap      toMap;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	typename TOMap::insert_return_type toMapInsertResult = toMap.emplace(value_type(0, to0));
+	toMapInsertResult = toMap.emplace(value_type(0, to0));
 	EATEST_VERIFY(toMapInsertResult.second == true);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
@@ -736,7 +736,7 @@ int TestMapCpp11()
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
 	value_type value51(5, to5);
-	typename TOMap::iterator toMapIterator = toMap.emplace_hint(toMapInsertResult.first, std::move(value51));
+	toMapIterator = toMap.emplace_hint(toMapInsertResult.first, std::move(value51));
 	EATEST_VERIFY(toMapIterator->first == 5);
 	EATEST_VERIFY(toMap.find(5) != toMap.end());
 
@@ -856,13 +856,13 @@ int TestMultimapCpp11()
 
 	typedef T1 TOMap;
 	typedef typename TOMap::value_type value_type;
-	// typename TOMap::iterator toMapIterator;
+	typename TOMap::iterator toMapIterator;
 
 	TOMap      toMap;
 	TestObject to0(0);
 	TestObject to1(1);
 
-	TOMap::iterator toMapIterator = toMap.emplace(value_type(0, to0));
+	toMapIterator = toMap.emplace(value_type(0, to0));
 	EATEST_VERIFY(toMapIterator->first == 0);
 	//EATEST_VERIFY((TestObject::sTOCopyCtorCount == 2) && (TestObject::sTOMoveCtorCount == 1));  // Disabled until we can guarantee its behavior and deal with how it's different between compilers of differing C++11 support.
 
