@@ -29,7 +29,6 @@
 #define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_ptr.h>
-// #include "safe_ptr_with_zero_offset.h"
 #include <iterator>
 
 namespace safememory {

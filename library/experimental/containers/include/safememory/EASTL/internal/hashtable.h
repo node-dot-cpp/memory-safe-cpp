@@ -74,7 +74,6 @@
 #include <initializer_list>
 #include <tuple>
 #include <string>
-#include <safememory/safe_ptr_for_map.h>
 
 // EA_DISABLE_ALL_VC_WARNINGS()
 // 	#include <new>
