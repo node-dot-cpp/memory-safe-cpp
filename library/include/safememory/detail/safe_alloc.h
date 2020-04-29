@@ -193,11 +193,11 @@ public:
 	unsafe_iterator(const unsafe_iterator& ri) = default;
 	unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
 
-	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
 	unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
 
-	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
 	unsafe_iterator& operator=(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri) {
 		mIterator = ri.mIterator;
 		return *this;
@@ -334,12 +334,12 @@ public:
 	}
 
 	// allow non-const to const convertion
-	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
 	safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
 		: arr(ri.arr), ix(ri.ix) {}
 
 	// allow non-const to const convertion
-	template<typename NonConstT = std::enable_if_t<!std::is_same<T, non_const_value_type>::value, non_const_value_type>>
+	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
 	safe_iterator& operator=(const safe_iterator<NonConstT, soft_array_of_prt>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;

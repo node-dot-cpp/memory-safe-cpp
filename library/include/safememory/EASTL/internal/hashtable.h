@@ -377,7 +377,7 @@ namespace safememory
 		hashtable_iterator(const hashtable_iterator& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
-		template<typename NonConstT = std::enable_if_t<bConst, this_type_non_const>>
+		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
 		hashtable_iterator(const NonConstT& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
@@ -389,8 +389,8 @@ namespace safememory
 			return *this;
 		}
 
-		template<typename NonConst = std::enable_if_t<bConst, this_type_non_const>>
-		hashtable_iterator& operator=(const NonConst& x) {
+		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
+		hashtable_iterator& operator=(const NonConstT& x) {
 			this->mpNode = x.mpNode;
 			this->mpBucket = x.mpBucket;
 
