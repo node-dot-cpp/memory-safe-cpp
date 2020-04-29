@@ -329,8 +329,8 @@ namespace safememory
 	//
 	// These are used as a utility to differentiate between two things.
 	//
-	typedef char yes_type;                      // sizeof(yes_type) == 1
-	struct       no_type { char padding[8]; };  // sizeof(no_type)  != 1
+	// typedef char yes_type;                      // sizeof(yes_type) == 1
+	// struct       no_type { char padding[8]; };  // sizeof(no_type)  != 1
 
 
 
@@ -374,16 +374,16 @@ namespace safememory
 	//        or
 	//    using ChosenType = type_select_t<is_integral_v<SomeType>, ChoiceAType, ChoiceBType>;
 	//
-	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-	struct type_select { typedef ConditionIsTrueType type; };
+	// template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
+	// struct type_select { typedef ConditionIsTrueType type; };
 
-	template <typename ConditionIsTrueType, class ConditionIsFalseType>
-	struct type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
+	// template <typename ConditionIsTrueType, class ConditionIsFalseType>
+	// struct type_select<false, ConditionIsTrueType, ConditionIsFalseType> { typedef ConditionIsFalseType type; };
 
-	#if EASTL_VARIABLE_TEMPLATES_ENABLED
-		template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
-		using type_select_t = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
-	#endif
+	// #if EASTL_VARIABLE_TEMPLATES_ENABLED
+	// 	template <bool bCondition, class ConditionIsTrueType, class ConditionIsFalseType>
+	// 	using type_select_t = typename type_select<bCondition, ConditionIsTrueType, ConditionIsFalseType>::type;
+	// #endif
 
 
 

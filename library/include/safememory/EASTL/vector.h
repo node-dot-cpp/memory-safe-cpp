@@ -66,7 +66,8 @@
 #include <safememory/EASTL/internal/config.h>
 #include <safememory/detail/safe_alloc.h>
 //#include <EASTL/allocator.h>
-#include <safememory/EASTL/type_traits.h>
+//#include <safememory/EASTL/type_traits.h>
+#include <type_traits>
 #include <safememory/EASTL/iterator.h>
 #include <iterator>
 #include <algorithm>

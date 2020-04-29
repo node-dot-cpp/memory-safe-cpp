@@ -63,7 +63,8 @@
 #endif
 
 #include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/type_traits.h>
+//#include <safememory/EASTL/type_traits.h>
+#include <type_traits>
 //#include <EASTL/allocator.h>
 #include <safememory/EASTL/iterator.h>
 #include <safe_ptr.h>
@@ -190,26 +191,26 @@ namespace safememory
 	// parameters. The hashtable support this level of configuration to allow users to choose which between the space vs.
 	// time optimization.
 	//
-	namespace Internal
-	{
-		template <class T>
-		struct has_hashcode_member 
-		{
-		private:
-			template <class U> static safememory::no_type test(...);
-			template <class U> static safememory::yes_type test(decltype(U::mnHashCode)* = 0);
-		public:
-			static const bool value = sizeof(test<T>(0)) == sizeof(safememory::yes_type);
-		};
-	}
+	// namespace Internal
+	// {
+	// 	template <class T>
+	// 	struct has_hashcode_member 
+	// 	{
+	// 	private:
+	// 		template <class U> static safememory::no_type test(...);
+	// 		template <class U> static safememory::yes_type test(decltype(U::mnHashCode)* = 0);
+	// 	public:
+	// 		static const bool value = sizeof(test<T>(0)) == sizeof(safememory::yes_type);
+	// 	};
+	// }
 	
-	static_assert(Internal::has_hashcode_member<hash_node<int, true>>::value, "contains a mnHashCode member");
-	static_assert(!Internal::has_hashcode_member<hash_node<int, false>>::value, "doesn't contain a mnHashCode member");
+	// static_assert(Internal::has_hashcode_member<hash_node<int, true>>::value, "contains a mnHashCode member");
+	// static_assert(!Internal::has_hashcode_member<hash_node<int, false>>::value, "doesn't contain a mnHashCode member");
 
 	// convenience macros to increase the readability of the code paths that must SFINAE on if the 'hash_node'
 	// contains the cached hashed value or not. 
-	#define ENABLE_IF_HAS_HASHCODE(T, RT) typename std::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
-	#define ENABLE_IF_HASHCODE_SIZET(T, RT) typename std::enable_if<std::is_convertible<T, size_t>::value, RT>::type
+	// #define ENABLE_IF_HAS_HASHCODE(T, RT) typename std::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
+	// #define ENABLE_IF_HASHCODE_SIZET(T, RT) typename std::enable_if<std::is_convertible<T, size_t>::value, RT>::type
 	#define ENABLE_IF_TRUETYPE(T) typename std::enable_if<T::value>::type*
 	#define DISABLE_IF_TRUETYPE(T) typename std::enable_if<!T::value>::type*
 
@@ -252,8 +253,8 @@ namespace safememory
 		typedef node_iterator<Value, bConst, bCacheHashCode>             this_type;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
-		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
-		typedef typename type_select<bConst, const Value&, Value&>::type reference;
+		typedef typename std::conditional<bConst, const Value*, Value*>::type pointer;
+		typedef typename std::conditional<bConst, const Value&, Value&>::type reference;
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag          			             iterator_category;
 
@@ -359,8 +360,8 @@ namespace safememory
 		typedef hashtable_iterator<Value, false, bCacheHashCode>         this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
-		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
-		typedef typename type_select<bConst, const Value&, Value&>::type reference;
+		typedef typename std::conditional<bConst, const Value*, Value*>::type pointer;
+		typedef typename std::conditional<bConst, const Value&, Value&>::type reference;
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag                                iterator_category;
 
@@ -912,7 +913,7 @@ namespace safememory
 		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode>                  iterator;
 		typedef hashtable_iterator<value_type, true,               bCacheHashCode>                  const_iterator;
 		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
-		typedef typename type_select<bUniqueKeys, std::pair<iterator, bool>, iterator>::type        insert_return_type;
+		typedef typename std::conditional<bUniqueKeys, std::pair<iterator, bool>, iterator>::type        insert_return_type;
 		typedef hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, 
 							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
 		typedef RehashPolicy                                                                        rehash_policy_type;

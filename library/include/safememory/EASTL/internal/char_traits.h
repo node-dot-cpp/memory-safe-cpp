@@ -49,7 +49,8 @@
 #endif
 
 #include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/type_traits.h>
+//#include <safememory/EASTL/type_traits.h>
+#include <type_traits>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <ctype.h>              // toupper, etc.
