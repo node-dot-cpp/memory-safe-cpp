@@ -127,7 +127,7 @@
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
-#include <safememory/EASTL/iterator.h>
+//#include <safememory/EASTL/iterator.h>
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
@@ -336,9 +336,11 @@ namespace safememory
 
 
 
-		typedef ::nodecpp::safememory::owning_ptr<detail::array_of2<T>> owning_heap_type;
-		typedef ::nodecpp::safememory::soft_ptr<detail::array_of2<T>> soft_heap_type;
+		typedef owning_ptr<detail::array_of2<T>> 					owning_heap_type;
+		typedef soft_ptr<detail::array_of2<T>> 						soft_heap_type;
 
+		// typedef detail::unsafe_iterator<T>							iterator_safe;
+		// typedef detail::unsafe_iterator<const T>						const_iterator_safe;
 		typedef detail::safe_iterator<T>							iterator_safe;
 		typedef detail::safe_iterator<const T>						const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;

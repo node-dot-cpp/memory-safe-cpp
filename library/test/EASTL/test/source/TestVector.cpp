@@ -186,14 +186,14 @@ int TestVector()
 		// explicit vector();
 		vector<int> intArray1;
 		vector<TestObject> toArray1;
-		vector<std::list<TestObject> > toListArray1;
+		// vector<std::list<TestObject> > toListArray1;
 
 		EATEST_VERIFY(intArray1.validate());
 		EATEST_VERIFY(intArray1.empty());
 		EATEST_VERIFY(toArray1.validate());
 		EATEST_VERIFY(toArray1.empty());
-		EATEST_VERIFY(toListArray1.validate());
-		EATEST_VERIFY(toListArray1.empty());
+		// EATEST_VERIFY(toListArray1.validate());
+		// EATEST_VERIFY(toListArray1.empty());
 
 		// explicit vector(const allocator_type& allocator);
 		// MallocAllocator::reset_all();
@@ -209,40 +209,40 @@ int TestVector()
 		// explicit vector(size_type n, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR)
 		vector<int> intArray2(10);
 		vector<TestObject> toArray2(10);
-		vector<std::list<TestObject> > toListArray2(10);
+		// vector<std::list<TestObject> > toListArray2(10);
 
 		EATEST_VERIFY(intArray2.validate());
 		EATEST_VERIFY(intArray2.size() == 10);
 		EATEST_VERIFY(toArray2.validate());
 		EATEST_VERIFY(toArray2.size() == 10);
-		EATEST_VERIFY(toListArray2.validate());
-		EATEST_VERIFY(toListArray2.size() == 10);
+		// EATEST_VERIFY(toListArray2.validate());
+		// EATEST_VERIFY(toListArray2.size() == 10);
 
 		// vector(size_type n, const value_type& value, const allocator_type& allocator =
 		// EASTL_VECTOR_DEFAULT_ALLOCATOR)
 		vector<int> intArray3(10, 7);
 		vector<TestObject> toArray3(10, TestObject(7));
-		vector<std::list<TestObject> > toListArray3(10, std::list<TestObject>(7));
+		// vector<std::list<TestObject> > toListArray3(10, std::list<TestObject>(7));
 
 		EATEST_VERIFY(intArray3.validate());
 		EATEST_VERIFY(intArray3.size() == 10);
 		EATEST_VERIFY(intArray3[5] == 7);
 		EATEST_VERIFY(toArray3.validate());
 		EATEST_VERIFY(toArray3[5] == TestObject(7));
-		EATEST_VERIFY(toListArray3.validate());
-		EATEST_VERIFY(toListArray3[5] == std::list<TestObject>(7));
+		// EATEST_VERIFY(toListArray3.validate());
+		// EATEST_VERIFY(toListArray3[5] == std::list<TestObject>(7));
 
 		// vector(const vector& x)
 		vector<int> intArray4(intArray2);
 		vector<TestObject> toArray4(toArray2);
-		vector<std::list<TestObject> > toListArray4(toListArray2);
+		// vector<std::list<TestObject> > toListArray4(toListArray2);
 
 		EATEST_VERIFY(intArray4.validate());
 		EATEST_VERIFY(intArray4 == intArray2);
 		EATEST_VERIFY(toArray4.validate());
 		EATEST_VERIFY(toArray4 == toArray2);
-		EATEST_VERIFY(intArray4.validate());
-		EATEST_VERIFY(toListArray4 == toListArray2);
+		// EATEST_VERIFY(intArray4.validate());
+		// EATEST_VERIFY(toListArray4 == toListArray2);
 
 		// vector(const this_type& x, const allocator_type& allocator)
 		// MallocAllocator::reset_all();
@@ -273,14 +273,14 @@ int TestVector()
 		// vector& operator=(const vector& x);
 		intArray3 = intArray4;
 		toArray3 = toArray4;
-		toListArray3 = toListArray4;
+		// toListArray3 = toListArray4;
 
 		EATEST_VERIFY(intArray3.validate());
 		EATEST_VERIFY(intArray3 == intArray4);
 		EATEST_VERIFY(toArray3.validate());
 		EATEST_VERIFY(toArray3 == toArray4);
-		EATEST_VERIFY(intArray3.validate());
-		EATEST_VERIFY(toListArray3 == toListArray4);
+		// EATEST_VERIFY(intArray3.validate());
+		// EATEST_VERIFY(toListArray3 == toListArray4);
 
 // this_type& operator=(std::initializer_list<T> ilist);
 #if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)

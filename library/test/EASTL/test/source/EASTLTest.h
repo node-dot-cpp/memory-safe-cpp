@@ -398,7 +398,7 @@ struct TestObject
 	// Due to the nature of TestObject, there isn't much special for us to 
 	// do in our move constructor. A move constructor swaps its contents with 
 	// the other object, whhich is often a default-constructed object.
-	TestObject(TestObject&& testObject)
+	TestObject(TestObject&& testObject) noexcept
 		: mX(testObject.mX), mbThrowOnCopy(testObject.mbThrowOnCopy), mMagicValue(testObject.mMagicValue)
 	{
 		++sTOCount;
@@ -406,12 +406,12 @@ struct TestObject
 		++sTOMoveCtorCount;
 		mId = sTOCtorCount;  // testObject keeps its mId, and we assign ours anew.
 		testObject.mX = 0;   // We are swapping our contents with the TestObject, so give it our "previous" value.
-		if(mbThrowOnCopy)
-		{
-			#if EASTL_EXCEPTIONS_ENABLED
-				throw "Disallowed TestObject copy";
-			#endif
-		}
+		// if(mbThrowOnCopy)
+		// {
+		// 	#if EASTL_EXCEPTIONS_ENABLED
+		// 		throw "Disallowed TestObject copy";
+		// 	#endif
+		// }
 	}
 
 	TestObject& operator=(const TestObject& testObject)
@@ -434,7 +434,7 @@ struct TestObject
 		return *this;
 	}
 
-	TestObject& operator=(TestObject&& testObject)
+	TestObject& operator=(TestObject&& testObject) noexcept
 	{
 		++sTOMoveAssignCount;
 
@@ -446,12 +446,12 @@ struct TestObject
 			swap(mMagicValue, testObject.mMagicValue);
 			swap(mbThrowOnCopy, testObject.mbThrowOnCopy);
 
-			if(mbThrowOnCopy)
-			{
-				#if EASTL_EXCEPTIONS_ENABLED
-					throw "Disallowed TestObject copy";
-				#endif
-			}
+			// if(mbThrowOnCopy)
+			// {
+			// 	#if EASTL_EXCEPTIONS_ENABLED
+			// 		throw "Disallowed TestObject copy";
+			// 	#endif
+			// }
 		}
 		return *this;
 	}

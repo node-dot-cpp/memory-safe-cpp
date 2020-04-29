@@ -58,7 +58,7 @@ namespace
 		MovableType(MovableType&& x) EA_NOEXCEPT : mpData(x.mpData)
 			{ x.mpData = NULL; }
 
-		MovableType& operator=(MovableType&& x)
+		MovableType& operator=(MovableType&& x) EA_NOEXCEPT
 		{
 			std::swap(mpData, x.mpData); // In practice it may not be right to do a swap, depending on the case.
 			return *this;
@@ -101,7 +101,7 @@ namespace
 				mpObject->AddRef();
 		}
 
-		AutoRefCount& operator=(const AutoRefCount& x)     
+		AutoRefCount& operator=(const AutoRefCount& x) EA_NOEXCEPT    
 		{         
 			return operator=(x.mpObject);
 		}
@@ -125,7 +125,7 @@ namespace
 			x.mpObject = NULL;
 		}
 
-		AutoRefCount& operator=(AutoRefCount&& x)
+		AutoRefCount& operator=(AutoRefCount&& x) EA_NOEXCEPT
 		{
 			if(mpObject)
 				mpObject->Release();

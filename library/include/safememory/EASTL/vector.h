@@ -68,11 +68,12 @@
 //#include <EASTL/allocator.h>
 //#include <safememory/EASTL/type_traits.h>
 #include <type_traits>
-#include <safememory/EASTL/iterator.h>
+//#include <safememory/EASTL/iterator.h>
+#include <iterator>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
-#include <safememory/EASTL/memory.h>
+//#include <safememory/EASTL/memory.h>
 #include <memory>
 //#include <EASTL/bonus/compressed_pair.h>
 
@@ -213,10 +214,8 @@ namespace safememory
 	template <typename T, typename Allocator = std::allocator<T> >
 	class vector
 	{
-		static_assert((std::is_nothrow_move_constructible<T>::value &&
-		std::is_nothrow_move_assignable<T>::value)  ||
-			(std::is_copy_constructible<T>::value && 
-			std::is_copy_assignable<T>::value), "T must be copiable or nothrow movable");
+		static_assert(std::is_nothrow_move_constructible<T>::value, "T must be nothrow constructible");
+		static_assert(std::is_nothrow_move_assignable<T>::value, "T must be nothrow movable");
 
 
 		// typedef VectorBase<T, Allocator>                      base_type;
@@ -237,6 +236,8 @@ namespace safememory
 		typedef owning_ptr<detail::array_of2<T>> 					owning_heap_type;
 		typedef soft_ptr<detail::array_of2<T>> 						soft_heap_type;
 
+		// typedef detail::unsafe_iterator<T>							iterator_safe;
+		// typedef detail::unsafe_iterator<const T>						const_iterator_safe;
 		typedef detail::safe_iterator<T>							iterator_safe;
 		typedef detail::safe_iterator<const T>						const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
@@ -2050,10 +2051,10 @@ namespace safememory
 					pointer pNewEnd = pNewData;
 					try
 					{
-						pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+						pNewEnd = std::uninitialized_move(mpBegin, destPosition, pNewData);
 						// pNewEnd = eastl::uninitialized_copy_ptr(first, last, pNewEnd);
 						pNewEnd = std::uninitialized_copy(first, last, pNewEnd);
-						pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd);
+						pNewEnd = std::uninitialized_move(destPosition, mpEnd, pNewEnd);
 					}
 					catch(...)
 					{
@@ -2129,10 +2130,10 @@ namespace safememory
 				pointer pNewEnd = pNewData;
 				try
 				{
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
+					pNewEnd = std::uninitialized_move(mpBegin, destPosition, pNewData);
 					// eastl::uninitialized_fill_n_ptr(pNewEnd, n, value);
-					std::uninitialized_fill_n(pNewEnd, n, value);
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, pNewEnd + n);
+					pNewEnd = std::uninitialized_fill_n(pNewEnd, n, value);
+					pNewEnd = std::uninitialized_move(destPosition, mpEnd, pNewEnd);
 				}
 				catch(...)
 				{
@@ -2173,7 +2174,7 @@ namespace safememory
 		auto nNewHeap = DoAllocate(n);
 		pointer const pNewData = nNewHeap->begin();
 
-		pointer pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+		pointer pNewEnd = std::uninitialized_move(mpBegin, mpEnd, pNewData);
 
 		std::destroy(mpBegin, mpEnd);
 		SetNewHeap(std::move(nNewHeap));
@@ -2211,7 +2212,7 @@ namespace safememory
 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 				try
 				{
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+					pNewEnd = std::uninitialized_move(mpBegin, mpEnd, pNewData);
 				}
 				catch(...)
 				{
@@ -2258,7 +2259,7 @@ namespace safememory
 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
 				try 
 				{
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+					pNewEnd = std::uninitialized_move(mpBegin, mpEnd, pNewData);
 				}
 				catch (...)
 				{
@@ -2326,7 +2327,7 @@ namespace safememory
 		}
 		else // else (size == capacity)
 		{
-			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
+//			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
 			const size_type nPrevSize = size_type(mpEnd - mpBegin);
 			// const size_type nNewSize  = GetNewCapacity(nPrevSize);
 			auto			nNewHeap  = DoAllocate(nPrevSize + 1);
@@ -2337,17 +2338,18 @@ namespace safememory
 				try
 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
 					// call eastl::destruct on the entire range if only the first part of the range was costructed.
-					::new((void*)(pNewData + nPosSize)) value_type(std::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
-					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
-					pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(destPosition, mpEnd, ++pNewEnd);
+					// pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
+					pNewEnd = std::uninitialized_move(mpBegin, destPosition, pNewData);       // the value first, because it might possibly be a reference to the old data being moved.
+					::new((void*)(pNewEnd)) value_type(std::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
+					++pNewEnd;
+					pNewEnd = std::uninitialized_move(destPosition, mpEnd, pNewEnd);
 				}
 				catch(...)
 				{
-					if(pNewEnd)
+					// if(pNewEnd)
 						std::destroy(pNewData, pNewEnd);                                         // Destroy what has been constructed so far.
-					else
-						std::destroy_at(pNewData + nPosSize);                                       // The exception occurred during the first unintialized move, so destroy only the value at nPosSize.
+					// else
+					// 	std::destroy_at(pNewData + nPosSize);                                       // The exception occurred during the first unintialized move, so destroy only the value at nPosSize.
 					// DoFree(pNewData, nNewSize);
 					throw;
 				}
@@ -2381,7 +2383,7 @@ namespace safememory
 			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
 			try
 			{
-				pNewEnd = safememory::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
+				pNewEnd = std::uninitialized_move(mpBegin, mpEnd, pNewData);
 				::new((void*)pNewEnd) value_type(std::forward<Args>(args)...);
 				pNewEnd++;
 			}

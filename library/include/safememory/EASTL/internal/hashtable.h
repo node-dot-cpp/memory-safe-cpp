@@ -66,7 +66,8 @@
 //#include <safememory/EASTL/type_traits.h>
 #include <type_traits>
 //#include <EASTL/allocator.h>
-#include <safememory/EASTL/iterator.h>
+//#include <safememory/EASTL/iterator.h>
+#include <iterator>
 #include <safe_ptr.h>
 #include <safememory/detail/safe_alloc.h>
 #include <functional>
@@ -129,6 +130,41 @@ namespace safememory
 	#define EASTL_MACRO_SWAP(Type, a, b) \
 		{ Type temp = a; a = b; b = temp; }
 
+	/// use_self
+	///
+	/// operator()(x) simply returns x. Used in sets, as opposed to maps.
+	/// This is a template policy implementation; it is an alternative to 
+	/// the use_first template implementation.
+	///
+	/// The existance of use_self may seem odd, given that it does nothing,
+	/// but these kinds of things are useful, virtually required, for optimal 
+	/// generic programming.
+	///
+	template <typename T>
+	struct use_self             // : public unary_function<T, T> // Perhaps we want to make it a subclass of unary_function.
+	{
+		typedef T result_type;
+
+		const T& operator()(const T& x) const
+			{ return x; }
+	};
+
+	/// use_first
+	///
+	/// operator()(x) simply returns x.first. Used in maps, as opposed to sets.
+	/// This is a template policy implementation; it is an alternative to 
+	/// the use_self template implementation. This is the same thing as the
+	/// SGI SGL select1st utility.
+	///
+	template <typename Pair>
+	struct use_first
+	{
+		typedef Pair argument_type;
+		typedef typename Pair::first_type result_type;
+
+		const result_type& operator()(const Pair& x) const
+			{ return x.first; }
+	};
 
 	/// hash_node
 	///
@@ -229,6 +265,8 @@ namespace safememory
 
 		soft_ptr<node_type> mpNode;
 
+		node_iterator_base() { }
+
 		node_iterator_base(soft_ptr<node_type> pNode)
 			: mpNode(pNode) { }
 
@@ -253,13 +291,15 @@ namespace safememory
 		typedef node_iterator<Value, bConst, bCacheHashCode>             this_type;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
-		typedef typename std::conditional<bConst, const Value*, Value*>::type pointer;
-		typedef typename std::conditional<bConst, const Value&, Value&>::type reference;
+		typedef typename std::conditional_t<bConst, const Value*, Value*> pointer;
+		typedef typename std::conditional_t<bConst, const Value&, Value&> reference;
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag          			             iterator_category;
 
 	public:
-		explicit node_iterator(soft_ptr<node_type> pNode = NULL)
+		node_iterator() { }
+
+		explicit node_iterator(soft_ptr<node_type> pNode)
 			: base_type(pNode) { }
 
 		node_iterator(const node_iterator<Value, true, bCacheHashCode>& x)
@@ -291,33 +331,40 @@ namespace safememory
 	/// We define a base class here because it is shared by both const and
 	/// non-const iterators.
 	///
-	template <typename Value, bool bCacheHashCode>
+	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
 	struct hashtable_iterator_base
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode> this_type;
-		typedef hash_node<Value, bCacheHashCode>               node_type;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe> this_type;
+		typedef hash_node<Value, bCacheHashCode>              		node_type;
+
+		// typedef std::conditional_t<is_safe == memory_safety::safe,
+		// 	soft_ptr<node_type>, node_type*> 						node_ptr;
+		typedef soft_ptr<node_type>			 						node_ptr;
+		typedef std::conditional_t<is_safe == memory_safety::safe,
+			detail::safe_iterator<owning_ptr<node_type>>,
+			detail::unsafe_iterator<owning_ptr<node_type>>> 		bucket_ptr;
 
 	protected:
 		template <typename, typename, typename, typename, typename, typename, typename, typename, typename, bool, bool, bool>
 		friend class hashtable;
 
-		template <typename, bool, bool>
+		template <typename, bool, bool, memory_safety>
 		friend struct hashtable_iterator;
 
-		template <typename V, bool b>
-		friend bool operator==(const hashtable_iterator_base<V, b>&, const hashtable_iterator_base<V, b>&);
+		template <typename V, bool b, memory_safety s>
+		friend bool operator==(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
-		template <typename V, bool b>
-		friend bool operator!=(const hashtable_iterator_base<V, b>&, const hashtable_iterator_base<V, b>&);
+		template <typename V, bool b, memory_safety s>
+		friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
-		soft_ptr<node_type>  mpNode;      // Current node within current bucket.
-		detail::safe_iterator<owning_ptr<node_type>> mpBucket;    // Current bucket.
+		node_ptr  mpNode;      // Current node within current bucket.
+		bucket_ptr mpBucket;    // Current bucket.
 
 	public:
 		hashtable_iterator_base() { }
 
-		hashtable_iterator_base(soft_ptr<node_type> pNode, detail::safe_iterator<owning_ptr<node_type>> pBucket)
+		hashtable_iterator_base(node_ptr pNode, bucket_ptr pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
 
 		void increment_bucket()
@@ -351,17 +398,17 @@ namespace safememory
 	/// The bConst parameter defines if the iterator is a const_iterator
 	/// or an iterator.
 	///
-	template <typename Value, bool bConst, bool bCacheHashCode>
-	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode>
+	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety is_safe>
+	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode, is_safe>
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode>           base_type;
-		typedef hashtable_iterator<Value, bConst, bCacheHashCode>        this_type;
-		typedef hashtable_iterator<Value, false, bCacheHashCode>         this_type_non_const;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe>           base_type;
+		typedef hashtable_iterator<Value, bConst, bCacheHashCode, is_safe>        this_type;
+		typedef hashtable_iterator<Value, false, bCacheHashCode, is_safe>         this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
-		typedef typename std::conditional<bConst, const Value*, Value*>::type pointer;
-		typedef typename std::conditional<bConst, const Value&, Value&>::type reference;
+		typedef std::conditional_t<bConst, const Value*, Value*> 		 pointer;
+		typedef std::conditional_t<bConst, const Value&, Value&> 		 reference;
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag                                iterator_category;
 
@@ -369,17 +416,13 @@ namespace safememory
 		hashtable_iterator()
 			: base_type() { }
 
-		hashtable_iterator(soft_ptr<node_type> pNode, detail::safe_iterator<owning_ptr<node_type>> pBucket)
+		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_ptr pBucket)
 			: base_type(pNode, pBucket) { }
 
-		hashtable_iterator(detail::safe_iterator<owning_ptr<node_type>> pBucket)
+		hashtable_iterator(typename base_type::bucket_ptr pBucket)
 			: base_type(*pBucket, pBucket) { }
 
 		hashtable_iterator(const hashtable_iterator& x)
-			: base_type(x.mpNode, x.mpBucket) { }
-
-		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
-		hashtable_iterator(const NonConstT& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
 		hashtable_iterator& operator=(const hashtable_iterator& x) {
@@ -389,6 +432,11 @@ namespace safememory
 			}
 			return *this;
 		}
+
+		// non const to const convertion
+		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
+		hashtable_iterator(const NonConstT& x)
+			: base_type(x.mpNode, x.mpBucket) { }
 
 		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
 		hashtable_iterator& operator=(const NonConstT& x) {
@@ -910,10 +958,10 @@ namespace safememory
 		typedef const value_type&                                                                   const_reference;
 		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode>                       local_iterator;
 		typedef node_iterator<value_type, true,               bCacheHashCode>                       const_local_iterator;
-		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode>                  iterator;
-		typedef hashtable_iterator<value_type, true,               bCacheHashCode>                  const_iterator;
+		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, memory_safety::none>                  iterator;
+		typedef hashtable_iterator<value_type, true,               bCacheHashCode, memory_safety::none>                  const_iterator;
 		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
-		typedef typename std::conditional<bUniqueKeys, std::pair<iterator, bool>, iterator>::type        insert_return_type;
+		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
 		typedef hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, 
 							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
 		typedef RehashPolicy                                                                        rehash_policy_type;
@@ -1022,13 +1070,13 @@ namespace safememory
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
 		local_iterator end(size_type) EA_NOEXCEPT
-			{ return local_iterator(soft_ptr<node_type>()); }
+			{ return local_iterator(); }
 
 		const_local_iterator end(size_type) const EA_NOEXCEPT
-			{ return const_local_iterator(soft_ptr<node_type>()); }
+			{ return const_local_iterator(); }
 
 		const_local_iterator cend(size_type) const EA_NOEXCEPT
-			{ return const_local_iterator(soft_ptr<node_type>()); }
+			{ return const_local_iterator(); }
 
 		bool empty() const EA_NOEXCEPT
 			{ return mnElementCount == 0; }
@@ -1244,8 +1292,8 @@ namespace safememory
 		detail::iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
-		detail::safe_iterator<owning_ptr<node_type>> GetBucketArrayIt() const { 
-			return detail::safe_iterator<owning_ptr<node_type>>(mpBucketArray);
+		typename iterator::bucket_ptr GetBucketArrayIt() const { 
+			return typename iterator::bucket_ptr(mpBucketArray);
 		}
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1396,12 +1444,12 @@ namespace safememory
 	// hashtable_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode>
-	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode>& a, const hashtable_iterator_base<Value, bCacheHashCode>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
+	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
 		{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
 
-	template <typename Value, bool bCacheHashCode>
-	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode>& a, const hashtable_iterator_base<Value, bCacheHashCode>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
+	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
 		{ return !operator==(a, b); }
 
 
@@ -3283,7 +3331,7 @@ namespace safememory
 	{
 		if(i == const_iterator())
 			return detail::iterator_validity::Null;
-		else if(i.mpBucket.arr == mpBucketArray ) {
+		// else if(i.mpBucket.arr == mpBucketArray ) {
 			
 			//is mine and current
 			if(i == end())
@@ -3294,8 +3342,8 @@ namespace safememory
 				if(temp == i)
 					return detail::iterator_validity::ValidCanDeref;
 			}
-		}
-
+		// }
+		//TODO 
 		return detail::iterator_validity::InvalidZoombie;
 	}
 

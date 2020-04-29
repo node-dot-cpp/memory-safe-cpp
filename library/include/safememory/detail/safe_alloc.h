@@ -35,6 +35,7 @@ namespace safememory {
 
 using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;
+using ::nodecpp::safememory::memory_safety;
 
 namespace detail {
 
@@ -45,19 +46,6 @@ enum class iterator_validity {
 	InvalidZoombie,	     // invalid but not escaping safememory rules 
 	xxx_Broken_xxx       // invalid and escaping safety rules
 };
-
-
-template< class InputIt, class ForwardIt >
-ForwardIt uninitialized_move_or_copy( InputIt first, InputIt last, ForwardIt d_first ) {
-	if constexpr (std::is_nothrow_move_constructible<typename std::iterator_traits<InputIt>::value_type>::value) {
-		return std::uninitialized_move(first, last, d_first);
-	}
-	else {
-		return std::uninitialized_copy(first, last, d_first);
-	}
-}
-
-
 
 
 template<class T>
@@ -187,8 +175,8 @@ public:
 	unsafe_iterator(soft_array_of_prt, pointer ptr)
 		: mIterator(ptr) {}
 
-	// unsafe_iterator(pointer ptr)
-	// 	: mIterator(ptr) {}
+	unsafe_iterator(pointer ptr)
+		: mIterator(ptr) {}
 
 	unsafe_iterator(const unsafe_iterator& ri) = default;
 	unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
