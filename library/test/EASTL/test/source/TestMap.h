@@ -592,24 +592,24 @@ int TestMapSearch()
 
 
 		// find_as
-		typedef TMapComparable<typename T1::key_type> TC;
+		// typedef TMapComparable<typename T1::key_type> TC;
 
-		// Normally we use find_as to find via a different type, but we can test it here like this.
-		for(i = 0; i < 1000; i++)
-		{
-			TC k = typename T1::key_type(i);
-			it = t1A.find_as(k, std::less_2<typename T1::key_type, TC>());
+		// // Normally we use find_as to find via a different type, but we can test it here like this.
+		// for(i = 0; i < 1000; i++)
+		// {
+		// 	TC k = typename T1::key_type(i);
+		// 	it = t1A.find_as(k, std::less_2<typename T1::key_type, TC>());
 
-			EATEST_VERIFY(it != t1A.end());
-			EATEST_VERIFY(it->first  == k);
-			EATEST_VERIFY(it->second == k);
-		}
+		// 	EATEST_VERIFY(it != t1A.end());
+		// 	EATEST_VERIFY(it->first  == k);
+		// 	EATEST_VERIFY(it->second == k);
+		// }
 
-		it = t1A.find_as(TC(typename T1::key_type(-1)), std::less_2<typename T1::key_type, TC>());
-		EATEST_VERIFY(it == t1A.end());
+		// it = t1A.find_as(TC(typename T1::key_type(-1)), std::less_2<typename T1::key_type, TC>());
+		// EATEST_VERIFY(it == t1A.end());
 
-		it = t1A.find_as(TC(typename T1::key_type(1001)), std::less_2<typename T1::key_type, TC>());
-		EATEST_VERIFY(it == t1A.end());
+		// it = t1A.find_as(TC(typename T1::key_type(1001)), std::less_2<typename T1::key_type, TC>());
+		// EATEST_VERIFY(it == t1A.end());
 
 
 		// lower_bound
