@@ -4,6 +4,7 @@
 
 
 #include "EASTLTest.h"
+#include <safememory/unordered_set.h>
 #include <vector>
 #include <algorithm>
 #include <type_traits>

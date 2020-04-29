@@ -4,10 +4,12 @@
 
 
 #include "EASTLTest.h"
+#include <safememory/unordered_map.h>
 #include <vector>
 #include <algorithm>
 #include <type_traits>
 //#include <EASTL/scoped_ptr.h>
+#include <memory>
 #include <random>
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
