@@ -127,14 +127,14 @@ namespace safememory
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  typename Allocator = std::allocator<Value>, bool bCacheHashCode = false>
 	class hash_set
-		: public hashtable<Value, Value, Allocator, use_self<Value>, Predicate,
-						   Hash, mod_range_hashing, default_ranged_hash, 
-						   prime_rehash_policy, bCacheHashCode, false, true>
+		: public detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
+						   detail::prime_rehash_policy, bCacheHashCode, false, true>
 	{
 	public:
-		typedef hashtable<Value, Value, Allocator, use_self<Value>, Predicate, 
-						  Hash, mod_range_hashing, default_ranged_hash,
-						  prime_rehash_policy, bCacheHashCode, false, true>       base_type;
+		typedef detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate, 
+						  Hash, detail::mod_range_hashing, detail::default_ranged_hash,
+						  detail::prime_rehash_policy, bCacheHashCode, false, true>       base_type;
 		typedef hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>       this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::value_type                                    value_type;
@@ -147,7 +147,7 @@ namespace safememory
 		/// Default constructor.
 		/// 
 		explicit hash_set(/*const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), Predicate(), use_self<Value>()/*, allocator*/)
+			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), Predicate(), detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -161,7 +161,7 @@ namespace safememory
 		///
 		explicit hash_set(size_type nBucketCount, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate()/*, 
 						  const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -192,7 +192,7 @@ namespace safememory
 		///     
 		hash_set(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -206,7 +206,7 @@ namespace safememory
 		template <typename FowardIterator>
 		hash_set(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -245,14 +245,14 @@ namespace safememory
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  typename Allocator = std::allocator<Value>, bool bCacheHashCode = false>
 	class hash_multiset
-		: public hashtable<Value, Value, Allocator, use_self<Value>, Predicate,
-						   Hash, mod_range_hashing, default_ranged_hash,
-						   prime_rehash_policy, bCacheHashCode, false, false>
+		: public detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+						   Hash, detail::mod_range_hashing, detail::default_ranged_hash,
+						   detail::prime_rehash_policy, bCacheHashCode, false, false>
 	{
 	public:
-		typedef hashtable<Value, Value, Allocator, use_self<Value>, Predicate,
-						  Hash, mod_range_hashing, default_ranged_hash,
-						  prime_rehash_policy, bCacheHashCode, false, false>          base_type;
+		typedef detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+						  Hash, detail::mod_range_hashing, detail::default_ranged_hash,
+						  detail::prime_rehash_policy, bCacheHashCode, false, false>          base_type;
 		typedef hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>      this_type;
 		typedef typename base_type::size_type                                         size_type;
 		typedef typename base_type::value_type                                        value_type;
@@ -265,7 +265,7 @@ namespace safememory
 		/// Default constructor.
 		/// 
 		explicit hash_multiset(/*const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), Predicate(), use_self<Value>()/*, allocator*/)
+			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), Predicate(), detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -279,7 +279,7 @@ namespace safememory
 		///
 		explicit hash_multiset(size_type nBucketCount, const Hash& hashFunction = Hash(), 
 							   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -310,7 +310,7 @@ namespace safememory
 		///     
 		hash_multiset(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -324,7 +324,7 @@ namespace safememory
 		template <typename FowardIterator>
 		hash_multiset(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 					  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), predicate, use_self<Value>()/*, allocator*/)
+			: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			// Empty
 		}

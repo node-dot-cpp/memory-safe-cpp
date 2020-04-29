@@ -90,7 +90,7 @@
 #endif
 
 
-namespace safememory
+namespace safememory::detail
 {
 
 	/// EASTL_HASHTABLE_DEFAULT_NAME
@@ -342,8 +342,8 @@ namespace safememory
 		// 	soft_ptr<node_type>, node_type*> 						node_ptr;
 		typedef soft_ptr<node_type>			 						node_ptr;
 		typedef std::conditional_t<is_safe == memory_safety::safe,
-			detail::safe_iterator<owning_ptr<node_type>>,
-			detail::unsafe_iterator<owning_ptr<node_type>>> 		bucket_ptr;
+			safe_iterator<owning_ptr<node_type>>,
+			unsafe_iterator<owning_ptr<node_type>>> 		bucket_ptr;
 
 	protected:
 		template <typename, typename, typename, typename, typename, typename, typename, typename, typename, bool, bool, bool>
@@ -973,7 +973,7 @@ namespace safememory
 
 		typedef owning_ptr<node_type>    owning_node_type;
 		typedef soft_ptr<node_type>    soft_node_type;
-		typedef owning_ptr<detail::array_of2<owning_node_type>>    owning_bucket_type;
+		typedef owning_ptr<array_of2<owning_node_type>>    owning_bucket_type;
 
 
 		using hash_code_base_type::key_eq;
@@ -1289,7 +1289,7 @@ namespace safememory
 		std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
 
 		bool validate() const;
-		detail::iterator_validity  validate_iterator(const_iterator i) const;
+		iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
 		typename iterator::bucket_ptr GetBucketArrayIt() const { 
@@ -1320,7 +1320,7 @@ namespace safememory
 		owning_node_type  DoAllocateNodeFromKey(const key_type& key);
 		owning_node_type  DoAllocateNodeFromKey(key_type&& key);
 		void        DoFreeNode(owning_node_type pNode);
-		void        DoFreeNodes(soft_ptr<detail::array_of2<owning_node_type>> pBucketArray, size_type);
+		void        DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pBucketArray, size_type);
 
 		owning_bucket_type DoAllocateBuckets(size_type n);
 		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
@@ -1498,7 +1498,7 @@ namespace safememory
 	{
 		if(nBucketCount < 2)
 		{
-			const size_type nElementCount = (size_type)safememory::ht_distance(first, last);
+			const size_type nElementCount = (size_type)ht_distance(first, last);
 			mnBucketCount = (size_type)mRehashPolicy.GetBucketCount((uint32_t)nElementCount);
 		}
 		else
@@ -1726,7 +1726,7 @@ namespace safememory
 // 			}
 // 		#endif
 
-		return ::nodecpp::safememory::make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
+		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
 	}
 
 
@@ -1756,7 +1756,7 @@ namespace safememory
 // 			}
 // 		#endif
 
-		return ::nodecpp::safememory::make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
+		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
 	}
 
 
@@ -1773,7 +1773,7 @@ namespace safememory
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_ptr<detail::array_of2<owning_node_type>> pNodeArray, size_type n)
+	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pNodeArray, size_type n)
 	{
 		if(pNodeArray) {
 			for(size_type i = 0; i < n; ++i)
@@ -1809,14 +1809,14 @@ namespace safememory
 // 		return pBucketArray;
 
 		// mb: allocate n + 1 so we have a dereferenceable end()
-		auto pBucketArray = detail::make_owning_array_of<owning_node_type>(n + 1);
+		auto pBucketArray = make_owning_array_of<owning_node_type>(n + 1);
 		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->begin() + n + 1);
 
 
 // 		pBucketArray->at_unsafe(n) = reinterpret_cast<node_type*>((uintptr_t)~0);
 
 		//create a fake (zoombie) end() node, key must be default constructed
-		auto end = ::nodecpp::safememory::make_owning<node_type>();
+		auto end = make_owning<node_type>();
 		end->~node_type();
 		pBucketArray->at(n) = std::move(end);
 
@@ -2284,7 +2284,7 @@ namespace safememory
 		// 		throw;
 		// 	}
 		// #endif
-		return ::nodecpp::safememory::make_owning<node_type>(std::forward<Args>(args)...);
+		return make_owning<node_type>(std::forward<Args>(args)...);
 	}
 
 
@@ -2467,7 +2467,7 @@ namespace safememory
 		// 		throw;
 		// 	}
 		// #endif
-		return ::nodecpp::safememory::make_owning<node_type>(std::move(value));
+		return make_owning<node_type>(std::move(value));
 	}
 
 
@@ -2642,7 +2642,7 @@ namespace safememory
 		// 		throw;
 		// 	}
 		// #endif
-		return ::nodecpp::safememory::make_owning<node_type>(value);
+		return make_owning<node_type>(value);
 	}
 
 
@@ -3008,7 +3008,7 @@ namespace safememory
 	void
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(InputIterator first, InputIterator last)
 	{
-		const uint32_t nElementAdd = (uint32_t)safememory::ht_distance(first, last);
+		const uint32_t nElementAdd = (uint32_t)ht_distance(first, last);
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, nElementAdd);
 
 		if(bRehash.first)
@@ -3327,24 +3327,24 @@ namespace safememory
 
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	detail::iterator_validity hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
+	iterator_validity hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
 	{
 		if(i == const_iterator())
-			return detail::iterator_validity::Null;
+			return iterator_validity::Null;
 		// else if(i.mpBucket.arr == mpBucketArray ) {
 			
 			//is mine and current
 			if(i == end())
-				return detail::iterator_validity::ValidEnd; 
+				return iterator_validity::ValidEnd; 
 			// To do: Come up with a more efficient mechanism of doing this.
 			for(const_iterator temp = begin(), tempEnd = end(); temp != tempEnd; ++temp)
 			{
 				if(temp == i)
-					return detail::iterator_validity::ValidCanDeref;
+					return iterator_validity::ValidCanDeref;
 			}
 		// }
 		//TODO 
-		return detail::iterator_validity::InvalidZoombie;
+		return iterator_validity::InvalidZoombie;
 	}
 
 

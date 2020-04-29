@@ -31,6 +31,7 @@ using safememory::hash_set;
 using safememory::hash_multiset;
 using safememory::detail::iterator_validity;
 
+
 namespace std
 {
 	template <> 
@@ -101,28 +102,28 @@ struct HashtableValueHash
 
 // Explicit Template instantiations.
 // These tell the compiler to compile all the functions for the given class.
-template class safememory::hashtable<int,
+template class safememory::detail::hashtable<int,
                                 std::pair<const int, int>,
 								std::allocator<std::pair<const int, int>>,
-                                safememory::use_first<std::pair<const int, int>>,
+                                safememory::detail::use_first<std::pair<const int, int>>,
                                 std::equal_to<int>,
                                 std::hash<int>,
-                                safememory::mod_range_hashing,
-                                safememory::default_ranged_hash,
-                                safememory::prime_rehash_policy,
+                                safememory::detail::mod_range_hashing,
+                                safememory::detail::default_ranged_hash,
+                                safememory::detail::prime_rehash_policy,
                                 true, // bCacheHashCode
                                 true, // bMutableIterators
                                 true  // bUniqueKeys
                                 >;
-template class safememory::hashtable<int,
+template class safememory::detail::hashtable<int,
 								std::pair<const int, int>,
 								std::allocator<std::pair<const int, int>>,
-								safememory::use_first<std::pair<const int, int>>,
+								safememory::detail::use_first<std::pair<const int, int>>,
 								std::equal_to<int>,
 								std::hash<int>,
-								safememory::mod_range_hashing,
-								safememory::default_ranged_hash,
-								safememory::prime_rehash_policy,
+								safememory::detail::mod_range_hashing,
+								safememory::detail::default_ranged_hash,
+								safememory::detail::prime_rehash_policy,
 								false, // bCacheHashCode
 								true,  // bMutableIterators
 								true   // bUniqueKeys
@@ -155,8 +156,8 @@ template class safememory::hash_map<Align32, Align32>;
 template class safememory::hash_multimap<Align32, Align32>;
 
 // validate static assumptions about hashtable core types
-typedef safememory::hash_node<int, false> HashNode1;
-typedef safememory::hash_node<int, true> HashNode2;
+typedef safememory::detail::hash_node<int, false> HashNode1;
+typedef safememory::detail::hash_node<int, true> HashNode2;
 static_assert(std::is_default_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_default_constructible<HashNode2>::value, "hash_node static error");
 // static_assert(std::is_copy_constructible<HashNode1>::value, "hash_node static error");
