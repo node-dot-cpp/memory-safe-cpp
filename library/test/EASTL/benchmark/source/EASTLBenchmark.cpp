@@ -81,7 +81,7 @@ namespace Benchmark
 		else
 			sz = snprintf(buff, sizeof(buff), "%6.1f ns", (double)timeNS / 1);
 
-		return sz > 0 && sz < sizeof(buff) ? std::string(buff) : std::string("error");
+		return sz > 0 && sz < static_cast<int>(sizeof(buff)) ? std::string(buff) : std::string("error");
 	}
 
 
