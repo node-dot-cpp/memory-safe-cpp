@@ -409,8 +409,8 @@ namespace safememory
 		hashtable_iterator operator++(int)
 			{ hashtable_iterator temp(*this); base_type::increment(); return temp; }
 
-		soft_ptr<node_type> get_node() const
-			{ return base_type::mpNode; }
+		// soft_ptr<node_type> get_node() const
+		// 	{ return base_type::mpNode; }
 
 	}; // hashtable_iterator
 
@@ -1766,8 +1766,11 @@ namespace safememory
 
 // 		pBucketArray->at_unsafe(n) = reinterpret_cast<node_type*>((uintptr_t)~0);
 
-		//create a fake end() node, key must be default constructed
-		pBucketArray->at(n) = ::nodecpp::safememory::make_owning<node_type>();
+		//create a fake (zoombie) end() node, key must be default constructed
+		auto end = ::nodecpp::safememory::make_owning<node_type>();
+		end->~node_type();
+		pBucketArray->at(n) = std::move(end);
+
 		return pBucketArray;
 	}
 
@@ -1783,10 +1786,6 @@ namespace safememory
 		// if(n > 1)
 		// 	// EASTLFree(mAllocator, pBucketArray, (n + 1) * sizeof(node_type*)); // '+1' because DoAllocateBuckets allocates nBucketCount + 1 buckets in order to have a NULL sentinel at the end.
 	
-		// destroy the fake end() node
-		if(pBucketArray)
-			pBucketArray->at(n) = nullptr;
-		
 		// pBucketArray will self destroy here
 	}
 
