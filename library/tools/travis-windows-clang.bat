@@ -1,3 +1,6 @@
+rem mb: Travis-ci uses git-bash to execute scripts under Windows.
+rem But vcvars needs to be called under cmd.exe, so this .bat file forces
+rem git-bash to launch a cmd.exe to execute this.
 
 mkdir build
 cd build
