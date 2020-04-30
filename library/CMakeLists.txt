@@ -72,6 +72,7 @@ if (MSVC AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
     # emulating clang-cl specifics
     target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
     target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
+    target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
 endif()
 
 target_link_libraries(test_safe_memory SafeMemory)

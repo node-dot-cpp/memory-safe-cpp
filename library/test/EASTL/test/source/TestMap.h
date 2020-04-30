@@ -18,6 +18,7 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
+using safememory::detail::use_first;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestMapConstruction
@@ -41,7 +42,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2A(new T2);
 	// 	T1& t1A = *pt1A;
 	// 	T2& t2A = *pt2A;
-	// 	nErrorCount += CompareContainers(t1A, t2A, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1A, t2A, "Map ctor", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 	// 	EATEST_VERIFY(t1A.validate());
 
 
@@ -49,7 +50,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2B(new T2);
 	// 	T1& t1B = *pt1B;
 	// 	T2& t2B = *pt2B;
-	// 	nErrorCount += CompareContainers(t1B, t2B, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1B, t2B, "Map ctor", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1C(new T1);
@@ -61,7 +62,7 @@ int TestMapConstruction()
 	// 		t1C.insert(typename T1::value_type(typename T1::key_type(i), typename T1::mapped_type(i)));
 	// 		t2C.insert(typename T2::value_type(typename T2::key_type(i), typename T2::mapped_type(i)));
 	// 		EATEST_VERIFY(t1C.validate());
-	// 		nErrorCount += CompareContainers(t1C, t2C, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 		nErrorCount += CompareContainers(t1C, t2C, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 	// 	}
 
 
@@ -69,7 +70,7 @@ int TestMapConstruction()
 	// 	eastl::scoped_ptr<T2> pt2D(new T2);
 	// 	T1& t1D = *pt1D;
 	// 	T2& t2D = *pt2D;
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map ctor", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1E(new T1(t1C));
@@ -77,7 +78,7 @@ int TestMapConstruction()
 	// 	T1& t1E = *pt1E;
 	// 	T2& t2E = *pt2E;
 	// 	EATEST_VERIFY(t1E.validate());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map ctor", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	eastl::scoped_ptr<T1> pt1F(new T1(t1C.begin(), t1C.end()));
@@ -85,14 +86,14 @@ int TestMapConstruction()
 	// 	T1& t1F = *pt1F;
 	// 	T2& t2F = *pt2F;
 	// 	EATEST_VERIFY(t1F.validate());
-	// 	nErrorCount += CompareContainers(t1F, t2F, "Map ctor", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1F, t2F, "Map ctor", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	// operator=(const map&)
 	// 	t1E = t1D;
 	// 	t2E = t2D;
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map operator=", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map operator=", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map operator=", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map operator=", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	// operator=(map&&)
@@ -134,20 +135,20 @@ int TestMapConstruction()
 	// 	t2E.swap(t2D);
 	// 	EATEST_VERIFY(t1D.validate());
 	// 	EATEST_VERIFY(t1E.validate());
-	// 	nErrorCount += CompareContainers(t1D, t2D, "Map swap", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
-	// 	nErrorCount += CompareContainers(t1E, t2E, "Map swap", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1D, t2D, "Map swap", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1E, t2E, "Map swap", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	// clear
 	// 	t1A.clear();
 	// 	t2A.clear();
 	// 	EATEST_VERIFY(t1A.validate());
-	// 	nErrorCount += CompareContainers(t1A, t2A, "Map clear", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1A, t2A, "Map clear", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 	// 	t1B.clear();
 	// 	t2B.clear();
 	// 	EATEST_VERIFY(t1B.validate());
-	// 	nErrorCount += CompareContainers(t1B, t2B, "Map clear", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+	// 	nErrorCount += CompareContainers(t1B, t2B, "Map clear", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 	// 	// global operators (==, !=, <, etc.)
@@ -242,7 +243,7 @@ int TestMapMutation()
 					t2A.insert(typename T2::value_type(k, k));
 
 					EATEST_VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 				}
 
 
@@ -268,7 +269,7 @@ int TestMapMutation()
 
 					EATEST_VERIFY(n1 == n2);
 					EATEST_VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Map erase", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Map erase", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 				}
 
 				EATEST_VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -301,7 +302,7 @@ int TestMapMutation()
 						t2A.insert(typename T2::value_type(k, k));
 
 						EATEST_VERIFY(t1A.validate());
-						nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+						nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 					}
 
 					for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -312,7 +313,7 @@ int TestMapMutation()
 						t2A.erase(k);
 
 						EATEST_VERIFY(t1A.validate());
-						nErrorCount += CompareContainers(t1A, t2A, "Map erase", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+						nErrorCount += CompareContainers(t1A, t2A, "Map erase", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 					}
 
 					EATEST_VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -360,14 +361,14 @@ int TestMapMutation()
 			t1A.insert(valueArrayInsert1.begin(), valueArrayInsert1.end());
 			t2A.insert(valueArrayInsert2.begin(), valueArrayInsert2.end());
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 			// insert_return_type insert(const Key& key);
 			t1A.insert(typename T1::key_type(8888));
 			t2A.insert(typename T2::value_type(typename T2::key_type(8888), typename T2::mapped_type(0)));
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 			// iterator insert(iterator position, const value_type& value);
@@ -379,14 +380,14 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(1));
 			EATEST_VERIFY(it2->first == typename T2::key_type(1));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 			it1 = t1A.insert(t1A.end(), typename T1::value_type(typename T1::key_type(5), typename T1::mapped_type(5)));
 			it2 = t2A.insert(t2A.end(), typename T2::value_type(typename T2::key_type(5), typename T2::mapped_type(5)));
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(5));
 			EATEST_VERIFY(it2->first == typename T2::key_type(5));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 			// Now we remove these items so that the insertions above can succeed.
 			t1A.erase(t1A.find(typename T1::key_type(1)));
@@ -396,7 +397,7 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(1));
 			EATEST_VERIFY(it2->first == typename T2::key_type(1));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 			t1A.erase(t1A.find(typename T1::key_type(5)));
 			t2A.erase(t2A.find(typename T2::key_type(5)));
@@ -405,7 +406,7 @@ int TestMapMutation()
 			EATEST_VERIFY(t1A.validate());
 			EATEST_VERIFY(it1->first == typename T1::key_type(5));
 			EATEST_VERIFY(it2->first == typename T2::key_type(5));
-			nErrorCount += CompareContainers(t1A, t2A, "Map insert", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map insert", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 			// iterator erase(iterator first, iterator last);
@@ -418,14 +419,14 @@ int TestMapMutation()
 			t2A.erase(it21, it22);
 
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 			// iterator erase(iterator position);
 			t1A.erase(t1A.find(typename T1::key_type(60)));
 			t2A.erase(t2A.find(typename T1::key_type(60)));
 			EATEST_VERIFY(t1A.validate());
-			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 
 			// Disabled because this function isn't exposed outside the rbtree yet.
@@ -435,7 +436,7 @@ int TestMapMutation()
 			//t1A.erase(keyArray1 + 0, keyArray1 + 3);
 			//t2A.erase(keyArray2 + 0, keyArray2 + 3);
 			//EATEST_VERIFY(t1A.validate());
-			//nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", safememory::use_first<typename T1::value_type>(), safememory::use_first<typename T2::value_type>());
+			//nErrorCount += CompareContainers(t1A, t2A, "Map erase(first, last)", use_first<typename T1::value_type>(), use_first<typename T2::value_type>());
 
 		#endif // EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 	}
