@@ -29,6 +29,7 @@
 #define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_ptr.h>
+#include <safe_ptr_with_zero_offset.h>
 #include <iterator>
 
 namespace safememory {
@@ -401,17 +402,11 @@ public:
 	}
 
 	bool operator<(const safe_iterator& ri) const {
-		if(arr == ri.arr)
-			return ix < ri.ix;
-
-		throw std::invalid_argument("iterators don't match");
+		return arr == ri.arr && ix < ri.ix;
 	}
 
 	bool operator<=(const safe_iterator& ri) const {
-		if(arr == ri.arr)
-			return ix <= ri.ix;
-
-		throw std::invalid_argument("iterators don't match");
+		return arr == ri.arr && ix <= ri.ix;
 	}
 
 	// constexpr bool operator>=(const safe_iterator& ri) const {

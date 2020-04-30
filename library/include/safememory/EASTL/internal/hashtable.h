@@ -1403,7 +1403,7 @@ namespace safememory::detail
 
 		void DoInit();
 		void       DoRehash(size_type nBucketCount);
-		soft_ptr<node_type> DoFindNode(soft_ptr<node_type> pNode, const key_type& k, hash_code_t c) const;
+		soft_node_type DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const;
 
 		// template <typename T>
 		// ENABLE_IF_HAS_HASHCODE(T, node_type) DoFindNode(T* pNode, hash_code_t c) const
@@ -1548,7 +1548,7 @@ namespace safememory::detail
 			// #endif
 					for(size_type i = 0; i < x.mnBucketCount; ++i)
 					{
-						soft_ptr<node_type>  pNodeSource = x.mpBucketArray->at_unsafe(i);
+						soft_node_type  pNodeSource = x.mpBucketArray->at_unsafe(i);
 						
 						if(pNodeSource) {
 							mpBucketArray->at_unsafe(i) = DoAllocateNode(pNodeSource->mValue);
@@ -1556,7 +1556,7 @@ namespace safememory::detail
 							copy_code(*mpBucketArray->at_unsafe(i), *pNodeSource);
 							pNodeSource = pNodeSource->mpNext;
 						}
-						soft_ptr<node_type> ppNodeDest  = mpBucketArray->at_unsafe(i);
+						soft_node_type ppNodeDest  = mpBucketArray->at_unsafe(i);
 
 						while(pNodeSource)
 						{
@@ -1878,7 +1878,7 @@ namespace safememory::detail
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
-		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
 		return pNode ? iterator(pNode, GetBucketArrayIt() + n) : end();
 	}
 
@@ -1892,7 +1892,7 @@ namespace safememory::detail
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
-		soft_ptr<node_type> pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
 		return pNode ? const_iterator(pNode, GetBucketArrayIt() + n) : cend();
 	}
 
@@ -2030,7 +2030,7 @@ namespace safememory::detail
 
 		// To do: Make a specialization for bU (unique keys) == true and take 
 		// advantage of the fact that the count will always be zero or one in that case. 
-		for(soft_ptr<node_type> pNode = mpBucketArray->at_unsafe(n); pNode; pNode = pNode->mpNext)
+		for(soft_node_type pNode = mpBucketArray->at_unsafe(n); pNode; pNode = pNode->mpNext)
 		{
 			if(compare(k, c, *pNode))
 				++result;
@@ -2049,11 +2049,11 @@ namespace safememory::detail
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 		auto       head  = GetBucketArrayIt() + n;
-		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
+		soft_node_type        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
 		{
-			soft_ptr<node_type> p1 = pNode->mpNext;
+			soft_node_type p1 = pNode->mpNext;
 
 			for(; p1; p1 = p1->mpNext)
 			{
@@ -2085,11 +2085,11 @@ namespace safememory::detail
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 		auto       head  = GetBucketArrayIt() + n;
-		soft_ptr<node_type>        pNode = DoFindNode(*head, k, c);
+		soft_node_type        pNode = DoFindNode(*head, k, c);
 
 		if(pNode)
 		{
-			soft_ptr<node_type> p1 = pNode->mpNext;
+			soft_node_type p1 = pNode->mpNext;
 
 			for(; p1; p1 = p1->mpNext)
 			{
@@ -2114,14 +2114,14 @@ namespace safememory::detail
 	template <typename K, typename V, typename A, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(soft_ptr<node_type> pNode, const key_type& k, hash_code_t c) const
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const
 	{
 		for(; pNode; pNode = pNode->mpNext)
 		{
 			if(compare(k, c, *pNode))
 				return pNode;
 		}
-		return soft_ptr<node_type>();
+		return soft_node_type();
 	}
 
 
@@ -2163,7 +2163,7 @@ namespace safememory::detail
 		const key_type&   k        = mExtractKey(pNodeNew->mValue);
 		const hash_code_t c        = get_hash_code(k);
 		size_type         n        = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type> pNode    = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNode    = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
 
 		if(pNode == nullptr) // If value is not present... add it.
 		{
@@ -2182,7 +2182,7 @@ namespace safememory::detail
 					}
 
 					// EASTL_ASSERT((uintptr_t)mpBucketArray != (uintptr_t)&gpEmptyBucketArray[0]);
-					soft_ptr<node_type> pNodeIt = pNodeNew;
+					soft_node_type pNodeIt = pNodeNew;
 					pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
@@ -2237,8 +2237,8 @@ namespace safememory::detail
 		// erase(value) can more quickly find equal values. The downside is that
 		// this insertion operation taking some extra time. How important is it to
 		// us that equal_range span all equal items? 
-		soft_ptr<node_type> pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		soft_ptr<node_type> pNodeIt = pNodeNew;
+		soft_node_type pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNodeIt = pNodeNew;
 
 		if(pNodePrev == nullptr)
 		{
@@ -2306,7 +2306,7 @@ namespace safememory::detail
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
 		size_type         n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type>  pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
 
 		if(pNode == nullptr) // If value is not present... add it.
 		{
@@ -2346,7 +2346,7 @@ namespace safememory::detail
 					}
 
 					// EASTL_ASSERT((uintptr_t)mpBucketArray != (uintptr_t)&gpEmptyBucketArray[0]);
-					soft_ptr<node_type> pNodeIt = pNodeNew;
+					soft_node_type pNodeIt = pNodeNew;
 					pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
@@ -2408,8 +2408,8 @@ namespace safememory::detail
 		// erase(value) can more quickly find equal values. The downside is that
 		// this insertion operation taking some extra time. How important is it to
 		// us that equal_range span all equal items? 
-		soft_ptr<node_type> pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		soft_ptr<node_type> pNodeIt = pNodeNew;
+		soft_node_type pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNodeIt = pNodeNew;
 
 		if(pNodePrev == nullptr)
 		{
@@ -2481,7 +2481,7 @@ namespace safememory::detail
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
 		size_type         n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type>  pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
 
 		if(pNode == nullptr) // If value is not present... add it.
 		{
@@ -2521,7 +2521,7 @@ namespace safememory::detail
 					}
 
 					// EASTL_ASSERT((uintptr_t)mpBucketArray != (uintptr_t)&gpEmptyBucketArray[0]);
-					soft_ptr<node_type> pNodeIt = pNodeNew;
+					soft_node_type pNodeIt = pNodeNew;
 					pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
@@ -2583,8 +2583,8 @@ namespace safememory::detail
 		// erase(value) can more quickly find equal values. The downside is that
 		// this insertion operation taking some extra time. How important is it to
 		// us that equal_range span all equal items? 
-		soft_ptr<node_type> pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
-		soft_ptr<node_type> pNodeIt = pNodeNew;
+		soft_node_type pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), k, c);
+		soft_node_type pNodeIt = pNodeNew;
 
 		if(pNodePrev == nullptr)
 		{
@@ -2677,7 +2677,7 @@ namespace safememory::detail
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type>  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
+		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
 
 		if(pNode == nullptr)
 		{
@@ -2699,7 +2699,7 @@ namespace safememory::detail
 					}
 
 					// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-					soft_ptr<node_type> pNodeIt = pNodeNew;
+					soft_node_type pNodeIt = pNodeNew;
 					pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
@@ -2741,8 +2741,8 @@ namespace safememory::detail
 		// erase(value) can more quickly find equal values. The downside is that
 		// this insertion operation taking some extra time. How important is it to
 		// us that equal_range span all equal items? 
-		soft_ptr<node_type> pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
-		soft_ptr<node_type> pNodeIt = pNodeNew;
+		soft_node_type pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
+		soft_node_type pNodeIt = pNodeNew;
 
 		if(pNodePrev == nullptr)
 		{
@@ -2768,7 +2768,7 @@ namespace safememory::detail
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
-		soft_ptr<node_type>  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
+		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
 
 		if(pNode == nullptr)
 		{
@@ -2790,7 +2790,7 @@ namespace safememory::detail
 					}
 
 					// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-					soft_ptr<node_type> pNodeIt = pNodeNew;
+					soft_node_type pNodeIt = pNodeNew;
 					pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
@@ -2831,8 +2831,8 @@ namespace safememory::detail
 		// erase(value) can more quickly find equal values. The downside is that
 		// this insertion operation taking some extra time. How important is it to
 		// us that equal_range span all equal items? 
-		soft_ptr<node_type> pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
-		soft_ptr<node_type> pNodeIt = pNodeNew;
+		soft_node_type pNodePrev = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
+		soft_node_type pNodeIt = pNodeNew;
 
 		if(pNodePrev == nullptr)
 		{
@@ -3082,8 +3082,8 @@ namespace safememory::detail
 		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
 		++iNext;
 
-		soft_ptr<node_type> pNode        =  i.mpNode;
-		soft_ptr<node_type> pNodeCurrent = *i.mpBucket;
+		soft_node_type pNode        =  i.mpNode;
+		soft_node_type pNodeCurrent = *i.mpBucket;
 
 		if(*i.mpBucket == pNode) {
 			owning_ptr<node_type> tmp = std::move(*i.mpBucket);
@@ -3095,8 +3095,8 @@ namespace safememory::detail
 		{
 			// We have a singly-linked list, so we have no choice but to
 			// walk down it till we find the node before the node at 'i'.
-			soft_ptr<node_type> pNodeCurrent = *i.mpBucket;
-			soft_ptr<node_type> pNodeNext = pNodeCurrent->mpNext;
+			soft_node_type pNodeCurrent = *i.mpBucket;
+			soft_node_type pNodeNext = pNodeCurrent->mpNext;
 
 			while(pNodeNext != pNode)
 			{
