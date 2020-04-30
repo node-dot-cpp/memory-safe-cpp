@@ -41,7 +41,7 @@ int TestSetConstruction()
 		std::unique_ptr<T2> pt2A(new T2);
 		T1& t1A = *pt1A;
 		T2& t2A = *pt2A;
-		nErrorCount += CompareContainers(t1A, t2A, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set ctor", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 		VERIFY(t1A.validate());
 
 
@@ -49,7 +49,7 @@ int TestSetConstruction()
 		std::unique_ptr<T2> pt2B(new T2);
 		T1& t1B = *pt1B;
 		T2& t2B = *pt2B;
-		nErrorCount += CompareContainers(t1B, t2B, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1B, t2B, "Set ctor", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		std::unique_ptr<T1> pt1C(new T1);
@@ -61,7 +61,7 @@ int TestSetConstruction()
 			t1C.insert(typename T1::value_type(typename T1::value_type(i)));
 			t2C.insert(typename T2::value_type(typename T2::value_type(i)));
 			VERIFY(t1C.validate());
-			nErrorCount += CompareContainers(t1C, t2C, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+			nErrorCount += CompareContainers(t1C, t2C, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 		}
 
 
@@ -69,7 +69,7 @@ int TestSetConstruction()
 		std::unique_ptr<T2> pt2D(new T2);
 		T1& t1D = *pt1D;
 		T2& t2D = *pt2D;
-		nErrorCount += CompareContainers(t1D, t2D, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set ctor", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		std::unique_ptr<T1> pt1E(new T1(t1C));
@@ -77,7 +77,7 @@ int TestSetConstruction()
 		T1& t1E = *pt1E;
 		T2& t2E = *pt2E;
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1E, t2E, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set ctor", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		std::unique_ptr<T1> pt1F(new T1(t1C.begin(), t1C.end()));
@@ -85,14 +85,14 @@ int TestSetConstruction()
 		T1& t1F = *pt1F;
 		T2& t2F = *pt2F;
 		VERIFY(t1F.validate());
-		nErrorCount += CompareContainers(t1F, t2F, "Set ctor", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1F, t2F, "Set ctor", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// operator=
 		t1E = t1D;
 		t2E = t2D;
-		nErrorCount += CompareContainers(t1D, t2D, "Set operator=", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Set operator=", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set operator=", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set operator=", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// operator=(set&&)
@@ -126,8 +126,8 @@ int TestSetConstruction()
 		t2E.swap(t2D);
 		VERIFY(t1D.validate());
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1D, t2D, "Set swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Set swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Set swap", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Set swap", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// std::swap
@@ -135,20 +135,20 @@ int TestSetConstruction()
 		  std::swap(t2E, t2D);
 		VERIFY(t1D.validate());
 		VERIFY(t1E.validate());
-		nErrorCount += CompareContainers(t1D, t2D, "Global swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
-		nErrorCount += CompareContainers(t1E, t2E, "Global swap", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1D, t2D, "Global swap", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1E, t2E, "Global swap", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// clear
 		t1A.clear();
 		t2A.clear();
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set clear", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set clear", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 		t1B.clear();
 		t2B.clear();
 		VERIFY(t1B.validate());
-		nErrorCount += CompareContainers(t1B, t2B, "Set clear", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1B, t2B, "Set clear", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// global operators (==, !=, <, etc.)
@@ -244,7 +244,7 @@ int TestSetMutation()
 					t2A.insert(typename T2::value_type(k));
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 				}
 
 
@@ -270,7 +270,7 @@ int TestSetMutation()
 
 					VERIFY(n1 == n2);
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set erase", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set erase", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 				}
 
 				VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -301,7 +301,7 @@ int TestSetMutation()
 					t2A.insert(typename T2::value_type(k));
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 				}
 
 				for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -312,7 +312,7 @@ int TestSetMutation()
 					t2A.erase(k);
 
 					VERIFY(t1A.validate());
-					nErrorCount += CompareContainers(t1A, t2A, "Set erase", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+					nErrorCount += CompareContainers(t1A, t2A, "Set erase", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 				}
 
 				VERIFY((TestObject::sTOCount == 0) || (TestObject::sTOCount == (int64_t)valueArrayInsert.size())); // This test will only have meaning when T1 contains TestObject.
@@ -356,7 +356,7 @@ int TestSetMutation()
 		t1A.insert(valueArrayInsert1.begin(), valueArrayInsert1.end());
 		t2A.insert(valueArrayInsert2.begin(), valueArrayInsert2.end());
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// iterator insert(iterator position, const value_type& value);
@@ -368,14 +368,14 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(1));
 		VERIFY(*it2 == typename T2::value_type(1));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 		it1 = t1A.insert(t1A.end(), typename T1::value_type(5));
 		it2 = t2A.insert(t2A.end(), typename T2::value_type(5));
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(5));
 		VERIFY(*it2 == typename T2::value_type(5));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 		// Now we remove these items so that the insertions above can succeed.
 		t1A.erase(t1A.find(typename T1::value_type(1)));
@@ -385,7 +385,7 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(1));
 		VERIFY(*it2 == typename T2::value_type(1));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 		t1A.erase(t1A.find(typename T1::value_type(5)));
 		t2A.erase(t2A.find(typename T2::value_type(5)));
@@ -394,7 +394,7 @@ int TestSetMutation()
 		VERIFY(t1A.validate());
 		VERIFY(*it1 == typename T1::value_type(5));
 		VERIFY(*it2 == typename T2::value_type(5));
-		nErrorCount += CompareContainers(t1A, t2A, "Set insert", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set insert", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 		// iterator erase(iterator first, iterator last);
 		typename T1::iterator it11 = t1A.find(typename T1::value_type(17));
@@ -406,14 +406,14 @@ int TestSetMutation()
 		t2A.erase(it21, it22);
 
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// iterator erase(iterator position);
 		t1A.erase(t1A.find(typename T1::value_type(60)));
 		t2A.erase(t2A.find(typename T1::value_type(60)));
 		VERIFY(t1A.validate());
-		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 
 
 		// Disabled because this function isn't exposed outside the rbtree yet.
@@ -423,7 +423,7 @@ int TestSetMutation()
 		//t1A.erase(keyArray1 + 0, keyArray1 + 3);
 		//t2A.erase(keyArray2 + 0, keyArray2 + 3);
 		//VERIFY(t1A.validate());
-		//nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", safememory::use_self<typename T1::value_type>(), safememory::use_self<typename T2::value_type>());
+		//nErrorCount += CompareContainers(t1A, t2A, "Set erase(first, last)", use_self<typename T1::value_type>(), use_self<typename T2::value_type>());
 	}
 
 	{
