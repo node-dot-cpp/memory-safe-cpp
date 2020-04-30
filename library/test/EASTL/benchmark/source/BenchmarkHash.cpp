@@ -74,6 +74,13 @@ namespace
 		stopwatch.Stop();
 	}
 
+	template <typename Container, typename Value>
+	void TestInsertEA(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
+	{
+		stopwatch.Restart();
+		c.insert_unsafe(pArrayBegin, pArrayEnd);
+		stopwatch.Stop();
+	}
 
 	template <typename Container, typename Value>
 	void TestIteration(EA::StdC::Stopwatch& stopwatch, const Container& c, const Value& findValue)
@@ -279,13 +286,13 @@ void BenchmarkHash()
 			///////////////////////////////
 
 			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+			TestInsertEA(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
 
 			if(i == 1)
 				Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
 
 			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestInsert(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+			TestInsertEA(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
 
 			if(i == 1)
 				Benchmark::AddResult("hash_map<string, uint32_t>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
@@ -433,9 +440,9 @@ void BenchmarkHash()
 
 			// Re-set the containers with full data.
 			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestInsert(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
+			TestInsertEA(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
 			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestInsert(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+			TestInsertEA(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
 
 			// Now clear the data again, this time measuring it.
 			TestClear(stopwatch1, stdMapUint32TO);

@@ -192,9 +192,10 @@ namespace safememory
 		///     
 		hash_set(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
-			// Empty
+			//TODO: mb: improve, since we know the list size before construction
+			insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 
@@ -203,13 +204,13 @@ namespace safememory
 		/// An input bucket count of <= 1 causes the bucket count to be equal to the number of 
 		/// elements in the input range.
 		///
-		template <typename FowardIterator>
-		hash_set(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-				 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
-			: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
-		{
-			// Empty
-		}
+		// template <typename FowardIterator>
+		// hash_set(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
+		// 		 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
+		// {
+		// 	// Empty
+		// }
 
 
 		this_type& operator=(const this_type& x)
@@ -310,9 +311,10 @@ namespace safememory
 		///     
 		hash_multiset(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(ilist.begin(), ilist.end(), nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
-			// Empty
+			//TODO: mb: improve, since we know the list size before construction
+			insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 
@@ -321,13 +323,13 @@ namespace safememory
 		/// An input bucket count of <= 1 causes the bucket count to be equal to the number of 
 		/// elements in the input range.
 		///
-		template <typename FowardIterator>
-		hash_multiset(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-					  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
-			: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
-		{
-			// Empty
-		}
+		// template <typename FowardIterator>
+		// hash_multiset(FowardIterator first, FowardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
+		// 			  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
+		// {
+		// 	// Empty
+		// }
 
 
 		this_type& operator=(const this_type& x)

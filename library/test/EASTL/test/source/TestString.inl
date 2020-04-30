@@ -918,7 +918,7 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto iRBegin = str.rbegin_unsafe();
+		auto iRBegin = str.rbegin();
 
 		VERIFY(*iRBegin++ == LITERAL('z'));
 		VERIFY(*iRBegin++ == LITERAL('y'));
@@ -926,7 +926,7 @@ int TEST_STRING_NAME()
 		VERIFY(*iRBegin++ == LITERAL('w'));
 		VERIFY(*iRBegin++ == LITERAL('v'));
 		VERIFY(*iRBegin++ == LITERAL('u'));
-		VERIFY(*(str.rbegin_unsafe() + 25) == LITERAL('a'));
+		VERIFY(*(str.rbegin() + 25) == LITERAL('a'));
 	}
 
 	// reverse_iterator       rend() EA_NOEXCEPT;
@@ -935,7 +935,7 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto iREnd = str.rend_unsafe() - 1;
+		auto iREnd = str.rend() - 1;
 
 		VERIFY(*iREnd-- == LITERAL('a'));
 		VERIFY(*iREnd-- == LITERAL('b'));
@@ -943,7 +943,7 @@ int TEST_STRING_NAME()
 		VERIFY(*iREnd-- == LITERAL('d'));
 		VERIFY(*iREnd-- == LITERAL('e'));
 		VERIFY(*iREnd-- == LITERAL('f'));
-		VERIFY(*(str.rend_unsafe() - 26) == LITERAL('z'));
+		VERIFY(*(str.rend() - 26) == LITERAL('z'));
 	}
 
 	// bool empty() const EA_NOEXCEPT;
@@ -1240,10 +1240,10 @@ int TEST_STRING_NAME()
 		StringType str;
 		str.append(StringType(LITERAL("abcd")));        // "abcd"
 		str.append(src, 4, 4); 		   					// "abcdefgh"
-		str.append_unsafe(src.data() + 8, 4); 					// "abcdefghijkl"
-		str.append_unsafe(LITERAL("mnop"));   					// "abcdefghijklmnop"
+		// str.append(src.begin() + 8, 4); 					// "abcdefghijkl"
+		str.append(LITERAL("ijklmnop"));   					// "abcdefghijklmnop"
 		str.append(1, LITERAL('q'));   					// "abcdefghijklmnopq"
-		str.append_unsafe(src.data() + 17, src.data() + 26);   // "abcdefghijklmnopqrstuvwxyz"
+		str.append(src.begin() + 17, src.begin() + 26);   // "abcdefghijklmnopqrstuvwxyz"
 
 		VERIFY(str == src);
 	}

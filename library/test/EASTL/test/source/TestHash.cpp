@@ -594,22 +594,25 @@ int TestHash()
 		// hash_set(InputIterator first, InputIterator last, size_type nBucketCount = 8, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
 		// bool validate() const;
 
-		std::vector<int> intArray;
-		for(int i = 0; i < 1000; i++)
-			intArray.push_back(i);
+		// std::vector<int> intArray;
+		// for(int i = 0; i < 1000; i++)
+		// 	intArray.push_back(i);
 
-		hash_set<int> hashSet1(intArray.begin(), intArray.end(), 0);
-		hash_set<int> hashSet2(intArray.begin(), intArray.end(), 1);
-		hash_set<int> hashSet3(intArray.begin(), intArray.end(), 2);
-		hash_set<int> hashSet4(intArray.begin(), intArray.end(), 3);
+		// hash_set<int> hashSet1(intArray.begin(), intArray.end(), 0);
+		// hash_set<int> hashSet2(intArray.begin(), intArray.end(), 1);
+		// hash_set<int> hashSet3(intArray.begin(), intArray.end(), 2);
+		// hash_set<int> hashSet4(intArray.begin(), intArray.end(), 3);
 
-		EATEST_VERIFY(hashSet1.validate());
-		EATEST_VERIFY(hashSet2.validate());
-		EATEST_VERIFY(hashSet3.validate());
-		EATEST_VERIFY(hashSet4.validate());
+		// EATEST_VERIFY(hashSet1.validate());
+		// EATEST_VERIFY(hashSet2.validate());
+		// EATEST_VERIFY(hashSet3.validate());
+		// EATEST_VERIFY(hashSet4.validate());
 
 
 		// bool validate_iterator(const_iterator i) const;
+		hash_set<int> hashSet1({1,2,3,4});
+		hash_set<int> hashSet2({1,2,3,4});
+
 		hash_set<int>::iterator it;
 		auto result = hashSet1.validate_iterator(it);
 		EATEST_VERIFY(result == iterator_validity::Null);
@@ -652,34 +655,34 @@ int TestHash()
 
 	{
 		// void insert(InputIterator first, InputIterator last);
-		std::vector<int> intArray1;
-		std::vector<int> intArray2;
+		// std::vector<int> intArray1;
+		// std::vector<int> intArray2;
 
-		for(int i = 0; i < 1000; i++)
-		{
-			intArray1.push_back(i + 0);
-			intArray2.push_back(i + 500);
-		}
+		// for(int i = 0; i < 1000; i++)
+		// {
+		// 	intArray1.push_back(i + 0);
+		// 	intArray2.push_back(i + 500);
+		// }
 
-		hash_set<int> hashSet1(intArray1.begin(), intArray1.end());
-		hashSet1.insert(intArray2.begin(), intArray2.end());
-		EATEST_VERIFY(hashSet1.validate());
+		// hash_set<int> hashSet1(intArray1.begin(), intArray1.end());
+		// hashSet1.insert(intArray2.begin(), intArray2.end());
+		// EATEST_VERIFY(hashSet1.validate());
 
-		hash_set<int> hashSet2;
-		hashSet2.insert(intArray1.begin(), intArray1.end());
-		hashSet2.insert(intArray2.begin(), intArray2.end());
-		EATEST_VERIFY(hashSet2.validate());
+		// hash_set<int> hashSet2;
+		// hashSet2.insert(intArray1.begin(), intArray1.end());
+		// hashSet2.insert(intArray2.begin(), intArray2.end());
+		// EATEST_VERIFY(hashSet2.validate());
 
-		EATEST_VERIFY(hashSet1 == hashSet2);
+		// EATEST_VERIFY(hashSet1 == hashSet2);
 
 
-		// insert_return_type insert(const_iterator, const value_type& value)
-		for(int j = 0; j < 1000; j++)
-			hashSet1.insert(hashSet1.begin(), j);
+		// // insert_return_type insert(const_iterator, const value_type& value)
+		// for(int j = 0; j < 1000; j++)
+		// 	hashSet1.insert(hashSet1.begin(), j);
 
-		std::insert_iterator< safememory::hash_set<int> > ii(hashSet1, hashSet1.begin());
-		for(int j = 0; j < 1000; j++)
-			*ii++ = j;
+		// std::insert_iterator< safememory::hash_set<int> > ii(hashSet1, hashSet1.begin());
+		// for(int j = 0; j < 1000; j++)
+		// 	*ii++ = j;
 	}
 
 

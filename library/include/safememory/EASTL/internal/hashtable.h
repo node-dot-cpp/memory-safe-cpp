@@ -1005,10 +1005,10 @@ namespace safememory::detail
 		hashtable(size_type nBucketCount, const H1&, const H2&, const H&, const Equal&, const ExtractKey&/*, 
 				  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR*/);
 		
-		template <typename FowardIterator>
-		hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
-				  const H1&, const H2&, const H&, const Equal&, const ExtractKey&/*, 
-				  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR*/); 
+		// template <typename FowardIterator>
+		// hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
+		// 		  const H1&, const H2&, const H&, const Equal&, const ExtractKey&/*, 
+		// 		  const allocator_type& allocator = EASTL_HASHTABLE_DEFAULT_ALLOCATOR*/); 
 		
 		hashtable(const hashtable& x);
 
@@ -1135,7 +1135,7 @@ namespace safememory::detail
 		iterator                               insert(const_iterator hint, const value_type& value);
 		iterator                               insert(const_iterator hint, value_type&& value);
 		void                                   insert(std::initializer_list<value_type> ilist);
-		template <typename InputIterator> void insert(InputIterator first, InputIterator last);
+		template <typename InputIterator> void insert_unsafe(InputIterator first, InputIterator last);
 	  //insert_return_type                     insert(node_type&& nh);
 	  //iterator                               insert(const_iterator hint, node_type&& nh);
 
@@ -1483,48 +1483,48 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename FowardIterator>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
-																	 const H1& h1, const H2& h2, const H& h, 
-																	 const Eq& eq, const EK& ek/*, const allocator_type& allocator*/)
-		:   rehash_base<rehash_policy_type, hashtable>(),
-			hash_code_base<key_type, value_type, extract_key_type, key_equal, h1_type, h2_type, h_type, kCacheHashCode>(ek, eq, h1, h2, h),
-		  //mnBucketCount(0), // This gets re-assigned below.
-			mnElementCount(0),
-			mRehashPolicy()/*,
-			mAllocator(allocator)*/
-	{
-		if(nBucketCount < 2)
-		{
-			const size_type nElementCount = (size_type)ht_distance(first, last);
-			mnBucketCount = (size_type)mRehashPolicy.GetBucketCount((uint32_t)nElementCount);
-		}
-		else
-		{
-			EASTL_ASSERT(nBucketCount < 10000000);
-			mnBucketCount = nBucketCount;
-		}
+	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// template <typename FowardIterator>
+	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
+	// 																 const H1& h1, const H2& h2, const H& h, 
+	// 																 const Eq& eq, const EK& ek/*, const allocator_type& allocator*/)
+	// 	:   rehash_base<rehash_policy_type, hashtable>(),
+	// 		hash_code_base<key_type, value_type, extract_key_type, key_equal, h1_type, h2_type, h_type, kCacheHashCode>(ek, eq, h1, h2, h),
+	// 	  //mnBucketCount(0), // This gets re-assigned below.
+	// 		mnElementCount(0),
+	// 		mRehashPolicy()/*,
+	// 		mAllocator(allocator)*/
+	// {
+	// 	if(nBucketCount < 2)
+	// 	{
+	// 		const size_type nElementCount = (size_type)ht_distance(first, last);
+	// 		mnBucketCount = (size_type)mRehashPolicy.GetBucketCount((uint32_t)nElementCount);
+	// 	}
+	// 	else
+	// 	{
+	// 		EASTL_ASSERT(nBucketCount < 10000000);
+	// 		mnBucketCount = nBucketCount;
+	// 	}
 
-		mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
+	// 	mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
 
-		#if EASTL_EXCEPTIONS_ENABLED
-			try
-			{
-		#endif
-				for(; first != last; ++first)
-					insert(*first);
-		#if EASTL_EXCEPTIONS_ENABLED
-			}
-			catch(...)
-			{
-				clear();
-				DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
-				throw;
-			}
-		#endif
-	}
+	// 	#if EASTL_EXCEPTIONS_ENABLED
+	// 		try
+	// 		{
+	// 	#endif
+	// 			for(; first != last; ++first)
+	// 				insert(*first);
+	// 	#if EASTL_EXCEPTIONS_ENABLED
+	// 		}
+	// 		catch(...)
+	// 		{
+	// 			clear();
+	// 			DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
+	// 			throw;
+	// 		}
+	// 	#endif
+	// }
 
 
 
@@ -1657,7 +1657,7 @@ namespace safememory::detail
 			// 	mAllocator = x.mAllocator;
 			// #endif
 
-			insert(x.begin(), x.end());
+			insert_unsafe(x.begin(), x.end());
 		}
 		return *this;
 	}
@@ -1685,7 +1685,7 @@ namespace safememory::detail
 		// The simplest means of doing this is to clear and insert. There probably isn't a generic
 		// solution that's any more efficient without having prior knowledge of the ilist contents.
 		clear();
-		insert(ilist.begin(), ilist.end());
+		insert_unsafe(ilist.begin(), ilist.end());
 		return *this;
 	}
 
@@ -2998,7 +2998,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(std::initializer_list<value_type> ilist)
 	{
-		insert(ilist.begin(), ilist.end());
+		insert_unsafe(ilist.begin(), ilist.end());
 	}
 
 
@@ -3006,7 +3006,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename InputIterator>
 	void
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(InputIterator first, InputIterator last)
+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_unsafe(InputIterator first, InputIterator last)
 	{
 		const uint32_t nElementAdd = (uint32_t)ht_distance(first, last);
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, nElementAdd);
