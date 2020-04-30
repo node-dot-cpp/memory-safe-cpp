@@ -195,7 +195,7 @@ namespace safememory
 			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
-			insert_unsafe(ilist.begin(), ilist.end());
+			base_type::insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 
@@ -260,6 +260,8 @@ namespace safememory
 		// typedef typename base_type::allocator_type                                    allocator_type;
 		typedef typename base_type::node_type                                         node_type;
 
+		using base_type::insert_unsafe;
+
 	public:
 		/// hash_multiset
 		///
@@ -314,7 +316,7 @@ namespace safememory
 			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), predicate, detail::use_self<Value>()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
-			insert_unsafe(ilist.begin(), ilist.end());
+			base_type::insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 

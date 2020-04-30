@@ -208,7 +208,7 @@ namespace safememory
 						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
-			insert_unsafe(ilist.begin(), ilist.end());
+			base_type::insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 
@@ -415,7 +415,7 @@ namespace safememory
 						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
-			insert_unsafe(ilist.begin(), ilist.end());
+			base_type::insert_unsafe(ilist.begin(), ilist.end());
 		}
 
 

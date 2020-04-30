@@ -39,7 +39,8 @@ template<class T>
 class soft_ptr_with_zero_offset_impl
 {
 	friend class owning_ptr_impl<T>;
-	friend struct FirstControlBlock;
+
+	friend struct ::nodecpp::safememory::FirstControlBlock;
 
 	template<class TT>
 	friend class soft_ptr_with_zero_offset_base_no_checks;
