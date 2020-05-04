@@ -6,13 +6,27 @@ script:
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build .
-  - ctest --output-on-failure --exclude-regex foundation
+  - ctest --output-on-failure
 jobs:
   include:
-    - name: Linux Clang
-      compiler: clang
     - name: Linux GCC
       compiler: gcc
+    - name: Linux Clang
+      compiler: clang
+    - name: Windows MSVC
+      os: windows
+      script:
+        - mkdir build
+        - cd build
+        - cmake -G "Visual Studio 15 2017 Win64" ..
+        - cmake --build . --config Release
+        - ctest -C Release --output-on-failure
+    - name: macOS Clang
+      os: osx        
+    - name: Windows Clang
+      os: windows
+      install: choco install ninja
+      script: ./library/tools/travis-windows-clang.bat
     - name: Linux GCC (long)
       compiler: gcc
       script:
@@ -24,14 +38,6 @@ jobs:
         - cd ../checker
         - ./checkout.sh
         - ./build.sh
-    - name: Windows MSVC
-      os: windows
-      script:
-        - mkdir build
-        - cd build
-        - cmake -G "Visual Studio 15 2017 Win64" ..
-        - cmake --build . --config Release
-        - ctest -C Release --output-on-failure --exclude-regex foundation
     - name: Windows MSVC (long)
       os: windows
       script:
@@ -43,11 +49,8 @@ jobs:
         - cd ../checker
         - ./checkout.bat
         - ./build.bat
-    - name: Windows Clang
-      os: windows
-      install: choco install ninja
-      script: ./library/tools/travis-windows-clang.bat
   allow_failures:        
+    - name: macOS Clang
     - name: Windows Clang
-    - name: Windows MSVC (long)
     - name: Linux GCC (long)
+    - name: Windows MSVC (long)

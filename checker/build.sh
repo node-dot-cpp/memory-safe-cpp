@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ev
 
 rm -Rf build/release
 mkdir -p build/release

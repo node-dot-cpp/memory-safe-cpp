@@ -1,5 +1,5 @@
 #!/bin/sh
-set -e
+set -ev
 
 cd 3rdparty
 
