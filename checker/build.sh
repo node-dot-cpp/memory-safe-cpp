@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-rm -R build/release
+rm -Rf build/release
 mkdir -p build/release
 cd build/release
 
