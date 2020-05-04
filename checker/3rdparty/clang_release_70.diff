@@ -266,7 +266,6 @@ index 5a937b1..4819836 100644
 +elements inside such namespace shouln't be checked for determinism.
 +}];
 +}
-+
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
 index b241856..f33df4a 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
@@ -277,7 +276,7 @@ index b241856..f33df4a 100644
     "the type does not have the expected form}1">;
 +
 +def err_unknown_nodecpp_attribute : Error<
-+  "(C1) unknown attribute %0">;   
++  "(C1) unknown attribute %0">;
  } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
 index 50cff15..43048e1 100644
