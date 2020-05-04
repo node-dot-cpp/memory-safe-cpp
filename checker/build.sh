@@ -1,4 +1,5 @@
 #!/bin/sh
+set -e
 
 rm -R build/release
 mkdir -p build/release
