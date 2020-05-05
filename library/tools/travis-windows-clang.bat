@@ -16,6 +16,6 @@ cmake -DCMAKE_BUILD_TYPE=Release -G Ninja ..
 cmake --build .
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
-ctest --output-on-failure --exclude-regex foundation
+ctest --output-on-failure
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 

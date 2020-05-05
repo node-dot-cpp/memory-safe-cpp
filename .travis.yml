@@ -11,8 +11,6 @@ jobs:
   include:
     - name: Linux GCC
       compiler: gcc
-    - name: Linux Clang
-      compiler: clang
     - name: Windows MSVC
       os: windows
       script:
@@ -23,11 +21,14 @@ jobs:
         - ctest -C Release --output-on-failure
     - name: macOS Clang
       os: osx        
+      compiler: clang
+    - name: Linux Clang
+      compiler: clang
     - name: Windows Clang
       os: windows
       install: choco install ninja
       script: ./library/tools/travis-windows-clang.bat
-    - name: Linux GCC (long)
+    - name: Linux GCC (checker)
       compiler: gcc
       script:
         - mkdir build
@@ -38,7 +39,7 @@ jobs:
         - cd ../checker
         - ./checkout.sh
         - ./build.sh
-    - name: Windows MSVC (long)
+    - name: Windows MSVC (checker)
       os: windows
       script:
         - mkdir build
@@ -52,5 +53,5 @@ jobs:
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
-    - name: Linux GCC (long)
-    - name: Windows MSVC (long)
+    - name: Linux GCC (checker)
+    - name: Windows MSVC (checker)
