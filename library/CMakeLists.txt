@@ -68,7 +68,7 @@ add_executable(test_safe_memory
   test/test_safe_pointers.cpp
   )
 
-if (CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
     target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
     target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
