@@ -250,6 +250,21 @@ public:
 	bool operator!=(const unsafe_iterator& ri) const
 		{ return !operator==(ri); }
 
+	bool operator<(const unsafe_iterator& ri) const {
+		return mIterator < ri.mIterator;
+	}
+
+	bool operator>(const unsafe_iterator& ri) const {
+		return mIterator > ri.mIterator;
+	}
+
+	bool operator<=(const unsafe_iterator& ri) const {
+		return !operator>(ri);
+	}
+
+	bool operator>=(const unsafe_iterator& ri) const {
+		return !operator<(ri);
+	}
 
 	pointer _Unwrapped() const {
 		return mIterator;
@@ -258,20 +273,6 @@ public:
 	void _Seek_to(pointer ptr) {
 		mIterator = ptr;
 	}
-
-	bool operator<(const unsafe_iterator& ri) const {
-		return mIterator < ri.mIterator;
-	}
-
-	bool operator<=(const unsafe_iterator& ri) const {
-		return mIterator <= ri.mIterator;
-	}
-
-	// constexpr bool operator>=(const unsafe_iterator& ri) const {
-	// 	return !operator<(ri);
-	// }
-
-
 };
 
 template <typename T, typename Arr>
@@ -387,11 +388,38 @@ public:
 	reference operator[](difference_type n) const
 		{ return arr->at(ix + n); }
 
-	bool operator==(const safe_iterator& ri) const
-		{ return arr == ri.arr && ix == ri.ix; }
+	bool operator==(const safe_iterator& ri) const {
+		if (arr == ri.arr)
+			return ix == ri.ix;
 
-	bool operator!=(const safe_iterator& ri) const
-		{ return !operator==(ri); }
+		throw std::invalid_argument("Iterators don't match");
+	}
+
+	bool operator!=(const safe_iterator& ri) const {
+		return !operator==(ri);
+	}
+
+	bool operator<(const safe_iterator& ri) const {
+		if (arr == ri.arr)
+			return ix < ri.ix;
+
+		throw std::invalid_argument("Iterators don't match");
+	}
+
+	bool operator>(const safe_iterator& ri) const {
+		if (arr == ri.arr)
+			return ix > ri.ix;
+
+		throw std::invalid_argument("Iterators don't match");
+	}
+
+	bool operator<=(const safe_iterator& ri) const {
+		return !operator>(ri);
+	}
+
+	bool operator>=(const safe_iterator& ri) const {
+		return !operator<(ri);
+	}
 
 	pointer _Unwrapped() const {
 		return get_raw_ptr();
@@ -400,19 +428,6 @@ public:
 	void _Seek_to(pointer to) {
 		ix = std::distance(arr->begin(), to);
 	}
-
-	bool operator<(const safe_iterator& ri) const {
-		return arr == ri.arr && ix < ri.ix;
-	}
-
-	bool operator<=(const safe_iterator& ri) const {
-		return arr == ri.arr && ix <= ri.ix;
-	}
-
-	// constexpr bool operator>=(const safe_iterator& ri) const {
-	// 	return !operator<(ri);
-	// }
-	
 };
 
 template <typename T, typename Arr>

@@ -41,19 +41,7 @@ jobs:
         - cd ../checker
         - ./checkout.sh
         - ./build.sh
-    - name: Windows MSVC (checker)
-      os: windows
-      script:
-        - mkdir build
-        - cd build
-        - cmake -G "Visual Studio 15 2017 Win64" ..
-        - cmake --build . --config Release
-        - ctest -C Release --output-on-failure
-        - cd ../checker
-        - #./checkout.bat
-        - #./build.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
-    - name: Windows MSVC (checker)
