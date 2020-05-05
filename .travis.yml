@@ -50,8 +50,8 @@ jobs:
         - cmake --build . --config Release
         - ctest -C Release --output-on-failure
         - cd ../checker
-        - ./checkout.bat
-        - ./build.bat
+        - #./checkout.bat
+        - #./build.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
