@@ -30,6 +30,8 @@ jobs:
       script: ./library/tools/travis-windows-clang.bat
     - name: Linux GCC (checker)
       compiler: gcc
+      cache: ccache
+      env: CC="ccache gcc" CXX="ccache g++"
       script:
         - mkdir build
         - cd build
