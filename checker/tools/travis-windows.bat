@@ -18,6 +18,7 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliar
 
 set CC=sccache cl.exe
 set CXX=sccache cl.exe
+set RC=rc.exe
 
 cmake -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\checker -G Ninja ..\checker\3rdparty\llvm
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
