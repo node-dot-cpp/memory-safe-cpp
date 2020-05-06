@@ -32,7 +32,13 @@ jobs:
       compiler: gcc
       cache: ccache
       script: ./checker/tools/travis-ccache.sh
+    - name: macOS Clang (checker)
+      os: osx        
+      compiler: clang
+      install: brew install ccache
+      script: ./checker/tools/travis-ccache.sh
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
+    - name: macOS Clang (checker)
