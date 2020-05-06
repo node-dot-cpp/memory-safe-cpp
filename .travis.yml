@@ -35,10 +35,23 @@ jobs:
     - name: macOS Clang (checker)
       os: osx        
       compiler: clang
+      cache: ccache
       install: brew install ccache
       script: ./checker/tools/travis-ccache.sh
+    - name: Windows MSVC (checker)
+      os: windows
+      install:
+        - choco install ninja
+        - choco install sccache
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - $HOME/AppData/Local/Mozilla/sccache      
+      script: ./checker/tools/travis-windows.bat
+
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
     - name: macOS Clang (checker)
+    - name: Windows MSVC (checker)
