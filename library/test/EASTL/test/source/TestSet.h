@@ -234,7 +234,7 @@ int TestSetMutation()
 
 			for(p = 0; p < gEASTL_TestLevel * 100; p++) // For each permutation...
 			{
-				std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+				std::shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 				// insert
 				for(i = 0, iEnd = (int)valueArrayInsert.size(); i < iEnd; i++)
@@ -535,7 +535,7 @@ int TestSetSearch()
 			valueArrayInsert.push_back(typename T1::value_type(i));
 
 		EASTLTest_Rand rng(EA::UnitTest::GetRandSeed());
-		std::random_shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
+		std::shuffle(valueArrayInsert.begin(), valueArrayInsert.end(), rng);
 
 
 		// insert

@@ -546,7 +546,7 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("massive referencing")
 			{
-				const size_t maxPtrs = 0x1000000;
+				const size_t maxPtrs = 0x100000;
 				soft_ptr<int>* sptrs = new soft_ptr<int>[maxPtrs];
 				owning_ptr<int> op = make_owning<int>();
 				for ( size_t i=0; i<maxPtrs; ++i )

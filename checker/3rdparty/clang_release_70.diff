@@ -212,10 +212,10 @@ index dc9edac..cfe7969 100644
 +  let Documentation = [NodeCppNonDeterministicDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..4819836 100644
+index 5a937b1..c07b1c0 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,51 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,50 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -266,9 +266,8 @@ index 5a937b1..4819836 100644
 +elements inside such namespace shouln't be checked for determinism.
 +}];
 +}
-+
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
-index b241856..f33df4a 100644
+index b241856..bfe368b 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
 +++ b/include/clang/Basic/DiagnosticSemaKinds.td
 @@ -9438,4 +9438,7 @@ def err_std_compare_type_not_supported : Error<
@@ -277,7 +276,7 @@ index b241856..f33df4a 100644
     "the type does not have the expected form}1">;
 +
 +def err_unknown_nodecpp_attribute : Error<
-+  "(C1) unknown attribute %0">;   
++  "(C1) unknown attribute %0">;
  } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
 index 50cff15..43048e1 100644
