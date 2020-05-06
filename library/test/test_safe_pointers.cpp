@@ -539,7 +539,7 @@ int testWithLest( int argc, char * argv[] )
 				auto ptr = &(opS->n);
 				EXPECT_NO_THROW( *(::safememory::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-				EXPECT_THROWS( *(:safememory::dezombiefy(ptr)) = 27 );
+				EXPECT_THROWS( *(::safememory::dezombiefy(ptr)) = 27 );
 			}
 		},
 
