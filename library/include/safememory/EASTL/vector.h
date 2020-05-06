@@ -2512,6 +2512,7 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
+		// TODO move as method of iterator
 		if(i == nullptr)
 		 	return detail::iterator_validity::Null;
 		else if(i >= mpBegin)
@@ -2532,7 +2533,8 @@ namespace safememory
 	template <typename T, typename Allocator>
 	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
-		if(i == const_iterator_safe())
+		// TODO move as method of iterator
+		if(i.arr == soft_heap_type(nullptr))
 		 	return detail::iterator_validity::Null;
 		else if(i.arr == GetSoftHeapPtr()) {
 

@@ -31,7 +31,7 @@ jobs:
     - name: Linux GCC (checker)
       compiler: gcc
       cache: ccache
-      script: ./library/tools/travis-ccache.sh
+      script: ./checker/tools/travis-ccache.sh
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
