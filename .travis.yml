@@ -27,20 +27,11 @@ jobs:
     - name: Windows Clang
       os: windows
       install: choco install ninja
-      script: ./library/tools/travis-windows-clang.bat
+      script: ./library/src/iibmalloc/src/foundation/tools/travis-windows-clang.bat
     - name: Linux GCC (checker)
       compiler: gcc
       cache: ccache
-      env: CC="ccache gcc" CXX="ccache g++"
-      script:
-        - mkdir build
-        - cd build
-        - cmake -DCMAKE_BUILD_TYPE=Release ..
-        - cmake --build .
-        - ctest --output-on-failure
-        - cd ../checker
-        - ./checkout.sh
-        - ./build.sh
+      script: ./library/tools/travis-ccache.sh
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
