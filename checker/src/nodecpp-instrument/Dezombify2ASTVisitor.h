@@ -58,7 +58,7 @@ public:
   explicit Dezombify2ASTVisitor(ASTContext &Context, bool SilentMode):
     Base(Context, SilentMode) {}
 
-  auto getStats() {
+  DezombiefyStats getStats() {
     return Stats;
   }
 

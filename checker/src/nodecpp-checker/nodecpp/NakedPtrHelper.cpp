@@ -241,7 +241,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
     if (isa<CXXDestructorDecl>(Method))
       continue;
 
-    if (auto Ctr = dyn_cast<CXXConstructorDecl>(Method)) {
+    if (isa<CXXConstructorDecl>(Method)) {
       // if(!missingInitializers.empty()) {
       //   auto inits = ctr->inits();
       //   std::list<const FieldDecl*> decls(missingInitializers);
@@ -1285,7 +1285,7 @@ NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Param, nullptr);
-    } else if (auto Field = dyn_cast<FieldDecl>(Dc)) {
+    } else if (dyn_cast<FieldDecl>(Dc)) {
 
       Ex->dumpColor();
       assert(false);

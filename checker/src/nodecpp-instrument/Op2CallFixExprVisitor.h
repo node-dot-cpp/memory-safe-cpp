@@ -131,7 +131,7 @@ class Op2CallFixExprVisitor
 public:
 
   explicit Op2CallFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, FileChanges &Replacements):
-    Base(Context), SilentMode(SilentMode), FileReplacements(Replacements) {}
+    Base(Context), FileReplacements(Replacements), SilentMode(SilentMode) {}
 
   bool fixExpression(clang::Stmt* St) {
     Visit(St);
