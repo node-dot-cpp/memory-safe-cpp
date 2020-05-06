@@ -1,6 +1,6 @@
 // RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs
 
-#include <dezombiefy.h>
+#include <safememory/dezombiefy.h>
 
 
 struct TestObj {};
@@ -16,13 +16,13 @@ public:
         
         auto aMethod(U u) {
             return u;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( u );            
+// CHECK-FIXES: return safememory::dezombiefy( u );            
         }
 
         template<class V>
         auto templMethod(V v) {
             return v;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( v );
+// CHECK-FIXES: return safememory::dezombiefy( v );
         }
     };
 };

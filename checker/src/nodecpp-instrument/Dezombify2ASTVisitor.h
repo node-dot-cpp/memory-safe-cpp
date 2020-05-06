@@ -71,7 +71,7 @@ public:
         if(E->isImplicit()) {
           auto Loc = E->getBeginLoc();
           if(Loc.isValid() && !Loc.isMacroID()) {
-            const char *Fix = "nodecpp::safememory::dezombiefy( this )->";
+            const char *Fix = "safememory::dezombiefy( this )->";
             addReplacement(CodeChange::makeInsertLeft(
               Context.getSourceManager(), Loc, Fix));
           }
@@ -81,7 +81,7 @@ public:
           auto ChRange = toCheckedCharRange(E->getSourceRange(),
             Context.getSourceManager(), Context.getLangOpts());
           if(ChRange.isValid()) {
-            const char *Fix = "nodecpp::safememory::dezombiefy( this )";
+            const char *Fix = "safememory::dezombiefy( this )";
             addReplacement(CodeChange::makeReplace(
               Context.getSourceManager(), ChRange, Fix));
           }
@@ -108,7 +108,7 @@ public:
     //      E->dumpColor();
 
           SmallString<64> Fix;
-          Fix += "nodecpp::safememory::dezombiefy( ";
+          Fix += "safememory::dezombiefy( ";
           Fix += E->getNameInfo().getAsString();
           Fix += " )";
 

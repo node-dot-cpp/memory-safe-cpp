@@ -1,7 +1,7 @@
 // RUN: %check_nodecpp_instrument --fix-only %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers
 
 #include <safe_ptr.h>
-#include <dezombiefy.h>
+#include <safememory/dezombiefy.h>
 #include <safe_types.h>
 
 using namespace nodecpp::safememory;
@@ -29,6 +29,6 @@ struct Bad {
 
 		//safeFunction may be eating a zombie
 		while(safeFunction(*StPtr) + release() != 0);
-// CHECK-FIXES: while(nodecpp::safememory::ne(nodecpp::safememory::add(safeFunction(*StPtr) , release()) , 0));
+// CHECK-FIXES: while(safememory::dz_ne(safememory::dz_add(safeFunction(*StPtr) , release()) , 0));
 	}
 };

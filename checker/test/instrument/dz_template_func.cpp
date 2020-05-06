@@ -1,19 +1,19 @@
 // RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs
 
-#include <dezombiefy.h>
+#include <safememory/dezombiefy.h>
 
 struct TestObj {};
 
 template <class T>
 T* templPtrAtDecl(T* t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 template <class T>
 const T& templRefAtDecl(const T& t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 // this template is only instantiated with T as a value
@@ -26,21 +26,21 @@ auto templValueOnly(T t) {
 template <class T>
 auto templRefOnly(T t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 // this template is only instantiated with T as a ptr
 template <class T>
 auto templPtrOnly(T t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 // this template is instantiated with T as a ptr and ref
 template <class T>
 auto templRefAndPtr(T t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 //This template is has explicit specialization for ptr
@@ -52,7 +52,7 @@ auto templWithSpecialization(T t) {
 template <>
 auto templWithSpecialization(TestObj* t) {
     return t;
-// CHECK-FIXES: return nodecpp::safememory::dezombiefy( t );
+// CHECK-FIXES: return safememory::dezombiefy( t );
 }
 
 //This template is never instantiated
