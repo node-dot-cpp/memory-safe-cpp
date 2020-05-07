@@ -386,6 +386,19 @@ index 8a70404..113c960 100644
        }
        AddPath("/usr/include/c++/v1", CXXSystem, false);
      } else {
+diff --git a/lib/Rewrite/HTMLRewrite.cpp b/lib/Rewrite/HTMLRewrite.cpp
+index 12d7a16..cdc7d22 100644
+--- a/lib/Rewrite/HTMLRewrite.cpp
++++ b/lib/Rewrite/HTMLRewrite.cpp
+@@ -325,7 +325,7 @@ h1 { font-size:14pt }
+   z-index: 1
+ }
+ 
+-#tooltiphint {
++" R"#tooltiphint {
+   position: fixed;
+   width: 50em;
+   margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
 index 77deed6..4f6779d 100644
 --- a/lib/Sema/SemaDeclAttr.cpp

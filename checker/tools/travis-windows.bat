@@ -8,7 +8,6 @@ call checkout.bat
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 cd ..
 
-rmdir /S /Q build
 mkdir build
 cd build
 
@@ -16,11 +15,7 @@ cd build
 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
-set CC=sccache cl.exe
-set CXX=sccache cl.exe
-set RC=rc.exe
-
-cmake -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\checker -G Ninja ..\checker\3rdparty\llvm
+cmake -DCMAKE_CXX_COMPILER_LAUNCHER="sccache" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\checker -G Ninja ..\checker\3rdparty\llvm
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 ninja nodecpp-checker
