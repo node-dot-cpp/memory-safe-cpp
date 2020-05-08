@@ -40,6 +40,7 @@ jobs:
       script: ./checker/tools/travis-ccache.sh
     - name: Windows MSVC (checker)
       os: windows
+      env: CC=cl CXX=cl
       install:
         - choco install ninja
         - choco install sccache
