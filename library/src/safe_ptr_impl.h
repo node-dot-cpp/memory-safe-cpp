@@ -323,7 +323,7 @@ struct FirstControlBlock // not reallocatable
 				otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
 		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: after reset 2nd block, otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 			}
-			assert ( otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
+			NODECPP_ASSERT( nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, otherAllockedSlots.getPtr() && otherAllockedSlots.getPtr()->firstFree );
 			size_t idx = maxSlots + otherAllockedSlots.getPtr()->insert( ptr );
 					//nodecpp::log::default_log::error( nodecpp::log::ModuleID(nodecpp::safememory_module_id), "1CB 0x{:x}: inserted 0x{:x} at idx {}", (size_t)this, (size_t)ptr, idx );
 			return idx;
@@ -1124,8 +1124,8 @@ public:
 		{
 			if ( otherWasOnStack )
 			{
-				assert(isOnStack());
-				assert(other.isOnStack());
+				NODECPP_ASSERT( nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, isOnStack() );
+				NODECPP_ASSERT( nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, other.isOnStack() );
 				// ... and we have to do nothing else
 			}
 			else
@@ -1228,7 +1228,7 @@ public:
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );
 			if ( getIdx_() != PointersT::max_data )
 			{
-				assert(!isOnStack());
+				NODECPP_ASSERT( nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !isOnStack() );
 				getControlBlock()->remove(getIdx_());
 			}
 			setPtrZombie();
