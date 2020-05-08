@@ -6,7 +6,7 @@ script:
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build .
-  - ctest --output-on-failure
+  - ctest --output-on-failure -E foundation
 jobs:
   include:
     - name: Linux GCC
