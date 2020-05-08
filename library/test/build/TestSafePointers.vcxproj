@@ -185,7 +185,7 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath)</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;../../include;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-No-Safety_Features|x64'">
     <LinkIncremental>false</LinkIncremental>
