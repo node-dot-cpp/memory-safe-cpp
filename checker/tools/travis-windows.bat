@@ -15,7 +15,7 @@ cd build
 call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliary\Build\vcvars64.bat"
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
-cmake -DCMAKE_CXX_COMPILER_LAUNCHER="C:\ProgramData\chocolatey\lib\sccache\tools\sccache.exe" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\checker -G Ninja ..\checker\3rdparty\llvm
+cmake -DCMAKE_CXX_COMPILER_LAUNCHER="C:\ProgramData\chocolatey\lib\sccache\tools\sccache-0.2.12-x86_64-pc-windows-msvc\sccache.exe" -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\checker -G Ninja ..\checker\3rdparty\llvm
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 ninja nodecpp-checker

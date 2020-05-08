@@ -43,7 +43,7 @@ jobs:
       env: CC=cl CXX=cl
       install:
         - choco install ninja
-        - choco install sccache
+        - choco install sccache --version=0.2.12
       cache:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
