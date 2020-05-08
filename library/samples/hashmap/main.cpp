@@ -4,6 +4,7 @@
 
 #include <vector>
 #include <random>
+#include <cassert>
 
 template<class IT>
 void printIt(IT it) {

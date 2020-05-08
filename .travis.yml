@@ -6,7 +6,7 @@ script:
   - cd build
   - cmake -DCMAKE_BUILD_TYPE=Release ..
   - cmake --build .
-  - ctest --output-on-failure
+  - ctest --output-on-failure -E foundation
 jobs:
   include:
     - name: Linux GCC
@@ -32,7 +32,27 @@ jobs:
       compiler: gcc
       cache: ccache
       script: ./checker/tools/travis-ccache.sh
+    - name: macOS Clang (checker)
+      os: osx        
+      compiler: clang
+      cache: ccache
+      install: brew install ccache
+      script: ./checker/tools/travis-ccache.sh
+    - name: Windows MSVC (checker)
+      os: windows
+      env: CC=cl CXX=cl
+      install:
+        - choco install ninja
+        - choco install sccache --version=0.2.12
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - $HOME/AppData/Local/Mozilla/sccache      
+      script: ./checker/tools/travis-windows.bat
+
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
+    - name: macOS Clang (checker)
+    - name: Windows MSVC (checker)
