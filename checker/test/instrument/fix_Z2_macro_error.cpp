@@ -1,7 +1,7 @@
 // RUN: %check_nodecpp_instrument --fix-only --no-silent-mode %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers
 
 #include <safe_ptr.h>
-#include <dezombiefy.h>
+#include <safememory/dezombiefy.h>
 #include <safe_types.h>
 
 #define MACRO_FUNC(X, Y) (safeFunction((X), (Y)))

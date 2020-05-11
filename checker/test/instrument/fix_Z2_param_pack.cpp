@@ -2,7 +2,7 @@
 // XFAIL: *
 
 #include <utility>
-#include <dezombiefy.h>
+#include <safememory/dezombiefy.h>
 
 
 struct TestObj {};
@@ -18,7 +18,7 @@ public:
     template<class ... ARGS>
     void execute(ARGS&& ... args) {
         auto i = function(arg0, std::forward<ARGS>(args)...);
-    // CHECK-FIXES: auto i = function(nodecpp::safememory::dezombiefy( args )...);
+    // CHECK-FIXES: auto i = function(safememory::dezombiefy( args )...);
     }
 };
 

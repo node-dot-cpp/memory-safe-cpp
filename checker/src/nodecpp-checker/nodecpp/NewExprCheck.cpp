@@ -59,7 +59,7 @@ bool NewExprCheck::checkParentExpr(ASTContext *Context, const Expr *Ex) {
     } else if (isa<CallExpr>(P)) {
       return true;
     }
-  } else if (auto P = SIt->get<VarDecl>()) {
+  } else if (SIt->get<VarDecl>()) {
     return true;
   }
 

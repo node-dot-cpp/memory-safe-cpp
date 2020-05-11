@@ -74,9 +74,15 @@ struct DeduplicateHelper {
     FunctionDecl *TemplPattern = nullptr;
     FunctionDecl *TemplInstantiation = nullptr;
     TUChanges TemplChanges;
+    
+    InstHelper() {}
+    InstHelper(FunctionDecl *TemplPattern, FunctionDecl *TemplInstantiation,
+        TUChanges TemplChanges) :TemplPattern(TemplPattern),
+        TemplInstantiation(TemplInstantiation), TemplChanges(TemplChanges) {}
   };
 
   std::map<FunctionDecl *, InstHelper> Data;
+  typedef typename std::map<FunctionDecl *, InstHelper>::const_iterator const_iterator;
 
   static
   std::string dumpChanges(clang::SourceManager &Sm, const TUChanges& Changes1) {
@@ -136,7 +142,7 @@ struct DeduplicateHelper {
       auto It2 = Data.find(TemplPattern);
       if(It2 == Data.end()) {
         // is the first time we hit this pattern, just add it.
-        Data[TemplPattern] = InstHelper{TemplPattern, TemplInstantiation, TemplChanges};
+        Data[TemplPattern] = InstHelper(TemplPattern, TemplInstantiation, TemplChanges);
         return true;
       }
       else {
@@ -156,8 +162,8 @@ struct DeduplicateHelper {
       }
     }
 
-    auto begin() const { return Data.begin(); }
-    auto end() const { return Data.end(); }
+    const_iterator begin() const { return Data.begin(); }
+    const_iterator end() const { return Data.end(); }
 };
 
 
@@ -225,7 +231,7 @@ public:
     }
   }
   
-  auto& finishReplacements() {
+  TUChanges& finishReplacements() {
     
     // llvm::errs() <<
     //   "Dezombiefy finishReplacements!\n";
@@ -356,7 +362,7 @@ public:
 
   bool TraverseLambdaExpr(clang::LambdaExpr *E) {
 
-    return TraverseCompoundStmt(E->getBody());
+    return Base::TraverseCompoundStmt(E->getBody());
   }
 
 };

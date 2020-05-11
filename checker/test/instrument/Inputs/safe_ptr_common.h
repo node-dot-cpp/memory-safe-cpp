@@ -88,27 +88,6 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 
 
-template<class T>
-T* dezombiefy(T* x) {
-	return x;
-}
-
-template<class T>
-const T* dezombiefy(const T* x) {
-	return x;
-}
-
-template<class T>
-T& dezombiefy(T& x) {
-	return x;
-}
-
-template<class T>
-const T& dezombiefy(const T& x) {
-	return x;
-}
-
-
 } // namespace nodecpp::safememory
 
 #endif // SAFE_PTR_COMMON_H

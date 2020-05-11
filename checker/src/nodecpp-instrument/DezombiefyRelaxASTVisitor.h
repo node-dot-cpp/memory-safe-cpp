@@ -133,7 +133,7 @@ public:
 
   void VisitCallExpr(CallExpr *Ce) {
 //    Ce->dumpColor();
-    if (Decl *Callee = Ce->getCalleeDecl()) {
+    if (Ce->getCalleeDecl()) {
       InOut.clear();
     }
   }

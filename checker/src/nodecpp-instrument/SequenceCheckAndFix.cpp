@@ -127,7 +127,7 @@ public:
     BaseASTVisitor<SequenceCheckAndFixASTVisitor>(Context, SilentMode),
      DebugReportMode(DebugReportMode) {}
 
-  auto getStats() {
+  ZombieIssuesStats getStats() {
     return Stats;
   }
 

@@ -25,65 +25,106 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_DEZOMBIEFY_H
-#define NODECPP_DEZOMBIEFY_H
+#ifndef SAFEMEMORY_DEZOMBIEFY_H
+#define SAFEMEMORY_DEZOMBIEFY_H
 
+#include <safe_ptr_common.h>
+#include <safe_memory_error.h>
 #include <utility>
 
-namespace nodecpp::safememory {
+namespace safememory {
+
+using nodecpp::safememory::isPointerNotZombie;
+
+#ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+template<class T>
+T*& dezombiefy(T*& x) {
+	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
+		return x;
+	else
+		throw nodecpp::error::early_detected_zombie_pointer_access; 
+}
+
+template<class T>
+const T*& dezombiefy(const T*& x) {
+	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( x ) ) ) )
+		return x;
+	else
+		throw nodecpp::error::early_detected_zombie_pointer_access; 
+}
+
+template<class T>
+T& dezombiefy(T& x) {
+	if ( NODECPP_LIKELY( isPointerNotZombie( &x ) ) )
+		return x;
+	else
+		throw nodecpp::error::early_detected_zombie_pointer_access; 
+}
+
+template<class T>
+const T& dezombiefy(const T& x) {
+	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( &x ) ) ) )
+		return x;
+	else
+		throw nodecpp::error::early_detected_zombie_pointer_access; 
+}
+#else
+#define dezombiefy( x ) (x)
+#endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+
 
 template<class T1, class T2>
-auto mul(T1&& t1, T2&& t2) {
+auto dz_mul(T1&& t1, T2&& t2) {
 	return std::forward(t1) * std::forward(t2);
 }
 
 template<class T1, class T2>
-auto div(T1&& t1, T2&& t2) {
+auto dz_div(T1&& t1, T2&& t2) {
 	return std::forward(t1) / std::forward(t2);
 }
 
 template<class T1, class T2>
-auto rem(T1&& t1, T2&& t2) {
+auto dz_rem(T1&& t1, T2&& t2) {
 	return std::forward(t1) % std::forward(t2);
 }
 
 template<class T1, class T2>
-auto add(T1&& t1, T2&& t2) {
+auto dz_add(T1&& t1, T2&& t2) {
 	return std::forward(t1) + std::forward(t2);
 }
 
 template<class T1, class T2>
-auto sub(T1&& t1, T2&& t2) {
+auto dz_sub(T1&& t1, T2&& t2) {
 	return std::forward(t1) - std::forward(t2);
 }
 /// logical
 
 template<class T1, class T2>
-auto lt(T1&& t1, T2&& t2) {
+auto dz_lt(T1&& t1, T2&& t2) {
 	return std::forward(t1) < std::forward(t2);
 }
 
 template<class T1, class T2>
-auto gt(T1&& t1, T2&& t2) {
+auto dz_gt(T1&& t1, T2&& t2) {
 	return std::forward(t1) > std::forward(t2);
 }
 
 template<class T1, class T2>
-auto le(T1&& t1, T2&& t2) {
+auto dz_le(T1&& t1, T2&& t2) {
 	return std::forward(t1) <= std::forward(t2);
 }
 template<class T1, class T2>
-auto ge(T1&& t1, T2&& t2) {
+auto dz_ge(T1&& t1, T2&& t2) {
 	return std::forward(t1) >= std::forward(t2);
 }
 
 template<class T1, class T2>
-auto eq(T1&& t1, T2&& t2) {
+auto dz_eq(T1&& t1, T2&& t2) {
 	return std::forward(t1) == std::forward(t2);
 }
 
 template<class T1, class T2>
-auto ne(T1&& t1, T2&& t2) {
+auto dz_ne(T1&& t1, T2&& t2) {
 	return std::forward(t1) != std::forward(t2);
 }
 
@@ -93,21 +134,21 @@ auto ne(T1&& t1, T2&& t2) {
 // }
 
 template<class T1, class T2>
-auto and(T1&& t1, T2&& t2) {
+auto dz_and(T1&& t1, T2&& t2) {
 	return std::forward(t1) & std::forward(t2);
 }
 
 template<class T1, class T2>
-auto xor(T1&& t1, T2&& t2) {
+auto dz_xor(T1&& t1, T2&& t2) {
 	return std::forward(t1) ^ std::forward(t2);
 }
 
 template<class T1, class T2>
-auto or(T1&& t1, T2&& t2) {
+auto dz_or(T1&& t1, T2&& t2) {
 	return std::forward(t1) | std::forward(t2);
 }
 
-} // namespace nodecpp::safememory
+} // namespace safememory
 
 
-#endif // NODECPP_DEZOMBIEFY_H
+#endif // SAFEMEMORY_DEZOMBIEFY_H

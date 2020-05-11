@@ -37,6 +37,7 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 #include <safe_ptr_with_zero_offset.h>
+#include <safememory/dezombiefy.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -536,9 +537,9 @@ int testWithLest( int argc, char * argv[] )
 			{
 				owning_ptr<StructureWithSoftIntPtr> opS = make_owning<StructureWithSoftIntPtr>();
 				auto ptr = &(opS->n);
-				EXPECT_NO_THROW( *(dezombiefy(ptr)) = 17 );
+				EXPECT_NO_THROW( *(::safememory::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-				EXPECT_THROWS( *(dezombiefy(ptr)) = 27 );
+				EXPECT_THROWS( *(::safememory::dezombiefy(ptr)) = 27 );
 			}
 		},
 

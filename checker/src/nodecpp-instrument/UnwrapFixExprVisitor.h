@@ -61,11 +61,11 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
   using Base = clang::EvaluatedExprVisitor<UnwrapFixExprVisitor>;
 
+  FileChanges &FileReplacements;
+
   bool SilentMode = false;
   bool HasError = false;
   int &Index;
-
-  FileChanges &FileReplacements;
 
   string StmtText;
   Range StmtRange;
@@ -298,7 +298,7 @@ public:
 
   UnwrapFixExprVisitor(const clang::ASTContext &Context, bool SilentMode, 
     FileChanges &Replacements, int &Index)
-    :Base(Context), SilentMode(SilentMode), FileReplacements(Replacements), Index(Index) {}
+    :Base(Context), FileReplacements(Replacements), SilentMode(SilentMode), Index(Index) {}
 
   bool unwrapExpression(const Stmt *St, Expr *E, bool ExtraB, bool ExtraS) {
     

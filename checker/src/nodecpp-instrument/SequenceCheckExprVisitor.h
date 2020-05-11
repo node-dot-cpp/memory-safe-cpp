@@ -57,7 +57,7 @@ class ZombieIssues {
 
 public:
   unsigned getMessageId(ZombieSequence Zs) {
-    
+    return 0;
   }
 
   void addStats(ZombieIssuesStats& Stats) const {
@@ -529,7 +529,7 @@ class SequenceCheckExprVisitor : public EvaluatedExprVisitor<SequenceCheckExprVi
         BaseMayZombie = true;
 
     }
-    else if(auto Bo = dyn_cast<BinaryOperator>(Ce)) {
+    else if(isa<BinaryOperator>(Ce)) {
       //TODO
       //this is a pointer to member or something extrange
       // right now just ignore
