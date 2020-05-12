@@ -42,8 +42,8 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   //   diag(Ex->getExprLoc(), "(S1.3) raw pointer can't be null");
   //   return;
   // }
-
-  if (isRawPointerType(Qt) || isNakedPointerType(Qt, getContext()) ||
+   
+  if (isRawPointerType(Qt) || getCheckHelper()->isNullablePtr(Qt) ||
     isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {
 
     auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());

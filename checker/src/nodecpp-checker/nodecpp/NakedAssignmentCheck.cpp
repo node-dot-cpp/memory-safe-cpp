@@ -33,7 +33,7 @@ void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
   if (Ex->getNumArgs() == 2) {
     auto Left = Ex->getArg(0);
     QualType Lqt = Left->getType().getCanonicalType();
-    if (isNakedPointerType(Lqt, getContext())) {
+    if (getCheckHelper()->isNullablePtr(Lqt)) {
       auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
                                                        Result.Context, Left);
 

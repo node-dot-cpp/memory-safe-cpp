@@ -32,8 +32,12 @@ public:
   DiagHelper(std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
   :Diag(Diag), Level(Level) {}
 
-  DiagHelper() {}
+  DiagHelper(ClangTidyContext* Context)
+  :Diag(std::bind(&ClangTidyContext::diagNote, Context, std::placeholders::_1,
+    std::placeholders::_2, std::placeholders::_3)), Level(DiagnosticIDs::Note) {}
 
+  DiagHelper() {}
+  
   void diag(SourceLocation Loc, StringRef Message) {
     if(Diag) {
       DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
@@ -97,16 +101,20 @@ const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 QualType getPointeeType(QualType Qt);
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
+bool isOwnerPtrType(QualType Qt);
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 bool isNodecppErrorType(QualType Qt);
 
 class TypeChecker {
   const ClangTidyContext* Context = nullptr;
-  DiagHelper Dh = {nullptr};
+  DiagHelper Dh;
   std::set<const CXXRecordDecl *> alreadyChecking;
   bool isSystemLoc = false;
 
+  // std::set<const Type *> safeTypes;
+  // std::set<const Type *> deterministicTypes;
+  // std::set<const Type *> selfContainedTypes;
 
 public:
   TypeChecker(const ClangTidyContext* Context) : Context(Context) {}
@@ -120,6 +128,9 @@ public:
 
   bool isDeterministicRecord(const CXXRecordDecl *Dc);
   bool isDeterministicType(const QualType& Qt);
+
+  bool isSelfContainedRecord(const CXXRecordDecl *Dc);
+  bool isSelfContainedType(QualType Qt);
 
   bool swapSystemLoc(bool newValue) {
     bool tmp = isSystemLoc;

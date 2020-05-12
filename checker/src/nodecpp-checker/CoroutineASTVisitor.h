@@ -70,6 +70,8 @@ class CoroutineASTVisitor
     return Context.diag(DiagMsgSrc, Loc, Message, Level);
   }
 
+  CheckHelper* getCheckHelper() const { return Context.getCheckHelper(); }
+
 public:
 
   explicit CoroutineASTVisitor(ClangTidyContext &Context): Context(Context) {}
@@ -105,7 +107,7 @@ public:
 
   bool VisitVarDecl(clang::VarDecl *D) {
     auto Qt = D->getType().getCanonicalType();
-    if(isNakedPointerType(Qt, &Context)) {
+    if(getCheckHelper()->isNullablePtr(Qt)) {
       St.add(D);
     }
     else if(Qt->isReferenceType()) {

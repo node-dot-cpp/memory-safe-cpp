@@ -55,7 +55,7 @@ bool MayExtendLambdaCheck::checkLambda(
     case LCK_ByCopy: {
       auto D = It->getCapturedVar();
       auto Qt = D->getType().getCanonicalType();
-      if (isSafeType(Qt, getContext()))
+      if (getCheckHelper()->isHeapSafe(Qt))
         break;
 
       if (D->hasGlobalStorage())

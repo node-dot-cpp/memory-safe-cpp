@@ -122,6 +122,9 @@ public:
                          StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
+  DiagnosticBuilder diagError(SourceLocation Loc, StringRef RuleName, StringRef Message);
+  DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level);
+
   /// \brief Sets the \c SourceManager of the used \c DiagnosticsEngine.
   ///
   /// This is called from the \c ClangTidyCheck base class.
@@ -205,6 +208,14 @@ public:
 
   const CheckerData& getCheckerData() const {
     return ChkData;
+  }
+
+  CheckHelper* getCheckHelper() {
+    return &ChkData;
+  }
+
+  const CheckHelper* getCheckHelper() const {
+    return &ChkData;
   }
 
 private:

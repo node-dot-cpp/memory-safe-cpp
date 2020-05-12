@@ -28,15 +28,37 @@
 #ifndef NODECPP_CHECKER_CHECKERDATA_H
 #define NODECPP_CHECKER_CHECKERDATA_H
 
+#include "clang/AST/Type.h"
 #include <set>
+#include <map>
 #include <string>
 
 namespace nodecpp {
 namespace checker {
 
+class ClangTidyContext;
+
+
+/// \brief Helper class that has information about a type meeting certain criteria
+/// and also where there is some error in the type or not.
+class KindCheck2 {
+  bool IsKind = false;
+  bool CheckOk = false;
+public:
+  KindCheck2(bool IsKind, bool CheckOk)
+    :IsKind(IsKind), CheckOk(CheckOk) {}
+  operator bool () const { return IsKind; }
+  bool isOk() const { return CheckOk; }
+};
+
 /// \brief Contains checker collected information that is persistent
 /// acrosss several rules.
-struct CheckerData {
+class CheckerData {
+public:
+
+  void setContext(ClangTidyContext* Context) {
+    this->Context = Context;
+  }
 
   /// \brief Adds a namespace to the set of unsafe namespaces.
   void addUnsafeNamespace(const std::string& Name);
@@ -44,9 +66,44 @@ struct CheckerData {
   /// \brief Returns \c true if \p Name has an unsafe namespace as prefix.
   bool isFromUnsafeNamespace(const std::string& Name) const;
 
+  /// \brief Returns \c true if type is safe.
+  bool isHeapSafe(clang::QualType Qt);
+  void reportNonSafeDetail(clang::QualType Qt);
+
+  /// \brief Returns \c true if type is a naked pointer type.
+  bool isNullablePtr(clang::QualType Qt);
+  KindCheck2 checkNullablePtr(clang::QualType Qt);
+  void reportNullablePtrDetail(clang::QualType Qt);
+
+
+
+private:
+
   std::set<std::string> UnsafeNamespaces;
+
+  struct SafeData {
+    bool wasReported = false;
+    bool isSafe = false;
+
+    SafeData(bool isSafe) :isSafe(isSafe) {}
+  };
+
+  std::map<const clang::Type*, SafeData> SafeTypes;
+
+  struct NakedPointerData {
+    bool wasReported = false;
+    bool isKind = false;
+    bool checkOk = false;
+
+    NakedPointerData(bool isKind, bool checkOk) :isKind(isKind), checkOk(checkOk) {}
+  };
+
+  std::map<const clang::Type*, NakedPointerData> NakedPointerTypes;
+
+  ClangTidyContext* Context = nullptr;
 };
 
+typedef CheckerData CheckHelper;
 
 } // end namespace checker
 } // end namespace nodecpp

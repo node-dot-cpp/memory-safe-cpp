@@ -184,6 +184,7 @@ ClangTidyContext::ClangTidyContext(
   // Before the first translation unit we can get errors related to command-line
   // parsing, use empty string for the file name in this case.
   setCurrentFile("");
+  ChkData.setContext(this);
 }
 
 ClangTidyContext::~ClangTidyContext() = default;
@@ -197,6 +198,33 @@ DiagnosticBuilder ClangTidyContext::diag(
   CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
   return DiagEngine->Report(Loc, ID);
 }
+
+DiagnosticBuilder ClangTidyContext::diagError(SourceLocation Loc, StringRef RuleName, StringRef Message) {
+
+
+  unsigned ID = 0;
+  if(RuleName != "xxx") {
+    ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Error, ("(" + RuleName + ") " + Message + " [memory-safe-cpp]").str());
+  }
+  else {
+    ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
+        DiagnosticIDs::Error, (Message + " [memory-safe-cpp]").str());
+  }
+  CheckNamesByDiagnosticID.try_emplace(ID, RuleName);
+  return DiagEngine->Report(Loc, ID);
+}
+
+DiagnosticBuilder ClangTidyContext::diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level) {
+
+  unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
+      DiagnosticIDs::Note, Message);
+//  CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
+  return DiagEngine->Report(Loc, ID);
+
+
+}
+
 
 void ClangTidyContext::setDiagnosticsEngine(DiagnosticsEngine *Engine) {
   DiagEngine = Engine;

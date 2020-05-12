@@ -46,7 +46,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
     if (isStdFunctionType(Qt))
       return;
 
-    if (isSafeType(Qt, getContext()))
+    if (getCheckHelper()->isHeapSafe(Qt))
       return;
 
     if (isAwaitableType(Qt))
@@ -55,13 +55,12 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
     if (isRawPointerType(Qt))
       return;
 
-    if (auto Np = isNakedPointerType(Qt, getContext())) {
+    if (auto Np = getCheckHelper()->checkNullablePtr(Qt)) {
       if (Np.isOk())
         return;
 
-      auto Dh = DiagHelper(this);
-      Dh.diag(Loc, "unsafe type at temporary expression");
-      isNakedPointerType(Qt, getContext(), Dh); // for report
+      getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
+      getCheckHelper()->reportNullablePtrDetail(Qt); // for report
       return;
     }
 
@@ -69,8 +68,8 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       if (Ns.isOk())
         return;
 
-      auto Dh = DiagHelper(this);
-      Dh.diag(Loc, "unsafe type at temporary expression");
+      auto Dh = DiagHelper(getContext());
+      getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
       isNakedStructType(Qt, getContext(), Dh); // for report
       return;
     }
@@ -79,9 +78,8 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       return;
 
 //    tmp->dump();
-    auto Dh = DiagHelper(this);
-    Dh.diag(Loc, "unsafe type at temporary expression");
-    isSafeType(Qt, getContext(), Dh);
+    getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
+    getCheckHelper()->reportNonSafeDetail(Qt);
   }
 }
 

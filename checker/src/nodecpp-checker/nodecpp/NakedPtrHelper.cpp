@@ -443,6 +443,18 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   return KindCheck(false, false);
 }
 
+bool isOwnerPtrType(QualType Qt) {
+
+  assert(Qt.isCanonical());
+
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
+    return false;
+
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  return isOwnerPtrName(Name);
+}
+
 bool isSafePtrType(QualType Qt) {
 
   assert(Qt.isCanonical());
@@ -695,6 +707,140 @@ bool TypeChecker::isDeterministicType(const QualType& Qt) {
     return true;
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isDeterministicRecord(Rd);
+  } else if (Qt->isTemplateTypeParmType()) {
+    // we will take care at instantiation
+    return true;
+  } else {
+    //t->dump();
+    return false;
+  }
+}
+
+bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
+
+  if (!Dc) {
+    return false;
+  }
+
+  //can this happend?
+  if(Dc->getDefinition() != Dc)
+    return false;
+
+  if(!alreadyChecking.insert(Dc).second) {
+    //already checking this type (got recursive)
+    return true;
+  }
+
+  // if database says is a safe name, then is safe
+  // std::string Name = getQnameForSystemSafeDb(Dc);
+  // if (isSystemSafeTypeName(Context, Name))
+  //   return true;
+
+  bool sysLoc = false;
+
+  if (!isSystemLoc && isSystemLocation(Context, Dc->getLocation())) {
+    sysLoc = true;
+  }
+
+  SystemLocRiia riia(*this, sysLoc);
+
+  // if we don't have a definition, we can't check
+  if (!Dc->hasDefinition())
+    return false;
+
+  if (Dc->isUnion()) {
+
+    // for unions, one initializer is enought.
+    // the rest of the union is zero padded.
+
+    // auto F = Dc->fields();
+    // for (auto It = F.begin(); It != F.end(); ++It) {
+    //   if (It->hasInClassInitializer()) {
+    //     return true;
+    //   }
+    // }
+    return false;
+  }
+
+  auto F = Dc->fields();
+  for (auto It = F.begin(); It != F.end(); ++It) {
+    auto Ft = (*It)->getType();
+    if (!isSelfContainedType(Ft)) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        std::string Msg =
+            "member '" + std::string((*It)->getName()) + "' is not self contained";
+        Dh.diag((*It)->getLocation(), Msg);
+      }
+      return false;
+    }
+  }
+
+  auto M = Dc->methods();
+  for (auto It = M.begin(); It != M.end(); ++It) {
+
+    auto Method = *It;
+
+    if (isa<CXXDestructorDecl>(Method)) {
+      if(!Method->isDefaulted()) {
+        Dh.diag((*It)->getLocation(), "desctructor must be 'default' for self contained");
+        return false;
+      }
+    }
+    else if (auto Ctor = dyn_cast<CXXConstructorDecl>(Method)) {
+      if(Ctor->isCopyOrMoveConstructor() && !Ctor->isDefaulted()) {
+        Dh.diag((*It)->getLocation(), "copy/move constructor must be 'default' for self contained");
+        return false;
+      }
+    }
+    else if (Method->isMoveAssignmentOperator() ||
+        Method->isCopyAssignmentOperator()) {
+      if(!Method->isDefaulted()) {
+        Dh.diag((*It)->getLocation(), "copy/move assignment operator must be 'default' for self contained");
+        return false;
+      }
+    }
+  }
+
+  auto B = Dc->bases();
+  for (auto It = B.begin(); It != B.end(); ++It) {
+
+    auto Bt = It->getType();
+    if (!isSelfContainedType(Bt)) {
+      if(!isSystemLoc || riia.getWasFalse()) {
+        Dh.diag((*It).getBaseTypeLoc(), "base class is not self contained");
+      }
+      return false;
+    }
+  }
+
+  // finally we are deterministic!
+  return true;
+}
+
+bool TypeChecker::isSelfContainedType(QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+
+  if (Qt->isReferenceType()) {
+    return false;
+  } else if (Qt->isPointerType()) {
+    return false;
+  } else if (Qt->isBuiltinType()) {
+    return true;
+  } else if (Qt->isEnumeralType()) {
+    return true;
+  // } else if (isAwaitableType(Qt)) {//mb: check
+  //   return false;
+  // } else if (isLambdaType(Qt)) {
+  //   return false;
+  } else if (isOwnerPtrType(Qt)) {
+    return true;
+  } else if (isSafePtrType(Qt)) {
+    return false;
+  } else if (isNakedPointerType(Qt, Context)) {
+    return false;
+  } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
+    return isSelfContainedRecord(Rd);
   } else if (Qt->isTemplateTypeParmType()) {
     // we will take care at instantiation
     return true;
@@ -991,7 +1137,7 @@ bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
   // out.dump();
   // arg.dump();
 
-  if (isSafeType(Arg, TidyContext))
+  if (TidyContext->getCheckerData().isHeapSafe(Arg))
     return false;
 
   if (isNakedPointerType(Arg, TidyContext))

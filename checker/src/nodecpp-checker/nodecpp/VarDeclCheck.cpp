@@ -102,21 +102,21 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto U = isUnionType(Qt)) {
     if (!checkUnion(U)) {
-      auto Dh = DiagHelper(this);
-      Dh.diag(Var->getLocation(), "unsafe union at variable declaration");
+      auto Dh = DiagHelper(getContext());
+      getContext()->diagError(Var->getLocation(), "xxx", "unsafe union at variable declaration");
       checkUnion(U, Dh);
     }
     return;
   }
 
-  if (isSafeType(Qt, getContext())) {
+  if (getCheckHelper()->isHeapSafe(Qt)) {
     return;
   }
 
   if (Qt->isReferenceType()) {
     //non-const reference only from safe types
-    QualType Inner = Qt->getPointeeType().getCanonicalType();
-    if (!isSafeType(Inner, getContext())) {
+    QualType Inner = Qt->getPointeeType();
+    if (!getCheckHelper()->isHeapSafe(Inner)) {
       diag(Var->getLocation(),
            "(S5.3) non-const reference of unsafe type is prohibited");
     }
@@ -147,8 +147,8 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    QualType Inner = Qt->getPointeeType().getCanonicalType();
-    if (!isSafeType(Inner, getContext())) {
+    QualType Inner = Qt->getPointeeType();
+    if (!getCheckHelper()->isHeapSafe(Inner)) {
       diag(Var->getLocation(),
            "(S5.3) raw pointer of unsafe type is prohibited");
       return;
@@ -190,15 +190,14 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if (auto Np = isNakedPointerType(Qt, getContext())) {
+  if (auto Np = getCheckHelper()->checkNullablePtr(Qt)) {
     if (Np.isOk()) {
       //this is all for naked_ptr
       return;
     }
 
-    auto Dh = DiagHelper(this);
-    Dh.diag(Var->getLocation(), "unsafe nullable_ptr at variable declaration");
-    isNakedPointerType(Qt, getContext(), Dh); // for report
+    getContext()->diagError(Var->getLocation(), "xxx", "unsafe nullable_ptr at variable declaration");
+    getCheckHelper()->reportNullablePtrDetail(Qt);
     return;
   }
 
@@ -211,8 +210,8 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    auto Dh = DiagHelper(this);
-    Dh.diag(Var->getLocation(), "unsafe naked_struct at variable declaration");
+    auto Dh = DiagHelper(getContext());
+    getContext()->diagError(Var->getLocation(), "xxx", "unsafe naked_struct at variable declaration");
     isNakedStructType(Qt, getContext(), Dh); // for report
     return;
   }
@@ -228,9 +227,8 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  auto Dh = DiagHelper(this);
-  Dh.diag(Var->getLocation(), "unsafe type at variable declaration");
-  isSafeType(Qt, getContext(), Dh);
+  getContext()->diagError(Var->getLocation(), "xxx", "unsafe type at variable declaration");
+  getCheckHelper()->reportNonSafeDetail(Qt);
 
   return;
 }

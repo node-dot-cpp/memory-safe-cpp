@@ -49,7 +49,7 @@ void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
   }
   // else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {
   //   auto Qt = Dr->getDecl()->getType();
-  //   if(isNakedPointerType(Qt.getCanonicalType(), getContext())) {
+  //   if(isNullablePtr(Qt.getCanonicalType(), getContext())) {
   //     diag(Dr->getExprLoc(), "(S5.8) naked pointer types not allowed inside coroutines");
   //     return;
   //   }

@@ -195,6 +195,8 @@ protected:
   ClangTidyContext* getContext() const { return Context; }
   /// \brief Returns the AST context.
   ASTContext* getASTContext() const { return Context->getASTContext(); }
+  /// \brief Returns the check helper.
+  CheckHelper* getCheckHelper() const { return &Context->getCheckerData(); }
 };
 
 class ClangTidyCheckFactories;

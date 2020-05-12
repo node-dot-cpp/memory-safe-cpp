@@ -70,6 +70,8 @@ class RuleCASTVisitor
     return Context.diag(DiagMsgSrc, Loc, Message, Level);
   }
 
+  CheckHelper* getCheckHelper() const { return Context.getCheckHelper(); }
+
 public:
 
   explicit RuleCASTVisitor(ClangTidyContext &Context): Context(Context) {}
@@ -112,7 +114,7 @@ public:
       if(D->hasAttr<NodeCppMemoryUnsafeAttr>()) {
 
         std::string Name = getQnameForSystemSafeDb(D);
-        Context.getCheckerData().addUnsafeNamespace(Name);
+        getCheckHelper()->addUnsafeNamespace(Name);
       }
     }
     else {
