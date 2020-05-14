@@ -70,50 +70,49 @@ public:
   bool isHeapSafe(clang::QualType Qt);
   void reportNonSafeDetail(clang::QualType Qt);
 
+  /// \brief Returns \c true if type is deterministic.
+  bool isDeterministic(clang::QualType Qt);
+  void reportDeterministicDetail(clang::QualType Qt);
+
   /// \brief Returns \c true if type is a \c nullable_ptr type.
-  bool isNullablePtr(clang::QualType Qt);
+  bool isNullablePtr(clang::QualType Qt) {
+    return static_cast<bool>(checkNullablePtr(Qt));
+  }
   KindCheck2 checkNullablePtr(clang::QualType Qt);
   void reportNullablePtrDetail(clang::QualType Qt);
 
   /// \brief Returns \c true if type is a \c [[naked_struct]] class.
-  bool isNakedStruct(clang::QualType Qt);
+  bool isNakedStruct(clang::QualType Qt) {
+    return static_cast<bool>(checkNakedStruct(Qt));
+  }
   KindCheck2 checkNakedStruct(clang::QualType Qt);
   void reportNakedStructDetail(clang::QualType Qt);
+
+  /// \brief Returns \c true if type is a \c [[deep_const]] class.
+  bool isDeepConst(clang::QualType Qt) {
+    return static_cast<bool>(checkDeepConst(Qt));
+  }
+  KindCheck2 checkDeepConst(clang::QualType Qt);
+  void reportDeepConstDetail(clang::QualType Qt);
 
 
 private:
 
   std::set<std::string> UnsafeNamespaces;
 
-  struct SafeData {
+  struct TypeData2 {
+    bool wasTested = false;
+    bool isPositive = false;
+    bool isOk = false;
     bool wasReported = false;
-    bool isSafe = false;
-
-    SafeData(bool isSafe) :isSafe(isSafe) {}
   };
-
-  std::map<const clang::Type*, SafeData> SafeTypes;
-
-  struct NakedPointerData {
-    bool wasReported = false;
-    bool isKind = false;
-    bool checkOk = false;
-
-    NakedPointerData(bool isKind, bool checkOk) :isKind(isKind), checkOk(checkOk) {}
-  };
-
-  std::map<const clang::Type*, NakedPointerData> NakedPointerTypes;
 
   struct TypeData {
-    bool wasReported = false;
-    bool isHeapSafe = false;
-    bool isNullablePtr = false;
-    bool isNakedStruct = false;
-    bool checkOk = false;
-
-    bool isUnknown() const { return !isHeapSafe && !isNullablePtr && !isNakedStruct; }
-
-    TypeData() {}
+    TypeData2 isHeapSafe;
+    TypeData2 isNullablePtr;
+    TypeData2 isNakedStruct;
+    TypeData2 isDeepConst;
+    TypeData2 isDeterministic;
   };
 
   std::map<const clang::Type*, TypeData> Data;

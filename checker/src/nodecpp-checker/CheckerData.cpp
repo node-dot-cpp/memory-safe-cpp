@@ -55,16 +55,17 @@ bool CheckerData::isHeapSafe(clang::QualType Qt) {
 
   auto& V = Data[T];
 
-  if(V.isUnknown()) {
+  if(!V.isHeapSafe.wasTested) {
 
     TypeChecker Tc(Context, NullDiagHelper);
     bool S = Tc.isSafeType(Qt);
 
-    V.isHeapSafe = S;
-    V.checkOk = S;
+    V.isHeapSafe.wasTested = true;
+    V.isHeapSafe.isPositive = S;
+    V.isHeapSafe.isOk = S;
   }
 
-  return V.isHeapSafe;
+  return V.isHeapSafe.isPositive;
 }
 
 void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
@@ -75,10 +76,10 @@ void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
   
   assert (It != Data.end());
 
-  if(It->second.wasReported)
+  if(It->second.isHeapSafe.wasReported)
     return;
 
-  It->second.wasReported = true;
+  It->second.isHeapSafe.wasReported = true;
 
   DiagHelper Dh(Context);
 
@@ -88,21 +89,49 @@ void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
   assert(!S);
 }
 
-bool CheckerData::isNullablePtr(QualType Qt) {
+bool CheckerData::isDeterministic(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
 
   auto& V = Data[T];
 
-  if(V.isUnknown()) {
-    auto Ck = isNakedPointerType(Qt, Context);
-    V.isNullablePtr = static_cast<bool>(Ck);
-    V.checkOk = Ck.isOk();
+  if(!V.isDeterministic.wasTested) {
+
+    TypeChecker Tc(Context, NullDiagHelper);
+    bool S = Tc.isDeterministicType(Qt);
+
+    V.isDeterministic.wasTested = true;
+    V.isDeterministic.isPositive = S;
+    V.isDeterministic.isOk = S;
   }
 
-  return V.isNullablePtr;
+  return V.isDeterministic.isPositive;
+
 }
+
+
+void CheckerData::reportDeterministicDetail(clang::QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+  auto It = Data.find(T);
+  
+  assert (It != Data.end());
+
+  if(It->second.isDeterministic.wasReported)
+    return;
+
+  It->second.isDeterministic.wasReported = true;
+
+  DiagHelper Dh(Context);
+
+  TypeChecker Tc(Context, Dh);
+
+  bool S = Tc.isDeterministicType(Qt);
+  assert(!S);
+}
+
 
 KindCheck2 CheckerData::checkNullablePtr(clang::QualType Qt) {
 
@@ -112,13 +141,14 @@ KindCheck2 CheckerData::checkNullablePtr(clang::QualType Qt) {
 
   auto& V = Data[T];
 
-  if(V.isUnknown()) {
+  if(!V.isNullablePtr.wasTested) {
     auto Ck = isNakedPointerType(Qt, Context);
-    V.isNullablePtr = static_cast<bool>(Ck);
-    V.checkOk = Ck.isOk();
+    V.isNullablePtr.wasTested = true;
+    V.isNullablePtr.isPositive = static_cast<bool>(Ck);
+    V.isNullablePtr.isOk = Ck.isOk();
   }
 
-  return KindCheck2(V.isNullablePtr, V.checkOk);
+  return KindCheck2(V.isNullablePtr.isPositive, V.isNullablePtr.isOk);
 }
 
 void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
@@ -129,10 +159,10 @@ void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
   
   assert (It != Data.end());
 
-  if(It->second.wasReported)
+  if(It->second.isNullablePtr.wasReported)
     return;
 
-  It->second.wasReported = true;
+  It->second.isNullablePtr.wasReported = true;
 
   DiagHelper Dh(Context);
 
@@ -142,37 +172,21 @@ void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
   assert(!Ck.isOk());
 }
 
-bool CheckerData::isNakedStruct(QualType Qt) {
-
-  Qt = Qt.getCanonicalType();
-  const clang::Type* T = Qt.getTypePtr();
-
-  auto& V = Data[T];
-
-  if(V.isUnknown()) {
-    auto Ck = isNakedStructType(Qt, Context);
-    V.isNakedStruct = static_cast<bool>(Ck);
-    V.checkOk = Ck.isOk();
-  }
-
-  return V.isNakedStruct;
-}
-
 KindCheck2 CheckerData::checkNakedStruct(clang::QualType Qt) {
 
-
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
 
   auto& V = Data[T];
 
-  if(V.isUnknown()) {
+  if(!V.isNakedStruct.wasTested) {
     auto Ck = isNakedStructType(Qt, Context);
-    V.isNakedStruct = static_cast<bool>(Ck);
-    V.checkOk = Ck.isOk();
+    V.isNakedStruct.wasTested = true;
+    V.isNakedStruct.isPositive = static_cast<bool>(Ck);
+    V.isNakedStruct.isOk = Ck.isOk();
   }
 
-  return KindCheck2(V.isNakedStruct, V.checkOk);
+  return KindCheck2(V.isNakedStruct.isPositive, V.isNakedStruct.isOk);
 }
 
 void CheckerData::reportNakedStructDetail(clang::QualType Qt) {
@@ -183,10 +197,48 @@ void CheckerData::reportNakedStructDetail(clang::QualType Qt) {
   
   assert (It != Data.end());
 
-  if(It->second.wasReported)
+  if(It->second.isNakedStruct.wasReported)
     return;
 
-  It->second.wasReported = true;
+  It->second.isNakedStruct.wasReported = true;
+
+  DiagHelper Dh(Context);
+
+  auto Ck = isNakedStructType(Qt, Context, Dh);
+
+  assert(static_cast<bool>(Ck));
+  assert(!Ck.isOk());
+}
+
+KindCheck2 CheckerData::checkDeepConst(clang::QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+
+  auto& V = Data[T];
+
+  if(!V.isDeepConst.wasTested) {
+    auto Ck = isNakedStructType(Qt, Context);
+    V.isDeepConst.wasTested = true;
+    V.isDeepConst.isPositive = static_cast<bool>(Ck);
+    V.isDeepConst.isOk = Ck.isOk();
+  }
+
+  return KindCheck2(V.isDeepConst.isPositive, V.isDeepConst.isOk);
+}
+
+void CheckerData::reportDeepConstDetail(clang::QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+  auto It = Data.find(T);
+  
+  assert (It != Data.end());
+
+  if(It->second.isDeepConst.wasReported)
+    return;
+
+  It->second.isDeepConst.wasReported = true;
 
   DiagHelper Dh(Context);
 

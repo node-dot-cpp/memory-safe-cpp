@@ -443,18 +443,6 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   return KindCheck(false, false);
 }
 
-bool isOwnerPtrType(QualType Qt) {
-
-  assert(Qt.isCanonical());
-
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return false;
-
-  std::string Name = getQnameForSystemSafeDb(Dc);
-  return isOwnerPtrName(Name);
-}
-
 bool isSafePtrType(QualType Qt) {
 
   assert(Qt.isCanonical());
@@ -716,7 +704,7 @@ bool TypeChecker::isDeterministicType(const QualType& Qt) {
   }
 }
 
-bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
+bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
 
   if (!Dc) {
     return false;
@@ -735,6 +723,7 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
   // std::string Name = getQnameForSystemSafeDb(Dc);
   // if (isSystemSafeTypeName(Context, Name))
   //   return true;
+  bool HasAttr = Dc->hasAttr<NodeCppDeepConstAttr>();
 
   bool sysLoc = false;
 
@@ -743,6 +732,9 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
+
+  if(isSystemLoc && HasAttr)
+    return true;
 
   // if we don't have a definition, we can't check
   if (!Dc->hasDefinition())
@@ -765,10 +757,10 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
   auto F = Dc->fields();
   for (auto It = F.begin(); It != F.end(); ++It) {
     auto Ft = (*It)->getType();
-    if (!isSelfContainedType(Ft)) {
+    if (!isDeepConstType(Ft)) {
       if(!isSystemLoc || riia.getWasFalse()) {
         std::string Msg =
-            "member '" + std::string((*It)->getName()) + "' is not self contained";
+            "member '" + std::string((*It)->getName()) + "' is not deep const";
         Dh.diag((*It)->getLocation(), Msg);
       }
       return false;
@@ -782,20 +774,20 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
 
     if (isa<CXXDestructorDecl>(Method)) {
       if(!Method->isDefaulted()) {
-        Dh.diag((*It)->getLocation(), "desctructor must be 'default' for self contained");
+        Dh.diag((*It)->getLocation(), "desctructor must be 'default' for deep const");
         return false;
       }
     }
     else if (auto Ctor = dyn_cast<CXXConstructorDecl>(Method)) {
       if(Ctor->isCopyOrMoveConstructor() && !Ctor->isDefaulted()) {
-        Dh.diag((*It)->getLocation(), "copy/move constructor must be 'default' for self contained");
+        Dh.diag((*It)->getLocation(), "copy/move constructor must be 'default' for deep const");
         return false;
       }
     }
     else if (Method->isMoveAssignmentOperator() ||
         Method->isCopyAssignmentOperator()) {
       if(!Method->isDefaulted()) {
-        Dh.diag((*It)->getLocation(), "copy/move assignment operator must be 'default' for self contained");
+        Dh.diag((*It)->getLocation(), "copy/move assignment operator must be 'default' for deep const");
         return false;
       }
     }
@@ -805,9 +797,9 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
   for (auto It = B.begin(); It != B.end(); ++It) {
 
     auto Bt = It->getType();
-    if (!isSelfContainedType(Bt)) {
+    if (!isDeepConstType(Bt)) {
       if(!isSystemLoc || riia.getWasFalse()) {
-        Dh.diag((*It).getBaseTypeLoc(), "base class is not self contained");
+        Dh.diag((*It).getBaseTypeLoc(), "base class is not deep const");
       }
       return false;
     }
@@ -817,7 +809,7 @@ bool TypeChecker::isSelfContainedRecord(const CXXRecordDecl *Dc) {
   return true;
 }
 
-bool TypeChecker::isSelfContainedType(QualType Qt) {
+bool TypeChecker::isDeepConstType(QualType Qt) {
 
   Qt = Qt.getCanonicalType();
 
@@ -833,14 +825,12 @@ bool TypeChecker::isSelfContainedType(QualType Qt) {
   //   return false;
   // } else if (isLambdaType(Qt)) {
   //   return false;
-  } else if (isOwnerPtrType(Qt)) {
-    return true;
   } else if (isSafePtrType(Qt)) {
     return false;
   } else if (isNakedPointerType(Qt, Context)) {
     return false;
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
-    return isSelfContainedRecord(Rd);
+    return isDeepConstRecord(Rd);
   } else if (Qt->isTemplateTypeParmType()) {
     // we will take care at instantiation
     return true;

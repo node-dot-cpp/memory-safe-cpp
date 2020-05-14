@@ -101,7 +101,6 @@ const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 QualType getPointeeType(QualType Qt);
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
-bool isOwnerPtrType(QualType Qt);
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 bool isNodecppErrorType(QualType Qt);
@@ -129,8 +128,8 @@ public:
   bool isDeterministicRecord(const CXXRecordDecl *Dc);
   bool isDeterministicType(const QualType& Qt);
 
-  bool isSelfContainedRecord(const CXXRecordDecl *Dc);
-  bool isSelfContainedType(QualType Qt);
+  bool isDeepConstRecord(const CXXRecordDecl *Dc);
+  bool isDeepConstType(QualType Qt);
 
   bool swapSystemLoc(bool newValue) {
     bool tmp = isSystemLoc;

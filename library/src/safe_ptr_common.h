@@ -409,10 +409,12 @@ template<> struct nodecpp::safememory::safeness_declarator<double> { static cons
 #define SAFEMEMORY_MAY_EXTEND_TO_THIS [[nodecpp::may_extend_to_this]]
 #define SAFEMEMORY_NO_AWAIT [[nodecpp::no_await]]
 #define SAFEMEMORY_NAKED_STRUCT [[nodecpp::naked_struct]]
+#define SAFEMEMORY_DEEP_CONST [[nodecpp::deep_const]]
 #else
 #define SAFEMEMORY_MAY_EXTEND_TO_THIS
 #define SAFEMEMORY_NO_AWAIT
 #define SAFEMEMORY_NAKED_STRUCT
+#define SAFEMEMORY_DEEP_CONST
 #endif
 
 
