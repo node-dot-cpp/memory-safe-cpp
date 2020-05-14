@@ -49,16 +49,16 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
     if (K == TSK_ImplicitInstantiation)
       return;
 
-    QualType Qt = getContext()->getASTContext()->getRecordType(Rd);
+    QualType Qt = getASTContext()->getRecordType(Rd);
 
-    if (Rd->hasAttr<NodeCppNakedStructAttr>()) {
-      if (checkNakedStructRecord(Rd, getContext()))
+    if(auto Ns = getCheckHelper()->checkNakedStruct(Qt)) {
+      if(Ns.isOk())
         return;
 
-      auto Dh = DiagHelper(getContext());
       getContext()->diagError(Rd->getLocation(), "xxx", "unsafe naked_struct declaration");
-      checkNakedStructRecord(Rd, getContext(), Dh);
-    } else {
+      getCheckHelper()->reportNakedStructDetail(Qt);
+    }
+    else {
       if (getCheckHelper()->isHeapSafe(Qt))
         return;
 

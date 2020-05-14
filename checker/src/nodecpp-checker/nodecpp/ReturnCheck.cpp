@@ -44,7 +44,7 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   // }
    
   if (isRawPointerType(Qt) || getCheckHelper()->isNullablePtr(Qt) ||
-    isNakedStructType(Qt, getContext()) || Qt->isLValueReferenceType()) {
+    getCheckHelper()->isNakedStruct(Qt) || Qt->isLValueReferenceType()) {
 
     auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
     if (!Ch.checkExpr(Ex))

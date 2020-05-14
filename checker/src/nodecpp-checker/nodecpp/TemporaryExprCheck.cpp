@@ -64,13 +64,12 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    if (auto Ns = isNakedStructType(Qt, getContext())) {
+    if (auto Ns = getCheckHelper()->checkNakedStruct(Qt)) {
       if (Ns.isOk())
         return;
 
-      auto Dh = DiagHelper(getContext());
       getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
-      isNakedStructType(Qt, getContext(), Dh); // for report
+      getCheckHelper()->reportNakedStructDetail(Qt); // for report
       return;
     }
 

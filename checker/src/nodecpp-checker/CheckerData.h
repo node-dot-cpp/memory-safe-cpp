@@ -70,11 +70,15 @@ public:
   bool isHeapSafe(clang::QualType Qt);
   void reportNonSafeDetail(clang::QualType Qt);
 
-  /// \brief Returns \c true if type is a naked pointer type.
+  /// \brief Returns \c true if type is a \c nullable_ptr type.
   bool isNullablePtr(clang::QualType Qt);
   KindCheck2 checkNullablePtr(clang::QualType Qt);
   void reportNullablePtrDetail(clang::QualType Qt);
 
+  /// \brief Returns \c true if type is a \c [[naked_struct]] class.
+  bool isNakedStruct(clang::QualType Qt);
+  KindCheck2 checkNakedStruct(clang::QualType Qt);
+  void reportNakedStructDetail(clang::QualType Qt);
 
 
 private:
@@ -99,6 +103,20 @@ private:
   };
 
   std::map<const clang::Type*, NakedPointerData> NakedPointerTypes;
+
+  struct TypeData {
+    bool wasReported = false;
+    bool isHeapSafe = false;
+    bool isNullablePtr = false;
+    bool isNakedStruct = false;
+    bool checkOk = false;
+
+    bool isUnknown() const { return !isHeapSafe && !isNullablePtr && !isNakedStruct; }
+
+    TypeData() {}
+  };
+
+  std::map<const clang::Type*, TypeData> Data;
 
   ClangTidyContext* Context = nullptr;
 };

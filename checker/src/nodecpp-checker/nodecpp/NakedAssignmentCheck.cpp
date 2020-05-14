@@ -40,7 +40,7 @@ void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
       if (!Checker.checkExpr(Ex->getArg(1)))
         diag(Ex->getExprLoc(),
              "(S5.1) assignment of nullable_ptr may extend scope");
-    } else if (isNakedStructType(Lqt, getContext())) {
+    } else if (getCheckHelper()->isNakedStruct(Lqt)) {
       auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
                                                        Result.Context, Left);
 

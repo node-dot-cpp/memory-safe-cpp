@@ -52,26 +52,28 @@ bool CheckerData::isHeapSafe(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
-  auto It = SafeTypes.find(T);
-  
-  if(It != SafeTypes.end())
-    return It->second.isSafe;;
 
-  TypeChecker Tc(Context, NullDiagHelper);
+  auto& V = Data[T];
 
-  bool S = Tc.isSafeType(Qt);
-  SafeTypes.insert(std::make_pair(T, SafeData(S)));
+  if(V.isUnknown()) {
 
-  return S;
+    TypeChecker Tc(Context, NullDiagHelper);
+    bool S = Tc.isSafeType(Qt);
+
+    V.isHeapSafe = S;
+    V.checkOk = S;
+  }
+
+  return V.isHeapSafe;
 }
 
 void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
-  auto It = SafeTypes.find(T);
+  auto It = Data.find(T);
   
-  assert (It != SafeTypes.end());
+  assert (It != Data.end());
 
   if(It->second.wasReported)
     return;
@@ -90,39 +92,42 @@ bool CheckerData::isNullablePtr(QualType Qt) {
 
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
-  auto It = NakedPointerTypes.find(T);
-  
-  if(It != NakedPointerTypes.end())
-    return It->second.isKind;
 
-  auto Ck = isNakedPointerType(Qt, Context);
-  NakedPointerTypes.insert(std::make_pair(T, NakedPointerData(static_cast<bool>(Ck), Ck.isOk())));
+  auto& V = Data[T];
 
-  return static_cast<bool>(Ck);
+  if(V.isUnknown()) {
+    auto Ck = isNakedPointerType(Qt, Context);
+    V.isNullablePtr = static_cast<bool>(Ck);
+    V.checkOk = Ck.isOk();
+  }
+
+  return V.isNullablePtr;
 }
 
 KindCheck2 CheckerData::checkNullablePtr(clang::QualType Qt) {
 
+
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
-  auto It = NakedPointerTypes.find(T);
-  
-  if(It != NakedPointerTypes.end())
-    return KindCheck2(It->second.isKind, It->second.checkOk);
 
-  auto Ck = isNakedPointerType(Qt, Context);
-  NakedPointerTypes.insert(std::make_pair(T, NakedPointerData(static_cast<bool>(Ck), Ck.isOk())));
+  auto& V = Data[T];
 
-  return KindCheck2(static_cast<bool>(Ck), Ck.isOk());
+  if(V.isUnknown()) {
+    auto Ck = isNakedPointerType(Qt, Context);
+    V.isNullablePtr = static_cast<bool>(Ck);
+    V.checkOk = Ck.isOk();
+  }
+
+  return KindCheck2(V.isNullablePtr, V.checkOk);
 }
 
 void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();
   const clang::Type* T = Qt.getTypePtr();
-  auto It = NakedPointerTypes.find(T);
+  auto It = Data.find(T);
   
-  assert (It != NakedPointerTypes.end());
+  assert (It != Data.end());
 
   if(It->second.wasReported)
     return;
@@ -137,6 +142,59 @@ void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
   assert(!Ck.isOk());
 }
 
+bool CheckerData::isNakedStruct(QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+
+  auto& V = Data[T];
+
+  if(V.isUnknown()) {
+    auto Ck = isNakedStructType(Qt, Context);
+    V.isNakedStruct = static_cast<bool>(Ck);
+    V.checkOk = Ck.isOk();
+  }
+
+  return V.isNakedStruct;
+}
+
+KindCheck2 CheckerData::checkNakedStruct(clang::QualType Qt) {
+
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+
+  auto& V = Data[T];
+
+  if(V.isUnknown()) {
+    auto Ck = isNakedStructType(Qt, Context);
+    V.isNakedStruct = static_cast<bool>(Ck);
+    V.checkOk = Ck.isOk();
+  }
+
+  return KindCheck2(V.isNakedStruct, V.checkOk);
+}
+
+void CheckerData::reportNakedStructDetail(clang::QualType Qt) {
+
+  Qt = Qt.getCanonicalType();
+  const clang::Type* T = Qt.getTypePtr();
+  auto It = Data.find(T);
+  
+  assert (It != Data.end());
+
+  if(It->second.wasReported)
+    return;
+
+  It->second.wasReported = true;
+
+  DiagHelper Dh(Context);
+
+  auto Ck = isNakedStructType(Qt, Context, Dh);
+
+  assert(static_cast<bool>(Ck));
+  assert(!Ck.isOk());
+}
 
 
 } // namespace checker

@@ -201,7 +201,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if (auto Ns = isNakedStructType(Qt, getContext())) {
+  if (auto Ns = getCheckHelper()->checkNakedStruct(Qt)) {
     if (Ns.isOk()) {
       if (Var->hasAttr<NodeCppMayExtendAttr>()) {
         diag(Var->getLocation(),
@@ -210,9 +210,9 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    auto Dh = DiagHelper(getContext());
+    // auto Dh = DiagHelper(getContext());
     getContext()->diagError(Var->getLocation(), "xxx", "unsafe naked_struct at variable declaration");
-    isNakedStructType(Qt, getContext(), Dh); // for report
+    getCheckHelper()->reportNakedStructDetail(Qt); // for report
     return;
   }
 
