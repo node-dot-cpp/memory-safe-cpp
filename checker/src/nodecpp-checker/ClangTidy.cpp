@@ -511,6 +511,8 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
 
   Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DNODECPP_CHECKER_EXTENSIONS",
          ArgumentInsertPosition::BEGIN));
+  Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DSAFEMEMORY_CHECKER_EXTENSIONS",
+         ArgumentInsertPosition::BEGIN));
   Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-fsyntax-only",
          ArgumentInsertPosition::BEGIN));
   Tool.appendArgumentsAdjuster(PerFileExtraArgumentsInserter);

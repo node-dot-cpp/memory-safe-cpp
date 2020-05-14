@@ -405,6 +405,15 @@ struct safeness_declarator {
 template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
 
+#ifdef SAFEMEMORY_CHECKER_EXTENSIONS
+#define SAFEMEMORY_MAY_EXTEND_TO_THIS [[nodecpp::may_extend_to_this]]
+#define SAFEMEMORY_NO_AWAIT [[nodecpp::no_await]]
+#define SAFEMEMORY_NAKED_STRUCT [[nodecpp::naked_struct]]
+#else
+#define SAFEMEMORY_MAY_EXTEND_TO_THIS
+#define SAFEMEMORY_NO_AWAIT
+#define SAFEMEMORY_NAKED_STRUCT
+#endif
 
 
 } // namespace nodecpp::safememory

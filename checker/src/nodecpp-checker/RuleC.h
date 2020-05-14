@@ -148,12 +148,27 @@ public:
       }
     }
 
+    if(D->hasAttr<NodeCppDeepConstAttr>()) {
+      auto R = dyn_cast<CXXRecordDecl>(D);
+      if(!R || (!R->isStruct() && !R->isClass())) {
+        diag(D->getLocation(), "(C2) attribute [[nodecpp::deep_const]] allowed at struct or class declaration only");
+      }
+    }
+
     if(D->hasAttr<NodeCppMayExtendAttr>() && !IsMemoryUnsafe) {
       diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] only allowed at system libraries declarartions");
     }
 
     if(D->hasAttr<NodeCppNoAwaitAttr>() && !IsMemoryUnsafe) {
       diag(D->getLocation(), "(C2) attribute [[nodecpp::no_await]] only allowed at system libraries declarartions");
+    }
+
+    if(D->hasAttr<NodeCppSelfContainedAttr>()) {
+      diag(D->getLocation(), "(C2) attribute [[nodecpp::self_contained]] not implemented yet");
+    }
+
+    if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
+      diag(D->getLocation(), "(C2) attribute [[nodecpp::no_side_effect]] not implemented yet");
     }
 
     return Super::VisitDecl(D);
