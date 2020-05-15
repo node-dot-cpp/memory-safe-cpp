@@ -20,30 +20,43 @@ namespace checker {
 
 extern const char *DiagMsgSrc;
 
+// class DiagHelper {
+//   std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag;
+//   DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
+// public:
+
+//   DiagHelper(ClangTidyCheck *Check, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
+//   :Diag(std::bind(&ClangTidyCheck::diag, Check, std::placeholders::_1,
+//     std::placeholders::_2, std::placeholders::_3)), Level(Level) {}
+
+//   DiagHelper(std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
+//   :Diag(Diag), Level(Level) {}
+
+//   DiagHelper(ClangTidyContext* Context)
+//   :Diag(std::bind(&ClangTidyContext::diagNote, Context, std::placeholders::_1,
+//     std::placeholders::_2, std::placeholders::_3)), Level(DiagnosticIDs::Note) {}
+
+//   DiagHelper() {}
+  
+//   void diag(SourceLocation Loc, StringRef Message) {
+//     if(Diag) {
+//       DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
+//       std::swap(Level, NextLevel);
+//       Diag(Loc, Message, NextLevel);
+//     }
+//   }
+// };
+
 class DiagHelper {
-  std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag;
-  DiagnosticIDs::Level Level = DiagnosticIDs::Warning;
+  ClangTidyContext* Context = nullptr;
 public:
 
-  DiagHelper(ClangTidyCheck *Check, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
-  :Diag(std::bind(&ClangTidyCheck::diag, Check, std::placeholders::_1,
-    std::placeholders::_2, std::placeholders::_3)), Level(Level) {}
-
-  DiagHelper(std::function<DiagnosticBuilder(SourceLocation, StringRef, DiagnosticIDs::Level)> Diag, DiagnosticIDs::Level Level = DiagnosticIDs::Error)
-  :Diag(Diag), Level(Level) {}
-
-  DiagHelper(ClangTidyContext* Context)
-  :Diag(std::bind(&ClangTidyContext::diagNote, Context, std::placeholders::_1,
-    std::placeholders::_2, std::placeholders::_3)), Level(DiagnosticIDs::Note) {}
-
   DiagHelper() {}
-  
-  void diag(SourceLocation Loc, StringRef Message) {
-    if(Diag) {
-      DiagnosticIDs::Level NextLevel = DiagnosticIDs::Note;
-      std::swap(Level, NextLevel);
-      Diag(Loc, Message, NextLevel);
-    }
+  DiagHelper(ClangTidyContext* Context) : Context(Context) {}
+
+  void diag(clang::SourceLocation Loc, llvm::StringRef Message) {
+    if(Context)
+      Context->diagNote(Loc, Message);
   }
 };
 
@@ -99,7 +112,15 @@ bool isCharPointerType(QualType Qt);
 const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
 
 QualType getPointeeType(QualType Qt);
+QualType getTemplateArgType(QualType Qt, size_t i);
+
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+
+bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+
+KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context);
+KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context);
 
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
@@ -117,8 +138,6 @@ class TypeChecker {
 
 public:
   TypeChecker(const ClangTidyContext* Context) : Context(Context) {}
-  TypeChecker(const ClangTidyContext* Context, ClangTidyCheck *Check) :
-    Context(Context), Dh(Check) {}
   TypeChecker(const ClangTidyContext* Context, const DiagHelper& Dh) :
     Context(Context), Dh(Dh) {}
 
@@ -139,15 +158,6 @@ public:
 };
 
 inline
-bool isSafeRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context,
-  DiagHelper& Dh = NullDiagHelper) {
-
-  TypeChecker Tc(Context, Dh);
-
-  return Tc.isSafeRecord(Dc);
-}
-
-inline
 bool isSafeType(QualType Qt, const ClangTidyContext* Context,
   DiagHelper& Dh = NullDiagHelper) {
 
@@ -164,6 +174,18 @@ bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
 
   return Tc.isDeterministicType(Qt);
 }
+
+inline
+bool isDeepConstType(QualType Qt, const ClangTidyContext* Context,
+  DiagHelper& Dh = NullDiagHelper) {
+
+  TypeChecker Tc(Context, Dh);
+
+  return Tc.isDeepConstType(Qt);
+}
+
+
+
 
 const CXXRecordDecl* isUnionType(QualType Qt);
 bool checkUnion(const CXXRecordDecl *Dc, DiagHelper& Dh = NullDiagHelper);

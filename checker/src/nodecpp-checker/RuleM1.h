@@ -55,11 +55,6 @@ class RuleM1ASTVisitor
     return Context.diag(DiagMsgSrc, Loc, Message, Level);
   }
 
-  DiagHelper makeDiagHelper() {
-    return DiagHelper(std::bind(&RuleM1ASTVisitor::diag, this, std::placeholders::_1,
-    std::placeholders::_2, std::placeholders::_3), DiagnosticIDs::Note);
-  }
-
 public:
 
   explicit RuleM1ASTVisitor(ClangTidyContext &Context): Context(Context) {}

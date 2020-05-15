@@ -410,6 +410,13 @@ QualType getPointeeType(QualType Qt) {
   if (Qt->isPointerType())
     return Qt->getPointeeType().getCanonicalType();
 
+  return getTemplateArgType(Qt, 0);
+}
+
+QualType getTemplateArgType(QualType Qt, size_t i) {
+
+  assert(Qt.isCanonical());
+
   auto Dc = getTemplatePtrDecl(Qt);
 
   assert(Dc);
@@ -417,14 +424,16 @@ QualType getPointeeType(QualType Qt) {
 
   auto &Args = Dc->getTemplateArgs();
 
-  assert(Args.size() >= 1);
+  assert(Args.size() > i);
 
-  auto &Arg0 = Args.get(0);
+  auto &Argi = Args.get(i);
 
-  assert(Arg0.getKind() == TemplateArgument::Type);
+  assert(Argi.getKind() == TemplateArgument::Type);
 
-  return Arg0.getAsType().getCanonicalType();
+  return Argi.getAsType().getCanonicalType();
 }
+
+
 
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
                              DiagHelper &Dh) {
@@ -442,6 +451,67 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
 
   return KindCheck(false, false);
 }
+
+bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+
+  QualType ArgI = getTemplateArgType(Qt, i);
+  return isDeepConstType(ArgI, Context, Dh);
+}
+
+bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+
+  QualType ArgI = getTemplateArgType(Qt, i);
+  return isSafeType(ArgI, Context, Dh);
+}
+
+
+KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
+                             DiagHelper &Dh) {
+  
+  assert(Qt.isCanonical());
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
+    return KindCheck(false, false);
+
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if (Name == "safememory::vector") {
+    return KindCheck(true, templateArgIsSafe(Qt, 0, Context, Dh));
+  }
+
+  return KindCheck(false, false);
+
+}
+
+KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
+                             DiagHelper &Dh) {
+
+  assert(Qt.isCanonical());
+  auto Dc = getTemplatePtrDecl(Qt);
+  if (!Dc)
+    return KindCheck(false, false);
+
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if (Name == "safememory::hash_map") {
+    // mb: hashmap Key,Hash, and Equal must be deep_const
+    // value only needs to be safe
+
+    if(!templateArgIsDeepConstSafe(Qt, 0, Context, Dh))
+      return KindCheck(true, false);
+    if(!templateArgIsSafe(Qt, 1, Context, Dh))
+      return KindCheck(true, false);
+    if(!templateArgIsDeepConstSafe(Qt, 2, Context, Dh))
+      return KindCheck(true, false);
+    if(!templateArgIsDeepConstSafe(Qt, 3, Context, Dh))
+      return KindCheck(true, false);
+    return KindCheck(true, true);
+  }
+
+  return KindCheck(false, false);
+
+}
+
+
+
 
 bool isSafePtrType(QualType Qt) {
 

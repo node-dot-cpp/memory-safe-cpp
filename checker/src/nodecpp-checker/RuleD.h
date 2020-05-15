@@ -55,18 +55,13 @@ class RuleDASTVisitor
     return Context.diag(DiagMsgSrc, Loc, Message, Level);
   }
 
-  DiagHelper makeDiagHelper() {
-    return DiagHelper(std::bind(&RuleDASTVisitor::diag, this, std::placeholders::_1,
-    std::placeholders::_2, std::placeholders::_3), DiagnosticIDs::Note);
-  }
-
   void checkTypeMembers(QualType Qt, SourceLocation Loc) {
 
     assert(Qt.isCanonical());
     if(Qt->getAs<RecordType>()) {
       if(!isDeterministicType(Qt, &Context)) {
         diag(Loc, "(D2.1) expression type is not deterministic");
-        auto Dh = makeDiagHelper();
+        DiagHelper Dh(&Context);
         isDeterministicType(Qt, &Context, Dh);
       }
     }
@@ -132,7 +127,7 @@ public:
         if(Qt->getAs<RecordType>()) {
           
           diag(Var->getLocation(), "(D2.1) variable type is not deterministic");
-          auto Dh = makeDiagHelper();
+          DiagHelper Dh(&Context);
           isDeterministicType(Qt, &Context, Dh);
         }
         else if (!Var->getInit()) {

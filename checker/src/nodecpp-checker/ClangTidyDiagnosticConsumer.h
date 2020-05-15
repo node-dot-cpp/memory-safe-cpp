@@ -123,7 +123,10 @@ public:
                          DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
   DiagnosticBuilder diagError(SourceLocation Loc, StringRef RuleName, StringRef Message);
-  DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level);
+  DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level) {
+    diagNote(Loc, Message);
+  }
+  DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message);
 
   /// \brief Sets the \c SourceManager of the used \c DiagnosticsEngine.
   ///
