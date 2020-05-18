@@ -134,6 +134,19 @@ bool isSystemSafeFunctionName(const ClangTidyContext *Context,
   return (Wl.find(Name) != Wl.end());
 }
 
+std::string getQnameForSystemSafeDb(QualType Qt) {
+
+  if(!Qt.isNull()) {
+    Qt = Qt.getCanonicalType();
+    auto Dc = Qt->getAsCXXRecordDecl();
+    if(Dc)
+      return getQnameForSystemSafeDb(Dc);
+  }
+
+  return "";
+}
+
+
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
   
   std::string QualName;
@@ -178,17 +191,32 @@ std::string getQnameForSystemSafeDb(const NamedDecl *Decl) {
 
 }
 
+const CXXRecordDecl *getRecordWithDefinition(const CXXRecordDecl *Dc) {
+
+  if (!Dc)
+    return nullptr;
+
+  Dc = Dc->getCanonicalDecl();
+  if(Dc->hasDefinition())
+    return Dc;
+
+  //mb: this can happend with templates that don't add anything when instantiated    
+  if(auto TD = dyn_cast<ClassTemplateSpecializationDecl>(Dc))
+    Dc = TD->getSpecializedTemplate()->getTemplatedDecl();
+
+  if(Dc->hasDefinition())
+    return Dc;
+
+  return nullptr;
+}
+
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc,
                             const ClangTidyContext *Context, DiagHelper &Dh) {
 
-  //on debug break here
-  assert(Dc);
-  assert(Dc->hasDefinition());
-
-  if (!Dc || !Dc->hasDefinition()) {
+  Dc = getRecordWithDefinition(Dc);
+  if(!Dc)
     return false;
-  }
 
   //we check explicit and implicit here
   bool HasAttr = Dc->hasAttr<NodeCppNakedStructAttr>();
@@ -285,19 +313,10 @@ KindCheck isNakedStructType(QualType Qt, const ClangTidyContext *Context,
 
   assert(Qt.isCanonical());
 
-  auto Dc = Qt->getAsCXXRecordDecl();
+  const CXXRecordDecl *Dc = Qt->getAsCXXRecordDecl();
 
-  if (!Dc || !Dc->hasDefinition())
-    return KindCheck(false, false);
-
-  // // first verify if is a well known class,
-  // auto name = decl->getQualifiedNameAsString();
-  // if (isNakedStructName(name))
-  //   return KindCheck(true, true);
-  
-  //if it has attribute, the some other rule
-  // must have verified it
-  if (Dc->hasAttr<NodeCppNakedStructAttr>())
+  Dc = getRecordWithDefinition(Dc);
+  if (Dc && Dc->hasAttr<NodeCppNakedStructAttr>())
     return KindCheck(true, checkNakedStructRecord(Dc, Context));
 
   //t->dump();
@@ -378,31 +397,6 @@ bool isCharPointerType(QualType Qt) {
   return false;
 }
 
-const ClassTemplateSpecializationDecl *getTemplatePtrDecl(QualType Qt) {
-
-  assert(Qt.isCanonical());
-
-  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
-      Qt->getAsCXXRecordDecl());
-  if (!Dc)
-    return nullptr;
-
-  // if (!Dc->hasDefinition())
-  //   return nullptr;
-
-  auto &Args = Dc->getTemplateArgs();
-
-  if (Args.size() < 1)
-    return nullptr;
-
-  auto &Arg0 = Args.get(0);
-
-  if (Arg0.getKind() != TemplateArgument::Type)
-    return nullptr;
-
-  return Dc;
-}
-
 QualType getPointeeType(QualType Qt) {
 
   assert(Qt.isCanonical());
@@ -417,10 +411,10 @@ QualType getTemplateArgType(QualType Qt, size_t i) {
 
   assert(Qt.isCanonical());
 
-  auto Dc = getTemplatePtrDecl(Qt);
+  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
+      Qt->getAsCXXRecordDecl());
 
   assert(Dc);
-//  assert(Dc->hasDefinition());
 
   auto &Args = Dc->getTemplateArgs();
 
@@ -439,11 +433,11 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
                              DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return KindCheck(false, false);
+  // auto Dc = getTemplatePtrDecl(Qt);
+  // if (!Dc)
+  //   return KindCheck(false, false);
 
-  std::string Name = getQnameForSystemSafeDb(Dc);
+  std::string Name = getQnameForSystemSafeDb(Qt);
   if (isNakedPtrName(Name)) {
     QualType Pointee = getPointeeType(Qt);
     return KindCheck(true, isSafeType(Pointee, Context, Dh));
@@ -452,16 +446,48 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   return KindCheck(false, false);
 }
 
+// bool hasDeepConstAttr(const CXXRecordDecl* Decl) {
+//   if(Decl->hasAttr<NodeCppDeepConstAttr>())
+//     return true;
+
+//   auto TD = dyn_cast<ClassTemplateSpecializationDecl>(Decl);
+//   if(TD) {
+//     auto D2 = TD->getSpecializedTemplate()->getTemplatedDecl();
+//     if(D2->hasAttr<NodeCppDeepConstAttr>())
+//       return true;
+//   }
+
+//   return false;
+// }
+
+
 bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
 
+  //mb: while [[deep_const]] already implies type safety, is better to check and report
+  // for safety first, as this makes the error message more acurate.
   QualType ArgI = getTemplateArgType(Qt, i);
-  return isDeepConstType(ArgI, Context, Dh);
+  if(!isSafeType(ArgI, Context, Dh)) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not safe");
+    return false;
+  }
+
+  if(!isDeepConstType(ArgI, Context, Dh)) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not [[deep_const]]");
+    return false;
+  }
+
+  return true;
 }
 
 bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
 
   QualType ArgI = getTemplateArgType(Qt, i);
-  return isSafeType(ArgI, Context, Dh);
+  if(!isSafeType(ArgI, Context, Dh)) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not safe");
+    return false;
+  }
+
+  return true;
 }
 
 
@@ -469,11 +495,11 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
                              DiagHelper &Dh) {
   
   assert(Qt.isCanonical());
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return KindCheck(false, false);
+  // auto Dc = getTemplatePtrDecl(Qt);
+  // if (!Dc)
+  //   return KindCheck(false, false);
 
-  std::string Name = getQnameForSystemSafeDb(Dc);
+  std::string Name = getQnameForSystemSafeDb(Qt);
   if (Name == "safememory::vector") {
     return KindCheck(true, templateArgIsSafe(Qt, 0, Context, Dh));
   }
@@ -486,12 +512,14 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
                              DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return KindCheck(false, false);
+  // auto Dc = getTemplatePtrDecl(Qt);
+  // if (!Dc)
+  //   return KindCheck(false, false);
 
-  std::string Name = getQnameForSystemSafeDb(Dc);
-  if (Name == "safememory::hash_map") {
+  std::string Name = getQnameForSystemSafeDb(Qt);
+  if (Name == "safememory::hash_map" 
+    || Name == "safememory::unordered_map"
+    || Name == "safememory::unordered_multimap") {
     // mb: hashmap Key,Hash, and Equal must be deep_const
     // value only needs to be safe
 
@@ -517,25 +545,25 @@ bool isSafePtrType(QualType Qt) {
 
   assert(Qt.isCanonical());
 
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return false;
+  // auto Dc = getTemplatePtrDecl(Qt);
+  // if (!Dc)
+  //   return false;
 
-  std::string Name = getQnameForSystemSafeDb(Dc);
+  std::string Name = getQnameForSystemSafeDb(Qt);
   return isSafePtrName(Name);
 }
 
 bool isAwaitableType(QualType Qt) {
 
-  if(Qt.isNull())
-    return false;
+  // if(Qt.isNull())
+  //   return false;
 
-  Qt = Qt.getCanonicalType();
-  auto Dc = getTemplatePtrDecl(Qt);
-  if (!Dc)
-    return false;
+  // Qt = Qt.getCanonicalType();
+  // auto Dc = getTemplatePtrDecl(Qt);
+  // if (!Dc)
+  //   return false;
 
-  std::string Name = getQnameForSystemSafeDb(Dc);
+  std::string Name = getQnameForSystemSafeDb(Qt);
   return isAwaitableName(Name);
 
 }
@@ -578,12 +606,8 @@ struct SystemLocRiia {
 
 bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
 
-  if (!Dc) {
-    return false;
-  }
-
-  //can this happend?
-  if(Dc->getDefinition() != Dc)
+  Dc = getRecordWithDefinition(Dc);
+  if (!Dc)
     return false;
 
   if(!alreadyChecking.insert(Dc).second) {
@@ -603,10 +627,6 @@ bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
-
-  // if we don't have a definition, we can't check
-  if (!Dc->hasDefinition())
-    return false;
 
   if (Dc->isUnion()) {
     return checkUnion(Dc, Dh);
@@ -653,8 +673,14 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
     return true;
   } else if (Qt->isEnumeralType()) {
     return true;
-  } else if (isAwaitableType(Qt)) {//explicit black-list
+  } else if (isAwaitableType(Qt)) { //explicit black-list
     return false;
+  } else if (isNakedPointerType(Qt, Context)) { //explicit black-list
+    return false;
+  } else if(auto Kc = isSafeVectorType(Qt, Context, Dh)) {
+    return Kc.isOk();
+  } else if(auto Kc = isSafeHashMapType(Qt, Context, Dh)) {
+    return Kc.isOk();
   } else if (isSafePtrType(Qt)) {
     return isSafeType(getPointeeType(Qt));
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
@@ -670,12 +696,8 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
 
 bool TypeChecker::isDeterministicRecord(const CXXRecordDecl *Dc) {
 
-  if (!Dc) {
-    return false;
-  }
-
-  //can this happend?
-  if(Dc->getDefinition() != Dc)
+  Dc = getRecordWithDefinition(Dc);
+  if (!Dc)
     return false;
 
   if(!alreadyChecking.insert(Dc).second) {
@@ -695,10 +717,6 @@ bool TypeChecker::isDeterministicRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
-
-  // if we don't have a definition, we can't check
-  if (!Dc->hasDefinition())
-    return false;
 
   if (Dc->isUnion()) {
 
@@ -776,12 +794,8 @@ bool TypeChecker::isDeterministicType(const QualType& Qt) {
 
 bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
 
-  if (!Dc) {
-    return false;
-  }
-
-  //can this happend?
-  if(Dc->getDefinition() != Dc)
+  Dc = getRecordWithDefinition(Dc);
+  if (!Dc)
     return false;
 
   if(!alreadyChecking.insert(Dc).second) {
@@ -789,11 +803,8 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
     return true;
   }
 
-  // if database says is a safe name, then is safe
-  // std::string Name = getQnameForSystemSafeDb(Dc);
-  // if (isSystemSafeTypeName(Context, Name))
-  //   return true;
-  bool HasAttr = Dc->hasAttr<NodeCppDeepConstAttr>();
+  if(!Dc->hasAttr<NodeCppDeepConstAttr>())
+    return false;
 
   bool sysLoc = false;
 
@@ -803,24 +814,11 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
 
   SystemLocRiia riia(*this, sysLoc);
 
-  if(isSystemLoc && HasAttr)
+  if(isSystemLoc)
     return true;
 
-  // if we don't have a definition, we can't check
-  if (!Dc->hasDefinition())
-    return false;
-
   if (Dc->isUnion()) {
-
-    // for unions, one initializer is enought.
-    // the rest of the union is zero padded.
-
-    // auto F = Dc->fields();
-    // for (auto It = F.begin(); It != F.end(); ++It) {
-    //   if (It->hasInClassInitializer()) {
-    //     return true;
-    //   }
-    // }
+    //not supported yet
     return false;
   }
 
@@ -910,13 +908,14 @@ bool TypeChecker::isDeepConstType(QualType Qt) {
   }
 }
 
-
 const CXXRecordDecl *isUnionType(QualType Qt) {
 
   assert(Qt.isCanonical());
 
-  auto Rd = Qt->getAsCXXRecordDecl();
-  return (Rd && Rd->hasDefinition() && Rd->isUnion()) ? Rd : nullptr;
+  const CXXRecordDecl *Rd = Qt->getAsCXXRecordDecl();
+  Rd = getRecordWithDefinition(Rd);
+ 
+  return (Rd && Rd->isUnion()) ? Rd : nullptr;
 }
 
 bool checkUnion(const CXXRecordDecl *Dc, DiagHelper &Dh) {

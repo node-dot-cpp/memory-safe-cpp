@@ -54,7 +54,7 @@ public:
   DiagHelper() {}
   DiagHelper(ClangTidyContext* Context) : Context(Context) {}
 
-  void diag(clang::SourceLocation Loc, llvm::StringRef Message) {
+  void diag(clang::SourceLocation Loc, llvm::StringRef Message) const {
     if(Context)
       Context->diagNote(Loc, Message);
   }
@@ -90,7 +90,10 @@ bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
 
+std::string getQnameForSystemSafeDb(QualType Qt);
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl);
+
+const CXXRecordDecl *getDeclWithDefinition(const CXXRecordDecl *Dc);
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
@@ -109,18 +112,18 @@ bool isNullPtrValue(ASTContext *Context, const Expr *Ex);
 bool isStringLiteralType(QualType Qt);
 bool isCharPointerType(QualType Qt);
 
-const ClassTemplateSpecializationDecl* getTemplatePtrDecl(QualType Qt);
-
 QualType getPointeeType(QualType Qt);
 QualType getTemplateArgType(QualType Qt, size_t i);
 
 KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
+// bool hasDeepConstAttr(const CXXRecordDecl* Decl);
+
 bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
-KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context);
-KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context);
+KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
