@@ -124,7 +124,7 @@ public:
 
   DiagnosticBuilder diagError(SourceLocation Loc, StringRef RuleName, StringRef Message);
   DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level) {
-    diagNote(Loc, Message);
+    return diagNote(Loc, Message);
   }
   DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message);
 

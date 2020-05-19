@@ -174,7 +174,7 @@ index 51f2ce2..b13de57 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index dc9edac..724b07a 100644
+index dc9edac..c9955fa 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
 @@ -3004,3 +3004,51 @@ def InternalLinkage : InheritableAttr {
@@ -182,58 +182,58 @@ index dc9edac..724b07a 100644
    let Documentation = [InternalLinkageDocs];
  }
 +
-+def NodeCppNakedStruct : InheritableAttr {
++def NodeCppNakedStruct : Attr {
 +  let Spellings = [CXX11<"nodecpp","naked_struct">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
 +  let Documentation = [NodeCppNakedStructDocs];
 +}
 +
-+def NodeCppMayExtend : InheritableAttr {
++def NodeCppMayExtend : Attr {
 +  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
 +//  let Subjects = SubjectList<[ParmVar]>;
 +  let Documentation = [NodeCppMayExtendDocs];
 +}
 +
-+def NodeCppNoAwait : InheritableAttr {
++def NodeCppNoAwait : Attr {
 +  let Spellings = [CXX11<"nodecpp","no_await">];
 +//  let Subjects = SubjectList<[ParmVar]>;
 +  let Documentation = [NodeCppNoAwaitDocs];
 +}
 +
-+def NodeCppMemoryUnsafe : InheritableAttr {
++def NodeCppMemoryUnsafe : Attr {
 +  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
 +//  let Subjects = SubjectList<[Namespace]>;
 +  let Documentation = [NodeCppMemoryUnsafeDocs];
 +}
 +
-+def NodeCppNonDeterministic : InheritableAttr {
++def NodeCppNonDeterministic : Attr {
 +  let Spellings = [CXX11<"nodecpp","non_deterministic">];
 +//  let Subjects = SubjectList<[Namespace]>;
 +  let Documentation = [NodeCppNonDeterministicDocs];
 +}
 +
-+def NodeCppSelfContained : InheritableAttr {
-+  let Spellings = [CXX11<"nodecpp","self_contained">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppSelfContainedDocs];
-+}
-+
-+def NodeCppNoSideEffect : InheritableAttr {
++def NodeCppNoSideEffect : Attr {
 +  let Spellings = [CXX11<"nodecpp","no_side_effect">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
 +  let Documentation = [NodeCppNoSideEffectDocs];
 +}
 +
-+def NodeCppDeepConst : InheritableAttr {
++def NodeCppNoSideEffectWhenConst : Attr {
++  let Spellings = [CXX11<"nodecpp","no_side_effect_when_const">];
++//  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [NodeCppNoSideEffectWhenConstDocs];
++}
++
++def NodeCppDeepConst : Attr {
 +  let Spellings = [CXX11<"nodecpp","deep_const">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
 +  let Documentation = [NodeCppDeepConstDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..4e97025 100644
+index 5a937b1..9e7bbd4 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,74 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,75 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -285,19 +285,20 @@ index 5a937b1..4e97025 100644
 +}];
 +}
 +
-+def NodeCppSelfContainedDocs : Documentation {
-+  let Category = DocCatNodeCpp;
-+  let Content = [{
-+This attribute is used on class declaration to indicate that an
-+instance of this type is completely independant of others.
-+}];
-+}
 +
 +def NodeCppNoSideEffectDocs : Documentation {
 +  let Category = DocCatNodeCpp;
 +  let Content = [{
 +This attribute is used on function and method declaration to indicate
 +it is side effect free.  
++}];
++}
++
++def NodeCppNoSideEffectWhenConstDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on class declaration to indicate that all const
++methods are [[no_side_effect]]
 +}];
 +}
 +
@@ -442,7 +443,7 @@ index 12d7a16..cdc7d22 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..d6521b6 100644
+index 77deed6..f500806 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -485,11 +486,11 @@ index 77deed6..d6521b6 100644
 +  case ParsedAttr::AT_NodeCppNonDeterministic:
 +    handleSimpleAttribute<NodeCppNonDeterministicAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppSelfContained:
-+    handleSimpleAttribute<NodeCppSelfContainedAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_NodeCppNoSideEffect:
 +    handleSimpleAttribute<NodeCppNoSideEffectAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_NodeCppNoSideEffectWhenConst:
++    handleSimpleAttribute<NodeCppNoSideEffectWhenConstAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppDeepConst:
 +    handleSimpleAttribute<NodeCppDeepConstAttr>(S, D, AL);
