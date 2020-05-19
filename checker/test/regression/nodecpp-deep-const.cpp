@@ -1,4 +1,5 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// XFAIL: *
 
 #include <safe_ptr.h>
 #include <safememory/string.h>
