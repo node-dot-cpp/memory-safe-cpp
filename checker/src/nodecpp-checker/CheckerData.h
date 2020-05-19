@@ -66,6 +66,9 @@ public:
   /// \brief Returns \c true if \p Name has an unsafe namespace as prefix.
   bool isFromUnsafeNamespace(const std::string& Name) const;
 
+  /// \brief Returns \c true if function is \c [[no_side_effect]]
+  bool isNoSideEffect(const clang::FunctionDecl *D);
+
   /// \brief Returns \c true if type is safe.
   bool isHeapSafe(clang::QualType Qt);
   void reportNonSafeDetail(clang::QualType Qt);
@@ -99,6 +102,7 @@ public:
 private:
 
   std::set<std::string> UnsafeNamespaces;
+  std::set<const clang::FunctionDecl*> NoSideEffectFuncs;
 
   struct TypeData2 {
     bool wasTested = false;

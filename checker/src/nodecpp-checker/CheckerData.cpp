@@ -48,6 +48,33 @@ bool CheckerData::isFromUnsafeNamespace(const std::string& Name) const {
   return false;
 }
 
+bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
+  
+  if(!D)
+    return false;
+
+  D = D->getCanonicalDecl();
+  if(NoSideEffectFuncs.find(D) != NoSideEffectFuncs.end())
+    return true;
+
+
+  if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
+    NoSideEffectFuncs.insert(D);
+    return true;
+  }
+  else if(auto M = dyn_cast<CXXMethodDecl>(D)) {
+    if(M->isConst()) {
+      if(M->getParent()->hasAttr<NodeCppNoSideEffectWhenConstAttr>()) {
+        NoSideEffectFuncs.insert(D);
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+
 bool CheckerData::isHeapSafe(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();

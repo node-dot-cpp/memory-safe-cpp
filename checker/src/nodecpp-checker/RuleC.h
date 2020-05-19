@@ -72,6 +72,17 @@ class RuleCASTVisitor
 
   CheckHelper* getCheckHelper() const { return Context.getCheckHelper(); }
 
+  template<typename ATTR>
+  void checkConsistency(clang::Decl *Current, clang::Decl *Reference, StringRef AttrName) {
+    if(Current->hasAttr<ATTR>() != Reference->hasAttr<ATTR>()) {
+      diag(Current->getLocation(), "(C3) inconsistent attribute %0 at declaration") << AttrName;
+      diag(Reference->getLocation(), "previous declaration was here", DiagnosticIDs::Note);
+    }
+  } 
+
+  void diagC2(SourceLocation Loc, StringRef AttrName, StringRef Where) {
+      diag(Loc, "(C2) attribute %0 allowed at %1 only") << AttrName << Where;
+  }
 public:
 
   explicit RuleCASTVisitor(ClangTidyContext &Context): Context(Context) {}
@@ -104,6 +115,7 @@ public:
       return Super::TraverseNamespaceDecl(D);
   }
 
+
   bool VisitNamespaceDecl(clang::NamespaceDecl *D) {
 
     if(D->isAnonymousNamespace()) {
@@ -118,57 +130,88 @@ public:
       }
     }
     else {
-
       clang::NamespaceDecl* O = D->getOriginalNamespace();
-      if((D->hasAttr<NodeCppMemoryUnsafeAttr>() != O->hasAttr<NodeCppMemoryUnsafeAttr>()) ||
-          (D->hasAttr<NodeCppNonDeterministicAttr>() != O->hasAttr<NodeCppNonDeterministicAttr>())) {
-
-        diag(D->getLocation(), "(C3) inconsistent attribute at namespace declaration");
-        diag(O->getLocation(), "previous declaration was here", DiagnosticIDs::Note);
-      }
+      checkConsistency<NodeCppMemoryUnsafeAttr>(D, O, "[[memory_unsafe]]");
+      checkConsistency<NodeCppNonDeterministicAttr>(D, O, "[[non_deterministic]]");
     }
 
     return Super::VisitNamespaceDecl(D);
   }
 
+  bool VisitFunctionDecl(clang::FunctionDecl *D) {
+
+    if(!D->isCanonicalDecl()) {
+      clang::FunctionDecl* C = D->getCanonicalDecl();
+      checkConsistency<NodeCppNoSideEffectAttr>(D, C, "[[no_side_effect]]");
+    }
+
+    return Super::VisitFunctionDecl(D);
+  }
+
+  bool VisitCXXRecordDecl(clang::CXXRecordDecl *D) {
+
+    if(!D->isCanonicalDecl()) {
+      clang::CXXRecordDecl* C = D->getCanonicalDecl();
+      checkConsistency<NodeCppNakedStructAttr>(D, C, "[[naked_struct]]");
+      checkConsistency<NodeCppDeepConstAttr>(D, C, "[[deep_const]]");
+    }
+
+    return Super::VisitCXXRecordDecl(D);
+  }
+
   bool VisitDecl(clang::Decl *D) {
 
     if(D->hasAttr<NodeCppMemoryUnsafeAttr>() && !isa<NamespaceDecl>(D)) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::memory_unsafe]] allowed at namespace declaration only");
+      diagC2(D->getLocation(), "[[nodecpp::memory_unsafe]]", "namespace");
     }
 
     if(D->hasAttr<NodeCppNonDeterministicAttr>() && !isa<NamespaceDecl>(D)) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::non_determinstic]] allowed at namespace declaration only");
+      diagC2(D->getLocation(), "[[nodecpp::non_determinstic]]", "namespace");
     }
 
     if(D->hasAttr<NodeCppNakedStructAttr>()) {
       auto R = dyn_cast<CXXRecordDecl>(D);
-      if(!R || (!R->isStruct() && !R->isClass())) {
-        diag(D->getLocation(), "(C2) attribute [[nodecpp::naked_struct]] allowed at struct or class declaration only");
+      if(R && (R->isStruct() || R->isClass())) {
+        ; //ok
+      }
+      else {
+        diagC2(D->getLocation(), "[[nodecpp::naked_struct]]", "struct or class");
       }
     }
 
     if(D->hasAttr<NodeCppDeepConstAttr>()) {
       auto R = dyn_cast<CXXRecordDecl>(D);
-      if(!R || (!R->isStruct() && !R->isClass())) {
-        diag(D->getLocation(), "(C2) attribute [[nodecpp::deep_const]] allowed at struct or class declaration only");
+      if(R && (R->isStruct() || R->isClass())) {
+        ;//ok
+      }
+      else {
+        diagC2(D->getLocation(), "[[nodecpp::deep_const]]", "struct or class");
       }
     }
 
+    if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
+      if(isa<CXXConstructorDecl>(D))
+        diagC2(D->getLocation(), "[[nodecpp::no_side_effect]]", "non-virtual function");
+      if(!isa<FunctionDecl>(D))
+        diagC2(D->getLocation(), "[[nodecpp::no_side_effect]]", "non-virtual function");
+      else if(auto M = dyn_cast<CXXMethodDecl>(D)) {
+        if(M->isVirtual())
+          diagC2(D->getLocation(), "[[nodecpp::no_side_effect]]", "non-virtual function");
+      }
+    }
+
+
     if(D->hasAttr<NodeCppMayExtendAttr>() && !IsMemoryUnsafe) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::may_extend_to_this]] only allowed at system libraries declarartions");
+      diagC2(D->getLocation(), "[[nodecpp::may_extend_to_this]]", "system libraries");
     }
 
     if(D->hasAttr<NodeCppNoAwaitAttr>() && !IsMemoryUnsafe) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::no_await]] only allowed at system libraries declarartions");
+      diagC2(D->getLocation(), "[[nodecpp::no_await]]", "system libraries");
     }
 
-    if(D->hasAttr<NodeCppSelfContainedAttr>()) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::self_contained]] not implemented yet");
-    }
 
-    if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
-      diag(D->getLocation(), "(C2) attribute [[nodecpp::no_side_effect]] not implemented yet");
+    if(D->hasAttr<NodeCppNoSideEffectWhenConstAttr>() && !IsMemoryUnsafe) {
+      diagC2(D->getLocation(), "[[nodecpp::no_side_effect_when_const]]", "system libraries");
     }
 
     return Super::VisitDecl(D);

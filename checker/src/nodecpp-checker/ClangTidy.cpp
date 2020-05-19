@@ -23,6 +23,7 @@
 #include "RuleD.h"
 #include "RuleM1.h"
 #include "RuleS9.h"
+#include "NoSideEffectRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
@@ -381,6 +382,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   Consumers.push_back(llvm::make_unique<RuleDASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleS9ASTConsumer>(Context));
+  Consumers.push_back(llvm::make_unique<NoSideEffectASTConsumer>(&Context));
 
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));

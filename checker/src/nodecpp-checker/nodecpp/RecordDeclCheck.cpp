@@ -58,6 +58,13 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
       getContext()->diagError(Rd->getLocation(), "xxx", "unsafe naked_struct declaration");
       getCheckHelper()->reportNakedStructDetail(Qt);
     }
+    else if(auto Dc = getCheckHelper()->checkDeepConst(Qt)) {
+      if(Dc.isOk())
+        return;
+
+      getContext()->diagError(Rd->getLocation(), "xxx", "unsafe [[deep_const]] declaration");
+      getCheckHelper()->reportDeepConstDetail(Qt);
+    }
     else {
       if (getCheckHelper()->isHeapSafe(Qt))
         return;
