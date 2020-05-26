@@ -37,10 +37,10 @@ struct Other {
 void badFunc() {
     func(1, 2);//ok
     normalFunc();//bad
-// CHECK: :[[@LINE-1]]:5: error: (S11)
+// CHECK: :[[@LINE-1]]:5: error: function with no_side_effect attribute can call only other no side effect functions [no-side-effect]
 
     Basic b;
     Other o;
-// CHECK: :[[@LINE-1]]:11: error: (S11)
+// CHECK: :[[@LINE-1]]:11: error: function with no_side_effect attribute can call only other no side effect functions [no-side-effect]
 }
 

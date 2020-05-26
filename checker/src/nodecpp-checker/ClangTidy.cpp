@@ -382,7 +382,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   Consumers.push_back(llvm::make_unique<RuleDASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleS9ASTConsumer>(Context));
-  Consumers.push_back(llvm::make_unique<NoSideEffectASTConsumer>(&Context));
+  Consumers.push_back(makeNoSideEffectRule(&Context));
 
   return llvm::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));

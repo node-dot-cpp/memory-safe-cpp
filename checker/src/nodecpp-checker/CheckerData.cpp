@@ -245,7 +245,7 @@ KindCheck2 CheckerData::checkDeepConst(clang::QualType Qt) {
   auto& V = Data[T];
 
   if(!V.isDeepConst.wasTested) {
-    auto Ck = isNakedStructType(Qt, Context);
+    auto Ck = isDeepConstType(Qt, Context);
     V.isDeepConst.wasTested = true;
     V.isDeepConst.isPositive = static_cast<bool>(Ck);
     V.isDeepConst.isOk = Ck.isOk();
@@ -269,7 +269,7 @@ void CheckerData::reportDeepConstDetail(clang::QualType Qt) {
 
   DiagHelper Dh(Context);
 
-  auto Ck = isNakedStructType(Qt, Context, Dh);
+  auto Ck = isDeepConstType(Qt, Context, Dh);
 
   assert(static_cast<bool>(Ck));
   assert(!Ck.isOk());

@@ -109,6 +109,17 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
+  //here we verify that deep const template instantiations are indeed deep-const
+  if(auto Dc = getCheckHelper()->checkDeepConst(Qt)) {
+    if(!Dc.isOk()) {
+      getContext()->diagError2(Var->getLocation(), "deep-const", "unsafe deep_const attribute at variable declaration");
+      getCheckHelper()->reportDeepConstDetail(Qt);
+      return;
+    }
+  }
+
+
+
   if (getCheckHelper()->isHeapSafe(Qt)) {
     return;
   }
@@ -215,7 +226,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     getCheckHelper()->reportNakedStructDetail(Qt); // for report
     return;
   }
-
+  
   if (isLambdaType(Qt)) {
 
     //naked struct internal is checked at other place

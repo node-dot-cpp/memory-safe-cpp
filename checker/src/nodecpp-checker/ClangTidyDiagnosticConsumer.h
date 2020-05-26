@@ -123,6 +123,7 @@ public:
                          DiagnosticIDs::Level Level = DiagnosticIDs::Warning);
 
   DiagnosticBuilder diagError(SourceLocation Loc, StringRef RuleName, StringRef Message);
+  DiagnosticBuilder diagError2(SourceLocation Loc, StringRef RuleName, StringRef Message);
   DiagnosticBuilder diagNote(SourceLocation Loc, StringRef Message, DiagnosticIDs::Level) {
     return diagNote(Loc, Message);
   }

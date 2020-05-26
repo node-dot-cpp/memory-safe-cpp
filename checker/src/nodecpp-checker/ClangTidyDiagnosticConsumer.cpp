@@ -215,6 +215,13 @@ DiagnosticBuilder ClangTidyContext::diagError(SourceLocation Loc, StringRef Rule
   return DiagEngine->Report(Loc, ID);
 }
 
+DiagnosticBuilder ClangTidyContext::diagError2(SourceLocation Loc, StringRef RuleName, StringRef Message) {
+
+  unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error, (Message));
+  CheckNamesByDiagnosticID.try_emplace(ID, RuleName);
+  return DiagEngine->Report(Loc, ID);
+}
+
 DiagnosticBuilder ClangTidyContext::diagNote(SourceLocation Loc, StringRef Message) {
 
   unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(

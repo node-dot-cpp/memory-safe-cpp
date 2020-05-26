@@ -1,5 +1,4 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
-// XFAIL: *
 
 #include <safe_ptr.h>
 #include <safememory/string.h>
@@ -16,11 +15,18 @@ struct DeepConst;
 
 
 struct [[nodecpp::deep_const]] BadDeepConst {
+// CHECK: :[[@LINE-1]]:32: error: unsafe deep_const attribute at declaration [deep-const]
     owning_ptr<long> ptr;
-// CHECK: :[[@LINE-1]]:34: error: unsafe naked_struct declaration
+};
+
+
+template <class T>
+struct [[nodecpp::deep_const]] BadDeepConstTemplate {
+    T t;
 };
 
 void func() {
 
-    BadDeepConst b;
+    BadDeepConstTemplate<soft_ptr<int>> b;
+// CHECK: :[[@LINE-1]]:41: error: unsafe deep_const attribute at variable declaration [deep-const]
 }

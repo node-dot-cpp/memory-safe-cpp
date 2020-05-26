@@ -150,8 +150,8 @@ public:
   bool isDeterministicRecord(const CXXRecordDecl *Dc);
   bool isDeterministicType(const QualType& Qt);
 
-  bool isDeepConstRecord(const CXXRecordDecl *Dc);
-  bool isDeepConstType(QualType Qt);
+  KindCheck isDeepConstRecord(const CXXRecordDecl *Dc);
+  KindCheck isDeepConstType(QualType Qt);
 
   bool swapSystemLoc(bool newValue) {
     bool tmp = isSystemLoc;
@@ -179,7 +179,7 @@ bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
 }
 
 inline
-bool isDeepConstType(QualType Qt, const ClangTidyContext* Context,
+KindCheck isDeepConstType(QualType Qt, const ClangTidyContext* Context,
   DiagHelper& Dh = NullDiagHelper) {
 
   TypeChecker Tc(Context, Dh);

@@ -210,7 +210,6 @@ const CXXRecordDecl *getRecordWithDefinition(const CXXRecordDecl *Dc) {
   return nullptr;
 }
 
-
 bool checkNakedStructRecord(const CXXRecordDecl *Dc,
                             const ClangTidyContext *Context, DiagHelper &Dh) {
 
@@ -792,19 +791,23 @@ bool TypeChecker::isDeterministicType(const QualType& Qt) {
   }
 }
 
-bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
+
+KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
 
   Dc = getRecordWithDefinition(Dc);
   if (!Dc)
-    return false;
+    return {false, false};
 
   if(!alreadyChecking.insert(Dc).second) {
     //already checking this type (got recursive)
-    return true;
+    return {true, true};
   }
 
   if(!Dc->hasAttr<NodeCppDeepConstAttr>())
-    return false;
+    return {false, false};
+
+
+  // below this line, we must return true for 'isKind'
 
   bool sysLoc = false;
 
@@ -815,11 +818,12 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   SystemLocRiia riia(*this, sysLoc);
 
   if(isSystemLoc)
-    return true;
+    return {true, true};
 
   if (Dc->isUnion()) {
     //not supported yet
-    return false;
+    Dh.diag(Dc->getLocation(), "Union not supported yet");
+    return {true, false};
   }
 
   auto F = Dc->fields();
@@ -831,7 +835,7 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
             "member '" + std::string((*It)->getName()) + "' is not deep const";
         Dh.diag((*It)->getLocation(), Msg);
       }
-      return false;
+      return {true, false};
     }
   }
 
@@ -843,20 +847,20 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
     if (isa<CXXDestructorDecl>(Method)) {
       if(!Method->isDefaulted()) {
         Dh.diag((*It)->getLocation(), "desctructor must be 'default' for deep const");
-        return false;
+        return {true, false};
       }
     }
     else if (auto Ctor = dyn_cast<CXXConstructorDecl>(Method)) {
       if(Ctor->isCopyOrMoveConstructor() && !Ctor->isDefaulted()) {
         Dh.diag((*It)->getLocation(), "copy/move constructor must be 'default' for deep const");
-        return false;
+        return {true, false};
       }
     }
     else if (Method->isMoveAssignmentOperator() ||
         Method->isCopyAssignmentOperator()) {
       if(!Method->isDefaulted()) {
         Dh.diag((*It)->getLocation(), "copy/move assignment operator must be 'default' for deep const");
-        return false;
+        return {true, false};
       }
     }
   }
@@ -869,42 +873,42 @@ bool TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
       if(!isSystemLoc || riia.getWasFalse()) {
         Dh.diag((*It).getBaseTypeLoc(), "base class is not deep const");
       }
-      return false;
+      return {true, false};
     }
   }
 
-  // finally we are deterministic!
-  return true;
+  // finally we are deep const!
+  return {true, true};
 }
 
-bool TypeChecker::isDeepConstType(QualType Qt) {
+KindCheck TypeChecker::isDeepConstType(QualType Qt) {
 
   Qt = Qt.getCanonicalType();
 
   if (Qt->isReferenceType()) {
-    return false;
+    return {false, false};
   } else if (Qt->isPointerType()) {
-    return false;
+    return {false, false};
   } else if (Qt->isBuiltinType()) {
-    return true;
+    return {true, true};
   } else if (Qt->isEnumeralType()) {
-    return true;
+    return {true, true};
   // } else if (isAwaitableType(Qt)) {//mb: check
   //   return false;
   // } else if (isLambdaType(Qt)) {
   //   return false;
   } else if (isSafePtrType(Qt)) {
-    return false;
+    return {false, false};
   } else if (isNakedPointerType(Qt, Context)) {
-    return false;
+    return {false, false};
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isDeepConstRecord(Rd);
   } else if (Qt->isTemplateTypeParmType()) {
     // we will take care at instantiation
-    return true;
+    return {true, true};
   } else {
     //t->dump();
-    return false;
+    return {false, false};
   }
 }
 

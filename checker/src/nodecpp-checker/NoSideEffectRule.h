@@ -28,115 +28,14 @@
 #ifndef NODECPP_CHECKER_NOSIDEEFFECTRULE_H
 #define NODECPP_CHECKER_NOSIDEEFFECTRULE_H
 
-
-#include "nodecpp/NakedPtrHelper.h"
-#include "ClangTidyDiagnosticConsumer.h"
+#include "ClangTidyDiagnosticConsumer.h" // for ClangTidyContext
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/AST/ASTLambda.h"
 
 namespace nodecpp {
 namespace checker {
 
-
-class NoSideEffectASTVisitor
-  : public RecursiveASTVisitor<NoSideEffectASTVisitor> {
-
-  typedef RecursiveASTVisitor<NoSideEffectASTVisitor> Super;
-
-  ClangTidyContext *Context;
-
-  /// \brief flags if we are currently visiting a \c [[NoSideEffect]] function or method 
-  bool NoSideEffect = false;
-
-  /// \brief riia class to help with declarations inside other declarations
-  struct FlagRiia {
-    bool &V;
-    bool OldValue;
-    FlagRiia(bool &V) :V(V) {
-      OldValue = V;
-      V = false;
-    }
-    ~FlagRiia() {
-      V = OldValue;
-    }
-  };
-
-  /// \brief Add a diagnostic with the check's name.
-  DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
-                         DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context->diag(DiagMsgSrc, Loc, Message, Level);
-  }
-  
-  CheckHelper* getCheckHelper() const { return Context->getCheckHelper(); }
-
-public:
-
-  explicit NoSideEffectASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else
-      return Super::TraverseDecl(D);
-  }
-
-  bool TraverseFunctionDecl(clang::FunctionDecl *D) {
-
-    FlagRiia Riia(NoSideEffect);
-    NoSideEffect = getCheckHelper()->isNoSideEffect(D);
-
-    return Super::TraverseFunctionDecl(D);;
-  }
-
-  bool VisitCallExpr(CallExpr *E) {
-
-    if(NoSideEffect) {
-
-      if(!getCheckHelper()->isNoSideEffect(E->getDirectCallee())) {
-        diag(E->getExprLoc(), "(S11) function with attribute [[no_side_effect]] can call only other no side effect functions");
-      }
-    }
-
-    return Super::VisitCallExpr(E);
-  }
-
-  bool VisitCXXConstructExpr(CXXConstructExpr *E) {
-
-    if(NoSideEffect) {
-      if(!E->getConstructor()->isTrivial()) {
-        diag(E->getExprLoc(), "(S11) function with attribute [[no_side_effect]] can call only other no side effect functions");
-      }
-    }
-
-    return Super::VisitCXXConstructExpr(E);
-  }
-};
-
-
-class NoSideEffectASTConsumer : public ASTConsumer {
-
-  NoSideEffectASTVisitor Visitor;
-
-public:
-  NoSideEffectASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
-
-  void HandleTranslationUnit(ASTContext &Context) override {
-    Visitor.TraverseDecl(Context.getTranslationUnitDecl());
-  }
-
-};
+std::unique_ptr<clang::ASTConsumer> makeNoSideEffectRule(ClangTidyContext *Context);
 
 } // namespace checker
 } // namespace nodecpp

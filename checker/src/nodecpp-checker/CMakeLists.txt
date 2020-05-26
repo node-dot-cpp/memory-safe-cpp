@@ -9,6 +9,7 @@ add_clang_library(nodecppChecker
   ClangTidyDiagnosticConsumer.cpp
   ClangTidyOptions.cpp
   JSONSafeDatabase.cpp
+  NoSideEffectRule.cpp
 
   LINK_LIBS
   clangAST

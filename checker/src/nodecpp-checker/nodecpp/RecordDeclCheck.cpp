@@ -62,7 +62,7 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
       if(Dc.isOk())
         return;
 
-      getContext()->diagError(Rd->getLocation(), "xxx", "unsafe [[deep_const]] declaration");
+      getContext()->diagError2(Rd->getLocation(), "deep-const", "unsafe deep_const attribute at declaration");
       getCheckHelper()->reportDeepConstDetail(Qt);
     }
     else {
