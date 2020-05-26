@@ -30,6 +30,7 @@
 
 #include <foundation.h>
 #include <nodecpp_assert.h>
+#include <log.h>
 #include <memory>
 #include <stdint.h>
 

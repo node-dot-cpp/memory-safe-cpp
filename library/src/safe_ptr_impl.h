@@ -29,6 +29,8 @@
 #define SAFE_PTR_IMPL_H
 
 #include "safe_ptr_common.h"
+#include <stack_info.h>
+#include "../include/nodecpp_error/nodecpp_error.h"
 
 namespace nodecpp::safememory
 {
@@ -385,7 +387,6 @@ inline
 void* getPtrToAllocatedObjectFromControlBlock_( void* allocObjPtr ) { return (reinterpret_cast<FirstControlBlock*>(allocObjPtr)) + 1; }
 
 
-
 //struct make_owning_t {};
 template<class T>
 class owning_ptr_base_impl
@@ -442,6 +443,20 @@ class owning_ptr_base_impl
 				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
 					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 	}
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+	void dbgSetDestructionPointInfo()
+	{
+		nodecpp::StackInfo si( true );
+		FirstControlBlock* cb = getControlBlock();
+		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( cb->slots[i].isUsed() )
+				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->dbgLastDestructionPoint = si;
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgLastDestructionPoint = si;
+	}
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckValidity() const
@@ -540,7 +555,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			updatePtrForListItemsWithInvalidPtr();
+			dbgSetDestructionPointInfo();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setZombie();
@@ -555,6 +573,9 @@ public:
 		{
 			destruct( t.getTypedPtr() );
 			updatePtrForListItemsWithInvalidPtr();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+			dbgSetDestructionPointInfo();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setPtr( nullptr );
@@ -759,6 +780,9 @@ class soft_ptr_base_impl
 		bool isOnStack() { return has_flag<0>(); }
 	};
 	Pointers<T> pointers; // the only data member!
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+	nodecpp::StackInfo dbgLastDestructionPoint;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
 	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
@@ -1458,19 +1482,51 @@ public:
 		soft_ptr_base_impl<T>::swap(other);
 	}
 
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+	void dbgTestForNullAndThrowNullPtrAccess() const
+	{
+		if ( this->getDereferencablePtr() == nullptr )
+		{
+			if ( nodecpp::impl::isDataStackInfo( this->dbgLastDestructionPoint ) )
+			{
+				auto s = fmt::format( "\tObject has been deleted at {} here:\n{}", nodecpp::impl::whenTakenStackInfo( this->dbgLastDestructionPoint ), nodecpp::impl::whereTakenStackInfo( this->dbgLastDestructionPoint ).c_str() );
+				nodecpp::error::string_ref extra( s.c_str() );
+				throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
+			}
+			else
+			{
+				nodecpp::error::string_ref extra( nodecpp::error::string_ref::literal_tag_t(), "Pointer has not yet been initialized or set to nullptr" );
+				throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
+			}
+		}
+	}
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+
 	nullable_ptr_impl<T> get() const
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgTestForNullAndThrowNullPtrAccess();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+
 		return soft_ptr_base_impl<T>::get();
 	}
 
 	T& operator * () const
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgTestForNullAndThrowNullPtrAccess();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+
 		checkNotNullAllSizes( this->getDereferencablePtr() );
 		return *(this->getDereferencablePtr());
 	}
 
 	T* operator -> () const 
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgTestForNullAndThrowNullPtrAccess();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+
 		checkNotNullLargeSize( this->getDereferencablePtr() );
 		return this->getDereferencablePtr();
 	}

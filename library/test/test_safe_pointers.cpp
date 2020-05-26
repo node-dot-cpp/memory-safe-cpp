@@ -1327,6 +1327,18 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
+	nodecpp::safememory::owning_ptr<int> op = nodecpp::safememory::make_owning<int>( 3 );
+	nodecpp::safememory::soft_ptr<int>* sp = new nodecpp::safememory::soft_ptr<int>;
+	*sp = op;
+	op = nullptr;
+	try { *(*sp) = 4; }
+	catch (nodecpp::error::error e)
+	{
+//		nodecpp::log::default_log::fatal( nodecpp::log::ModuleID(nodecpp::foundation_module_id),"error caught; e.name = {}, e.description = {}", e.name().c_str(), e.description().c_str() );
+		printf( "error caught; e.name = %s, e.description = %s", e.name().c_str(), e.description().c_str() );
+	}
+	return 0;
+
 	testSoftPtrsWithZeroOffset();
 	testOwningPtrWithManDel();
 //	return 0;
