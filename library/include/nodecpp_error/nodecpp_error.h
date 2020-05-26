@@ -92,6 +92,8 @@ namespace nodecpp::error {
 				default: return "unknown nodecpp error";
 			}
 		}
+		virtual void log(error_value* value, log::LogLevel l ) const { log::default_log::log( l, "{}", value_to_message( value ).c_str() ); }
+		virtual void log(error_value* value, log::Log& targetLog, log::LogLevel l ) const { targetLog.log( l, "{}", value_to_message( value ).c_str() ); }
 		error_value* create_value( NODECPP_EXCEPTION code, string_ref&& extra ) const {
 			return new nodecpp_error_value(code, std::move( extra ));
 		}

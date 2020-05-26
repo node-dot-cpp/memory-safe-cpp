@@ -78,6 +78,19 @@ void throwPointerOutOfRange()
 }
 
 
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+struct DbgCreationAndDestructionInfo
+{
+	enum Origination { yetzero, ini, moved };
+	Origination origination = Origination::yetzero;
+	enum Destruction { alive, dtoring, nulling };
+	Destruction destruction = Destruction::alive;
+	nodecpp::StackInfo destructionPoint;
+	nodecpp::StackInfo creationPoint;
+};
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+
+
 template<class T> class soft_ptr_base_impl; // forward declaration
 template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class nullable_ptr_base_impl; // forward declaration
@@ -450,11 +463,11 @@ class owning_ptr_base_impl
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->dbgLastDestructionPoint = si;
+				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
 		if ( cb->otherAllockedSlots.getPtr() )
 			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
 				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
-					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgLastDestructionPoint = si;
+					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
 	}
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
@@ -781,7 +794,7 @@ class soft_ptr_base_impl
 	};
 	Pointers<T> pointers; // the only data member!
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-	nodecpp::StackInfo dbgLastDestructionPoint;
+	DbgCreationAndDestructionInfo dbgObjectStatus;
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
@@ -1487,9 +1500,9 @@ public:
 	{
 		if ( this->getDereferencablePtr() == nullptr )
 		{
-			if ( nodecpp::impl::isDataStackInfo( this->dbgLastDestructionPoint ) )
+			if ( nodecpp::impl::isDataStackInfo( this->dbgObjectStatus.destructionPoint ) )
 			{
-				auto s = fmt::format( "\tObject has been deleted at {} here:\n{}", nodecpp::impl::whenTakenStackInfo( this->dbgLastDestructionPoint ), nodecpp::impl::whereTakenStackInfo( this->dbgLastDestructionPoint ).c_str() );
+				auto s = fmt::format( "\tObject has been deleted at {} here:\n{}", nodecpp::impl::whenTakenStackInfo( this->dbgObjectStatus.destructionPoint ), nodecpp::impl::whereTakenStackInfo( this->dbgObjectStatus.destructionPoint ).c_str() );
 				nodecpp::error::string_ref extra( s.c_str() );
 				throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
 			}
