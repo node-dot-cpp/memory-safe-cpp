@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_NOSIDEEFFECTRULE_H
-#define NODECPP_CHECKER_NOSIDEEFFECTRULE_H
+#ifndef NODECPP_CHECKER_CONSISTENCYRULE_H
+#define NODECPP_CHECKER_CONSISTENCYRULE_H
 
 #include <memory>
 #include "clang/AST/ASTConsumer.h"
@@ -36,10 +36,10 @@ namespace checker {
 
 class ClangTidyContext;
 
-std::unique_ptr<clang::ASTConsumer> makeNoSideEffectRule(ClangTidyContext *Context);
+std::unique_ptr<clang::ASTConsumer> makeConsistencyRule(ClangTidyContext *Context);
 
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_NOSIDEEFFECTRULE_H
+#endif // NODECPP_CHECKER_CONSISTENCYRULE_H
 

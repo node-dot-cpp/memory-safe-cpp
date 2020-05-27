@@ -19,7 +19,7 @@
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
 #include "CoroutineASTVisitor.h"
-#include "RuleC.h"
+#include "ConsistencyRule.h"
 #include "RuleD.h"
 #include "RuleM1.h"
 #include "RuleS9.h"
@@ -373,7 +373,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
 
   std::vector<std::unique_ptr<ASTConsumer>> Consumers;
 
-  Consumers.push_back(llvm::make_unique<RuleCASTConsumer>(Context));
+  Consumers.push_back(makeConsistencyRule(&Context));
 
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());

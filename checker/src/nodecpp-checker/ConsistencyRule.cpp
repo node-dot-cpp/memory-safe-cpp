@@ -25,10 +25,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULECASTVISITOR_H
-#define NODECPP_CHECKER_RULECASTVISITOR_H
-
-
+#include "ConsistencyRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -47,7 +44,7 @@ class RuleCASTVisitor
 
   typedef clang::RecursiveASTVisitor<RuleCASTVisitor> Super;
 
-  ClangTidyContext &Context;
+  ClangTidyContext *Context;
   bool IsMemoryUnsafe = false;
 //  MyStack St;
 
@@ -67,10 +64,10 @@ class RuleCASTVisitor
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+    return Context->diag(DiagMsgSrc, Loc, Message, Level);
   }
 
-  CheckHelper* getCheckHelper() const { return Context.getCheckHelper(); }
+  CheckHelper* getCheckHelper() const { return Context->getCheckHelper(); }
 
   template<typename ATTR>
   void checkConsistency(clang::Decl *Current, clang::Decl *Reference, StringRef AttrName) {
@@ -85,7 +82,7 @@ class RuleCASTVisitor
   }
 public:
 
-  explicit RuleCASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleCASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -97,7 +94,7 @@ public:
     else if (isa<TranslationUnitDecl>(D))
       return Super::TraverseDecl(D);
 
-    else if(isSystemLocation(&Context, D->getLocation()))
+    else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
     else
@@ -224,7 +221,7 @@ class RuleCASTConsumer : public clang::ASTConsumer {
   RuleCASTVisitor Visitor;
 
 public:
-  RuleCASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleCASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -232,8 +229,12 @@ public:
 
 };
 
+std::unique_ptr<clang::ASTConsumer> makeConsistencyRule(ClangTidyContext *Context) {
+  return llvm::make_unique<RuleCASTConsumer>(Context);
+}
+
+
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_RULECASTVISITOR_H
 
