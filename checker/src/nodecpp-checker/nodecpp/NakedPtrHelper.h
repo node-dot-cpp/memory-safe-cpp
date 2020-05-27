@@ -88,7 +88,7 @@ bool isNodeBaseName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
-bool isSystemSafeFunctionName(const ClangTidyContext* Context, const std::string& Name);
+bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Context);
 
 std::string getQnameForSystemSafeDb(QualType Qt);
 std::string getQnameForSystemSafeDb(const NamedDecl *Decl);

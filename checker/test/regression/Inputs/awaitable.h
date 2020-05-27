@@ -193,7 +193,7 @@ namespace std {
 
 namespace nodecpp {
 	auto hidden_await_function() {
-		struct HiddenAwaitable  {
+		struct [[nodecpp::awaitable]] HiddenAwaitable  {
 
 			bool await_ready() noexcept { 
 				return false;
@@ -203,6 +203,19 @@ namespace nodecpp {
 		};
 
 		return HiddenAwaitable();
+	}
+
+	auto bad_await_function() {
+		struct BadAwaitable  {
+
+			bool await_ready() noexcept { 
+				return false;
+			}
+			void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
+			void await_resume() { }
+		};
+
+		return BadAwaitable();
 	}
 }
 

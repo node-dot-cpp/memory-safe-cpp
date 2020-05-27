@@ -16,6 +16,21 @@ namespace nodecpp {
 	void await_function();
 	void no_await_function();
 
+	void hidden_await_function() {
+		struct HiddenAwaitable  {
+			bool await_ready() noexcept { return false; }
+			void await_suspend() noexcept {}
+			void await_resume() { }
+		};
+	}
+	void bad_await_function() {
+		struct BadAwaitable  {
+			bool await_ready() noexcept { return false; }
+			void await_suspend() noexcept {}
+			void await_resume() { }
+		};
+	}
+
 	class awaitable {
 		void await_ready();
 		void await_resume();

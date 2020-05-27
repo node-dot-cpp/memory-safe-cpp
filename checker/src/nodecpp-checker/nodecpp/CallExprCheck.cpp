@@ -45,7 +45,7 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  if(isSystemSafeFunctionName(getContext(), Name))
+  if(isSystemSafeFunction(Decl, getContext()))
     return;
 
   diag(Ex->getExprLoc(),

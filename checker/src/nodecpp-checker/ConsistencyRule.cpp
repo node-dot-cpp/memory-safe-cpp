@@ -215,6 +215,10 @@ public:
       diagC2(D->getLocation(), "[[nodecpp::deep_const_when_params]]", "system libraries");
     }
 
+    if(D->hasAttr<NodeCppAwaitableAttr>() && !IsMemoryUnsafe) {
+      diagC2(D->getLocation(), "[[nodecpp::awaitable]]", "system libraries");
+    }
+
     return Super::VisitDecl(D);
   }
 

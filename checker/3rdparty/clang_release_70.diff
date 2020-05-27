@@ -174,10 +174,10 @@ index 51f2ce2..b13de57 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index dc9edac..2626032 100644
+index dc9edac..cc221a5 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3004,3 +3004,57 @@ def InternalLinkage : InheritableAttr {
+@@ -3004,3 +3004,63 @@ def InternalLinkage : InheritableAttr {
    let Subjects = SubjectList<[Var, Function, CXXRecord]>;
    let Documentation = [InternalLinkageDocs];
  }
@@ -235,11 +235,17 @@ index dc9edac..2626032 100644
 +//  let Subjects = SubjectList<[CXXRecord]>;
 +  let Documentation = [NodeCppDeepConstWhenParamsDocs];
 +}
++
++def NodeCppAwaitable : Attr {
++  let Spellings = [CXX11<"nodecpp","awaitable">];
++//  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [NodeCppAwaitableDocs];
++}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..fb441ee 100644
+index 5a937b1..abf99bf 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,85 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,93 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -322,6 +328,14 @@ index 5a937b1..fb441ee 100644
 +This attribute is used on class template declaration to indicate that
 +when all type parameters are [[deep_const]] then such instantiation is also
 +[[deep_const]].
++}];
++}
++
++def NodeCppAwaitableDocs : Documentation {
++  let Category = DocCatNodeCpp;
++  let Content = [{
++This attribute is used on class declaration to indicate that is an awaitable
++type and therefore it must be verified by that co_await is called on instances.
 +}];
 +}
 +
@@ -459,7 +473,7 @@ index 12d7a16..cdc7d22 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..d14835a 100644
+index 77deed6..6bee11a 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -483,7 +497,7 @@ index 77deed6..d14835a 100644
      return;
    }
  
-@@ -6604,6 +6610,33 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -6604,6 +6610,37 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    case ParsedAttr::AT_XRayLogArgs:
      handleXRayLogArgsAttr(S, D, AL);
      break;
@@ -514,6 +528,10 @@ index 77deed6..d14835a 100644
 +  case ParsedAttr::AT_NodeCppDeepConstWhenParams:
 +    handleSimpleAttribute<NodeCppDeepConstWhenParamsAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_NodeCppAwaitable:
++    handleSimpleAttribute<NodeCppAwaitableAttr>(S, D, AL);
++    break;
++    
    }
  }
  

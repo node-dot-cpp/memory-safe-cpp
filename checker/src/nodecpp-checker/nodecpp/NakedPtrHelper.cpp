@@ -118,14 +118,26 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
   return (Wl.find(Name) != Wl.end());
 }
 
-bool isSystemSafeFunctionName(const ClangTidyContext *Context,
-                      const std::string &Name) {
 
-  //hardcode some names that are really important
-  // and their types have special rules
-  if(isOsnMethodName(Name))
-    return true;
+bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Context) {
 
+  const CXXMethodDecl* M = dyn_cast<CXXMethodDecl>(Decl);
+  if(M && M->getParent()) {
+    const CXXRecordDecl* Cl = M->getParent();
+    std::string ClassName = getQnameForSystemSafeDb(Cl);
+    std::string MethodName = M->getNameAsString();
+    if(isSafePtrName(ClassName) || isNakedPtrName(ClassName)) {
+      if(MethodName == "operator*" || 
+              MethodName == "operator->" ||
+              MethodName == "operator=" ||
+              MethodName == "operator bool" ||
+              MethodName == "get")
+              return true;
+    }
+  }
+
+  std::string Name = getQnameForSystemSafeDb(Decl);
+  
   // coroutine automatically injected call
   if (Name == "__builtin_coro_frame")
     return true;
@@ -603,17 +615,17 @@ bool isSafePtrType(QualType Qt) {
 
 bool isAwaitableType(QualType Qt) {
 
-  // if(Qt.isNull())
-  //   return false;
+  Qt = Qt.getCanonicalType();
 
-  // Qt = Qt.getCanonicalType();
-  // auto Dc = getTemplatePtrDecl(Qt);
-  // if (!Dc)
-  //   return false;
+  auto Dc = Qt->getAsCXXRecordDecl();
+  if (!Dc)
+    return false;
 
-  std::string Name = getQnameForSystemSafeDb(Qt);
-  return isAwaitableName(Name);
-
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  if(isAwaitableName(Name))
+    return true;
+  else
+    return Dc->hasAttr<NodeCppAwaitableAttr>();
 }
 
 bool isNodecppErrorType(QualType Qt) {
