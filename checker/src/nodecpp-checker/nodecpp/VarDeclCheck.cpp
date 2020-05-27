@@ -103,7 +103,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
   if (auto U = isUnionType(Qt)) {
     if (!checkUnion(U)) {
       auto Dh = DiagHelper(getContext());
-      getContext()->diagError(Var->getLocation(), "xxx", "unsafe union at variable declaration");
+      getContext()->diagError2(Var->getLocation(), "safe-union", "unsafe union at variable declaration");
       checkUnion(U, Dh);
     }
     return;
@@ -207,7 +207,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
       return;
     }
 
-    getContext()->diagError(Var->getLocation(), "xxx", "unsafe nullable_ptr at variable declaration");
+    getContext()->diagError2(Var->getLocation(), "nullable-ptr", "unsafe nullable_ptr at variable declaration");
     getCheckHelper()->reportNullablePtrDetail(Qt);
     return;
   }
@@ -222,7 +222,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     }
 
     // auto Dh = DiagHelper(getContext());
-    getContext()->diagError(Var->getLocation(), "xxx", "unsafe naked_struct at variable declaration");
+    getContext()->diagError2(Var->getLocation(), "naked-struct", "unsafe naked_struct at variable declaration");
     getCheckHelper()->reportNakedStructDetail(Qt); // for report
     return;
   }
@@ -238,7 +238,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  getContext()->diagError(Var->getLocation(), "xxx", "unsafe type at variable declaration");
+  getContext()->diagError2(Var->getLocation(), "heap-safe", "unsafe type at variable declaration");
   getCheckHelper()->reportNonSafeDetail(Qt);
 
   return;

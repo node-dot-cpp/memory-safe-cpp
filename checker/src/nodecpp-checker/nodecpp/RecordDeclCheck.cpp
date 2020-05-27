@@ -55,7 +55,7 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
       if(Ns.isOk())
         return;
 
-      getContext()->diagError(Rd->getLocation(), "xxx", "unsafe naked_struct declaration");
+      getContext()->diagError2(Rd->getLocation(), "naked-struct", "unsafe naked_struct declaration");
       getCheckHelper()->reportNakedStructDetail(Qt);
     }
     else if(auto Dc = getCheckHelper()->checkDeepConst(Qt)) {
@@ -69,7 +69,7 @@ void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
       if (getCheckHelper()->isHeapSafe(Qt))
         return;
 
-      getContext()->diagError(Rd->getLocation(), "xxx", "unsafe type declaration");
+      getContext()->diagError2(Rd->getLocation(), "heap-safe", "unsafe type declaration");
       getCheckHelper()->reportNonSafeDetail(Qt);
     }
   }

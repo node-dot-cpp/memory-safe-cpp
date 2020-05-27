@@ -59,7 +59,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       if (Np.isOk())
         return;
 
-      getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
+      getContext()->diagError2(Loc, "nullable-ptr", "unsafe type at temporary expression");
       getCheckHelper()->reportNullablePtrDetail(Qt); // for report
       return;
     }
@@ -68,7 +68,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       if (Ns.isOk())
         return;
 
-      getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
+      getContext()->diagError2(Loc, "naked-struct", "unsafe type at temporary expression");
       getCheckHelper()->reportNakedStructDetail(Qt); // for report
       return;
     }
@@ -77,7 +77,7 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
       return;
 
 //    tmp->dump();
-    getContext()->diagError(Loc, "xxx", "unsafe type at temporary expression");
+    getContext()->diagError2(Loc, "heap-safe", "unsafe type at temporary expression");
     getCheckHelper()->reportNonSafeDetail(Qt);
   }
 }

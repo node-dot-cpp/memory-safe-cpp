@@ -459,19 +459,36 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
 //   return false;
 // }
 
+SourceLocation getLocationForTemplateArg(const CXXRecordDecl *Rd, unsigned I) {
 
-bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+  //mb: is slow to do this all over again, but is only when error needs to be reported
+  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(Rd);
+  if(Dc) {
+    auto Tr = Dc->getTypeAsWritten();
+    if(Tr) {
+      auto Tl = Tr->getTypeLoc().getAs<clang::TemplateSpecializationTypeLoc>();
+      if(Tl) {
+        return Tl.getArgLoc(I).getLocation();
+      }
+    }
+  }
+  return SourceLocation();
+}
+
+bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
 
   //mb: while [[deep_const]] already implies type safety, is better to check and report
   // for safety first, as this makes the error message more acurate.
   QualType ArgI = getTemplateArgType(Qt, i);
   if(!isSafeType(ArgI, Context, Dh)) {
-    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not safe");
+    SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), i);
+    Dh.diag(Sl, "template parameter " + std::to_string(i) + " is not safe");
     return false;
   }
 
   if(!isDeepConstType(ArgI, Context, Dh)) {
-    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not [[deep_const]]");
+    SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), i);
+    Dh.diag(Sl, "template parameter " + std::to_string(i) + " is not [[deep_const]]");
     return false;
   }
 
@@ -482,8 +499,40 @@ bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, D
 
   QualType ArgI = getTemplateArgType(Qt, i);
   if(!isSafeType(ArgI, Context, Dh)) {
-    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + " is not safe");
+    SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), i);
+    Dh.diag(Sl, "template parameter " + std::to_string(i) + " is not safe");
     return false;
+  }
+
+  return true;
+}
+
+bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, const ClangTidyContext* Context, DiagHelper& Dh) {
+
+//  assert(Rd.isCanonical());
+
+  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(Rd);
+  if(!Dc)
+    return false;
+
+
+
+  auto &Args = Dc->getTemplateArgs();
+  for(unsigned I = 0; I < Args.size(); ++I) {
+    auto &Argi = Args.get(I);
+    if(Argi.getKind() == TemplateArgument::Type) {
+      QualType Qt = Argi.getAsType().getCanonicalType();
+      if(!isSafeType(Qt, Context, Dh)) {
+        SourceLocation Sl = getLocationForTemplateArg(Rd, I);
+        Dh.diag(Sl, "template parameter " + std::to_string(I) + " is not safe");
+        return false;
+      }
+      if(!isDeepConstType(Qt, Context, Dh)) {
+        SourceLocation Sl = getLocationForTemplateArg(Rd, I);
+        Dh.diag(SourceLocation(), "template parameter " + std::to_string(I) + " is not [[deep_const]]");
+        return false;
+      }
+    }
   }
 
   return true;
@@ -522,13 +571,13 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
     // mb: hashmap Key,Hash, and Equal must be deep_const
     // value only needs to be safe
 
-    if(!templateArgIsDeepConstSafe(Qt, 0, Context, Dh))
+    if(!templateArgIsSafeAndDeepConst(Qt, 0, Context, Dh))
       return KindCheck(true, false);
     if(!templateArgIsSafe(Qt, 1, Context, Dh))
       return KindCheck(true, false);
-    if(!templateArgIsDeepConstSafe(Qt, 2, Context, Dh))
+    if(!templateArgIsSafeAndDeepConst(Qt, 2, Context, Dh))
       return KindCheck(true, false);
-    if(!templateArgIsDeepConstSafe(Qt, 3, Context, Dh))
+    if(!templateArgIsSafeAndDeepConst(Qt, 3, Context, Dh))
       return KindCheck(true, false);
     return KindCheck(true, true);
   }
@@ -803,11 +852,8 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
     return {true, true};
   }
 
-  if(!Dc->hasAttr<NodeCppDeepConstAttr>())
-    return {false, false};
 
 
-  // below this line, we must return true for 'isKind'
 
   bool sysLoc = false;
 
@@ -816,9 +862,27 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
+  bool attr = Dc->hasAttr<NodeCppDeepConstAttr>();
+  bool attrWhenParams = Dc->hasAttr<NodeCppDeepConstWhenParamsAttr>();
 
-  if(isSystemLoc)
-    return {true, true};
+  if(isSystemLoc) {
+    if(attr)
+      return {true, true};
+    else if(attrWhenParams) {
+      bool params = allTemplateArgsAreDeepConst(Dc, Context, Dh);
+      return {true, params};
+    }
+    else
+      return {false, false};
+  }
+  else {
+    if(!attr)
+      return {false, false};
+   
+    // else fall down to analyze
+  }
+
+  // below this line, we must return true for 'isKind'
 
   if (Dc->isUnion()) {
     //not supported yet
