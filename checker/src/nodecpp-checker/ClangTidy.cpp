@@ -18,7 +18,7 @@
 #include "ClangTidy.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "ClangTidyModuleRegistry.h"
-#include "CoroutineASTVisitor.h"
+#include "ReferenceOverCoAwaitRule.h"
 #include "ConsistencyRule.h"
 #include "DeterminismRule.h"
 #include "RuleM1.h"
@@ -378,7 +378,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   if (!Checks.empty())
     Consumers.push_back(Finder->newASTConsumer());
 
-  Consumers.push_back(llvm::make_unique<CoroutineASTConsumer>(Context));
+  Consumers.push_back(makeReferenceOverCoAwaitRule(&Context));
   Consumers.push_back(makeDeterminismRule(&Context));
   Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleS9ASTConsumer>(Context));

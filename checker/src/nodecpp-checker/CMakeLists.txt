@@ -12,6 +12,7 @@ add_clang_library(nodecppChecker
   DeterminismRule.cpp
   JSONSafeDatabase.cpp
   NoSideEffectRule.cpp
+  ReferenceOverCoAwaitRule.cpp
 
   LINK_LIBS
   clangAST

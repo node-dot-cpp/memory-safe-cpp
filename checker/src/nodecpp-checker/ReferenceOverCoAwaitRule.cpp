@@ -25,10 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_COROUTINEASTVISITOR_H
-#define NODECPP_CHECKER_COROUTINEASTVISITOR_H
 
-
+#include "ReferenceOverCoAwaitRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -61,20 +59,20 @@ struct MyStack {
 class CoroutineASTVisitor
   : public clang::RecursiveASTVisitor<CoroutineASTVisitor> {
 
-  ClangTidyContext &Context;
+  ClangTidyContext *Context;
   MyStack St;
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+    return Context->diag(DiagMsgSrc, Loc, Message, Level);
   }
 
-  CheckHelper* getCheckHelper() const { return Context.getCheckHelper(); }
+  CheckHelper* getCheckHelper() const { return Context->getCheckHelper(); }
 
 public:
 
-  explicit CoroutineASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit CoroutineASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -86,7 +84,7 @@ public:
     else if (isa<TranslationUnitDecl>(D))
       return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
 
-    else if(isSystemLocation(&Context, D->getLocation()))
+    else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
     else
@@ -147,7 +145,7 @@ class CoroutineASTConsumer : public clang::ASTConsumer {
   CoroutineASTVisitor Visitor;
 
 public:
-  CoroutineASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  CoroutineASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -155,8 +153,11 @@ public:
 
 };
 
+std::unique_ptr<clang::ASTConsumer> makeReferenceOverCoAwaitRule(ClangTidyContext *Context) {
+  return llvm::make_unique<CoroutineASTConsumer>(Context);
+}
+
+
 } // namespace checker
 } // namespace nodecpp
-
-#endif // NODECPP_CHECKER_COROUTINEASTVISITOR_H
 
