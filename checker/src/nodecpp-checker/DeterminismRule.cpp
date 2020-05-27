@@ -25,10 +25,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULEDASTVISITOR_H
-#define NODECPP_CHECKER_RULEDASTVISITOR_H
-
-
+#include "DeterminismRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -45,31 +42,31 @@ class RuleDASTVisitor
 
   typedef clang::RecursiveASTVisitor<RuleDASTVisitor> Super;
 
-  ClangTidyContext &Context;
+  ClangTidyContext *Context;
 //  MyStack St;
 
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+    return Context->diag(DiagMsgSrc, Loc, Message, Level);
   }
 
   void checkTypeMembers(QualType Qt, SourceLocation Loc) {
 
     assert(Qt.isCanonical());
     if(Qt->getAs<RecordType>()) {
-      if(!isDeterministicType(Qt, &Context)) {
+      if(!isDeterministicType(Qt, Context)) {
         diag(Loc, "(D2.1) expression type is not deterministic");
-        DiagHelper Dh(&Context);
-        isDeterministicType(Qt, &Context, Dh);
+        DiagHelper Dh(Context);
+        isDeterministicType(Qt, Context, Dh);
       }
     }
   }
 
 public:
 
-  explicit RuleDASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleDASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -81,7 +78,7 @@ public:
     else if (isa<TranslationUnitDecl>(D))
       return Super::TraverseDecl(D);
 
-    else if(isSystemLocation(&Context, D->getLocation()))
+    else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
     else if(D->hasAttr<NodeCppNonDeterministicAttr>())
@@ -116,19 +113,19 @@ public:
 
   bool VisitVarDecl(clang::VarDecl *Var) {
 
-    if(isParmVarOrCatchVar(Context.getASTContext(), Var))
+    if(isParmVarOrCatchVar(Context->getASTContext(), Var))
       return Super::VisitVarDecl(Var);
 
     if(Var->hasLocalStorage() || Var->isStaticLocal()) {
 
       auto Qt = Var->getType().getCanonicalType();
     
-      if(!isDeterministicType(Qt, &Context)) {
+      if(!isDeterministicType(Qt, Context)) {
         if(Qt->getAs<RecordType>()) {
           
           diag(Var->getLocation(), "(D2.1) variable type is not deterministic");
-          DiagHelper Dh(&Context);
-          isDeterministicType(Qt, &Context, Dh);
+          DiagHelper Dh(Context);
+          isDeterministicType(Qt, Context, Dh);
         }
         else if (!Var->getInit()) {
           diag(Var->getLocation(), "(D2) variable type must have initializer");
@@ -156,7 +153,7 @@ class RuleDASTConsumer : public clang::ASTConsumer {
   RuleDASTVisitor Visitor;
 
 public:
-  RuleDASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleDASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -164,8 +161,11 @@ public:
 
 };
 
+std::unique_ptr<clang::ASTConsumer> makeDeterminismRule(ClangTidyContext *Context) {
+  return llvm::make_unique<RuleDASTConsumer>(Context);
+}
+
 } // namespace checker
 } // namespace nodecpp
 
-#endif // NODECPP_CHECKER_RULEDASTVISITOR_H
 

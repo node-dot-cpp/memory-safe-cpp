@@ -20,7 +20,7 @@
 #include "ClangTidyModuleRegistry.h"
 #include "CoroutineASTVisitor.h"
 #include "ConsistencyRule.h"
-#include "RuleD.h"
+#include "DeterminismRule.h"
 #include "RuleM1.h"
 #include "RuleS9.h"
 #include "NoSideEffectRule.h"
@@ -379,7 +379,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
     Consumers.push_back(Finder->newASTConsumer());
 
   Consumers.push_back(llvm::make_unique<CoroutineASTConsumer>(Context));
-  Consumers.push_back(llvm::make_unique<RuleDASTConsumer>(Context));
+  Consumers.push_back(makeDeterminismRule(&Context));
   Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
   Consumers.push_back(llvm::make_unique<RuleS9ASTConsumer>(Context));
   Consumers.push_back(makeNoSideEffectRule(&Context));
