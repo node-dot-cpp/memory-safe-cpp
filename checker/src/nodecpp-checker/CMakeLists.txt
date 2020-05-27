@@ -11,6 +11,7 @@ add_clang_library(nodecppChecker
   ConsistencyRule.cpp
   DeterminismRule.cpp
   JSONSafeDatabase.cpp
+  MiscellaneousRule.cpp
   MustCoAwaitRule.cpp
   NoSideEffectRule.cpp
   ReferenceOverCoAwaitRule.cpp

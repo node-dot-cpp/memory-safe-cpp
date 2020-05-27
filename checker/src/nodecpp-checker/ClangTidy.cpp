@@ -21,7 +21,7 @@
 #include "ReferenceOverCoAwaitRule.h"
 #include "ConsistencyRule.h"
 #include "DeterminismRule.h"
-#include "RuleM1.h"
+#include "MiscellaneousRule.h"
 #include "MustCoAwaitRule.h"
 #include "NoSideEffectRule.h"
 #include "nodecpp/NakedPtrHelper.h"
@@ -380,7 +380,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
 
   Consumers.push_back(makeReferenceOverCoAwaitRule(&Context));
   Consumers.push_back(makeDeterminismRule(&Context));
-  Consumers.push_back(llvm::make_unique<RuleM1ASTConsumer>(Context));
+  Consumers.push_back(makeMiscellaneousRule(&Context));
   Consumers.push_back(makeMustCoAwaitRule(&Context));
   Consumers.push_back(makeNoSideEffectRule(&Context));
 

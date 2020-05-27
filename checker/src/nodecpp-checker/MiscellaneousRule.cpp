@@ -25,10 +25,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULEM1_H
-#define NODECPP_CHECKER_RULEM1_H
-
-
+#include "MiscellaneousRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -45,19 +42,19 @@ class RuleM1ASTVisitor
 
   typedef clang::RecursiveASTVisitor<RuleM1ASTVisitor> Super;
 
-  ClangTidyContext &Context;
+  ClangTidyContext *Context;
 //  MyStack St;
 
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+    return Context->diag(DiagMsgSrc, Loc, Message, Level);
   }
 
 public:
 
-  explicit RuleM1ASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleM1ASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
@@ -69,7 +66,7 @@ public:
     else if (isa<TranslationUnitDecl>(D))
       return Super::TraverseDecl(D);
 
-    else if(isSystemLocation(&Context, D->getLocation()))
+    else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
     else
@@ -109,7 +106,7 @@ class RuleM1ASTConsumer : public clang::ASTConsumer {
   RuleM1ASTVisitor Visitor;
 
 public:
-  RuleM1ASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleM1ASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(clang::ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -117,8 +114,11 @@ public:
 
 };
 
+std::unique_ptr<clang::ASTConsumer> makeMiscellaneousRule(ClangTidyContext *Context) {
+  return llvm::make_unique<RuleM1ASTConsumer>(Context);
+}
+
+
 } // namespace checker
 } // namespace nodecpp
-
-#endif // NODECPP_CHECKER_RULEM1_H
 
