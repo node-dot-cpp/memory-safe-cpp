@@ -1334,8 +1334,7 @@ int main( int argc, char * argv[] )
 	try { *(*sp) = 4; }
 	catch (nodecpp::error::error e)
 	{
-//		nodecpp::log::default_log::fatal( nodecpp::log::ModuleID(nodecpp::foundation_module_id),"error caught; e.name = {}, e.description = {}", e.name().c_str(), e.description().c_str() );
-		printf( "error caught; e.name = %s, e.description = %s", e.name().c_str(), e.description().c_str() );
+		e.log( log, nodecpp::log::LogLevel::fatal );
 	}
 	return 0;
 
