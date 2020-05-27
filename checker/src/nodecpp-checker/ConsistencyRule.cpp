@@ -211,6 +211,10 @@ public:
       diagC2(D->getLocation(), "[[nodecpp::no_side_effect_when_const]]", "system libraries");
     }
 
+    if(D->hasAttr<NodeCppDeepConstWhenParamsAttr>() && !IsMemoryUnsafe) {
+      diagC2(D->getLocation(), "[[nodecpp::deep_const_when_params]]", "system libraries");
+    }
+
     return Super::VisitDecl(D);
   }
 

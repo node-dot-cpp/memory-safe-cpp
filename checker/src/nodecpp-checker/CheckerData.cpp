@@ -63,11 +63,10 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
     return true;
   }
   else if(auto M = dyn_cast<CXXMethodDecl>(D)) {
-    if(M->isConst()) {
-      if(M->getParent()->hasAttr<NodeCppNoSideEffectWhenConstAttr>()) {
-        NoSideEffectFuncs.insert(D);
-        return true;
-      }
+    if(M->isConst() &&
+        M->getParent()->hasAttr<NodeCppNoSideEffectWhenConstAttr>()) {
+      NoSideEffectFuncs.insert(D);
+      return true;
     }
   }
 
