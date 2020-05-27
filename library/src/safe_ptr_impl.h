@@ -79,14 +79,44 @@ void throwPointerOutOfRange()
 
 
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-struct DbgCreationAndDestructionInfo
+struct DbgCreationInfo
 {
-	enum Origination { yetzero, ini, moved };
-	Origination origination = Origination::yetzero;
+	enum Origination { inizero, reset, fromptr, created, movedin, movedout };
+	Origination origination = Origination::inizero;
+	nodecpp::StackInfo creationPoint;
+
+	DbgCreationInfo() {}
+	DbgCreationInfo( const DbgCreationInfo& ) = default;
+	DbgCreationInfo& operator= ( const DbgCreationInfo& ) = default;
+	DbgCreationInfo( DbgCreationInfo&& other ) {
+		creationPoint = std::move( other.creationPoint );
+		other.origination = Origination::movedout;
+		origination = Origination::movedin;
+	}
+	DbgCreationInfo& operator = ( DbgCreationInfo&& other ) {
+		creationPoint = std::move( other.creationPoint );
+		other.origination = Origination::movedout;
+		origination = Origination::movedin;
+		return *this;
+	}
+	void init( Origination o ) { 
+		creationPoint.init(); 
+		origination = o;
+	}
+	void swap( DbgCreationInfo& other ) {
+		auto tmpo = origination;
+		origination = other.origination;
+		other.origination = tmpo;
+		nodecpp::StackInfo tmpc( std::move( creationPoint ) );
+		creationPoint = std::move( other.creationPoint );
+		other.creationPoint = std::move( tmpc );
+	}
+};
+struct DbgCreationAndDestructionInfo : public DbgCreationInfo
+{
 	enum Destruction { alive, dtoring, nulling };
 	Destruction destruction = Destruction::alive;
 	nodecpp::StackInfo destructionPoint;
-	nodecpp::StackInfo creationPoint;
 };
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
@@ -440,6 +470,21 @@ class owning_ptr_base_impl
 		//bool isZombie() const { return base_pointer_t::is_sombie(); }
 	};
 	ObjectPointer<T> t; // the only data member!
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+	DbgCreationInfo creationInfo;
+	void dbgSetDestructionPointInfo()
+	{
+		nodecpp::StackInfo si( true );
+		FirstControlBlock* cb = getControlBlock();
+		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( cb->slots[i].isUsed() )
+				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
+	}
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 	FirstControlBlock* getControlBlock() { return getControlBlock_(t.getPtr()); }
 	const FirstControlBlock* getControlBlock() const { return getControlBlock_(t.getPtr()); }
@@ -456,20 +501,6 @@ class owning_ptr_base_impl
 				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
 					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
 	}
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-	void dbgSetDestructionPointInfo()
-	{
-		nodecpp::StackInfo si( true );
-		FirstControlBlock* cb = getControlBlock();
-		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
-			if ( cb->slots[i].isUsed() )
-				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
-		if ( cb->otherAllockedSlots.getPtr() )
-			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
-				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
-					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgObjectStatus.destructionPoint = si;
-	}
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 #ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
 	void dbgCheckValidity() const
@@ -506,15 +537,24 @@ public:
 		t.setPtr( t_ );
 		getControlBlock()->init();
 		dbgCheckValidity();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo.init( DbgCreationInfo::Origination::fromptr );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 	owning_ptr_base_impl()
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo.init( DbgCreationInfo::Origination::inizero );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		t.setPtr( nullptr );
 	}
 	owning_ptr_base_impl( owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo = std::move( other.creationInfo );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
@@ -522,6 +562,9 @@ public:
 	}
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo = std::move( other.creationInfo );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		if ( this == &other ) return *this;
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
@@ -532,6 +575,9 @@ public:
 	template<class T1>
 	owning_ptr_base_impl( owning_ptr_base_impl<T1>&& other )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo = std::move( other.creationInfo );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		t.setTypedPtr( other.t.getTypedPtr() ); // implicit cast, if at all possible
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
@@ -540,6 +586,9 @@ public:
 	template<class T1>
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo = std::move( other.creationInfo );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		if ( this == &other ) return *this;
 		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
@@ -549,11 +598,17 @@ public:
 	}
 	owning_ptr_base_impl( std::nullptr_t nulp )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo.init( DbgCreationInfo::Origination::inizero );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		t.setPtr( nullptr );
 	}
 	owning_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo.init( DbgCreationInfo::Origination::reset );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
 	~owning_ptr_base_impl()
@@ -603,6 +658,9 @@ public:
 		other.t = tmp;
 		other.dbgCheckValidity();
 		dbgCheckValidity();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		creationInfo.swap( other.creationInfo );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 
 	nullable_ptr_impl<T> get() const
