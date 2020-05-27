@@ -25,10 +25,7 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef NODECPP_CHECKER_RULES9_H
-#define NODECPP_CHECKER_RULES9_H
-
-
+#include "MustCoAwaitRule.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -40,14 +37,12 @@ namespace nodecpp {
 namespace checker {
 
 
-
-
 class RuleS9ASTVisitor
   : public RecursiveASTVisitor<RuleS9ASTVisitor> {
 
   typedef RecursiveASTVisitor<RuleS9ASTVisitor> Super;
 
-  ClangTidyContext &Context;
+  ClangTidyContext *Context;
   llvm::SmallSet<CallExpr*, 4> CallWhiteList;
   llvm::SmallSet<CoawaitExpr*, 4> CoawaitWhiteList;
   llvm::SmallSet<ValueDecl*, 4> DeclWhiteList;
@@ -72,12 +67,12 @@ class RuleS9ASTVisitor
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context.diag(DiagMsgSrc, Loc, Message, Level);
+    return Context->diag(DiagMsgSrc, Loc, Message, Level);
   }
 
 public:
 
-  explicit RuleS9ASTVisitor(ClangTidyContext &Context): Context(Context) {}
+  explicit RuleS9ASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
   void ReportAndClear() {
     for(auto each : DeclWhiteList) {
@@ -114,7 +109,7 @@ public:
     else if (isa<TranslationUnitDecl>(D))
       return Super::TraverseDecl(D);
 
-    else if(isSystemLocation(&Context, D->getLocation()))
+    else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
     else if(D->hasAttr<NodeCppMemoryUnsafeAttr>())
@@ -214,7 +209,7 @@ public:
     // and whose direct parent is an statement that is not an expression
     if(Expr *E = dyn_cast<Expr>(St)) {
 
-      const Stmt * P = getParentStmt(Context.getASTContext(), St);
+      const Stmt * P = getParentStmt(Context->getASTContext(), St);
       if(P && !isa<const Expr>(P)) {
 
         E = E->IgnoreImplicit();
@@ -354,7 +349,7 @@ class RuleS9ASTConsumer : public ASTConsumer {
   RuleS9ASTVisitor Visitor;
 
 public:
-  RuleS9ASTConsumer(ClangTidyContext &Context) :Visitor(Context) {}
+  RuleS9ASTConsumer(ClangTidyContext *Context) :Visitor(Context) {}
 
   void HandleTranslationUnit(ASTContext &Context) override {
     Visitor.TraverseDecl(Context.getTranslationUnitDecl());
@@ -363,8 +358,10 @@ public:
 
 };
 
+std::unique_ptr<clang::ASTConsumer> makeMustCoAwaitRule(ClangTidyContext *Context) {
+  return llvm::make_unique<RuleS9ASTConsumer>(Context);
+}
+
 } // namespace checker
 } // namespace nodecpp
-
-#endif // NODECPP_CHECKER_RULES9_H
 
