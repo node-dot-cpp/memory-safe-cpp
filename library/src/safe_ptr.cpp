@@ -41,3 +41,13 @@ thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> nodecpp::safemem
 thread_local bool nodecpp::safememory::doZombieEarlyDetection_ = true;
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #endif // NODECPP_USE_xxx_ALLOC
+
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+namespace nodecpp::safememory::impl {
+	NODECPP_NOINLINE void dbgThrowNullPtrAccess( const DbgCreationAndDestructionInfo& info )
+	{
+		nodecpp::error::string_ref extra( info.toStr().c_str() );
+		throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
+	}
+} // namespace nodecpp::safememory::impl
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
