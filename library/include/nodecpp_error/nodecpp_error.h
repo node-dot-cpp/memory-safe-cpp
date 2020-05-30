@@ -30,7 +30,9 @@
 
 #include <platform_base.h>
 #include <error.h>
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 #include <stack_info.h>
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 #include <fmt/format.h>
 
 #include <cerrno>  // for error constants
@@ -45,11 +47,21 @@ namespace nodecpp::error {
 	{
 		friend class nodecpp_error_domain;
 		NODECPP_EXCEPTION errorCode;
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		::nodecpp::StackInfo stackInfo;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		string_ref extra;
 	public:
-		nodecpp_error_value( NODECPP_EXCEPTION code ) : errorCode( code ), extra( string_ref::literal_tag_t(), "" ) { stackInfo.init(); }
-		nodecpp_error_value( NODECPP_EXCEPTION code, string_ref&& extra_ ) : errorCode( code ), extra( std::move( extra_ ) ) { stackInfo.init(); }
+		nodecpp_error_value( NODECPP_EXCEPTION code ) : errorCode( code ), extra( string_ref::literal_tag_t(), "" ) { 
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+			stackInfo.init();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		}
+		nodecpp_error_value( NODECPP_EXCEPTION code, string_ref&& extra_ ) : errorCode( code ), extra( std::move( extra_ ) ) {
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+			stackInfo.init();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		}
 		nodecpp_error_value( const nodecpp_error_value& other ) = default;
 		nodecpp_error_value& operator = ( const nodecpp_error_value& other ) = default;
 		nodecpp_error_value& operator = ( nodecpp_error_value&& other ) = default;
@@ -75,16 +87,20 @@ namespace nodecpp::error {
 					std::string s;
 					if ( !myData->extra.empty() )
 					{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 						if ( ::nodecpp::impl::isDataStackInfo( myData->stackInfo ) )
 							s = fmt::format("Attempt to dereference a null pointer at\n{}\n{}", ::nodecpp::impl::whereTakenStackInfo( myData->stackInfo ).c_str(), myData->extra.c_str());
 						else
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 							s = fmt::format("Attempt to dereference a null pointer\n{}", myData->extra.c_str());
 					}
 					else
 					{
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 						if ( ::nodecpp::impl::isDataStackInfo( myData->stackInfo ) )
 							s = fmt::format("Attempt to dereference a null pointer at\n{}", ::nodecpp::impl::whereTakenStackInfo( myData->stackInfo ).c_str() );
 						else
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 							s = fmt::format("Attempt to dereference a null pointer" );
 					}
 					return string_ref( s.c_str() );
@@ -98,7 +114,7 @@ namespace nodecpp::error {
 			return new nodecpp_error_value(code, std::move( extra ));
 		}
 		virtual bool is_same_error_code(const error_value* value1, const error_value* value2) const { 
-			return reinterpret_cast<const nodecpp_error_value*>(value1)->errorCode == reinterpret_cast<const nodecpp_error_value*>(value1)->errorCode;
+			return reinterpret_cast<const nodecpp_error_value*>(value1)->errorCode == reinterpret_cast<const nodecpp_error_value*>(value2)->errorCode;
 		}
 		virtual error_value* clone_value(error_value* value) const {
 			if ( value )
