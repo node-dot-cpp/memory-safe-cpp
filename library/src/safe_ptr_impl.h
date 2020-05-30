@@ -29,8 +29,10 @@
 #define SAFE_PTR_IMPL_H
 
 #include "safe_ptr_common.h"
-#include <stack_info.h>
 #include "../include/nodecpp_error/nodecpp_error.h"
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#include <stack_info.h>
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 namespace nodecpp::safememory
 {
@@ -144,6 +146,9 @@ struct DbgCreationAndDestructionInfo
 		return creationInfo.toStr() + destructionInfo.toStr();
 	}
 };
+namespace impl {
+	NODECPP_NOINLINE void dbgThrowNullPtrAccess( const DbgCreationAndDestructionInfo& info );
+} // namespace impl
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 
@@ -1589,11 +1594,9 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	void dbgTestForNullAndThrowNullPtrAccess() const
 	{
-		if ( this->getDereferencablePtr() == nullptr )
-		{
-			nodecpp::error::string_ref extra( this->dbgObjectStatus.toStr().c_str() );
-			throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
-		}
+		if ( this->getDereferencablePtr() )
+			return;
+		impl::dbgThrowNullPtrAccess( this->dbgObjectStatus );
 	}
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
