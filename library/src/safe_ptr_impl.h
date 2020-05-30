@@ -29,8 +29,10 @@
 #define SAFE_PTR_IMPL_H
 
 #include "safe_ptr_common.h"
-#include <stack_info.h>
 #include "../include/nodecpp_error/nodecpp_error.h"
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#include <stack_info.h>
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 
 namespace nodecpp::safememory
 {
