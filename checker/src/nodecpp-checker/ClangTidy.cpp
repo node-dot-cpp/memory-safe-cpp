@@ -413,7 +413,7 @@ ClangTidyOptions::OptionMap ClangTidyASTConsumerFactory::getCheckOptions() {
 
 DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message,
                                        DiagnosticIDs::Level Level) {
-  return Context->diag(DiagMsgSrc, Loc, Message, Level);
+  return Context->diag(CheckName, Loc, Message, Level);
 }
 
 void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {

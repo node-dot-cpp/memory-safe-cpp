@@ -39,3 +39,11 @@ void func2() {
 
 Good ok; //ok, because is empty
 
+class [[nodecpp::deep_const]] DeepConst {
+	int i = 0;
+};
+
+//both ok, because of deep_const
+const DeepConst dc;
+constexpr DeepConst dc2;
+
