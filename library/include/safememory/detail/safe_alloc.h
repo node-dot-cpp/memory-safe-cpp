@@ -38,8 +38,11 @@ using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;
 using ::nodecpp::safememory::memory_safety;
 using ::nodecpp::safememory::make_owning;
+using ::nodecpp::safememory::memory_safety;
 
 namespace detail {
+
+using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl;
 
 enum class iterator_validity {
 	Null,                // default constructed iterator

@@ -125,17 +125,17 @@ namespace safememory
 	///     i = hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
-			  typename Allocator = std::allocator<Value>, bool bCacheHashCode = false>
+			  memory_safety is_safe = memory_safety::safe, bool bCacheHashCode = false>
 	class hash_set
-		: public detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+		: public detail::hashtable<Value, Value, is_safe, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
 						   detail::prime_rehash_policy, bCacheHashCode, false, true>
 	{
 	public:
-		typedef detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate, 
+		typedef detail::hashtable<Value, Value, is_safe, detail::use_self<Value>, Predicate, 
 						  Hash, detail::mod_range_hashing, detail::default_ranged_hash,
 						  detail::prime_rehash_policy, bCacheHashCode, false, true>       base_type;
-		typedef hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>       this_type;
+		typedef hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>       this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::value_type                                    value_type;
 		// typedef typename base_type::allocator_type                                allocator_type;
@@ -244,17 +244,17 @@ namespace safememory
 	/// for hash_set for details.
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
-			  typename Allocator = std::allocator<Value>, bool bCacheHashCode = false>
+			  memory_safety is_safe = memory_safety::safe, bool bCacheHashCode = false>
 	class hash_multiset
-		: public detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+		: public detail::hashtable<Value, Value, is_safe, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash,
 						   detail::prime_rehash_policy, bCacheHashCode, false, false>
 	{
 	public:
-		typedef detail::hashtable<Value, Value, Allocator, detail::use_self<Value>, Predicate,
+		typedef detail::hashtable<Value, Value, is_safe, detail::use_self<Value>, Predicate,
 						  Hash, detail::mod_range_hashing, detail::default_ranged_hash,
 						  detail::prime_rehash_policy, bCacheHashCode, false, false>          base_type;
-		typedef hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>      this_type;
+		typedef hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>      this_type;
 		typedef typename base_type::size_type                                         size_type;
 		typedef typename base_type::value_type                                        value_type;
 		// typedef typename base_type::allocator_type                                    allocator_type;
@@ -359,11 +359,11 @@ namespace safememory
 	// global operators
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator==(const hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Value, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
+	inline bool operator==(const hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>& a, 
+						   const hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>& b)
 	{
-		typedef typename hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>::const_iterator const_iterator;
 
 		// We implement branching with the assumption that the return value is usually false.
 		if(a.size() != b.size())
@@ -382,19 +382,19 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator!=(const hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Value, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
+	inline bool operator!=(const hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>& a, 
+						   const hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
 
 
-	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator==(const hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Value, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
+	inline bool operator==(const hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>& a, 
+						   const hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>& b)
 	{
-		typedef typename hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>::const_iterator const_iterator;
 		typedef typename std::iterator_traits<const_iterator>::difference_type difference_type;
 
 		// We implement branching with the assumption that the return value is usually false.
@@ -443,9 +443,9 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Value, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator!=(const hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Value, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
+	inline bool operator!=(const hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>& a, 
+						   const hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}

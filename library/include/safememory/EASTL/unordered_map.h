@@ -58,9 +58,9 @@ namespace safememory
 				  typename T,
 				  typename Hash = std::hash<Key>,
 				  typename Predicate = std::equal_to<Key>,
-				  typename Allocator = std::allocator< std::pair<const Key, T> >,
+				  memory_safety is_safe = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_map = hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>;
+		using unordered_map = hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>;
     #endif
 
     /// unordered_multimap
@@ -73,9 +73,9 @@ namespace safememory
 				  typename T,
 				  typename Hash = std::hash<Key>,
 				  typename Predicate = std::equal_to<Key>,
-				  typename Allocator = std::allocator< std::pair<const Key, T> >,
+				  memory_safety is_safe = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_multimap = hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>;
+		using unordered_multimap = hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>;
     #endif
 
 } // namespace safememory

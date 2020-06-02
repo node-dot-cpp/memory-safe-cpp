@@ -58,9 +58,9 @@ namespace safememory
 		template <typename Value,
 				  typename Hash = std::hash<Value>,
 				  typename Predicate = std::equal_to<Value>,
-				  typename Allocator = std::allocator<Value>,
+				  memory_safety is_safe = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_set = hash_set<Value, Hash, Predicate, Allocator, bCacheHashCode>;
+		using unordered_set = hash_set<Value, Hash, Predicate, is_safe, bCacheHashCode>;
 	#endif
 
     /// unordered_multiset 
@@ -72,9 +72,9 @@ namespace safememory
 		template <typename Value,
 				  typename Hash = std::hash<Value>,
 				  typename Predicate = std::equal_to<Value>,
-				  typename Allocator = std::allocator<Value>,
+				  memory_safety is_safe = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_multiset = hash_multiset<Value, Hash, Predicate, Allocator, bCacheHashCode>;
+		using unordered_multiset = hash_multiset<Value, Hash, Predicate, is_safe, bCacheHashCode>;
 	#endif
 
 } // namespace eastl

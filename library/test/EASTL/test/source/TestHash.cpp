@@ -104,7 +104,7 @@ struct HashtableValueHash
 // These tell the compiler to compile all the functions for the given class.
 template class safememory::detail::hashtable<int,
                                 std::pair<const int, int>,
-								std::allocator<std::pair<const int, int>>,
+								safememory::memory_safety::safe,
                                 safememory::detail::use_first<std::pair<const int, int>>,
                                 std::equal_to<int>,
                                 std::hash<int>,
@@ -117,7 +117,7 @@ template class safememory::detail::hashtable<int,
                                 >;
 template class safememory::detail::hashtable<int,
 								std::pair<const int, int>,
-								std::allocator<std::pair<const int, int>>,
+								safememory::memory_safety::safe,
 								safememory::detail::use_first<std::pair<const int, int>>,
 								std::equal_to<int>,
 								std::hash<int>,
@@ -419,7 +419,7 @@ int TestHash()
 		// iterator       find(const key_type& k);
 		// const_iterator find(const key_type& k) const;
 
-		typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
+		typedef hash_set<int, std::hash<int>, std::equal_to<int>, safememory::memory_safety::safe, true> HashSetIntC;
 
 		HashSetIntC hashSet;
 		const int kCount = 10000;
