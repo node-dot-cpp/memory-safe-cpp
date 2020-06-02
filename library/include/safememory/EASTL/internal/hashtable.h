@@ -263,11 +263,11 @@ namespace safememory::detail
 	{
 		typedef hash_node<Value, bCacheHashCode> node_type;
 
-		soft_ptr<node_type> mpNode;
+		detail::soft_ptr_with_zero_offset_impl<node_type> mpNode;
 
 		node_iterator_base() { }
 
-		node_iterator_base(soft_ptr<node_type> pNode)
+		node_iterator_base(detail::soft_ptr_with_zero_offset_impl<node_type> pNode)
 			: mpNode(pNode) { }
 
 		void increment()
@@ -299,7 +299,7 @@ namespace safememory::detail
 	public:
 		node_iterator() { }
 
-		explicit node_iterator(soft_ptr<node_type> pNode)
+		explicit node_iterator(detail::soft_ptr_with_zero_offset_impl<node_type> pNode)
 			: base_type(pNode) { }
 
 		node_iterator(const node_iterator<Value, true, bCacheHashCode>& x)
@@ -340,7 +340,7 @@ namespace safememory::detail
 
 		// typedef std::conditional_t<is_safe == memory_safety::safe,
 		// 	soft_ptr<node_type>, node_type*> 						node_ptr;
-		typedef soft_ptr<node_type>			 						node_ptr;
+		typedef detail::soft_ptr_with_zero_offset_impl<node_type>			 						node_ptr;
 		typedef std::conditional_t<is_safe == memory_safety::safe,
 			safe_iterator<owning_ptr<node_type>>,
 			unsafe_iterator<owning_ptr<node_type>>> 		bucket_ptr;
@@ -958,8 +958,8 @@ namespace safememory::detail
 		typedef const value_type&                                                                   const_reference;
 		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode>                       local_iterator;
 		typedef node_iterator<value_type, true,               bCacheHashCode>                       const_local_iterator;
-		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, memory_safety::none>                  iterator;
-		typedef hashtable_iterator<value_type, true,               bCacheHashCode, memory_safety::none>                  const_iterator;
+		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, is_safe>                  iterator;
+		typedef hashtable_iterator<value_type, true,               bCacheHashCode, is_safe>                  const_iterator;
 		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
 		typedef hashtable<Key, Value, is_safe, ExtractKey, Equal, H1, H2, H, 
@@ -972,7 +972,7 @@ namespace safememory::detail
 		typedef std::integral_constant<bool, bUniqueKeys>                                           has_unique_keys_type;
 
 		typedef owning_ptr<node_type>    owning_node_type;
-		typedef soft_ptr<node_type>    soft_node_type;
+		typedef detail::soft_ptr_with_zero_offset_impl<node_type>    soft_node_type;
 		typedef owning_ptr<array_of2<owning_node_type>>    owning_bucket_type;
 
 
@@ -1320,7 +1320,7 @@ namespace safememory::detail
 		owning_node_type  DoAllocateNodeFromKey(const key_type& key);
 		owning_node_type  DoAllocateNodeFromKey(key_type&& key);
 		void        DoFreeNode(owning_node_type pNode);
-		void        DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pBucketArray, size_type);
+		void        DoFreeNodes(detail::soft_ptr_with_zero_offset_impl<array_of2<owning_node_type>> pBucketArray, size_type);
 
 		owning_bucket_type DoAllocateBuckets(size_type n);
 		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
@@ -1773,7 +1773,7 @@ namespace safememory::detail
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pNodeArray, size_type n)
+	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(detail::soft_ptr_with_zero_offset_impl<array_of2<owning_node_type>> pNodeArray, size_type n)
 	{
 		if(pNodeArray) {
 			for(size_type i = 0; i < n; ++i)

@@ -234,13 +234,12 @@ namespace safememory
 		// typedef typename base_type::allocator_type            allocator_type;
 
 		typedef owning_ptr<detail::array_of2<T>> 					owning_heap_type;
-		// typedef detail::soft_ptr_with_zero_offset_impl<detail::array_of2<T>> soft_heap_type;
-		typedef soft_ptr<detail::array_of2<T>> soft_heap_type;
+		typedef detail::soft_ptr_with_zero_offset_impl<detail::array_of2<T>> soft_heap_type;
 
 		// typedef detail::unsafe_iterator<T>							iterator_safe;
 		// typedef detail::unsafe_iterator<const T>						const_iterator_safe;
-		typedef detail::safe_iterator<T>							iterator_safe;
-		typedef detail::safe_iterator<const T>						const_iterator_safe;
+		typedef detail::safe_iterator<T, soft_heap_type>							iterator_safe;
+		typedef detail::safe_iterator<const T, soft_heap_type>						const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 		typedef const const_iterator_safe&							csafe_it_arg;
