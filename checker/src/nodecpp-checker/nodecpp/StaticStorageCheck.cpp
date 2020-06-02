@@ -37,14 +37,14 @@ void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (Decl->isConstexpr() || Qt.isConstQualified()) {
     if(!getContext()->getCheckerData().isDeepConst(Qt)) {
-      diag(Decl->getLocation(),
+      diag2(Decl->getLocation(),
           "(S3) global, static or thread_local variables must be deep_const");
     }
 
     return; 
   }
 
-  diag(Decl->getLocation(),
+  diag2(Decl->getLocation(),
        "(S3) global, static or thread_local variables are prohibited");
 }
 

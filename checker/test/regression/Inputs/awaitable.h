@@ -153,6 +153,8 @@ struct awaitable  {
 		return T(); 
 	}
 
+	void return_void() {}
+
 };
 
 inline

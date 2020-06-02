@@ -29,6 +29,7 @@
     "nodecpp::hidden_await_function::HiddenAwaitable::await_resume",
     "nodecpp::hidden_await_function::HiddenAwaitable::await_suspend",
     "nodecpp::no_await_function",
+    "nodecpp::promise_type_struct::return_value",
     "nodecpp::promise_type_struct::return_void",
     "nodecpp::promise_type_struct::yield_value",
     "nodecpp::safememory::make_owning",

@@ -71,7 +71,7 @@ public:
     CheckFactories.registerCheck<RecordDeclCheck>(
         "nodecpp-record-decl");
     CheckFactories.registerCheck<StaticStorageCheck>(
-        "nodecpp-static-storage");
+        "static-storage");
     CheckFactories.registerCheck<StringLiteralCheck>(
         "nodecpp-string-literal");
     CheckFactories.registerCheck<TemporaryExprCheck>(

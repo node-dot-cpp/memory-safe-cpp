@@ -354,7 +354,7 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
   GlobalOptions.AllowRawPointers = !NoRawPtr;
 
   ClangTidyOptions DefaultOptions;
-  DefaultOptions.Checks = "nodecpp-*";
+  DefaultOptions.Checks = "*,-clang-diagnostic-*";
   DefaultOptions.WarningsAsErrors = "";
   DefaultOptions.HeaderFilterRegex = ".*";
   DefaultOptions.SystemHeaders = false;

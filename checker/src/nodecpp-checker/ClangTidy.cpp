@@ -413,6 +413,11 @@ ClangTidyOptions::OptionMap ClangTidyASTConsumerFactory::getCheckOptions() {
 
 DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message,
                                        DiagnosticIDs::Level Level) {
+  return Context->diag(DiagMsgSrc, Loc, Message, Level);
+}
+
+DiagnosticBuilder ClangTidyCheck::diag2(SourceLocation Loc, StringRef Message,
+                                       DiagnosticIDs::Level Level) {
   return Context->diag(CheckName, Loc, Message, Level);
 }
 
