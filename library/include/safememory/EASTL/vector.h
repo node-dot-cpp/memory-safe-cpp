@@ -262,7 +262,8 @@ namespace safememory
 
 		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
 		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
-
+		static constexpr memory_safety is_safe = Safety;
+		
 	private:
 		owning_heap_type							mHeap;
 		T*                                          mpBegin;

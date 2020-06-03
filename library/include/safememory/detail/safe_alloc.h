@@ -190,6 +190,8 @@ public:
 	pointer mIterator = nullptr;
 
 public:
+	static constexpr memory_safety is_safe = memory_safety::none;
+
 	safe_iterator_no_checks() {}
 
 	explicit safe_iterator_no_checks(soft_array_of_prt arr)
@@ -324,6 +326,8 @@ public:
 
 
 public:
+	static constexpr memory_safety is_safe = memory_safety::safe;
+
 	safe_iterator_impl() {}
 	explicit safe_iterator_impl(soft_array_of_prt arr)
 		: arr(arr), ix(0) {}

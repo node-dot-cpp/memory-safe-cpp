@@ -349,6 +349,7 @@ namespace safememory
 		typedef std::pair<const_pointer, const_pointer>				const_pointer_pair;
 
 		static const size_type npos     = static_cast<size_type>(-1);      /// 'npos' means non-valid position or simply non-position.
+		static constexpr memory_safety is_safe = Safety;
 
 	public:
 		// CtorReserve exists so that we can create a constructor that allocates but doesn't

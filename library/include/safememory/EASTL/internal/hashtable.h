@@ -296,6 +296,8 @@ namespace safememory::detail
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag          			             iterator_category;
 
+		static constexpr memory_safety is_safe = Safety;
+
 	public:
 		node_iterator() { }
 
@@ -407,6 +409,8 @@ namespace safememory::detail
 		typedef std::conditional_t<bConst, const Value&, Value&> 		 reference;
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag                                iterator_category;
+
+		static constexpr memory_safety is_safe = Safety;
 
 	public:
 		hashtable_iterator()
@@ -985,6 +989,7 @@ namespace safememory::detail
 		using hash_code_base_type::copy_code;
 
 		static const bool kCacheHashCode = bCacheHashCode;
+		static constexpr memory_safety is_safe = Safety;
 
 		// enum
 		// {
