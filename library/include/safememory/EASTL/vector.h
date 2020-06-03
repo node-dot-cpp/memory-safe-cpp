@@ -211,7 +211,7 @@ namespace safememory
 	///
 	/// Implements a dynamic array.
 	///
-	template <typename T, memory_safety Safety = memory_safety::safe >
+	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe >
 	class vector
 	{
 		static_assert(std::is_nothrow_move_constructible<T>::value, "T must be nothrow constructible");

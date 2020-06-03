@@ -125,7 +125,7 @@ namespace safememory
 	///     i = hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
-			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class hash_set
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
@@ -244,7 +244,7 @@ namespace safememory
 	/// for hash_set for details.
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
-			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class hash_multiset
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash,

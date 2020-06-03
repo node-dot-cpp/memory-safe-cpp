@@ -128,7 +128,7 @@ namespace safememory
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
-			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_map
 		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
 							Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, true>
@@ -332,7 +332,7 @@ namespace safememory
 	/// documentation for hash_set for details.
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
-			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_multimap
 		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, false>

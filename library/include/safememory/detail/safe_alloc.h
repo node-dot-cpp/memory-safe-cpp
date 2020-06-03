@@ -39,6 +39,8 @@ using ::nodecpp::safememory::soft_ptr;
 using ::nodecpp::safememory::memory_safety;
 using ::nodecpp::safememory::make_owning;
 using ::nodecpp::safememory::memory_safety;
+using ::nodecpp::safememory::safeness_declarator;
+
 
 namespace detail {
 

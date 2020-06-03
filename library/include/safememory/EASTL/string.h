@@ -318,7 +318,7 @@ namespace safememory
 	///
 	
 
-	template <typename T, memory_safety Safety = memory_safety::safe>
+	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 	class basic_string
 	{
 	public:
