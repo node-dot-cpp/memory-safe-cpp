@@ -42,11 +42,6 @@ using ::nodecpp::safememory::memory_safety;
 
 namespace detail {
 
-// template<class T, memory_safety is_safe> struct soft_ptr_with_zero_offset_type_ { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T> type; };
-// template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::none> { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T> type; };
-// template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::safe> { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T> type; };
-// template<class T, memory_safety is_safe = ::nodecpp::safememory::safeness_declarator<T>::is_safe> using soft_ptr_with_zero_offset = typename owning_ptr_type_<T, is_safe>::type;
-
 template<class T, memory_safety is_safe>
 using soft_ptr_with_zero_offset = std::conditional_t<is_safe == memory_safety::none,
 			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T>,
@@ -127,43 +122,59 @@ public:
 
 	T* begin() { return _begin; }
 	const T* begin() const { return _begin; }
+
+	static
+	size_t calculateSize(size_t size) {
+		// TODO here we should fine tune the sizes of array_of2<T> 
+		return sizeof(array_of2<T>) + (sizeof(T) * size)
+	}
 };
 
 
-template<class _Ty>
-	NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<_Ty>> make_owning_array_of_impl(size_t size)
-	{
-		using namespace nodecpp::safememory;
-		size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
-		
-		// TODO here we should fine tune the sizes of array_of2<T> 
-		size_t total = head + sizeof(array_of2<_Ty>) + (sizeof(_Ty) * size);
-		void* data = zombieAllocate(total);
+template<class T>
+NODISCARD nodecpp::safememory::owning_ptr<array_of2<T>> make_owning_array_of_impl(size_t size) {
+	using namespace nodecpp::safememory;
+	size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
+	
+	// TODO here we should fine tune the sizes of array_of2<T> 
+	size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
+	void* data = zombieAllocate(total);
 
-		// non trivial types get zeroed memory, just in case we get to deref
-		// a non initialized position
-		if constexpr (!std::is_trivial<_Ty>::value)
-			std::memset(data, 0, total);
+	// non trivial types get zeroed memory, just in case we get to deref
+	// a non initialized position
+	if constexpr (!std::is_trivial<T>::value)
+		std::memset(data, 0, total);
 
-		array_of2<_Ty>* dataForObj = reinterpret_cast<array_of2<_Ty>*>(reinterpret_cast<uintptr_t>(data) + head);
-		owning_ptr_impl<array_of2<_Ty>> op(make_owning_t(), dataForObj);
-		// void* stackTmp = thg_stackPtrForMakeOwningCall;
-		// thg_stackPtrForMakeOwningCall = dataForObj;
-		/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_of2<_Ty>(size);
-		// thg_stackPtrForMakeOwningCall = stackTmp;
-		//return owning_ptr_impl<_Ty>(objPtr);
+	array_of2<T>* dataForObj = reinterpret_cast<array_of2<T>*>(reinterpret_cast<uintptr_t>(data) + head);
+	owning_ptr_impl<array_of2<T>> op(make_owning_t(), dataForObj);
+	// void* stackTmp = thg_stackPtrForMakeOwningCall;
+	// thg_stackPtrForMakeOwningCall = dataForObj;
+	/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_of2<T>(size);
+	// thg_stackPtrForMakeOwningCall = stackTmp;
+	//return owning_ptr_impl<_Ty>(objPtr);
+	return op;
+}
+
+template<class T, memory_safety is_safe>
+NODISCARD 
+auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, is_safe> {
+	using namespace nodecpp::safememory;
+	if constexpr ( is_safe == memory_safety::none ) {
+		size_t head = 0;
+		size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
+		void* data = allocate( total );
+		array_of2<T>* dataForObj = reinterpret_cast<array_of2<T>*>(reinterpret_cast<uintptr_t>(data) + head);
+		owning_ptr<T, memory_safety::none> op( make_owning_t(), dataForObj );
+		/*array_of2<T>* objPtr = */::new ( dataForObj ) array_of2<T>(size);
 		return op;
 	}
-
-template<class _Ty>
-	NODISCARD 
-	nodecpp::safememory::owning_ptr<array_of2<_Ty>> make_owning_array_of(size_t size) {
-		return make_owning_array_of_impl<_Ty>(size);
-	}
+	else
+		return make_owning_array_of_impl<T>(size);
+}
 
 
 template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::none>>
-class unsafe_iterator
+class safe_iterator_no_checks
 {
 public:
 	typedef std::random_access_iterator_tag  	iterator_category;
@@ -179,29 +190,29 @@ public:
 	pointer mIterator = nullptr;
 
 public:
-	unsafe_iterator() {}
+	safe_iterator_no_checks() {}
 
-	explicit unsafe_iterator(soft_array_of_prt arr)
+	explicit safe_iterator_no_checks(soft_array_of_prt arr)
 		: mIterator(arr->begin()) {}
 
-	unsafe_iterator(soft_array_of_prt arr, size_t ix)
+	safe_iterator_no_checks(soft_array_of_prt arr, size_t ix)
 		: mIterator(arr->begin() + ix) {}
 
-	unsafe_iterator(soft_array_of_prt, pointer ptr)
+	safe_iterator_no_checks(soft_array_of_prt, pointer ptr)
 		: mIterator(ptr) {}
 
-	unsafe_iterator(pointer ptr)
+	safe_iterator_no_checks(pointer ptr)
 		: mIterator(ptr) {}
 
-	unsafe_iterator(const unsafe_iterator& ri) = default;
-	unsafe_iterator& operator=(const unsafe_iterator& ri) = default;
+	safe_iterator_no_checks(const safe_iterator_no_checks& ri) = default;
+	safe_iterator_no_checks& operator=(const safe_iterator_no_checks& ri) = default;
 
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
-	unsafe_iterator(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri)
+	safe_iterator_no_checks(const safe_iterator_no_checks<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
 
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
-	unsafe_iterator& operator=(const unsafe_iterator<NonConstT, soft_array_of_prt>& ri) {
+	safe_iterator_no_checks& operator=(const safe_iterator_no_checks<NonConstT, soft_array_of_prt>& ri) {
 		mIterator = ri.mIterator;
 		return *this;
 	}
@@ -219,63 +230,63 @@ public:
 	pointer operator->() const
 		{ return mIterator; }
 
-	unsafe_iterator& operator++()
+	safe_iterator_no_checks& operator++()
 		{ ++mIterator; return *this; }
 
-	unsafe_iterator operator++(int)
+	safe_iterator_no_checks operator++(int)
 	{
-		unsafe_iterator ri(*this);
+		safe_iterator_no_checks ri(*this);
 		++mIterator;
 		return ri;
 	}
 
-	unsafe_iterator& operator--()
+	safe_iterator_no_checks& operator--()
 		{ --mIterator; return *this; }
 
-	unsafe_iterator operator--(int)
+	safe_iterator_no_checks operator--(int)
 	{
-		unsafe_iterator ri(*this);
+		safe_iterator_no_checks ri(*this);
 		--mIterator;
 		return ri;
 	}
 
-	unsafe_iterator operator+(difference_type n) const
-		{ return unsafe_iterator(mIterator + n); }
+	safe_iterator_no_checks operator+(difference_type n) const
+		{ return safe_iterator_no_checks(mIterator + n); }
 
-	unsafe_iterator& operator+=(difference_type n)
+	safe_iterator_no_checks& operator+=(difference_type n)
 		{ mIterator += n; return *this; }
 
-	unsafe_iterator operator-(difference_type n) const
-		{ return unsafe_iterator(mIterator - n); }
+	safe_iterator_no_checks operator-(difference_type n) const
+		{ return safe_iterator_no_checks(mIterator - n); }
 
-	difference_type operator-(const unsafe_iterator& other) const
+	difference_type operator-(const safe_iterator_no_checks& other) const
 		{ return distance(*this, other); }
 
-	unsafe_iterator& operator-=(difference_type n)
+	safe_iterator_no_checks& operator-=(difference_type n)
 		{ mIterator -= n; return *this; }
 
 	reference operator[](difference_type n) const
 		{ return mIterator[n]; }
 
-	bool operator==(const unsafe_iterator& ri) const
+	bool operator==(const safe_iterator_no_checks& ri) const
 		{ return mIterator == ri.mIterator; }
 
-	bool operator!=(const unsafe_iterator& ri) const
+	bool operator!=(const safe_iterator_no_checks& ri) const
 		{ return !operator==(ri); }
 
-	bool operator<(const unsafe_iterator& ri) const {
+	bool operator<(const safe_iterator_no_checks& ri) const {
 		return mIterator < ri.mIterator;
 	}
 
-	bool operator>(const unsafe_iterator& ri) const {
+	bool operator>(const safe_iterator_no_checks& ri) const {
 		return mIterator > ri.mIterator;
 	}
 
-	bool operator<=(const unsafe_iterator& ri) const {
+	bool operator<=(const safe_iterator_no_checks& ri) const {
 		return !operator>(ri);
 	}
 
-	bool operator>=(const unsafe_iterator& ri) const {
+	bool operator>=(const safe_iterator_no_checks& ri) const {
 		return !operator<(ri);
 	}
 
@@ -289,14 +300,14 @@ public:
 };
 
 template <typename T, typename Arr>
-typename unsafe_iterator<T, Arr>::difference_type distance(const unsafe_iterator<T, Arr>& l, const unsafe_iterator<T, Arr>& r) {
+typename safe_iterator_no_checks<T, Arr>::difference_type distance(const safe_iterator_no_checks<T, Arr>& l, const safe_iterator_no_checks<T, Arr>& r) {
 
 		return l.mIterator - r.mIterator;
 }
 
 
 template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::safe>>
-class safe_iterator
+class safe_iterator_impl
 {
 public:
 	typedef std::random_access_iterator_tag  	iterator_category;
@@ -313,23 +324,23 @@ public:
 
 
 public:
-	safe_iterator() {}
-	explicit safe_iterator(soft_array_of_prt arr)
+	safe_iterator_impl() {}
+	explicit safe_iterator_impl(soft_array_of_prt arr)
 		: arr(arr), ix(0) {}
 
-	safe_iterator(soft_array_of_prt arr, size_t ix)
+	safe_iterator_impl(soft_array_of_prt arr, size_t ix)
 		: arr(arr), ix(ix) {}
 
-	safe_iterator(soft_array_of_prt arr, pointer to)
+	safe_iterator_impl(soft_array_of_prt arr, pointer to)
 		: arr(arr) {
 			ix = std::distance(arr->begin(), to);
 		}
 
 	// GCC and clang fail to generate defaultd copy ctor/assign
-	safe_iterator(const safe_iterator& ri) 
+	safe_iterator_impl(const safe_iterator_impl& ri) 
 		:arr(ri.arr), ix(ri.ix) {}
 		
-	safe_iterator& operator=(const safe_iterator& ri) {
+	safe_iterator_impl& operator=(const safe_iterator_impl& ri) {
 		if(this != &ri) {
 			this->arr = ri.arr;
 			this->ix = ri.ix;
@@ -339,12 +350,12 @@ public:
 
 	// allow non-const to const convertion
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
-	safe_iterator(const safe_iterator<NonConstT, soft_array_of_prt>& ri)
+	safe_iterator_impl(const safe_iterator_impl<NonConstT, soft_array_of_prt>& ri)
 		: arr(ri.arr), ix(ri.ix) {}
 
 	// allow non-const to const convertion
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
-	safe_iterator& operator=(const safe_iterator<NonConstT, soft_array_of_prt>& ri) {
+	safe_iterator_impl& operator=(const safe_iterator_impl<NonConstT, soft_array_of_prt>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		return *this;
@@ -363,74 +374,74 @@ public:
 	pointer operator->() const
 		{ return arr->get_raw_ptr(ix); }
 
-	safe_iterator& operator++()
+	safe_iterator_impl& operator++()
 		{ ++ix; return *this; }
 
-	safe_iterator operator++(int)
+	safe_iterator_impl operator++(int)
 	{
-		safe_iterator ri(*this);
+		safe_iterator_impl ri(*this);
 		++ix;
 		return ri;
 	}
 
-	safe_iterator& operator--()
+	safe_iterator_impl& operator--()
 		{ --ix; return *this; }
 
-	safe_iterator operator--(int)
+	safe_iterator_impl operator--(int)
 	{
-		safe_iterator ri(*this);
+		safe_iterator_impl ri(*this);
 		--ix;
 		return ri;
 	}
 
-	safe_iterator operator+(difference_type n) const
-		{ return safe_iterator(arr, ix + n); }
+	safe_iterator_impl operator+(difference_type n) const
+		{ return safe_iterator_impl(arr, ix + n); }
 
-	safe_iterator& operator+=(difference_type n)
+	safe_iterator_impl& operator+=(difference_type n)
 		{ ix += n; return *this; }
 
-	safe_iterator operator-(difference_type n) const
-		{ return safe_iterator(arr, ix - n); }
+	safe_iterator_impl operator-(difference_type n) const
+		{ return safe_iterator_impl(arr, ix - n); }
 
-	difference_type operator-(const safe_iterator& other) const
+	difference_type operator-(const safe_iterator_impl& other) const
 		{ return distance(*this, other); }
 
-	safe_iterator& operator-=(difference_type n)
+	safe_iterator_impl& operator-=(difference_type n)
 		{ ix -= n; return *this; }
 
 	reference operator[](difference_type n) const
 		{ return arr->at(ix + n); }
 
-	bool operator==(const safe_iterator& ri) const {
+	bool operator==(const safe_iterator_impl& ri) const {
 		if (arr == ri.arr)
 			return ix == ri.ix;
 
 		throw std::invalid_argument("Iterators don't match");
 	}
 
-	bool operator!=(const safe_iterator& ri) const {
+	bool operator!=(const safe_iterator_impl& ri) const {
 		return !operator==(ri);
 	}
 
-	bool operator<(const safe_iterator& ri) const {
+	bool operator<(const safe_iterator_impl& ri) const {
 		if (arr == ri.arr)
 			return ix < ri.ix;
 
 		throw std::invalid_argument("Iterators don't match");
 	}
 
-	bool operator>(const safe_iterator& ri) const {
+	bool operator>(const safe_iterator_impl& ri) const {
 		if (arr == ri.arr)
 			return ix > ri.ix;
 
 		throw std::invalid_argument("Iterators don't match");
 	}
 
-	bool operator<=(const safe_iterator& ri) const {
+	bool operator<=(const safe_iterator_impl& ri) const {
 		return !operator>(ri);
 	}
 
-	bool operator>=(const safe_iterator& ri) const {
+	bool operator>=(const safe_iterator_impl& ri) const {
 		return !operator<(ri);
 	}
 
@@ -444,28 +455,19 @@ public:
 };
 
 template <typename T, typename Arr>
-typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, Arr>& l, const safe_iterator<T, Arr>& r) {
+typename safe_iterator_impl<T, Arr>::difference_type distance(const safe_iterator_impl<T, Arr>& l, const safe_iterator_impl<T, Arr>& r) {
 	if(l.arr == r.arr)
 		return l.ix - r.ix;
 	
 	throw std::invalid_argument("Iterators don't match");
 }
 
-template<class T, class A, memory_safety is_safe>
-using safe_iterator2 = std::conditional_t<is_safe == memory_safety::none,
-			unsafe_iterator<T, A>, safe_iterator<T, A>>;
-
 template<class T, memory_safety is_safe>
-using safe_iterator3 = std::conditional_t<is_safe == memory_safety::none,
-			unsafe_iterator<T>, safe_iterator<T>>;
-
-// template<class T, class A, memory_safety is_safe> struct safe_iterator_type_ { typedef safe_iterator<T, A> type; };
-// template<class T, class A> struct safe_iterator_type_<T, A, memory_safety::none> { typedef unsafe_iterator<T, A> type; };
-// template<class T, class A> struct safe_iterator_type_<T, A, memory_safety::safe> { typedef safe_iterator<T, A> type; };
-// template<class T, class A, memory_safety is_safe = ::nodecpp::safememory::safeness_declarator<T>::is_safe> using safe_iterator2 = typename safe_iterator_type_<T, A, is_safe>::type;
+using safe_array_iterator = std::conditional_t<is_safe == memory_safety::none,
+			safe_iterator_no_checks<T>, safe_iterator_impl<T>>;
 
 
-} //namespace detail
+} // namespace detail
 } // namespace safememory
 
 #ifdef NODECPP_WINDOWS
@@ -475,13 +477,13 @@ namespace safememory {
 namespace detail {
 
 template <typename T, typename Arr>
-constexpr void _Verify_range(const unsafe_iterator<T, Arr>& _First, const unsafe_iterator<T, Arr>& _Last) {
+constexpr void _Verify_range(const safe_iterator_no_checks<T, Arr>& _First, const safe_iterator_no_checks<T, Arr>& _Last) {
 	if(!(_First <= _Last))
 		throw std::invalid_argument("Iterators range invalid");
 }
 
 template <typename T, typename Arr>
-constexpr void _Verify_range(const safe_iterator<T, Arr>& _First, const safe_iterator<T, Arr>& _Last) {
+constexpr void _Verify_range(const safe_iterator_impl<T, Arr>& _First, const safe_iterator_impl<T, Arr>& _Last) {
 	if(!(_First <= _Last))
 		throw std::invalid_argument("Iterators range invalid");
 }
@@ -495,28 +497,28 @@ namespace std {
 
 
 template <typename T, typename Arr>
-struct _Unwrappable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
+struct _Unwrappable<sfd::safe_iterator_no_checks<T, Arr>, sfd::safe_iterator_no_checks<T, Arr>> : std::true_type {
 };
 
 template <typename T, typename Arr>
-struct _Wrapped_seekable<sfd::unsafe_iterator<T, Arr>, T*> : std::true_type {
+struct _Wrapped_seekable<sfd::safe_iterator_no_checks<T, Arr>, T*> : std::true_type {
 };
 
 template <typename T, typename Arr>
-struct _Range_verifiable<sfd::unsafe_iterator<T, Arr>, sfd::unsafe_iterator<T, Arr>> : std::true_type {
+struct _Range_verifiable<sfd::safe_iterator_no_checks<T, Arr>, sfd::safe_iterator_no_checks<T, Arr>> : std::true_type {
 };
 
 
 template <typename T, typename Arr>
-struct _Unwrappable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
+struct _Unwrappable<sfd::safe_iterator_impl<T, Arr>, sfd::safe_iterator_impl<T, Arr>> : std::true_type {
 };
 
 template <typename T, typename Arr>
-struct _Wrapped_seekable<sfd::safe_iterator<T, Arr>, T*> : std::true_type {
+struct _Wrapped_seekable<sfd::safe_iterator_impl<T, Arr>, T*> : std::true_type {
 };
 
 template <typename T, typename Arr>
-struct _Range_verifiable<sfd::safe_iterator<T, Arr>, sfd::safe_iterator<T, Arr>> : std::true_type {
+struct _Range_verifiable<sfd::safe_iterator_impl<T, Arr>, sfd::safe_iterator_impl<T, Arr>> : std::true_type {
 };
 
 

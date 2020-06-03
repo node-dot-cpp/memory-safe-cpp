@@ -236,8 +236,8 @@ namespace safememory
 		typedef owning_ptr<detail::array_of2<T>, is_safe> 					owning_heap_type;
 		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, is_safe> soft_heap_type;
 
-		typedef detail::safe_iterator<T, soft_heap_type, is_safe>		iterator_safe;
-		typedef detail::safe_iterator<const T, soft_heap_type, is_safe>	const_iterator_safe;
+		typedef detail::safe_array_iterator<T, is_safe>		iterator_safe;
+		typedef detail::safe_array_iterator<const T, is_safe>	const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 		typedef const const_iterator_safe&							csafe_it_arg;
@@ -1758,7 +1758,7 @@ namespace safememory
 		// mb: make_owning_array_of may return an array bigger
 		// than requested because allocation has discrete possible
 		// values under iibmalloc and we don't want to waste space
-		return detail::make_owning_array_of<T>(n);
+		return detail::make_owning_array_of<T, is_safe>(n);
 	}
 
 	// template <typename T, memory_safety is_safe>

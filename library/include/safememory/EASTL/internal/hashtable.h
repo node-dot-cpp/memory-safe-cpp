@@ -339,7 +339,7 @@ namespace safememory::detail
 		typedef hash_node<Value, bCacheHashCode>              		node_type;
 
 		typedef soft_ptr_with_zero_offset<node_type, is_safe>	node_ptr;
-		typedef safe_iterator3<owning_ptr<node_type>, is_safe>	bucket_ptr;
+		typedef safe_array_iterator<owning_ptr<node_type>, is_safe>	bucket_ptr;
 
 	protected:
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
@@ -1808,7 +1808,7 @@ namespace safememory::detail
 // 		return pBucketArray;
 
 		// mb: allocate n + 1 so we have a dereferenceable end()
-		auto pBucketArray = make_owning_array_of<owning_node_type>(n + 1);
+		owning_bucket_type pBucketArray = make_owning_array_of<owning_node_type, S>(n + 1);
 		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->begin() + n + 1);
 
 

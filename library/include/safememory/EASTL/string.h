@@ -339,10 +339,8 @@ namespace safememory
 		typedef owning_ptr<detail::array_of2<T>, is_safe> 				owning_heap_type;
 		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, is_safe> 	soft_heap_type;
 
-		// typedef detail::unsafe_iterator<T>							iterator;
-		// typedef detail::unsafe_iterator<const T>						const_iterator;
-		typedef detail::safe_iterator2<T, soft_heap_type, is_safe>				iterator;
-		typedef detail::safe_iterator2<const T, soft_heap_type, is_safe>		const_iterator;
+		typedef detail::safe_array_iterator<T, is_safe>				iterator;
+		typedef detail::safe_array_iterator<const T, is_safe>		const_iterator;
 		typedef std::reverse_iterator<iterator>                	reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>          	const_reverse_iterator;
 		typedef const const_iterator&							csafe_it_arg;
@@ -3811,7 +3809,7 @@ namespace safememory
 		if(EASTL_UNLIKELY(n > max_size()))
 			ThrowMaxSizeException();
 
-		return detail::make_owning_array_of<T>(n);
+		return detail::make_owning_array_of<T, is_safe>(n);
 	}
 
 
