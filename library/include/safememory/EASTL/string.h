@@ -318,11 +318,11 @@ namespace safememory
 	///
 	
 
-	template <typename T, memory_safety is_safe = memory_safety::safe>
+	template <typename T, memory_safety Safety = memory_safety::safe>
 	class basic_string
 	{
 	public:
-		typedef basic_string<T, is_safe>                      this_type;
+		typedef basic_string<T, Safety>                      this_type;
 		// typedef std::basic_string_view<T>                       view_type;
 		typedef basic_string_literal<T>                       	literal_type;
 		typedef T                                               value_type;
@@ -336,11 +336,11 @@ namespace safememory
 		typedef std::ptrdiff_t                                  difference_type;
 		// typedef Allocator                                       allocator_type;
 
-		typedef owning_ptr<detail::array_of2<T>, is_safe> 				owning_heap_type;
-		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, is_safe> 	soft_heap_type;
+		typedef owning_ptr<detail::array_of2<T>, Safety> 				owning_heap_type;
+		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, Safety> 	soft_heap_type;
 
-		typedef detail::safe_array_iterator<T, is_safe>				iterator;
-		typedef detail::safe_array_iterator<const T, is_safe>		const_iterator;
+		typedef detail::safe_array_iterator<T, Safety>				iterator;
+		typedef detail::safe_array_iterator<const T, Safety>		const_iterator;
 		typedef std::reverse_iterator<iterator>                	reverse_iterator;
 		typedef std::reverse_iterator<const_iterator>          	const_reverse_iterator;
 		typedef const const_iterator&							csafe_it_arg;
@@ -937,41 +937,41 @@ namespace safememory
 	// basic_string
 	///////////////////////////////////////////////////////////////////////////////
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::basic_string() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::basic_string() EA_NOEXCEPT
 	    /*: mPair_second(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))*/
 	{
 		AllocateSelf();
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const allocator_type& allocator) EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const allocator_type& allocator) EA_NOEXCEPT
 	//     : mPair_second(allocator)
 	// {
 	// 	AllocateSelf();
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::basic_string(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::basic_string(const this_type& x)
 	    // : mPair_second(x.get_allocator())
 	{
 		RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// basic_string<T, is_safe>::basic_string(const this_type& x, const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// basic_string<T, Safety>::basic_string(const this_type& x, const allocator_type& allocator)
 	// 	: mPair_second(allocator)
 	// {
 	// 	RangeInitialize(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
+	// template <typename T, memory_safety Safety>
 	// template <typename OtherStringType>
-	// inline basic_string<T, is_safe>::basic_string(CtorConvert, const OtherStringType& x)
+	// inline basic_string<T, Safety>::basic_string(CtorConvert, const OtherStringType& x)
 	//     // : mPair_second(x.get_allocator())
 	// {
 	// 	AllocateSelf();
@@ -979,45 +979,45 @@ namespace safememory
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>::basic_string(const this_type& x, size_type position, size_type n)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>::basic_string(const this_type& x, size_type position, size_type n)
 		// : mPair_second(x.get_allocator())
 	{
 		const_pointer_pair p = toPtrPair(x, position, n);
 		RangeInitialize(p.first, p.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::basic_string(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::basic_string(literal_type x)
 	{
 		RangeInitialize(x.c_str());
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const_pointer p, size_type n/*, const allocator_type& allocator*/)
 	// 	// : mPair_second(allocator)
 	// {
 	// 	RangeInitialize(p, p + n);
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const view_type& sv/*, const allocator_type& allocator*/)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const view_type& sv/*, const allocator_type& allocator*/)
 	//     : basic_string(sv.data(), sv.size()/*, allocator*/)
 	// {
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator*/)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const view_type& sv, size_type position, size_type n/*, const allocator_type& allocator*/)
 	//     : basic_string(sv.substr(position, n)/*, allocator*/)
 	// {
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
+	// template <typename T, memory_safety Safety>
 	// template <typename OtherCharType>
-	// inline basic_string<T, is_safe>::basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator*/)
+	// inline basic_string<T, Safety>::basic_string(CtorConvert, const OtherCharType* p/*, const allocator_type& allocator*/)
 	// 	// : mPair_second(allocator)
 	// {
 	// 	AllocateSelf();    // In this case we are converting from one string encoding to another, and we
@@ -1025,9 +1025,9 @@ namespace safememory
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
+	// template <typename T, memory_safety Safety>
 	// template <typename OtherCharType>
-	// inline basic_string<T, is_safe>::basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator*/)
+	// inline basic_string<T, Safety>::basic_string(CtorConvert, const OtherCharType* p, size_type n/*, const allocator_type& allocator*/)
 	// 	// : mPair_second(allocator)
 	// {
 	// 	AllocateSelf();         // In this case we are converting from one string encoding to another, and we
@@ -1035,31 +1035,31 @@ namespace safememory
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const_pointer p/*, const allocator_type& allocator*/)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const_pointer p/*, const allocator_type& allocator*/)
 	// 	// : mPair_second(allocator)
 	// {
 	// 	RangeInitialize(p);
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::basic_string(size_type n, value_type c/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::basic_string(size_type n, value_type c/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		SizeInitialize(n, c);
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>::basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator*/)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>::basic_string(const_pointer pBegin, const_pointer pEnd/*, const allocator_type& allocator*/)
 	// 	// : mPair_second(allocator)
 	// {
 	// 	RangeInitialize(pBegin, pEnd);
 	// }
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::basic_string(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::basic_string(csafe_it_arg itBegin, csafe_it_arg itEnd)
 		// : mPair_second(allocator)
 	{
 		const_pointer_pair p = checkAndGet(itBegin, itEnd);
@@ -1069,8 +1069,8 @@ namespace safememory
 
 	// CtorReserve exists so that we can create a version that allocates but doesn't
 	// initialize but also doesn't collide with any other constructor declaration.
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>::basic_string(CtorReserve /*unused*/, size_type n/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>::basic_string(CtorReserve /*unused*/, size_type n/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		// Note that we do not call SizeInitialize here.
@@ -1081,8 +1081,8 @@ namespace safememory
 
 	// // CtorSprintf exists so that we can create a version that does a variable argument
 	// // sprintf but also doesn't collide with any other constructor declaration.
-	// template <typename T, memory_safety is_safe>
-	// basic_string<T, is_safe>::basic_string(CtorSprintf /*unused*/, const_pointer pFormat, ...)
+	// template <typename T, memory_safety Safety>
+	// basic_string<T, Safety>::basic_string(CtorSprintf /*unused*/, const_pointer pFormat, ...)
 	// 	// : mPair_second()
 	// {
 	// 	const size_type n = (size_type)CharStrlen(pFormat);
@@ -1095,16 +1095,16 @@ namespace safememory
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>::basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator*/)
 		// : mPair_second(allocator)
 	{
 		RangeInitialize(init.begin(), init.end());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>::basic_string(this_type&& x) EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>::basic_string(this_type&& x) EA_NOEXCEPT
 		// : mPair_second(x.get_allocator())
 	{
 		// internalLayout() = std::move(x.internalLayout());
@@ -1113,8 +1113,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// basic_string<T, is_safe>::basic_string(this_type&& x, const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// basic_string<T, Safety>::basic_string(this_type&& x, const allocator_type& allocator)
 	// : mPair_second(allocator)
 	// {
 	// 	if(get_allocator() == x.get_allocator()) // If we can borrow from x...
@@ -1130,288 +1130,288 @@ namespace safememory
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>::~basic_string()
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>::~basic_string()
 	{
 		// DeallocateSelf();
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline const typename basic_string<T, is_safe>::allocator_type&
-	// basic_string<T, is_safe>::get_allocator() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline const typename basic_string<T, Safety>::allocator_type&
+	// basic_string<T, Safety>::get_allocator() const EA_NOEXCEPT
 	// {
 	// 	return internalAllocator();
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::allocator_type&
-	// basic_string<T, is_safe>::get_allocator() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::allocator_type&
+	// basic_string<T, Safety>::get_allocator() EA_NOEXCEPT
 	// {
 	// 	return internalAllocator();
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline void basic_string<T, is_safe>::set_allocator(const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// inline void basic_string<T, Safety>::set_allocator(const allocator_type& allocator)
 	// {
 	// 	get_allocator() = allocator;
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::data()  const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::data()  const EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::c_str() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::c_str() const EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::data() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::data() EA_NOEXCEPT
 	{
 		return internalLayout().BeginPtr();
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::begin_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::begin_unsafe() EA_NOEXCEPT
 	{
 		return pointer(internalLayout().BeginPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::end_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::end_unsafe() EA_NOEXCEPT
 	{
 		return pointer(internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::begin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::begin_unsafe() const EA_NOEXCEPT
 	{
 		return const_pointer(internalLayout().BeginPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::cbegin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::cbegin_unsafe() const EA_NOEXCEPT
 	{
 		return const_pointer(internalLayout().BeginPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::end_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::end_unsafe() const EA_NOEXCEPT
 	{
 		return const_pointer(internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::cend_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::cend_unsafe() const EA_NOEXCEPT
 	{
 		return const_pointer(internalLayout().EndPtr());
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::reverse_iterator_unsafe
-	// basic_string<T, is_safe>::rbegin_unsafe() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::reverse_iterator_unsafe
+	// basic_string<T, Safety>::rbegin_unsafe() EA_NOEXCEPT
 	// {
 	// 	return reverse_iterator_unsafe(end_unsafe());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::reverse_iterator_unsafe
-	// basic_string<T, is_safe>::rend_unsafe() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::reverse_iterator_unsafe
+	// basic_string<T, Safety>::rend_unsafe() EA_NOEXCEPT
 	// {
 	// 	return reverse_iterator_unsafe(begin_unsafe());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::const_reverse_iterator_unsafe
-	// basic_string<T, is_safe>::rbegin_unsafe() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
+	// basic_string<T, Safety>::rbegin_unsafe() const EA_NOEXCEPT
 	// {
 	// 	return const_reverse_iterator_unsafe(end_unsafe());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::const_reverse_iterator_unsafe
-	// basic_string<T, is_safe>::crbegin_unsafe() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
+	// basic_string<T, Safety>::crbegin_unsafe() const EA_NOEXCEPT
 	// {
 	// 	return const_reverse_iterator_unsafe(end_unsafe());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::const_reverse_iterator_unsafe
-	// basic_string<T, is_safe>::rend_unsafe() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
+	// basic_string<T, Safety>::rend_unsafe() const EA_NOEXCEPT
 	// {
 	// 	return const_reverse_iterator_unsafe(begin_unsafe());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::const_reverse_iterator_unsafe
-	// basic_string<T, is_safe>::crend_unsafe() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
+	// basic_string<T, Safety>::crend_unsafe() const EA_NOEXCEPT
 	// {
 	// 	return const_reverse_iterator_unsafe(begin_unsafe());
 	// }
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::begin() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::begin() EA_NOEXCEPT
 	{
 		return iterator(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::end() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::end() EA_NOEXCEPT
 	{
 		return iterator(GetSoftHeapPtr(), size());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_iterator
-	basic_string<T, is_safe>::begin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_iterator
+	basic_string<T, Safety>::begin() const EA_NOEXCEPT
 	{
 		return const_iterator(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_iterator
-	basic_string<T, is_safe>::cbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_iterator
+	basic_string<T, Safety>::cbegin() const EA_NOEXCEPT
 	{
 		return const_iterator(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_iterator
-	basic_string<T, is_safe>::end() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_iterator
+	basic_string<T, Safety>::end() const EA_NOEXCEPT
 	{
 		return const_iterator(GetSoftHeapPtr(), size());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_iterator
-	basic_string<T, is_safe>::cend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_iterator
+	basic_string<T, Safety>::cend() const EA_NOEXCEPT
 	{
 		return const_iterator(GetSoftHeapPtr(), size());
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reverse_iterator
-	basic_string<T, is_safe>::rbegin() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reverse_iterator
+	basic_string<T, Safety>::rbegin() EA_NOEXCEPT
 	{
 		return reverse_iterator(end());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reverse_iterator
-	basic_string<T, is_safe>::rend() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reverse_iterator
+	basic_string<T, Safety>::rend() EA_NOEXCEPT
 	{
 		return reverse_iterator(begin());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reverse_iterator
-	basic_string<T, is_safe>::rbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reverse_iterator
+	basic_string<T, Safety>::rbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(end());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reverse_iterator
-	basic_string<T, is_safe>::crbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reverse_iterator
+	basic_string<T, Safety>::crbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(end());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reverse_iterator
-	basic_string<T, is_safe>::rend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reverse_iterator
+	basic_string<T, Safety>::rend() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(begin());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reverse_iterator
-	basic_string<T, is_safe>::crend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reverse_iterator
+	basic_string<T, Safety>::crend() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator(begin());
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline bool basic_string<T, is_safe>::empty() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline bool basic_string<T, Safety>::empty() const EA_NOEXCEPT
 	{
 		return (size() == 0);
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline bool basic_string<T, is_safe>::IsSSO() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline bool basic_string<T, Safety>::IsSSO() const EA_NOEXCEPT
 	// {
 	// 	return internalLayout().IsSSO();
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::size() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::size() const EA_NOEXCEPT
 	{
 		return internalLayout().GetSize();
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::length() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::length() const EA_NOEXCEPT
 	{
 		return internalLayout().GetSize();
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::max_size() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::max_size() const EA_NOEXCEPT
 	{
 		return kMaxSize;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::capacity() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::capacity() const EA_NOEXCEPT
 	{
 		// if (internalLayout().IsHeap())
 		// {
@@ -1421,9 +1421,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reference
-	basic_string<T, is_safe>::operator[](size_type n) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reference
+	basic_string<T, Safety>::operator[](size_type n) const
 	{
 		// #if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
 		// 	if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
@@ -1435,9 +1435,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reference
-	basic_string<T, is_safe>::operator[](size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reference
+	basic_string<T, Safety>::operator[](size_type n)
 	{
 		// #if EASTL_ASSERT_ENABLED // We allow the user to reference the trailing 0 char without asserting. Perhaps we shouldn't.
 		// 	if(EASTL_UNLIKELY(n > internalLayout().GetSize()))
@@ -1449,15 +1449,15 @@ namespace safememory
 	}
 
 
-	// template <typename T, memory_safety is_safe>
+	// template <typename T, memory_safety Safety>
 	// basic_string<T,Allocator>::operator std::basic_string_view<T>() const EA_NOEXCEPT
 	// {
 	// 	return std::basic_string_view<T>(data(), size());
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(const this_type& x)
 	{
 		if(&x != this)
 		{
@@ -1483,17 +1483,17 @@ namespace safememory
 
 
 	// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
-	// 	template <typename T, memory_safety is_safe>
+	// 	template <typename T, memory_safety Safety>
 	// 	template <typename CharType>
-	// 	inline void basic_string<T, is_safe>::DoAssignConvert(CharType c, true_type)
+	// 	inline void basic_string<T, Safety>::DoAssignConvert(CharType c, true_type)
 	// 	{
 	// 		assign_convert(&c, 1); // Call this version of append because it will result in the encoding-converting append being used.
 	// 	}
 
 
-	// 	template <typename T, memory_safety is_safe>
+	// 	template <typename T, memory_safety Safety>
 	// 	template <typename StringType>
-	// 	inline void basic_string<T, is_safe>::DoAssignConvert(const StringType& x, false_type)
+	// 	inline void basic_string<T, Safety>::DoAssignConvert(const StringType& x, false_type)
 	// 	{
 	// 		//if(&x != this) // Unnecessary because &x cannot possibly equal this.
 	// 		{
@@ -1506,9 +1506,9 @@ namespace safememory
 	// 	}
 
 
-	// 	template <typename T, memory_safety is_safe>
+	// 	template <typename T, memory_safety Safety>
 	// 	template <typename OtherStringType>
-	// 	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(const OtherStringType& x)
+	// 	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(const OtherStringType& x)
 	// 	{
 	// 		clear();
 	// 		DoAssignConvert(x, is_integral<OtherStringType>());
@@ -1516,57 +1516,57 @@ namespace safememory
 	// 	}
 
 
-	// 	template <typename T, memory_safety is_safe>
+	// 	template <typename T, memory_safety Safety>
 	// 	template <typename OtherCharType>
-	// 	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(const OtherCharType* p)
+	// 	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(const OtherCharType* p)
 	// 	{
 	// 		return assign_convert(p);
 	// 	}
 	// #endif
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(literal_type x)
 	{
 		const T* p = x.c_str();
 		return assign_unsafe(p, p + CharStrlen(p));
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(const_pointer p)
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(const_pointer p)
 	// {
 	// 	return assign(p, p + CharStrlen(p));
 	// }
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(value_type c)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(value_type c)
 	{
 		return assign(static_cast<size_type>(1), c);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(this_type&& x)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(this_type&& x)
 	{
 		return assign(std::move(x));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(std::initializer_list<value_type> ilist)
 	{
 		return assign_unsafe(ilist.begin(), ilist.end());
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::this_type& basic_string<T, is_safe>::operator=(view_type v)
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::this_type& basic_string<T, Safety>::operator=(view_type v)
 	// {
 	// 	return assign(v.data(), static_cast<this_type::size_type>(v.size()));
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::resize(size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::resize(size_type n, value_type c)
 	{
 		const size_type s = internalLayout().GetSize();
 
@@ -1577,8 +1577,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::resize(size_type n)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::resize(size_type n)
 	{
 		// C++ basic_string specifies that resize(n) is equivalent to resize(n, value_type()).
 		// For built-in types, value_type() is the same as zero (value_type(0)).
@@ -1596,8 +1596,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::reserve(size_type n)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::reserve(size_type n)
 	{
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			if(EASTL_UNLIKELY(n > max_size()))
@@ -1615,15 +1615,15 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::shrink_to_fit()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::shrink_to_fit()
 	{
 		set_capacity(internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::set_capacity(size_type n)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::set_capacity(size_type n)
 	{
 		if(n == npos)
 			// If the user wants to set the capacity to equal the current size...
@@ -1681,8 +1681,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::force_size(size_type n)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::force_size(size_type n)
 	{
 		#if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(n > capacity()))
@@ -1696,17 +1696,17 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::clear() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::clear() EA_NOEXCEPT
 	{
 		internalLayout().SetSize(0);
 		*internalLayout().BeginPtr() = value_type(0);
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::pointer
-	// basic_string<T, is_safe>::detach() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::pointer
+	// basic_string<T, Safety>::detach() EA_NOEXCEPT
 	// {
 	// 	// The detach function is an extension function which simply forgets the
 	// 	// owned pointer. It doesn't free it but rather assumes that the user
@@ -1734,9 +1734,9 @@ namespace safememory
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reference
-	basic_string<T, is_safe>::at(size_type n) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reference
+	basic_string<T, Safety>::at(size_type n) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
@@ -1750,9 +1750,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reference
-	basic_string<T, is_safe>::at(size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reference
+	basic_string<T, Safety>::at(size_type n)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(n >= internalLayout().GetSize()))
@@ -1766,9 +1766,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reference
-	basic_string<T, is_safe>::front()
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reference
+	basic_string<T, Safety>::front()
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
@@ -1781,9 +1781,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reference
-	basic_string<T, is_safe>::front() const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reference
+	basic_string<T, Safety>::front() const
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
@@ -1796,9 +1796,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reference
-	basic_string<T, is_safe>::back()
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reference
+	basic_string<T, Safety>::back()
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
@@ -1811,9 +1811,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_reference
-	basic_string<T, is_safe>::back() const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_reference
+	basic_string<T, Safety>::back() const
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference the trailing 0 char without asserting.
@@ -1826,87 +1826,87 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::operator+=(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::operator+=(const this_type& x)
 	{
 		return append(x);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::operator+=(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::operator+=(literal_type x)
 	{
 		return append(x);
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>& basic_string<T, is_safe>::operator+=(const_pointer p)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>& basic_string<T, Safety>::operator+=(const_pointer p)
 	// {
 	// 	return append(p);
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::operator+=(value_type c)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::operator+=(value_type c)
 	{
 		push_back(c);
 		return *this;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::append(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::append(const this_type& x)
 	{
 		return append_unsafe(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::append(const this_type& x, size_type position, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::append(const this_type& x, size_type position, size_type n)
 	{
 		const_pointer_pair p = toPtrPair(x, position, n);
 	    return append_unsafe(p.first, p.second);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::append(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::append(literal_type x)
 	{
 		const T* p = x.c_str();
 		return append_unsafe(p, p + CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::append_unsafe(const_pointer p, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::append_unsafe(const_pointer p, size_type n)
 	{
 		return append_unsafe(p, p + n);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::append_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::append_unsafe(const_pointer p)
 	{
 		return append_unsafe(p, p + CharStrlen(p));
 	}
 
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append_convert_unsafe(const OtherCharType* pOther)
+	basic_string<T, Safety>& basic_string<T, Safety>::append_convert_unsafe(const OtherCharType* pOther)
 	{
 		return append_convert_unsafe(pOther, (size_type)CharStrlen(pOther));
 	}
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append_convert(const basic_string<OtherCharType>& x)
+	basic_string<T, Safety>& basic_string<T, Safety>::append_convert(const basic_string<OtherCharType>& x)
 	{
 		return append_convert_unsafe(x.c_str(), x.length());
 	}
 
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append_convert_unsafe(const OtherCharType* pOther, size_type n)
+	basic_string<T, Safety>& basic_string<T, Safety>::append_convert_unsafe(const OtherCharType* pOther, size_type n)
 	{
 		// Question: What do we do in the case that we have an illegally encoded source string?
 		// This can happen with UTF8 strings. Do we throw an exception or do we ignore the input?
@@ -1930,17 +1930,17 @@ namespace safememory
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append_convert(basic_string_literal<OtherCharType> x)
+	basic_string<T, Safety>& basic_string<T, Safety>::append_convert(basic_string_literal<OtherCharType> x)
 	{
 		const T* p = x.c_str();
 		return append_convert_unsafe(p, CharStrlen(p));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append(size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::append(size_type n, value_type c)
 	{
 		if (n > 0)
 		{
@@ -1959,8 +1959,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append_unsafe(const_pointer pBegin, const_pointer pEnd)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::append_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		if(pBegin != pEnd)
 		{
@@ -1996,14 +1996,14 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::append(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::append(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkAndGet(itBegin, itEnd);
 		return append_unsafe(p.first, p.second);
 	}
-// 	template <typename T, memory_safety is_safe>
-// 	basic_string<T, is_safe>& basic_string<T, is_safe>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
+// 	template <typename T, memory_safety Safety>
+// 	basic_string<T, Safety>& basic_string<T, Safety>::append_sprintf_va_list(const_pointer pFormat, va_list arguments)
 // 	{
 // 		// From unofficial C89 extension documentation:
 // 		// The vsnprintf returns the number of characters written into the array,
@@ -2122,8 +2122,8 @@ namespace safememory
 // 		return *this;
 // 	}
 
-// 	template <typename T, memory_safety is_safe>
-// 	basic_string<T, is_safe>& basic_string<T, is_safe>::append_sprintf(const_pointer pFormat, ...)
+// 	template <typename T, memory_safety Safety>
+// 	basic_string<T, Safety>& basic_string<T, Safety>::append_sprintf(const_pointer pFormat, ...)
 // 	{
 // 		va_list arguments;
 // 		va_start(arguments, pFormat);
@@ -2134,15 +2134,15 @@ namespace safememory
 // 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::push_back(value_type c)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::push_back(value_type c)
 	{
 		append((size_type)1, c);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::pop_back()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::pop_back()
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY(internalLayout().GetSize() <= 0))
@@ -2154,45 +2154,45 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign(const this_type& x)
 	{
 		// The C++11 Standard 21.4.6.3 p6 specifies that assign from this_type assigns contents only and not the allocator.
 		return assign_unsafe(x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign(const this_type& x, size_type position, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign(const this_type& x, size_type position, size_type n)
 	{
 		const_pointer_pair p = toPtrPair(x, position, n);
 		return assign_unsafe(p.first, p.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign(literal_type x)
 	{
 		const T* p = x.c_str();
 		return assign_unsafe(p, p + CharStrlen(p));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign_unsafe(const_pointer p, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign_unsafe(const_pointer p, size_type n)
 	{
 		return assign_unsafe(p, p + n);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign_unsafe(const_pointer p)
 	{
 		return assign_unsafe(p, p + CharStrlen(p));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign(size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::assign(size_type n, value_type c)
 	{
 		if(n <= internalLayout().GetSize())
 		{
@@ -2208,8 +2208,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign_unsafe(const_pointer pBegin, const_pointer pEnd)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::assign_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		const size_type n = (size_type)(pEnd - pBegin);
 		if(n <= internalLayout().GetSize())
@@ -2225,22 +2225,22 @@ namespace safememory
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::assign(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkAndGet(itBegin, itEnd);
 		return assign_unsafe(p.first, p.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign(std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign(std::initializer_list<value_type> ilist)
 	{
 		return assign_unsafe(ilist.begin(), ilist.end());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::assign(this_type&& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::assign(this_type&& x)
 	{
 		// if(get_allocator() == x.get_allocator())
 		// {
@@ -2253,9 +2253,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign_convert_unsafe(const OtherCharType* p)
+	basic_string<T, Safety>& basic_string<T, Safety>::assign_convert_unsafe(const OtherCharType* p)
 	{
 		clear();
 		append_convert_unsafe(p);
@@ -2263,27 +2263,27 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign_convert_unsafe(const OtherCharType* p, size_type n)
+	basic_string<T, Safety>& basic_string<T, Safety>::assign_convert_unsafe(const OtherCharType* p, size_type n)
 	{
 		clear();
 		append_convert_unsafe(p, n);
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign_convert(const basic_string<OtherCharType>& x)
+	basic_string<T, Safety>& basic_string<T, Safety>::assign_convert(const basic_string<OtherCharType>& x)
 	{
 		clear();
 		append_convert_unsafe(x.data(), x.length());
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	template <typename OtherCharType>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::assign_convert(basic_string_literal<OtherCharType> x)
+	basic_string<T, Safety>& basic_string<T, Safety>::assign_convert(basic_string_literal<OtherCharType> x)
 	{
 		clear();
 		append_convert_unsafe(x.c_str());
@@ -2291,8 +2291,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert(size_type position, const this_type& x)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert(size_type position, const this_type& x)
 	{
 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
 			ThrowRangeException();
@@ -2305,8 +2305,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert(size_type position, const this_type& x, size_type beg, size_type n)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert(size_type position, const this_type& x, size_type beg, size_type n)
 	{
 		if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
 			ThrowRangeException();
@@ -2325,8 +2325,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert_unsafe(size_type position, const_pointer p, size_type n)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert_unsafe(size_type position, const_pointer p, size_type n)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2343,8 +2343,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert_unsafe(size_type position, const_pointer p)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert_unsafe(size_type position, const_pointer p)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2362,8 +2362,8 @@ namespace safememory
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert(size_type position, literal_type x)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert(size_type position, literal_type x)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2384,8 +2384,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::insert(size_type position, size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::insert(size_type position, size_type n, value_type c)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2402,9 +2402,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::insert_unsafe(const_pointer p, value_type c)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::insert_unsafe(const_pointer p, value_type c)
 	{
 		if(p == const_pointer(internalLayout().EndPtr()))
 		{
@@ -2415,9 +2415,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::insert_unsafe(const_pointer p, size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::insert_unsafe(const_pointer p, size_type n, value_type c)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2495,9 +2495,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::insert_unsafe(const_pointer p, const_pointer pBegin, const_pointer pEnd)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::insert_unsafe(const_pointer p, const_pointer pBegin, const_pointer pEnd)
 	{
 		const difference_type nPosition = (p - internalLayout().BeginPtr()); // Save this because we might reallocate.
 
@@ -2603,34 +2603,34 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::insert_unsafe(const_pointer p, std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::insert_unsafe(const_pointer p, std::initializer_list<value_type> ilist)
 	{
 		return insert_unsafe(p, ilist.begin(), ilist.end());
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::insert(csafe_it_arg it, value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::insert(csafe_it_arg it, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, c);
 		return iterator(GetSoftHeapPtr(), r);
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::insert(csafe_it_arg it, size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::insert(csafe_it_arg it, size_type n, value_type c)
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, n, c);
 		return iterator(GetSoftHeapPtr(), r);
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::insert(csafe_it_arg it, csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer p = checkMineAndGet(it);
 		const_pointer_pair p2 = checkAndGet(itBegin, itEnd);
@@ -2638,17 +2638,17 @@ namespace safememory
 		return iterator(GetSoftHeapPtr(), r);
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::insert(csafe_it_arg it, std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::insert(csafe_it_arg it, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, ilist.begin(), ilist.end());
 		return iterator(GetSoftHeapPtr(), r);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::erase(size_type position, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::erase(size_type position, size_type n)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 			// if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2667,9 +2667,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::erase_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::erase_unsafe(const_pointer p)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((p < internalLayout().BeginPtr()) || (p >= internalLayout().EndPtr())))
@@ -2682,9 +2682,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::erase_unsafe(const_pointer pBegin, const_pointer pEnd)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::erase_unsafe(const_pointer pBegin, const_pointer pEnd)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2701,18 +2701,18 @@ namespace safememory
 		return pointer(const_cast<pointer>(pBegin));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::erase(csafe_it_arg it)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::erase(csafe_it_arg it)
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer i = erase_unsafe(p);
 		// size_t dst = std::distance(begin_unsafe(),  i);
 		return iterator(GetSoftHeapPtr(), i);
 	}
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::iterator
-	basic_string<T, is_safe>::erase(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::iterator
+	basic_string<T, Safety>::erase(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
 		pointer i = erase_unsafe(p.first, p.second);
@@ -2720,38 +2720,38 @@ namespace safememory
 		return iterator(GetSoftHeapPtr(), i);
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline typename basic_string<T, is_safe>::reverse_iterator_unsafe
-	// basic_string<T, is_safe>::erase_unsafe(reverse_iterator_unsafe position)
+	// template <typename T, memory_safety Safety>
+	// inline typename basic_string<T, Safety>::reverse_iterator_unsafe
+	// basic_string<T, Safety>::erase_unsafe(reverse_iterator_unsafe position)
 	// {
 	// 	return reverse_iterator_unsafe(erase_unsafe((++position).base()));
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// typename basic_string<T, is_safe>::reverse_iterator_unsafe
-	// basic_string<T, is_safe>::erase_unsafe(reverse_iterator_unsafe first, reverse_iterator_unsafe last)
+	// template <typename T, memory_safety Safety>
+	// typename basic_string<T, Safety>::reverse_iterator_unsafe
+	// basic_string<T, Safety>::erase_unsafe(reverse_iterator_unsafe first, reverse_iterator_unsafe last)
 	// {
 	// 	return reverse_iterator_unsafe(erase_unsafe((++last).base(), (++first).base()));
 	// }
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::reverse_iterator
-	basic_string<T, is_safe>::erase(crsafe_it_arg position)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::reverse_iterator
+	basic_string<T, Safety>::erase(crsafe_it_arg position)
 	{
 		return reverse_iterator(erase((++position).base()));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::reverse_iterator
-	basic_string<T, is_safe>::erase(crsafe_it_arg first, crsafe_it_arg last)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::reverse_iterator
+	basic_string<T, Safety>::erase(crsafe_it_arg first, crsafe_it_arg last)
 	{
 		return reverse_iterator(erase((++last).base(), (++first).base()));
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace(size_type position, size_type n, const this_type& x)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace(size_type position, size_type n, const this_type& x)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2770,8 +2770,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// if(EASTL_UNLIKELY((pos1 > internalLayout().GetSize()) || (pos2 > x.internalLayout().GetSize())))
@@ -2795,8 +2795,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(size_type position, size_type n1, const_pointer p, size_type n2)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(size_type position, size_type n1, const_pointer p, size_type n2)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2814,8 +2814,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(size_type position, size_type n1, const_pointer p)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(size_type position, size_type n1, const_pointer p)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2833,8 +2833,8 @@ namespace safememory
 		return replace_unsafe(internalLayout().BeginPtr() + position, internalLayout().BeginPtr() + position + nLength, p, p + CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace(size_type position, size_type n1, literal_type x)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace(size_type position, size_type n1, literal_type x)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2855,8 +2855,8 @@ namespace safememory
 		return replace_unsafe(t.first, t.second, p.first, p.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace(size_type position, size_type n1, size_type n2, value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace(size_type position, size_type n1, size_type n2, value_type c)
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -2877,35 +2877,35 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const this_type& x)
 	{
 		return replace_unsafe(pBegin, pEnd, x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p, size_type n)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p, size_type n)
 	{
 		return replace_unsafe(pBegin, pEnd, p, p + n);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, const_pointer p)
 	{
 		return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, literal_type x)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_iterator pBegin, const_iterator pEnd, literal_type x)
 	// {
 	// 	const T* p = x.c_str();
 	// 	return replace_unsafe(pBegin, pEnd, p, p + CharStrlen(p));
 	// }
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_pointer pBegin, const_pointer pEnd, size_type n, value_type c)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin < internalLayout().BeginPtr()) || (pBegin > internalLayout().EndPtr()) ||
@@ -2929,8 +2929,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe>& basic_string<T, is_safe>::replace_unsafe(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety>& basic_string<T, Safety>::replace_unsafe(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if (EASTL_UNLIKELY((pBegin1 < internalLayout().BeginPtr()) || (pBegin1 > internalLayout().EndPtr()) ||
@@ -2984,46 +2984,46 @@ namespace safememory
 		return *this;
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace(csafe_it_arg first, csafe_it_arg last, const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace(csafe_it_arg first, csafe_it_arg last, const this_type& x)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 
 		return replace_unsafe(p.first, p.second, x);
 	}
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>& basic_string<T, Safety>::replace(csafe_it_arg first, csafe_it_arg last, const_pointer p, size_type n)
 	// {
 	// 	const_pointer_pair p = checkMineAndGet(first, last);
 	// 	return replace_unsafe(p.first, p.second, p, n);
 	// }
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace(csafe_it_arg first, csafe_it_arg last, literal_type x)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace(csafe_it_arg first, csafe_it_arg last, literal_type x)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 		return replace_unsafe(p.first, p.second, x);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace(csafe_it_arg first, csafe_it_arg last, size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace(csafe_it_arg first, csafe_it_arg last, size_type n, value_type c)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 		return replace_unsafe(p.first, p.second, n, c);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe>& basic_string<T, is_safe>::replace(csafe_it_arg first, csafe_it_arg last, csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety>& basic_string<T, Safety>::replace(csafe_it_arg first, csafe_it_arg last, csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		const_pointer_pair p = checkMineAndGet(first, last);
 		const_pointer_pair it = checkMineAndGet(itBegin, itEnd);
 		return replace_unsafe(p.first, p.second, it.first, it.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::copy(pointer p, size_type n, size_type position) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::copy(pointer p, size_type n, size_type position) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -3038,8 +3038,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::swap(this_type& x) EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::swap(this_type& x) EA_NOEXCEPT
 	{
 		// if(get_allocator() == x.get_allocator() || (internalLayout().IsSSO() && x.internalLayout().IsSSO())) // If allocators are equivalent...
 		// {
@@ -3055,32 +3055,32 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return find_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_unsafe(const_pointer p, size_type position) const
 	{
 		return find_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return find_unsafe(p, position, CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// It is not clear what the requirements are for position, but since the C++ standard
 		// appears to be silent it is assumed for now that position can be any value.
@@ -3101,9 +3101,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		// It is not clear what the requirements are for position, but since the C++ standard
 		// appears to be silent it is assumed for now that position can be any value.
@@ -3123,32 +3123,32 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::rfind(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::rfind(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return rfind_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::rfind_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::rfind_unsafe(const_pointer p, size_type position) const
 	{
 		return rfind_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::rfind(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::rfind(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return rfind_unsafe(p, position, CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::rfind_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::rfind_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// Disabled because it's not clear what values are valid for position.
 		// It is documented that npos is a valid value, though. We return npos and
@@ -3182,9 +3182,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::rfind(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::rfind(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
@@ -3201,32 +3201,32 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return find_first_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_of_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_of_unsafe(const_pointer p, size_type position) const
 	{
 		return find_first_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_of(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return find_first_of_unsafe(p, position, CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_of_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// If position is >= size, we return npos.
 		if(EASTL_LIKELY((position < internalLayout().GetSize())))
@@ -3241,40 +3241,40 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_of(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		return find(c, position);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return find_last_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_of_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_of_unsafe(const_pointer p, size_type position) const
 	{
 		return find_last_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_of(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return find_last_of_unsafe(p, position, CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_of_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
@@ -3291,40 +3291,40 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_of(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		return rfind(c, position);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return find_first_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_not_of_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_not_of_unsafe(const_pointer p, size_type position) const
 	{
 		return find_first_not_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_not_of(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_not_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return find_first_not_of_unsafe(p, position, CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
@@ -3338,9 +3338,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_first_not_of(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_first_not_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
@@ -3355,32 +3355,32 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
 	{
 		return find_last_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_not_of_unsafe(const_pointer p, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_not_of_unsafe(const_pointer p, size_type position) const
 	{
 		return find_last_not_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_not_of(literal_type x, size_type position) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_not_of(literal_type x, size_type position) const
 	{
 		const T* p = x.c_str();
 		return find_last_not_of_unsafe(p, position, (size_type)CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_not_of_unsafe(const_pointer p, size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_not_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		const size_type nLength = internalLayout().GetSize();
 
@@ -3396,9 +3396,9 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::find_last_not_of(value_type c, size_type position) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::find_last_not_of(value_type c, size_type position) const EA_NOEXCEPT
 	{
 		const size_type nLength = internalLayout().GetSize();
 
@@ -3415,8 +3415,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe> basic_string<T, is_safe>::substr(size_type position, size_type n) const
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety> basic_string<T, Safety>::substr(size_type position, size_type n) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(position > internalLayout().GetSize()))
@@ -3435,15 +3435,15 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare(const this_type& x) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare(const this_type& x) const EA_NOEXCEPT
 	{
 		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare(size_type pos1, size_type n1, const this_type& x) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare(size_type pos1, size_type n1, const this_type& x) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3461,8 +3461,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY((pos1 > (size_type)(internalLayout().EndPtr() - internalLayout().BeginPtr())) ||
@@ -3481,21 +3481,21 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare_unsafe(const_pointer p) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare_unsafe(const_pointer p) const
 	{
 		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare(literal_type x) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare(literal_type x) const
 	{
 		const_pointer_pair p = toPtrPair(x);
 		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), p.first, p.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare_unsafe(size_type pos1, size_type n1, const_pointer p) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare_unsafe(size_type pos1, size_type n1, const_pointer p) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3508,8 +3508,8 @@ namespace safememory
 					   p + CharStrlen(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare(size_type pos1, size_type n1, literal_type x) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare(size_type pos1, size_type n1, literal_type x) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3526,8 +3526,8 @@ namespace safememory
 		return compare_unsafe(p1.first, p1.second, p2.first, p2.second);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline int basic_string<T, is_safe>::compare_unsafe(size_type pos1, size_type n1, const_pointer p, size_type n2) const
+	template <typename T, memory_safety Safety>
+	inline int basic_string<T, Safety>::compare_unsafe(size_type pos1, size_type n1, const_pointer p, size_type n2) const
 	{
 		// #if EASTL_STRING_OPT_RANGE_ERRORS
 		// 	if(EASTL_UNLIKELY(pos1 > internalLayout().GetSize()))
@@ -3544,8 +3544,8 @@ namespace safememory
 	// make_lower
 	// This is a very simple ASCII-only case conversion function
 	// Anything more complicated should use a more powerful separate library.
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::make_lower()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::make_lower()
 	{
 		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
 			*p = (value_type)CharToLower(*p);
@@ -3555,78 +3555,78 @@ namespace safememory
 	// make_upper
 	// This is a very simple ASCII-only case conversion function
 	// Anything more complicated should use a more powerful separate library.
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::make_upper()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::make_upper()
 	{
 		for(pointer p = internalLayout().BeginPtr(); p < internalLayout().EndPtr(); ++p)
 			*p = (value_type)CharToUpper(*p);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::ltrim()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::ltrim()
 	{
 		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
 		erase(0, find_first_not_of_unsafe(array));
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::rtrim()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::rtrim()
 	{
 		const value_type array[] = { ' ', '\t', 0 }; // This is a pretty simplistic view of whitespace.
 		erase(find_last_not_of_unsafe(array) + 1);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::trim()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::trim()
 	{
 		ltrim();
 		rtrim();
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::ltrim_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::ltrim_unsafe(const_pointer p)
 	{
 		erase(0, find_first_not_of_unsafe(p));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::ltrim(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::ltrim(literal_type x)
 	{
 		erase(0, find_first_not_of(x));
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::rtrim_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::rtrim_unsafe(const_pointer p)
 	{
 		erase(find_last_not_of_unsafe(p) + 1);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::rtrim(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::rtrim(literal_type x)
 	{
 		erase(find_last_not_of(x) + 1);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::trim_unsafe(const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::trim_unsafe(const_pointer p)
 	{
 		ltrim_unsafe(p);
 		rtrim_unsafe(p);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::trim(literal_type x)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::trim(literal_type x)
 	{
 		ltrim(x);
 		rtrim(x);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe> basic_string<T, is_safe>::left(size_type n) const
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety> basic_string<T, Safety>::left(size_type n) const
 	{
 		const size_type nLength = length();
 		if(n < nLength)
@@ -3637,8 +3637,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline basic_string<T, is_safe> basic_string<T, is_safe>::right(size_type n) const
+	template <typename T, memory_safety Safety>
+	inline basic_string<T, Safety> basic_string<T, Safety>::right(size_type n) const
 	{
 		const size_type nLength = length();
 		if(n < nLength)
@@ -3649,8 +3649,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline basic_string<T, is_safe>& basic_string<T, is_safe>::sprintf(const_pointer pFormat, ...)
+	// template <typename T, memory_safety Safety>
+	// inline basic_string<T, Safety>& basic_string<T, Safety>::sprintf(const_pointer pFormat, ...)
 	// {
 	// 	va_list arguments;
 	// 	va_start(arguments, pFormat);
@@ -3662,8 +3662,8 @@ namespace safememory
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// basic_string<T, is_safe>& basic_string<T, is_safe>::sprintf_va_list(const_pointer pFormat, va_list arguments)
+	// template <typename T, memory_safety Safety>
+	// basic_string<T, Safety>& basic_string<T, Safety>::sprintf_va_list(const_pointer pFormat, va_list arguments)
 	// {
 	// 	internalLayout().SetSize(0); // Fast truncate to zero length.
 
@@ -3672,8 +3672,8 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, memory_safety is_safe>
-	int basic_string<T, is_safe>::compare_unsafe(const_pointer pBegin1, const_pointer pEnd1,
+	template <typename T, memory_safety Safety>
+	int basic_string<T, Safety>::compare_unsafe(const_pointer pBegin1, const_pointer pEnd1,
 											const_pointer pBegin2, const_pointer pEnd2)
 	{
 		const difference_type n1   = pEnd1 - pBegin1;
@@ -3685,8 +3685,8 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, memory_safety is_safe>
-	int basic_string<T, is_safe>::compare(csafe_it_arg itBegin1, csafe_it_arg itEnd1,
+	template <typename T, memory_safety Safety>
+	int basic_string<T, Safety>::compare(csafe_it_arg itBegin1, csafe_it_arg itEnd1,
 											csafe_it_arg itBegin2, csafe_it_arg itEnd2)
 	{
 		const_pointer_pair p1 = checkAndGet(itBegin1, itEnd1);
@@ -3696,8 +3696,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// int basic_string<T, is_safe>::comparei(const_pointer pBegin1, const_pointer pEnd1,
+	// template <typename T, memory_safety Safety>
+	// int basic_string<T, Safety>::comparei(const_pointer pBegin1, const_pointer pEnd1,
 	// 										 const_pointer pBegin2, const_pointer pEnd2)
 	// {
 	// 	const difference_type n1   = pEnd1 - pBegin1;
@@ -3709,23 +3709,23 @@ namespace safememory
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline int basic_string<T, is_safe>::comparei(const this_type& x) const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline int basic_string<T, Safety>::comparei(const this_type& x) const EA_NOEXCEPT
 	// {
 	// 	return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline int basic_string<T, is_safe>::comparei(const_pointer p) const
+	// template <typename T, memory_safety Safety>
+	// inline int basic_string<T, Safety>::comparei(const_pointer p) const
 	// {
 	// 	return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), p, p + CharStrlen(p));
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::pointer
-	basic_string<T, is_safe>::InsertInternal(const_pointer p, value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::pointer
+	basic_string<T, Safety>::InsertInternal(const_pointer p, value_type c)
 	{
 		pointer pNewPosition = const_cast<pointer>(p);
 
@@ -3761,8 +3761,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::SizeInitialize(size_type n, value_type c)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::SizeInitialize(size_type n, value_type c)
 	{
 		AllocateSelf(n);
 
@@ -3772,8 +3772,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::RangeInitialize(const_pointer pBegin, const_pointer pEnd)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::RangeInitialize(const_pointer pBegin, const_pointer pEnd)
 	{
 		// #if EASTL_STRING_OPT_ARGUMENT_ERRORS
 		// 	if(EASTL_UNLIKELY(!pBegin && (pEnd < pBegin))) // 21.4.2 p7
@@ -3790,8 +3790,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::RangeInitialize(const_pointer pBegin)
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::RangeInitialize(const_pointer pBegin)
 	{
 		// #if EASTL_STRING_OPT_ARGUMENT_ERRORS
 		// 	if(EASTL_UNLIKELY(!pBegin))
@@ -3802,36 +3802,36 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::owning_heap_type
-	basic_string<T, is_safe>::DoAllocate(size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::owning_heap_type
+	basic_string<T, Safety>::DoAllocate(size_type n)
 	{
 		if(EASTL_UNLIKELY(n > max_size()))
 			ThrowMaxSizeException();
 
-		return detail::make_owning_array_of<T, is_safe>(n);
+		return detail::make_owning_array_of<T, Safety>(n);
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline void basic_string<T, is_safe>::DoFree(pointer p, size_type n)
+	// template <typename T, memory_safety Safety>
+	// inline void basic_string<T, Safety>::DoFree(pointer p, size_type n)
 	// {
 	// 	if(p)
 	// 		safememory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
 	// }
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::GetNewCapacity(size_type currentCapacity)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::GetNewCapacity(size_type currentCapacity)
 	{
 		return GetNewCapacity(currentCapacity, 1);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::size_type
-	basic_string<T, is_safe>::GetNewCapacity(size_type currentCapacity, size_type minimumGrowSize)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::size_type
+	basic_string<T, Safety>::GetNewCapacity(size_type currentCapacity, size_type minimumGrowSize)
 	{
 		#if EASTL_STRING_OPT_LENGTH_ERRORS
 			const size_type nRemainingSize = max_size() - currentCapacity;
@@ -3847,8 +3847,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void basic_string<T, is_safe>::AllocateSelf()
+	template <typename T, memory_safety Safety>
+	inline void basic_string<T, Safety>::AllocateSelf()
 	{
 		AllocateSelf(16);//TODO
 //		internalLayout().Reset();
@@ -3856,8 +3856,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	void basic_string<T, is_safe>::AllocateSelf(size_type n)
+	template <typename T, memory_safety Safety>
+	void basic_string<T, Safety>::AllocateSelf(size_type n)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY(n >= 0x40000000))
@@ -3882,8 +3882,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline void basic_string<T, is_safe>::DeallocateSelf()
+	// template <typename T, memory_safety Safety>
+	// inline void basic_string<T, Safety>::DeallocateSelf()
 	// {
 	// 	internalLayout().DoFree();
 	// 	{
@@ -3893,9 +3893,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void basic_string<T, is_safe>::ThrowLengthException()
+	inline void basic_string<T, Safety>::ThrowLengthException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::length_error("basic_string -- length_error");
@@ -3906,9 +3906,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void basic_string<T, is_safe>::ThrowRangeException()
+	inline void basic_string<T, Safety>::ThrowRangeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("basic_string -- out of range");
@@ -3919,9 +3919,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void basic_string<T, is_safe>::ThrowInvalidArgumentException()
+	inline void basic_string<T, Safety>::ThrowInvalidArgumentException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::invalid_argument("basic_string -- invalid argument");
@@ -3931,9 +3931,9 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, memory_safety is_safe>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void basic_string<T, is_safe>::ThrowMaxSizeException()
+	inline void basic_string<T, Safety>::ThrowMaxSizeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("basic_string -- size too big");
@@ -3944,9 +3944,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer_pair
-	basic_string<T, is_safe>::checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer_pair
+	basic_string<T, Safety>::checkAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		if(NODECPP_LIKELY(itBegin <= itEnd)) {
 			const_pointer b = itBegin.get_raw_ptr();
@@ -3958,8 +3958,8 @@ namespace safememory
 		ThrowInvalidArgumentException();
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer basic_string<T, is_safe>::checkMineAndGet(csafe_it_arg it) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer basic_string<T, Safety>::checkMineAndGet(csafe_it_arg it) const
 	{
 		if(NODECPP_LIKELY(it <= end())) {
 			return it.get_raw_ptr();
@@ -3968,9 +3968,9 @@ namespace safememory
 		ThrowInvalidArgumentException();
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer_pair
-	basic_string<T, is_safe>::checkMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer_pair
+	basic_string<T, Safety>::checkMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
 	{
 		if(NODECPP_LIKELY(itBegin <= itEnd && itEnd <= end())) {
 			const_pointer b = itBegin.get_raw_ptr();
@@ -3983,9 +3983,9 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer_pair
-	basic_string<T, is_safe>::toPtrPair(literal_type lit)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer_pair
+	basic_string<T, Safety>::toPtrPair(literal_type lit)
 	{
 		//lit non-null warrantied
 
@@ -3994,9 +3994,9 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, memory_safety is_safe>
-	inline typename basic_string<T, is_safe>::const_pointer_pair
-	basic_string<T, is_safe>::toPtrPair(const typename basic_string<T, is_safe>::this_type& str, size_type pos, size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename basic_string<T, Safety>::const_pointer_pair
+	basic_string<T, Safety>::toPtrPair(const typename basic_string<T, Safety>::this_type& str, size_type pos, size_type n)
 	{
 		if(NODECPP_LIKELY(pos <= str.internalLayout().GetSize())) {
 			const_pointer b = str.internalLayout().BeginPtr() + pos;
@@ -4011,9 +4011,9 @@ namespace safememory
 	// CharTypeStringFindEnd
 	// Specialized char version of STL find() from back function.
 	// Not the same as RFind because search range is specified as forward iterators.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringFindEnd(const_pointer pBegin, const_pointer pEnd, value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringFindEnd(const_pointer pBegin, const_pointer pEnd, value_type c)
 	{
 		const_pointer pTemp = pEnd;
 		while(--pTemp >= pBegin)
@@ -4028,9 +4028,9 @@ namespace safememory
 
 	// CharTypeStringRFind
 	// Specialized value_type version of STL find() function in reverse.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringRFind(const_pointer pRBegin, const_pointer pREnd, const value_type c)
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringRFind(const_pointer pRBegin, const_pointer pREnd, const value_type c)
 	{
 		while(pRBegin > pREnd)
 		{
@@ -4045,9 +4045,9 @@ namespace safememory
 	// CharTypeStringSearch
 	// Specialized value_type version of STL search() function.
 	// Purpose: find p2 within p1. Return p1End if not found or if either string is zero length.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringSearch(const_pointer p1Begin, const_pointer p1End,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringSearch(const_pointer p1Begin, const_pointer p1End,
 													 const_pointer p2Begin, const_pointer p2End)
 	{
 		// Test for zero length strings, in which case we have a match or a failure,
@@ -4093,9 +4093,9 @@ namespace safememory
 	// CharTypeStringRSearch
 	// Specialized value_type version of STL find_end() function (which really is a reverse search function).
 	// Purpose: find last instance of p2 within p1. Return p1End if not found or if either string is zero length.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringRSearch(const_pointer p1Begin, const_pointer p1End,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringRSearch(const_pointer p1Begin, const_pointer p1End,
 													  const_pointer p2Begin, const_pointer p2End)
 	{
 		// Test for zero length strings, in which case we have a match or a failure,
@@ -4143,9 +4143,9 @@ namespace safememory
 	// CharTypeStringFindFirstOf
 	// Specialized value_type version of STL find_first_of() function.
 	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringFindFirstOf(const_pointer p1Begin, const_pointer p1End,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringFindFirstOf(const_pointer p1Begin, const_pointer p1End,
 														  const_pointer p2Begin, const_pointer p2End)
 	{
 		for( ; p1Begin != p1End; ++p1Begin)
@@ -4163,9 +4163,9 @@ namespace safememory
 	// CharTypeStringRFindFirstOf
 	// Specialized value_type version of STL find_first_of() function in reverse.
 	// This function is much like the C runtime strtok function, except the strings aren't null-terminated.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringRFindFirstOf(const_pointer p1RBegin, const_pointer p1REnd,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringRFindFirstOf(const_pointer p1RBegin, const_pointer p1REnd,
 														   const_pointer p2Begin,  const_pointer p2End)
 	{
 		for( ; p1RBegin != p1REnd; --p1RBegin)
@@ -4183,9 +4183,9 @@ namespace safememory
 
 	// CharTypeStringFindFirstNotOf
 	// Specialized value_type version of STL find_first_not_of() function.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringFindFirstNotOf(const_pointer p1Begin, const_pointer p1End,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringFindFirstNotOf(const_pointer p1Begin, const_pointer p1End,
 															 const_pointer p2Begin, const_pointer p2End)
 	{
 		for( ; p1Begin != p1End; ++p1Begin)
@@ -4205,9 +4205,9 @@ namespace safememory
 
 	// CharTypeStringRFindFirstNotOf
 	// Specialized value_type version of STL find_first_not_of() function in reverse.
-	template <typename T, memory_safety is_safe>
-	typename basic_string<T, is_safe>::const_pointer
-	basic_string<T, is_safe>::CharTypeStringRFindFirstNotOf(const_pointer p1RBegin, const_pointer p1REnd,
+	template <typename T, memory_safety Safety>
+	typename basic_string<T, Safety>::const_pointer
+	basic_string<T, Safety>::CharTypeStringRFindFirstNotOf(const_pointer p1RBegin, const_pointer p1REnd,
 															  const_pointer p2Begin,  const_pointer p2End)
 	{
 		for( ; p1RBegin != p1REnd; --p1RBegin)
@@ -4228,122 +4228,122 @@ namespace safememory
 
 
 	// iterator operators
-	// template <typename T, memory_safety is_safe>
-	// inline bool operator==(const typename basic_string<T, is_safe>::reverse_iterator_unsafe& r1,
-	// 					   const typename basic_string<T, is_safe>::reverse_iterator_unsafe& r2)
+	// template <typename T, memory_safety Safety>
+	// inline bool operator==(const typename basic_string<T, Safety>::reverse_iterator_unsafe& r1,
+	// 					   const typename basic_string<T, Safety>::reverse_iterator_unsafe& r2)
 	// {
 	// 	return r1.mpCurrent == r2.mpCurrent;
 	// }
 
 
-	// template <typename T, memory_safety is_safe>
-	// inline bool operator!=(const typename basic_string<T, is_safe>::reverse_iterator_unsafe& r1,
-	// 					   const typename basic_string<T, is_safe>::reverse_iterator_unsafe& r2)
+	// template <typename T, memory_safety Safety>
+	// inline bool operator!=(const typename basic_string<T, Safety>::reverse_iterator_unsafe& r1,
+	// 					   const typename basic_string<T, Safety>::reverse_iterator_unsafe& r2)
 	// {
 	// 	return r1.mpCurrent != r2.mpCurrent;
 	// }
 
 
 	// Operator +
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
-		typedef typename basic_string<T, is_safe>::CtorReserve CtorReserve;
+		typedef typename basic_string<T, Safety>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		basic_string<T, is_safe> result(cDNI, a.size() + b.size()/*, const_cast<basic_string<T, is_safe>&>(a).get_allocator()*/); // Note that we choose to assign a's allocator.
+		basic_string<T, Safety> result(cDNI, a.size() + b.size()/*, const_cast<basic_string<T, Safety>&>(a).get_allocator()*/); // Note that we choose to assign a's allocator.
 		result.append(a);
 		result.append(b);
 		return result;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
-		typedef typename basic_string<T, is_safe>::CtorReserve CtorReserve;
+		typedef typename basic_string<T, Safety>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		const typename basic_string<T, is_safe>::size_type n = CharStrlen(l.c_str());
-		basic_string<T, is_safe> result(cDNI, n + b.size()/*, const_cast<basic_string<T, is_safe>&>(b).get_allocator()*/);
+		const typename basic_string<T, Safety>::size_type n = CharStrlen(l.c_str());
+		basic_string<T, Safety> result(cDNI, n + b.size()/*, const_cast<basic_string<T, Safety>&>(b).get_allocator()*/);
 		result.append(l.c_str(), l.c_str() + n);
 		result.append(b);
 		return result;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(typename basic_string<T, is_safe>::value_type c, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(typename basic_string<T, Safety>::value_type c, const basic_string<T, Safety>& b)
 	{
-		typedef typename basic_string<T, is_safe>::CtorReserve CtorReserve;
+		typedef typename basic_string<T, Safety>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		basic_string<T, is_safe> result(cDNI, 1 + b.size()/*, const_cast<basic_string<T, is_safe>&>(b).get_allocator()*/);
+		basic_string<T, Safety> result(cDNI, 1 + b.size()/*, const_cast<basic_string<T, Safety>&>(b).get_allocator()*/);
 		result.push_back(c);
 		result.append(b);
 		return result;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
-		typedef typename basic_string<T, is_safe>::CtorReserve CtorReserve;
+		typedef typename basic_string<T, Safety>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		const typename basic_string<T, is_safe>::size_type n = CharStrlen(l.c_str());
-		basic_string<T, is_safe> result(cDNI, a.size() + n/*, const_cast<basic_string<T, is_safe>&>(a).get_allocator()*/);
+		const typename basic_string<T, Safety>::size_type n = CharStrlen(l.c_str());
+		basic_string<T, Safety> result(cDNI, a.size() + n/*, const_cast<basic_string<T, Safety>&>(a).get_allocator()*/);
 		result.append(a);
 		result.append(l.c_str(), l.c_str() + n);
 		return result;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::value_type c)
 	{
-		typedef typename basic_string<T, is_safe>::CtorReserve CtorReserve;
+		typedef typename basic_string<T, Safety>::CtorReserve CtorReserve;
 		CtorReserve cDNI; // GCC 2.x forces us to declare a named temporary like this.
-		basic_string<T, is_safe> result(cDNI, a.size() + 1/*, const_cast<basic_string<T, is_safe>&>(a).get_allocator()*/);
+		basic_string<T, Safety> result(cDNI, a.size() + 1/*, const_cast<basic_string<T, Safety>&>(a).get_allocator()*/);
 		result.append(a);
 		result.push_back(c);
 		return result;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(basic_string<T, is_safe>&& a, basic_string<T, is_safe>&& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(basic_string<T, Safety>&& a, basic_string<T, Safety>&& b)
 	{
 		a.append(b); // Using an rvalue by name results in it becoming an lvalue.
 		return std::move(a);
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(basic_string<T, is_safe>&& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(basic_string<T, Safety>&& a, const basic_string<T, Safety>& b)
 	{
 		a.append(b);
 		return std::move(a);
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(typename basic_string<T, is_safe>::literal_type l, basic_string<T, is_safe>&& b)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(typename basic_string<T, Safety>::literal_type l, basic_string<T, Safety>&& b)
 	{
 		b.insert(0, l);
 		return std::move(b);
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(basic_string<T, is_safe>&& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(basic_string<T, Safety>&& a, typename basic_string<T, Safety>::literal_type l)
 	{
 		a.append(l);
 		return std::move(a);
 	}
 
-	template <typename T, memory_safety is_safe>
-	basic_string<T, is_safe> operator+(basic_string<T, is_safe>&& a, typename basic_string<T, is_safe>::value_type c)
+	template <typename T, memory_safety Safety>
+	basic_string<T, Safety> operator+(basic_string<T, Safety>&& a, typename basic_string<T, Safety>::value_type c)
 	{
 		a.push_back(c);
 		return std::move(a);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline size_t basic_string<T, is_safe>::hash() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline size_t basic_string<T, Safety>::hash() const EA_NOEXCEPT
 	{
 		// To consider: limit p to at most 256 chars.
 		auto p = begin_unsafe();
@@ -4355,8 +4355,8 @@ namespace safememory
 		return static_cast<size_t>(result);
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline bool basic_string<T, is_safe>::validate() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline bool basic_string<T, Safety>::validate() const EA_NOEXCEPT
 	{
 		if((internalLayout().BeginPtr() == nullptr) || (internalLayout().EndPtr() == nullptr))
 			return false;
@@ -4370,8 +4370,8 @@ namespace safememory
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline detail::iterator_validity basic_string<T, is_safe>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
 		if(i == nullptr)
 		 	return detail::iterator_validity::Null;
@@ -4390,8 +4390,8 @@ namespace safememory
 		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
-	template <typename T, memory_safety is_safe>
-	inline detail::iterator_validity basic_string<T, is_safe>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
 		if(i == const_iterator())
 		 	return detail::iterator_validity::Null;
@@ -4416,149 +4416,149 @@ namespace safememory
 	///////////////////////////////////////////////////////////////////////
 
 	// Operator== and operator!=
-	template <typename T, memory_safety is_safe>
-	inline bool operator==(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator==(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
-		return (a.size() == b.size()) && //(memcmp(a.data(), b.data(), (size_t)a.size() * sizeof(typename basic_string<T, is_safe>::value_type)) == 0));
-			(basic_string<T, is_safe>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) == 0);
+		return (a.size() == b.size()) && //(memcmp(a.data(), b.data(), (size_t)a.size() * sizeof(typename basic_string<T, Safety>::value_type)) == 0));
+			(basic_string<T, Safety>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) == 0);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator==(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator==(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
-		typedef typename basic_string<T, is_safe>::size_type size_type;
+		typedef typename basic_string<T, Safety>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return (n == b.size()) && //(memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
-			(basic_string<T, is_safe>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) == 0);
+			(basic_string<T, Safety>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) == 0);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator==(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	inline bool operator==(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
-		typedef typename basic_string<T, is_safe>::size_type size_type;
+		typedef typename basic_string<T, Safety>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
 		return (a.size() == n) && //(memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
-			(basic_string<T, is_safe>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) == 0);
+			(basic_string<T, Safety>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) == 0);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator!=(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
 		return !(a == b);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator!=(typename basic_string<T, is_safe>::const_pointer p, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(typename basic_string<T, Safety>::const_pointer p, const basic_string<T, Safety>& b)
 	{
 		return !(p == b);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator!=(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::const_pointer p)
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::const_pointer p)
 	{
 		return !(a == p);
 	}
 
 
 	// Operator< (and also >, <=, and >=).
-	template <typename T, memory_safety is_safe>
-	inline bool operator<(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
-		return basic_string<T, is_safe>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) < 0; }
+		return basic_string<T, Safety>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), b.begin_unsafe(), b.end_unsafe()) < 0; }
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator<(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
-		typedef typename basic_string<T, is_safe>::size_type size_type;
+		typedef typename basic_string<T, Safety>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, is_safe>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) < 0;
+		return basic_string<T, Safety>::compare_unsafe(p, p + n, b.begin_unsafe(), b.end_unsafe()) < 0;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator<(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
-		typedef typename basic_string<T, is_safe>::size_type size_type;
+		typedef typename basic_string<T, Safety>::size_type size_type;
 		const T* p = l.c_str();
 		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, is_safe>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) < 0;
+		return basic_string<T, Safety>::compare_unsafe(a.begin_unsafe(), a.end_unsafe(), p, p + n) < 0;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
 		return b < a;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
 		return b < l;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
 		return l < a;
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator<=(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
 		return !(b < a);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator<=(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
 		return !(b < l);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator<=(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
 		return !(l < a);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>=(const basic_string<T, is_safe>& a, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b)
 	{
 		return !(a < b);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>=(typename basic_string<T, is_safe>::literal_type l, const basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(typename basic_string<T, Safety>::literal_type l, const basic_string<T, Safety>& b)
 	{
 		return !(l < b);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline bool operator>=(const basic_string<T, is_safe>& a, typename basic_string<T, is_safe>::literal_type l)
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, typename basic_string<T, Safety>::literal_type l)
 	{
 		return !(a < l);
 	}
 
 
-	template <typename T, memory_safety is_safe>
-	inline void swap(basic_string<T, is_safe>& a, basic_string<T, is_safe>& b)
+	template <typename T, memory_safety Safety>
+	inline void swap(basic_string<T, Safety>& a, basic_string<T, Safety>& b)
 	{
 		a.swap(b);
 	}

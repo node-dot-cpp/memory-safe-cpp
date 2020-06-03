@@ -42,8 +42,8 @@ using ::nodecpp::safememory::memory_safety;
 
 namespace detail {
 
-template<class T, memory_safety is_safe>
-using soft_ptr_with_zero_offset = std::conditional_t<is_safe == memory_safety::none,
+template<class T, memory_safety Safety>
+using soft_ptr_with_zero_offset = std::conditional_t<Safety == memory_safety::none,
 			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T>,
 			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T>>;
 
@@ -155,11 +155,11 @@ NODISCARD nodecpp::safememory::owning_ptr<array_of2<T>> make_owning_array_of_imp
 	return op;
 }
 
-template<class T, memory_safety is_safe>
+template<class T, memory_safety Safety>
 NODISCARD 
-auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, is_safe> {
+auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, Safety> {
 	using namespace nodecpp::safememory;
-	if constexpr ( is_safe == memory_safety::none ) {
+	if constexpr ( Safety == memory_safety::none ) {
 		size_t head = 0;
 		size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
 		void* data = allocate( total );
@@ -462,8 +462,8 @@ typename safe_iterator_impl<T, Arr>::difference_type distance(const safe_iterato
 	throw std::invalid_argument("Iterators don't match");
 }
 
-template<class T, memory_safety is_safe>
-using safe_array_iterator = std::conditional_t<is_safe == memory_safety::none,
+template<class T, memory_safety Safety>
+using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
 			safe_iterator_no_checks<T>, safe_iterator_impl<T>>;
 
 

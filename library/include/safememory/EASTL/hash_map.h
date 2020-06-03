@@ -128,17 +128,17 @@ namespace safememory
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
-			  memory_safety is_safe = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
 	class hash_map
-		: public detail::hashtable<Key, std::pair<const Key, T>, is_safe, detail::use_first<std::pair<const Key, T> >, Predicate,
+		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
 							Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, true>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, is_safe, 
+		typedef detail::hashtable<Key, std::pair<const Key, T>, Safety, 
 						  detail::use_first<std::pair<const Key, T> >, 
 						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
 						  detail::prime_rehash_policy, bCacheHashCode, true, true>        base_type;
-		typedef hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>      this_type;
+		typedef hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>      this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::key_type                                      key_type;
 		typedef T                                                                 mapped_type;
@@ -332,17 +332,17 @@ namespace safememory
 	/// documentation for hash_set for details.
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
-			  memory_safety is_safe = memory_safety::safe, bool bCacheHashCode = false>
+			  memory_safety Safety = memory_safety::safe, bool bCacheHashCode = false>
 	class hash_multimap
-		: public detail::hashtable<Key, std::pair<const Key, T>, is_safe, detail::use_first<std::pair<const Key, T> >, Predicate,
+		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, false>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, is_safe, 
+		typedef detail::hashtable<Key, std::pair<const Key, T>, Safety, 
 						  detail::use_first<std::pair<const Key, T> >, 
 						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
 						  detail::prime_rehash_policy, bCacheHashCode, true, false>           base_type;
-		typedef hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>     this_type;
+		typedef hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>     this_type;
 		typedef typename base_type::size_type                                         size_type;
 		typedef typename base_type::key_type                                          key_type;
 		typedef T                                                                     mapped_type;
@@ -478,11 +478,11 @@ namespace safememory
 	// global operators
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
-	inline bool operator==(const hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& a, 
-						   const hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator==(const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
-		typedef typename hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
 
 		// We implement branching with the assumption that the return value is usually false.
 		if(a.size() != b.size())
@@ -501,19 +501,19 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
-	inline bool operator!=(const hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& a, 
-						   const hash_map<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator!=(const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
 
 
-	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
-	inline bool operator==(const hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& a, 
-						   const hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator==(const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
-		typedef typename hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
 		typedef typename std::iterator_traits<const_iterator>::difference_type difference_type;
 
 		// We implement branching with the assumption that the return value is usually false.
@@ -562,9 +562,9 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety is_safe, bool bCacheHashCode>
-	inline bool operator!=(const hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& a, 
-						   const hash_multimap<Key, T, Hash, Predicate, is_safe, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator!=(const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}

@@ -258,16 +258,16 @@ namespace safememory::detail
 	/// We define a base class here because it is shared by both const and
 	/// non-const iterators.
 	///
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
 	struct node_iterator_base
 	{
 		typedef hash_node<Value, bCacheHashCode> node_type;
 
-		soft_ptr_with_zero_offset<node_type, is_safe> mpNode;
+		soft_ptr_with_zero_offset<node_type, Safety> mpNode;
 
 		node_iterator_base() { }
 
-		node_iterator_base(soft_ptr_with_zero_offset<node_type, is_safe> pNode)
+		node_iterator_base(soft_ptr_with_zero_offset<node_type, Safety> pNode)
 			: mpNode(pNode) { }
 
 		void increment()
@@ -283,12 +283,12 @@ namespace safememory::detail
 	/// The bConst parameter defines if the iterator is a const_iterator
 	/// or an iterator.
 	///
-	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety is_safe>
-	struct node_iterator : public node_iterator_base<Value, bCacheHashCode, is_safe>
+	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
+	struct node_iterator : public node_iterator_base<Value, bCacheHashCode, Safety>
 	{
 	public:
-		typedef node_iterator_base<Value, bCacheHashCode, is_safe>       base_type;
-		typedef node_iterator<Value, bConst, bCacheHashCode, is_safe>    this_type;
+		typedef node_iterator_base<Value, bCacheHashCode, Safety>       base_type;
+		typedef node_iterator<Value, bConst, bCacheHashCode, Safety>    this_type;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
 		typedef typename std::conditional_t<bConst, const Value*, Value*> pointer;
@@ -299,10 +299,10 @@ namespace safememory::detail
 	public:
 		node_iterator() { }
 
-		explicit node_iterator(soft_ptr_with_zero_offset<node_type, is_safe> pNode)
+		explicit node_iterator(soft_ptr_with_zero_offset<node_type, Safety> pNode)
 			: base_type(pNode) { }
 
-		node_iterator(const node_iterator<Value, true, bCacheHashCode, is_safe>& x)
+		node_iterator(const node_iterator<Value, true, bCacheHashCode, Safety>& x)
 			: base_type(x.mpNode) { }
 
 		reference operator*() const
@@ -331,15 +331,15 @@ namespace safememory::detail
 	/// We define a base class here because it is shared by both const and
 	/// non-const iterators.
 	///
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
 	struct hashtable_iterator_base
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe> this_type;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, Safety> this_type;
 		typedef hash_node<Value, bCacheHashCode>              		node_type;
 
-		typedef soft_ptr_with_zero_offset<node_type, is_safe>	node_ptr;
-		typedef safe_array_iterator<owning_ptr<node_type>, is_safe>	bucket_ptr;
+		typedef soft_ptr_with_zero_offset<node_type, Safety>	node_ptr;
+		typedef safe_array_iterator<owning_ptr<node_type>, Safety>	bucket_ptr;
 
 	protected:
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
@@ -394,13 +394,13 @@ namespace safememory::detail
 	/// The bConst parameter defines if the iterator is a const_iterator
 	/// or an iterator.
 	///
-	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety is_safe>
-	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode, is_safe>
+	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
+	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode, Safety>
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe>           base_type;
-		typedef hashtable_iterator<Value, bConst, bCacheHashCode, is_safe>        this_type;
-		typedef hashtable_iterator<Value, false, bCacheHashCode, is_safe>         this_type_non_const;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, Safety>           base_type;
+		typedef hashtable_iterator<Value, bConst, bCacheHashCode, Safety>        this_type;
+		typedef hashtable_iterator<Value, false, bCacheHashCode, Safety>         this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
 		typedef std::conditional_t<bConst, const Value*, Value*> 		 pointer;
@@ -933,11 +933,11 @@ namespace safememory::detail
 	/// already known, allowing us to avoid a redundant hash operation
 	/// in the normal find path.
 	/// 
-	template <typename Key, typename Value, memory_safety is_safe, typename ExtractKey, 
+	template <typename Key, typename Value, memory_safety Safety, typename ExtractKey, 
 			  typename Equal, typename H1, typename H2, typename H, 
 			  typename RehashPolicy, bool bCacheHashCode, bool bMutableIterators, bool bUniqueKeys>
 	class hashtable
-		:   public rehash_base<RehashPolicy, hashtable<Key, Value, is_safe, ExtractKey, Equal, H1, H2, H, RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys> >,
+		:   public rehash_base<RehashPolicy, hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys> >,
 			public hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, bCacheHashCode>
 	{
 	public:
@@ -953,13 +953,13 @@ namespace safememory::detail
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
 
-		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode, is_safe>              local_iterator;
-		typedef node_iterator<value_type, true,               bCacheHashCode, is_safe>              const_local_iterator;
-		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, is_safe>         iterator;
-		typedef hashtable_iterator<value_type, true,               bCacheHashCode, is_safe>         const_iterator;
+		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>              local_iterator;
+		typedef node_iterator<value_type, true,               bCacheHashCode, Safety>              const_local_iterator;
+		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
+		typedef hashtable_iterator<value_type, true,               bCacheHashCode, Safety>         const_iterator;
 		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
-		typedef hashtable<Key, Value, is_safe, ExtractKey, Equal, H1, H2, H, 
+		typedef hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, 
 							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
 		typedef RehashPolicy                                                                        rehash_policy_type;
 		typedef ExtractKey                                                                          extract_key_type;
@@ -968,10 +968,10 @@ namespace safememory::detail
 		typedef H                                                                                   h_type;
 		typedef std::integral_constant<bool, bUniqueKeys>                                           has_unique_keys_type;
 
-		typedef owning_ptr<node_type, is_safe>                                                      owning_node_type;
-		typedef soft_ptr_with_zero_offset<node_type, is_safe>                               soft_node_type;
-		typedef owning_ptr<array_of2<owning_node_type>, is_safe>                                    owning_bucket_type;
-		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type>, is_safe>             soft_bucket_type;
+		typedef owning_ptr<node_type, Safety>                                                      owning_node_type;
+		typedef soft_ptr_with_zero_offset<node_type, Safety>                               soft_node_type;
+		typedef owning_ptr<array_of2<owning_node_type>, Safety>                                    owning_bucket_type;
+		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type>, Safety>             soft_bucket_type;
 
 
 
@@ -1428,12 +1428,12 @@ namespace safememory::detail
 	// node_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator==(const node_iterator_base<Value, bCacheHashCode, is_safe>& a, const node_iterator_base<Value, bCacheHashCode, is_safe>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
 		{ return a.mpNode == b.mpNode; }
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, is_safe>& a, const node_iterator_base<Value, bCacheHashCode, is_safe>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
 		{ return a.mpNode != b.mpNode; }
 
 
@@ -1443,12 +1443,12 @@ namespace safememory::detail
 	// hashtable_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
 		{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
 		{ return !operator==(a, b); }
 
 
