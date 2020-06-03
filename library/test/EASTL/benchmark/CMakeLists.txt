@@ -43,7 +43,7 @@ endif()
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp" "../test/source/EASTLTest.cpp")
-set(SOURCES ${EASTLBENCHMARK_SOURCES})
+
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -57,19 +57,27 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
-add_executable(EASTLBenchmarks ${EASTLBENCHMARK_SOURCES})
+add_executable(EASTLBenchmark ${EASTLBENCHMARK_SOURCES})
+add_executable(EASTLBenchmarkNoCheck ${EASTLBENCHMARK_SOURCES})
+
+
+target_compile_definitions(EASTLBenchmarkNoCheck PUBLIC -DNODECPP_MEMORY_SAFETY=0)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
 set(EASTLBenchmark_Libraries
+    EATest
+)
 
-    EATest)
-target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries} Threads::Threads)
+target_link_libraries(EASTLBenchmark ${EASTLBenchmark_Libraries} Threads::Threads)
+target_link_libraries(EASTLBenchmarkNoCheck ${EASTLBenchmark_Libraries} Threads::Threads)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
 #-------------------------------------------------------------------------------------------
-add_test(EASTLBenchmarkRuns EASTLBenchmarks)
+add_test(EASTLBenchmarkRuns EASTLBenchmark)
+add_test(EASTLBenchmarkNoCheckRuns EASTLBenchmarkNoCheck)
 set_tests_properties (EASTLBenchmarkRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
+set_tests_properties (EASTLBenchmarkNoCheckRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
 
