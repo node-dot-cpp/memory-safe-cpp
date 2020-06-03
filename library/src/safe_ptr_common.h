@@ -386,9 +386,9 @@ enum class memory_safety { none, safe };
 template<class T>
 struct safeness_declarator {
 #ifdef NODECPP_MEMORY_SAFETY
-#if NODECPP_MEMORY_SAFETY == SAFE
+#if NODECPP_MEMORY_SAFETY == 100
 	static constexpr memory_safety is_safe = memory_safety::safe;
-#elif NODECPP_MEMORY_SAFETY == NONE
+#elif NODECPP_MEMORY_SAFETY == 0
 	static constexpr memory_safety is_safe = memory_safety::none;
 #else
 #error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are SAFE and NONE)

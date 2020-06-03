@@ -156,14 +156,21 @@ template class safememory::hash_map<Align32, Align32>;
 template class safememory::hash_multimap<Align32, Align32>;
 
 // validate static assumptions about hashtable core types
-typedef safememory::detail::hash_node<int, false> HashNode1;
-typedef safememory::detail::hash_node<int, true> HashNode2;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, false> HashNode1;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, true> HashNode2;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::none, false> HashNode3;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::none, true> HashNode4;
+
 static_assert(std::is_default_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_default_constructible<HashNode2>::value, "hash_node static error");
+static_assert(std::is_default_constructible<HashNode3>::value, "hash_node static error");
+static_assert(std::is_default_constructible<HashNode4>::value, "hash_node static error");
 // static_assert(std::is_copy_constructible<HashNode1>::value, "hash_node static error");
 // static_assert(std::is_copy_constructible<HashNode2>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode2>::value, "hash_node static error");
+static_assert(std::is_move_constructible<HashNode3>::value, "hash_node static error");
+static_assert(std::is_move_constructible<HashNode4>::value, "hash_node static error");
 
 // A custom hash function that has a high number of collisions is used to ensure many keys share the same hash value.
 struct colliding_hash

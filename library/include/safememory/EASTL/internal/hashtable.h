@@ -174,15 +174,15 @@ namespace safememory::detail
 	/// store a hash code in the node to speed up hash calculations 
 	/// and comparisons in some cases.
 	/// 
-	template <typename Value, bool bCacheHashCode>
+	template <typename Value, memory_safety Safety, bool bCacheHashCode>
 	struct hash_node;
 
 	// EA_DISABLE_VC_WARNING(4625 4626) // "copy constructor / assignment operator could not be generated because a base class copy constructor is inaccessible or deleted"
 	// #ifdef EA_COMPILER_MSVC_2015
 	// 	EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
 	// #endif
-		template <typename Value>
-		struct hash_node<Value, true>
+		template <typename Value, memory_safety Safety>
+		struct hash_node<Value, Safety, true>
 		{
 			hash_node() = default;
 
@@ -192,13 +192,13 @@ namespace safememory::detail
 				{}
 
 			Value        mValue;
-			owning_ptr<hash_node>   mpNext;
+			owning_ptr<hash_node, Safety>   mpNext;
 			std::size_t mnHashCode;
 
 		} EASTL_MAY_ALIAS;
 
-		template <typename Value>
-		struct hash_node<Value, false>
+		template <typename Value, memory_safety Safety>
+		struct hash_node<Value, Safety, false>
 		{
 			hash_node() = default;
 
@@ -208,7 +208,7 @@ namespace safememory::detail
 				{}
 
 		    Value      mValue;
-			owning_ptr<hash_node> mpNext;
+			owning_ptr<hash_node, Safety> mpNext;
 
 		} EASTL_MAY_ALIAS;
 
@@ -261,7 +261,7 @@ namespace safememory::detail
 	template <typename Value, bool bCacheHashCode, memory_safety Safety>
 	struct node_iterator_base
 	{
-		typedef hash_node<Value, bCacheHashCode> node_type;
+		typedef hash_node<Value, Safety, bCacheHashCode> node_type;
 
 		soft_ptr_with_zero_offset<node_type, Safety> mpNode;
 
@@ -338,10 +338,10 @@ namespace safememory::detail
 	{
 	public:
 		typedef hashtable_iterator_base<Value, bCacheHashCode, Safety> this_type;
-		typedef hash_node<Value, bCacheHashCode>              		node_type;
+		typedef hash_node<Value, Safety, bCacheHashCode>              		node_type;
 
 		typedef soft_ptr_with_zero_offset<node_type, Safety>	node_ptr;
-		typedef safe_array_iterator<owning_ptr<node_type>, Safety>	bucket_ptr;
+		typedef safe_array_iterator<owning_ptr<node_type, Safety>, Safety>	bucket_it;
 
 	protected:
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
@@ -357,12 +357,12 @@ namespace safememory::detail
 		friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
 		node_ptr  mpNode;      // Current node within current bucket.
-		bucket_ptr mpBucket;    // Current bucket.
+		bucket_it mpBucket;    // Current bucket.
 
 	public:
 		hashtable_iterator_base() { }
 
-		hashtable_iterator_base(node_ptr pNode, bucket_ptr pBucket)
+		hashtable_iterator_base(node_ptr pNode, bucket_it pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
 
 		void increment_bucket()
@@ -416,10 +416,10 @@ namespace safememory::detail
 		hashtable_iterator()
 			: base_type() { }
 
-		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_ptr pBucket)
+		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_it pBucket)
 			: base_type(pNode, pBucket) { }
 
-		hashtable_iterator(typename base_type::bucket_ptr pBucket)
+		hashtable_iterator(typename base_type::bucket_it pBucket)
 			: base_type(*pBucket, pBucket) { }
 
 		hashtable_iterator(const hashtable_iterator& x)
@@ -627,7 +627,7 @@ namespace safememory::detail
 	/// objects here, for convenience.
 	///
 	template <typename Key, typename Value, typename ExtractKey, typename Equal, 
-			  typename H1, typename H2, typename H, bool bCacheHashCode>
+			  typename H1, typename H2, typename H, memory_safety S, bool bCacheHashCode>
 	struct hash_code_base;
 
 
@@ -636,8 +636,8 @@ namespace safememory::detail
 	/// Specialization: ranged hash function, no caching hash codes. 
 	/// H1 and H2 are provided but ignored. We define a dummy hash code type.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, false>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, false>
 	{
 	protected:
 		ExtractKey  mExtractKey;    // To do: Make this member go away entirely, as it never has any data.
@@ -676,16 +676,16 @@ namespace safememory::detail
 		bucket_index_t bucket_index(const Key& key, hash_code_t, uint32_t nBucketCount) const
 			{ return (bucket_index_t)mRangedHash(key, nBucketCount); }
 
-		bucket_index_t bucket_index(const hash_node<Value, false>& pNode, uint32_t nBucketCount) const
+		bucket_index_t bucket_index(const hash_node<Value, Safety, false>& pNode, uint32_t nBucketCount) const
 			{ return (bucket_index_t)mRangedHash(mExtractKey(pNode.mValue), nBucketCount); }
 
-		bool compare(const Key& key, hash_code_t, hash_node<Value, false>& pNode) const
+		bool compare(const Key& key, hash_code_t, hash_node<Value, Safety, false>& pNode) const
 			{ return mEqual(key, mExtractKey(pNode.mValue)); }
 
-		void copy_code(hash_node<Value, false>&, const hash_node<Value, false>&) const
+		void copy_code(hash_node<Value, Safety, false>&, const hash_node<Value, Safety, false>&) const
 			{ } // Nothing to do.
 
-		void set_code(hash_node<Value, false>&, hash_code_t) const
+		void set_code(hash_node<Value, Safety, false>&, hash_code_t) const
 		{
 			// EA_UNUSED(pDest);
 			// EA_UNUSED(c);
@@ -712,8 +712,8 @@ namespace safememory::detail
 	/// This combination is meaningless, so we provide only a declaration
 	/// and no definition.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, true>;
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, true>;
 
 
 
@@ -723,8 +723,8 @@ namespace safememory::detail
 	/// no caching of hash codes. H is provided but ignored. 
 	/// Provides typedef and accessor required by TR1.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, false>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, Safety, false>
 	{
 	protected:
 		ExtractKey  mExtractKey;
@@ -750,7 +750,7 @@ namespace safememory::detail
 	protected:
 		typedef size_t hash_code_t;
 		typedef uint32_t bucket_index_t;
-		typedef hash_node<Value, false> node_type;
+		typedef hash_node<Value, Safety, false> node_type;
 
 		hash_code_base(const ExtractKey& ex, const Equal& eq, const H1& h1, const H2& h2, const default_ranged_hash&)
 			: mExtractKey(ex), mEqual(eq), m_h1(h1), m_h2(h2) { }
@@ -794,8 +794,8 @@ namespace safememory::detail
 	/// caching hash codes. H is provided but ignored. 
 	/// Provides typedef and accessor required by TR1.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, true>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, Safety, true>
 	{
 	protected:
 		ExtractKey  mExtractKey;
@@ -821,7 +821,7 @@ namespace safememory::detail
 	protected:
 		typedef uint32_t hash_code_t;
 		typedef uint32_t bucket_index_t;
-		typedef hash_node<Value, true> node_type;
+		typedef hash_node<Value, Safety, true> node_type;
 
 		hash_code_base(const ExtractKey& ex, const Equal& eq, const H1& h1, const H2& h2, const default_ranged_hash&)
 			: mExtractKey(ex), mEqual(eq), m_h1(h1), m_h2(h2) { }
@@ -942,13 +942,13 @@ namespace safememory::detail
 			  typename RehashPolicy, bool bCacheHashCode, bool bMutableIterators, bool bUniqueKeys>
 	class hashtable
 		:   public rehash_base<RehashPolicy, hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys> >,
-			public hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, bCacheHashCode>
+			public hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>
 	{
 	public:
 		typedef Key                                                                                 key_type;
 		typedef Value                                                                               value_type;
 		typedef typename ExtractKey::result_type                                                    mapped_type;
-		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, bCacheHashCode>            hash_code_base_type;
+		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>            hash_code_base_type;
 		typedef typename hash_code_base_type::hash_code_t                                           hash_code_t;
 		// typedef Allocator                                                                           allocator_type;
 		typedef Equal                                                                               key_equal;
@@ -961,7 +961,7 @@ namespace safememory::detail
 		typedef node_iterator<value_type, true,               bCacheHashCode, Safety>              const_local_iterator;
 		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
 		typedef hashtable_iterator<value_type, true,               bCacheHashCode, Safety>         const_iterator;
-		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
+		typedef hash_node<value_type, Safety, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
 		typedef hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, 
 							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
@@ -1296,8 +1296,8 @@ namespace safememory::detail
 		iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
-		typename iterator::bucket_ptr GetBucketArrayIt() const { 
-			return typename iterator::bucket_ptr(mpBucketArray);
+		safe_array_iterator<owning_node_type, Safety> GetBucketArrayIt() const { 
+			return safe_array_iterator<owning_node_type, Safety>(mpBucketArray);
 		}
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1469,7 +1469,7 @@ namespace safememory::detail
 	::hashtable(size_type nBucketCount, const H1& h1, const H2& h2, const H& h,
 				const Eq& eq, const EK& ek/*, const allocator_type& allocator*/)
 		:   rehash_base<RP, hashtable>(),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(ek, eq, h1, h2, h),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(ek, eq, h1, h2, h),
 			mnBucketCount(),
 			mnElementCount(0),
 			mRehashPolicy()/*,
@@ -1536,7 +1536,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(const this_type& x)
 		:   rehash_base<RP, hashtable>(x),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(x),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(x),
 			mnBucketCount(x.mnBucketCount),
 			mnElementCount(x.mnElementCount),
 			mRehashPolicy(x.mRehashPolicy)/*,
@@ -1593,7 +1593,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(this_type&& x)
 		:   rehash_base<RP, hashtable>(x),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(x),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(x),
 			mnBucketCount(0),
 			mnElementCount(0),
 			mRehashPolicy(x.mRehashPolicy)/*,
@@ -1730,7 +1730,7 @@ namespace safememory::detail
 // 			}
 // 		#endif
 
-		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
+		return make_owning_2<node_type, S>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
 	}
 
 
@@ -1760,7 +1760,7 @@ namespace safememory::detail
 // 			}
 // 		#endif
 
-		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
+		return make_owning_2<node_type, S>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
 	}
 
 
@@ -1820,7 +1820,7 @@ namespace safememory::detail
 // 		pBucketArray->at_unsafe(n) = reinterpret_cast<node_type*>((uintptr_t)~0);
 
 		//create a fake (zoombie) end() node, key must be default constructed
-		auto end = make_owning<node_type>();
+		auto end = make_owning_2<node_type, S>();
 		end->~node_type();
 		pBucketArray->at(n) = std::move(end);
 
@@ -1847,7 +1847,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::swap(this_type& x)
 	{
-		hash_code_base<K, V, EK, Eq, H1, H2, H, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
+		hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
 		std::swap(mRehashPolicy, x.mRehashPolicy);
 		std::swap(mpBucketArray, x.mpBucketArray);
 		std::swap(mnBucketCount, x.mnBucketCount);
@@ -2288,7 +2288,7 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(std::forward<Args>(args)...);
+		return make_owning_2<node_type, S>(std::forward<Args>(args)...);
 	}
 
 
@@ -2471,7 +2471,7 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(std::move(value));
+		return make_owning_2<node_type, S>(std::move(value));
 	}
 
 
@@ -2646,7 +2646,7 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(value);
+		return make_owning_2<node_type, S>(value);
 	}
 
 
@@ -3090,7 +3090,7 @@ namespace safememory::detail
 		soft_node_type pNodeCurrent = *i.mpBucket;
 
 		if(*i.mpBucket == pNode) {
-			owning_ptr<node_type> tmp = std::move(*i.mpBucket);
+			owning_node_type tmp = std::move(*i.mpBucket);
 			*i.mpBucket = std::move(tmp->mpNext);
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
@@ -3108,7 +3108,7 @@ namespace safememory::detail
 				pNodeNext    = pNodeCurrent->mpNext;
 			}
 
-			owning_ptr<node_type> tmp = std::move(pNodeCurrent->mpNext);
+			owning_node_type tmp = std::move(pNodeCurrent->mpNext);
 			pNodeCurrent->mpNext = std::move(tmp->mpNext);
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
@@ -3248,7 +3248,7 @@ namespace safememory::detail
 			try
 			{
 		// #endif
-				owning_ptr<node_type> pNode;
+				owning_node_type pNode;
 
 				for(size_type i = 0; i < mnBucketCount; ++i)
 				{

@@ -2533,10 +2533,24 @@ namespace safememory
 	inline detail::iterator_validity vector<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
 		// TODO move as method of iterator
-		if(i.arr == soft_heap_type(nullptr))
-		 	return detail::iterator_validity::Null;
-		else if(i.arr == GetSoftHeapPtr()) {
+		if constexpr (is_safe == memory_safety::safe) {
+			if(i.arr == soft_heap_type(nullptr))
+				return detail::iterator_validity::Null;
+			else if(i.arr == GetSoftHeapPtr()) {
 
+				const_pointer p = i.get_raw_ptr();
+				if(p < mpEnd)
+					return detail::iterator_validity::ValidCanDeref;
+
+				else if(p == mpEnd)
+					return detail::iterator_validity::ValidEnd;
+
+				else if(p < mCapacity)
+					return detail::iterator_validity::InvalidZoombie;
+			}
+		}
+		else {
+			//todo fix all this
 			const_pointer p = i.get_raw_ptr();
 			if(p < mpEnd)
 				return detail::iterator_validity::ValidCanDeref;
@@ -2546,6 +2560,7 @@ namespace safememory
 
 			else if(p < mCapacity)
 				return detail::iterator_validity::InvalidZoombie;
+
 		}
 
 		return detail::iterator_validity::InvalidZoombie;

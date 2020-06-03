@@ -38,18 +38,14 @@ using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;
 using ::nodecpp::safememory::memory_safety;
 using ::nodecpp::safememory::make_owning;
+using ::nodecpp::safememory::make_owning_2;
 using ::nodecpp::safememory::memory_safety;
 using ::nodecpp::safememory::safeness_declarator;
 
 
 namespace detail {
 
-template<class T, memory_safety Safety>
-using soft_ptr_with_zero_offset = std::conditional_t<Safety == memory_safety::none,
-			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T>,
-			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T>>;
-
-
+using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
 
 enum class iterator_validity {
 	Null,                // default constructed iterator
@@ -58,7 +54,6 @@ enum class iterator_validity {
 	InvalidZoombie,	     // invalid but not escaping safememory rules 
 	xxx_Broken_xxx       // invalid and escaping safety rules
 };
-
 
 template<class T>
 struct array_of2
@@ -134,7 +129,7 @@ public:
 
 
 template<class T>
-NODISCARD nodecpp::safememory::owning_ptr<array_of2<T>> make_owning_array_of_impl(size_t size) {
+NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T>> make_owning_array_of_impl(size_t size) {
 	using namespace nodecpp::safememory;
 	size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 	
@@ -166,7 +161,7 @@ auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, Safety> {
 		size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
 		void* data = allocate( total );
 		array_of2<T>* dataForObj = reinterpret_cast<array_of2<T>*>(reinterpret_cast<uintptr_t>(data) + head);
-		owning_ptr<T, memory_safety::none> op( make_owning_t(), dataForObj );
+		owning_ptr<array_of2<T>, memory_safety::none> op( make_owning_t(), dataForObj );
 		/*array_of2<T>* objPtr = */::new ( dataForObj ) array_of2<T>(size);
 		return op;
 	}
