@@ -42,7 +42,17 @@ using ::nodecpp::safememory::memory_safety;
 
 namespace detail {
 
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl;
+// template<class T, memory_safety is_safe> struct soft_ptr_with_zero_offset_type_ { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T> type; };
+// template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::none> { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T> type; };
+// template<class T> struct soft_ptr_with_zero_offset_type_<T, memory_safety::safe> { typedef ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T> type; };
+// template<class T, memory_safety is_safe = ::nodecpp::safememory::safeness_declarator<T>::is_safe> using soft_ptr_with_zero_offset = typename owning_ptr_type_<T, is_safe>::type;
+
+template<class T, memory_safety is_safe>
+using soft_ptr_with_zero_offset = std::conditional_t<is_safe == memory_safety::none,
+			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks<T>,
+			::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl<T>>;
+
+
 
 enum class iterator_validity {
 	Null,                // default constructed iterator
@@ -152,7 +162,7 @@ template<class _Ty>
 	}
 
 
-template <typename T, typename SoftArrayOfPtr = safememory::soft_ptr<array_of2<typename std::remove_const<T>::type>>>
+template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::none>>
 class unsafe_iterator
 {
 public:
@@ -285,7 +295,7 @@ typename unsafe_iterator<T, Arr>::difference_type distance(const unsafe_iterator
 }
 
 
-template <typename T, typename SoftArrayOfPtr = safememory::soft_ptr<array_of2<typename std::remove_const<T>::type>>>
+template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::safe>>
 class safe_iterator
 {
 public:
@@ -441,6 +451,18 @@ typename safe_iterator<T, Arr>::difference_type distance(const safe_iterator<T, 
 	throw std::invalid_argument("Iterators don't match");
 }
 
+template<class T, class A, memory_safety is_safe>
+using safe_iterator2 = std::conditional_t<is_safe == memory_safety::none,
+			unsafe_iterator<T, A>, safe_iterator<T, A>>;
+
+template<class T, memory_safety is_safe>
+using safe_iterator3 = std::conditional_t<is_safe == memory_safety::none,
+			unsafe_iterator<T>, safe_iterator<T>>;
+
+// template<class T, class A, memory_safety is_safe> struct safe_iterator_type_ { typedef safe_iterator<T, A> type; };
+// template<class T, class A> struct safe_iterator_type_<T, A, memory_safety::none> { typedef unsafe_iterator<T, A> type; };
+// template<class T, class A> struct safe_iterator_type_<T, A, memory_safety::safe> { typedef safe_iterator<T, A> type; };
+// template<class T, class A, memory_safety is_safe = ::nodecpp::safememory::safeness_declarator<T>::is_safe> using safe_iterator2 = typename safe_iterator_type_<T, A, is_safe>::type;
 
 
 } //namespace detail
