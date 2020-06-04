@@ -72,14 +72,14 @@ namespace nodecpp::error {
 	class nodecpp_error_domain : public error_domain
 	{
 	protected:
-		virtual uintptr_t _nodecpp_get_error_code(const error_value* value) const { return (int)(static_cast<const nodecpp_error_value*>(value)->errorCode); } // for inter-domain comparison purposes only
+		virtual uintptr_t _nodecpp_get_error_code(const error_value* value) const { return (int)(reinterpret_cast<const nodecpp_error_value*>(value)->errorCode); } // for inter-domain comparison purposes only
 
 	public:
 		constexpr nodecpp_error_domain() {}
 		using Valuetype = nodecpp_error_value;
 		virtual string_ref name() const { return string_ref( string_ref::literal_tag_t(), "nodecpp error" ); }
 		virtual string_ref value_to_message(error_value* value) const { 
-			nodecpp_error_value* myData = static_cast<nodecpp_error_value*>(value);
+			nodecpp_error_value* myData = reinterpret_cast<nodecpp_error_value*>(value);
 			switch ( myData->errorCode )
 			{
 				case NODECPP_EXCEPTION::null_ptr_access:
@@ -114,17 +114,17 @@ namespace nodecpp::error {
 			return new nodecpp_error_value(code, std::move( extra ));
 		}
 		virtual bool is_same_error_code(const error_value* value1, const error_value* value2) const { 
-			return static_cast<const nodecpp_error_value*>(value1)->errorCode == static_cast<const nodecpp_error_value*>(value2)->errorCode;
+			return reinterpret_cast<const nodecpp_error_value*>(value1)->errorCode == reinterpret_cast<const nodecpp_error_value*>(value2)->errorCode;
 		}
 		virtual error_value* clone_value(error_value* value) const {
 			if ( value )
-				return new nodecpp_error_value( *static_cast<nodecpp_error_value*>(value) );
+				return new nodecpp_error_value( *reinterpret_cast<nodecpp_error_value*>(value) );
 			else
 				return nullptr;
 		}
 		virtual void destroy_value(error_value* value) const {
 			if ( value ) {
-				nodecpp_error_value* myData = static_cast<nodecpp_error_value*>(value);
+				nodecpp_error_value* myData = reinterpret_cast<nodecpp_error_value*>(value);
 				delete myData;
 			}
 		}
