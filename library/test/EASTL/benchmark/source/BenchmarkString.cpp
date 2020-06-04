@@ -205,277 +205,274 @@ void BenchmarkStringTempl()
 {
 	Stopwatch stopwatch1(Stopwatch::kUnitsCPUCycles);
 
+	for(int i = 0; i < 2; i++)
 	{
-		for(int i = 0; i < 2; i++)
-		{
-			S8  		stds8(16, 0);
-			S16   		stds16(16, 0);
+		S8  		stds8(16, 0);
+		S16   		stds16(16, 0);
 
-			///////////////////////////////
-			// Test push_back
-			///////////////////////////////
+		///////////////////////////////
+		// Test push_back
+		///////////////////////////////
 
-			TestPushBack(stopwatch1, stds8);
+		TestPushBack(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/push_back", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/push_back", IX, stopwatch1);
 
-			TestPushBack(stopwatch1, stds16);
+		TestPushBack(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/push_back", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/push_back", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test insert(size_type position, const value_type* p)
-			///////////////////////////////
+		///////////////////////////////
+		// Test insert(size_type position, const value_type* p)
+		///////////////////////////////
 
-			const char8_t pInsert1_8[] = { 'a', 0 };
-			TestInsert1(stopwatch1, stds8, pInsert1_8);
+		const char8_t pInsert1_8[] = { 'a', 0 };
+		TestInsert1(stopwatch1, stds8, pInsert1_8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/insert/pos,p", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/insert/pos,p", IX, stopwatch1);
 
-			const char16_t pInsert1_16[] = { 'a', 0 };
-			TestInsert1(stopwatch1, stds16, pInsert1_16);
+		const char16_t pInsert1_16[] = { 'a', 0 };
+		TestInsert1(stopwatch1, stds16, pInsert1_16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/insert/pos,p", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/insert/pos,p", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test erase(size_type position, size_type n)
-			///////////////////////////////
+		///////////////////////////////
+		// Test erase(size_type position, size_type n)
+		///////////////////////////////
 
-			TestErase1(stopwatch1, stds8);
+		TestErase1(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/erase/pos,n", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/erase/pos,n", IX, stopwatch1);
 
-			TestErase1(stopwatch1, stds16);
+		TestErase1(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/erase/pos,n", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/erase/pos,n", IX, stopwatch1);
 
 
-			///////////////////////////////            
-			// Test replace(size_type position, size_type n1, const basic_string& str)
-			///////////////////////////////
+		///////////////////////////////            
+		// Test replace(size_type position, size_type n1, const basic_string& str)
+		///////////////////////////////
 
-			decltype(stds8) pReplace1_stds8 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+		decltype(stds8) pReplace1_stds8 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			TestReplace1(stopwatch1, stds8, pReplace1_stds8);
+		TestReplace1(stopwatch1, stds8, pReplace1_stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/replace/pos,n,str", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/replace/pos,n,str", IX, stopwatch1);
 
-			decltype(stds16) pReplace1_stds16 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
+		decltype(stds16) pReplace1_stds16 = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' };
 
-			TestReplace1(stopwatch1, stds16, pReplace1_stds16);
+		TestReplace1(stopwatch1, stds16, pReplace1_stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/replace/pos,n,str", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/replace/pos,n,str", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test reserve(size_type)
-			///////////////////////////////
+		///////////////////////////////
+		// Test reserve(size_type)
+		///////////////////////////////
 
-			TestReserve(stopwatch1, stds8);
+		TestReserve(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/reserve", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/reserve", IX, stopwatch1);
 
-			TestReserve(stopwatch1, stds16);
+		TestReserve(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/reserve", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/reserve", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test size()
-			///////////////////////////////
+		///////////////////////////////
+		// Test size()
+		///////////////////////////////
 
-			TestSize(stopwatch1, stds8);
+		TestSize(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/size", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/size", IX, stopwatch1);
 
-			TestSize(stopwatch1, stds16);
+		TestSize(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/size", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/size", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test operator[].
-			///////////////////////////////
+		///////////////////////////////
+		// Test operator[].
+		///////////////////////////////
 
-			TestBracket(stopwatch1, stds8);
+		TestBracket(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/operator[]", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/operator[]", IX, stopwatch1);
 
-			TestBracket(stopwatch1, stds16);
+		TestBracket(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/operator[]", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/operator[]", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test iteration via find().
-			///////////////////////////////
+		///////////////////////////////
+		// Test iteration via find().
+		///////////////////////////////
 
-			TestFind(stopwatch1, stds8);
+		TestFind(stopwatch1, stds8);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/iteration", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/iteration", IX, stopwatch1);
 
-			TestFind(stopwatch1, stds16);
+		TestFind(stopwatch1, stds16);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/iteration", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/iteration", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test find(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test find(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			decltype(stds8) pFind1_stds8 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+		decltype(stds8) pFind1_stds8 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			stds8.insert(stds8.size() / 2, pFind1_stds8);
+		stds8.insert(stds8.size() / 2, pFind1_stds8);
 
-			TestFind1(stopwatch1, stds8, pFind1_stds8, 15);
+		TestFind1(stopwatch1, stds8, pFind1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/find/str,pos", IX, stopwatch1);
 
-			decltype(stds16) pFind1_stds16 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
+		decltype(stds16) pFind1_stds16 = { 'p', 'a', 't', 't', 'e', 'r', 'n' };
 
-			stds16.insert(stds16.size() / 2, pFind1_stds16);
+		stds16.insert(stds16.size() / 2, pFind1_stds16);
 
-			TestFind1(stopwatch1, stds16, pFind1_stds16, 15);
+		TestFind1(stopwatch1, stds16, pFind1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/find/str,pos", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test rfind(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test rfind(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			TestRfind1(stopwatch1, stds8, pFind1_stds8, 15);
+		TestRfind1(stopwatch1, stds8, pFind1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/rfind/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/rfind/str,pos", IX, stopwatch1);
 
-			TestRfind1(stopwatch1, stds16, pFind1_stds16, 15);
+		TestRfind1(stopwatch1, stds16, pFind1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/rfind/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/rfind/str,pos", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test find_first_of(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test find_first_of(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			const int kFindOf1Size = 7;
-			decltype(stds8) pFindOf1_stds8 = { '~', '~', '~', '~', '~', '~', '~' };
+		const int kFindOf1Size = 7;
+		decltype(stds8) pFindOf1_stds8 = { '~', '~', '~', '~', '~', '~', '~' };
 
-			TestFirstOf1(stopwatch1, stds8, pFindOf1_stds8, 15);
+		TestFirstOf1(stopwatch1, stds8, pFindOf1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_first_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/find_first_of/str,pos", IX, stopwatch1);
 
-			decltype(stds16) pFindOf1_stds16 = { '~', '~', '~', '~', '~', '~', '~' };
+		decltype(stds16) pFindOf1_stds16 = { '~', '~', '~', '~', '~', '~', '~' };
 
-			TestFirstOf1(stopwatch1, stds16, pFindOf1_stds16, 15);
+		TestFirstOf1(stopwatch1, stds16, pFindOf1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_first_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/find_first_of/str,pos", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test find_last_of(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test find_last_of(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			TestLastOf1(stopwatch1, stds8, pFindOf1_stds8, 15);
+		TestLastOf1(stopwatch1, stds8, pFindOf1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", IX, stopwatch1);
 
-			TestLastOf1(stopwatch1, stds16, pFindOf1_stds16, 15);
+		TestLastOf1(stopwatch1, stds16, pFindOf1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test find_first_not_of(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test find_first_not_of(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			TestFirstNotOf1(stopwatch1, stds8, pFind1_stds8, 15);
+		TestFirstNotOf1(stopwatch1, stds8, pFind1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_first_not_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/find_first_not_of/str,pos", IX, stopwatch1);
 
-			TestFirstNotOf1(stopwatch1, stds16, pFind1_stds16, 15);
+		TestFirstNotOf1(stopwatch1, stds16, pFind1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_first_not_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/find_first_not_of/str,pos", IX, stopwatch1);
 
 
-			///////////////////////////////
-			// Test find_last_of(const basic_string& str, size_type position)
-			///////////////////////////////
+		///////////////////////////////
+		// Test find_last_of(const basic_string& str, size_type position)
+		///////////////////////////////
 
-			TestLastNotOf1(stopwatch1, stds8, pFind1_stds8, 15);
+		TestLastNotOf1(stopwatch1, stds8, pFind1_stds8, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/find_last_of/str,pos", IX, stopwatch1);
 
-			TestLastNotOf1(stopwatch1, stds16, pFind1_stds16, 15);
+		TestLastNotOf1(stopwatch1, stds16, pFind1_stds16, 15);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/find_last_of/str,pos", IX, stopwatch1);
 
-			///////////////////////////////
-			// Test compare()
-			///////////////////////////////
+		///////////////////////////////
+		// Test compare()
+		///////////////////////////////
 
-			decltype(stds8)  stds8X(stds8);
+		decltype(stds8)  stds8X(stds8);
 
-			TestCompare(stopwatch1, stds8, stds8X);
+		TestCompare(stopwatch1, stds8, stds8X);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/compare", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/compare", IX, stopwatch1);
 
-			decltype(stds16) stds16X(stds16);
+		decltype(stds16) stds16X(stds16);
 
-			TestCompare(stopwatch1, stds16, stds16X);
+		TestCompare(stopwatch1, stds16, stds16X);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/compare", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/compare", IX, stopwatch1);
 
 
 
-			///////////////////////////////
-			// Test swap()
-			///////////////////////////////
+		///////////////////////////////
+		// Test swap()
+		///////////////////////////////
 
-			TestSwap(stopwatch1, stds8, stds8X);
+		TestSwap(stopwatch1, stds8, stds8X);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char8_t>/swap", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char8_t>/swap", IX, stopwatch1);
 
-			TestSwap(stopwatch1, stds16, stds16X);
+		TestSwap(stopwatch1, stds16, stds16X);
 
-			if(i == 1)
-				Benchmark::AddResult("string<char16_t>/swap", IX, stopwatch1);
+		if(i == 1)
+			Benchmark::AddResult("string<char16_t>/swap", IX, stopwatch1);
 
-		}
 	}
-
 }
 
 

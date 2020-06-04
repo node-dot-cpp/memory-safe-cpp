@@ -299,122 +299,119 @@ namespace
 template<int IX, template<typename> typename Vec> 
 void BenchmarkVectorTempl()
 {
-
 	EA::UnitTest::RandGenT<uint32_t> rng(EA::UnitTest::GetRandSeed());
 	Stopwatch              stopwatch1(Stopwatch::kUnitsCPUCycles);
 
+	std::vector<uint32_t> intVector(100000);
+	std::generate(intVector.begin(), intVector.end(), rng);
+
+	for(int i = 0; i < 2; i++)
 	{
-		std::vector<uint32_t> intVector(100000);
-		std::generate(intVector.begin(), intVector.end(), rng);
+		Vec<uint64_t> stdVectorUint64;
 
-		for(int i = 0; i < 2; i++)
+
+		///////////////////////////////
+		// Test push_back
+		///////////////////////////////
+
+		TestPushBack(stopwatch1, stdVectorUint64, intVector);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<uint64>/push_back", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test operator[].
+		///////////////////////////////
+
+		TestBracket(stopwatch1, stdVectorUint64);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<uint64>/operator[]", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test iteration via find().
+		///////////////////////////////
+
+		TestFind(stopwatch1, stdVectorUint64);
+		TestFind(stopwatch1, stdVectorUint64);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<uint64>/iteration", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test sort
+		///////////////////////////////
+
+		// Currently VC++ complains about our sort function decrementing std::iterator that is already at begin(). In the strictest sense,
+		// that's a valid complaint, but we aren't testing std STL here. We will want to revise our sort function eventually.
+		#if !defined(_MSC_VER) || !defined(_ITERATOR_DEBUG_LEVEL) || (_ITERATOR_DEBUG_LEVEL < 2)
+			TestSort(stopwatch1, stdVectorUint64);
+
+			if(i == 1)
+				Benchmark::AddResult("vector<uint64>/sort", IX, stopwatch1);
+		#endif
+
+		///////////////////////////////
+		// Test insert
+		///////////////////////////////
+
+		TestInsert(stopwatch1, stdVectorUint64);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<uint64>/insert", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test erase
+		///////////////////////////////
+
+		TestErase(stopwatch1, stdVectorUint64);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<uint64>/erase", IX, stopwatch1);
+
+
+		///////////////////////////////////////////
+		// Test move of MovableType
+		// Should be much faster with C++11 move.
+		///////////////////////////////////////////
+
+		Vec<MovableType>   stdVectorMovableType;
+
+		TestMoveReallocate(stopwatch1, stdVectorMovableType);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<MovableType>/reallocate", IX, stopwatch1);
+
+
+		TestMoveErase(stopwatch1, stdVectorMovableType);
+
+		if(i == 1)
+			Benchmark::AddResult("vector<MovableType>/erase", IX, stopwatch1);
+
+
+		///////////////////////////////////////////
+		// Test move of AutoRefCount
+		// Should be much faster with C++11 move.
+		///////////////////////////////////////////
+
+		Vec<AutoRefCount<RefCounted> >   stdVectorAutoRefCount;
+
+		for(size_t a = 0; a < 2048; a++)
 		{
-			Vec<uint64_t> stdVectorUint64;
+			stdVectorAutoRefCount.push_back(AutoRefCount<RefCounted>(new RefCounted));
+		}
 
-
-			///////////////////////////////
-			// Test push_back
-			///////////////////////////////
-
-			TestPushBack(stopwatch1, stdVectorUint64, intVector);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/push_back", IX, stopwatch1);
-
-
-			///////////////////////////////
-			// Test operator[].
-			///////////////////////////////
-
-			TestBracket(stopwatch1, stdVectorUint64);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/operator[]", IX, stopwatch1);
-
-
-			///////////////////////////////
-			// Test iteration via find().
-			///////////////////////////////
-
-			TestFind(stopwatch1, stdVectorUint64);
-			TestFind(stopwatch1, stdVectorUint64);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/iteration", IX, stopwatch1);
-
-
-			///////////////////////////////
-			// Test sort
-			///////////////////////////////
-
-			// Currently VC++ complains about our sort function decrementing std::iterator that is already at begin(). In the strictest sense,
-			// that's a valid complaint, but we aren't testing std STL here. We will want to revise our sort function eventually.
-			#if !defined(_MSC_VER) || !defined(_ITERATOR_DEBUG_LEVEL) || (_ITERATOR_DEBUG_LEVEL < 2)
-				TestSort(stopwatch1, stdVectorUint64);
-
-				if(i == 1)
-					Benchmark::AddResult("vector<uint64>/sort", IX, stopwatch1);
-			#endif
-
-			///////////////////////////////
-			// Test insert
-			///////////////////////////////
-
-			TestInsert(stopwatch1, stdVectorUint64);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/insert", IX, stopwatch1);
-
-
-			///////////////////////////////
-			// Test erase
-			///////////////////////////////
-
-			TestErase(stopwatch1, stdVectorUint64);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/erase", IX, stopwatch1);
-
-
-			///////////////////////////////////////////
-			// Test move of MovableType
-			// Should be much faster with C++11 move.
-			///////////////////////////////////////////
-
-			Vec<MovableType>   stdVectorMovableType;
-
-			TestMoveReallocate(stopwatch1, stdVectorMovableType);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<MovableType>/reallocate", IX, stopwatch1);
-
-
-			TestMoveErase(stopwatch1, stdVectorMovableType);
-
-			if(i == 1)
-				Benchmark::AddResult("vector<MovableType>/erase", IX, stopwatch1);
-
-
-			///////////////////////////////////////////
-			// Test move of AutoRefCount
-			// Should be much faster with C++11 move.
-			///////////////////////////////////////////
-
-			Vec<AutoRefCount<RefCounted> >   stdVectorAutoRefCount;
-
-			for(size_t a = 0; a < 2048; a++)
-			{
-				stdVectorAutoRefCount.push_back(AutoRefCount<RefCounted>(new RefCounted));
-			}
-
-			RefCounted::msAddRefCount  = 0;
-			RefCounted::msReleaseCount = 0;
-			TestMoveErase(stopwatch1, stdVectorAutoRefCount);
+		RefCounted::msAddRefCount  = 0;
+		RefCounted::msReleaseCount = 0;
+		TestMoveErase(stopwatch1, stdVectorAutoRefCount);
 //			EASTLTest_Printf("vector<AutoRefCount>/erase std counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
 
-			if(i == 1)
-				Benchmark::AddResult("vector<AutoRefCount>/erase", IX, stopwatch1);
-		}
+		if(i == 1)
+			Benchmark::AddResult("vector<AutoRefCount>/erase", IX, stopwatch1);
 	}
 }
 

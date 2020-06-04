@@ -74,11 +74,12 @@ namespace
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename Value>
-	void TestInsertEA(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
+	template <typename Container, typename C2>
+	void TestInsertEA(EA::StdC::Stopwatch& stopwatch, Container& c, const C2& c2)
 	{
 		stopwatch.Restart();
-		c.insert_unsafe(pArrayBegin, pArrayEnd);
+		for(auto& Each : c2)
+			c.insert(Each);
 		stopwatch.Stop();
 	}
 
@@ -241,226 +242,211 @@ namespace
 } // namespace
 
 
+template<int IX, template<typename, typename> typename Map1, template<typename, typename, typename> typename Map2>
+void BenchmarkHashTempl()
+{
+	EA::UnitTest::Rand  rng(EA::UnitTest::GetRandSeed());
+	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	std::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
+	std::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
+
+	for(std::size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
+	{
+		const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
+		const uint32_t n2 = rng.RandValue();
+
+		stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
+
+		char str_n1[32];
+		sprintf(str_n1, "%u", (unsigned)n1);
+
+		stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
+	}
+
+	for(int i = 0; i < 2; i++)
+	{
+		Map1<uint32_t, TestObject> stdMapUint32TO;
+		Map2<std::string, uint32_t, HashString8<std::string>> stdMapStrUint32;
+
+
+		///////////////////////////////
+		// Test insert(const value_type&)
+		///////////////////////////////
+
+		TestInsertEA(stopwatch1, stdMapUint32TO, stdVectorUT);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", IX, stopwatch1);
+
+		TestInsertEA(stopwatch1, stdMapStrUint32, stdVectorSU);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/insert", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test iteration
+		///////////////////////////////
+
+		TestIteration(stopwatch1, stdMapUint32TO, StdMapUint32TO::value_type(9999999, TestObject(9999999)));
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", IX, stopwatch1);
+
+		TestIteration(stopwatch1, stdMapStrUint32, StdMapStrUint32::value_type(  std::string("9999999"), 9999999));
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/iteration", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test operator[]
+		///////////////////////////////
+
+		TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/operator[]", IX, stopwatch1);
+
+		TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/operator[]", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test find
+		///////////////////////////////
+
+		TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/find", IX, stopwatch1);
+
+		TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/find", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test find_as
+		///////////////////////////////
+
+		// TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+		// TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
+
+		// if(i == 1)
+		// 	Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test count
+		///////////////////////////////
+
+		TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/count", IX, stopwatch1);
+
+		TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/count", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test erase(const key_type& key)
+		///////////////////////////////
+
+		TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase val", IX, stopwatch1);
+
+		TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/erase val", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test erase(iterator position)
+		///////////////////////////////
+
+		TestErasePosition(stopwatch1, stdMapUint32TO);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase pos", IX, stopwatch1);
+
+		TestErasePosition(stopwatch1, stdMapStrUint32);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/erase pos", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test erase(iterator first, iterator last)
+		///////////////////////////////
+
+		TestEraseRange(stopwatch1, stdMapUint32TO);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase range", IX, stopwatch1);
+
+		TestEraseRange(stopwatch1, stdMapStrUint32);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/erase range", IX, stopwatch1);
+
+
+		///////////////////////////////
+		// Test clear()
+		///////////////////////////////
+
+		// Clear the containers of whatever they happen to have. We want the containers to have full data.
+		TestClear(stopwatch1, stdMapUint32TO);
+		TestClear(stopwatch1, stdMapStrUint32);
+
+		// Re-set the containers with full data.
+		TestInsertEA(stopwatch1, stdMapUint32TO, stdVectorUT);
+		TestInsertEA(stopwatch1, stdMapStrUint32, stdVectorSU);
+
+		// Now clear the data again, this time measuring it.
+		TestClear(stopwatch1, stdMapUint32TO);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<uint32_t, TestObject>/clear", IX, stopwatch1);
+
+		TestClear(stopwatch1, stdMapStrUint32);
+
+		if(i == 1)
+			Benchmark::AddResult("hash_map<string, uint32_t>/clear", IX, stopwatch1);
+
+	}
+}
+
+template<class K, class V>
+using SafeMap1 = safememory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safememory::memory_safety::safe>;
+
+template<class K, class V, class H>
+using SafeMap2 = safememory::unordered_map<K, V, H, std::equal_to<K>, safememory::memory_safety::safe>;
+
+template<class K, class V>
+using UnsafeMap1 = safememory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safememory::memory_safety::none>;
+
+template<class K, class V, class H>
+using UnsafeMap2 = safememory::unordered_map<K, V, H, std::equal_to<K>, safememory::memory_safety::none>;
 
 void BenchmarkHash()
 {
 	EASTLTest_Printf("HashMap\n");
 
-	EA::UnitTest::Rand  rng(EA::UnitTest::GetRandSeed());
-	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
-	EA::StdC::Stopwatch stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
-
-	{
-		std::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
-		std::vector< std::pair<uint32_t, TestObject> >  eaVectorUT(10000);
-
-		std::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
-		std::vector< std::pair<std::string, uint32_t> >  eaVectorSU(10000);
-
-		for(std::size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
-		{
-			const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
-			const uint32_t n2 = rng.RandValue();
-
-			stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
-			eaVectorUT[i]  = std::pair<uint32_t, TestObject>(n1, TestObject(n2));
-
-			char str_n1[32];
-			sprintf(str_n1, "%u", (unsigned)n1);
-
-			stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
-			eaVectorSU[i]  = std::pair<std::string, uint32_t>(std::string(str_n1), n2);
-		}
-
-		for(int i = 0; i < 2; i++)
-		{
-			StdMapUint32TO  stdMapUint32TO;
-			EaMapUint32TO   eaMapUint32TO;
-
-			StdMapStrUint32 stdMapStrUint32;
-			EaMapStrUint32  eaMapStrUint32;
-
-
-			///////////////////////////////
-			// Test insert(const value_type&)
-			///////////////////////////////
-
-			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestInsertEA(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestInsertEA(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test iteration
-			///////////////////////////////
-
-			TestIteration(stopwatch1, stdMapUint32TO, StdMapUint32TO::value_type(9999999, TestObject(9999999)));
-			TestIteration(stopwatch2,  eaMapUint32TO,  EaMapUint32TO::value_type(9999999, TestObject(9999999)));
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestIteration(stopwatch1, stdMapStrUint32, StdMapStrUint32::value_type(  std::string("9999999"), 9999999));
-			TestIteration(stopwatch2,  eaMapStrUint32,  EaMapStrUint32::value_type(std::string("9999999"), 9999999));
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test operator[]
-			///////////////////////////////
-
-			TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestBracket(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestBracket(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test find
-			///////////////////////////////
-
-			TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestFind(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestFind(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/find", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test find_as
-			///////////////////////////////
-
-			// TestFindAsStd(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			// TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			// if(i == 1)
-			// 	Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test count
-			///////////////////////////////
-
-			TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestCount(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestCount(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/count", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test erase(const key_type& key)
-			///////////////////////////////
-
-			TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
-			TestEraseValue(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  (eaVectorUT.size() / 2));
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
-			TestEraseValue(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  (eaVectorSU.size() / 2));
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/erase val", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test erase(iterator position)
-			///////////////////////////////
-
-			TestErasePosition(stopwatch1, stdMapUint32TO);
-			TestErasePosition(stopwatch2, eaMapUint32TO);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestErasePosition(stopwatch1, stdMapStrUint32);
-			TestErasePosition(stopwatch2, eaMapStrUint32);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/erase pos", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test erase(iterator first, iterator last)
-			///////////////////////////////
-
-			TestEraseRange(stopwatch1, stdMapUint32TO);
-			TestEraseRange(stopwatch2, eaMapUint32TO);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestEraseRange(stopwatch1, stdMapStrUint32);
-			TestEraseRange(stopwatch2, eaMapStrUint32);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/erase range", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-
-			///////////////////////////////
-			// Test clear()
-			///////////////////////////////
-
-			// Clear the containers of whatever they happen to have. We want the containers to have full data.
-			TestClear(stopwatch1, stdMapUint32TO);
-			TestClear(stopwatch2, eaMapUint32TO);
-			TestClear(stopwatch1, stdMapStrUint32);
-			TestClear(stopwatch2, eaMapStrUint32);
-
-			// Re-set the containers with full data.
-			TestInsert(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
-			TestInsertEA(stopwatch2, eaMapUint32TO,   eaVectorUT.data(),  eaVectorUT.data() +  eaVectorUT.size());
-			TestInsert(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
-			TestInsertEA(stopwatch2, eaMapStrUint32,   eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
-
-			// Now clear the data again, this time measuring it.
-			TestClear(stopwatch1, stdMapUint32TO);
-			TestClear(stopwatch2, eaMapUint32TO);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<uint32_t, TestObject>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-			TestClear(stopwatch1, stdMapStrUint32);
-			TestClear(stopwatch2, eaMapStrUint32);
-
-			if(i == 1)
-				Benchmark::AddResult("hash_map<string, uint32_t>/clear", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
-
-		}
-	}
+	BenchmarkHashTempl<1, std::unordered_map, std::unordered_map>();
+	BenchmarkHashTempl<2, std::unordered_map, std::unordered_map>();
+	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
+	BenchmarkHashTempl<4, UnsafeMap1, UnsafeMap2>();
 }
-
 
 
 
