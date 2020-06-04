@@ -23,6 +23,7 @@
 
 
 using namespace EA;
+using EA::StdC::Stopwatch;
 
 
 typedef std::vector<uint64_t>     StdVectorUint64;
@@ -295,17 +296,12 @@ namespace
 
 } // namespace
 
-
-
-
-
-void BenchmarkVector()
+template<int IX, template<typename> typename Vec> 
+void BenchmarkVectorTempl()
 {
-	EASTLTest_Printf("Vector\n");
 
 	EA::UnitTest::RandGenT<uint32_t> rng(EA::UnitTest::GetRandSeed());
-	EA::StdC::Stopwatch              stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
-	EA::StdC::Stopwatch              stopwatch2(EA::StdC::Stopwatch::kUnitsCPUCycles);
+	Stopwatch              stopwatch1(Stopwatch::kUnitsCPUCycles);
 
 	{
 		std::vector<uint32_t> intVector(100000);
@@ -313,8 +309,7 @@ void BenchmarkVector()
 
 		for(int i = 0; i < 2; i++)
 		{
-			StdVectorUint64 stdVectorUint64;
-			EaVectorUint64  eaVectorUint64;
+			Vec<uint64_t> stdVectorUint64;
 
 
 			///////////////////////////////
@@ -322,10 +317,9 @@ void BenchmarkVector()
 			///////////////////////////////
 
 			TestPushBack(stopwatch1, stdVectorUint64, intVector);
-			TestPushBack(stopwatch2, eaVectorUint64,  intVector);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/push_back", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<uint64>/push_back", IX, stopwatch1);
 
 
 			///////////////////////////////
@@ -333,10 +327,9 @@ void BenchmarkVector()
 			///////////////////////////////
 
 			TestBracket(stopwatch1, stdVectorUint64);
-			TestBracket(stopwatch2, eaVectorUint64);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/operator[]", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<uint64>/operator[]", IX, stopwatch1);
 
 
 			///////////////////////////////
@@ -344,12 +337,10 @@ void BenchmarkVector()
 			///////////////////////////////
 
 			TestFind(stopwatch1, stdVectorUint64);
-			TestFind(stopwatch2, eaVectorUint64);
 			TestFind(stopwatch1, stdVectorUint64);
-			TestFind(stopwatch2, eaVectorUint64);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/iteration", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<uint64>/iteration", IX, stopwatch1);
 
 
 			///////////////////////////////
@@ -360,10 +351,9 @@ void BenchmarkVector()
 			// that's a valid complaint, but we aren't testing std STL here. We will want to revise our sort function eventually.
 			#if !defined(_MSC_VER) || !defined(_ITERATOR_DEBUG_LEVEL) || (_ITERATOR_DEBUG_LEVEL < 2)
 				TestSort(stopwatch1, stdVectorUint64);
-				TestSort(stopwatch2, eaVectorUint64);
 
 				if(i == 1)
-					Benchmark::AddResult("vector<uint64>/sort", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+					Benchmark::AddResult("vector<uint64>/sort", IX, stopwatch1);
 			#endif
 
 			///////////////////////////////
@@ -371,10 +361,9 @@ void BenchmarkVector()
 			///////////////////////////////
 
 			TestInsert(stopwatch1, stdVectorUint64);
-			TestInsert(stopwatch2, eaVectorUint64);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/insert", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<uint64>/insert", IX, stopwatch1);
 
 
 			///////////////////////////////
@@ -382,10 +371,9 @@ void BenchmarkVector()
 			///////////////////////////////
 
 			TestErase(stopwatch1, stdVectorUint64);
-			TestErase(stopwatch2, eaVectorUint64);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<uint64>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<uint64>/erase", IX, stopwatch1);
 
 
 			///////////////////////////////////////////
@@ -393,21 +381,18 @@ void BenchmarkVector()
 			// Should be much faster with C++11 move.
 			///////////////////////////////////////////
 
-			std::vector<MovableType>   stdVectorMovableType;
-			safememory::vector<MovableType> eaVectorMovableType;
+			Vec<MovableType>   stdVectorMovableType;
 
 			TestMoveReallocate(stopwatch1, stdVectorMovableType);
-			TestMoveReallocate(stopwatch2, eaVectorMovableType);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<MovableType>/reallocate", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<MovableType>/reallocate", IX, stopwatch1);
 
 
 			TestMoveErase(stopwatch1, stdVectorMovableType);
-			TestMoveErase(stopwatch2, eaVectorMovableType);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<MovableType>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<MovableType>/erase", IX, stopwatch1);
 
 
 			///////////////////////////////////////////
@@ -415,39 +400,38 @@ void BenchmarkVector()
 			// Should be much faster with C++11 move.
 			///////////////////////////////////////////
 
-			std::vector<AutoRefCount<RefCounted> >   stdVectorAutoRefCount;
-			safememory::vector<AutoRefCount<RefCounted> > eaVectorAutoRefCount;
+			Vec<AutoRefCount<RefCounted> >   stdVectorAutoRefCount;
 
 			for(size_t a = 0; a < 2048; a++)
 			{
 				stdVectorAutoRefCount.push_back(AutoRefCount<RefCounted>(new RefCounted));
-				eaVectorAutoRefCount.push_back(AutoRefCount<RefCounted>(new RefCounted));
 			}
 
 			RefCounted::msAddRefCount  = 0;
 			RefCounted::msReleaseCount = 0;
 			TestMoveErase(stopwatch1, stdVectorAutoRefCount);
-			EASTLTest_Printf("vector<AutoRefCount>/erase std counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
-
-			RefCounted::msAddRefCount  = 0;
-			RefCounted::msReleaseCount = 0;
-			TestMoveErase(stopwatch2, eaVectorAutoRefCount);
-			EASTLTest_Printf("vector<AutoRefCount>/erase EA counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
+//			EASTLTest_Printf("vector<AutoRefCount>/erase std counts: %d %d\n", RefCounted::msAddRefCount, RefCounted::msReleaseCount);
 
 			if(i == 1)
-				Benchmark::AddResult("vector<AutoRefCount>/erase", stopwatch1.GetUnits(), stopwatch1.GetElapsedTime(), stopwatch2.GetElapsedTime());
+				Benchmark::AddResult("vector<AutoRefCount>/erase", IX, stopwatch1);
 		}
 	}
 }
 
+template<class T>
+using SafeVec = safememory::vector<T, safememory::memory_safety::safe>;
+
+template<class T>
+using UnsafeVec = safememory::vector<T, safememory::memory_safety::none>;
 
 
+void BenchmarkVector()
+{
+	EASTLTest_Printf("Vector\n");
 
-
-
-
-
-
-
-
+	BenchmarkVectorTempl<1, std::vector>();
+	BenchmarkVectorTempl<2, std::vector>();
+	BenchmarkVectorTempl<3, SafeVec>();
+	BenchmarkVectorTempl<4, UnsafeVec>();
+}
 

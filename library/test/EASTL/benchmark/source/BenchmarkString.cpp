@@ -200,7 +200,7 @@ namespace
 
 } // namespace
 
-template<class S8, class S16, int IX>
+template<int IX, class S8, class S16>
 void BenchmarkStringTempl()
 {
 	Stopwatch stopwatch1(Stopwatch::kUnitsCPUCycles);
@@ -492,13 +492,13 @@ void BenchmarkString()
 	typedef safememory::basic_string<char8_t, safememory::memory_safety::safe> Safe8;
 	typedef safememory::basic_string<char16_t, safememory::memory_safety::safe> Safe16;
 
-	typedef safememory::basic_string<char8_t, safememory::memory_safety::none> None8;
-	typedef safememory::basic_string<char16_t, safememory::memory_safety::none> None16;
+	typedef safememory::basic_string<char8_t, safememory::memory_safety::none> Unsafe8;
+	typedef safememory::basic_string<char16_t, safememory::memory_safety::none> Unsafe16;
 
-	BenchmarkStringTempl<Std8, Std16, 1>();
-	BenchmarkStringTempl<Ea8, Ea16, 2>();
-	BenchmarkStringTempl<Safe8, Safe16, 3>();
-	BenchmarkStringTempl<None8, None16, 4>();
+	BenchmarkStringTempl<1, Std8, Std16>();
+	BenchmarkStringTempl<2, Ea8, Ea16>();
+	BenchmarkStringTempl<3, Safe8, Safe16>();
+	BenchmarkStringTempl<4, Unsafe8, Unsafe16>();
 }
 
 
