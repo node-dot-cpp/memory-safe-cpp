@@ -17,16 +17,17 @@ include(CommonCppFlags)
 
 add_definitions(-D_CHAR16T)
 
-add_definitions(-DUSING_T_SOCKETS)
+#add_definitions(-DUSING_T_SOCKETS)
 
 
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
 add_library(SafeMemory STATIC
+  src/EASTL/string.cpp
+  src/EASTL/hashtable.cpp
   src/safe_ptr.cpp
-  src/string.cpp
-  src/hashtable.cpp
+  src/nodecpp_error.cpp
   )
 
 #-------------------------------------------------------------------------------------------
