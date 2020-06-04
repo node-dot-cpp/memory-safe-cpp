@@ -134,8 +134,8 @@ int EAMain(int argc, char* argv[])
 	// Set up test information
 	Benchmark::Environment& environment = Benchmark::GetEnvironment();
 	environment.msPlatform = EA_PLATFORM_DESCRIPTION;
-	environment.msSTLName1 = GetStdSTLName();
-	environment.msSTLName2 = "Node.cpp";
+	// environment.msSTLName1 = GetStdSTLName();
+	// environment.msSTLName2 = "node-dot-cpp/memory-safe-cpp";
 
 
 	// Run tests
