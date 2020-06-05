@@ -63,18 +63,18 @@ namespace safememory
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_SET_DEFAULT_NAME
-		#define EASTL_HASH_SET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_set" // Unless the user overrides something, this is "EASTL hash_set".
-	#endif
+	// #ifndef EASTL_HASH_SET_DEFAULT_NAME
+	// 	#define EASTL_HASH_SET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_set" // Unless the user overrides something, this is "EASTL hash_set".
+	// #endif
 
 
 	/// EASTL_HASH_MULTISET_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_MULTISET_DEFAULT_NAME
-		#define EASTL_HASH_MULTISET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multiset" // Unless the user overrides something, this is "EASTL hash_multiset".
-	#endif
+	// #ifndef EASTL_HASH_MULTISET_DEFAULT_NAME
+	// 	#define EASTL_HASH_MULTISET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multiset" // Unless the user overrides something, this is "EASTL hash_multiset".
+	// #endif
 
 
 	/// EASTL_HASH_SET_DEFAULT_ALLOCATOR

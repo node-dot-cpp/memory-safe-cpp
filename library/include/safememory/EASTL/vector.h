@@ -116,9 +116,9 @@ namespace safememory
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_NAME
-		#define EASTL_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " vector" // Unless the user overrides something, this is "EASTL vector".
-	#endif
+	// #ifndef EASTL_VECTOR_DEFAULT_NAME
+	// 	#define EASTL_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " vector" // Unless the user overrides something, this is "EASTL vector".
+	// #endif
 
 
 	/// EASTL_VECTOR_DEFAULT_ALLOCATOR

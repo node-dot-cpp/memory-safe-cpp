@@ -1030,24 +1030,24 @@ operator+(typename demoted_iterator<Iterator1, IteratorCategory1>::difference_ty
 // Returns a demoted iterator
 //
 template <typename Iterator>
-inline demoted_iterator<Iterator, EASTL_ITC_NS::input_iterator_tag>
+inline demoted_iterator<Iterator, std::input_iterator_tag>
 to_input_iterator(const Iterator& i)
-	{ return demoted_iterator<Iterator, EASTL_ITC_NS::input_iterator_tag>(i); }
+	{ return demoted_iterator<Iterator, std::input_iterator_tag>(i); }
 
 template <typename Iterator>
-inline demoted_iterator<Iterator, EASTL_ITC_NS::forward_iterator_tag>
+inline demoted_iterator<Iterator, std::forward_iterator_tag>
 to_forward_iterator(const Iterator& i)
-	{ return demoted_iterator<Iterator, EASTL_ITC_NS::forward_iterator_tag>(i); }
+	{ return demoted_iterator<Iterator, std::forward_iterator_tag>(i); }
 
 template <typename Iterator>
-inline demoted_iterator<Iterator, EASTL_ITC_NS::bidirectional_iterator_tag>
+inline demoted_iterator<Iterator, std::bidirectional_iterator_tag>
 to_bidirectional_iterator(const Iterator& i)
-	{ return demoted_iterator<Iterator, EASTL_ITC_NS::bidirectional_iterator_tag>(i); }
+	{ return demoted_iterator<Iterator, std::bidirectional_iterator_tag>(i); }
 
 template <typename Iterator>
-inline demoted_iterator<Iterator, EASTL_ITC_NS::random_access_iterator_tag>
+inline demoted_iterator<Iterator, std::random_access_iterator_tag>
 to_random_access_iterator(const Iterator& i)
-	{ return demoted_iterator<Iterator, EASTL_ITC_NS::random_access_iterator_tag>(i); }
+	{ return demoted_iterator<Iterator, std::random_access_iterator_tag>(i); }
 
 
 

@@ -282,9 +282,9 @@ namespace safememory
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_BASIC_STRING_DEFAULT_NAME
-		#define EASTL_BASIC_STRING_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " basic_string" // Unless the user overrides something, this is "EASTL basic_string".
-	#endif
+	// #ifndef EASTL_BASIC_STRING_DEFAULT_NAME
+	// 	#define EASTL_BASIC_STRING_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " basic_string" // Unless the user overrides something, this is "EASTL basic_string".
+	// #endif
 
 
 	/// EASTL_BASIC_STRING_DEFAULT_ALLOCATOR

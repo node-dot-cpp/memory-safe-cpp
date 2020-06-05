@@ -97,9 +97,9 @@ namespace safememory::detail
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASHTABLE_DEFAULT_NAME
-		#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
-	#endif
+	// #ifndef EASTL_HASHTABLE_DEFAULT_NAME
+	// 	#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
+	// #endif
 
 
 	/// EASTL_HASHTABLE_DEFAULT_ALLOCATOR
@@ -127,8 +127,8 @@ namespace safememory::detail
 	///
 	/// Use EASTL_MACRO_SWAP because GCC (at least v4.6-4.8) has a bug where it fails to compile eastl::swap(mpBucketArray, x.mpBucketArray).
 	///
-	#define EASTL_MACRO_SWAP(Type, a, b) \
-		{ Type temp = a; a = b; b = temp; }
+	// #define EASTL_MACRO_SWAP(Type, a, b) \
+	// 	{ Type temp = a; a = b; b = temp; }
 
 	/// use_self
 	///

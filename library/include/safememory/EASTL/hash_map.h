@@ -64,18 +64,18 @@ namespace safememory::detail
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_MAP_DEFAULT_NAME
-		#define EASTL_HASH_MAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_map" // Unless the user overrides something, this is "EASTL hash_map".
-	#endif
+	// #ifndef EASTL_HASH_MAP_DEFAULT_NAME
+	// 	#define EASTL_HASH_MAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_map" // Unless the user overrides something, this is "EASTL hash_map".
+	// #endif
 
 
 	/// EASTL_HASH_MULTIMAP_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_MULTIMAP_DEFAULT_NAME
-		#define EASTL_HASH_MULTIMAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multimap" // Unless the user overrides something, this is "EASTL hash_multimap".
-	#endif
+	// #ifndef EASTL_HASH_MULTIMAP_DEFAULT_NAME
+	// 	#define EASTL_HASH_MULTIMAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multimap" // Unless the user overrides something, this is "EASTL hash_multimap".
+	// #endif
 
 
 	/// EASTL_HASH_MAP_DEFAULT_ALLOCATOR
