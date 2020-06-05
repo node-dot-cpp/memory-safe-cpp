@@ -58,13 +58,6 @@ struct HashString8
 };
 
 
-using StdMapUint32TO = std::unordered_map<uint32_t, TestObject>;
-using StdMapStrUint32 = std::unordered_map<std::string, uint32_t, HashString8<std::string>>;
-
-using EaMapUint32TO = safememory::hash_map<uint32_t, TestObject>;
-using EaMapStrUint32 = safememory::hash_map<std::string, uint32_t, HashString8<std::string>>;
-
-
 namespace
 {
 	template <typename Container, typename Value>

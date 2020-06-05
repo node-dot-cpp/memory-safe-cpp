@@ -57,7 +57,7 @@
 
 
 
-namespace safememory
+namespace safememory::detail
 {
 
 	/// EASTL_HASH_MAP_DEFAULT_NAME
@@ -130,14 +130,14 @@ namespace safememory
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_map
-		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
-							Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, true>
+		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
+							Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, true>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, Safety, 
-						  detail::use_first<std::pair<const Key, T> >, 
-						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
-						  detail::prime_rehash_policy, bCacheHashCode, true, true>        base_type;
+		typedef hashtable<Key, std::pair<const Key, T>, Safety, 
+						  use_first<std::pair<const Key, T> >, 
+						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
+						  prime_rehash_policy, bCacheHashCode, true, true>        base_type;
 		typedef hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>      this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::key_type                                      key_type;
@@ -157,8 +157,8 @@ namespace safememory
 		/// Default constructor.
 		///
 		explicit hash_map(/*const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						Predicate(), detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
+						Predicate(), use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -172,8 +172,8 @@ namespace safememory
 		///
 		explicit hash_map(size_type nBucketCount, const Hash& hashFunction = Hash(), 
 						  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -204,8 +204,8 @@ namespace safememory
 		///     
 		hash_map(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
 			base_type::insert_unsafe(ilist.begin(), ilist.end());
@@ -220,8 +220,8 @@ namespace safememory
 		// template <typename ForwardIterator>
 		// hash_map(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 		// 		 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-		// 				predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+		// 				predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		// {
 		// 	// Empty
 		// }
@@ -334,14 +334,14 @@ namespace safememory
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_multimap
-		: public detail::hashtable<Key, std::pair<const Key, T>, Safety, detail::use_first<std::pair<const Key, T> >, Predicate,
-						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, false>
+		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
+						   Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, false>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, Safety, 
-						  detail::use_first<std::pair<const Key, T> >, 
-						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
-						  detail::prime_rehash_policy, bCacheHashCode, true, false>           base_type;
+		typedef hashtable<Key, std::pair<const Key, T>, Safety, 
+						  use_first<std::pair<const Key, T> >, 
+						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
+						  prime_rehash_policy, bCacheHashCode, true, false>           base_type;
 		typedef hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>     this_type;
 		typedef typename base_type::size_type                                         size_type;
 		typedef typename base_type::key_type                                          key_type;
@@ -364,8 +364,8 @@ namespace safememory
 		/// Default constructor.
 		///
 		explicit hash_multimap(/*const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						Predicate(), detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
+						Predicate(), use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -379,8 +379,8 @@ namespace safememory
 		///
 		explicit hash_multimap(size_type nBucketCount, const Hash& hashFunction = Hash(), 
 							   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -411,8 +411,8 @@ namespace safememory
 		///     
 		hash_multimap(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
 			base_type::insert_unsafe(ilist.begin(), ilist.end());
@@ -427,8 +427,8 @@ namespace safememory
 		// template <typename ForwardIterator>
 		// hash_multimap(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 		// 			  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-		// 				predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+		// 				predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		// {
 		// 	// Empty
 		// }
@@ -570,7 +570,7 @@ namespace safememory
 	}
 
 
-} // namespace safememory
+} // namespace safememory::detail
 
 
 #endif // Header include guard

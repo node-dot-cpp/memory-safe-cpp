@@ -25,7 +25,7 @@ using safememory::detail::use_self;
 // TestSetConstruction
 //
 // This test compares eastl::set/multiset to std::set/multiset. It could possibly
-// work for comparing eastl::hash_set to C++11 std::unordered_set, but we would 
+// work for comparing eastl::unordered_set to C++11 std::unordered_set, but we would 
 // rather move towards making this test be independent of any std comparisons.
 //
 // Requires a container that can hold at least 1000 items.
@@ -657,7 +657,7 @@ int TestSetSearch()
 ///////////////////////////////////////////////////////////////////////////////
 // TestSetCpp11
 //
-// This function is designed to work with set, fixed_set, hash_set, fixed_hash_set
+// This function is designed to work with set, fixed_set, unordered_set, fixed_unordered_set
 //
 template <typename T1>
 int TestSetCpp11()
@@ -782,7 +782,7 @@ int TestSetCpp11()
 ///////////////////////////////////////////////////////////////////////////////
 // TestMultisetCpp11
 //
-// This function is designed to work with multiset, fixed_multiset, hash_multiset, fixed_hash_multiset
+// This function is designed to work with multiset, fixed_multiset, unordered_multiset, fixed_unordered_multiset
 //
 // This is similar to the TestSetCpp11 function, with some differences related 
 // to handling of duplicate entries.

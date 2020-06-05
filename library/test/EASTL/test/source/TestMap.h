@@ -24,7 +24,7 @@ using safememory::detail::use_first;
 // TestMapConstruction
 //
 // This test compares eastl::map/multimap to std::map/multimap. It could possibly
-// work for comparing eastl::hash_map to C++11 std::unordered_map, but we would 
+// work for comparing eastl::unordered_map to C++11 std::unordered_map, but we would 
 // rather move towards making this test be independent of any std comparisons.
 //
 // Requires a container that can hold at least 1000 items.
@@ -683,7 +683,7 @@ int TestMapSearch()
 ///////////////////////////////////////////////////////////////////////////////
 // TestMapCpp11
 //
-// This function is designed to work with map, fixed_map, hash_map, fixed_hash_map.
+// This function is designed to work with map, fixed_map, unordered_map, fixed_unordered_map.
 //
 template <typename T1>
 int TestMapCpp11()
@@ -837,7 +837,7 @@ int TestMapCpp11NonCopyable()
 ///////////////////////////////////////////////////////////////////////////////
 // TestMultimapCpp11
 //
-// This function is designed to work with multimap, fixed_multimap, hash_multimap, fixed_hash_multimap
+// This function is designed to work with multimap, fixed_multimap, unordered_multimap, fixed_unordered_multimap
 //
 // This is similar to the TestSetCpp11 function, with some differences related
 // to handling of duplicate entries.
@@ -968,7 +968,7 @@ int TestMultimapCpp11()
 ///////////////////////////////////////////////////////////////////////////////
 // TestMapCpp17
 //
-// This function is designed to work with map, fixed_map, hash_map, fixed_hash_map, unordered_map.
+// This function is designed to work with map, fixed_map, unordered_map, fixed_unordered_map, unordered_map.
 //
 template <typename T1>
 int TestMapCpp17()

@@ -60,7 +60,7 @@ namespace safememory
 				  typename Predicate = std::equal_to<Key>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_map = hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
+		using unordered_map = detail::hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
     #endif
 
     /// unordered_multimap
@@ -75,7 +75,7 @@ namespace safememory
 				  typename Predicate = std::equal_to<Key>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_multimap = hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
+		using unordered_multimap = detail::hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
     #endif
 
 } // namespace safememory
