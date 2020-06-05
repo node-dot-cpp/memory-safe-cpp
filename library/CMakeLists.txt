@@ -15,7 +15,7 @@ include(CommonCppFlags)
 #-------------------------------------------------------------------------------------------
 
 
-add_definitions(-D_CHAR16T)
+#add_definitions(-D_CHAR16T)
 
 #add_definitions(-DUSING_T_SOCKETS)
 
