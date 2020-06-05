@@ -908,7 +908,33 @@ namespace safememory
 		const_pointer_pair toPtrPair(literal_type x);
 		static
 		const_pointer_pair toPtrPair(const this_type& str, size_type pos, size_type n);
+	
+	public:
+		template <typename Arg>
+		static
+		this_type snprintf_unsafe(const char* fmt, Arg arg) {
+			int sz = std::snprintf(nullptr, 0, fmt, arg);
+			this_type buff;
+			if(r < 0)
+				return buff;
+			
+			buff.reserve(static_cast<size_t>(sz));
+			std::snprintf(buf.data(), buf.size(), fmt, arg);
+			return buff;
+		};
 
+		template <typename Arg>
+		static
+		this_type swprintf_unsafe(const wchar_t* fmt, Arg arg) {
+			int sz = std::swprintf(nullptr, 0, fmt, arg);
+			this_type buff;
+			if(r < 0)
+				return buff;
+			
+			buff.reserve(static_cast<size_t>(sz));
+			std::swprintf(buf.data(), buf.size(), fmt, arg);
+			return buff;
+		};
 
 		// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
 		// 	template <typename CharType>
@@ -4636,24 +4662,24 @@ namespace safememory
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/to_string
 	///
-	// inline string to_string(int value)
-	// 	{ return string(string::CtorSprintf(), "%d", value); }
-	// inline string to_string(long value)
-	// 	{ return string(string::CtorSprintf(), "%ld", value); }
-	// inline string to_string(long long value)
-	// 	{ return string(string::CtorSprintf(), "%lld", value); }
-	// inline string to_string(unsigned value)
-	// 	{ return string(string::CtorSprintf(), "%u", value); }
-	// inline string to_string(unsigned long value)
-	// 	{ return string(string::CtorSprintf(), "%lu", value); }
-	// inline string to_string(unsigned long long value)
-	// 	{ return string(string::CtorSprintf(), "%llu", value); }
-	// inline string to_string(float value)
-	// 	{ return string(string::CtorSprintf(), "%f", value); }
-	// inline string to_string(double value)
-	// 	{ return string(string::CtorSprintf(), "%f", value); }
-	// inline string to_string(long double value)
-	// 	{ return string(string::CtorSprintf(), "%Lf", value); }
+	inline string to_string(int value)
+		{ return string::snprintf_unsafe("%d", value); }
+	inline string to_string(long value)
+		{ return string::snprintf_unsafe("%ld", value); }
+	inline string to_string(long long value)
+		{ return string::snprintf_unsafe("%lld", value); }
+	inline string to_string(unsigned value)
+		{ return string::snprintf_unsafe("%u", value); }
+	inline string to_string(unsigned long value)
+		{ return string::snprintf_unsafe("%lu", value); }
+	inline string to_string(unsigned long long value)
+		{ return string::snprintf_unsafe("%llu", value); }
+	inline string to_string(float value)
+		{ return string::snprintf_unsafe("%f", value); }
+	inline string to_string(double value)
+		{ return string::snprintf_unsafe("%f", value); }
+	inline string to_string(long double value)
+		{ return string::snprintf_unsafe("%Lf", value); }
 
 
 	/// to_wstring
@@ -4664,24 +4690,24 @@ namespace safememory
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
 	///
-	// inline wstring to_wstring(int value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%d", value); }
-	// inline wstring to_wstring(long value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%ld", value); }
-	// inline wstring to_wstring(long long value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%lld", value); }
-	// inline wstring to_wstring(unsigned value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%u", value); }
-	// inline wstring to_wstring(unsigned long value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%lu", value); }
-	// inline wstring to_wstring(unsigned long long value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%llu", value); }
-	// inline wstring to_wstring(float value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%f", value); }
-	// inline wstring to_wstring(double value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%f", value); }
-	// inline wstring to_wstring(long double value)
-	// 	{ return wstring(wstring::CtorSprintf(), L"%Lf", value); }
+	inline wstring to_wstring(int value)
+		{ return wstring::swprintf_unsafe(L"%d", value); }
+	inline wstring to_wstring(long value)
+		{ return wstring::swprintf_unsafe(L"%ld", value); }
+	inline wstring to_wstring(long long value)
+		{ return wstring::swprintf_unsafe(L"%lld", value); }
+	inline wstring to_wstring(unsigned value)
+		{ return wstring::swprintf_unsafe(L"%u", value); }
+	inline wstring to_wstring(unsigned long value)
+		{ return wstring::swprintf_unsafe(L"%lu", value); }
+	inline wstring to_wstring(unsigned long long value)
+		{ return wstring::swprintf_unsafe(L"%llu", value); }
+	inline wstring to_wstring(float value)
+		{ return wstring::swprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(double value)
+		{ return wstring::swprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(long double value)
+		{ return wstring::swprintf_unsafe(L"%Lf", value); }
 
 
 	/// user defined literals
