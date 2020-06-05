@@ -271,7 +271,8 @@ namespace Benchmark
 		EA::UnitTest::Report("Build: Full optimization.\n");
 		#endif
 		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("Values are ticks and time to complete tests; smaller values are better.\n");
+		EA::UnitTest::Report("First column values are ticks and time to complete tests.\n");
+		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		EA::UnitTest::Report("\n");
 
 		EA::UnitTest::Report("%-43s | %-23s | %-12s | %-12s | %-12s\n", "Test", "std::", "eastl::", "safememory::", "(no_checks)");
