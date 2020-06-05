@@ -279,12 +279,12 @@ void BenchmarkHashTempl()
 		TestInsertEA<Vt1>(stopwatch1, stdMapUint32TO, stdVectorUT);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/insert", IX, stopwatch1);
 
 		TestInsertEA<Vt2>(stopwatch1, stdMapStrUint32, stdVectorSU);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/insert", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/insert", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -294,12 +294,12 @@ void BenchmarkHashTempl()
 		TestIteration(stopwatch1, stdMapUint32TO, Vt1(9999999, TestObject(9999999)));
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/iteration", IX, stopwatch1);
 
 		TestIteration(stopwatch1, stdMapStrUint32, Vt2(  std::string("9999999"), 9999999));
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/iteration", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/iteration", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -309,12 +309,12 @@ void BenchmarkHashTempl()
 		TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/operator[]", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/operator[]", IX, stopwatch1);
 
 		TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/operator[]", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/operator[]", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -324,12 +324,12 @@ void BenchmarkHashTempl()
 		TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/find", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/find", IX, stopwatch1);
 
 		TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/find", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/find", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -340,7 +340,7 @@ void BenchmarkHashTempl()
 		// TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
 
 		// if(i == 1)
-		// 	Benchmark::AddResult("hash_map<string, uint32_t>/find_as/char*", IX, stopwatch1);
+		// 	Benchmark::AddResult("unordered_map<string, uint32_t>/find_as/char*", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -350,12 +350,12 @@ void BenchmarkHashTempl()
 		TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/count", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/count", IX, stopwatch1);
 
 		TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/count", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/count", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -365,12 +365,12 @@ void BenchmarkHashTempl()
 		TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase val", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase val", IX, stopwatch1);
 
 		TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/erase val", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/erase val", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -380,12 +380,12 @@ void BenchmarkHashTempl()
 		TestErasePosition(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase pos", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase pos", IX, stopwatch1);
 
 		TestErasePosition(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/erase pos", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/erase pos", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -395,12 +395,12 @@ void BenchmarkHashTempl()
 		TestEraseRange(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/erase range", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase range", IX, stopwatch1);
 
 		TestEraseRange(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/erase range", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/erase range", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -419,12 +419,12 @@ void BenchmarkHashTempl()
 		TestClear(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<uint32_t, TestObject>/clear", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/clear", IX, stopwatch1);
 
 		TestClear(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("hash_map<string, uint32_t>/clear", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, uint32_t>/clear", IX, stopwatch1);
 
 	}
 }

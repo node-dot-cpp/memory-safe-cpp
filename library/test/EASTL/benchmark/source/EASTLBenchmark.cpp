@@ -189,7 +189,7 @@ namespace Benchmark
 		std::string sClockTime1 = WriteTime(Time1NS);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
 
 		// EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
-		EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %6.2f%6s | %6.2f%6s | %6.2f%6s |", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), fRatioPrinted2, pDifference2, fRatioPrinted3, pDifference3, fRatioPrinted4, pDifference4);
+		EA::UnitTest::Report("%-50s | %10" PRIu64 " %s | %6.2f%5s | %6.2f%5s | %6.2f%5s |", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), fRatioPrinted2, pDifference2, fRatioPrinted3, pDifference3, fRatioPrinted4, pDifference4);
 
 		if(result.msNotes.length()) // If there are any notes...
 			EA::UnitTest::Report("   %s", result.msNotes.c_str());
@@ -275,7 +275,7 @@ namespace Benchmark
 		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		EA::UnitTest::Report("\n");
 
-		EA::UnitTest::Report("%-43s | %-23s | %-12s | %-12s | %-12s\n", "Test", "std::", "eastl::", "safememory::", "(no_checks)");
+		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "eastl", "safememory", "(no_checks)");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;
