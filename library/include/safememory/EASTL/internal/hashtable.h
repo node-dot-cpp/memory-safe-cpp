@@ -247,8 +247,8 @@ namespace safememory::detail
 	// contains the cached hashed value or not. 
 	// #define ENABLE_IF_HAS_HASHCODE(T, RT) typename std::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
 	// #define ENABLE_IF_HASHCODE_SIZET(T, RT) typename std::enable_if<std::is_convertible<T, size_t>::value, RT>::type
-	#define ENABLE_IF_TRUETYPE(T) typename std::enable_if<T::value>::type*
-	#define DISABLE_IF_TRUETYPE(T) typename std::enable_if<!T::value>::type*
+	#define SM_ENABLE_IF_TRUETYPE(T) typename std::enable_if<T::value>::type*
+	#define SM_DISABLE_IF_TRUETYPE(T) typename std::enable_if<!T::value>::type*
 
 
 	/// node_iterator_base
@@ -1308,7 +1308,7 @@ namespace safememory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt.first;
 		}
@@ -1316,7 +1316,7 @@ namespace safememory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt;
 		}
@@ -1329,10 +1329,10 @@ namespace safememory::detail
 		owning_bucket_type DoAllocateBuckets(size_type n);
 		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
 
-		template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
+		template <typename BoolConstantT, class... Args, SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args);
 
-		template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
+		template <typename BoolConstantT, class... Args, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		iterator DoInsertValue(BoolConstantT, Args&&... args);
 
 
@@ -1342,12 +1342,12 @@ namespace safememory::detail
 													   hash_code_t c,
 													   owning_node_type pNodeNew,
 													   value_type&& value,
-													   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+													   SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT,
 												  value_type&& value,
-												  ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+												  SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		iterator DoInsertValueExtra(BoolConstantT,
@@ -1355,10 +1355,10 @@ namespace safememory::detail
 									hash_code_t c,
 									owning_node_type pNodeNew,
 									value_type&& value,
-									DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+									SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
-		iterator DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		iterator DoInsertValue(BoolConstantT, value_type&& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 
 		template <typename BoolConstantT>
@@ -1367,12 +1367,12 @@ namespace safememory::detail
 													   hash_code_t c,
 													   owning_node_type pNodeNew,
 													   const value_type& value,
-													   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+													   SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT,
 		                                          const value_type& value,
-		                                          ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		                                          SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		iterator DoInsertValueExtra(BoolConstantT,
@@ -1380,10 +1380,10 @@ namespace safememory::detail
 		                            hash_code_t c,
 		                            owning_node_type pNodeNew,
 		                            const value_type& value,
-		                            DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		                            SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
-		iterator DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		iterator DoInsertValue(BoolConstantT, const value_type& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <class... Args>
 		owning_node_type DoAllocateNode(Args&&... args);
@@ -2148,7 +2148,7 @@ namespace safememory::detail
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT)>
+	template <typename BoolConstantT, class... Args, SM_ENABLE_IF_TRUETYPE(BoolConstantT)>
 	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // true_type means bUniqueKeys is true.
 	{
@@ -2219,7 +2219,7 @@ namespace safememory::detail
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT)>
+	template <typename BoolConstantT, class... Args, SM_DISABLE_IF_TRUETYPE(BoolConstantT)>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // false_type means bUniqueKeys is false.
 	{
@@ -2305,7 +2305,7 @@ namespace safememory::detail
 	template <typename BoolConstantT>
 	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k,
-		hash_code_t c, owning_node_type pNodeNew, value_type&& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+		hash_code_t c, owning_node_type pNodeNew, value_type&& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
@@ -2376,7 +2376,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename BoolConstantT>
 	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2390,7 +2390,7 @@ namespace safememory::detail
 	template <typename BoolConstantT>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, value_type&& value, 
-			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+			SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2437,7 +2437,7 @@ namespace safememory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2480,7 +2480,7 @@ namespace safememory::detail
 	template<typename BoolConstantT>
 	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value, 
-			ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+			SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
@@ -2551,7 +2551,7 @@ namespace safememory::detail
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
 	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2565,7 +2565,7 @@ namespace safememory::detail
 	template <typename BoolConstantT>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value,
-			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+			SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2612,7 +2612,7 @@ namespace safememory::detail
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);

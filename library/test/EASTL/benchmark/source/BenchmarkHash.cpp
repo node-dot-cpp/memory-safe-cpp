@@ -8,6 +8,7 @@
 #include <EAStdC/EAStopwatch.h>
 // #include <EASTL/vector.h>
 #include <safememory/unordered_map.h>
+#include <EASTL/unordered_map.h>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -74,12 +75,12 @@ namespace
 		stopwatch.Stop();
 	}
 
-	template <typename Container, typename C2>
-	void TestInsertEA(EA::StdC::Stopwatch& stopwatch, Container& c, const C2& c2)
+	template <typename ValueType, typename Container, typename Container2>
+	void TestInsertEA(EA::StdC::Stopwatch& stopwatch, Container& c, const Container2& c2)
 	{
 		stopwatch.Restart();
 		for(auto& Each : c2)
-			c.insert(Each);
+			c.insert(ValueType(Each.first, Each.second));
 		stopwatch.Stop();
 	}
 
@@ -268,17 +269,19 @@ void BenchmarkHashTempl()
 		Map1<uint32_t, TestObject> stdMapUint32TO;
 		Map2<std::string, uint32_t, HashString8<std::string>> stdMapStrUint32;
 
+		typedef typename Map1<uint32_t, TestObject>::value_type Vt1;
+		typedef typename Map2<std::string, uint32_t, HashString8<std::string>>::value_type Vt2;
 
 		///////////////////////////////
 		// Test insert(const value_type&)
 		///////////////////////////////
 
-		TestInsertEA(stopwatch1, stdMapUint32TO, stdVectorUT);
+		TestInsertEA<Vt1>(stopwatch1, stdMapUint32TO, stdVectorUT);
 
 		if(i == 1)
 			Benchmark::AddResult("hash_map<uint32_t, TestObject>/insert", IX, stopwatch1);
 
-		TestInsertEA(stopwatch1, stdMapStrUint32, stdVectorSU);
+		TestInsertEA<Vt2>(stopwatch1, stdMapStrUint32, stdVectorSU);
 
 		if(i == 1)
 			Benchmark::AddResult("hash_map<string, uint32_t>/insert", IX, stopwatch1);
@@ -288,12 +291,12 @@ void BenchmarkHashTempl()
 		// Test iteration
 		///////////////////////////////
 
-		TestIteration(stopwatch1, stdMapUint32TO, StdMapUint32TO::value_type(9999999, TestObject(9999999)));
+		TestIteration(stopwatch1, stdMapUint32TO, Vt1(9999999, TestObject(9999999)));
 
 		if(i == 1)
 			Benchmark::AddResult("hash_map<uint32_t, TestObject>/iteration", IX, stopwatch1);
 
-		TestIteration(stopwatch1, stdMapStrUint32, StdMapStrUint32::value_type(  std::string("9999999"), 9999999));
+		TestIteration(stopwatch1, stdMapStrUint32, Vt2(  std::string("9999999"), 9999999));
 
 		if(i == 1)
 			Benchmark::AddResult("hash_map<string, uint32_t>/iteration", IX, stopwatch1);
@@ -409,8 +412,8 @@ void BenchmarkHashTempl()
 		TestClear(stopwatch1, stdMapStrUint32);
 
 		// Re-set the containers with full data.
-		TestInsertEA(stopwatch1, stdMapUint32TO, stdVectorUT);
-		TestInsertEA(stopwatch1, stdMapStrUint32, stdVectorSU);
+		TestInsertEA<Vt1>(stopwatch1, stdMapUint32TO, stdVectorUT);
+		TestInsertEA<Vt2>(stopwatch1, stdMapStrUint32, stdVectorSU);
 
 		// Now clear the data again, this time measuring it.
 		TestClear(stopwatch1, stdMapUint32TO);
@@ -443,7 +446,7 @@ void BenchmarkHash()
 	EASTLTest_Printf("HashMap\n");
 
 	BenchmarkHashTempl<1, std::unordered_map, std::unordered_map>();
-	BenchmarkHashTempl<2, std::unordered_map, std::unordered_map>();
+	BenchmarkHashTempl<2, eastl::unordered_map, eastl::unordered_map>();
 	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
 	BenchmarkHashTempl<4, UnsafeMap1, UnsafeMap2>();
 }

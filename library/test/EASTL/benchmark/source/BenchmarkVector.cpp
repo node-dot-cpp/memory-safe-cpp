@@ -8,6 +8,7 @@
 #include <EAStdC/EAStopwatch.h>
 #include <algorithm>
 #include <safememory/vector.h>
+#include <EASTL/vector.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -427,7 +428,7 @@ void BenchmarkVector()
 	EASTLTest_Printf("Vector\n");
 
 	BenchmarkVectorTempl<1, std::vector>();
-	BenchmarkVectorTempl<2, std::vector>();
+	BenchmarkVectorTempl<2, eastl::vector>();
 	BenchmarkVectorTempl<3, SafeVec>();
 	BenchmarkVectorTempl<4, UnsafeVec>();
 }

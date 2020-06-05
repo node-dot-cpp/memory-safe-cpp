@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <string>
 #include <safememory/string.h>
-//#include <EASTL/sort.h>
+#include <EASTL/string.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <algorithm>
@@ -483,8 +483,8 @@ void BenchmarkString()
 	typedef std::basic_string<char8_t> Std8;
 	typedef	std::basic_string<char16_t> Std16;
 
-	typedef std::basic_string<char8_t> Ea8;
-	typedef std::basic_string<char16_t> Ea16;
+	typedef eastl::basic_string<char8_t> Ea8;
+	typedef eastl::basic_string<char16_t> Ea16;
 
 	typedef safememory::basic_string<char8_t, safememory::memory_safety::safe> Safe8;
 	typedef safememory::basic_string<char16_t, safememory::memory_safety::safe> Safe16;

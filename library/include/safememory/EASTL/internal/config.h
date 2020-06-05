@@ -1133,15 +1133,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_VALIDATE_COMPARE_ENABLED
-	#define EASTL_VALIDATE_COMPARE_ENABLED EASTL_VALIDATION_ENABLED
-#endif
+// #ifndef EASTL_VALIDATE_COMPARE_ENABLED
+// 	#define EASTL_VALIDATE_COMPARE_ENABLED EASTL_VALIDATION_ENABLED
+// #endif
 
-#if EASTL_VALIDATE_COMPARE_ENABLED
-	#define EASTL_VALIDATE_COMPARE EASTL_ASSERT
-#else
-	#define EASTL_VALIDATE_COMPARE(expression)
-#endif
+// #if EASTL_VALIDATE_COMPARE_ENABLED
+// 	#define EASTL_VALIDATE_COMPARE EASTL_ASSERT
+// #else
+// 	#define EASTL_VALIDATE_COMPARE(expression)
+// #endif
 
 
 

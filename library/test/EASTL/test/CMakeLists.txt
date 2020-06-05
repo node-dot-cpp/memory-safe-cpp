@@ -59,6 +59,7 @@ target_include_directories(EASTLTestNoCheck PUBLIC include)
 add_subdirectory(packages/EABase)
 add_subdirectory(packages/EAAssert)
 add_subdirectory(packages/EAStdC)
+add_subdirectory(packages/EASTL)
 add_subdirectory(packages/EAMain)
 add_subdirectory(packages/EATest)
 add_subdirectory(packages/EAThread)
@@ -67,7 +68,7 @@ set(EASTLTest_Libraries
     EABase
     EAAssert
     EAMain
-#   EASTL
+    EASTL
     EAStdC
     EATest
     EAThread
