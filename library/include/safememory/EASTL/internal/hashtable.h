@@ -263,6 +263,7 @@ namespace safememory::detail
 	{
 		typedef hash_node<Value, Safety, bCacheHashCode> node_type;
 
+	protected:
 		soft_ptr_with_zero_offset<node_type, Safety> mpNode;
 
 		node_iterator_base() { }
@@ -272,6 +273,14 @@ namespace safememory::detail
 
 		void increment()
 			{ mpNode = mpNode->mpNext; }
+
+	public:
+		bool operator==(const node_iterator_base& other) const
+			{ return mpNode == other.mpNode; }
+
+		bool operator!=(const node_iterator_base& other) const
+			{ return !operator==(other); }
+
 	};
 
 
@@ -298,11 +307,17 @@ namespace safememory::detail
 
 		static constexpr memory_safety is_safe = Safety;
 
+	private:
+		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
+		friend class hashtable;
+
 	public:
 		node_iterator() { }
 
+	private:
 		explicit node_iterator(soft_ptr_with_zero_offset<node_type, Safety> pNode)
 			: base_type(pNode) { }
+	public:
 
 		node_iterator(const node_iterator<Value, true, bCacheHashCode, Safety>& x)
 			: base_type(x.mpNode) { }
@@ -350,16 +365,16 @@ namespace safememory::detail
 		template <typename, bool, bool, memory_safety>
 		friend struct hashtable_iterator;
 
-		template <typename V, bool b, memory_safety s>
-		friend bool operator==(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
+		// template <typename V, bool b, memory_safety s>
+		// friend bool operator==(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
-		template <typename V, bool b, memory_safety s>
-		friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
+		// template <typename V, bool b, memory_safety s>
+		// friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
 		node_ptr  mpNode;      // Current node within current bucket.
 		bucket_it mpBucket;    // Current bucket.
 
-	public:
+//	public:
 		hashtable_iterator_base() { }
 
 		hashtable_iterator_base(node_ptr pNode, bucket_it pBucket)
@@ -380,7 +395,13 @@ namespace safememory::detail
 			while(mpNode == nullptr)
 				mpNode = *++mpBucket;
 		}
+	public:
+		bool operator==(const hashtable_iterator_base& other) const
+			{ return mpNode == other.mpNode && mpBucket == other.mpBucket; }
 
+		bool operator!=(const hashtable_iterator_base& other) const
+			{ return !operator==(other); }
+		
 	}; // hashtable_iterator_base
 
 
@@ -412,16 +433,22 @@ namespace safememory::detail
 
 		static constexpr memory_safety is_safe = Safety;
 
+	private:
+		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
+		friend class hashtable;
+
 	public:
 		hashtable_iterator()
 			: base_type() { }
 
+	private:
 		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_it pBucket)
 			: base_type(pNode, pBucket) { }
 
 		hashtable_iterator(typename base_type::bucket_it pBucket)
 			: base_type(*pBucket, pBucket) { }
 
+	public:
 		hashtable_iterator(const hashtable_iterator& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
@@ -1297,7 +1324,7 @@ namespace safememory::detail
 
 	protected:
 		safe_array_iterator<owning_node_type, Safety> GetBucketArrayIt() const { 
-			return safe_array_iterator<owning_node_type, Safety>(mpBucketArray);
+			return safe_array_iterator<owning_node_type, Safety>::make(mpBucketArray);
 		}
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1433,13 +1460,13 @@ namespace safememory::detail
 	// node_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-		{ return a.mpNode == b.mpNode; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode == b.mpNode; }
 
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-		{ return a.mpNode != b.mpNode; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode != b.mpNode; }
 
 
 
@@ -1448,13 +1475,13 @@ namespace safememory::detail
 	// hashtable_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-		{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
 
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-		{ return !operator==(a, b); }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return !operator==(a, b); }
 
 
 

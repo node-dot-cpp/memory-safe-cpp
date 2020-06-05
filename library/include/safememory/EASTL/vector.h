@@ -963,7 +963,7 @@ namespace safememory
 	inline typename vector<T, Safety>::iterator_safe
 	vector<T, Safety>::begin() EA_NOEXCEPT
 	{
-		return iterator_safe(GetSoftHeapPtr());
+		return iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
@@ -971,7 +971,7 @@ namespace safememory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::begin() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr());
+		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
@@ -979,7 +979,7 @@ namespace safememory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::cbegin() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr());
+		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
@@ -987,7 +987,7 @@ namespace safememory
 	inline typename vector<T, Safety>::iterator_safe
 	vector<T, Safety>::end() EA_NOEXCEPT
 	{
-		return iterator_safe(GetSoftHeapPtr(), size());
+		return iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
@@ -995,7 +995,7 @@ namespace safememory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::end() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr(), size());
+		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1003,7 +1003,7 @@ namespace safememory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::cend() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr(), size());
+		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1387,7 +1387,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = emplace_unsafe(p, std::forward<Args>(args)...);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -1474,7 +1474,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, value);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1484,7 +1484,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, std::move(value));
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1494,7 +1494,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, n, value);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1505,7 +1505,7 @@ namespace safememory
 		const_pointer p = CheckMineAndGet(position);
 		const_pointer_pair other = CheckAndGet(first, last);
 		pointer r = insert_unsafe(p, other.first, other.second);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1515,7 +1515,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, ilist);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1564,7 +1564,7 @@ namespace safememory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = erase_unsafe(p);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
@@ -1574,7 +1574,7 @@ namespace safememory
 	{
 		const_pointer_pair p = CheckMineAndGet(first, last);
 		pointer r = erase_unsafe(p.first, p.second);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 	// template <typename T, memory_safety Safety>
@@ -2532,38 +2532,7 @@ namespace safememory
 	template <typename T, memory_safety Safety>
 	inline detail::iterator_validity vector<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
-		// TODO move as method of iterator
-		if constexpr (is_safe == memory_safety::safe) {
-			if(i.arr == soft_heap_type(nullptr))
-				return detail::iterator_validity::Null;
-			else if(i.arr == GetSoftHeapPtr()) {
-
-				const_pointer p = i.get_raw_ptr();
-				if(p < mpEnd)
-					return detail::iterator_validity::ValidCanDeref;
-
-				else if(p == mpEnd)
-					return detail::iterator_validity::ValidEnd;
-
-				else if(p < mCapacity)
-					return detail::iterator_validity::InvalidZoombie;
-			}
-		}
-		else {
-			//todo fix all this
-			const_pointer p = i.get_raw_ptr();
-			if(p < mpEnd)
-				return detail::iterator_validity::ValidCanDeref;
-
-			else if(p == mpEnd)
-				return detail::iterator_validity::ValidEnd;
-
-			else if(p < mCapacity)
-				return detail::iterator_validity::InvalidZoombie;
-
-		}
-
-		return detail::iterator_validity::InvalidZoombie;
+		return i.validate_iterator(cbegin(), cend());
 	}
 
 

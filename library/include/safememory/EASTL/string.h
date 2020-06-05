@@ -1282,7 +1282,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::iterator
 	basic_string<T, Safety>::begin() EA_NOEXCEPT
 	{
-		return iterator(GetSoftHeapPtr());
+		return iterator::make(GetSoftHeapPtr());
 	}
 
 
@@ -1290,7 +1290,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::iterator
 	basic_string<T, Safety>::end() EA_NOEXCEPT
 	{
-		return iterator(GetSoftHeapPtr(), size());
+		return iterator::make(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1298,7 +1298,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::begin() const EA_NOEXCEPT
 	{
-		return const_iterator(GetSoftHeapPtr());
+		return const_iterator::make(GetSoftHeapPtr());
 	}
 
 
@@ -1306,7 +1306,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::cbegin() const EA_NOEXCEPT
 	{
-		return const_iterator(GetSoftHeapPtr());
+		return const_iterator::make(GetSoftHeapPtr());
 	}
 
 
@@ -1314,7 +1314,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::end() const EA_NOEXCEPT
 	{
-		return const_iterator(GetSoftHeapPtr(), size());
+		return const_iterator::make(GetSoftHeapPtr(), size());
 	}
 
 
@@ -1322,7 +1322,7 @@ namespace safememory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::cend() const EA_NOEXCEPT
 	{
-		return const_iterator(GetSoftHeapPtr(), size());
+		return const_iterator::make(GetSoftHeapPtr(), size());
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2617,7 +2617,7 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, c);
-		return iterator(GetSoftHeapPtr(), r);
+		return iterator::make(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2626,7 +2626,7 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, n, c);
-		return iterator(GetSoftHeapPtr(), r);
+		return iterator::make(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2636,7 +2636,7 @@ namespace safememory
 		const_pointer p = checkMineAndGet(it);
 		const_pointer_pair p2 = checkAndGet(itBegin, itEnd);
 		pointer r = insert_unsafe(p, p2.first, p2.second);
-		return iterator(GetSoftHeapPtr(), r);
+		return iterator::make(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2645,7 +2645,7 @@ namespace safememory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, ilist.begin(), ilist.end());
-		return iterator(GetSoftHeapPtr(), r);
+		return iterator::make(GetSoftHeapPtr(), r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2709,7 +2709,7 @@ namespace safememory
 		const_pointer p = checkMineAndGet(it);
 		pointer i = erase_unsafe(p);
 		// size_t dst = std::distance(begin_unsafe(),  i);
-		return iterator(GetSoftHeapPtr(), i);
+		return iterator::make(GetSoftHeapPtr(), i);
 	}
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::iterator
@@ -2718,7 +2718,7 @@ namespace safememory
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
 		pointer i = erase_unsafe(p.first, p.second);
 		// difference_type dst = std::distance(begin_unsafe(),  i);
-		return iterator(GetSoftHeapPtr(), i);
+		return iterator::make(GetSoftHeapPtr(), i);
 	}
 
 	// template <typename T, memory_safety Safety>

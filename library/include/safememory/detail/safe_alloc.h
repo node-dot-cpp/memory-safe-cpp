@@ -182,26 +182,31 @@ public:
 	typedef T&	 								reference;
 	typedef SoftArrayOfPtr  					soft_array_of_prt;
 
+	static constexpr memory_safety is_safe = memory_safety::none;
 
-// private:
+	// for non-const to const conversion
+	template<typename T, typename S>
+	friend class safe_iterator_no_checks;
+
+private:
 	pointer mIterator = nullptr;
 
 public:
-	static constexpr memory_safety is_safe = memory_safety::none;
 
 	safe_iterator_no_checks() {}
 
-	explicit safe_iterator_no_checks(soft_array_of_prt arr)
-		: mIterator(arr->begin()) {}
-
-	safe_iterator_no_checks(soft_array_of_prt arr, size_t ix)
-		: mIterator(arr->begin() + ix) {}
-
-	safe_iterator_no_checks(soft_array_of_prt, pointer ptr)
+private:
+	explicit safe_iterator_no_checks(pointer ptr)
 		: mIterator(ptr) {}
+public:
 
-	safe_iterator_no_checks(pointer ptr)
-		: mIterator(ptr) {}
+	static safe_iterator_no_checks make(soft_array_of_prt arr, size_t ix = 0) {
+		return safe_iterator_no_checks(arr->begin() + ix);
+	}
+
+	static safe_iterator_no_checks make(soft_array_of_prt, pointer ptr) {
+		return safe_iterator_no_checks(ptr);
+	}
 
 	safe_iterator_no_checks(const safe_iterator_no_checks& ri) = default;
 	safe_iterator_no_checks& operator=(const safe_iterator_no_checks& ri) = default;
@@ -259,7 +264,7 @@ public:
 		{ return safe_iterator_no_checks(mIterator - n); }
 
 	difference_type operator-(const safe_iterator_no_checks& other) const
-		{ return distance(*this, other); }
+		{ return mIterator - other.mIterator; }
 
 	safe_iterator_no_checks& operator-=(difference_type n)
 		{ mIterator -= n; return *this; }
@@ -289,6 +294,18 @@ public:
 		return !operator<(ri);
 	}
 
+	iterator_validity validate_iterator(const safe_iterator_no_checks& b, const safe_iterator_no_checks& end) const noexcept {
+		if(mIterator == nullptr)
+			return iterator_validity::Null;
+		else if(mIterator >= b.mIterator) {
+			if(mIterator < end.mIterator)
+				return detail::iterator_validity::ValidCanDeref;
+			else if(mIterator == end.mIterator)
+				return detail::iterator_validity::ValidEnd;
+		}
+		return iterator_validity::xxx_Broken_xxx;
+	}
+
 	pointer _Unwrapped() const {
 		return mIterator;
 	}
@@ -300,8 +317,7 @@ public:
 
 template <typename T, typename Arr>
 typename safe_iterator_no_checks<T, Arr>::difference_type distance(const safe_iterator_no_checks<T, Arr>& l, const safe_iterator_no_checks<T, Arr>& r) {
-
-		return l.mIterator - r.mIterator;
+		return r - l;
 }
 
 
@@ -317,25 +333,33 @@ public:
 	typedef T&									reference;
 	typedef SoftArrayOfPtr 						soft_array_of_prt;
 
-// private:
+	static constexpr memory_safety is_safe = memory_safety::safe;
+
+	// for non-const to const conversion
+	template<typename T, typename S>
+	friend class safe_iterator_impl;
+
+private:
 	soft_array_of_prt arr;
 	size_t ix = 0;
 
 
 public:
-	static constexpr memory_safety is_safe = memory_safety::safe;
 
 	safe_iterator_impl() {}
-	explicit safe_iterator_impl(soft_array_of_prt arr)
-		: arr(arr), ix(0) {}
 
+private:
 	safe_iterator_impl(soft_array_of_prt arr, size_t ix)
 		: arr(arr), ix(ix) {}
 
-	safe_iterator_impl(soft_array_of_prt arr, pointer to)
-		: arr(arr) {
-			ix = std::distance(arr->begin(), to);
-		}
+public:
+	static safe_iterator_impl make(soft_array_of_prt arr, size_t ix = 0) {
+		return safe_iterator_impl(arr, ix);
+	}
+
+	static safe_iterator_impl make(soft_array_of_prt arr, pointer to) {
+		return safe_iterator_impl(arr, to - arr->begin());
+	}
 
 	// GCC and clang fail to generate defaultd copy ctor/assign
 	safe_iterator_impl(const safe_iterator_impl& ri) 
@@ -404,8 +428,12 @@ public:
 	safe_iterator_impl operator-(difference_type n) const
 		{ return safe_iterator_impl(arr, ix - n); }
 
-	difference_type operator-(const safe_iterator_impl& other) const
-		{ return distance(*this, other); }
+	difference_type operator-(const safe_iterator_impl& other) const {
+		if(arr == other.arr)
+			return ix - other.ix;
+	
+		throw std::invalid_argument("Iterators don't match");
+	}
 
 	safe_iterator_impl& operator-=(difference_type n)
 		{ ix -= n; return *this; }
@@ -446,21 +474,35 @@ public:
 		return !operator<(ri);
 	}
 
+	iterator_validity validate_iterator(const safe_iterator_impl& b, const safe_iterator_impl& end) const noexcept {
+		if(arr == nullptr)
+			return iterator_validity::Null;
+		else if(arr == end.arr) {
+
+			if(ix < end.ix)
+				return iterator_validity::ValidCanDeref;
+
+			else if(ix == end.ix)
+				return iterator_validity::ValidEnd;
+
+			else if(ix < arr->capacity())
+				return iterator_validity::InvalidZoombie;
+		}
+		return iterator_validity::InvalidZoombie;
+	}
+
 	pointer _Unwrapped() const {
 		return get_raw_ptr();
 	}
 
 	void _Seek_to(pointer to) {
-		ix = std::distance(arr->begin(), to);
+		ix = to - arr->begin();
 	}
 };
 
 template <typename T, typename Arr>
 typename safe_iterator_impl<T, Arr>::difference_type distance(const safe_iterator_impl<T, Arr>& l, const safe_iterator_impl<T, Arr>& r) {
-	if(l.arr == r.arr)
-		return l.ix - r.ix;
-	
-	throw std::invalid_argument("Iterators don't match");
+	return r - l;
 }
 
 template<class T, memory_safety Safety>
