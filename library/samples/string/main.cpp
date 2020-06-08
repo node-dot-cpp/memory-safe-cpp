@@ -1,17 +1,21 @@
 
 #include <safememory/string.h>
 #include <fmt/printf.h>
+#include <fmt/format.h>
+#include <safememory/string_format.h>
 
+#include <iostream>
+
+namespace sm = safememory;
 
 int main() {
 
-    safememory::string s = safememory::string_literal("hola mundo");
-    safememory::string s2("hola mundo");
+    sm::string_literal lit = "hola mundo";
+    sm::string s = sm::string_literal("hola mundo");
+    sm::string s2("hola mundo");
 //    safememory::string s3 = "hola mundo"; //error
 
     s.append("! - ");
-
-    s2 += " cruel! - ";
 
     for(auto it = s.begin(); it != s.end(); ++it)
         s2 += *it;
@@ -19,6 +23,12 @@ int main() {
     for(auto its = s2.begin(); its != s2.end(); ++its) {
         s += *its;
     }
+
+    fmt::print("{}\n", sm::to_string(42)); //sm::string_literal
+    fmt::print("{}\n", lit); //sm::string_literal
+    fmt::print("{}\n", s2); //sm::string
+
+    std::cout << lit << std::endl << s2 << std::endl;
 
     fmt::printf(s2.c_str());
 

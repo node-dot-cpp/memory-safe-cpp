@@ -914,26 +914,28 @@ namespace safememory
 		static
 		this_type snprintf_unsafe(const char* fmt, Arg arg) {
 			int sz = std::snprintf(nullptr, 0, fmt, arg);
-			this_type buff;
-			if(r < 0)
-				return buff;
+			this_type buffer;
+			if(sz < 0)
+				return buffer;
 			
-			buff.reserve(static_cast<size_t>(sz));
-			std::snprintf(buf.data(), buf.size(), fmt, arg);
-			return buff;
+			buffer.resize(static_cast<size_t>(sz));
+			// snprintf will write ending '\0'
+			std::snprintf(buffer.data(), buffer.size() + 1, fmt, arg);
+			return buffer;
 		};
 
 		template <typename Arg>
 		static
 		this_type swprintf_unsafe(const wchar_t* fmt, Arg arg) {
 			int sz = std::swprintf(nullptr, 0, fmt, arg);
-			this_type buff;
-			if(r < 0)
-				return buff;
+			this_type buffer;
+			if(sz < 0)
+				return buffer;
 			
-			buff.reserve(static_cast<size_t>(sz));
-			std::swprintf(buf.data(), buf.size(), fmt, arg);
-			return buff;
+			buffer.resize(static_cast<size_t>(sz));
+			// snprintf will write ending '\0'
+			std::swprintf(buffer.data(), buffer.size() + 1, fmt, arg);
+			return buffer;
 		};
 
 		// #if EASTL_OPERATOR_EQUALS_OTHER_ENABLED
