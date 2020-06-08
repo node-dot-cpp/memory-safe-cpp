@@ -380,6 +380,9 @@ namespace safememory::detail
 		hashtable_iterator_base(node_ptr pNode, bucket_it pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
 
+		hashtable_iterator_base(hashtable_iterator_base&&) = default;
+		hashtable_iterator_base& operator=(hashtable_iterator_base&&) = default;
+
 		void increment_bucket()
 		{
 			++mpBucket;
@@ -459,6 +462,9 @@ namespace safememory::detail
 			}
 			return *this;
 		}
+
+		hashtable_iterator(hashtable_iterator&& x) = default;
+		hashtable_iterator& operator=(hashtable_iterator&& x) = default;
 
 		// non const to const convertion
 		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>

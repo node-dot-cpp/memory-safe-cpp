@@ -211,6 +211,9 @@ public:
 	safe_iterator_no_checks(const safe_iterator_no_checks& ri) = default;
 	safe_iterator_no_checks& operator=(const safe_iterator_no_checks& ri) = default;
 
+	safe_iterator_no_checks(safe_iterator_no_checks&& ri) = default;
+	safe_iterator_no_checks& operator=(safe_iterator_no_checks&& ri) = default;
+
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
 	safe_iterator_no_checks(const safe_iterator_no_checks<NonConstT, soft_array_of_prt>& ri)
 		: mIterator(ri.mIterator) {}
@@ -372,6 +375,9 @@ public:
 		}
 		return *this;
 	}
+
+	safe_iterator_impl(safe_iterator_impl&& ri) = default; 
+	safe_iterator_impl& operator=(safe_iterator_impl&& ri) = default;
 
 	// allow non-const to const convertion
 	template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, non_const_value_type>::value>>
