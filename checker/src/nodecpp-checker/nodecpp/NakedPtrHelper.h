@@ -75,8 +75,7 @@ public:
 /// FIXME: Write a short description.
 ///
 bool isOsnPtrMethodName(const std::string& Name);
-bool isOwnerPtrName(const std::string& Name);
-bool isOwnerPtrDecl(const NamedDecl* Dc);
+bool isOwningPtrName(const std::string& Name);
 bool isSafePtrName(const std::string& Name);
 bool isAwaitableName(const std::string &Name);
 bool isNakedPtrName(const std::string& Name);
@@ -125,6 +124,7 @@ bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, D
 KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
+bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 bool isNodecppErrorType(QualType Qt);
