@@ -28,24 +28,11 @@
 #ifndef SAFEMEMORY_DETAIL_SAFE_ALLOC_H
 #define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
 
-#include <safe_ptr.h>
-#include <safe_ptr_with_zero_offset.h>
+#include <safememory/safe_ptr2.h>
+#include <safememory/detail/safe_ptr_with_zero_offset2.h>
 #include <iterator>
 
-namespace safememory {
-
-using ::nodecpp::safememory::owning_ptr;
-using ::nodecpp::safememory::soft_ptr;
-using ::nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::make_owning;
-using ::nodecpp::safememory::make_owning_2;
-using ::nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::safeness_declarator;
-
-
-namespace detail {
-
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
+namespace safememory::detail {
 
 enum class iterator_validity {
 	Null,                // default constructed iterator
@@ -516,8 +503,7 @@ using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
 			safe_iterator_no_checks<T>, safe_iterator_impl<T>>;
 
 
-} // namespace detail
-} // namespace safememory
+} // namespace safememory::detail
 
 #ifdef NODECPP_WINDOWS
 // this is to allow MS to optimize algorightms like std::find using TMP
