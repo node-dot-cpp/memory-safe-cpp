@@ -148,12 +148,12 @@ template class safememory::detail::hashtable<int,
 // coverage of those inherited hashtable functions.
 // template class eastl::unordered_set<int>;
 // template class eastl::unordered_multiset<int>;
-template typename safememory::unordered_map<int, int>;
-template typename safememory::unordered_multimap<int, int>;
+//template typename safememory::unordered_map<int, int>;
+//template typename safememory::unordered_multimap<int, int>;
 // template class eastl::unordered_set<Align32>;
 // template class eastl::unordered_multiset<Align32>;
-template typename safememory::unordered_map<Align32, Align32>;
-template typename safememory::unordered_multimap<Align32, Align32>;
+//template typename safememory::unordered_map<Align32, Align32>;
+//template typename safememory::unordered_multimap<Align32, Align32>;
 
 // validate static assumptions about hashtable core types
 typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, false> HashNode1;
