@@ -661,8 +661,8 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			updatePtrForListItemsWithInvalidPtr();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::dtoring );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
