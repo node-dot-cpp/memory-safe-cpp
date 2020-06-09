@@ -121,31 +121,75 @@ namespace Benchmark
 		result.msName   = pName;
 		result.mUnits   = units;
 		result.mTime1   = nTime1;
-		result.mTime1NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)units, nTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		// result.mTime1NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)units, nTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
 		result.mTime2   = nTime2;
-		result.mTime2NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)units, nTime2, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		// result.mTime2NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)units, nTime2, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		result.mTime3   = nTime2;
+		result.mTime4   = nTime2;
 
 		if(pNotes)
 			result.msNotes = pNotes;
 
-		gResultSet.insert(result);
+		gResultSet.insert(std::pair<std::string, Result>(pName, result));
+	}
+
+	void AddResult(const char* pName, int index, const EA::StdC::Stopwatch& sw, const char* pNotes)
+	{
+		if(index == 1) {
+			Result result;
+
+			result.msName   = pName;
+			//TODO assert all units are the same
+			result.mUnits   = sw.GetUnits();
+			result.mTime1   = sw.GetElapsedTime();
+
+			if(pNotes)
+				result.msNotes = pNotes;
+
+			gResultSet.insert(std::pair<std::string, Result>(pName, result));
+			return;
+		}
+
+
+		auto result = gResultSet.find(pName);
+		if(result == gResultSet.end())
+			return;
+
+		if(index == 2)
+			result->second.mTime2 = sw.GetElapsedTime();
+		else if(index == 3)
+			result->second.mTime3 = sw.GetElapsedTime();
+		else if(index == 4)
+			result->second.mTime4 = sw.GetElapsedTime();
 	}
 
 
 	void PrintResultLine(const Result& result)
 	{
-		const double fRatio         = (double)result.mTime1 / (double)result.mTime2;
-		const double fRatioPrinted  = (fRatio > 100) ? 100 : fRatio;
-		const double fPercentChange = fabs(((double)result.mTime1 - (double)result.mTime2) / (((double)result.mTime1 + (double)result.mTime2) / 2));
-		const bool   bDifference    = (result.mTime1 > 10) && (result.mTime2 > 10) && (fPercentChange > 0.25);
-		const char*  pDifference    = (bDifference ? (result.mTime1 < result.mTime2 ? "-" : "+") : "");
+		const double fRatio2         = (double)result.mTime1 / (double)result.mTime2;
+		const double fRatioPrinted2  = (fRatio2 > 100) ? 100 : fRatio2;
+		// const double fPercentChange = fabs(((double)result.mTime1 - (double)result.mTime2) / (((double)result.mTime1 + (double)result.mTime2) / 2));
+		// const bool   bDifference    = (result.mTime1 > 10) && (result.mTime2 > 10) && (fPercentChange > 0.25);
+		// const char*  pDifference    = (bDifference ? (result.mTime1 < result.mTime2 ? "-" : "+") : "");
+		const char*  pDifference2    = "";
 
-		// std::string sClockTime1, sClockTime2;
 
-		std::string sClockTime1 = WriteTime(result.mTime1NS);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
-		std::string sClockTime2 = WriteTime(result.mTime2NS);
+		const double fRatio3         = (double)result.mTime1 / (double)result.mTime3;
+		const double fRatioPrinted3  = (fRatio3 > 100) ? 100 : fRatio3;
+		const char*  pDifference3    = "";
 
-		EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
+		const double fRatio4         = (double)result.mTime1 / (double)result.mTime4;
+		const double fRatioPrinted4  = (fRatio4 > 100) ? 100 : fRatio4;
+		const char*  pDifference4    = ""; 
+
+
+
+
+		int64_t Time1NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)result.mUnits, result.mTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		std::string sClockTime1 = WriteTime(Time1NS);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
+
+		// EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
+		EA::UnitTest::Report("%-50s | %10" PRIu64 " %s | %6.2f%5s | %6.2f%5s | %6.2f%5s |", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), fRatioPrinted2, pDifference2, fRatioPrinted3, pDifference3, fRatioPrinted4, pDifference4);
 
 		if(result.msNotes.length()) // If there are any notes...
 			EA::UnitTest::Report("   %s", result.msNotes.c_str());
@@ -220,16 +264,18 @@ namespace Benchmark
 		// EA::UnitTest::Report("EASTL version: %s\n", EASTL_VERSION);
 		EA::UnitTest::Report("Platform: %s\n", gEnvironment.msPlatform.c_str());
 		EA::UnitTest::Report("Compiler: %s\n", EA_COMPILER_STRING);
-		EA::UnitTest::Report("Allocator: Node.cpp - IibMalloc.\n");
+//		EA::UnitTest::Report("Allocator: Node.cpp - IibMalloc.\n");
 		#if defined(EA_DEBUG) || defined(_DEBUG)
 		EA::UnitTest::Report("Build: Debug.\n");
 		#else
 		EA::UnitTest::Report("Build: Full optimization.\n");
 		#endif
 		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("Values are ticks and time to complete tests; smaller values are better.\n");
+		EA::UnitTest::Report("First column values are ticks and time to complete tests.\n");
+		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("%-43s%26s%26s%13s%13s\n", "Test", gEnvironment.msSTLName1.c_str(), gEnvironment.msSTLName2.c_str(), "Ratio", "Difference?");
+
+		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "eastl", "safememory", "(no_checks)");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;
@@ -237,7 +283,7 @@ namespace Benchmark
 
 		for(ResultSet::iterator it = gResultSet.begin(); it != gResultSet.end(); ++it)
 		{
-			const Result& result = *it;
+			const Result& result = it->second;
 
 			size_t n = result.msName.find('/');
 			if(n == std::string::npos)
@@ -260,16 +306,18 @@ namespace Benchmark
 
 		for(ResultSet::iterator its = gResultSet.begin(); its != gResultSet.end(); ++its)
 		{
-			const Result& resultTemp = *its;
+			const Result& resultTemp = its->second;
 
 			EASTL_ASSERT(resultTemp.mUnits == EA::StdC::Stopwatch::kUnitsCPUCycles); // Our ConvertStopwatchUnits call below assumes that every measured time is CPUCycles.
 			resultSum.mTime1 += resultTemp.mTime1;
 			resultSum.mTime2 += resultTemp.mTime2;
+			resultSum.mTime3 += resultTemp.mTime3;
+			resultSum.mTime4 += resultTemp.mTime4;
 		}
 
 		// We do this convert as a final step instead of the loop in order to avoid loss of precision.
-		resultSum.mTime1NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
-		resultSum.mTime2NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime2, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		// resultSum.mTime1NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
+		// resultSum.mTime2NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime2, EA::StdC::Stopwatch::kUnitsNanoseconds);
 		EA::UnitTest::Report("\n");
 		PrintResultLine(resultSum);
 

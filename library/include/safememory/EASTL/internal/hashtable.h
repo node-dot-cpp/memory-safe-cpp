@@ -68,7 +68,7 @@
 //#include <EASTL/allocator.h>
 //#include <safememory/EASTL/iterator.h>
 #include <iterator>
-#include <safe_ptr.h>
+#include <safememory/safe_ptr2.h>
 #include <safememory/detail/safe_alloc.h>
 #include <functional>
 #include <utility>
@@ -97,9 +97,9 @@ namespace safememory::detail
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASHTABLE_DEFAULT_NAME
-		#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
-	#endif
+	// #ifndef EASTL_HASHTABLE_DEFAULT_NAME
+	// 	#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
+	// #endif
 
 
 	/// EASTL_HASHTABLE_DEFAULT_ALLOCATOR
@@ -127,8 +127,8 @@ namespace safememory::detail
 	///
 	/// Use EASTL_MACRO_SWAP because GCC (at least v4.6-4.8) has a bug where it fails to compile eastl::swap(mpBucketArray, x.mpBucketArray).
 	///
-	#define EASTL_MACRO_SWAP(Type, a, b) \
-		{ Type temp = a; a = b; b = temp; }
+	// #define EASTL_MACRO_SWAP(Type, a, b) \
+	// 	{ Type temp = a; a = b; b = temp; }
 
 	/// use_self
 	///
@@ -174,15 +174,15 @@ namespace safememory::detail
 	/// store a hash code in the node to speed up hash calculations 
 	/// and comparisons in some cases.
 	/// 
-	template <typename Value, bool bCacheHashCode>
+	template <typename Value, memory_safety Safety, bool bCacheHashCode>
 	struct hash_node;
 
 	// EA_DISABLE_VC_WARNING(4625 4626) // "copy constructor / assignment operator could not be generated because a base class copy constructor is inaccessible or deleted"
 	// #ifdef EA_COMPILER_MSVC_2015
 	// 	EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
 	// #endif
-		template <typename Value>
-		struct hash_node<Value, true>
+		template <typename Value, memory_safety Safety>
+		struct hash_node<Value, Safety, true>
 		{
 			hash_node() = default;
 
@@ -192,13 +192,13 @@ namespace safememory::detail
 				{}
 
 			Value        mValue;
-			owning_ptr<hash_node>   mpNext;
+			owning_ptr<hash_node, Safety>   mpNext;
 			std::size_t mnHashCode;
 
 		} EASTL_MAY_ALIAS;
 
-		template <typename Value>
-		struct hash_node<Value, false>
+		template <typename Value, memory_safety Safety>
+		struct hash_node<Value, Safety, false>
 		{
 			hash_node() = default;
 
@@ -208,7 +208,7 @@ namespace safememory::detail
 				{}
 
 		    Value      mValue;
-			owning_ptr<hash_node> mpNext;
+			owning_ptr<hash_node, Safety> mpNext;
 
 		} EASTL_MAY_ALIAS;
 
@@ -247,8 +247,8 @@ namespace safememory::detail
 	// contains the cached hashed value or not. 
 	// #define ENABLE_IF_HAS_HASHCODE(T, RT) typename std::enable_if<Internal::has_hashcode_member<T>::value, RT>::type*
 	// #define ENABLE_IF_HASHCODE_SIZET(T, RT) typename std::enable_if<std::is_convertible<T, size_t>::value, RT>::type
-	#define ENABLE_IF_TRUETYPE(T) typename std::enable_if<T::value>::type*
-	#define DISABLE_IF_TRUETYPE(T) typename std::enable_if<!T::value>::type*
+	#define SM_ENABLE_IF_TRUETYPE(T) typename std::enable_if<T::value>::type*
+	#define SM_DISABLE_IF_TRUETYPE(T) typename std::enable_if<!T::value>::type*
 
 
 	/// node_iterator_base
@@ -258,20 +258,29 @@ namespace safememory::detail
 	/// We define a base class here because it is shared by both const and
 	/// non-const iterators.
 	///
-	template <typename Value, bool bCacheHashCode>
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
 	struct node_iterator_base
 	{
-		typedef hash_node<Value, bCacheHashCode> node_type;
+		typedef hash_node<Value, Safety, bCacheHashCode> node_type;
 
-		soft_ptr<node_type> mpNode;
+	protected:
+		soft_ptr_with_zero_offset<node_type, Safety> mpNode;
 
 		node_iterator_base() { }
 
-		node_iterator_base(soft_ptr<node_type> pNode)
+		node_iterator_base(soft_ptr_with_zero_offset<node_type, Safety> pNode)
 			: mpNode(pNode) { }
 
 		void increment()
 			{ mpNode = mpNode->mpNext; }
+
+	public:
+		bool operator==(const node_iterator_base& other) const
+			{ return mpNode == other.mpNode; }
+
+		bool operator!=(const node_iterator_base& other) const
+			{ return !operator==(other); }
+
 	};
 
 
@@ -283,12 +292,12 @@ namespace safememory::detail
 	/// The bConst parameter defines if the iterator is a const_iterator
 	/// or an iterator.
 	///
-	template <typename Value, bool bConst, bool bCacheHashCode>
-	struct node_iterator : public node_iterator_base<Value, bCacheHashCode>
+	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
+	struct node_iterator : public node_iterator_base<Value, bCacheHashCode, Safety>
 	{
 	public:
-		typedef node_iterator_base<Value, bCacheHashCode>                base_type;
-		typedef node_iterator<Value, bConst, bCacheHashCode>             this_type;
+		typedef node_iterator_base<Value, bCacheHashCode, Safety>       base_type;
+		typedef node_iterator<Value, bConst, bCacheHashCode, Safety>    this_type;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
 		typedef typename std::conditional_t<bConst, const Value*, Value*> pointer;
@@ -296,13 +305,21 @@ namespace safememory::detail
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag          			             iterator_category;
 
+		static constexpr memory_safety is_safe = Safety;
+
+	private:
+		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
+		friend class hashtable;
+
 	public:
 		node_iterator() { }
 
-		explicit node_iterator(soft_ptr<node_type> pNode)
+	private:
+		explicit node_iterator(soft_ptr_with_zero_offset<node_type, Safety> pNode)
 			: base_type(pNode) { }
+	public:
 
-		node_iterator(const node_iterator<Value, true, bCacheHashCode>& x)
+		node_iterator(const node_iterator<Value, true, bCacheHashCode, Safety>& x)
 			: base_type(x.mpNode) { }
 
 		reference operator*() const
@@ -331,41 +348,40 @@ namespace safememory::detail
 	/// We define a base class here because it is shared by both const and
 	/// non-const iterators.
 	///
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
+	template <typename Value, bool bCacheHashCode, memory_safety Safety>
 	struct hashtable_iterator_base
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe> this_type;
-		typedef hash_node<Value, bCacheHashCode>              		node_type;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, Safety> this_type;
+		typedef hash_node<Value, Safety, bCacheHashCode>              		node_type;
 
-		// typedef std::conditional_t<is_safe == memory_safety::safe,
-		// 	soft_ptr<node_type>, node_type*> 						node_ptr;
-		typedef soft_ptr<node_type>			 						node_ptr;
-		typedef std::conditional_t<is_safe == memory_safety::safe,
-			safe_iterator<owning_ptr<node_type>>,
-			unsafe_iterator<owning_ptr<node_type>>> 		bucket_ptr;
+		typedef soft_ptr_with_zero_offset<node_type, Safety>	node_ptr;
+		typedef safe_array_iterator<owning_ptr<node_type, Safety>, Safety>	bucket_it;
 
 	protected:
-		template <typename, typename, typename, typename, typename, typename, typename, typename, typename, bool, bool, bool>
+		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
 		friend class hashtable;
 
 		template <typename, bool, bool, memory_safety>
 		friend struct hashtable_iterator;
 
-		template <typename V, bool b, memory_safety s>
-		friend bool operator==(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
+		// template <typename V, bool b, memory_safety s>
+		// friend bool operator==(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
-		template <typename V, bool b, memory_safety s>
-		friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
+		// template <typename V, bool b, memory_safety s>
+		// friend bool operator!=(const hashtable_iterator_base<V, b, s>&, const hashtable_iterator_base<V, b, s>&);
 
 		node_ptr  mpNode;      // Current node within current bucket.
-		bucket_ptr mpBucket;    // Current bucket.
+		bucket_it mpBucket;    // Current bucket.
 
-	public:
+//	public:
 		hashtable_iterator_base() { }
 
-		hashtable_iterator_base(node_ptr pNode, bucket_ptr pBucket)
+		hashtable_iterator_base(node_ptr pNode, bucket_it pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
+
+		hashtable_iterator_base(hashtable_iterator_base&&) = default;
+		hashtable_iterator_base& operator=(hashtable_iterator_base&&) = default;
 
 		void increment_bucket()
 		{
@@ -382,7 +398,13 @@ namespace safememory::detail
 			while(mpNode == nullptr)
 				mpNode = *++mpBucket;
 		}
+	public:
+		bool operator==(const hashtable_iterator_base& other) const
+			{ return mpNode == other.mpNode && mpBucket == other.mpBucket; }
 
+		bool operator!=(const hashtable_iterator_base& other) const
+			{ return !operator==(other); }
+		
 	}; // hashtable_iterator_base
 
 
@@ -398,13 +420,13 @@ namespace safememory::detail
 	/// The bConst parameter defines if the iterator is a const_iterator
 	/// or an iterator.
 	///
-	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety is_safe>
-	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode, is_safe>
+	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
+	struct hashtable_iterator : public hashtable_iterator_base<Value, bCacheHashCode, Safety>
 	{
 	public:
-		typedef hashtable_iterator_base<Value, bCacheHashCode, is_safe>           base_type;
-		typedef hashtable_iterator<Value, bConst, bCacheHashCode, is_safe>        this_type;
-		typedef hashtable_iterator<Value, false, bCacheHashCode, is_safe>         this_type_non_const;
+		typedef hashtable_iterator_base<Value, bCacheHashCode, Safety>           base_type;
+		typedef hashtable_iterator<Value, bConst, bCacheHashCode, Safety>        this_type;
+		typedef hashtable_iterator<Value, false, bCacheHashCode, Safety>         this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef Value                                                    value_type;
 		typedef std::conditional_t<bConst, const Value*, Value*> 		 pointer;
@@ -412,16 +434,24 @@ namespace safememory::detail
 		typedef std::ptrdiff_t                                           difference_type;
 		typedef std::forward_iterator_tag                                iterator_category;
 
+		static constexpr memory_safety is_safe = Safety;
+
+	private:
+		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
+		friend class hashtable;
+
 	public:
 		hashtable_iterator()
 			: base_type() { }
 
-		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_ptr pBucket)
+	private:
+		hashtable_iterator(typename base_type::node_ptr pNode, typename base_type::bucket_it pBucket)
 			: base_type(pNode, pBucket) { }
 
-		hashtable_iterator(typename base_type::bucket_ptr pBucket)
+		hashtable_iterator(typename base_type::bucket_it pBucket)
 			: base_type(*pBucket, pBucket) { }
 
+	public:
 		hashtable_iterator(const hashtable_iterator& x)
 			: base_type(x.mpNode, x.mpBucket) { }
 
@@ -432,6 +462,9 @@ namespace safememory::detail
 			}
 			return *this;
 		}
+
+		hashtable_iterator(hashtable_iterator&& x) = default;
+		hashtable_iterator& operator=(hashtable_iterator&& x) = default;
 
 		// non const to const convertion
 		template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
@@ -627,7 +660,7 @@ namespace safememory::detail
 	/// objects here, for convenience.
 	///
 	template <typename Key, typename Value, typename ExtractKey, typename Equal, 
-			  typename H1, typename H2, typename H, bool bCacheHashCode>
+			  typename H1, typename H2, typename H, memory_safety S, bool bCacheHashCode>
 	struct hash_code_base;
 
 
@@ -636,8 +669,8 @@ namespace safememory::detail
 	/// Specialization: ranged hash function, no caching hash codes. 
 	/// H1 and H2 are provided but ignored. We define a dummy hash code type.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, false>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, false>
 	{
 	protected:
 		ExtractKey  mExtractKey;    // To do: Make this member go away entirely, as it never has any data.
@@ -676,16 +709,16 @@ namespace safememory::detail
 		bucket_index_t bucket_index(const Key& key, hash_code_t, uint32_t nBucketCount) const
 			{ return (bucket_index_t)mRangedHash(key, nBucketCount); }
 
-		bucket_index_t bucket_index(const hash_node<Value, false>& pNode, uint32_t nBucketCount) const
+		bucket_index_t bucket_index(const hash_node<Value, Safety, false>& pNode, uint32_t nBucketCount) const
 			{ return (bucket_index_t)mRangedHash(mExtractKey(pNode.mValue), nBucketCount); }
 
-		bool compare(const Key& key, hash_code_t, hash_node<Value, false>& pNode) const
+		bool compare(const Key& key, hash_code_t, hash_node<Value, Safety, false>& pNode) const
 			{ return mEqual(key, mExtractKey(pNode.mValue)); }
 
-		void copy_code(hash_node<Value, false>&, const hash_node<Value, false>&) const
+		void copy_code(hash_node<Value, Safety, false>&, const hash_node<Value, Safety, false>&) const
 			{ } // Nothing to do.
 
-		void set_code(hash_node<Value, false>&, hash_code_t) const
+		void set_code(hash_node<Value, Safety, false>&, hash_code_t) const
 		{
 			// EA_UNUSED(pDest);
 			// EA_UNUSED(c);
@@ -712,8 +745,8 @@ namespace safememory::detail
 	/// This combination is meaningless, so we provide only a declaration
 	/// and no definition.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, true>;
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, typename H, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, true>;
 
 
 
@@ -723,8 +756,8 @@ namespace safememory::detail
 	/// no caching of hash codes. H is provided but ignored. 
 	/// Provides typedef and accessor required by TR1.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, false>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, Safety, false>
 	{
 	protected:
 		ExtractKey  mExtractKey;
@@ -750,7 +783,7 @@ namespace safememory::detail
 	protected:
 		typedef size_t hash_code_t;
 		typedef uint32_t bucket_index_t;
-		typedef hash_node<Value, false> node_type;
+		typedef hash_node<Value, Safety, false> node_type;
 
 		hash_code_base(const ExtractKey& ex, const Equal& eq, const H1& h1, const H2& h2, const default_ranged_hash&)
 			: mExtractKey(ex), mEqual(eq), m_h1(h1), m_h2(h2) { }
@@ -794,8 +827,8 @@ namespace safememory::detail
 	/// caching hash codes. H is provided but ignored. 
 	/// Provides typedef and accessor required by TR1.
 	///
-	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2>
-	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, true>
+	template <typename Key, typename Value, typename ExtractKey, typename Equal, typename H1, typename H2, memory_safety Safety>
+	struct hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, default_ranged_hash, Safety, true>
 	{
 	protected:
 		ExtractKey  mExtractKey;
@@ -821,7 +854,7 @@ namespace safememory::detail
 	protected:
 		typedef uint32_t hash_code_t;
 		typedef uint32_t bucket_index_t;
-		typedef hash_node<Value, true> node_type;
+		typedef hash_node<Value, Safety, true> node_type;
 
 		hash_code_base(const ExtractKey& ex, const Equal& eq, const H1& h1, const H2& h2, const default_ranged_hash&)
 			: mExtractKey(ex), mEqual(eq), m_h1(h1), m_h2(h2) { }
@@ -937,18 +970,18 @@ namespace safememory::detail
 	/// already known, allowing us to avoid a redundant hash operation
 	/// in the normal find path.
 	/// 
-	template <typename Key, typename Value, typename Allocator, typename ExtractKey, 
+	template <typename Key, typename Value, memory_safety Safety, typename ExtractKey, 
 			  typename Equal, typename H1, typename H2, typename H, 
 			  typename RehashPolicy, bool bCacheHashCode, bool bMutableIterators, bool bUniqueKeys>
 	class hashtable
-		:   public rehash_base<RehashPolicy, hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys> >,
-			public hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, bCacheHashCode>
+		:   public rehash_base<RehashPolicy, hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys> >,
+			public hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>
 	{
 	public:
 		typedef Key                                                                                 key_type;
 		typedef Value                                                                               value_type;
 		typedef typename ExtractKey::result_type                                                    mapped_type;
-		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, bCacheHashCode>            hash_code_base_type;
+		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>            hash_code_base_type;
 		typedef typename hash_code_base_type::hash_code_t                                           hash_code_t;
 		// typedef Allocator                                                                           allocator_type;
 		typedef Equal                                                                               key_equal;
@@ -956,13 +989,14 @@ namespace safememory::detail
 		typedef std::size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
-		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode>                       local_iterator;
-		typedef node_iterator<value_type, true,               bCacheHashCode>                       const_local_iterator;
-		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, memory_safety::none>                  iterator;
-		typedef hashtable_iterator<value_type, true,               bCacheHashCode, memory_safety::none>                  const_iterator;
-		typedef hash_node<value_type, bCacheHashCode>                                               node_type;
+
+		typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>              local_iterator;
+		typedef node_iterator<value_type, true,               bCacheHashCode, Safety>              const_local_iterator;
+		typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
+		typedef hashtable_iterator<value_type, true,               bCacheHashCode, Safety>         const_iterator;
+		typedef hash_node<value_type, Safety, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
-		typedef hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, 
+		typedef hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, 
 							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
 		typedef RehashPolicy                                                                        rehash_policy_type;
 		typedef ExtractKey                                                                          extract_key_type;
@@ -971,9 +1005,11 @@ namespace safememory::detail
 		typedef H                                                                                   h_type;
 		typedef std::integral_constant<bool, bUniqueKeys>                                           has_unique_keys_type;
 
-		typedef owning_ptr<node_type>    owning_node_type;
-		typedef soft_ptr<node_type>    soft_node_type;
-		typedef owning_ptr<array_of2<owning_node_type>>    owning_bucket_type;
+		typedef owning_ptr<node_type, Safety>                                                      owning_node_type;
+		typedef soft_ptr_with_zero_offset<node_type, Safety>                               soft_node_type;
+		typedef owning_ptr<array_of2<owning_node_type>, Safety>                                    owning_bucket_type;
+		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type>, Safety>             soft_bucket_type;
+
 
 
 		using hash_code_base_type::key_eq;
@@ -986,6 +1022,7 @@ namespace safememory::detail
 		using hash_code_base_type::copy_code;
 
 		static const bool kCacheHashCode = bCacheHashCode;
+		static constexpr memory_safety is_safe = Safety;
 
 		// enum
 		// {
@@ -1292,8 +1329,8 @@ namespace safememory::detail
 		iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
-		typename iterator::bucket_ptr GetBucketArrayIt() const { 
-			return typename iterator::bucket_ptr(mpBucketArray);
+		safe_array_iterator<owning_node_type, Safety> GetBucketArrayIt() const { 
+			return safe_array_iterator<owning_node_type, Safety>::make(mpBucketArray);
 		}
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1304,7 +1341,7 @@ namespace safememory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt.first;
 		}
@@ -1312,7 +1349,7 @@ namespace safememory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
 		{
 			return irt;
 		}
@@ -1320,15 +1357,15 @@ namespace safememory::detail
 		owning_node_type  DoAllocateNodeFromKey(const key_type& key);
 		owning_node_type  DoAllocateNodeFromKey(key_type&& key);
 		void        DoFreeNode(owning_node_type pNode);
-		void        DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pBucketArray, size_type);
+		void        DoFreeNodes(soft_bucket_type pBucketArray, size_type);
 
 		owning_bucket_type DoAllocateBuckets(size_type n);
 		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
 
-		template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
+		template <typename BoolConstantT, class... Args, SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args);
 
-		template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
+		template <typename BoolConstantT, class... Args, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		iterator DoInsertValue(BoolConstantT, Args&&... args);
 
 
@@ -1338,12 +1375,12 @@ namespace safememory::detail
 													   hash_code_t c,
 													   owning_node_type pNodeNew,
 													   value_type&& value,
-													   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+													   SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT,
 												  value_type&& value,
-												  ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+												  SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		iterator DoInsertValueExtra(BoolConstantT,
@@ -1351,10 +1388,10 @@ namespace safememory::detail
 									hash_code_t c,
 									owning_node_type pNodeNew,
 									value_type&& value,
-									DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+									SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
-		iterator DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		iterator DoInsertValue(BoolConstantT, value_type&& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 
 		template <typename BoolConstantT>
@@ -1363,12 +1400,12 @@ namespace safememory::detail
 													   hash_code_t c,
 													   owning_node_type pNodeNew,
 													   const value_type& value,
-													   ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+													   SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT,
 		                                          const value_type& value,
-		                                          ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		                                          SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
 		iterator DoInsertValueExtra(BoolConstantT,
@@ -1376,10 +1413,10 @@ namespace safememory::detail
 		                            hash_code_t c,
 		                            owning_node_type pNodeNew,
 		                            const value_type& value,
-		                            DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		                            SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <typename BoolConstantT>
-		iterator DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
+		iterator DoInsertValue(BoolConstantT, const value_type& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr);
 
 		template <class... Args>
 		owning_node_type DoAllocateNode(Args&&... args);
@@ -1429,13 +1466,13 @@ namespace safememory::detail
 	// node_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode>
-	inline bool operator==(const node_iterator_base<Value, bCacheHashCode>& a, const node_iterator_base<Value, bCacheHashCode>& b)
-		{ return a.mpNode == b.mpNode; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode == b.mpNode; }
 
-	template <typename Value, bool bCacheHashCode>
-	inline bool operator!=(const node_iterator_base<Value, bCacheHashCode>& a, const node_iterator_base<Value, bCacheHashCode>& b)
-		{ return a.mpNode != b.mpNode; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode != b.mpNode; }
 
 
 
@@ -1444,13 +1481,13 @@ namespace safememory::detail
 	// hashtable_iterator_base
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
-		{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
 
-	template <typename Value, bool bCacheHashCode, memory_safety is_safe>
-	inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& a, const hashtable_iterator_base<Value, bCacheHashCode, is_safe>& b)
-		{ return !operator==(a, b); }
+	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
+	// inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
+	// 	{ return !operator==(a, b); }
 
 
 
@@ -1459,13 +1496,13 @@ namespace safememory::detail
 	// hashtable
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>
 	::hashtable(size_type nBucketCount, const H1& h1, const H2& h2, const H& h,
 				const Eq& eq, const EK& ek/*, const allocator_type& allocator*/)
 		:   rehash_base<RP, hashtable>(),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(ek, eq, h1, h2, h),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(ek, eq, h1, h2, h),
 			mnBucketCount(),
 			mnElementCount(0),
 			mRehashPolicy()/*,
@@ -1483,10 +1520,10 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename FowardIterator>
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(FowardIterator first, FowardIterator last, size_type nBucketCount, 
 	// 																 const H1& h1, const H2& h2, const H& h, 
 	// 																 const Eq& eq, const EK& ek/*, const allocator_type& allocator*/)
 	// 	:   rehash_base<rehash_policy_type, hashtable>(),
@@ -1528,11 +1565,11 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(const this_type& x)
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(const this_type& x)
 		:   rehash_base<RP, hashtable>(x),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(x),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(x),
 			mnBucketCount(x.mnBucketCount),
 			mnElementCount(x.mnElementCount),
 			mRehashPolicy(x.mRehashPolicy)/*,
@@ -1585,11 +1622,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(this_type&& x)
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(this_type&& x)
 		:   rehash_base<RP, hashtable>(x),
-			hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(x),
+			hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>(x),
 			mnBucketCount(0),
 			mnElementCount(0),
 			mRehashPolicy(x.mRehashPolicy)/*,
@@ -1600,9 +1637,9 @@ namespace safememory::detail
 	}
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(this_type&& x, const allocator_type& allocator)
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::hashtable(this_type&& x, const allocator_type& allocator)
 	// 	:   rehash_base<RP, hashtable>(x),
 	// 		hash_code_base<K, V, EK, Eq, H1, H2, H, bC>(x),
 	// 		mnBucketCount(0),
@@ -1615,39 +1652,39 @@ namespace safememory::detail
 	// }
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline const typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const EA_NOEXCEPT
+	// inline const typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const EA_NOEXCEPT
 	// {
 	// 	return mAllocator;
 	// }
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() EA_NOEXCEPT
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() EA_NOEXCEPT
 	// {
 	// 	return mAllocator;
 	// }
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::set_allocator(const allocator_type& allocator)
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::set_allocator(const allocator_type& allocator)
 	// {
 	// 	mAllocator = allocator;
 	// }
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(const this_type& x)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(const this_type& x)
 	{
 		if(this != &x)
 		{
@@ -1663,10 +1700,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(this_type&& x)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(this_type&& x)
 	{
 		if(this != &x)
 		{
@@ -1677,10 +1714,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(std::initializer_list<value_type> ilist)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::this_type&
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::operator=(std::initializer_list<value_type> ilist)
 	{
 		// The simplest means of doing this is to clear and insert. There probably isn't a generic
 		// solution that's any more efficient without having prior knowledge of the ilist contents.
@@ -1691,19 +1728,19 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::~hashtable()
+	inline hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::~hashtable()
 	{
 		clear();
 		DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(const key_type& key)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(const key_type& key)
 	{
 // //		node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
 // 		node_type* const pNode = (node_type*)safememory::lib_helpers::allocate_memory(sizeof(node_type), alignof(value_type), 0);
@@ -1726,14 +1763,14 @@ namespace safememory::detail
 // 			}
 // 		#endif
 
-		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
+		return make_owning_2<node_type, S>(std::piecewise_construct, std::forward_as_tuple(key), std::tuple<>());
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(key_type&& key)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNodeFromKey(key_type&& key)
 	{
 // 		// node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
 // 		node_type* const pNode = (node_type*)safememory::lib_helpers::allocate_memory(sizeof(node_type), alignof(value_type), 0);
@@ -1756,13 +1793,13 @@ namespace safememory::detail
 // 			}
 // 		#endif
 
-		return make_owning<node_type>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
+		return make_owning_2<node_type, S>(std::piecewise_construct, std::forward_as_tuple(std::move(key)), std::tuple<>());
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNode(owning_node_type pNode)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNode(owning_node_type pNode)
 	{
 		// pNode->~node_type();
 		// // EASTLFree(mAllocator, pNode, sizeof(node_type));
@@ -1771,9 +1808,9 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_ptr<array_of2<owning_node_type>> pNodeArray, size_type n)
+	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNodes(soft_bucket_type pNodeArray, size_type n)
 	{
 		if(pNodeArray) {
 			for(size_type i = 0; i < n; ++i)
@@ -1792,10 +1829,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_bucket_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateBuckets(size_type n)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_bucket_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateBuckets(size_type n)
 	{
 		// We allocate one extra bucket to hold a sentinel, an arbitrary
 		// non-null pointer. Iterator increment relies on this.
@@ -1809,14 +1846,14 @@ namespace safememory::detail
 // 		return pBucketArray;
 
 		// mb: allocate n + 1 so we have a dereferenceable end()
-		auto pBucketArray = make_owning_array_of<owning_node_type>(n + 1);
+		owning_bucket_type pBucketArray = make_owning_array_of<owning_node_type, S>(n + 1);
 		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->begin() + n + 1);
 
 
 // 		pBucketArray->at_unsafe(n) = reinterpret_cast<node_type*>((uintptr_t)~0);
 
 		//create a fake (zoombie) end() node, key must be default constructed
-		auto end = make_owning<node_type>();
+		auto end = make_owning_2<node_type, S>();
 		end->~node_type();
 		pBucketArray->at(n) = std::move(end);
 
@@ -1825,9 +1862,9 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeBuckets(owning_bucket_type pBucketArray, size_type n)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeBuckets(owning_bucket_type pBucketArray, size_type n)
 	{
 		// If n <= 1, then pBucketArray is from the shared gpEmptyBucketArray. We don't test 
 		// for pBucketArray == &gpEmptyBucketArray because one library have a different gpEmptyBucketArray
@@ -1839,11 +1876,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::swap(this_type& x)
+	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::swap(this_type& x)
 	{
-		hash_code_base<K, V, EK, Eq, H1, H2, H, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
+		hash_code_base<K, V, EK, Eq, H1, H2, H, S, bC>::base_swap(x); // hash_code_base has multiple implementations, so we let them handle the swap.
 		std::swap(mRehashPolicy, x.mRehashPolicy);
 		std::swap(mpBucketArray, x.mpBucketArray);
 		std::swap(mnBucketCount, x.mnBucketCount);
@@ -1856,9 +1893,9 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::rehash_policy(const rehash_policy_type& rehashPolicy)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::rehash_policy(const rehash_policy_type& rehashPolicy)
 	{
 		mRehashPolicy = rehashPolicy;
 
@@ -1870,10 +1907,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k)
 	{
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -1884,10 +1921,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k) const
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k) const
 	{
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -1898,11 +1935,11 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename U, typename UHash, typename BinaryPredicate>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate)
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate)
 	// {
 	// 	const hash_code_t c = (hash_code_t)uhash(other);
 	// 	const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
@@ -1913,11 +1950,11 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename U, typename UHash, typename BinaryPredicate>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate) const
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate) const
 	// {
 	// 	const hash_code_t c = (hash_code_t)uhash(other);
 	// 	const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
@@ -1951,22 +1988,22 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename U>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other)
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other)
 	// 	{ return safememory::hashtable_find(*this, other); }
 	// 	// VC++ doesn't appear to like the following, though it seems correct to me.
 	// 	// So we implement the workaround above until we can straighten this out.
 	// 	//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename U>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
 	// 	{ return std::hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
@@ -1974,11 +2011,11 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq, 
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq, 
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
-	// 			typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
+	// std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
+	// 			typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
 	// {
 	// 	const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 	// 	soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
@@ -1996,11 +2033,11 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq, 
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq, 
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
-	// 			typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
+	// std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
+	// 			typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
 	// {
 	// 	const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 	// 	soft_ptr<node_type> pNodeStart = mpBucketArray->at_unsafe(start);
@@ -2019,10 +2056,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const EA_NOEXCEPT
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const EA_NOEXCEPT
 	{
 		const hash_code_t c      = get_hash_code(k);
 		const size_type   n      = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -2040,11 +2077,11 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
-				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k)
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator,
+				typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k)
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -2076,11 +2113,11 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
-				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k) const
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator,
+				typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k) const
 	{
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -2111,10 +2148,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const
 	{
 		for(; pNode; pNode = pNode->mpNext)
 		{
@@ -2126,11 +2163,11 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename U, typename BinaryPredicate>
-	// inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNodeT(soft_ptr<node_type> pNode, const U& other, BinaryPredicate predicate) const
+	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNodeT(soft_ptr<node_type> pNode, const U& other, BinaryPredicate predicate) const
 	// {
 	// 	for(; pNode; pNode = pNode->mpNext)
 	// 	{
@@ -2142,11 +2179,11 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename BoolConstantT, class... Args, ENABLE_IF_TRUETYPE(BoolConstantT)>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // true_type means bUniqueKeys is true.
+	template <typename BoolConstantT, class... Args, SM_ENABLE_IF_TRUETYPE(BoolConstantT)>
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // true_type means bUniqueKeys is true.
 	{
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
@@ -2213,11 +2250,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	template <typename BoolConstantT, class... Args, DISABLE_IF_TRUETYPE(BoolConstantT)>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // false_type means bUniqueKeys is false.
+	template <typename BoolConstantT, class... Args, SM_DISABLE_IF_TRUETYPE(BoolConstantT)>
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, Args&&... args) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2258,11 +2295,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(Args&&... args)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(Args&&... args)
 	{
 		// node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
 		// node_type* const pNode = (node_type*)safememory::lib_helpers::allocate_memory(sizeof(node_type), alignof(value_type), 0);
@@ -2284,7 +2321,7 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(std::forward<Args>(args)...);
+		return make_owning_2<node_type, S>(std::forward<Args>(args)...);
 	}
 
 
@@ -2296,12 +2333,12 @@ namespace safememory::detail
 	// the creation of a node until it's known that it will be needed.
 	////////////////////////////////////////////////////////////////////////////////////////////////////
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename BoolConstantT>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k,
-		hash_code_t c, owning_node_type pNodeNew, value_type&& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k,
+		hash_code_t c, owning_node_type pNodeNew, value_type&& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
@@ -2368,11 +2405,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename BoolConstantT>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2381,12 +2418,12 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename BoolConstantT>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, value_type&& value, 
-			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, value_type&& value, 
+			SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2429,11 +2466,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, value_type&& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2442,10 +2479,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(value_type&& value)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(value_type&& value)
 	{
 //		node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
 		// node_type* const pNode = (node_type*)safememory::lib_helpers::allocate_memory(sizeof(node_type), alignof(value_type), 0);
@@ -2467,16 +2504,16 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(std::move(value));
+		return make_owning_2<node_type, S>(std::move(value));
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value, 
-			ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value, 
+			SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		// Adds the value to the hash table if not already present. 
 		// If already present then the existing value is returned via an iterator/bool pair.
@@ -2543,11 +2580,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, SM_ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2556,12 +2593,12 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename BoolConstantT>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value,
-			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, owning_node_type pNodeNew, const value_type& value,
+			SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2604,11 +2641,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template<typename BoolConstantT>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValue(BoolConstantT, const value_type& value, SM_DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
 	{
 		const key_type&   k = mExtractKey(value);
 		const hash_code_t c = get_hash_code(k);
@@ -2617,10 +2654,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(const value_type& value)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateNode(const value_type& value)
 	{
 		// node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
 		// node_type* const pNode = (node_type*)safememory::lib_helpers::allocate_memory(sizeof(node_type), alignof(value_type), 0);
@@ -2642,14 +2679,14 @@ namespace safememory::detail
 		// 		throw;
 		// 	}
 		// #endif
-		return make_owning<node_type>(value);
+		return make_owning_2<node_type, S>(value);
 	}
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocate_uninitialized_node()
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_node_type
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocate_uninitialized_node()
 	// {
 	// 	// We don't wrap this in try/catch because users of this function are expected to do that themselves as needed.
 	// 	// node_type* const pNode = (node_type*)allocate_memory(mAllocator, sizeof(node_type), EASTL_ALIGN_OF(value_type), 0);
@@ -2661,9 +2698,9 @@ namespace safememory::detail
 	// }
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::free_uninitialized_node(owning_node_type pNode)
+	// void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::free_uninitialized_node(owning_node_type pNode)
 	// {
 	// 	// pNode->mValue is expected to be uninitialized.
 	// 	// EASTLFree(mAllocator, pNode, sizeof(node_type));
@@ -2671,10 +2708,10 @@ namespace safememory::detail
 	// }
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
@@ -2720,10 +2757,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, const key_type& key, const hash_code_t c) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, const key_type& key, const hash_code_t c) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2762,10 +2799,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
 	{
 		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
 		soft_node_type  pNode = DoFindNode(mpBucketArray->at_unsafe(n), key, c);
@@ -2810,10 +2847,10 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, key_type&& key, const hash_code_t c) // false_type means bUniqueKeys is false.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, key_type&& key, const hash_code_t c) // false_type means bUniqueKeys is false.
 	{
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
@@ -2852,53 +2889,53 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace(Args&&... args)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace(Args&&... args)
 	{
 		return DoInsertValue(has_unique_keys_type(), std::forward<Args>(args)...); // Need to use forward instead of move because Args&& is a "universal reference" instead of an rvalue reference.
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace_hint(const_iterator, Args&&... args)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace_hint(const_iterator, Args&&... args)
 	{
 		// We currently ignore the iterator argument as a hint.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), std::forward<Args>(args)...);
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	          typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	// inline eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const key_type& key, Args&&... args)
+	// inline eastl::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
 		return DoInsertValue(has_unique_keys_type(), std::piecewise_construct, std::forward_as_tuple(key),
 		                     std::forward_as_tuple(std::forward<Args>(args)...));
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	          typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	// inline eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
+	// inline eastl::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
 		return DoInsertValue(has_unique_keys_type(), std::piecewise_construct, std::forward_as_tuple(std::move(key)),
 		                     std::forward_as_tuple(std::forward<Args>(args)...));
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, const key_type& key, Args&&... args)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, const key_type& key, Args&&... args)
 	{
 		insert_return_type result = DoInsertValue(
 		    has_unique_keys_type(),
@@ -2907,11 +2944,11 @@ namespace safememory::detail
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class... Args>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
 	{
 		insert_return_type result =
 		    DoInsertValue(has_unique_keys_type(), value_type(std::piecewise_construct, std::forward_as_tuple(std::move(key)),
@@ -2920,20 +2957,20 @@ namespace safememory::detail
 		return DoGetResultIterator(has_unique_keys_type(), result);
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(value_type&& otherValue)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(value_type&& otherValue)
 	{
 		return DoInsertValue(has_unique_keys_type(), std::move(otherValue));
 	}
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <class P>
-	// typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, owning_node_type pNodeNew, P&& otherValue)
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, owning_node_type pNodeNew, P&& otherValue)
 	// {
 	// 	// pNodeNew->mValue is expected to be uninitialized.
 	// 	value_type value(std::forward<P>(otherValue)); // Need to use forward instead of move because P&& is a "universal reference" instead of an rvalue reference.
@@ -2942,10 +2979,10 @@ namespace safememory::detail
 	// }
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, value_type&& value)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, value_type&& value)
 	{
 		// We currently ignore the iterator argument as a hint.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), value_type(std::move(value)));
@@ -2953,19 +2990,19 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const value_type& value) 
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const value_type& value) 
 	{
 		return DoInsertValue(has_unique_keys_type(), value);
 	}
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, owninig_node_type pNodeNew, const value_type& value) 
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, owninig_node_type pNodeNew, const value_type& value) 
 	// {
 	// 	// pNodeNew->mValue is expected to be uninitialized.
 	// 	const key_type& k = mExtractKey(value);
@@ -2973,20 +3010,20 @@ namespace safememory::detail
 	// }
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	//           typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// template <typename P, class>
-	// typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
-	// hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(P&& otherValue)
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(P&& otherValue)
 	// {
 	// 	return emplace(std::forward<P>(otherValue));
 	// }
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, const value_type& value)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, const value_type& value)
 	{
 		// We ignore the first argument (hint iterator). It's not likely to be useful for hashtable containers.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), value);
@@ -2994,19 +3031,19 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(std::initializer_list<value_type> ilist)
+	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(std::initializer_list<value_type> ilist)
 	{
 		insert_unsafe(ilist.begin(), ilist.end());
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <typename InputIterator>
 	void
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_unsafe(InputIterator first, InputIterator last)
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_unsafe(InputIterator first, InputIterator last)
 	{
 		const uint32_t nElementAdd = (uint32_t)ht_distance(first, last);
 		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, nElementAdd);
@@ -3019,11 +3056,11 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	          typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class M>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const key_type& k, M&& obj)
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const key_type& k, M&& obj)
 	{
 		auto iter = find(k);
 		if(iter == end())
@@ -3037,11 +3074,11 @@ namespace safememory::detail
 		}
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class M>
-	std::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(key_type&& k, M&& obj)
+	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(key_type&& k, M&& obj)
 	{
 		auto iter = find(k);
 		if(iter == end())
@@ -3055,29 +3092,29 @@ namespace safememory::detail
 		}
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class M>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator 
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const_iterator, const key_type& k, M&& obj)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator 
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const_iterator, const key_type& k, M&& obj)
 	{
 		return insert_or_assign(k, std::forward<M>(obj)).first; // we ignore the iterator hint
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	template <class M>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator 
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const_iterator, key_type&& k, M&& obj)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator 
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_or_assign(const_iterator, key_type&& k, M&& obj)
 	{
 		return insert_or_assign(std::move(k), std::forward<M>(obj)).first; // we ignore the iterator hint
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator i)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator i)
 	{
 		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
 		++iNext;
@@ -3086,7 +3123,7 @@ namespace safememory::detail
 		soft_node_type pNodeCurrent = *i.mpBucket;
 
 		if(*i.mpBucket == pNode) {
-			owning_ptr<node_type> tmp = std::move(*i.mpBucket);
+			owning_node_type tmp = std::move(*i.mpBucket);
 			*i.mpBucket = std::move(tmp->mpNext);
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
@@ -3104,7 +3141,7 @@ namespace safememory::detail
 				pNodeNext    = pNodeCurrent->mpNext;
 			}
 
-			owning_ptr<node_type> tmp = std::move(pNodeCurrent->mpNext);
+			owning_node_type tmp = std::move(pNodeCurrent->mpNext);
 			pNodeCurrent->mpNext = std::move(tmp->mpNext);
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
@@ -3116,10 +3153,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator first, const_iterator last)
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator first, const_iterator last)
 	{
 		while(first != last)
 			first = erase(first);
@@ -3128,10 +3165,10 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type 
-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const key_type& k)
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type 
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const key_type& k)
 	{
 		// To do: Reimplement this function to do a single loop and not try to be 
 		// smart about element contiguity. The mechanism here is only a benefit if the 
@@ -3162,9 +3199,9 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear()
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear()
 	{
 		DoFreeNodes(mpBucketArray, mnBucketCount);
 		mnElementCount = 0;
@@ -3172,9 +3209,9 @@ namespace safememory::detail
 
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear(bool clearBuckets)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear(bool clearBuckets)
 	{
 		DoFreeNodes(mpBucketArray, mnBucketCount);
 		if(clearBuckets)
@@ -3187,9 +3224,9 @@ namespace safememory::detail
 
 
 
-	// template <typename K, typename V, typename A, typename EK, typename Eq,
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() EA_NOEXCEPT
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() EA_NOEXCEPT
 	// {
 	// 	// The reset function is a special extension function which unilaterally 
 	// 	// resets the container to an empty state without freeing the memory of 
@@ -3208,16 +3245,16 @@ namespace safememory::detail
 	// 	mRehashPolicy.mnNextResize = 0;
 	// }
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
 	{
 		rehash(mRehashPolicy.GetBucketCount(uint32_t(nElementCount)));
 	}
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::rehash(size_type nBucketCount)
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::rehash(size_type nBucketCount)
 	{
 		// Note that we unilaterally use the passed in bucket count; we do not attempt migrate it
 		// up to the next prime number. We leave it at the user's discretion to do such a thing.
@@ -3225,18 +3262,18 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInit()
+	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInit()
 	{
 		mnBucketCount = (size_type)mRehashPolicy.GetNextBucketCount(1);
 		mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoRehash(size_type nNewBucketCount)
+	void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoRehash(size_type nNewBucketCount)
 	{
 		auto pNewBucketArray = DoAllocateBuckets(nNewBucketCount); // nNewBucketCount should always be >= 2.
 
@@ -3244,7 +3281,7 @@ namespace safememory::detail
 			try
 			{
 		// #endif
-				owning_ptr<node_type> pNode;
+				owning_node_type pNode;
 
 				for(size_type i = 0; i < mnBucketCount; ++i)
 				{
@@ -3278,9 +3315,9 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline bool hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate() const
+	inline bool hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate() const
 	{
 		// Verify our empty bucket array is unmodified.
 		// if(gpEmptyBucketArray[0] != NULL)
@@ -3325,9 +3362,9 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	iterator_validity hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
+	iterator_validity hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate_iterator(const_iterator i) const
 	{
 		if(i == const_iterator())
 			return iterator_validity::Null;
@@ -3361,10 +3398,10 @@ namespace safememory::detail
 	// Comparing hash tables for less-ness is an odd thing to do. We provide it for 
 	// completeness, though the user is advised to be wary of how they use this.
 	//
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline bool operator<(const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
-						  const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
+	inline bool operator<(const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
+						  const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
 	{
 		// This requires hash table elements to support operator<. Since the hash table
 		// doesn't compare elements via less (it does so via equals), we must use the 
@@ -3373,37 +3410,37 @@ namespace safememory::detail
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline bool operator>(const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
-						  const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
+	inline bool operator>(const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
+						  const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
 	{
 		return b < a;
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline bool operator<=(const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
-						   const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
+	inline bool operator<=(const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
+						   const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
 	{
 		return !(b < a);
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline bool operator>=(const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
-						   const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
+	inline bool operator>=(const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
+						   const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
 	{
 		return !(a < b);
 	}
 
 
-	template <typename K, typename V, typename A, typename EK, typename Eq,
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void swap(const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
-					 const hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
+	inline void swap(const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& a, 
+					 const hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>& b)
 	{
 		a.swap(b);
 	}

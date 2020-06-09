@@ -12,7 +12,7 @@ include(CTest)
 #-------------------------------------------------------------------------------------------
 # Defines
 #-------------------------------------------------------------------------------------------
-add_definitions(-D_CHAR16T)
+add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED)
 
 #-------------------------------------------------------------------------------------------
 # Include directories
@@ -43,7 +43,7 @@ endif()
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLBENCHMARK_SOURCES "source/*.cpp" "../test/source/EASTLTest.cpp")
-set(SOURCES ${EASTLBENCHMARK_SOURCES})
+
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -57,19 +57,10 @@ add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
-add_executable(EASTLBenchmarks ${EASTLBENCHMARK_SOURCES})
+add_executable(EASTLBenchmark ${EASTLBENCHMARK_SOURCES})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-set(EASTLBenchmark_Libraries
-
-    EATest)
-target_link_libraries(EASTLBenchmarks ${EASTLBenchmark_Libraries} Threads::Threads)
-
-#-------------------------------------------------------------------------------------------
-# Run Unit tests and verify the results.
-#-------------------------------------------------------------------------------------------
-add_test(EASTLBenchmarkRuns EASTLBenchmarks)
-set_tests_properties (EASTLBenchmarkRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
+target_link_libraries(EASTLBenchmark EATest EASTL Threads::Threads)
 

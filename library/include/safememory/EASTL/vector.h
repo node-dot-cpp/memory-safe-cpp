@@ -116,9 +116,9 @@ namespace safememory
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_VECTOR_DEFAULT_NAME
-		#define EASTL_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " vector" // Unless the user overrides something, this is "EASTL vector".
-	#endif
+	// #ifndef EASTL_VECTOR_DEFAULT_NAME
+	// 	#define EASTL_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " vector" // Unless the user overrides something, this is "EASTL vector".
+	// #endif
 
 
 	/// EASTL_VECTOR_DEFAULT_ALLOCATOR
@@ -156,7 +156,7 @@ namespace safememory
 	///     be destroyed before entering the handler of a function-try-block
 	///     of a constructor or destructor for that block."
 	///
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// struct VectorBase
 	// {
 	// 	// typedef Allocator    allocator_type;
@@ -211,15 +211,15 @@ namespace safememory
 	///
 	/// Implements a dynamic array.
 	///
-	template <typename T, typename Allocator = std::allocator<T> >
+	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe >
 	class vector
 	{
 		static_assert(std::is_nothrow_move_constructible<T>::value, "T must be nothrow constructible");
 		static_assert(std::is_nothrow_move_assignable<T>::value, "T must be nothrow movable");
 
 
-		// typedef VectorBase<T, Allocator>                      base_type;
-		typedef vector<T, Allocator>                          this_type;
+		// typedef VectorBase<T, Safety>                      base_type;
+		typedef vector<T, Safety>                          this_type;
 
 	public:
 		typedef T                                             value_type;
@@ -233,13 +233,11 @@ namespace safememory
 		typedef std::ptrdiff_t    							  difference_type;
 		// typedef typename base_type::allocator_type            allocator_type;
 
-		typedef owning_ptr<detail::array_of2<T>> 					owning_heap_type;
-		typedef soft_ptr<detail::array_of2<T>> 						soft_heap_type;
+		typedef owning_ptr<detail::array_of2<T>, Safety> 					owning_heap_type;
+		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, Safety> soft_heap_type;
 
-		// typedef detail::unsafe_iterator<T>							iterator_safe;
-		// typedef detail::unsafe_iterator<const T>						const_iterator_safe;
-		typedef detail::safe_iterator<T>							iterator_safe;
-		typedef detail::safe_iterator<const T>						const_iterator_safe;
+		typedef detail::safe_array_iterator<T, Safety>		iterator_safe;
+		typedef detail::safe_array_iterator<const T, Safety>	const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 		typedef const const_iterator_safe&							csafe_it_arg;
@@ -264,7 +262,8 @@ namespace safememory
 
 		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
 		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
-
+		static constexpr memory_safety is_safe = Safety;
+		
 	private:
 		owning_heap_type							mHeap;
 		T*                                          mpBegin;
@@ -529,8 +528,8 @@ namespace safememory
 	// VectorBase
 	///////////////////////////////////////////////////////////////////////
 
-// 	template <typename T, typename Allocator>
-// 	inline VectorBase<T, Allocator>::VectorBase()
+// 	template <typename T, memory_safety Safety>
+// 	inline VectorBase<T, Safety>::VectorBase()
 // // 		: mpBegin(NULL), 
 // // 		  mpEnd(NULL),
 // // //		  mCapacityAllocator(NULL, allocator_type(EASTL_VECTOR_DEFAULT_NAME))
@@ -541,8 +540,8 @@ namespace safememory
 // 	}
 
 
-// 	// template <typename T, typename Allocator>
-// 	// inline VectorBase<T, Allocator>::VectorBase(const allocator_type& allocator)
+// 	// template <typename T, memory_safety Safety>
+// 	// inline VectorBase<T, Safety>::VectorBase(const allocator_type& allocator)
 // 	// 	: mpBegin(NULL), 
 // 	// 	  mpEnd(NULL),
 // 	// 	  mCapacityAllocator(NULL, allocator)
@@ -550,8 +549,8 @@ namespace safememory
 // 	// }
 
 
-// 	template <typename T, typename Allocator>
-// 	inline VectorBase<T, Allocator>::VectorBase(size_type n/*, const allocator_type& allocator*/)
+// 	template <typename T, memory_safety Safety>
+// 	inline VectorBase<T, Safety>::VectorBase(size_type n/*, const allocator_type& allocator*/)
 // 		// : mCapacityAllocator(allocator)
 // 	{
 // 		SetNewHeap(DoAllocate(n));
@@ -561,39 +560,39 @@ namespace safememory
 // 	}
 
 
-// 	template <typename T, typename Allocator>
-// 	inline VectorBase<T, Allocator>::~VectorBase()
+// 	template <typename T, memory_safety Safety>
+// 	inline VectorBase<T, Safety>::~VectorBase()
 // 	{
 
 
 // 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline const typename VectorBase<T, Allocator>::allocator_type&
-	// VectorBase<T, Allocator>::get_allocator() const EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline const typename VectorBase<T, Safety>::allocator_type&
+	// VectorBase<T, Safety>::get_allocator() const EA_NOEXCEPT
 	// {
 	// 	return internalAllocator();
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename VectorBase<T, Allocator>::allocator_type&
-	// VectorBase<T, Allocator>::get_allocator() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline typename VectorBase<T, Safety>::allocator_type&
+	// VectorBase<T, Safety>::get_allocator() EA_NOEXCEPT
 	// {
 	// 	return internalAllocator();
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline void VectorBase<T, Allocator>::set_allocator(const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// inline void VectorBase<T, Safety>::set_allocator(const allocator_type& allocator)
 	// {
 	// 	internalAllocator() = allocator;
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename VectorBase<T, Allocator>::owning_heap_type VectorBase<T, Allocator>::DoAllocate(size_type n)
+	// template <typename T, memory_safety Safety>
+	// inline typename VectorBase<T, Safety>::owning_heap_type VectorBase<T, Safety>::DoAllocate(size_type n)
 	// {
 	// 	#if EASTL_ASSERT_ENABLED
 	// 		if(EASTL_UNLIKELY(n >= 0x80000000))
@@ -621,17 +620,17 @@ namespace safememory
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline void VectorBase<T, Allocator>::DoFree(T* p, size_type n)
+	// template <typename T, memory_safety Safety>
+	// inline void VectorBase<T, Safety>::DoFree(T* p, size_type n)
 	// {
 	// 	if(p)
 	// 		safememory::lib_helpers::EASTLFree(p, n * sizeof(T)); 
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename VectorBase<T, Allocator>::size_type
-	// VectorBase<T, Allocator>::GetNewCapacity(size_type currentCapacity)
+	// template <typename T, memory_safety Safety>
+	// inline typename VectorBase<T, Safety>::size_type
+	// VectorBase<T, Safety>::GetNewCapacity(size_type currentCapacity)
 	// {
 	// 	// TODO: mb update this to better take use of iibmalloc discrete allocation
 	// 	// sizes
@@ -647,8 +646,8 @@ namespace safememory
 	// vector
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/
 		/*: base_type()*/
 	{
 		SetNewHeap(DoAllocate(0));
@@ -656,16 +655,16 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline vector<T, Allocator>::vector(const allocator_type& allocator) EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline vector<T, Safety>::vector(const allocator_type& allocator) EA_NOEXCEPT
 	// 	: base_type(allocator)
 	// {
 	// 	// Empty
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(size_type n/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(size_type n/*, const allocator_type& allocator*/)
 		// : base_type(n/*, allocator*/)
 	{
 		SetNewHeap(DoAllocate(n));
@@ -675,8 +674,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(size_type n, const value_type& value/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(size_type n, const value_type& value/*, const allocator_type& allocator*/)
 		// : base_type(n/*, allocator*/)
 	{
 		SetNewHeap(DoAllocate(n));
@@ -686,8 +685,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(const this_type& x)
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(const this_type& x)
 //		: base_type(x.size()/*, x.internalAllocator()*/)
 	{
 		SetNewHeap(DoAllocate(x.size()));
@@ -696,16 +695,16 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline vector<T, Allocator>::vector(const this_type& x, const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// inline vector<T, Safety>::vector(const this_type& x, const allocator_type& allocator)
 	// 	: base_type(x.size(), allocator)
 	// {
 	// 	mpEnd = eastl::uninitialized_copy_ptr(x.mpBegin, x.mpEnd, mpBegin);
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(this_type&& x) EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(this_type&& x) EA_NOEXCEPT
 		// : base_type(/*std::move(x.internalAllocator())*/)  // vector requires move-construction of allocator in this case.
 	{
 		SetNewHeap(DoAllocate(0));
@@ -714,8 +713,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline vector<T, Allocator>::vector(this_type&& x, const allocator_type& allocator)
+	// template <typename T, memory_safety Safety>
+	// inline vector<T, Safety>::vector(this_type&& x, const allocator_type& allocator)
 	// 	: base_type(allocator)
 	// {
 	// 	if (internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
@@ -728,8 +727,8 @@ namespace safememory
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(std::initializer_list<value_type> ilist/*, const allocator_type& allocator*/)
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(std::initializer_list<value_type> ilist/*, const allocator_type& allocator*/)
 //		: base_type(/*allocator*/)
 	{
 		SetNewHeap(DoAllocate(ilist.size()));
@@ -737,16 +736,16 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// template <typename InputIterator>
-	// inline vector<T, Allocator>::vector(InputIterator first, InputIterator last/*, const allocator_type& allocator*/)
+	// inline vector<T, Safety>::vector(InputIterator first, InputIterator last/*, const allocator_type& allocator*/)
 	// 	: base_type(/*allocator*/)
 	// {
 	// 	DoInit(first, last, std::is_integral<InputIterator>());
 	// }
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::vector(csafe_it_arg first, csafe_it_arg last)
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::vector(csafe_it_arg first, csafe_it_arg last)
 //		: base_type()
 	{
 		const_pointer_pair p = CheckAndGet(first, last);
@@ -758,17 +757,17 @@ namespace safememory
 
 
 
-	template <typename T, typename Allocator>
-	inline vector<T, Allocator>::~vector()
+	template <typename T, memory_safety Safety>
+	inline vector<T, Safety>::~vector()
 	{
 		// Call destructor for the values. Parent class will free the memory.
 		std::destroy(mpBegin, mpEnd);
 	}
 
 
-	template <typename T, typename Allocator>
-	typename vector<T, Allocator>::this_type&
-	vector<T, Allocator>::operator=(const this_type& x)
+	template <typename T, memory_safety Safety>
+	typename vector<T, Safety>::this_type&
+	vector<T, Safety>::operator=(const this_type& x)
 	{
 		if(this != &x) // If not assigning to self...
 		{
@@ -803,9 +802,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	typename vector<T, Allocator>::this_type&
-	vector<T, Allocator>::operator=(std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	typename vector<T, Safety>::this_type&
+	vector<T, Safety>::operator=(std::initializer_list<value_type> ilist)
 	{
 		typedef typename std::initializer_list<value_type>::iterator InputIterator;
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
@@ -814,9 +813,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	typename vector<T, Allocator>::this_type&
-	vector<T, Allocator>::operator=(this_type&& x)
+	template <typename T, memory_safety Safety>
+	typename vector<T, Safety>::this_type&
+	vector<T, Safety>::operator=(this_type&& x)
 	{
 		if(this != &x)
 		{
@@ -827,16 +826,16 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::assign(size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::assign(size_type n, const value_type& value)
 	{
 		DoAssignValues(n, value);
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename InputIterator>                              
-	inline void vector<T, Allocator>::assign_unsafe(InputIterator first, InputIterator last)
+	inline void vector<T, Safety>::assign_unsafe(InputIterator first, InputIterator last)
 	{
 		// It turns out that the C++ std::vector<int, int> specifies a two argument
 		// version of assign that takes (int size, int value). These are not iterators, 
@@ -847,15 +846,15 @@ namespace safememory
 
 	}
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::assign(csafe_it_arg first, csafe_it_arg last)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::assign(csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer_pair p = CheckAndGet(first, last);
 		assign_unsafe(p.first, p.second);
 	}
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::assign(std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::assign(std::initializer_list<value_type> ilist)
 	{
 		typedef typename std::initializer_list<value_type>::iterator InputIterator;
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
@@ -863,229 +862,229 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::begin_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::begin_unsafe() EA_NOEXCEPT
 	{
 		return mpBegin;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer
-	vector<T, Allocator>::begin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer
+	vector<T, Safety>::begin_unsafe() const EA_NOEXCEPT
 	{
 		return mpBegin;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer
-	vector<T, Allocator>::cbegin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer
+	vector<T, Safety>::cbegin_unsafe() const EA_NOEXCEPT
 	{
 		return mpBegin;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::end_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::end_unsafe() EA_NOEXCEPT
 	{
 		return mpEnd;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer
-	vector<T, Allocator>::end_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer
+	vector<T, Safety>::end_unsafe() const EA_NOEXCEPT
 	{
 		return mpEnd;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer
-	vector<T, Allocator>::cend_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer
+	vector<T, Safety>::cend_unsafe() const EA_NOEXCEPT
 	{
 		return mpEnd;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator_unsafe
-	vector<T, Allocator>::rbegin_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reverse_iterator_unsafe
+	vector<T, Safety>::rbegin_unsafe() EA_NOEXCEPT
 	{
 		return reverse_iterator_unsafe(mpEnd);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
-	vector<T, Allocator>::rbegin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
+	vector<T, Safety>::rbegin_unsafe() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_unsafe(mpEnd);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
-	vector<T, Allocator>::crbegin_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
+	vector<T, Safety>::crbegin_unsafe() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_unsafe(mpEnd);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator_unsafe
-	vector<T, Allocator>::rend_unsafe() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reverse_iterator_unsafe
+	vector<T, Safety>::rend_unsafe() EA_NOEXCEPT
 	{
 		return reverse_iterator_unsafe(mpBegin);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
-	vector<T, Allocator>::rend_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
+	vector<T, Safety>::rend_unsafe() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_unsafe(mpBegin);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_unsafe
-	vector<T, Allocator>::crend_unsafe() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
+	vector<T, Safety>::crend_unsafe() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_unsafe(mpBegin);
 	}
 
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::begin() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::begin() EA_NOEXCEPT
 	{
-		return iterator_safe(GetSoftHeapPtr());
+		return iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator_safe
-	vector<T, Allocator>::begin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_iterator_safe
+	vector<T, Safety>::begin() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr());
+		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator_safe
-	vector<T, Allocator>::cbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_iterator_safe
+	vector<T, Safety>::cbegin() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr());
+		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::end() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::end() EA_NOEXCEPT
 	{
-		return iterator_safe(GetSoftHeapPtr(), size());
+		return iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator_safe
-	vector<T, Allocator>::end() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_iterator_safe
+	vector<T, Safety>::end() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr(), size());
+		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_iterator_safe
-	vector<T, Allocator>::cend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_iterator_safe
+	vector<T, Safety>::cend() const EA_NOEXCEPT
 	{
-		return const_iterator_safe(GetSoftHeapPtr(), size());
+		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator_safe
-	vector<T, Allocator>::rbegin() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reverse_iterator_safe
+	vector<T, Safety>::rbegin() EA_NOEXCEPT
 	{
 		return reverse_iterator_safe(end());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_safe
-	vector<T, Allocator>::rbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_safe
+	vector<T, Safety>::rbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_safe(end());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_safe
-	vector<T, Allocator>::crbegin() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_safe
+	vector<T, Safety>::crbegin() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_safe(end());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reverse_iterator_safe
-	vector<T, Allocator>::rend() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reverse_iterator_safe
+	vector<T, Safety>::rend() EA_NOEXCEPT
 	{
 		return reverse_iterator_safe(begin());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_safe
-	vector<T, Allocator>::rend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_safe
+	vector<T, Safety>::rend() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_safe(begin());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reverse_iterator_safe
-	vector<T, Allocator>::crend() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reverse_iterator_safe
+	vector<T, Safety>::crend() const EA_NOEXCEPT
 	{
 		return const_reverse_iterator_safe(begin());
 	}
 
-	template <typename T, typename Allocator>
-	bool vector<T, Allocator>::empty() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	bool vector<T, Safety>::empty() const EA_NOEXCEPT
 	{
 		return (mpBegin == mpEnd);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::size_type
-	vector<T, Allocator>::size() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::size_type
+	vector<T, Safety>::size() const EA_NOEXCEPT
 	{
 		return (size_type)(mpEnd - mpBegin);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::size_type
-	vector<T, Allocator>::capacity() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::size_type
+	vector<T, Safety>::capacity() const EA_NOEXCEPT
 	{
 		return (size_type)(mCapacity - mpBegin);
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::size_type
-	vector<T, Allocator>::max_size() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::size_type
+	vector<T, Safety>::max_size() const EA_NOEXCEPT
 	{
 		return kMaxSize;
 	}
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::resize(size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::resize(size_type n, const value_type& value)
 	{
 		if(n > (size_type)(mpEnd - mpBegin))  // We expect that more often than not, resizes will be upsizes.
 			DoInsertValuesEnd(n - ((size_type)(mpEnd - mpBegin)), value);
@@ -1097,8 +1096,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::resize(size_type n)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::resize(size_type n)
 	{
 		// Alternative implementation:
 		// resize(n, value_type());
@@ -1113,8 +1112,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::reserve(size_type n)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::reserve(size_type n)
 	{
 		// If the user wants to reduce the reserved memory, there is the set_capacity function.
 		if(n > capacity()) // If n > capacity ...
@@ -1122,8 +1121,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// void vector<T, Allocator>::set_capacity(size_type n)
+	// template <typename T, memory_safety Safety>
+	// void vector<T, Safety>::set_capacity(size_type n)
 	// {
 	// 	if((n == npos) || (n <= (size_type)(mpEnd - mpBegin))) // If new capacity <= size...
 	// 	{
@@ -1148,8 +1147,8 @@ namespace safememory
 	// 	}
 	// }
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::shrink_to_fit()
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::shrink_to_fit()
 	{
 		// This is the simplest way to accomplish this, and it is as efficient as any other.
 		this_type temp;
@@ -1160,25 +1159,25 @@ namespace safememory
 		DoSwap(temp);
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::data() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::data() EA_NOEXCEPT
 	{
 		return mpBegin;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer
-	vector<T, Allocator>::data() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer
+	vector<T, Safety>::data() const EA_NOEXCEPT
 	{
 		return mpBegin;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::operator[](size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::operator[](size_type n)
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container. But this was merely grandfathered in and ideally we shouldn't allow such access to [0].
 			if(EASTL_UNLIKELY((n != 0) && (n >= (static_cast<size_type>(mpEnd - mpBegin)))))
@@ -1192,9 +1191,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reference
-	vector<T, Allocator>::operator[](size_type n) const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reference
+	vector<T, Safety>::operator[](size_type n) const
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container. But this was merely grandfathered in and ideally we shouldn't allow such access to [0].
 			if(EASTL_UNLIKELY((n != 0) && (n >= (static_cast<size_type>(mpEnd - mpBegin)))))
@@ -1208,9 +1207,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::at(size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::at(size_type n)
 	{
 		// The difference between at() and operator[] is it signals 
 		// the requested position is out of range by throwing an 
@@ -1228,9 +1227,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reference
-	vector<T, Allocator>::at(size_type n) const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reference
+	vector<T, Safety>::at(size_type n) const
 	{
 		// #if EASTL_EXCEPTIONS_ENABLED
 			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
@@ -1244,9 +1243,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::front()
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::front()
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference an empty container.
@@ -1259,9 +1258,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reference
-	vector<T, Allocator>::front() const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reference
+	vector<T, Safety>::front() const
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference an empty container.
@@ -1274,9 +1273,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::back()
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::back()
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference an empty container.
@@ -1289,9 +1288,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_reference
-	vector<T, Allocator>::back() const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_reference
+	vector<T, Safety>::back() const
 	{
 		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
 			// We allow the user to reference an empty container.
@@ -1304,8 +1303,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::push_back(const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::push_back(const value_type& value)
 	{
 		if(mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type(value);
@@ -1314,8 +1313,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::push_back(value_type&& value)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::push_back(value_type&& value)
 	{
 		if (mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type(std::move(value));
@@ -1324,9 +1323,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::push_back()
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::push_back()
 	{
 		if(mpEnd < mCapacity)
 			::new((void*)mpEnd++) value_type();
@@ -1337,8 +1336,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void* vector<T, Allocator>::push_back_uninitialized()
+	template <typename T, memory_safety Safety>
+	inline void* vector<T, Safety>::push_back_uninitialized()
 	{
 		if(mpEnd == mCapacity)
 		{
@@ -1350,8 +1349,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::pop_back()
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::pop_back()
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
@@ -1363,10 +1362,10 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template<class... Args>
-	inline typename vector<T, Allocator>::pointer 
-	vector<T, Allocator>::emplace_unsafe(const_pointer position, Args&&... args)
+	inline typename vector<T, Safety>::pointer 
+	vector<T, Safety>::emplace_unsafe(const_pointer position, Args&&... args)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 
@@ -1381,20 +1380,20 @@ namespace safememory
 		return mpBegin + n;
 	}
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template<class... Args>
-	inline typename vector<T, Allocator>::iterator_safe 
-	vector<T, Allocator>::emplace(csafe_it_arg position, Args&&... args)
+	inline typename vector<T, Safety>::iterator_safe 
+	vector<T, Safety>::emplace(csafe_it_arg position, Args&&... args)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = emplace_unsafe(p, std::forward<Args>(args)...);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template<class... Args>
-	inline typename vector<T, Allocator>::reference
-	vector<T, Allocator>::emplace_back(Args&&... args)
+	inline typename vector<T, Safety>::reference
+	vector<T, Safety>::emplace_back(Args&&... args)
 	{
 		if(mpEnd < mCapacity)
 		{
@@ -1407,9 +1406,9 @@ namespace safememory
 		return back();
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::insert_unsafe(const_pointer position, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::insert_unsafe(const_pointer position, const value_type& value)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -1431,17 +1430,17 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::insert_unsafe(const_pointer position, value_type&& value)
+	template <typename T, memory_safety Safety>       
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::insert_unsafe(const_pointer position, value_type&& value)
 	{
 		return emplace_unsafe(position, std::move(value));
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::insert_unsafe(const_pointer position, size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::insert_unsafe(const_pointer position, size_type n, const value_type& value)
 	{
 		const std::ptrdiff_t p = position - mpBegin; // Save this because we might reallocate.
 		DoInsertValues(position, n, value);
@@ -1449,10 +1448,10 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename InputIterator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::insert_unsafe(const_pointer position, InputIterator first, InputIterator last)
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::insert_unsafe(const_pointer position, InputIterator first, InputIterator last)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 		DoInsert(position, first, last, std::is_integral<InputIterator>());
@@ -1460,69 +1459,69 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::insert_unsafe(const_pointer position, std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>       
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::insert_unsafe(const_pointer position, std::initializer_list<value_type> ilist)
 	{
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 		DoInsert(position, ilist.begin(), ilist.end(), std::false_type());
 		return mpBegin + n;
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::insert(csafe_it_arg position, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::insert(csafe_it_arg position, const value_type& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, value);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::insert(csafe_it_arg position, value_type&& value)
+	template <typename T, memory_safety Safety>       
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::insert(csafe_it_arg position, value_type&& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, std::move(value));
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::insert(csafe_it_arg position, size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::insert(csafe_it_arg position, size_type n, const value_type& value)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, n, value);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		const_pointer_pair other = CheckAndGet(first, last);
 		pointer r = insert_unsafe(p, other.first, other.second);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>       
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::insert(csafe_it_arg position, std::initializer_list<value_type> ilist)
+	template <typename T, memory_safety Safety>       
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::insert(csafe_it_arg position, std::initializer_list<value_type> ilist)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, ilist);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::erase_unsafe(const_pointer position)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::erase_unsafe(const_pointer position)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
@@ -1540,9 +1539,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::pointer
-	vector<T, Allocator>::erase_unsafe(const_pointer first, const_pointer last)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::pointer
+	vector<T, Safety>::erase_unsafe(const_pointer first, const_pointer last)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((first < mpBegin) || (first > mpEnd) || (last < mpBegin) || (last > mpEnd) || (last < first)))
@@ -1559,28 +1558,28 @@ namespace safememory
 		return const_cast<value_type*>(first);
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::erase(csafe_it_arg position)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::erase(csafe_it_arg position)
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = erase_unsafe(p);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::iterator_safe
-	vector<T, Allocator>::erase(csafe_it_arg first, csafe_it_arg last)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::iterator_safe
+	vector<T, Safety>::erase(csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer_pair p = CheckMineAndGet(first, last);
 		pointer r = erase_unsafe(p.first, p.second);
-		return iterator_safe(GetSoftHeapPtr(), r);
+		return iterator_safe::make(GetSoftHeapPtr(), r);
 	}
 
-	// template <typename T, typename Allocator>
-	// inline typename vector<T, Allocator>::iterator
-	// vector<T, Allocator>::erase_unsorted(const_iterator position)
+	// template <typename T, memory_safety Safety>
+	// inline typename vector<T, Safety>::iterator
+	// vector<T, Safety>::erase_unsorted(const_iterator position)
 	// {
 	// 	#if EASTL_ASSERT_ENABLED
 	// 		if(EASTL_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
@@ -1598,9 +1597,9 @@ namespace safememory
 	// 	return destPosition;
 	// }
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // //	template <typename>
-// 	inline typename vector<T, Allocator>::iterator vector<T, Allocator>::erase_first(const T& value)
+// 	inline typename vector<T, Safety>::iterator vector<T, Safety>::erase_first(const T& value)
 // 	{
 // 		iterator it = std::find(begin(), end(), value);
 
@@ -1610,10 +1609,10 @@ namespace safememory
 // 			return it;
 // 	}
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // //	template <typename>
-// 	inline typename vector<T, Allocator>::iterator 
-// 	vector<T, Allocator>::erase_first_unsorted(const T& value)
+// 	inline typename vector<T, Safety>::iterator 
+// 	vector<T, Safety>::erase_first_unsorted(const T& value)
 // 	{
 // 		iterator it = std::find(begin(), end(), value);
 
@@ -1623,10 +1622,10 @@ namespace safememory
 // 			return it;
 // 	}
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // //	template <typename>
-// 	inline typename vector<T, Allocator>::reverse_iterator 
-// 	vector<T, Allocator>::erase_last(const T& value)
+// 	inline typename vector<T, Safety>::reverse_iterator 
+// 	vector<T, Safety>::erase_last(const T& value)
 // 	{
 // 		reverse_iterator it = std::find(rbegin(), rend(), value);
 
@@ -1636,10 +1635,10 @@ namespace safememory
 // 			return it;
 // 	}
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // //	template <typename>
-// 	inline typename vector<T, Allocator>::reverse_iterator 
-// 	vector<T, Allocator>::erase_last_unsorted(const T& value)
+// 	inline typename vector<T, Safety>::reverse_iterator 
+// 	vector<T, Safety>::erase_last_unsorted(const T& value)
 // 	{
 // 		reverse_iterator it = std::find(rbegin(), rend(), value);
 
@@ -1649,17 +1648,17 @@ namespace safememory
 // 			return it;
 // 	}
 
-	// template <typename T, typename Allocator>
-	// inline typename vector<T, Allocator>::reverse_iterator
-	// vector<T, Allocator>::erase(const_reverse_iterator position)
+	// template <typename T, memory_safety Safety>
+	// inline typename vector<T, Safety>::reverse_iterator
+	// vector<T, Safety>::erase(const_reverse_iterator position)
 	// {
 	// 	return reverse_iterator(erase((++position).base()));
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename vector<T, Allocator>::reverse_iterator
-	// vector<T, Allocator>::erase(const_reverse_iterator first, const_reverse_iterator last)
+	// template <typename T, memory_safety Safety>
+	// inline typename vector<T, Safety>::reverse_iterator
+	// vector<T, Safety>::erase(const_reverse_iterator first, const_reverse_iterator last)
 	// {
 	// 	// Version which erases in order from first to last.
 	// 	// difference_type i(first.base() - last.base());
@@ -1672,24 +1671,24 @@ namespace safememory
 	// }
 
 
-	// template <typename T, typename Allocator>
-	// inline typename vector<T, Allocator>::reverse_iterator
-	// vector<T, Allocator>::erase_unsorted(const_reverse_iterator position)
+	// template <typename T, memory_safety Safety>
+	// inline typename vector<T, Safety>::reverse_iterator
+	// vector<T, Safety>::erase_unsorted(const_reverse_iterator position)
 	// {
 	// 	return reverse_iterator(erase_unsorted((++position).base()));
 	// }
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::clear() EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::clear() EA_NOEXCEPT
 	{
 		std::destroy(mpBegin, mpEnd);
 		mpEnd = mpBegin;
 	}
 
 
-	// template <typename T, typename Allocator>
-	// inline void vector<T, Allocator>::reset_lose_memory() EA_NOEXCEPT
+	// template <typename T, memory_safety Safety>
+	// inline void vector<T, Safety>::reset_lose_memory() EA_NOEXCEPT
 	// {
 	// 	// The reset function is a special extension function which unilaterally 
 	// 	// resets the container to an empty state without freeing the memory of 
@@ -1705,8 +1704,8 @@ namespace safememory
 	// allocator_traits<allocator_type>::propagate_on_container_swap::value is true (propagate_on_container_swap
 	// is false by default). EASTL doesn't have allocator_traits and so this doesn't directly apply,
 	// but EASTL has the effective behavior of propagate_on_container_swap = false for all allocators. 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::swap(this_type& x)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::swap(this_type& x)
 	{
 	// #if defined(EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 	// 	if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
@@ -1740,8 +1739,8 @@ namespace safememory
 	// #endif
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::owning_heap_type vector<T, Allocator>::DoAllocate(size_type n)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::owning_heap_type vector<T, Safety>::DoAllocate(size_type n)
 	{
 		// TODO, allocated heap should be zeroed 
 
@@ -1760,13 +1759,13 @@ namespace safememory
 		// mb: make_owning_array_of may return an array bigger
 		// than requested because allocation has discrete possible
 		// values under iibmalloc and we don't want to waste space
-		return detail::make_owning_array_of<T>(n);
+		return detail::make_owning_array_of<T, Safety>(n);
 	}
 
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// template <typename ForwardIterator>
 	// inline void
-	// vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
+	// vector<T, Safety>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_copy_tag)
 	// {
 	// 	const std::ptrdiff_t nPrevSize = last - first;
 	// 	auto p = DoAllocate(n); // p is of type T* but is not constructed. 
@@ -1788,10 +1787,10 @@ namespace safememory
 	// }
 
 
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// template <typename ForwardIterator>
 	// inline void
-	// vector<T, Allocator>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
+	// vector<T, Safety>::DoRealloc(size_type n, ForwardIterator first, ForwardIterator last, should_move_tag)
 	// {
 	// 	// pointer const pNewData = DoRealloc(n, mpBegin, mpEnd, should_move_tag());
 
@@ -1816,9 +1815,9 @@ namespace safememory
 	// }
 
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // 	template <typename Integer>
-// 	inline void vector<T, Allocator>::DoInit(Integer n, Integer value, std::true_type)
+// 	inline void vector<T, Safety>::DoInit(Integer n, Integer value, std::true_type)
 // 	{
 // 		SetNewHeap(DoAllocate((size_type)n));
 // 		// mpBegin    = DoAllocate((size_type)n);
@@ -1831,18 +1830,18 @@ namespace safememory
 // 	}
 
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // 	template <typename InputIterator>
-// 	inline void vector<T, Allocator>::DoInit(InputIterator first, InputIterator last, std::false_type)
+// 	inline void vector<T, Safety>::DoInit(InputIterator first, InputIterator last, std::false_type)
 // 	{
 // 		typedef typename std::iterator_traits<InputIterator>:: iterator_category IC;
 // 		DoInitFromIterator(first, last, IC());
 // 	}
 
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // 	template <typename InputIterator>
-// 	inline void vector<T, Allocator>::DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
+// 	inline void vector<T, Safety>::DoInitFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
 // 	{
 // 		// To do: Use emplace_back instead of push_back(). Our emplace_back will work below without any ifdefs.
 // 		for(; first != last; ++first)  // InputIterators by definition actually only allow you to iterate through them once.
@@ -1850,9 +1849,9 @@ namespace safememory
 // 	}                                 // Luckily, InputIterators are in practice almost never used, so this code will likely never get executed.
 
 
-// 	template <typename T, typename Allocator>
+// 	template <typename T, memory_safety Safety>
 // 	template <typename ForwardIterator>
-// 	inline void vector<T, Allocator>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
+// 	inline void vector<T, Safety>::DoInitFromIterator(ForwardIterator first, ForwardIterator last, std::forward_iterator_tag)
 // 	{
 // 		const size_type n = (size_type)std::distance(first, last);
 // 		SetNewHeap(DoAllocate(n));
@@ -1866,25 +1865,25 @@ namespace safememory
 // 	}
 
 
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// template <typename Integer, bool bMove>
-	// inline void vector<T, Allocator>::DoAssign(Integer n, Integer value, std::true_type)
+	// inline void vector<T, Safety>::DoAssign(Integer n, Integer value, std::true_type)
 	// {
 	// 	DoAssignValues(static_cast<size_type>(n), static_cast<value_type>(value));
 	// }
 
 
-	// template <typename T, typename Allocator>
+	// template <typename T, memory_safety Safety>
 	// template <typename InputIterator, bool bMove>
-	// inline void vector<T, Allocator>::DoAssign(InputIterator first, InputIterator last, std::false_type)
+	// inline void vector<T, Safety>::DoAssign(InputIterator first, InputIterator last, std::false_type)
 	// {
 	// 	typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
 	// 	DoAssignFromIterator<InputIterator, bMove>(first, last, IC());
 	// }
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoAssignValues(size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::DoAssignValues(size_type n, const value_type& value)
 	{
 		if(n > capacity()) // If n > capacity ...
 		{
@@ -1906,9 +1905,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename InputIterator/*, bool bMove*/>
-	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
+	void vector<T, Safety>::DoAssignFromIterator(InputIterator first, InputIterator last, std::input_iterator_tag)
 	{
 		pointer position(mpBegin);
 
@@ -1925,9 +1924,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename RandomAccessIterator/*, bool bMove*/>
-	void vector<T, Allocator>::DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, std::random_access_iterator_tag)
+	void vector<T, Safety>::DoAssignFromIterator(RandomAccessIterator first, RandomAccessIterator last, std::random_access_iterator_tag)
 	{
 		const size_type n = (size_type)std::distance(first, last);
 
@@ -1973,35 +1972,35 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename Integer>
-	inline void vector<T, Allocator>::DoInsert(const_pointer position, Integer n, Integer value, std::true_type)
+	inline void vector<T, Safety>::DoInsert(const_pointer position, Integer n, Integer value, std::true_type)
 	{
 		DoInsertValues(position, static_cast<size_type>(n), static_cast<value_type>(value));
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInsert(const_pointer position, InputIterator first, InputIterator last, std::false_type)
+	inline void vector<T, Safety>::DoInsert(const_pointer position, InputIterator first, InputIterator last, std::false_type)
 	{
 		typedef typename std::iterator_traits<InputIterator>::iterator_category IC;
 		DoInsertFromIterator(position, first, last, IC());
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename InputIterator>
-	inline void vector<T, Allocator>::DoInsertFromIterator(const_pointer position, InputIterator first, InputIterator last, std::input_iterator_tag)
+	inline void vector<T, Safety>::DoInsertFromIterator(const_pointer position, InputIterator first, InputIterator last, std::input_iterator_tag)
 	{
 		for(; first != last; ++first, ++position)
 			position = insert_unsafe(position, *first);
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template <typename BidirectionalIterator>
-	void vector<T, Allocator>::DoInsertFromIterator(const_pointer position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag)
+	void vector<T, Safety>::DoInsertFromIterator(const_pointer position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -2080,8 +2079,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoInsertValues(const_pointer position, size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::DoInsertValues(const_pointer position, size_type n, const value_type& value)
 	{
 		#if EASTL_ASSERT_ENABLED
 			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
@@ -2158,8 +2157,8 @@ namespace safememory
 	}
 
 
-	// template <typename T, typename Allocator>
-	// void vector<T, Allocator>::DoClearCapacity() // This function exists because set_capacity() currently indirectly requires value_type to be default-constructible, 
+	// template <typename T, memory_safety Safety>
+	// void vector<T, Safety>::DoClearCapacity() // This function exists because set_capacity() currently indirectly requires value_type to be default-constructible, 
 	// {                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
 	// 	clear();
 	// 	this_type temp(std::move(*this));  // This is the simplest way to accomplish this, 
@@ -2167,8 +2166,8 @@ namespace safememory
 	// }
 
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoGrow(size_type n)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::DoGrow(size_type n)
 	{
 		// TODO, review, if moved, sholdn't destroy...
 		auto nNewHeap = DoAllocate(n);
@@ -2186,8 +2185,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void vector<T, Allocator>::DoSwap(this_type& x)
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::DoSwap(this_type& x)
 	{
 		std::swap(mHeap,      x.mHeap);
 		std::swap(mpBegin,    x.mpBegin);
@@ -2197,8 +2196,8 @@ namespace safememory
 
 	// The code duplication between this and the version that takes no value argument and default constructs the values
 	// is unfortunate but not easily resolved without relying on C++11 perfect forwarding.
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoInsertValuesEnd(size_type n, const value_type& value)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::DoInsertValuesEnd(size_type n, const value_type& value)
 	{
 		if(n > size_type(mCapacity - mpEnd))
 		{
@@ -2244,8 +2243,8 @@ namespace safememory
 		}
 	}
 
-	template <typename T, typename Allocator>
-	void vector<T, Allocator>::DoInsertValuesEnd(size_type n)
+	template <typename T, memory_safety Safety>
+	void vector<T, Safety>::DoInsertValuesEnd(size_type n)
 	{
 		if (n > size_type(mCapacity - mpEnd))
 		{
@@ -2291,9 +2290,9 @@ namespace safememory
 		}
 	}
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template<typename... Args>
-	void vector<T, Allocator>::DoInsertValue(const_pointer position, Args&&... args)
+	void vector<T, Safety>::DoInsertValue(const_pointer position, Args&&... args)
 	{
 		// To consider: It's feasible that the args is from a value_type comes from within the current sequence itself and 
 		// so we need to be sure to handle that case. This is different from insert(position, const value_type&) because in 
@@ -2370,9 +2369,9 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	template<typename... Args>
-	void vector<T, Allocator>::DoInsertValueEnd(Args&&... args)
+	void vector<T, Safety>::DoInsertValueEnd(Args&&... args)
 	{
 		const size_type nPrevSize = size_type(mpEnd - mpBegin);
 		// const size_type nNewSize  = GetNewCapacity(nPrevSize);
@@ -2409,9 +2408,9 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void vector<T, Allocator>::ThrowLengthException()
+	inline void vector<T, Safety>::ThrowLengthException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::length_error("vector -- length_error");
@@ -2422,9 +2421,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void vector<T, Allocator>::ThrowRangeException()
+	inline void vector<T, Safety>::ThrowRangeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("vector -- out of range");
@@ -2435,9 +2434,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void vector<T, Allocator>::ThrowInvalidArgumentException()
+	inline void vector<T, Safety>::ThrowInvalidArgumentException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::invalid_argument("vector -- invalid argument");
@@ -2447,9 +2446,9 @@ namespace safememory
 	}
 
 	/* static */
-	template <typename T, typename Allocator>
+	template <typename T, memory_safety Safety>
 	[[noreturn]]
-	inline void vector<T, Allocator>::ThrowMaxSizeException()
+	inline void vector<T, Safety>::ThrowMaxSizeException()
 	{
 		#if EASTL_EXCEPTIONS_ENABLED
 			throw std::out_of_range("vector -- size too big");
@@ -2460,9 +2459,9 @@ namespace safememory
 
 
 	/* static */
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer_pair
-	vector<T, Allocator>::CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer_pair
+	vector<T, Safety>::CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
 		if(NODECPP_LIKELY(itBegin <= itEnd)) {
 			const_pointer b = itBegin.get_raw_ptr();
@@ -2474,8 +2473,8 @@ namespace safememory
 		ThrowInvalidArgumentException();
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer vector<T, Allocator>::CheckMineAndGet(csafe_it_arg it) const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer vector<T, Safety>::CheckMineAndGet(csafe_it_arg it) const
 	{
 		if(NODECPP_LIKELY(it <= end())) {
 			return it.get_raw_ptr();
@@ -2484,9 +2483,9 @@ namespace safememory
 		ThrowInvalidArgumentException();
 	}
 
-	template <typename T, typename Allocator>
-	inline typename vector<T, Allocator>::const_pointer_pair
-	vector<T, Allocator>::CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
+	template <typename T, memory_safety Safety>
+	inline typename vector<T, Safety>::const_pointer_pair
+	vector<T, Safety>::CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
 	{
 		if(NODECPP_LIKELY(itBegin <= itEnd && itEnd <= end())) {
 			const_pointer b = itBegin.get_raw_ptr();
@@ -2498,8 +2497,8 @@ namespace safememory
 		ThrowInvalidArgumentException();
 	}
 
-	template <typename T, typename Allocator>
-	inline bool vector<T, Allocator>::validate() const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline bool vector<T, Safety>::validate() const EA_NOEXCEPT
 	{
 		if(mpEnd < mpBegin)
 			return false;
@@ -2509,8 +2508,8 @@ namespace safememory
 	}
 
 
-	template <typename T, typename Allocator>
-	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator(const_pointer i) const EA_NOEXCEPT
 	{
 		// TODO move as method of iterator
 		if(i == nullptr)
@@ -2530,26 +2529,10 @@ namespace safememory
 		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
-	template <typename T, typename Allocator>
-	inline detail::iterator_validity vector<T, Allocator>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	template <typename T, memory_safety Safety>
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
 	{
-		// TODO move as method of iterator
-		if(i.arr == soft_heap_type(nullptr))
-		 	return detail::iterator_validity::Null;
-		else if(i.arr == GetSoftHeapPtr()) {
-
-			const_pointer p = i.get_raw_ptr();
-			if(p < mpEnd)
-				return detail::iterator_validity::ValidCanDeref;
-
-			else if(p == mpEnd)
-				return detail::iterator_validity::ValidEnd;
-
-			else if(p < mCapacity)
-				return detail::iterator_validity::InvalidZoombie;
-		}
-
-		return detail::iterator_validity::InvalidZoombie;
+		return i.validate_iterator(cbegin(), cend());
 	}
 
 
@@ -2557,50 +2540,50 @@ namespace safememory
 	// global operators
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename T, typename Allocator>
-	inline bool operator==(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return ((a.size() == b.size()) && std::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator!=(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return ((a.size() != b.size()) || !std::equal(a.begin(), a.end(), b.begin()));
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return std::lexicographical_compare(a.begin(), a.end(), b.begin(), b.end());
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return b < a;
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<=(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return !(b < a);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>=(const vector<T, Allocator>& a, const vector<T, Allocator>& b)
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
 		return !(a < b);
 	}
 
 
-	template <typename T, typename Allocator>
-	inline void swap(vector<T, Allocator>& a, vector<T, Allocator>& b) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(a.swap(b)))
+	template <typename T, memory_safety Safety>
+	inline void swap(vector<T, Safety>& a, vector<T, Safety>& b) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(a.swap(b)))
 	{
 		a.swap(b);
 	}

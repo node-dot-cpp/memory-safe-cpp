@@ -201,6 +201,8 @@ namespace safememory {
 		reference operator*() const;
 		pointer operator->() const;
 		this_type& operator++();
+		bool operator==(const node_iterator&);
+		bool operator!=(const node_iterator&);
 	}; // node_iterator
 
 	struct hashtable_iterator
@@ -215,6 +217,8 @@ namespace safememory {
 		reference operator*() const;
 		pointer operator->() const;
 		hashtable_iterator& operator++();
+		bool operator==(const hashtable_iterator&);
+		bool operator!=(const hashtable_iterator&);
 	}; // hashtable_iterator
 
 
@@ -270,59 +274,59 @@ namespace safememory {
 
 
 namespace detail {
-	class unsafe_iterator {
+	class safe_iterator_no_checks {
 public:
 	typedef int                 difference_type;
 	typedef int*   				pointer;
 	typedef int&	 				reference;
 
-	unsafe_iterator& operator=(const unsafe_iterator& ri);
+	safe_iterator_no_checks& operator=(const safe_iterator_no_checks& ri);
 
 	reference operator*() const;
 
 	pointer operator->() const;
-	unsafe_iterator& operator++();
-	unsafe_iterator& operator--();
-	unsafe_iterator operator+(difference_type n) const;
-	unsafe_iterator& operator+=(difference_type n);
-	unsafe_iterator operator-(difference_type n) const;
-	unsafe_iterator& operator-=(difference_type n);
+	safe_iterator_no_checks& operator++();
+	safe_iterator_no_checks& operator--();
+	safe_iterator_no_checks operator+(difference_type n) const;
+	safe_iterator_no_checks& operator+=(difference_type n);
+	safe_iterator_no_checks operator-(difference_type n) const;
+	safe_iterator_no_checks& operator-=(difference_type n);
 	reference operator[](difference_type n) const;
-	bool operator==(const unsafe_iterator& ri) const;
-	bool operator!=(const unsafe_iterator& ri) const;
-	bool operator<(const unsafe_iterator& ri) const;
-	bool operator>(const unsafe_iterator& ri) const;
-	bool operator<=(const unsafe_iterator& ri) const;
-	bool operator>=(const unsafe_iterator& ri) const;
+	bool operator==(const safe_iterator_no_checks& ri) const;
+	bool operator!=(const safe_iterator_no_checks& ri) const;
+	bool operator<(const safe_iterator_no_checks& ri) const;
+	bool operator>(const safe_iterator_no_checks& ri) const;
+	bool operator<=(const safe_iterator_no_checks& ri) const;
+	bool operator>=(const safe_iterator_no_checks& ri) const;
 
 	};
 
 	void distance(int, int);
 
-	class safe_iterator {
+	class safe_iterator_impl {
 public:
 	typedef int                 difference_type;
 	typedef int*   				pointer;
 	typedef int&	 				reference;
 
-	safe_iterator& operator=(const safe_iterator& ri);
+	safe_iterator_impl& operator=(const safe_iterator_impl& ri);
 
 	reference operator*() const;
 
 	pointer operator->() const;
-	safe_iterator& operator++();
-	safe_iterator& operator--();
-	safe_iterator operator+(difference_type n) const;
-	safe_iterator& operator+=(difference_type n);
-	safe_iterator operator-(difference_type n) const;
-	safe_iterator& operator-=(difference_type n);
+	safe_iterator_impl& operator++();
+	safe_iterator_impl& operator--();
+	safe_iterator_impl operator+(difference_type n) const;
+	safe_iterator_impl& operator+=(difference_type n);
+	safe_iterator_impl operator-(difference_type n) const;
+	safe_iterator_impl& operator-=(difference_type n);
 	reference operator[](difference_type n) const;
-	bool operator==(const safe_iterator& ri) const;
-	bool operator!=(const safe_iterator& ri) const;
-	bool operator<(const safe_iterator& ri) const;
-	bool operator>(const safe_iterator& ri) const;
-	bool operator<=(const safe_iterator& ri) const;
-	bool operator>=(const safe_iterator& ri) const;
+	bool operator==(const safe_iterator_impl& ri) const;
+	bool operator!=(const safe_iterator_impl& ri) const;
+	bool operator<(const safe_iterator_impl& ri) const;
+	bool operator>(const safe_iterator_impl& ri) const;
+	bool operator<=(const safe_iterator_impl& ri) const;
+	bool operator>=(const safe_iterator_impl& ri) const;
 
 	};
 } //namespace detail

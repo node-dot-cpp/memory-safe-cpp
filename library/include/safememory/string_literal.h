@@ -36,7 +36,6 @@ namespace safememory
 	{
 		const T* str;
 	public:
-//		basic_string_literal() : str( nullptr ) {}
 		basic_string_literal( const T* str_) : str( str_ ) {}
 		basic_string_literal( const basic_string_literal& other ) = default;
 		basic_string_literal& operator = ( const basic_string_literal& other ) = default;
@@ -59,32 +58,6 @@ namespace safememory
 	// typedef basic_string<char8_t>  string8;
 	typedef basic_string_literal<char16_t> string16_literal;
 	typedef basic_string_literal<char32_t> string32_literal;
-
-
-	// template <typename... Args>
-	// inline nodecpp::string format(
-	// 	const char* format_str, const Args &... args) {
-	// 	nodecpp::string s;
-	//   ::fmt::format_to( std::back_inserter(s), format_str, args... );
-	//   return s;
-	// }
-
-	// template <typename... Args>
-	// inline nodecpp::string format(
-	// 	const nodecpp::string& format_str, const Args &... args) {
-	// 	nodecpp::string s;
-	//   ::fmt::format_to( std::back_inserter(s), format_str.c_str(), args... );
-	//   return s;
-	// }
-
-	// template <typename... Args>
-	// inline nodecpp::string format(
-	// 	const nodecpp::string_literal& format_str, const Args &... args) {
-	// 	nodecpp::string s;
-	//   ::fmt::format_to( std::back_inserter(s), format_str.c_str(), args... );
-	//   return s;
-	// }
-
 
 } //namespace safememory
 

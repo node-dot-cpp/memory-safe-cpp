@@ -416,6 +416,11 @@ DiagnosticBuilder ClangTidyCheck::diag(SourceLocation Loc, StringRef Message,
   return Context->diag(DiagMsgSrc, Loc, Message, Level);
 }
 
+DiagnosticBuilder ClangTidyCheck::diag2(SourceLocation Loc, StringRef Message,
+                                       DiagnosticIDs::Level Level) {
+  return Context->diag(CheckName, Loc, Message, Level);
+}
+
 void ClangTidyCheck::run(const ast_matchers::MatchFinder::MatchResult &Result) {
   Context->setSourceManager(Result.SourceManager);
   check(Result);

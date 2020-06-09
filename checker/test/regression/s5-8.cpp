@@ -46,4 +46,5 @@ nodecpp::awaitable<int> func2() {
 // CHECK: :[[@LINE-1]]:21: error: (S5.8)
 		co_yield i;
 	}
+	co_return 0;
 }

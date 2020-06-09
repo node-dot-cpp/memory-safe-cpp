@@ -57,25 +57,25 @@
 
 
 
-namespace safememory
+namespace safememory::detail
 {
 
 	/// EASTL_HASH_MAP_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_MAP_DEFAULT_NAME
-		#define EASTL_HASH_MAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_map" // Unless the user overrides something, this is "EASTL hash_map".
-	#endif
+	// #ifndef EASTL_HASH_MAP_DEFAULT_NAME
+	// 	#define EASTL_HASH_MAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_map" // Unless the user overrides something, this is "EASTL hash_map".
+	// #endif
 
 
 	/// EASTL_HASH_MULTIMAP_DEFAULT_NAME
 	///
 	/// Defines a default container name in the absence of a user-provided name.
 	///
-	#ifndef EASTL_HASH_MULTIMAP_DEFAULT_NAME
-		#define EASTL_HASH_MULTIMAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multimap" // Unless the user overrides something, this is "EASTL hash_multimap".
-	#endif
+	// #ifndef EASTL_HASH_MULTIMAP_DEFAULT_NAME
+	// 	#define EASTL_HASH_MULTIMAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multimap" // Unless the user overrides something, this is "EASTL hash_multimap".
+	// #endif
 
 
 	/// EASTL_HASH_MAP_DEFAULT_ALLOCATOR
@@ -128,17 +128,17 @@ namespace safememory
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
-			  typename Allocator = std::allocator< std::pair<const Key, T> >, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_map
-		: public detail::hashtable<Key, std::pair<const Key, T>, Allocator, detail::use_first<std::pair<const Key, T> >, Predicate,
-							Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, true>
+		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
+							Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, true>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, Allocator, 
-						  detail::use_first<std::pair<const Key, T> >, 
-						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
-						  detail::prime_rehash_policy, bCacheHashCode, true, true>        base_type;
-		typedef hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>      this_type;
+		typedef hashtable<Key, std::pair<const Key, T>, Safety, 
+						  use_first<std::pair<const Key, T> >, 
+						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
+						  prime_rehash_policy, bCacheHashCode, true, true>        base_type;
+		typedef hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>      this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::key_type                                      key_type;
 		typedef T                                                                 mapped_type;
@@ -157,8 +157,8 @@ namespace safememory
 		/// Default constructor.
 		///
 		explicit hash_map(/*const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						Predicate(), detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
+						Predicate(), use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -172,8 +172,8 @@ namespace safememory
 		///
 		explicit hash_map(size_type nBucketCount, const Hash& hashFunction = Hash(), 
 						  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -204,8 +204,8 @@ namespace safememory
 		///     
 		hash_map(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
 			base_type::insert_unsafe(ilist.begin(), ilist.end());
@@ -220,8 +220,8 @@ namespace safememory
 		// template <typename ForwardIterator>
 		// hash_map(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 		// 		 const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR*/)
-		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-		// 				predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+		// 				predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		// {
 		// 	// Empty
 		// }
@@ -332,17 +332,17 @@ namespace safememory
 	/// documentation for hash_set for details.
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
-			  typename Allocator = std::allocator< std::pair<const Key, T> >, bool bCacheHashCode = false>
+			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class hash_multimap
-		: public detail::hashtable<Key, std::pair<const Key, T>, Allocator, detail::use_first<std::pair<const Key, T> >, Predicate,
-						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, detail::prime_rehash_policy, bCacheHashCode, true, false>
+		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
+						   Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, false>
 	{
 	public:
-		typedef detail::hashtable<Key, std::pair<const Key, T>, Allocator, 
-						  detail::use_first<std::pair<const Key, T> >, 
-						  Predicate, Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
-						  detail::prime_rehash_policy, bCacheHashCode, true, false>           base_type;
-		typedef hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>     this_type;
+		typedef hashtable<Key, std::pair<const Key, T>, Safety, 
+						  use_first<std::pair<const Key, T> >, 
+						  Predicate, Hash, mod_range_hashing, default_ranged_hash, 
+						  prime_rehash_policy, bCacheHashCode, true, false>           base_type;
+		typedef hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>     this_type;
 		typedef typename base_type::size_type                                         size_type;
 		typedef typename base_type::key_type                                          key_type;
 		typedef T                                                                     mapped_type;
@@ -364,8 +364,8 @@ namespace safememory
 		/// Default constructor.
 		///
 		explicit hash_multimap(/*const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(0, Hash(), detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						Predicate(), detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(0, Hash(), mod_range_hashing(), default_ranged_hash(), 
+						Predicate(), use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -379,8 +379,8 @@ namespace safememory
 		///
 		explicit hash_multimap(size_type nBucketCount, const Hash& hashFunction = Hash(), 
 							   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			// Empty
 		}
@@ -411,8 +411,8 @@ namespace safememory
 		///     
 		hash_multimap(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 				   const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-			: base_type(nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-						predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+			: base_type(nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+						predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		{
 			//TODO: mb: improve, since we know the list size before construction
 			base_type::insert_unsafe(ilist.begin(), ilist.end());
@@ -427,8 +427,8 @@ namespace safememory
 		// template <typename ForwardIterator>
 		// hash_multimap(ForwardIterator first, ForwardIterator last, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
 		// 			  const Predicate& predicate = Predicate()/*, const allocator_type& allocator = EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR*/)
-		// 	: base_type(first, last, nBucketCount, hashFunction, detail::mod_range_hashing(), detail::default_ranged_hash(), 
-		// 				predicate, detail::use_first<std::pair<const Key, T> >()/*, allocator*/)
+		// 	: base_type(first, last, nBucketCount, hashFunction, mod_range_hashing(), default_ranged_hash(), 
+		// 				predicate, use_first<std::pair<const Key, T> >()/*, allocator*/)
 		// {
 		// 	// Empty
 		// }
@@ -478,11 +478,11 @@ namespace safememory
 	// global operators
 	///////////////////////////////////////////////////////////////////////
 
-	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator==(const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator==(const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
-		typedef typename hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
 
 		// We implement branching with the assumption that the return value is usually false.
 		if(a.size() != b.size())
@@ -501,19 +501,19 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator!=(const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_map<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator!=(const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
 
 
-	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator==(const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator==(const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
-		typedef typename hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>::const_iterator const_iterator;
+		typedef typename hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
 		typedef typename std::iterator_traits<const_iterator>::difference_type difference_type;
 
 		// We implement branching with the assumption that the return value is usually false.
@@ -562,15 +562,15 @@ namespace safememory
 		return true;
 	}
 
-	template <typename Key, typename T, typename Hash, typename Predicate, typename Allocator, bool bCacheHashCode>
-	inline bool operator!=(const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& a, 
-						   const hash_multimap<Key, T, Hash, Predicate, Allocator, bCacheHashCode>& b)
+	template <typename Key, typename T, typename Hash, typename Predicate, memory_safety Safety, bool bCacheHashCode>
+	inline bool operator!=(const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& a, 
+						   const hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
 		return !(a == b);
 	}
 
 
-} // namespace safememory
+} // namespace safememory::detail
 
 
 #endif // Header include guard

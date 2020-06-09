@@ -29,20 +29,23 @@ void StaticStorageCheck::registerMatchers(MatchFinder *Finder) {
 void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
-  if (Decl->isConstexpr())
-    return;
 
   auto Qt = Decl->getType().getCanonicalType();
-  if (Qt.isConstQualified())
+  if(isEmptyClass(Qt)) {
     return;
+  }
 
-  if(isEmptyClass(Qt))
-    return;
+  if (Decl->isConstexpr() || Qt.isConstQualified()) {
+    if(!getContext()->getCheckerData().isDeepConst(Qt)) {
+      diag2(Decl->getLocation(),
+          "(S3) global, static or thread_local variables must be deep_const");
+    }
 
-  diag(Decl->getLocation(),
+    return; 
+  }
+
+  diag2(Decl->getLocation(),
        "(S3) global, static or thread_local variables are prohibited");
-  //<< MatchedDecl
-  //<< FixItHint::CreateInsertion(MatchedDecl->getLocation(), "awesome_");
 }
 
 } // namespace checker

@@ -22,13 +22,13 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 using safememory::unordered_map;
 using safememory::unordered_multimap;
-using safememory::hash_map;
-using safememory::hash_multimap;
+using safememory::unordered_map;
+using safememory::unordered_multimap;
 
 using safememory::unordered_set;
 using safememory::unordered_multiset;
-using safememory::hash_set;
-using safememory::hash_multiset;
+using safememory::unordered_set;
+using safememory::unordered_multiset;
 using safememory::detail::iterator_validity;
 
 
@@ -104,7 +104,7 @@ struct HashtableValueHash
 // These tell the compiler to compile all the functions for the given class.
 template class safememory::detail::hashtable<int,
                                 std::pair<const int, int>,
-								std::allocator<std::pair<const int, int>>,
+								safememory::memory_safety::safe,
                                 safememory::detail::use_first<std::pair<const int, int>>,
                                 std::equal_to<int>,
                                 std::hash<int>,
@@ -117,7 +117,7 @@ template class safememory::detail::hashtable<int,
                                 >;
 template class safememory::detail::hashtable<int,
 								std::pair<const int, int>,
-								std::allocator<std::pair<const int, int>>,
+								safememory::memory_safety::safe,
 								safememory::detail::use_first<std::pair<const int, int>>,
 								std::equal_to<int>,
 								std::hash<int>,
@@ -146,24 +146,31 @@ template class safememory::detail::hashtable<int,
 // Note these will only compile non-inherited functions.  We provide explicit
 // template instantiations for the hashtable base class above to get compiler
 // coverage of those inherited hashtable functions.
-// template class eastl::hash_set<int>;
-// template class eastl::hash_multiset<int>;
-template class safememory::hash_map<int, int>;
-template class safememory::hash_multimap<int, int>;
-// template class eastl::hash_set<Align32>;
-// template class eastl::hash_multiset<Align32>;
-template class safememory::hash_map<Align32, Align32>;
-template class safememory::hash_multimap<Align32, Align32>;
+// template class eastl::unordered_set<int>;
+// template class eastl::unordered_multiset<int>;
+//template typename safememory::unordered_map<int, int>;
+//template typename safememory::unordered_multimap<int, int>;
+// template class eastl::unordered_set<Align32>;
+// template class eastl::unordered_multiset<Align32>;
+//template typename safememory::unordered_map<Align32, Align32>;
+//template typename safememory::unordered_multimap<Align32, Align32>;
 
 // validate static assumptions about hashtable core types
-typedef safememory::detail::hash_node<int, false> HashNode1;
-typedef safememory::detail::hash_node<int, true> HashNode2;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, false> HashNode1;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, true> HashNode2;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::none, false> HashNode3;
+typedef safememory::detail::hash_node<int, safememory::memory_safety::none, true> HashNode4;
+
 static_assert(std::is_default_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_default_constructible<HashNode2>::value, "hash_node static error");
+static_assert(std::is_default_constructible<HashNode3>::value, "hash_node static error");
+static_assert(std::is_default_constructible<HashNode4>::value, "hash_node static error");
 // static_assert(std::is_copy_constructible<HashNode1>::value, "hash_node static error");
 // static_assert(std::is_copy_constructible<HashNode2>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_move_constructible<HashNode2>::value, "hash_node static error");
+static_assert(std::is_move_constructible<HashNode3>::value, "hash_node static error");
+static_assert(std::is_move_constructible<HashNode4>::value, "hash_node static error");
 
 // A custom hash function that has a high number of collisions is used to ensure many keys share the same hash value.
 struct colliding_hash
@@ -179,31 +186,31 @@ int TestHash()
 	int nErrorCount = 0;
 
 	{  // Test declarations
-		hash_set<int>           hashSet;
-		hash_multiset<int>      hashMultiSet;
-		hash_map<int, int>      hashMap;
-		hash_multimap<int, int> hashMultiMap;
+		unordered_set<int>           hashSet;
+		unordered_multiset<int>      hashMultiSet;
+		unordered_map<int, int>      hashMap;
+		unordered_multimap<int, int> hashMultiMap;
 
-		hash_set<int> hashSet2(hashSet);
+		unordered_set<int> hashSet2(hashSet);
 		EATEST_VERIFY(hashSet2.size() == hashSet.size());
 		EATEST_VERIFY(hashSet2 == hashSet);
 
-		hash_multiset<int> hashMultiSet2(hashMultiSet);
+		unordered_multiset<int> hashMultiSet2(hashMultiSet);
 		EATEST_VERIFY(hashMultiSet2.size() == hashMultiSet.size());
 		EATEST_VERIFY(hashMultiSet2 == hashMultiSet);
 
-		hash_map<int, int> hashMap2(hashMap);
+		unordered_map<int, int> hashMap2(hashMap);
 		EATEST_VERIFY(hashMap2.size() == hashMap.size());
 		EATEST_VERIFY(hashMap2 == hashMap);
 
-		hash_multimap<int, int> hashMultiMap2(hashMultiMap);
+		unordered_multimap<int, int> hashMultiMap2(hashMultiMap);
 		EATEST_VERIFY(hashMultiMap2.size() == hashMultiMap.size());
 		EATEST_VERIFY(hashMultiMap2 == hashMultiMap);
 
 
 		// allocator_type& get_allocator();
 		// void            set_allocator(const allocator_type& allocator);
-		// hash_set<int>::allocator_type& allocator = hashSet.get_allocator();
+		// unordered_set<int>::allocator_type& allocator = hashSet.get_allocator();
 		// hashSet.set_allocator(EASTLAllocatorType());
 		// hashSet.set_allocator(allocator);
 		// To do: Try to find something better to test here.
@@ -211,10 +218,10 @@ int TestHash()
 
 		// const key_equal& key_eq() const;
 		// key_equal&       key_eq();
-		hash_set<int>       hs;
-		const hash_set<int> hsc;
+		unordered_set<int>       hs;
+		const unordered_set<int> hsc;
 
-		const hash_set<int>::key_equal& ke = hsc.key_eq();
+		const unordered_set<int>::key_equal& ke = hsc.key_eq();
 		hs.key_eq() = ke;
 
 
@@ -229,7 +236,7 @@ int TestHash()
 
 
 	{
-		hash_set<int> hashSet;
+		unordered_set<int> hashSet;
 
 		// Clear a newly constructed, already empty container.
 		hashSet.clear(true);
@@ -259,7 +266,7 @@ int TestHash()
 	}
 
 
-	{   // Test hash_set
+	{   // Test unordered_set
 
 		// size_type          size() const
 		// bool               empty() const
@@ -270,7 +277,7 @@ int TestHash()
 		// const_iterator     find(const key_type& k) const;
 		// size_type          count(const key_type& k) const;
 
-		typedef hash_set<int> HashSetInt;
+		typedef unordered_set<int> HashSetInt;
 
 		HashSetInt hashSet;
 		const HashSetInt::size_type kCount = 10000;
@@ -345,7 +352,7 @@ int TestHash()
 		// const RehashPolicy& rehash_policy() const
 		// void  rehash_policy(const RehashPolicy& rehashPolicy);
 
-		typedef hash_set<int> HashSetInt;
+		typedef unordered_set<int> HashSetInt;
 
 		HashSetInt hashSet;
 
@@ -370,7 +377,7 @@ int TestHash()
 		EATEST_VERIFY(n >= ((hashSet.size() / hashSet.bucket_count()) / 2)); // It will be some high value. We divide by 2 to give it some slop.
 		EATEST_VERIFY(hashSet.validate());
 
-		hash_set<int>::rehash_policy_type rp = hashSet.rehash_policy();
+		unordered_set<int>::rehash_policy_type rp = hashSet.rehash_policy();
 		rp.mfGrowthFactor = 1.5f;
 		hashSet.rehash_policy(rp);
 		EATEST_VERIFY(hashSet.validate());
@@ -406,20 +413,20 @@ int TestHash()
 
 	{
 		// void reserve(size_type nElementCount);
-		nErrorCount += HashContainerReserveTest<hash_set<int>>()();
-		nErrorCount += HashContainerReserveTest<hash_multiset<int>>()();
-		nErrorCount += HashContainerReserveTest<hash_map<int, int>>()();
-		nErrorCount += HashContainerReserveTest<hash_multimap<int, int>>()();
+		nErrorCount += HashContainerReserveTest<unordered_set<int>>()();
+		nErrorCount += HashContainerReserveTest<unordered_multiset<int>>()();
+		nErrorCount += HashContainerReserveTest<unordered_map<int, int>>()();
+		nErrorCount += HashContainerReserveTest<unordered_multimap<int, int>>()();
 	}
 
 
-	{   // Test hash_set with cached hash code.
+	{   // Test unordered_set with cached hash code.
 
 		// insert_return_type insert(const value_type& value) ;
 		// iterator       find(const key_type& k);
 		// const_iterator find(const key_type& k) const;
 
-		typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
+		typedef unordered_set<int, std::hash<int>, std::equal_to<int>, safememory::memory_safety::safe, true> HashSetIntC;
 
 		HashSetIntC hashSet;
 		const int kCount = 10000;
@@ -474,11 +481,11 @@ int TestHash()
 	// 		};
 
 	// 		{
-	// 			typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
+	// 			typedef unordered_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, true> HashSetIntC;
 	// 			HashSetIntC hashSetC;
 	// 			FindByHashTest(hashSetC);
 
-	// 			typedef hash_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, false> HashSetInt;
+	// 			typedef unordered_set<int, std::hash<int>, std::equal_to<int>, std::allocator<int>, false> HashSetInt;
 	// 			HashSetInt hashSet;
 	// 			FindByHashTest(hashSet);
 	// 		}
@@ -488,12 +495,12 @@ int TestHash()
 
 
 	// {
-	// 	// hash_set(const allocator_type& allocator);
+	// 	// unordered_set(const allocator_type& allocator);
 	// 	// hashtable& operator=(const this_type& x);
 	// 	// bool validate() const;
 
-	// 	hash_set<int> hashSet1(EASTLAllocatorType("hash_set name"));
-	// 	hash_set<int> hashSet2(hashSet1);
+	// 	unordered_set<int> hashSet1(EASTLAllocatorType("unordered_set name"));
+	// 	unordered_set<int> hashSet2(hashSet1);
 
 	// 	for(int i = 0; i < 10; i++)
 	// 	{
@@ -509,17 +516,17 @@ int TestHash()
 
 
 	{
-		// hash_set(size_type nBucketCount, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
+		// unordered_set(size_type nBucketCount, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
 		// hashtable(const hashtable& x);
 		// hashtable& operator=(const this_type& x);
 		// void swap(this_type& x);
 		// bool validate() const;
 		{
-			hash_set<int> hashSet3(0);
-			hash_set<int> hashSet4(1);
-			hash_set<int> hashSet5(2);
-			hash_set<int> hashSet6(3);
-			hash_set<int> hashSet7(4);
+			unordered_set<int> hashSet3(0);
+			unordered_set<int> hashSet4(1);
+			unordered_set<int> hashSet5(2);
+			unordered_set<int> hashSet6(3);
+			unordered_set<int> hashSet7(4);
 
 			hashSet4 = hashSet3;
 			hashSet6 = hashSet5;
@@ -555,9 +562,9 @@ int TestHash()
 			EATEST_VERIFY(hashSet6.validate());
 			EATEST_VERIFY(hashSet7.validate());
 
-			hash_set<int> hashSet8(hashSet6);
-			hash_set<int> hashSet9(hashSet7);
-			hash_set<int> hashSet10(hashSet8);
+			unordered_set<int> hashSet8(hashSet6);
+			unordered_set<int> hashSet9(hashSet7);
+			unordered_set<int> hashSet10(hashSet8);
 
 			EATEST_VERIFY(hashSet8.validate());
 			EATEST_VERIFY(hashSet9.validate());
@@ -566,9 +573,9 @@ int TestHash()
 		
 		// test hashtable::swap using different allocator instances
 		// {
-		// 	typedef hash_set<int, std::hash<int>, std::equal_to<int>, InstanceAllocator> HS;
-		// 	HS hashSet1(InstanceAllocator("hash_set1 name", 111));
-		// 	HS hashSet2(InstanceAllocator("hash_set2 name", 222));
+		// 	typedef unordered_set<int, std::hash<int>, std::equal_to<int>, InstanceAllocator> HS;
+		// 	HS hashSet1(InstanceAllocator("unordered_set1 name", 111));
+		// 	HS hashSet2(InstanceAllocator("unordered_set2 name", 222));
 
 		// 	for(int i = 0; i < 10; i++)
 		// 	{
@@ -591,17 +598,17 @@ int TestHash()
 
 
 	{
-		// hash_set(InputIterator first, InputIterator last, size_type nBucketCount = 8, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
+		// unordered_set(InputIterator first, InputIterator last, size_type nBucketCount = 8, const Hash& hashFunction = Hash(), const Predicate& predicate = Predicate(), const allocator_type& allocator);
 		// bool validate() const;
 
 		// std::vector<int> intArray;
 		// for(int i = 0; i < 1000; i++)
 		// 	intArray.push_back(i);
 
-		// hash_set<int> hashSet1(intArray.begin(), intArray.end(), 0);
-		// hash_set<int> hashSet2(intArray.begin(), intArray.end(), 1);
-		// hash_set<int> hashSet3(intArray.begin(), intArray.end(), 2);
-		// hash_set<int> hashSet4(intArray.begin(), intArray.end(), 3);
+		// unordered_set<int> hashSet1(intArray.begin(), intArray.end(), 0);
+		// unordered_set<int> hashSet2(intArray.begin(), intArray.end(), 1);
+		// unordered_set<int> hashSet3(intArray.begin(), intArray.end(), 2);
+		// unordered_set<int> hashSet4(intArray.begin(), intArray.end(), 3);
 
 		// EATEST_VERIFY(hashSet1.validate());
 		// EATEST_VERIFY(hashSet2.validate());
@@ -610,10 +617,10 @@ int TestHash()
 
 
 		// bool validate_iterator(const_iterator i) const;
-		hash_set<int> hashSet1({1,2,3,4});
-		hash_set<int> hashSet2({1,2,3,4});
+		unordered_set<int> hashSet1({1,2,3,4});
+		unordered_set<int> hashSet2({1,2,3,4});
 
-		hash_set<int>::iterator it;
+		unordered_set<int>::iterator it;
 		auto result = hashSet1.validate_iterator(it);
 		EATEST_VERIFY(result == iterator_validity::Null);
 
@@ -664,11 +671,11 @@ int TestHash()
 		// 	intArray2.push_back(i + 500);
 		// }
 
-		// hash_set<int> hashSet1(intArray1.begin(), intArray1.end());
+		// unordered_set<int> hashSet1(intArray1.begin(), intArray1.end());
 		// hashSet1.insert(intArray2.begin(), intArray2.end());
 		// EATEST_VERIFY(hashSet1.validate());
 
-		// hash_set<int> hashSet2;
+		// unordered_set<int> hashSet2;
 		// hashSet2.insert(intArray1.begin(), intArray1.end());
 		// hashSet2.insert(intArray2.begin(), intArray2.end());
 		// EATEST_VERIFY(hashSet2.validate());
@@ -680,7 +687,7 @@ int TestHash()
 		// for(int j = 0; j < 1000; j++)
 		// 	hashSet1.insert(hashSet1.begin(), j);
 
-		// std::insert_iterator< safememory::hash_set<int> > ii(hashSet1, hashSet1.begin());
+		// std::insert_iterator< safememory::unordered_set<int> > ii(hashSet1, hashSet1.begin());
 		// for(int j = 0; j < 1000; j++)
 		// 	*ii++ = j;
 	}
@@ -688,37 +695,37 @@ int TestHash()
 
 	{
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<safememory::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<safememory::unordered_map<int, TestObject>>();
 		nErrorCount += TestMapCpp11<safememory::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<safememory::hash_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
 		nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
 
-		nErrorCount += TestMultimapCpp11<safememory::hash_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<safememory::unordered_multimap<int, TestObject>>();
 		nErrorCount += TestMultimapCpp11<safememory::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<safememory::hash_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<safememory::unordered_multiset<TestObject>>();
 		nErrorCount += TestMultisetCpp11<safememory::unordered_multiset<TestObject>>();
 
-		nErrorCount += TestMapCpp11NonCopyable<safememory::hash_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<safememory::unordered_map<int, NonCopyable>>();
 		nErrorCount += TestMapCpp11NonCopyable<safememory::unordered_map<int, NonCopyable>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
-		nErrorCount += TestMapCpp17<safememory::hash_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<safememory::unordered_map<int, TestObject>>();
 		nErrorCount += TestMapCpp17<safememory::unordered_map<int, TestObject>>();
 	}
 
 
 	{
 		// initializer_list support.
-		// hash_set(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-		//            const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_SET_DEFAULT_ALLOCATOR)
+		// unordered_set(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
+		//            const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_unordered_set_DEFAULT_ALLOCATOR)
 		// this_type& operator=(std::initializer_list<value_type> ilist);
 		// void insert(std::initializer_list<value_type> ilist);
 		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-			hash_set<int> intHashSet = { 12, 13, 14 };
+			unordered_set<int> intHashSet = { 12, 13, 14 };
 			EATEST_VERIFY(intHashSet.size() == 3);
 			EATEST_VERIFY(intHashSet.find(12) != intHashSet.end());
 			EATEST_VERIFY(intHashSet.find(13) != intHashSet.end());
@@ -749,14 +756,14 @@ int TestHash()
 
 
 
-	{   // Test hash_map
+	{   // Test unordered_map
 
 		// insert_return_type insert(const value_type& value);
 		// insert_return_type insert(const key_type& key);
 		// iterator       find(const key_type& k);
 		// const_iterator find(const key_type& k) const;
 
-		typedef hash_map<int, int> HashMapIntInt;
+		typedef unordered_map<int, int> HashMapIntInt;
 		HashMapIntInt hashMap;
 		const int kCount = 10000;
 
@@ -871,7 +878,7 @@ int TestHash()
 
 
 		// mapped_type& operator[](const key_type& key)
-		// hash_map is unique among the map/set containers in having this function.
+		// unordered_map is unique among the map/set containers in having this function.
 		hashMap.clear();
 
 		int x = hashMap[0]; // A default-constructed int (i.e. 0) should be returned.
@@ -890,21 +897,21 @@ int TestHash()
 	}
 
 
-	// {   // Test hash_map
+	// {   // Test unordered_map
 
 	// 	// Aligned objects should be CustomAllocator instead of the default, because the 
 	// 	// EASTL default might be unable to do aligned allocations, but CustomAllocator always can.
-	// 	hash_map<Align32, int, std::hash<Align32>, std::equal_to<Align32>, CustomAllocator> hashMap;
+	// 	unordered_map<Align32, int, std::hash<Align32>, std::equal_to<Align32>, CustomAllocator> hashMap;
 	// 	const int kCount = 10000;
 
 	// 	for(int i = 0; i < kCount; i++)
 	// 	{
 	// 		Align32 a32(i); // GCC 2.x doesn't like the Align32 object being created in the ctor below.
-	// 		hash_map<Align32, int>::value_type vt(a32, i);
+	// 		unordered_map<Align32, int>::value_type vt(a32, i);
 	// 		hashMap.insert(vt);
 	// 	}
 
-	// 	for(hash_map<Align32, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
+	// 	for(unordered_map<Align32, int>::iterator it = hashMap.begin(); it != hashMap.end(); ++it)
 	// 	{
 	// 		const Align32& k = (*it).first;
 	// 		int            v = (*it).second;
@@ -914,7 +921,7 @@ int TestHash()
 
 	// 	for(int i = 0; i < kCount * 2; i++)
 	// 	{
-	// 		hash_map<Align32, int>::iterator it = hashMap.find(Align32(i));
+	// 		unordered_map<Align32, int>::iterator it = hashMap.find(Align32(i));
 
 	// 		if(i < kCount)
 	// 		{
@@ -940,7 +947,7 @@ int TestHash()
 	// 	// template <typename U>
 	// 	// const_iterator find_as(const U& u) const;
 
-	// 	typedef hash_set<std::string> HashSetString;
+	// 	typedef unordered_set<std::string> HashSetString;
 
 	// 	HashSetString hashSet;
 	// 	const int kCount = 100;
@@ -973,11 +980,11 @@ int TestHash()
 
 	// {
 	// 	// Test const containers.
-	// 	const hash_set<int> constHashSet;
+	// 	const unordered_set<int> constHashSet;
 
-	// 	hash_set<int>::const_iterator i = constHashSet.begin();
-	// 	hash_set<int>::const_iterator i3 = i;
-	// 	hash_set<int>::iterator i2;
+	// 	unordered_set<int>::const_iterator i = constHashSet.begin();
+	// 	unordered_set<int>::const_iterator i3 = i;
+	// 	unordered_set<int>::iterator i2;
 	// 	i3 = i2;
 
 	// 	EATEST_VERIFY(i3 == i2);
@@ -994,7 +1001,7 @@ int TestHash()
 		const std::size_t kDataRange = 50;
 
 		{
-			typedef hash_set<HashtableValue, HashtableValueHash, HashtableValuePredicate> HashSet;
+			typedef unordered_set<HashtableValue, HashtableValueHash, HashtableValuePredicate> HashSet;
 			HashtableValue value;
 
 			HashSet h1;
@@ -1032,7 +1039,7 @@ int TestHash()
 		}
 
 		{
-			typedef hash_multiset<HashtableValue, HashtableValueHash, HashtableValuePredicate> HashSet;
+			typedef unordered_multiset<HashtableValue, HashtableValueHash, HashtableValuePredicate> HashSet;
 			HashtableValue value;
 
 			HashSet h1;
@@ -1071,7 +1078,7 @@ int TestHash()
 
 		{
 			// For simplicity we duplicate the HashtableValue::mData member as the hash map key.
-			typedef hash_map<std::size_t, HashtableValue, HashtableValueHash, HashtableValuePredicate> HashMap;
+			typedef unordered_map<std::size_t, HashtableValue, HashtableValueHash, HashtableValuePredicate> HashMap;
 			HashtableValue value;
 
 			HashMap h1;
@@ -1110,7 +1117,7 @@ int TestHash()
 
 		{
 			// For simplicity we duplicate the HashtableValue::mData member as the hash map key.
-			typedef hash_multimap<std::size_t, HashtableValue, HashtableValueHash, HashtableValuePredicate> HashMap;
+			typedef unordered_multimap<std::size_t, HashtableValue, HashtableValueHash, HashtableValuePredicate> HashMap;
 			HashtableValue value;
 
 			HashMap h1;
@@ -1165,15 +1172,15 @@ int TestHash()
 	{ 
 		// Regression of compiler warning reported by Jeff Litz/Godfather regarding 
 		// strict aliasing (EASTL 1.09.01) December 2007).
-		typedef safememory::hash_multimap<uint32_t, uint32_t*> Map;
+		typedef safememory::unordered_multimap<uint32_t, uint32_t*> Map;
 		Map* pMap = new Map;
 		delete pMap;
 	}
 
 	{ 
 		// Regression of user-reported crash.
-		safememory::hash_map<int, std::string*>* _hmTextureList;
-		_hmTextureList = new safememory::hash_map<int, std::string*>();
+		safememory::unordered_map<int, std::string*>* _hmTextureList;
+		_hmTextureList = new safememory::unordered_map<int, std::string*>();
 		std::string* a = NULL;
 		(*_hmTextureList)[0] = a;
 		delete _hmTextureList;
@@ -1181,7 +1188,7 @@ int TestHash()
 
 	{
 		// Regression of user-reported Android compiler error.
-		typedef safememory::hash_multimap<HashRegressionA*, HashRegressionB> HMM;
+		typedef safememory::unordered_multimap<HashRegressionA*, HashRegressionB> HMM;
 		HMM m_hash;
 
 		// Section 1
@@ -1196,7 +1203,7 @@ int TestHash()
 
 	{
 		// Regression of user-reported GCC 4.8 compile failure.
-		typedef safememory::hash_map<int64_t, Struct> AuditByBlazeIdMap;
+		typedef safememory::unordered_map<int64_t, Struct> AuditByBlazeIdMap;
 
 		AuditByBlazeIdMap auditBlazeIds;
 		AuditByBlazeIdMap tempAuditBlazeIds;
@@ -1209,7 +1216,7 @@ int TestHash()
 	// 	// This test is designed to designed to use the find_range_by_hash method to walk over all keys in a hash bucket (located by a hash value).
 		
 	// 	// Use the 'colliding_hash' hash function to intentionally create lots of collisions in a predictable way.
-	// 	typedef hash_map<int, int, colliding_hash> HM;
+	// 	typedef unordered_map<int, int, colliding_hash> HM;
 	// 	HM hashMap;
 
 	// 	// Add some numbers to the hashMap.
@@ -1293,7 +1300,7 @@ int TestHash()
 		// Regression of user reported compiler error in hashtable sfinae mechanism 
 		{
 			TestObject::Reset();
-			safememory::hash_set<TestObject> toSet;
+			safememory::unordered_set<TestObject> toSet;
 			toSet.emplace(3, 4, 5);
 		}
 	}
@@ -1302,15 +1309,15 @@ int TestHash()
 
 	{
 		// initializer_list support.
-		// hash_map(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
-		//            const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_HASH_MAP_DEFAULT_ALLOCATOR)
+		// unordered_map(std::initializer_list<value_type> ilist, size_type nBucketCount = 0, const Hash& hashFunction = Hash(), 
+		//            const Predicate& predicate = Predicate(), const allocator_type& allocator = EASTL_unordered_map_DEFAULT_ALLOCATOR)
 		// this_type& operator=(std::initializer_list<value_type> ilist);
 		// void insert(std::initializer_list<value_type> ilist);
 		
 		// VS2013 has a known issue when dealing with std::initializer_lists
 		// https://connect.microsoft.com/VisualStudio/feedback/details/792355/compiler-confused-about-whether-to-use-a-initializer-list-assignment-operator
 		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS) && !(defined(_MSC_VER) && _MSC_VER == 1800)
-			hash_map<int, double> intHashMap = { {12,12.0}, {13,13.0}, {14,14.0} };
+			unordered_map<int, double> intHashMap = { {12,12.0}, {13,13.0}, {14,14.0} };
 			EATEST_VERIFY(intHashMap.size() == 3);
 			EATEST_VERIFY(intHashMap.find(12) != intHashMap.end());
 			EATEST_VERIFY(intHashMap.find(13) != intHashMap.end());
@@ -1330,7 +1337,7 @@ int TestHash()
 		#endif
 	}
 
-	// Can't use move semantics with hash_map::operator[]
+	// Can't use move semantics with unordered_map::operator[]
 	//
 	// GCC has a bug with overloading rvalue and lvalue function templates.
 	// https://gcc.gnu.org/bugzilla/show_bug.cgi?id=54425
@@ -1358,7 +1365,7 @@ int TestHash()
 		};
 
 		Key key1, key2;
-		safememory::hash_map<Key, int, Hash> hm;
+		safememory::unordered_map<Key, int, Hash> hm;
 		hm[std::move(key1)] = 12345;
 
 		EATEST_VERIFY(hm[std::move(key2)] == 12345);
@@ -1369,7 +1376,7 @@ int TestHash()
 	// 	using AllocatorType = CountingAllocator;
 	// 	using String = std::basic_string<char8_t, AllocatorType>;
 	// 	using StringStringMap = std::map<String, String, std::equal_to<String>, AllocatorType>;
-	// 	using StringStringHashMap = safememory::hash_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
+	// 	using StringStringHashMap = safememory::unordered_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
 	// 	AllocatorType::resetCount();
 
 	// 	{
@@ -1427,7 +1434,7 @@ int TestHash()
 		{
 			int n = 42;
 			const char* pCStrName = "electronic arts";
-			safememory::hash_map<std::pair<int, const char*>, bool, std::hash<std::pair<int, const char*>>, name_equals> m_TempNames;
+			safememory::unordered_map<std::pair<int, const char*>, bool, std::hash<std::pair<int, const char*>>, name_equals> m_TempNames;
 			m_TempNames[std::make_pair(n, pCStrName)] = true;
 
 			auto isFound = (m_TempNames.find(std::make_pair(n, pCStrName)) != m_TempNames.end());

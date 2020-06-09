@@ -168,8 +168,12 @@ public:
   /// work in here.
   virtual void check(const ast_matchers::MatchFinder::MatchResult &Result) {}
 
-  /// \brief Add a diagnostic with the check's name.
+  /// \brief Add a diagnostic with the tool's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Description,
+                         DiagnosticIDs::Level Level = DiagnosticIDs::Error);
+
+  /// \brief Add a diagnostic with the check's name.
+  DiagnosticBuilder diag2(SourceLocation Loc, StringRef Description,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error);
 
   /// \brief Should store all options supported by this check with their

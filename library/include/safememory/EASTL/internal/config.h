@@ -125,10 +125,10 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_VERSION
-	#define EASTL_VERSION   "3.15.00"
-	#define EASTL_VERSION_N  31500
-#endif
+// #ifndef EASTL_VERSION
+// 	#define EASTL_VERSION   "3.15.00"
+// 	#define EASTL_VERSION_N  31500
+// #endif
 
 
 // ///////////////////////////////////////////////////////////////////////////////
@@ -159,11 +159,11 @@
 // Defined as a macro. Provided here for backward compatibility with older
 // EABase versions prior to 2.00.40 that don't yet define it themselves.
 //
-#if !defined(EA_NOEXCEPT)
- 	#define EA_NOEXCEPT
- 	#define EA_NOEXCEPT_IF(predicate)
- 	#define EA_NOEXCEPT_EXPR(expression) false
-#endif
+// #if !defined(EA_NOEXCEPT)
+//  	#define EA_NOEXCEPT
+//  	#define EA_NOEXCEPT_IF(predicate)
+//  	#define EA_NOEXCEPT_EXPR(expression) false
+// #endif
 
 
 
@@ -179,7 +179,7 @@
 // // functionality beyond the regular C++11 constexpr functionality.
 // // http://en.wikipedia.org/wiki/C%2B%2B14#Relaxed_constexpr_restrictions
 // //
-#if !defined(EA_CPP14_CONSTEXPR)
+// #if !defined(EA_CPP14_CONSTEXPR)
 
 // 	#if defined(EA_COMPILER_MSVC_2015)
 // 		#define EA_CPP14_CONSTEXPR  // not supported
@@ -188,12 +188,12 @@
 // 		#define EA_CPP14_CONSTEXPR  // not supported
 // 		#define EA_NO_CPP14_CONSTEXPR 
 // 	#elif defined(EA_COMPILER_CPP14_ENABLED)
-		#define EA_CPP14_CONSTEXPR constexpr
+		// #define EA_CPP14_CONSTEXPR constexpr
 // 	#else
 // 		#define EA_CPP14_CONSTEXPR  // not supported
 // 		#define EA_NO_CPP14_CONSTEXPR 
 // 	#endif
-#endif
+// #endif
 
 
 // ///////////////////////////////////////////////////////////////////////////////
@@ -444,9 +444,9 @@
 //         #define EASTL_DEQUE_DEFAULT_NAME   EASTL_DEFAULT_NAME_PREFIX " deque"
 //     #endif
 //
-#ifndef EASTL_DEFAULT_NAME_PREFIX
-	#define EASTL_DEFAULT_NAME_PREFIX "EASTL"
-#endif
+// #ifndef EASTL_DEFAULT_NAME_PREFIX
+// 	#define EASTL_DEFAULT_NAME_PREFIX "EASTL"
+// #endif
 
 
 
@@ -815,33 +815,33 @@
 // 	#define EASTL_STRING_OPT_EXPLICIT_CTORS 0
 // #endif
 
-#ifndef EASTL_STRING_OPT_LENGTH_ERRORS
-	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
-	// Defines if we check for string values going beyond kMaxSize
-	// (a very large value) and throw exections if so.
-	// C++ standard strings are expected to do such checks.
-	#define EASTL_STRING_OPT_LENGTH_ERRORS EASTL_EXCEPTIONS_ENABLED
-#endif
+// #ifndef EASTL_STRING_OPT_LENGTH_ERRORS
+// 	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
+// 	// Defines if we check for string values going beyond kMaxSize
+// 	// (a very large value) and throw exections if so.
+// 	// C++ standard strings are expected to do such checks.
+// 	#define EASTL_STRING_OPT_LENGTH_ERRORS EASTL_EXCEPTIONS_ENABLED
+// #endif
 
-#ifndef EASTL_STRING_OPT_RANGE_ERRORS
-	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
-	// Defines if we check for out-of-bounds references to string
-	// positions and throw exceptions if so. Well-behaved code shouldn't
-	// refence out-of-bounds positions and so shouldn't need these checks.
-	// C++ standard strings are expected to do such range checks.
-	#define EASTL_STRING_OPT_RANGE_ERRORS EASTL_EXCEPTIONS_ENABLED
-#endif
+// #ifndef EASTL_STRING_OPT_RANGE_ERRORS
+// 	// Defined as 0 or 1. Default is equal to EASTL_EXCEPTIONS_ENABLED.
+// 	// Defines if we check for out-of-bounds references to string
+// 	// positions and throw exceptions if so. Well-behaved code shouldn't
+// 	// refence out-of-bounds positions and so shouldn't need these checks.
+// 	// C++ standard strings are expected to do such range checks.
+// 	#define EASTL_STRING_OPT_RANGE_ERRORS EASTL_EXCEPTIONS_ENABLED
+// #endif
 
-#ifndef EASTL_STRING_OPT_ARGUMENT_ERRORS
-	// Defined as 0 or 1. Default is 0.
-	// Defines if we check for NULL ptr arguments passed to string
-	// functions by the user and throw exceptions if so. Well-behaved code
-	// shouldn't pass bad arguments and so shouldn't need these checks.
-	// Also, some users believe that strings should check for NULL pointers
-	// in all their arguments and do no-ops if so. This is very debatable.
-	// C++ standard strings are not required to check for such argument errors.
-	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
-#endif
+// #ifndef EASTL_STRING_OPT_ARGUMENT_ERRORS
+// 	// Defined as 0 or 1. Default is 0.
+// 	// Defines if we check for NULL ptr arguments passed to string
+// 	// functions by the user and throw exceptions if so. Well-behaved code
+// 	// shouldn't pass bad arguments and so shouldn't need these checks.
+// 	// Also, some users believe that strings should check for NULL pointers
+// 	// in all their arguments and do no-ops if so. This is very debatable.
+// 	// C++ standard strings are not required to check for such argument errors.
+// 	#define EASTL_STRING_OPT_ARGUMENT_ERRORS 0
+// #endif
 
 
 
@@ -1093,15 +1093,15 @@
 // // having a lot of headers behind <iterator>.
 // ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_STD_ITERATOR_CATEGORY_ENABLED
-	#define EASTL_STD_ITERATOR_CATEGORY_ENABLED 1
-#endif
+// #ifndef EASTL_STD_ITERATOR_CATEGORY_ENABLED
+// 	#define EASTL_STD_ITERATOR_CATEGORY_ENABLED 1
+// #endif
 
-#if EASTL_STD_ITERATOR_CATEGORY_ENABLED
-	#define EASTL_ITC_NS std
-#else
-	#define EASTL_ITC_NS eastl
-#endif
+// #if EASTL_STD_ITERATOR_CATEGORY_ENABLED
+// 	#define EASTL_ITC_NS std
+// #else
+// 	#define EASTL_ITC_NS eastl
+// #endif
 
 
 
@@ -1133,15 +1133,15 @@
 //
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef EASTL_VALIDATE_COMPARE_ENABLED
-	#define EASTL_VALIDATE_COMPARE_ENABLED EASTL_VALIDATION_ENABLED
-#endif
+// #ifndef EASTL_VALIDATE_COMPARE_ENABLED
+// 	#define EASTL_VALIDATE_COMPARE_ENABLED EASTL_VALIDATION_ENABLED
+// #endif
 
-#if EASTL_VALIDATE_COMPARE_ENABLED
-	#define EASTL_VALIDATE_COMPARE EASTL_ASSERT
-#else
-	#define EASTL_VALIDATE_COMPARE(expression)
-#endif
+// #if EASTL_VALIDATE_COMPARE_ENABLED
+// 	#define EASTL_VALIDATE_COMPARE EASTL_ASSERT
+// #else
+// 	#define EASTL_VALIDATE_COMPARE(expression)
+// #endif
 
 
 
@@ -1476,13 +1476,13 @@
 // Defined as 0 or 1.
 // If enabled then C++11-like functionality with variable templates is enabled.
 ///////////////////////////////////////////////////////////////////////////////
-#if !defined(EASTL_VARIABLE_TEMPLATES_ENABLED)
-	#if((EABASE_VERSION_N < 20605) || defined(EA_COMPILER_NO_VARIABLE_TEMPLATES))
-		#define EASTL_VARIABLE_TEMPLATES_ENABLED 0
-	#else
-		#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
-	#endif
-#endif
+// #if !defined(EASTL_VARIABLE_TEMPLATES_ENABLED)
+// 	#if((EABASE_VERSION_N < 20605) || defined(EA_COMPILER_NO_VARIABLE_TEMPLATES))
+// 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 0
+// 	#else
+// 		#define EASTL_VARIABLE_TEMPLATES_ENABLED 1
+// 	#endif
+// #endif
 
 // ///////////////////////////////////////////////////////////////////////////////
 // // EASTL_INLINE_VARIABLE_ENABLED

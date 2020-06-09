@@ -23,33 +23,23 @@ const char *DiagMsgSrc = "memory-safe-cpp";
 
 DiagHelper NullDiagHelper;
 
-bool isOwnerPtrName(const std::string &Name) {
+bool isOwningPtrName(const std::string &Name) {
   return Name == "nodecpp::safememory::owning_ptr_impl" ||
           Name == "nodecpp::safememory::owning_ptr_base_impl" ||
           Name == "nodecpp::safememory::owning_ptr_no_checks" ||
           Name == "nodecpp::safememory::owning_ptr_base_no_checks";
 }
 
-bool isOwnerPtrDecl(const NamedDecl *Dc) {
-  if (!Dc)
-    return false;
-
-  std::string Name = getQnameForSystemSafeDb(Dc);
-  return isOwnerPtrName(Name);
-}
-
 bool isSafePtrName(const std::string &Name) {
-  return isOwnerPtrName(Name) ||
+  return isOwningPtrName(Name) ||
     Name == "nodecpp::safememory::soft_ptr_impl" ||
     Name == "nodecpp::safememory::soft_ptr_no_checks" ||
     Name == "nodecpp::safememory::soft_this_ptr_impl" ||
     Name == "nodecpp::safememory::soft_this_ptr_no_checks";
 }
 
-
-
-
 bool isAwaitableName(const std::string &Name) {
+  //mb: hardcoded name, moving to awaitable attribute, then remove this
   return Name == "nodecpp::awaitable";
 }
 
@@ -457,20 +447,6 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   return KindCheck(false, false);
 }
 
-// bool hasDeepConstAttr(const CXXRecordDecl* Decl) {
-//   if(Decl->hasAttr<NodeCppDeepConstAttr>())
-//     return true;
-
-//   auto TD = dyn_cast<ClassTemplateSpecializationDecl>(Decl);
-//   if(TD) {
-//     auto D2 = TD->getSpecializedTemplate()->getTemplatedDecl();
-//     if(D2->hasAttr<NodeCppDeepConstAttr>())
-//       return true;
-//   }
-
-//   return false;
-// }
-
 SourceLocation getLocationForTemplateArg(const CXXRecordDecl *Rd, unsigned I) {
 
   //mb: is slow to do this all over again, but is only when error needs to be reported
@@ -498,7 +474,8 @@ bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext
     return false;
   }
 
-  if(!isDeepConstType(ArgI, Context, Dh)) {
+  auto Kc = isDeepConstType(ArgI, Context, Dh);
+  if(!Kc ||!Kc.isOk()) {
     SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), i);
     Dh.diag(Sl, "template parameter " + std::to_string(i) + " is not [[deep_const]]");
     return false;
@@ -539,9 +516,10 @@ bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, const ClangTidyContext
         Dh.diag(Sl, "template parameter " + std::to_string(I) + " is not safe");
         return false;
       }
-      if(!isDeepConstType(Qt, Context, Dh)) {
+      auto Kc = isDeepConstType(Qt, Context, Dh); 
+      if(!Kc || !Kc.isOk()) {
         SourceLocation Sl = getLocationForTemplateArg(Rd, I);
-        Dh.diag(SourceLocation(), "template parameter " + std::to_string(I) + " is not [[deep_const]]");
+        Dh.diag(Sl, "template parameter " + std::to_string(I) + " is not [[deep_const]]");
         return false;
       }
     }
@@ -599,6 +577,32 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
 }
 
 
+bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
+
+  assert(Qt.isCanonical());
+
+  std::string Name = getQnameForSystemSafeDb(Qt);
+  if(!isOwningPtrName(Name))
+    return false;
+
+  QualType Arg = getTemplateArgType(Qt, 0);
+  auto Kc = isDeepConstType(Arg, Context, Dh);
+  if(!Kc)
+    return false;
+  else if(!Kc.isOk()) {
+    // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
+    // Dh.diag(Sl, "owned type is not [[deep_const]]");
+    return false;
+  }
+
+  if(!Arg.isConstQualified()) {
+    // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
+    // Dh.diag(Sl, "owned type must be 'const' for owning_ptr to meet deep_const requiremenst");
+    return false;
+  }
+
+  return true;
+}
 
 
 bool isSafePtrType(QualType Qt) {
@@ -905,7 +909,8 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   auto F = Dc->fields();
   for (auto It = F.begin(); It != F.end(); ++It) {
     auto Ft = (*It)->getType();
-    if (!isDeepConstType(Ft)) {
+    auto Kc = isDeepConstType(Ft);
+    if (!Kc || !Kc.isOk()) {
       if(!isSystemLoc || riia.getWasFalse()) {
         std::string Msg =
             "member '" + std::string((*It)->getName()) + "' is not deep const";
@@ -945,7 +950,8 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   for (auto It = B.begin(); It != B.end(); ++It) {
 
     auto Bt = It->getType();
-    if (!isDeepConstType(Bt)) {
+    auto Kc = isDeepConstType(Bt);
+    if (!Kc || !Kc.isOk()) {
       if(!isSystemLoc || riia.getWasFalse()) {
         Dh.diag((*It).getBaseTypeLoc(), "base class is not deep const");
       }
@@ -973,9 +979,11 @@ KindCheck TypeChecker::isDeepConstType(QualType Qt) {
   //   return false;
   // } else if (isLambdaType(Qt)) {
   //   return false;
+  } else if (isDeepConstOwningPtrType(Qt, Context, Dh)) {
+    return {true, true};
   } else if (isSafePtrType(Qt)) {
     return {false, false};
-  } else if (isNakedPointerType(Qt, Context)) {
+  } else if (isNakedPointerType(Qt, Context, Dh)) {
     return {false, false};
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isDeepConstRecord(Rd);

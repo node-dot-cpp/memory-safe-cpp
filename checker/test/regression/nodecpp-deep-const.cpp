@@ -21,12 +21,21 @@ struct [[nodecpp::deep_const]] BadDeepConst {
 
 
 template <class T>
-struct [[nodecpp::deep_const]] BadDeepConstTemplate {
+struct [[nodecpp::deep_const]] DeepConstTemplate {
     T t;
 };
 
 void func() {
 
-    BadDeepConstTemplate<soft_ptr<int>> b;
-// CHECK: :[[@LINE-1]]:41: error: unsafe deep_const attribute at variable declaration [deep-const]
+    DeepConstTemplate<soft_ptr<int>> b1;
+// CHECK: :[[@LINE-1]]:38: error: unsafe deep_const attribute at variable declaration [deep-const]
+
+    DeepConstTemplate<owning_ptr<DeepConst>> b2;
+// CHECK: :[[@LINE-1]]:46: error: unsafe deep_const attribute at variable declaration [deep-const]
+
+
+    DeepConstTemplate<owning_ptr<const DeepConst>> g1; //ok!
+
 }
+
+

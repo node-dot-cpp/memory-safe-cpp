@@ -26,6 +26,7 @@
 
 
 #include <set>
+#include <map>
 #include <string>
 #include <EAStdC/EAStopwatch.h>
 #include <stdlib.h>
@@ -56,10 +57,10 @@ namespace Benchmark
 	struct Environment
 	{
 		std::string msPlatform;       // Name of test platform (e.g. "Windows")
-		std::string msSTLName1;       // Name of competitor #1 (e.g. "EASTL").
-		std::string msSTLName2;       // Name of competitor #2 (e.g. "MS STL").
+		// std::string msSTLName1;       // Name of competitor #1 (e.g. "EASTL").
+		// std::string msSTLName2;       // Name of competitor #2 (e.g. "MS STL").
 
-		void clear() { msPlatform.clear(); msSTLName1.clear(); msSTLName2.clear(); }
+		void clear() { msPlatform.clear(); }
 	};
 
 	Environment& GetEnvironment();
@@ -73,20 +74,22 @@ namespace Benchmark
 	{
 		std::string       msName;    // Test name (e.g. "vector/insert").
 		int                  mUnits;    // Timing units (e.g. EA::StdC::Stopwatch::kUnitsSeconds).
-		int64_t              mTime1;    // Time of competitor #1.
-		uint64_t             mTime1NS;  // Nanoseconds.
-		int64_t              mTime2;    // Time of competitor #2.
-		int64_t              mTime2NS;  // Nanoseconds.
+		int64_t              mTime1 = 0;    // Time of competitor #1.
+		// uint64_t             mTime1NS = 0;  // Nanoseconds.
+		int64_t              mTime2 = 0;    // Time of competitor #2.
+		// int64_t              mTime2NS = 0;  // Nanoseconds.
+		int64_t              mTime3 = 0;    // Time of competitor #3.
+		int64_t              mTime4 = 0;    // Time of competitor #4.
+
 		std::string       msNotes;   // Any comments to attach to this result.
 
-		Result() : msName(), mUnits(EA::StdC::Stopwatch::kUnitsCPUCycles), 
-					mTime1(0), mTime1NS(0), mTime2(0), mTime2NS(0), msNotes() { }
+		Result() : mUnits(EA::StdC::Stopwatch::kUnitsCPUCycles) { }
 	};
 
 	inline bool operator<(const Result& r1, const Result& r2)
 		{ return r1.msName < r2.msName; } 
 
-	typedef std::set<Result> ResultSet;
+	typedef std::map<std::string, Result> ResultSet;
 
 	ResultSet& GetResultSet();
 
@@ -100,6 +103,7 @@ namespace Benchmark
 	//
 	void DoNothing(...);
 	void AddResult(const char* pName, int units, int64_t nTime1, int64_t nTime2, const char* pNotes = NULL);
+	void AddResult(const char* pName, int index, const EA::StdC::Stopwatch& sw, const char* pNotes = NULL);
 	void PrintResults();
 	std::string WriteTime(int64_t timeNS);
 	
