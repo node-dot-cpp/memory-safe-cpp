@@ -15,7 +15,7 @@ include(CTest)
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 
-#add_definitions(-D_CHAR16T)
+add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED)
 
 
 #-------------------------------------------------------------------------------------------
