@@ -110,7 +110,7 @@ public:
 	static
 	size_t calculateSize(size_t size) {
 		// TODO here we should fine tune the sizes of array_of2<T> 
-		return sizeof(array_of2<T>) + (sizeof(T) * size)
+		return sizeof(array_of2<T>) + (sizeof(T) * size);
 	}
 };
 
@@ -172,7 +172,7 @@ public:
 	static constexpr memory_safety is_safe = memory_safety::none;
 
 	// for non-const to const conversion
-	template<typename T, typename S>
+	template<typename, typename>
 	friend class safe_iterator_no_checks;
 
 private:
@@ -326,7 +326,7 @@ public:
 	static constexpr memory_safety is_safe = memory_safety::safe;
 
 	// for non-const to const conversion
-	template<typename T, typename S>
+	template<typename, typename>
 	friend class safe_iterator_impl;
 
 private:
