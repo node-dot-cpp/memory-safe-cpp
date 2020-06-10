@@ -537,9 +537,9 @@ int testWithLest( int argc, char * argv[] )
 			{
 				owning_ptr<StructureWithSoftIntPtr> opS = make_owning<StructureWithSoftIntPtr>();
 				auto ptr = &(opS->n);
-				EXPECT_NO_THROW( *(::safememory::dezombiefy(ptr)) = 17 );
+				EXPECT_NO_THROW( *(safememory::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-				EXPECT_THROWS( *(::safememory::dezombiefy(ptr)) = 27 );
+				EXPECT_THROWS( *(safememory::dezombiefy(ptr)) = 27 );
 			}
 		},
 
@@ -547,7 +547,7 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("massive referencing")
 			{
-				const size_t maxPtrs = 0x100000;
+				const size_t maxPtrs = 0x1000000;
 				soft_ptr<int>* sptrs = new soft_ptr<int>[maxPtrs];
 				owning_ptr<int> op = make_owning<int>();
 				for ( size_t i=0; i<maxPtrs; ++i )

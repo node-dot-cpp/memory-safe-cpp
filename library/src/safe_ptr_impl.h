@@ -30,6 +30,7 @@
 
 #include "safe_ptr_common.h"
 #include "../include/nodecpp_error/nodecpp_error.h"
+#include <safe_memory_error.h>
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
@@ -811,8 +812,6 @@ template<class _Ty,
 	return op;
 	}
 
-
-#define NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 
 #ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 //NODECPP_FORCEINLINE
