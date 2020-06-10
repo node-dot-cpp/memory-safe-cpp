@@ -27,18 +27,33 @@
 
 #ifndef SAFEMEMORY_UNORDERED_MAP_H
 #define SAFEMEMORY_UNORDERED_MAP_H
+
+namespace std {
+    template<class Key>
+    class hash {
+        size_t operator()(const Key&) {return 0;}
+    };
+
+    template<class Key>
+    class equal_to {
+        bool operator()(const Key&l, const Key&r) {return l == r;}
+    };
+}
+
 namespace safememory {
 
     template<class Key>
     class [[nodecpp::deep_const]] DefHash {
-        Key i;
+        [[nodecpp::no_side_effect]] size_t operator()(const Key&) {return 0;}
     };
 
     template<class Key>
-    class [[nodecpp::deep_const]] DefEq {};
+    class [[nodecpp::deep_const]] DefEq {
+        [[nodecpp::no_side_effect]] constexpr bool operator()(const Key&l, const Key&r) {return l == r;}
+    };
     
 
-    template<class Key, class T, class Hash = DefHash<Key>, class Eq = DefEq<Key>>
+    template<class Key, class T, class Hash = DefHash<Key>, class Eq = std::equal_to<Key>>
     class unordered_map {
 
     };

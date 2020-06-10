@@ -84,6 +84,7 @@ bool isOsnMethodName(const std::string& Name);
 bool isSoftPtrCastName(const std::string& Name);
 bool isWaitForAllName(const std::string& Name);
 bool isNodeBaseName(const std::string& Name);
+bool isStdHashOrEqualToName(const std::string& Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
@@ -118,13 +119,16 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagH
 
 // bool hasDeepConstAttr(const CXXRecordDecl* Decl);
 
-bool templateArgIsDeepConstSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);
 bool isNodecppErrorType(QualType Qt);

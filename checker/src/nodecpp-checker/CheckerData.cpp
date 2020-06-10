@@ -62,11 +62,22 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
     NoSideEffectFuncs.insert(D);
     return true;
   }
-  else if(auto M = dyn_cast<CXXMethodDecl>(D)) {
+  
+  auto M = dyn_cast<CXXMethodDecl>(D);
+  if(M) {
     if(M->isConst() &&
         M->getParent()->hasAttr<NodeCppNoSideEffectWhenConstAttr>()) {
       NoSideEffectFuncs.insert(D);
       return true;
+    }
+    //make implicit when std::hash and std::equal_to on operator()
+    if(M->isOverloadedOperator() && M->getOverloadedOperator() == OO_Call) {
+      auto Rd = M->getParent();
+      std::string Name = getQnameForSystemSafeDb(Rd);
+      if(isStdHashOrEqualToName(Name)) {
+        NoSideEffectFuncs.insert(D);
+        return true;
+      }
     }
   }
 
