@@ -144,7 +144,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/ALLOW: `soft_ptr<X*> px;`
   + All the functions from "project files" (those included via `#include ""`) are ok (even if they're labeled with [[nodecpp::memory_unsafe]]). It is a responsibility of the developers/architects to ensure that [[nodecpp::memory_unsafe]] functions are actually safe.
 * **[Rule S9]** nodecpp::awaitable<>/co_await consistency (necessary to prevent leaks). Corroutines must return `nodecpp::awaitable<>` only.
-  + **[Rule S9.1]** For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<> and NOT having `[[nodecpp::no_await]]` at their declaration, MUST be fed to `co_await` operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function `wait_for_all()`).
+  + **[Rule S9.1]** For any function f, ALL return values of ALL functions/coroutines returning nodecpp::awaitable<>  and NOT having `[[nodecpp::no_await]]` at their declaration, MUST be fed to `co_await` operator within the same function f, and without any conversions. In addition, such return values MUST NOT be copied, nor passsed to other functions (except for special function `wait_for_all()`).
     - TEST CASES/PROHIBIT: `af();`, `{ auto x = af(); }`, `int x = af();`, `auto x = af(); anothre_f(x); /* where another_f() takes nodecpp::awaitable<> */`, `auto x = af(); auto y = x;` 
     - TEST CASES/ALLOW: `co_await af();`, `int x = co_await af();`, `auto x = af(); auto y = af2(); co_await x; co_await y;`, `nodecpp::awaitable<int> x = af(); co_await x;`, `co_await wait_for_all(af(), af2())`
   + **[Rule S9.2]** All calls to library functions returning nodecpp::awaitable<> that DO have attribute [[nodecpp::no_await]] at their declaration can be optionally fed to co_await operator.
@@ -153,12 +153,29 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/PROHIBIT: `int j = (co_await af()) + 1;`, `if(co_await af()) { ... };`
     - TEST CASES/ALLOW: `int i = co_await af();`, `co_await af();`
 * **[Rule S10]** Prohibit using unsafe collections and iterators
-  + Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, nmust be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
+  - Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, must be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
     - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc; ` 
     - TEST CASES/ALLOW: `nodecpp::vector<...> v`, `nodecpp::string s`, etc; 
-  + **[Rule S10.1]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
+  - **[Rule S10.1]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
     - TEST CASES/PROHIBIT: `const char* s = "abc"; StringLiteral x = s;`, `void fsl(StringLiteral x) {} ... const char* s = "abc"; fsl(s);`
     - TEST CASES/ALLOW: `StringLiteral x = "abc";`, `void fsl(StringLiteral x) {} ... fsl("abc");`, `void fsl(StringLiteral x) {} ... StringLiteral x = "abc"; fsl(x);`
+
+  - **[Rule S10.2]** *deep_const* types, are those that given a const intance, they become inmutable in _deep_ (in the sence of shallow/deep copy). In C++ doing `const T t;` works as a _shallow const_, if T is a class having a member that is a pointer, then only the pointer itself is const but not the pointed object. The same shallow const semantics are followed by `owning_ptr`, `safe_ptr`, etc. *deep_const* types are primitives, `owning_ptr<const T>`, and classes with special mark-up `[[nodecpp::deep_const]]` and whose members and bases are all *deep_const*.
+    - **[Rule S10.2.1]** Special mark-up `[[nodecpp::deep_const_when_params]]` is allowed only at library code, to mark a template as *deep_const* if and only if all its template parameters are *deep_const*.
+    - TEST CASES/PROHIBIT: `class [[nodecpp::deep_const]] C { owning_ptr<int> oi; };` 
+    - TEST CASES/ALLOW: `class [[nodecpp::deep_const]] MyHash { int i = 0; owning_ptr<const int> oi; };`
+
+  - **[Rule S10.3]** *no_side_effect* functions, are those that don't do any side effect. Some local side effects are already checked by previous rules (i.e. no global variables), but most calls to the OS are also side effects (i.e. open files, read/write the network, read/write to the console, get current date/time). *no_side_effect* functions and methods have special mark-up `[[nodecpp::no_side_effect]]` and their body is checked so that only calls to other *no_side_effect* functions are allowed.
+    - **[Rule S10.3.1]** Special *no_side_effect* exception is granted to `TRACE` family of functions.
+    - **[Rule S10.3.2]** Special mark-up `[[nodecpp::no_side_effect_when_const]]` is allowed only at library code, to indicate that all `const` methods of a class, are also *no_side_effect*.
+    - TEST CASES/PROHIBIT: `[[nodecpp::no_side_effect]] void f() {fmt::print("hello!");}` 
+    - TEST CASES/ALLOW: `[[nodecpp::no_side_effect]] void f() { otherNoSideEffect(); TRACE("Done!");}`
+
+  - **[Rule S10.4]** hashed contaniner `unordered_map<Key, Value, Hash, KeyEqual>` must have a `Key` type parameter that is compatible with *deep_const* requirements. `Hash` and `KeyEqual` type parameters must be compatible also with *deep_const* requirements and both have a definition of `operator()` comptatible with *no_side_effect* requirements.
+    - **[Rule S10.4.1]** `std::hash` and `std::equal_to` are treated as implicit `[[nodecpp::deep_const]]` and their `operator()` as implicit `[[nodecpp::no_side_effect]]`.
+    - TEST CASES/PROHIBIT: `unordered_map<soft_ptr<int>, int> m;` 
+    - TEST CASES/ALLOW: `unordered_map<string, int> m;`, `class [[nodecpp::deep_const]] MyHash { [[nodecpp::no_side_effect]] size_t operator()(const Key& k) {...}}; unordered_map<Key, string, MyHash> m;`
+
 
 ### Determinism Checks (strictly - ensuring Same-Executable Determinism)
 
