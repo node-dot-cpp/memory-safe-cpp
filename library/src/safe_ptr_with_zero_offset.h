@@ -327,13 +327,14 @@ NODISCARD owning_ptr_base_impl<_Ty> make_owning_base_impl(_Types&&... _Args)
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
+	owning_ptr_base_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	try {
-		_Ty* objPtr = new (dataForObj) _Ty(::std::forward<_Types>(_Args)...);
-		owning_ptr_base_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+		new (dataForObj) _Ty(::std::forward<_Types>(_Args)...);
 		thg_stackPtrForMakeOwningCall = stackTmp;
 		return op;
 	}
 	catch (...) {
+		killUnderconsructedOP( op );
 		thg_stackPtrForMakeOwningCall = stackTmp;
 		zombieDeallocate(data);
 		throw;

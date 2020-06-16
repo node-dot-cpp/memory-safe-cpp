@@ -77,7 +77,8 @@ inline
 void throwPointerOutOfRange()
 {
 	// TODO: actual implementation
-	throw std::bad_alloc();
+//	throw std::bad_alloc();
+		throw ::nodecpp::error::out_of_range;
 }
 
 
@@ -486,6 +487,9 @@ class owning_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
+	template<class T>
+	friend void killUnderconsructedOP( owning_ptr_base_impl<T>& );
+
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_ptr_with_zombie_property_; 
 #else
@@ -796,6 +800,9 @@ public:
 	}
 };
 
+template<class T>
+void killUnderconsructedOP( owning_ptr_base_impl<T>& p ) { p.t.setPtr( nullptr ); }
+
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
@@ -805,14 +812,14 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
-	_Ty* objPtr;
+	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	try { 
-		objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-		owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+		new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
 		thg_stackPtrForMakeOwningCall = stackTmp;
 		return op;
 	}
 	catch( ... ) {
+		killUnderconsructedOP( op );
 		thg_stackPtrForMakeOwningCall = stackTmp;
 		zombieDeallocate(data);
 		throw;
