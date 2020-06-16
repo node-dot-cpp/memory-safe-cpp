@@ -808,15 +808,15 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	_Ty* objPtr;
 	try { 
 		objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+		owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		return op;
 	}
 	catch( ... ) {
 		thg_stackPtrForMakeOwningCall = stackTmp;
 		zombieDeallocate(data);
 		throw;
 	}
-	thg_stackPtrForMakeOwningCall = stackTmp;
-	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
-	return op;
 }
 
 
