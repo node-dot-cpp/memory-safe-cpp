@@ -799,18 +799,25 @@ public:
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
-	{
+NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
+{
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
-	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-	thg_stackPtrForMakeOwningCall = stackTmp;
-	//return owning_ptr_impl<_Ty>(objPtr);
-	return op;
+	_Ty* objPtr;
+	try { 
+		objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
 	}
+	catch( ... ) {
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		zombieDeallocate(data);
+		throw;
+	}
+	thg_stackPtrForMakeOwningCall = stackTmp;
+	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	return op;
+}
 
 
 #ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
