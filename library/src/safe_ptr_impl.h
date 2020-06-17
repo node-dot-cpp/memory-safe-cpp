@@ -1158,7 +1158,7 @@ public:
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-		dbgObjectStatus = other.dbgObjectStatus;
+		dbgObjectStatus = std::move( other.dbgObjectStatus );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 
@@ -1207,7 +1207,7 @@ public:
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-		dbgObjectStatus = other.dbgObjectStatus;
+		dbgObjectStatus = std::move( other.dbgObjectStatus );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
@@ -1292,7 +1292,7 @@ public:
 
 	soft_ptr_base_impl( std::nullptr_t nulp ) {
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-		dbgObjectStatus.creationInfo.init();
+		dbgObjectStatus.creationInfo.init( DbgCreationInfo::Origination::inizero );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 	soft_ptr_base_impl& operator = ( std::nullptr_t nulp )
