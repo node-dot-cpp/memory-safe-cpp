@@ -133,6 +133,14 @@ struct DbgDestructionInfo
 		destructionPoint.init(); 
 		destruction = d;
 	}
+	void swap( DbgDestructionInfo& other ) {
+		auto tmpo = destruction;
+		destruction = other.destruction;
+		other.destruction = tmpo;
+		nodecpp::StackInfo tmpc( std::move( destructionPoint ) );
+		destructionPoint = std::move( other.destructionPoint );
+		other.destructionPoint = std::move( tmpc );
+	}
 	std::string toStr() const {
 		if ( nodecpp::impl::isDataStackInfo( destructionPoint ) )
 			return fmt::format( "\tObject has been deleted via {} at {} here:\n{}\n", destructionStr[destruction], nodecpp::impl::whenTakenStackInfo( destructionPoint ), nodecpp::impl::whereTakenStackInfo( destructionPoint ).c_str() );
@@ -144,6 +152,10 @@ struct DbgCreationAndDestructionInfo
 {
 	DbgCreationInfo creationInfo;
 	DbgDestructionInfo destructionInfo;
+	void swap( DbgCreationAndDestructionInfo& other ) {
+		creationInfo.swap( other. creationInfo );
+		destructionInfo.swap( other. destructionInfo );
+	}
 	std::string toStr() const {
 		return creationInfo.toStr() + destructionInfo.toStr();
 	}
@@ -1043,6 +1055,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 	template<class T1>
 	soft_ptr_base_impl<T>& operator = ( const soft_ptr_base_impl<T1>& other )
@@ -1061,6 +1076,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
 	soft_ptr_base_impl( const soft_ptr_base_impl<T>& other )
@@ -1077,6 +1095,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>& other )
 	{
@@ -1094,6 +1115,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
 
@@ -1133,6 +1157,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 
 	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>&& other )
@@ -1179,6 +1206,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
 
@@ -1235,6 +1265,9 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 	soft_ptr_base_impl( const soft_ptr_base_impl<T>& other, T* t_ )
 	{
@@ -1252,12 +1285,22 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 
-	soft_ptr_base_impl( std::nullptr_t nulp ) {}
+	soft_ptr_base_impl( std::nullptr_t nulp ) {
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus.creationInfo.init();
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+	}
 	soft_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus.destructionInfo.init( DbgDestructionInfo::Destruction::nulling );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		return *this;
 	}
 
@@ -1316,6 +1359,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+		dbgObjectStatus.swap( other.dbgObjectStatus );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 	}
 
 	nullable_ptr_impl<T> get() const
