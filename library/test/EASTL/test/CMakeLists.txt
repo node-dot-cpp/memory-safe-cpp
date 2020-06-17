@@ -28,8 +28,10 @@ include(CommonCppFlags)
 #	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 #endif()
 
+
 if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pointer-bool-conversion -Wno-unknown-warning-option")
+    # Remove warnings from EA libraries (used for tests and benchmarks only)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pointer-bool-conversion -Wno-unknown-warning-option -Wno-deprecated-declarations -Wno-ignored-pragma-optimize -Wno-microsoft-cast")
 endif()
 
 #-------------------------------------------------------------------------------------------

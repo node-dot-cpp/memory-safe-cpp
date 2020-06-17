@@ -101,17 +101,17 @@ namespace
 		uint64_t mnStopwatchCycleReadingOverhead(0);
 	#endif
 
-	#if defined(EA_PLATFORM_MICROSOFT)
-		void EAStdCThreadSleep(int ms)
-		{
-			#if (defined(EA_PLATFORM_WINDOWS) && !EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP)) || defined(EA_PLATFORM_WINDOWS_PHONE)
-				std::chrono::milliseconds duration(ms);
-				std::this_thread::sleep_for(duration);
-			#else
-				::SleepEx((DWORD)ms, TRUE);
-			#endif
-		}
-	#endif
+	// #if defined(EA_PLATFORM_MICROSOFT)
+	// 	void EAStdCThreadSleep(int ms)
+	// 	{
+	// 		#if (defined(EA_PLATFORM_WINDOWS) && !EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP)) || defined(EA_PLATFORM_WINDOWS_PHONE)
+	// 			std::chrono::milliseconds duration(ms);
+	// 			std::this_thread::sleep_for(duration);
+	// 		#else
+	// 			::SleepEx((DWORD)ms, TRUE);
+	// 		#endif
+	// 	}
+	// #endif
 }
 
 

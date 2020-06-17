@@ -87,7 +87,7 @@ EA_DISABLE_VC_WARNING(6312 6322)
 
 				EAThreadGlobalVars() {}
 				EAThreadGlobalVars(const EAThreadGlobalVars&) {}
-				EAThreadGlobalVars& operator=(const EAThreadGlobalVars&) {}
+				EAThreadGlobalVars& operator=(const EAThreadGlobalVars&) { return *this; }
 			};
 			EATHREAD_GLOBALVARS_CREATE_INSTANCE;
 
@@ -202,8 +202,8 @@ EA_DISABLE_VC_WARNING(6312 6322)
 		, mnStackSize(0)
 		, mnPriority(kThreadPriorityDefault)
 		, mnProcessor(kProcessorDefault)
-		, mnAffinityMask(kThreadAffinityMaskAny)
 		, mpName("")
+		, mnAffinityMask(kThreadAffinityMaskAny)
 		, mbDisablePriorityBoost(false)
 	{
 	}
