@@ -666,10 +666,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
-			updatePtrForListItemsWithInvalidPtr();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::dtoring );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setZombie();
@@ -683,10 +683,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
-			updatePtrForListItemsWithInvalidPtr();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::resetting );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setPtr( nullptr );
