@@ -499,8 +499,8 @@ class owning_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
-	template<class T>
-	friend void killUnderconsructedOP( owning_ptr_base_impl<T>& );
+	template<class TT>
+	friend void killUnderconsructedOP( owning_ptr_base_impl<TT>& );
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_ptr_with_zombie_property_; 
