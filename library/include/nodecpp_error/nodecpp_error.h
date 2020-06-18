@@ -30,9 +30,9 @@
 
 #include <platform_base.h>
 #include <error.h>
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 #include <stack_info.h>
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 #include <fmt/format.h>
 
 #include <cerrno>  // for error constants
@@ -47,20 +47,20 @@ namespace nodecpp::error {
 	{
 		friend class nodecpp_error_domain;
 		NODECPP_EXCEPTION errorCode;
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		::nodecpp::StackInfo stackInfo;
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		string_ref extra;
 	public:
 		nodecpp_error_value( NODECPP_EXCEPTION code ) : errorCode( code ), extra( string_ref::literal_tag_t(), "" ) { 
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			stackInfo.init();
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		}
 		nodecpp_error_value( NODECPP_EXCEPTION code, string_ref&& extra_ ) : errorCode( code ), extra( std::move( extra_ ) ) {
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			stackInfo.init();
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		}
 		nodecpp_error_value( const nodecpp_error_value& other ) = default;
 		nodecpp_error_value& operator = ( const nodecpp_error_value& other ) = default;
@@ -87,20 +87,20 @@ namespace nodecpp::error {
 					std::string s;
 					if ( !myData->extra.empty() )
 					{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 						if ( ::nodecpp::impl::isDataStackInfo( myData->stackInfo ) )
 							s = fmt::format("Attempt to dereference a null pointer at\n{}\n{}", ::nodecpp::impl::whereTakenStackInfo( myData->stackInfo ).c_str(), myData->extra.c_str());
 						else
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 							s = fmt::format("Attempt to dereference a null pointer\n{}", myData->extra.c_str());
 					}
 					else
 					{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 						if ( ::nodecpp::impl::isDataStackInfo( myData->stackInfo ) )
 							s = fmt::format("Attempt to dereference a null pointer at\n{}", ::nodecpp::impl::whereTakenStackInfo( myData->stackInfo ).c_str() );
 						else
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 							s = fmt::format("Attempt to dereference a null pointer" );
 					}
 					return string_ref( s.c_str() );
