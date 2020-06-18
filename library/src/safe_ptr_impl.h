@@ -104,8 +104,8 @@ struct DbgCreationInfo
 		origination = Origination::movedin;
 		return *this;
 	}
-	void init( Origination o ) { 
-		creationPoint.init(); 
+	void init( Origination o, const char* call2strip = nullptr ) { 
+		creationPoint.init( call2strip ); 
 		origination = o;
 	}
 	void swap( DbgCreationInfo& other ) {
@@ -129,8 +129,8 @@ struct DbgDestructionInfo
 	Destruction destruction = Destruction::alive;
 	static constexpr const char* destructionStr[] = { "", "destructing its owning_ptr<>", "resetting its own_ptr<>", "nulling its owning_ptr<>" };
 	nodecpp::StackInfo destructionPoint;
-	void init( Destruction d ) { 
-		destructionPoint.init(); 
+	void init( Destruction d, const char* call2strip = nullptr ) { 
+		destructionPoint.init( call2strip ); 
 		destruction = d;
 	}
 	void swap( DbgDestructionInfo& other ) {
@@ -523,7 +523,7 @@ class owning_ptr_base_impl
 	void dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction reason )
 	{
 		DbgDestructionInfo destructionInfo;
-		destructionInfo.init( reason );
+		destructionInfo.init( reason, "dbgSetDestructionPointInfo" );
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
