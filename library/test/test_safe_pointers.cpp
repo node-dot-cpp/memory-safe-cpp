@@ -537,9 +537,9 @@ int testWithLest( int argc, char * argv[] )
 			{
 				owning_ptr<StructureWithSoftIntPtr> opS = make_owning<StructureWithSoftIntPtr>();
 				auto ptr = &(opS->n);
-				EXPECT_NO_THROW( *(::safememory::dezombiefy(ptr)) = 17 );
+				EXPECT_NO_THROW( *(safe_memory::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-				EXPECT_THROWS( *(::safememory::dezombiefy(ptr)) = 27 );
+				EXPECT_THROWS( *(safe_memory::dezombiefy(ptr)) = 27 );
 			}
 		},
 

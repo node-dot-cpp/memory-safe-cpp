@@ -68,7 +68,7 @@
 //#include <EASTL/allocator.h>
 //#include <safe_memory/EASTL/iterator.h>
 #include <iterator>
-#include <safe_memory/safe_ptr2.h>
+#include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <functional>
 #include <utility>
