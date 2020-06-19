@@ -4,7 +4,7 @@
 
 
 #include "EASTLTest.h"
-#include <safememory/unordered_set.h>
+#include <safe_memory/unordered_set.h>
 #include <vector>
 #include <algorithm>
 #include <type_traits>
@@ -19,7 +19,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
-using safememory::detail::use_self;
+using safe_memory::detail::use_self;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestSetConstruction

@@ -278,7 +278,7 @@
 
 
 
-namespace safememory
+namespace safe_memory
 {
 
 	// ///////////////////////////////////////////////////////////////////////
@@ -1076,7 +1076,7 @@ namespace safememory
 	// };
 	// EA_RESTORE_VC_WARNING();
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 // The following files implement the type traits themselves.

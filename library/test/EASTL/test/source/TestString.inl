@@ -838,7 +838,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			safememory::string str2(EA_CHAR8("123456789"));
+			safe_memory::string str2(EA_CHAR8("123456789"));
 
 			str.assign_convert(str2);
 			VERIFY(str == LITERAL("123456789"));
@@ -848,7 +848,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR16)
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			safememory::basic_string<char16_t> str2(EA_CHAR16("123456789"));
+			safe_memory::basic_string<char16_t> str2(EA_CHAR16("123456789"));
 
 			str.assign_convert(str2);
 			VERIFY(str == LITERAL("123456789"));
@@ -858,7 +858,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR32)
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			safememory::basic_string<char32_t> str2(EA_CHAR32("123456789"));
+			safe_memory::basic_string<char32_t> str2(EA_CHAR32("123456789"));
 
 			str.assign_convert(str2);
 			VERIFY(str == LITERAL("123456789"));
@@ -868,7 +868,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_WCHAR)
 		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		    safememory::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
+		    safe_memory::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
 
 		    str.assign_convert(str2);
 		    VERIFY(str == LITERAL("123456789"));
@@ -1340,7 +1340,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str; 
-			str.append_convert(safememory::string(EA_CHAR8("123456789")));
+			str.append_convert(safe_memory::string(EA_CHAR8("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -1348,7 +1348,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR16)
 			StringType str; 
-			str.append_convert(safememory::string16(EA_CHAR16("123456789")));
+			str.append_convert(safe_memory::string16(EA_CHAR16("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -1356,7 +1356,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR32)
 			StringType str; 
-			str.append_convert(safememory::string32(EA_CHAR32("123456789")));
+			str.append_convert(safe_memory::string32(EA_CHAR32("123456789")));
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif

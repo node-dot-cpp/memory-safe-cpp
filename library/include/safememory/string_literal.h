@@ -29,7 +29,7 @@
 #define SAFEMEMORY_STRING_LITERAL_H
 
 
-namespace safememory
+namespace safe_memory
 {
 	template<typename T>
 	class basic_string_literal
@@ -59,6 +59,6 @@ namespace safememory
 	typedef basic_string_literal<char16_t> string16_literal;
 	typedef basic_string_literal<char32_t> string32_literal;
 
-} //namespace safememory
+} //namespace safe_memory
 
 #endif //SAFEMEMORY_STRING_LITERAL_H

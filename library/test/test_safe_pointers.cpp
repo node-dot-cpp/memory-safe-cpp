@@ -37,7 +37,7 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 #include <safe_ptr_with_zero_offset.h>
-#include <safememory/dezombiefy.h>
+#include <safe_memory/dezombiefy.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion

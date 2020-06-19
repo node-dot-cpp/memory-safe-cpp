@@ -35,14 +35,14 @@
 #ifndef SAFEMEMORY_EASTL_UNORDERED_MAP_H
 #define SAFEMEMORY_EASTL_UNORDERED_MAP_H
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/hash_map.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/hash_map.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-namespace safememory
+namespace safe_memory
 {
 	/// unordered_map 
 	///
@@ -78,7 +78,7 @@ namespace safememory
 		using unordered_multimap = detail::hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
     #endif
 
-} // namespace safememory
+} // namespace safe_memory
 
 #endif // Header include guard
 

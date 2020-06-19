@@ -1,19 +1,19 @@
 
-#include <safememory/string.h>
+#include <safe_memory/string.h>
 #include <fmt/printf.h>
 #include <fmt/format.h>
-#include <safememory/string_format.h>
+#include <safe_memory/string_format.h>
 
 #include <iostream>
 
-namespace sm = safememory;
+namespace sm = safe_memory;
 
 int main() {
 
     sm::string_literal lit = "hola mundo";
     sm::string s = sm::string_literal("hola mundo");
     sm::string s2("hola mundo");
-//    safememory::string s3 = "hola mundo"; //error
+//    safe_memory::string s3 = "hola mundo"; //error
 
     s.append("! - ");
 

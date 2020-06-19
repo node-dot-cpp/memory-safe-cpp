@@ -33,7 +33,7 @@
 
 #include "../../src/safe_ptr.h"
 
-namespace safememory {
+namespace safe_memory {
 
 using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;

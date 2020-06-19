@@ -120,14 +120,14 @@
 #ifndef SAFEMEMORY_EASTL_STRING_H
 #define SAFEMEMORY_EASTL_STRING_H
 
-#include <safememory/EASTL/internal/__undef_macros.h>
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/detail/safe_alloc.h>
-#include <safememory/string_literal.h>
+#include <safe_memory/EASTL/internal/__undef_macros.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/detail/safe_alloc.h>
+#include <safe_memory/string_literal.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
-//#include <safememory/EASTL/iterator.h>
+//#include <safe_memory/EASTL/iterator.h>
 #include <algorithm>
 #include <initializer_list>
 //#include <EASTL/bonus/compressed_pair.h>
@@ -167,7 +167,7 @@
 #endif
 
 
-#include <safememory/EASTL/internal/char_traits.h>
+#include <safe_memory/EASTL/internal/char_traits.h>
 //#include <string_view>
 
 
@@ -275,7 +275,7 @@
 
 
 
-namespace safememory
+namespace safe_memory
 {
 
 	/// EASTL_BASIC_STRING_DEFAULT_NAME
@@ -3846,7 +3846,7 @@ namespace safememory
 	// inline void basic_string<T, Safety>::DoFree(pointer p, size_type n)
 	// {
 	// 	if(p)
-	// 		safememory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
+	// 		safe_memory::lib_helpers::EASTLFree(/*get_allocator(), */p, n * sizeof(value_type));
 	// }
 
 
@@ -4736,7 +4736,7 @@ namespace safememory
 	// 	EA_RESTORE_VC_WARNING()  // warning: 4455
 	// #endif
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 #ifdef _MSC_VER

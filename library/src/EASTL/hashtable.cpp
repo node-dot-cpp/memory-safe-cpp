@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <safememory/EASTL/internal/hashtable.h>
+#include <safe_memory/EASTL/internal/hashtable.h>
 #include <utility>
 #include <math.h>  // Not all compilers support <cmath> and std::ceilf(), which we need below.
 #include <stddef.h>
@@ -44,7 +44,7 @@
 #endif
 
 
-namespace safememory::detail
+namespace safe_memory::detail
 {
 
 	/// gpEmptyBucketArray
@@ -204,7 +204,7 @@ namespace safememory::detail
 	}
 
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 

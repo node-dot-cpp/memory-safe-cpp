@@ -62,18 +62,18 @@
 #ifndef SAFEMEMORY_EASTL_VECTOR_H
 #define SAFEMEMORY_EASTL_VECTOR_H
 
-#include <safememory/EASTL/internal/__undef_macros.h>
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/detail/safe_alloc.h>
+#include <safe_memory/EASTL/internal/__undef_macros.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/detail/safe_alloc.h>
 //#include <EASTL/allocator.h>
-//#include <safememory/EASTL/type_traits.h>
+//#include <safe_memory/EASTL/type_traits.h>
 #include <type_traits>
-//#include <safememory/EASTL/iterator.h>
+//#include <safe_memory/EASTL/iterator.h>
 #include <iterator>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
-//#include <safememory/EASTL/memory.h>
+//#include <safe_memory/EASTL/memory.h>
 #include <memory>
 //#include <EASTL/bonus/compressed_pair.h>
 
@@ -109,7 +109,7 @@
 // 	#endif
 // #endif
 
-namespace safememory
+namespace safe_memory
 {
 
 	/// EASTL_VECTOR_DEFAULT_NAME
@@ -2589,7 +2589,7 @@ namespace safememory
 	}
 
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 #ifdef _MSC_VER

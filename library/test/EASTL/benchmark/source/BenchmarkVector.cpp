@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 #include <EAStdC/EAStopwatch.h>
 #include <algorithm>
-#include <safememory/vector.h>
+#include <safe_memory/vector.h>
 #include <EASTL/vector.h>
 
 #ifdef _MSC_VER
@@ -28,7 +28,7 @@ using EA::StdC::Stopwatch;
 
 
 typedef std::vector<uint64_t>     StdVectorUint64;
-typedef safememory::vector<uint64_t>   EaVectorUint64;
+typedef safe_memory::vector<uint64_t>   EaVectorUint64;
 
 
 namespace
@@ -423,10 +423,10 @@ template<class T>
 using EastlVec = eastl::vector<T>;
 
 template<class T>
-using SafeVec = safememory::vector<T, safememory::memory_safety::safe>;
+using SafeVec = safe_memory::vector<T, safe_memory::memory_safety::safe>;
 
 template<class T>
-using UnsafeVec = safememory::vector<T, safememory::memory_safety::none>;
+using UnsafeVec = safe_memory::vector<T, safe_memory::memory_safety::none>;
 
 
 void BenchmarkVector()

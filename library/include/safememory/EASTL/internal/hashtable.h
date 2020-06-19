@@ -62,14 +62,14 @@
 	#pragma once
 #endif
 
-#include <safememory/EASTL/internal/config.h>
-//#include <safememory/EASTL/type_traits.h>
+#include <safe_memory/EASTL/internal/config.h>
+//#include <safe_memory/EASTL/type_traits.h>
 #include <type_traits>
 //#include <EASTL/allocator.h>
-//#include <safememory/EASTL/iterator.h>
+//#include <safe_memory/EASTL/iterator.h>
 #include <iterator>
-#include <safememory/safe_ptr2.h>
-#include <safememory/detail/safe_alloc.h>
+#include <safe_memory/safe_ptr2.h>
+#include <safe_memory/detail/safe_alloc.h>
 #include <functional>
 #include <utility>
 #include <algorithm>
@@ -90,7 +90,7 @@
 #endif
 
 
-namespace safememory::detail
+namespace safe_memory::detail
 {
 
 	/// EASTL_HASHTABLE_DEFAULT_NAME
@@ -3446,7 +3446,7 @@ namespace safememory::detail
 	}
 
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 #ifdef _MSC_VER

@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 #include <EAStdC/EAStopwatch.h>
 // #include <EASTL/vector.h>
-#include <safememory/unordered_map.h>
+#include <safe_memory/unordered_map.h>
 #include <EASTL/unordered_map.h>
 #include <vector>
 #include <string>
@@ -435,16 +435,16 @@ template<class K, class V, class H>
 using EastlMap2 = eastl::unordered_map<K, V, H>;
 
 template<class K, class V>
-using SafeMap1 = safememory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safememory::memory_safety::safe>;
+using SafeMap1 = safe_memory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V, class H>
-using SafeMap2 = safememory::unordered_map<K, V, H, std::equal_to<K>, safememory::memory_safety::safe>;
+using SafeMap2 = safe_memory::unordered_map<K, V, H, std::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V>
-using UnsafeMap1 = safememory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safememory::memory_safety::none>;
+using UnsafeMap1 = safe_memory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safe_memory::memory_safety::none>;
 
 template<class K, class V, class H>
-using UnsafeMap2 = safememory::unordered_map<K, V, H, std::equal_to<K>, safememory::memory_safety::none>;
+using UnsafeMap2 = safe_memory::unordered_map<K, V, H, std::equal_to<K>, safe_memory::memory_safety::none>;
 
 void BenchmarkHash()
 {

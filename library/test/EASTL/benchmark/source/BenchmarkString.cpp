@@ -8,7 +8,7 @@
 #include <EAStdC/EAStopwatch.h>
 #include <algorithm>
 #include <string>
-#include <safememory/string.h>
+#include <safe_memory/string.h>
 #include <EASTL/string.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
@@ -18,7 +18,7 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdlib.h>
 EA_RESTORE_ALL_VC_WARNINGS()
 
-// namespace safememory {
+// namespace safe_memory {
 // 	template<class T>
 // 	using basic_string = std::basic_string<T>;
 
@@ -486,11 +486,11 @@ void BenchmarkString()
 	typedef eastl::basic_string<char8_t> Ea8;
 	typedef eastl::basic_string<char16_t> Ea16;
 
-	typedef safememory::basic_string<char8_t, safememory::memory_safety::safe> Safe8;
-	typedef safememory::basic_string<char16_t, safememory::memory_safety::safe> Safe16;
+	typedef safe_memory::basic_string<char8_t, safe_memory::memory_safety::safe> Safe8;
+	typedef safe_memory::basic_string<char16_t, safe_memory::memory_safety::safe> Safe16;
 
-	typedef safememory::basic_string<char8_t, safememory::memory_safety::none> Unsafe8;
-	typedef safememory::basic_string<char16_t, safememory::memory_safety::none> Unsafe16;
+	typedef safe_memory::basic_string<char8_t, safe_memory::memory_safety::none> Unsafe8;
+	typedef safe_memory::basic_string<char16_t, safe_memory::memory_safety::none> Unsafe16;
 
 	BenchmarkStringTempl<1, Std8, Std16>();
 	BenchmarkStringTempl<2, Ea8, Ea16>();

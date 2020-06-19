@@ -28,6 +28,6 @@
 #ifndef SAFEMEMORY_VECTOR_H
 #define SAFEMEMORY_VECTOR_H
 
-#include <safememory/EASTL/vector.h>
+#include <safe_memory/EASTL/vector.h>
 
 #endif //SAFEMEMORY_VECTOR_H

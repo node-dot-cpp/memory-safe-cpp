@@ -4,7 +4,7 @@
 
 
 #include "EASTLTest.h"
-#include <safememory/unordered_map.h>
+#include <safe_memory/unordered_map.h>
 #include <vector>
 #include <algorithm>
 #include <type_traits>
@@ -18,7 +18,7 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
-using safememory::detail::use_first;
+using safe_memory::detail::use_first;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestMapConstruction

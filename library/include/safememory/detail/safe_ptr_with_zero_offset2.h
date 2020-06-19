@@ -33,7 +33,7 @@
 
 #include "../../../src/safe_ptr_with_zero_offset.h"
 
-namespace safememory::detail {
+namespace safe_memory::detail {
 
 using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
 

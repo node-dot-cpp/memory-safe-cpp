@@ -5,7 +5,7 @@
 #ifndef CONCEPTSIMPLS_H
 #define CONCEPTSIMPLS_H
 
-#include <safememory/EASTL/type_traits.h>
+#include <safe_memory/EASTL/type_traits.h>
 
 #if !defined(EA_COMPILER_NO_DEFAULTED_FUNCTIONS) && !defined(EA_COMPILER_NO_DELETED_FUNCTIONS)
 

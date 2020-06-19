@@ -35,14 +35,14 @@
 #ifndef SAFEMEMORY_EASTL_UNORDERED_SET_H
 #define SAFEMEMORY_EASTL_UNORDERED_SET_H
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/hash_set.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/hash_set.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-namespace safememory
+namespace safe_memory
 {
 
 	/// unordered_set 

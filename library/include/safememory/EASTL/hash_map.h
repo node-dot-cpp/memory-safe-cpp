@@ -45,10 +45,10 @@
 #define SAFEMEMORY_EASTL_HASH_MAP_H
 
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/internal/hashtable.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safememory/EASTL/utility.h>
+//#include <safe_memory/EASTL/utility.h>
 #include <utility>
 
 // #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -57,7 +57,7 @@
 
 
 
-namespace safememory::detail
+namespace safe_memory::detail
 {
 
 	/// EASTL_HASH_MAP_DEFAULT_NAME
@@ -570,7 +570,7 @@ namespace safememory::detail
 	}
 
 
-} // namespace safememory::detail
+} // namespace safe_memory::detail
 
 
 #endif // Header include guard

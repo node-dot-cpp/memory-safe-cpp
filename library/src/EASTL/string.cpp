@@ -33,13 +33,13 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/string.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/string.h>
 //#include <EABase/eabase.h>
 #include <string.h>
 
 
-namespace safememory
+namespace safe_memory
 {
 	///////////////////////////////////////////////////////////////////////////////
 	// Converters for DecodePart
@@ -477,7 +477,7 @@ namespace safememory
 
 
 
-} // namespace safememory
+} // namespace safe_memory
 
 
 
