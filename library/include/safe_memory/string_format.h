@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_STRING_FORMAT_H
-#define SAFEMEMORY_STRING_FORMAT_H
+#ifndef SAFE_MEMORY_STRING_FORMAT_H
+#define SAFE_MEMORY_STRING_FORMAT_H
 
 #include <safe_memory/string.h>
 #include <safe_memory/string_literal.h>
@@ -67,4 +67,4 @@ std::basic_ostream<T>& operator<<(std::basic_ostream<T>& os, const safe_memory::
   return os << sview;
 }
 
-#endif //SAFEMEMORY_STRING_FORMAT_H
+#endif //SAFE_MEMORY_STRING_FORMAT_H

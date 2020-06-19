@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_DETAIL_SAFE_ALLOC_H
-#define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
+#ifndef SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
+#define SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_memory/safe_ptr2.h>
 #include <safe_memory/detail/safe_ptr_with_zero_offset2.h>
@@ -561,4 +561,4 @@ struct _Range_verifiable<sfd::safe_iterator_impl<T, Arr>, sfd::safe_iterator_imp
 #endif //NODECPP_WINDOWS
 
 
-#endif // SAFEMEMORY_DETAIL_SAFE_ALLOC_H
+#endif // SAFE_MEMORY_DETAIL_SAFE_ALLOC_H

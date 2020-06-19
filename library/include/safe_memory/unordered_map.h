@@ -25,9 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_UNORDERED_MAP_H
-#define SAFEMEMORY_UNORDERED_MAP_H
+#ifndef SAFE_MEMORY_UNORDERED_MAP_H
+#define SAFE_MEMORY_UNORDERED_MAP_H
 
 #include <safe_memory/EASTL/unordered_map.h>
 
-#endif //SAFEMEMORY_UNORDERED_MAP_H
+#endif //SAFE_MEMORY_UNORDERED_MAP_H

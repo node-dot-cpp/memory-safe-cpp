@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_STRING_LITERAL_H
-#define SAFEMEMORY_STRING_LITERAL_H
+#ifndef SAFE_MEMORY_STRING_LITERAL_H
+#define SAFE_MEMORY_STRING_LITERAL_H
 
 
 namespace safe_memory
@@ -61,4 +61,4 @@ namespace safe_memory
 
 } //namespace safe_memory
 
-#endif //SAFEMEMORY_STRING_LITERAL_H
+#endif //SAFE_MEMORY_STRING_LITERAL_H

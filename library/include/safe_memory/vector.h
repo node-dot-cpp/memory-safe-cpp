@@ -25,9 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_VECTOR_H
-#define SAFEMEMORY_VECTOR_H
+#ifndef SAFE_MEMORY_VECTOR_H
+#define SAFE_MEMORY_VECTOR_H
 
 #include <safe_memory/EASTL/vector.h>
 
-#endif //SAFEMEMORY_VECTOR_H
+#endif //SAFE_MEMORY_VECTOR_H

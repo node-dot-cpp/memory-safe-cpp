@@ -41,8 +41,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_HASH_SET_H
-#define SAFEMEMORY_EASTL_HASH_SET_H
+#ifndef SAFE_MEMORY_EASTL_HASH_SET_H
+#define SAFE_MEMORY_EASTL_HASH_SET_H
 
 
 #include <safe_memory/EASTL/internal/config.h>

@@ -117,8 +117,8 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_STRING_H
-#define SAFEMEMORY_EASTL_STRING_H
+#ifndef SAFE_MEMORY_EASTL_STRING_H
+#define SAFE_MEMORY_EASTL_STRING_H
 
 #include <safe_memory/EASTL/internal/__undef_macros.h>
 #include <safe_memory/EASTL/internal/config.h>

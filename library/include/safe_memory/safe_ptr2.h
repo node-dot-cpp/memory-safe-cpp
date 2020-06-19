@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_SAFE_PTR_H
-#define SAFEMEMORY_SAFE_PTR_H
+#ifndef SAFE_MEMORY_SAFE_PTR_H
+#define SAFE_MEMORY_SAFE_PTR_H
 
 //mb: temporary hack, until we move all files to their definitive location
 // and rename namespaces acordingly
@@ -45,4 +45,4 @@ using ::nodecpp::safememory::safeness_declarator;
 }
 
 
-#endif //SAFEMEMORY_SAFE_PTR_H
+#endif //SAFE_MEMORY_SAFE_PTR_H

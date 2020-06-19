@@ -25,9 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_STRING_H
-#define SAFEMEMORY_STRING_H
+#ifndef SAFE_MEMORY_STRING_H
+#define SAFE_MEMORY_STRING_H
 
 #include <safe_memory/EASTL/string.h>
 
-#endif //SAFEMEMORY_STRING_H
+#endif //SAFE_MEMORY_STRING_H

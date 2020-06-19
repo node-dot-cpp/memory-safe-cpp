@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_DEZOMBIEFY_H
-#define SAFEMEMORY_DEZOMBIEFY_H
+#ifndef SAFE_MEMORY_DEZOMBIEFY_H
+#define SAFE_MEMORY_DEZOMBIEFY_H
 
 #include <safe_ptr_common.h>
 #include <safe_memory_error.h>
@@ -151,4 +151,4 @@ auto dz_or(T1&& t1, T2&& t2) {
 } // namespace safe_memory
 
 
-#endif // SAFEMEMORY_DEZOMBIEFY_H
+#endif // SAFE_MEMORY_DEZOMBIEFY_H
