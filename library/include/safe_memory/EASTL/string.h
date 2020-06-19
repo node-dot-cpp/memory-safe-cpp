@@ -319,7 +319,7 @@ namespace safe_memory
 	
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class basic_string
+	class SAFE_MEMORY_DEEP_CONST SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string
 	{
 	public:
 		typedef basic_string<T, Safety>                      this_type;

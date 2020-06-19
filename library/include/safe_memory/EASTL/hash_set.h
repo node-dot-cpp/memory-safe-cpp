@@ -126,7 +126,7 @@ namespace safe_memory
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
-	class hash_set
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_set
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
 						   detail::prime_rehash_policy, bCacheHashCode, false, true>
@@ -245,7 +245,7 @@ namespace safe_memory
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
-	class hash_multiset
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multiset
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash,
 						   detail::prime_rehash_policy, bCacheHashCode, false, false>

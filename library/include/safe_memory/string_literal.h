@@ -32,7 +32,7 @@
 namespace safe_memory
 {
 	template<typename T>
-	class basic_string_literal
+	class SAFE_MEMORY_DEEP_CONST SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string_literal
 	{
 		const T* str;
 	public:

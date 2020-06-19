@@ -129,7 +129,7 @@ namespace safe_memory::detail
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
-	class hash_map
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_map
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
 							Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, true>
 	{
@@ -333,7 +333,7 @@ namespace safe_memory::detail
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
-	class hash_multimap
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multimap
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
 						   Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, false>
 	{
