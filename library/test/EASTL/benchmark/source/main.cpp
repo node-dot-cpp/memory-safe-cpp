@@ -11,7 +11,7 @@
 #include <EAStdC/EASprintf.h>
 #include <EAStdC/EAStopwatch.h>
 #include <EAStdC/EAString.h>
-#include <safememory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/config.h>
 #include <string.h>
 #include <stdio.h>
 EA_DISABLE_VC_WARNING(4946)

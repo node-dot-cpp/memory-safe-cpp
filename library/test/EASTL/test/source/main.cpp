@@ -5,7 +5,7 @@
 
 #include "EASTLTest.h"
 #include <EAStdC/EASprintf.h>
-#include <safememory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/config.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>

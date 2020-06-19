@@ -25,9 +25,46 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_VECTOR_H
-#define SAFEMEMORY_VECTOR_H
+#ifndef SAFE_MEMORY_STRING_FORMAT_H
+#define SAFE_MEMORY_STRING_FORMAT_H
 
-#include <safememory/EASTL/vector.h>
+#include <safe_memory/string.h>
+#include <safe_memory/string_literal.h>
+#include <fmt/format.h>
+#include <iostream>
 
-#endif //SAFEMEMORY_VECTOR_H
+
+template <class T>
+struct fmt::formatter<safe_memory::basic_string_literal<T>>: formatter<std::basic_string_view<T>> {
+  // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(const safe_memory::basic_string_literal<T>& str, FormatContext& ctx) -> decltype(ctx.out()) {
+        std::basic_string_view<T> sview(str.c_str());
+        return formatter<std::basic_string_view<T>>::format(sview, ctx);
+    }
+};
+
+template<class T>
+std::basic_ostream<T>& operator<<(std::basic_ostream<T>& os, const safe_memory::basic_string_literal<T>& str)
+{
+  return os << str.c_str();
+}
+
+template <class T>
+struct fmt::formatter<safe_memory::basic_string<T>>: formatter<std::basic_string_view<T>> {
+  // parse is inherited from formatter<string_view>.
+    template <typename FormatContext>
+    auto format(const safe_memory::basic_string<T>& str, FormatContext& ctx) -> decltype(ctx.out()) {
+        std::basic_string_view<T> sview(str.c_str(), str.size());
+        return formatter<std::basic_string_view<T>>::format(sview, ctx);
+    }
+};
+
+template<class T>
+std::basic_ostream<T>& operator<<(std::basic_ostream<T>& os, const safe_memory::basic_string<T>& str)
+{
+  std::basic_string_view<T> sview(str.c_str(), str.size());
+  return os << sview;
+}
+
+#endif //SAFE_MEMORY_STRING_FORMAT_H

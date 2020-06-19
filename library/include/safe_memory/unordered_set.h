@@ -25,9 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_UNORDERED_SET_H
-#define SAFEMEMORY_UNORDERED_SET_H
+#ifndef SAFE_MEMORY_UNORDERED_SET_H
+#define SAFE_MEMORY_UNORDERED_SET_H
 
-#include <safememory/EASTL/unordered_set.h>
+#include <safe_memory/EASTL/unordered_set.h>
 
-#endif //SAFEMEMORY_UNORDERED_SET_H
+#endif //SAFE_MEMORY_UNORDERED_SET_H

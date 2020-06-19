@@ -26,58 +26,59 @@
 * -------------------------------------------------------------------------------*/
 
 // Initial vesion from:
-// https://github.com/electronicarts/EASTL/blob/3.15.00/include/EASTL/unordered_set.h
+// https://github.com/electronicarts/EASTL/blob/3.15.00/include/EASTL/unordered_map.h
 
 ///////////////////////////////////////////////////////////////////////////////
 // Copyright (c) Electronic Arts Inc. All rights reserved.
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SAFEMEMORY_EASTL_UNORDERED_SET_H
-#define SAFEMEMORY_EASTL_UNORDERED_SET_H
+#ifndef SAFE_MEMORY_EASTL_UNORDERED_MAP_H
+#define SAFE_MEMORY_EASTL_UNORDERED_MAP_H
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/hash_set.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/hash_map.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-namespace safememory
+namespace safe_memory
 {
-
-	/// unordered_set 
+	/// unordered_map 
 	///
-	/// The original TR1 (technical report 1) used "hash_set" to name a hash
-	/// table backed associative container of unique "Key" type objects.  When
-	/// the container was added to the C++11 standard the committee chose the
-	/// name "unordered_set" to clarify that internally the elements are NOT
-	/// sorted in any particular order.  We provide a template alias here to
-	/// ensure feature parity with the original eastl::hash_set.
-	///
-	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-		template <typename Value,
-				  typename Hash = std::hash<Value>,
-				  typename Predicate = std::equal_to<Value>,
-				  memory_safety Safety = memory_safety::safe,
-				  bool bCacheHashCode = false>
-		using unordered_set = hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>;
-	#endif
-
-    /// unordered_multiset 
-	///
-	/// Similar template alias as "unordered_set" except the contained elements
-	/// need not be unique. See "hash_multiset" for more details. 
+	/// The original TR1 (technical report 1) used "hash_map" to name a hash
+	/// table backed associative container of unique key-value pairs.  When the
+	/// container was added to the C++11 standard the committee chose the name
+	/// "unordered_map" to clarify that internally the elements are NOT sorted in
+	/// any particular order.  We provide a template alias here to ensure feature
+	/// parity with the original eastl::hash_map.
 	///
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
-		template <typename Value,
-				  typename Hash = std::hash<Value>,
-				  typename Predicate = std::equal_to<Value>,
+		template <typename Key,
+				  typename T,
+				  typename Hash = std::hash<Key>,
+				  typename Predicate = std::equal_to<Key>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
-		using unordered_multiset = hash_multiset<Value, Hash, Predicate, Safety, bCacheHashCode>;
-	#endif
+		using unordered_map = detail::hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
+    #endif
 
-} // namespace eastl
+    /// unordered_multimap
+	///
+	/// Similar template alias as "unordered_map" except the contained elements
+	/// need not be unique. See "hash_multimap" for more details.
+	///
+	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
+		template <typename Key,
+				  typename T,
+				  typename Hash = std::hash<Key>,
+				  typename Predicate = std::equal_to<Key>,
+				  memory_safety Safety = memory_safety::safe,
+				  bool bCacheHashCode = false>
+		using unordered_multimap = detail::hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
+    #endif
+
+} // namespace safe_memory
 
 #endif // Header include guard
 

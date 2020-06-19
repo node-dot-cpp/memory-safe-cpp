@@ -41,14 +41,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_HASH_SET_H
-#define SAFEMEMORY_EASTL_HASH_SET_H
+#ifndef SAFE_MEMORY_EASTL_HASH_SET_H
+#define SAFE_MEMORY_EASTL_HASH_SET_H
 
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/internal/hashtable.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safememory/EASTL/utility.h>
+//#include <safe_memory/EASTL/utility.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -56,7 +56,7 @@
 
 
 
-namespace safememory
+namespace safe_memory
 {
 
 	/// EASTL_HASH_SET_DEFAULT_NAME
@@ -126,7 +126,7 @@ namespace safememory
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
-	class hash_set
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_set
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash, 
 						   detail::prime_rehash_policy, bCacheHashCode, false, true>
@@ -245,7 +245,7 @@ namespace safememory
 	///
 	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
-	class hash_multiset
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multiset
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
 						   Hash, detail::mod_range_hashing, detail::default_ranged_hash,
 						   detail::prime_rehash_policy, bCacheHashCode, false, false>

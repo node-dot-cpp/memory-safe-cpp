@@ -25,24 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_SAFE_PTR_H
-#define SAFEMEMORY_SAFE_PTR_H
+#ifndef SAFE_MEMORY_STRING_H
+#define SAFE_MEMORY_STRING_H
 
-//mb: temporary hack, until we move all files to their definitive location
-// and rename namespaces acordingly
+#include <safe_memory/EASTL/string.h>
 
-#include "../../src/safe_ptr.h"
-
-namespace safememory {
-
-using ::nodecpp::safememory::owning_ptr;
-using ::nodecpp::safememory::soft_ptr;
-using ::nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::make_owning;
-using ::nodecpp::safememory::make_owning_2;
-using ::nodecpp::safememory::safeness_declarator;
-
-}
-
-
-#endif //SAFEMEMORY_SAFE_PTR_H
+#endif //SAFE_MEMORY_STRING_H

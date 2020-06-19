@@ -25,20 +25,20 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_DETAIL_SAFE_ALLOC_H
-#define SAFEMEMORY_DETAIL_SAFE_ALLOC_H
+#ifndef SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
+#define SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
 
-#include <safememory/safe_ptr2.h>
-#include <safememory/detail/safe_ptr_with_zero_offset2.h>
+#include <safe_memory/safe_ptr.h>
+#include <safe_memory/detail/safe_ptr_with_zero_offset.h>
 #include <iterator>
 
-namespace safememory::detail {
+namespace safe_memory::detail {
 
 enum class iterator_validity {
 	Null,                // default constructed iterator
 	ValidCanDeref,       // valid, pointing a current element in the container
 	ValidEnd,			 // valid, pointing to end()
-	InvalidZoombie,	     // invalid but not escaping safememory rules 
+	InvalidZoombie,	     // invalid but not escaping safe_memory rules 
 	xxx_Broken_xxx       // invalid and escaping safety rules
 };
 
@@ -503,12 +503,12 @@ using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
 			safe_iterator_no_checks<T>, safe_iterator_impl<T>>;
 
 
-} // namespace safememory::detail
+} // namespace safe_memory::detail
 
 #ifdef NODECPP_WINDOWS
 // this is to allow MS to optimize algorightms like std::find using TMP
 
-namespace safememory {
+namespace safe_memory {
 namespace detail {
 
 template <typename T, typename Arr>
@@ -528,7 +528,7 @@ constexpr void _Verify_range(const safe_iterator_impl<T, Arr>& _First, const saf
 
 namespace std {
 
-	namespace sfd = safememory::detail;	
+	namespace sfd = safe_memory::detail;	
 
 
 template <typename T, typename Arr>
@@ -561,4 +561,4 @@ struct _Range_verifiable<sfd::safe_iterator_impl<T, Arr>, sfd::safe_iterator_imp
 #endif //NODECPP_WINDOWS
 
 
-#endif // SAFEMEMORY_DETAIL_SAFE_ALLOC_H
+#endif // SAFE_MEMORY_DETAIL_SAFE_ALLOC_H

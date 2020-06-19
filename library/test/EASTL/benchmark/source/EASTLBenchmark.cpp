@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 #include <string>
 #include <EAMain/EAMain.h>
-#include <safememory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/config.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -275,7 +275,7 @@ namespace Benchmark
 		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		EA::UnitTest::Report("\n");
 
-		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "eastl", "safememory", "(no_checks)");
+		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "eastl", "safe_memory", "(no_checks)");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;

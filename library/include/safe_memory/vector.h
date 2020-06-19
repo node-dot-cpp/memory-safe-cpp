@@ -25,19 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-#define SAFEMEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+#ifndef SAFE_MEMORY_VECTOR_H
+#define SAFE_MEMORY_VECTOR_H
 
-//mb: temporary hack, until we move all files to their definitive location
-// and rename namespaces acordingly
+#include <safe_memory/EASTL/vector.h>
 
-#include "../../../src/safe_ptr_with_zero_offset.h"
-
-namespace safememory::detail {
-
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
-
-}
-
-
-#endif //SAFEMEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+#endif //SAFE_MEMORY_VECTOR_H

@@ -4,5 +4,5 @@
 
 add_executable(HashMapSample main.cpp)
 
-target_link_libraries(HashMapSample SafeMemory)
+target_link_libraries(HashMapSample safe_memory)
 

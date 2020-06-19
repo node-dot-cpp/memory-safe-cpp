@@ -41,15 +41,15 @@
 // http://en.cppreference.com/w/cpp/string/char_traits
 ///////////////////////////////////////////////////////////////////////////////
 
-#ifndef SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
-#define SAFEMEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
+#ifndef SAFE_MEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
+#define SAFE_MEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once
 #endif
 
-#include <safememory/EASTL/internal/config.h>
-//#include <safememory/EASTL/type_traits.h>
+#include <safe_memory/EASTL/internal/config.h>
+//#include <safe_memory/EASTL/type_traits.h>
 #include <type_traits>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
@@ -57,7 +57,7 @@
 #include <string.h>             // memset, etc.
 //EA_RESTORE_ALL_VC_WARNINGS()
 
-namespace safememory
+namespace safe_memory
 {
 	///////////////////////////////////////////////////////////////////////////////
 	/// DecodePart
@@ -463,6 +463,6 @@ static_assert((sizeof(wchar_t) == sizeof(char16_t)) || (sizeof(wchar_t) == sizeo
 			*pDest++ = c;
 		return pDestination;
 	}
-} // namespace safememory
+} // namespace safe_memory
 
 #endif // EASTL_CHAR_TRAITS_H

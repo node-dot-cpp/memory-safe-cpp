@@ -25,40 +25,34 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_STRING_LITERAL_H
-#define SAFEMEMORY_STRING_LITERAL_H
+#ifndef SAFE_MEMORY_SAFE_PTR_H
+#define SAFE_MEMORY_SAFE_PTR_H
+
+//mb: temporary hack, until we move all files to their definitive location
+// and rename namespaces acordingly
+
+#include "../../src/safe_ptr.h"
+
+namespace safe_memory {
+
+using ::nodecpp::safememory::owning_ptr;
+using ::nodecpp::safememory::soft_ptr;
+using ::nodecpp::safememory::soft_this_ptr;
+using ::nodecpp::safememory::nullable_ptr;
+
+using ::nodecpp::safememory::make_owning;
+using ::nodecpp::safememory::make_owning_2;
+using ::nodecpp::safememory::soft_ptr_in_constructor;
+using ::nodecpp::safememory::soft_ptr_static_cast;
+using ::nodecpp::safememory::soft_ptr_reinterpret_cast;
+using ::nodecpp::safememory::nullable_cast;
 
 
-namespace safememory
-{
-	template<typename T>
-	class basic_string_literal
-	{
-		const T* str;
-	public:
-		basic_string_literal( const T* str_) : str( str_ ) {}
-		basic_string_literal( const basic_string_literal& other ) = default;
-		basic_string_literal& operator = ( const basic_string_literal& other ) = default;
-		basic_string_literal( basic_string_literal&& other ) = default;
-		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
 
-		// bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
-		// bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
+using ::nodecpp::safememory::memory_safety;
+using ::nodecpp::safememory::safeness_declarator;
 
-//		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
-//		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }
+}
 
-		const T* c_str() const { return str; }
-	};
 
-	typedef basic_string_literal<char>    string_literal;
-	typedef basic_string_literal<wchar_t> wstring_literal;
-
-	/// string8 / string16 / string32
-	// typedef basic_string<char8_t>  string8;
-	typedef basic_string_literal<char16_t> string16_literal;
-	typedef basic_string_literal<char32_t> string32_literal;
-
-} //namespace safememory
-
-#endif //SAFEMEMORY_STRING_LITERAL_H
+#endif //SAFE_MEMORY_SAFE_PTR_H

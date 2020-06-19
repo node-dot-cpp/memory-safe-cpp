@@ -6,8 +6,8 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
-#include <safememory/unordered_set.h>
-#include <safememory/unordered_map.h>
+#include <safe_memory/unordered_set.h>
+#include <safe_memory/unordered_map.h>
 // #include <EASTL/unordered_set.h>
 // #include <EASTL/unordered_map.h>
 #include <map>
@@ -20,16 +20,16 @@ EA_DISABLE_ALL_VC_WARNINGS()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 
-using safememory::unordered_map;
-using safememory::unordered_multimap;
-using safememory::unordered_map;
-using safememory::unordered_multimap;
+using safe_memory::unordered_map;
+using safe_memory::unordered_multimap;
+using safe_memory::unordered_map;
+using safe_memory::unordered_multimap;
 
-using safememory::unordered_set;
-using safememory::unordered_multiset;
-using safememory::unordered_set;
-using safememory::unordered_multiset;
-using safememory::detail::iterator_validity;
+using safe_memory::unordered_set;
+using safe_memory::unordered_multiset;
+using safe_memory::unordered_set;
+using safe_memory::unordered_multiset;
+using safe_memory::detail::iterator_validity;
 
 
 namespace std
@@ -102,28 +102,28 @@ struct HashtableValueHash
 
 // Explicit Template instantiations.
 // These tell the compiler to compile all the functions for the given class.
-template class safememory::detail::hashtable<int,
+template class safe_memory::detail::hashtable<int,
                                 std::pair<const int, int>,
-								safememory::memory_safety::safe,
-                                safememory::detail::use_first<std::pair<const int, int>>,
+								safe_memory::memory_safety::safe,
+                                safe_memory::detail::use_first<std::pair<const int, int>>,
                                 std::equal_to<int>,
                                 std::hash<int>,
-                                safememory::detail::mod_range_hashing,
-                                safememory::detail::default_ranged_hash,
-                                safememory::detail::prime_rehash_policy,
+                                safe_memory::detail::mod_range_hashing,
+                                safe_memory::detail::default_ranged_hash,
+                                safe_memory::detail::prime_rehash_policy,
                                 true, // bCacheHashCode
                                 true, // bMutableIterators
                                 true  // bUniqueKeys
                                 >;
-template class safememory::detail::hashtable<int,
+template class safe_memory::detail::hashtable<int,
 								std::pair<const int, int>,
-								safememory::memory_safety::safe,
-								safememory::detail::use_first<std::pair<const int, int>>,
+								safe_memory::memory_safety::safe,
+								safe_memory::detail::use_first<std::pair<const int, int>>,
 								std::equal_to<int>,
 								std::hash<int>,
-								safememory::detail::mod_range_hashing,
-								safememory::detail::default_ranged_hash,
-								safememory::detail::prime_rehash_policy,
+								safe_memory::detail::mod_range_hashing,
+								safe_memory::detail::default_ranged_hash,
+								safe_memory::detail::prime_rehash_policy,
 								false, // bCacheHashCode
 								true,  // bMutableIterators
 								true   // bUniqueKeys
@@ -148,18 +148,18 @@ template class safememory::detail::hashtable<int,
 // coverage of those inherited hashtable functions.
 // template class eastl::unordered_set<int>;
 // template class eastl::unordered_multiset<int>;
-//template typename safememory::unordered_map<int, int>;
-//template typename safememory::unordered_multimap<int, int>;
+//template typename safe_memory::unordered_map<int, int>;
+//template typename safe_memory::unordered_multimap<int, int>;
 // template class eastl::unordered_set<Align32>;
 // template class eastl::unordered_multiset<Align32>;
-//template typename safememory::unordered_map<Align32, Align32>;
-//template typename safememory::unordered_multimap<Align32, Align32>;
+//template typename safe_memory::unordered_map<Align32, Align32>;
+//template typename safe_memory::unordered_multimap<Align32, Align32>;
 
 // validate static assumptions about hashtable core types
-typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, false> HashNode1;
-typedef safememory::detail::hash_node<int, safememory::memory_safety::safe, true> HashNode2;
-typedef safememory::detail::hash_node<int, safememory::memory_safety::none, false> HashNode3;
-typedef safememory::detail::hash_node<int, safememory::memory_safety::none, true> HashNode4;
+typedef safe_memory::detail::hash_node<int, safe_memory::memory_safety::safe, false> HashNode1;
+typedef safe_memory::detail::hash_node<int, safe_memory::memory_safety::safe, true> HashNode2;
+typedef safe_memory::detail::hash_node<int, safe_memory::memory_safety::none, false> HashNode3;
+typedef safe_memory::detail::hash_node<int, safe_memory::memory_safety::none, true> HashNode4;
 
 static_assert(std::is_default_constructible<HashNode1>::value, "hash_node static error");
 static_assert(std::is_default_constructible<HashNode2>::value, "hash_node static error");
@@ -426,7 +426,7 @@ int TestHash()
 		// iterator       find(const key_type& k);
 		// const_iterator find(const key_type& k) const;
 
-		typedef unordered_set<int, std::hash<int>, std::equal_to<int>, safememory::memory_safety::safe, true> HashSetIntC;
+		typedef unordered_set<int, std::hash<int>, std::equal_to<int>, safe_memory::memory_safety::safe, true> HashSetIntC;
 
 		HashSetIntC hashSet;
 		const int kCount = 10000;
@@ -687,7 +687,7 @@ int TestHash()
 		// for(int j = 0; j < 1000; j++)
 		// 	hashSet1.insert(hashSet1.begin(), j);
 
-		// std::insert_iterator< safememory::unordered_set<int> > ii(hashSet1, hashSet1.begin());
+		// std::insert_iterator< safe_memory::unordered_set<int> > ii(hashSet1, hashSet1.begin());
 		// for(int j = 0; j < 1000; j++)
 		// 	*ii++ = j;
 	}
@@ -695,26 +695,26 @@ int TestHash()
 
 	{
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<safememory::unordered_map<int, TestObject>>();
-		nErrorCount += TestMapCpp11<safememory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
-		nErrorCount += TestSetCpp11<safememory::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
 
-		nErrorCount += TestMultimapCpp11<safememory::unordered_multimap<int, TestObject>>();
-		nErrorCount += TestMultimapCpp11<safememory::unordered_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
+		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<safememory::unordered_multiset<TestObject>>();
-		nErrorCount += TestMultisetCpp11<safememory::unordered_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
 
-		nErrorCount += TestMapCpp11NonCopyable<safememory::unordered_map<int, NonCopyable>>();
-		nErrorCount += TestMapCpp11NonCopyable<safememory::unordered_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
-		nErrorCount += TestMapCpp17<safememory::unordered_map<int, TestObject>>();
-		nErrorCount += TestMapCpp17<safememory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject>>();
 	}
 
 
@@ -1156,7 +1156,7 @@ int TestHash()
 	}
 
 	// {
-	// 	typedef safememory::unordered_multimap<int> HashMultisetInt;
+	// 	typedef safe_memory::unordered_multimap<int> HashMultisetInt;
 
 	// 	HashMultisetInt hashMultiSet;
 
@@ -1172,15 +1172,15 @@ int TestHash()
 	{ 
 		// Regression of compiler warning reported by Jeff Litz/Godfather regarding 
 		// strict aliasing (EASTL 1.09.01) December 2007).
-		typedef safememory::unordered_multimap<uint32_t, uint32_t*> Map;
+		typedef safe_memory::unordered_multimap<uint32_t, uint32_t*> Map;
 		Map* pMap = new Map;
 		delete pMap;
 	}
 
 	{ 
 		// Regression of user-reported crash.
-		safememory::unordered_map<int, std::string*>* _hmTextureList;
-		_hmTextureList = new safememory::unordered_map<int, std::string*>();
+		safe_memory::unordered_map<int, std::string*>* _hmTextureList;
+		_hmTextureList = new safe_memory::unordered_map<int, std::string*>();
 		std::string* a = NULL;
 		(*_hmTextureList)[0] = a;
 		delete _hmTextureList;
@@ -1188,7 +1188,7 @@ int TestHash()
 
 	{
 		// Regression of user-reported Android compiler error.
-		typedef safememory::unordered_multimap<HashRegressionA*, HashRegressionB> HMM;
+		typedef safe_memory::unordered_multimap<HashRegressionA*, HashRegressionB> HMM;
 		HMM m_hash;
 
 		// Section 1
@@ -1203,7 +1203,7 @@ int TestHash()
 
 	{
 		// Regression of user-reported GCC 4.8 compile failure.
-		typedef safememory::unordered_map<int64_t, Struct> AuditByBlazeIdMap;
+		typedef safe_memory::unordered_map<int64_t, Struct> AuditByBlazeIdMap;
 
 		AuditByBlazeIdMap auditBlazeIds;
 		AuditByBlazeIdMap tempAuditBlazeIds;
@@ -1276,7 +1276,7 @@ int TestHash()
 		};
 
 		using namespace std;
-		safememory::unordered_set<Movable, Movable::Hash> a, b;
+		safe_memory::unordered_set<Movable, Movable::Hash> a, b;
 		swap(a,b);
 	}
 	#endif
@@ -1300,7 +1300,7 @@ int TestHash()
 		// Regression of user reported compiler error in hashtable sfinae mechanism 
 		{
 			TestObject::Reset();
-			safememory::unordered_set<TestObject> toSet;
+			safe_memory::unordered_set<TestObject> toSet;
 			toSet.emplace(3, 4, 5);
 		}
 	}
@@ -1365,7 +1365,7 @@ int TestHash()
 		};
 
 		Key key1, key2;
-		safememory::unordered_map<Key, int, Hash> hm;
+		safe_memory::unordered_map<Key, int, Hash> hm;
 		hm[std::move(key1)] = 12345;
 
 		EATEST_VERIFY(hm[std::move(key2)] == 12345);
@@ -1376,7 +1376,7 @@ int TestHash()
 	// 	using AllocatorType = CountingAllocator;
 	// 	using String = std::basic_string<char8_t, AllocatorType>;
 	// 	using StringStringMap = std::map<String, String, std::equal_to<String>, AllocatorType>;
-	// 	using StringStringHashMap = safememory::unordered_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
+	// 	using StringStringHashMap = safe_memory::unordered_map<String, String, eastl::string_hash<String>, eastl::equal_to<String>, AllocatorType>;
 	// 	AllocatorType::resetCount();
 
 	// 	{
@@ -1434,7 +1434,7 @@ int TestHash()
 		{
 			int n = 42;
 			const char* pCStrName = "electronic arts";
-			safememory::unordered_map<std::pair<int, const char*>, bool, std::hash<std::pair<int, const char*>>, name_equals> m_TempNames;
+			safe_memory::unordered_map<std::pair<int, const char*>, bool, std::hash<std::pair<int, const char*>>, name_equals> m_TempNames;
 			m_TempNames[std::make_pair(n, pCStrName)] = true;
 
 			auto isFound = (m_TempNames.find(std::make_pair(n, pCStrName)) != m_TempNames.end());

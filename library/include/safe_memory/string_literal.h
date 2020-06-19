@@ -25,9 +25,40 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_UNORDERED_MAP_H
-#define SAFEMEMORY_UNORDERED_MAP_H
+#ifndef SAFE_MEMORY_STRING_LITERAL_H
+#define SAFE_MEMORY_STRING_LITERAL_H
 
-#include <safememory/EASTL/unordered_map.h>
 
-#endif //SAFEMEMORY_UNORDERED_MAP_H
+namespace safe_memory
+{
+	template<typename T>
+	class SAFE_MEMORY_DEEP_CONST SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string_literal
+	{
+		const T* str;
+	public:
+		basic_string_literal( const T* str_) : str( str_ ) {}
+		basic_string_literal( const basic_string_literal& other ) = default;
+		basic_string_literal& operator = ( const basic_string_literal& other ) = default;
+		basic_string_literal( basic_string_literal&& other ) = default;
+		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
+
+		// bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
+		// bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
+
+//		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
+//		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }
+
+		const T* c_str() const { return str; }
+	};
+
+	typedef basic_string_literal<char>    string_literal;
+	typedef basic_string_literal<wchar_t> wstring_literal;
+
+	/// string8 / string16 / string32
+	// typedef basic_string<char8_t>  string8;
+	typedef basic_string_literal<char16_t> string16_literal;
+	typedef basic_string_literal<char32_t> string32_literal;
+
+} //namespace safe_memory
+
+#endif //SAFE_MEMORY_STRING_LITERAL_H

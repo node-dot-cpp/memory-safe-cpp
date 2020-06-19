@@ -41,14 +41,14 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#ifndef SAFEMEMORY_EASTL_HASH_MAP_H
-#define SAFEMEMORY_EASTL_HASH_MAP_H
+#ifndef SAFE_MEMORY_EASTL_HASH_MAP_H
+#define SAFE_MEMORY_EASTL_HASH_MAP_H
 
 
-#include <safememory/EASTL/internal/config.h>
-#include <safememory/EASTL/internal/hashtable.h>
+#include <safe_memory/EASTL/internal/config.h>
+#include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safememory/EASTL/utility.h>
+//#include <safe_memory/EASTL/utility.h>
 #include <utility>
 
 // #if defined(EA_PRAGMA_ONCE_SUPPORTED)
@@ -57,7 +57,7 @@
 
 
 
-namespace safememory::detail
+namespace safe_memory::detail
 {
 
 	/// EASTL_HASH_MAP_DEFAULT_NAME
@@ -129,7 +129,7 @@ namespace safememory::detail
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
-	class hash_map
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_map
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
 							Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, true>
 	{
@@ -333,7 +333,7 @@ namespace safememory::detail
 	///
 	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
-	class hash_multimap
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multimap
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
 						   Hash, mod_range_hashing, default_ranged_hash, prime_rehash_policy, bCacheHashCode, true, false>
 	{
@@ -570,7 +570,7 @@ namespace safememory::detail
 	}
 
 
-} // namespace safememory::detail
+} // namespace safe_memory::detail
 
 
 #endif // Header include guard

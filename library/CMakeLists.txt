@@ -2,7 +2,7 @@
 # Copyright (c) 2020, OLogN Technologies AG
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.0)
-project(safememory CXX)
+project(SafeMemory CXX)
 
 include(CTest)
 
@@ -23,7 +23,7 @@ include(CommonCppFlags)
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
-add_library(SafeMemory STATIC
+add_library(safe_memory STATIC
   src/EASTL/string.cpp
   src/EASTL/hashtable.cpp
   src/safe_ptr.cpp
@@ -33,7 +33,7 @@ add_library(SafeMemory STATIC
 #-------------------------------------------------------------------------------------------
 # Export Include Directories
 #-------------------------------------------------------------------------------------------
-target_include_directories(SafeMemory
+target_include_directories(safe_memory
   PUBLIC include
   PUBLIC src
   )
@@ -43,7 +43,7 @@ target_include_directories(SafeMemory
 #-------------------------------------------------------------------------------------------
 add_subdirectory(src/iibmalloc)
 
-target_link_libraries(SafeMemory iibmalloc)
+target_link_libraries(safe_memory iibmalloc)
 
 
 #-------------------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 
   target_link_libraries(gcc_lto_workaround foundation)
-  target_link_libraries(SafeMemory gcc_lto_workaround)
+  target_link_libraries(safe_memory gcc_lto_workaround)
 
 endif()
 
@@ -75,7 +75,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
 endif()
 
-target_link_libraries(test_safe_memory SafeMemory)
+target_link_libraries(test_safe_memory safe_memory)
 
 add_test(Run_test_safe_memory test_safe_memory)
 
