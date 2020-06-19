@@ -29,7 +29,7 @@
 #define SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_memory/safe_ptr.h>
-#include <safe_memory/detail/safe_ptr_with_zero_offset2.h>
+#include <safe_memory/detail/safe_ptr_with_zero_offset.h>
 #include <iterator>
 
 namespace safe_memory::detail {
