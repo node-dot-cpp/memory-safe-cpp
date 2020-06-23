@@ -9,12 +9,9 @@ add_clang_library(clangTidyNodeCppModule
   MayExtendLambdaCheck.cpp
   NakedAssignmentCheck.cpp
   NakedPtrHelper.cpp
-  NakedPtrFuncCheck.cpp
   NewExprCheck.cpp
   NodeCppTidyModule.cpp
-  PtrArithmeticCheck.cpp
   RawPointerAssignmentCheck.cpp
-  RawPointerDereferenceCheck.cpp
   RawPtrExprCheck.cpp
   RecordDeclCheck.cpp
   ReturnCheck.cpp
