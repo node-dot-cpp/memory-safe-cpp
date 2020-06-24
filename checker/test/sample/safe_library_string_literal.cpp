@@ -2,7 +2,7 @@
 
 #include <safe_memory/string_literal.h>
 
-using namespace nodecpp;
+using namespace safe_memory;
 
 void f(string_literal sl);
 
@@ -15,7 +15,7 @@ void func() {
 // CHECK: :[[@LINE-1]]:21: error: (S10.1)
 	a = "Bye";
 	a = cp;
-// CHECK: :[[@LINE-1]]:4: error: (S10.1)
+// CHECK: :[[@LINE-1]]:6: error: (S10.1)
 
 	f("Implicit");
 

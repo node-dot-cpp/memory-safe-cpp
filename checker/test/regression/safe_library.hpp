@@ -9,6 +9,5 @@
  */
 
 #include "safe_db_std.hpp"
-#include "safe_db_safe_memory.hpp"
 #include "safe_db_nodecpp.hpp"
 

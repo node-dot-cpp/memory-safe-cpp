@@ -25,38 +25,15 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFEMEMORY_UNORDERED_MAP_H
-#define SAFEMEMORY_UNORDERED_MAP_H
+#ifndef DEEP_CONST_TYPE_H
+#define DEEP_CONST_TYPE_H
+namespace nodecpp {
 
-namespace std {
-    template<class Key>
-    class hash {
-        size_t operator()(const Key&) {return 0;}
+    template<class T>
+    class [[nodecpp::deep_const]] [[nodecpp::no_side_effect_when_const]] deep_const_templ {
     };
 
-    template<class Key>
-    class equal_to {
-        bool operator()(const Key&l, const Key&r) {return l == r;}
-    };
-}
-
-namespace safememory {
-
-    template<class Key>
-    class [[nodecpp::deep_const]] DefHash {
-        [[nodecpp::no_side_effect]] size_t operator()(const Key&) {return 0;}
-    };
-
-    template<class Key>
-    class [[nodecpp::deep_const]] DefEq {
-        [[nodecpp::no_side_effect]] constexpr bool operator()(const Key&l, const Key&r) {return l == r;}
-    };
-    
-
-    template<class Key, class T, class Hash = DefHash<Key>, class Eq = std::equal_to<Key>>
-    class unordered_map {
-
-    };
+    typedef deep_const_templ<char> deep_const_type;
 
 } // namespace nodecpp
 

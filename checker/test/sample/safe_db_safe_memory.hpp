@@ -26,6 +26,23 @@ namespace safe_memory {
 	bool operator>=(hash, hash);
 	void swap(hash, hash);
 
+	class basic_string_literal
+	{
+	public:
+		basic_string_literal( const char* str_)  {}
+		basic_string_literal( const basic_string_literal& other ) = default;
+		basic_string_literal& operator = ( const basic_string_literal& other ) = default;
+		basic_string_literal( basic_string_literal&& other ) = default;
+		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
+
+		// bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
+		// bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
+
+//		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
+//		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }
+
+		const char* c_str() const;
+	};
 
 	class basic_string
 	{

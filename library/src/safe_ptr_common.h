@@ -33,7 +33,7 @@
 #include <log.h>
 #include <memory>
 #include <stdint.h>
-
+#include <safe_memory/checker_attributes.h>
 
 namespace nodecpp::safememory
 {
@@ -405,38 +405,6 @@ struct safeness_declarator {
 /* Sample of user-defined exclusion:
 template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
-
-#ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
-
-#define NODECPP_MAY_EXTEND_TO_THIS [[nodecpp::may_extend_to_this]]
-#define NODECPP_NO_AWAIT [[nodecpp::no_await]]
-#define NODECPP_NAKED_STRUCT [[nodecpp::naked_struct]]
-#define NODECPP_DEEP_CONST [[nodecpp::deep_const]]
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS [[nodecpp::may_extend_to_this]]
-#define SAFE_MEMORY_NO_AWAIT [[nodecpp::no_await]]
-#define SAFE_MEMORY_AWAITABLE [[nodecpp::awaitable]]
-#define SAFE_MEMORY_NAKED_STRUCT [[nodecpp::naked_struct]]
-#define SAFE_MEMORY_DEEP_CONST [[nodecpp::deep_const]]
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS [[nodecpp::deep_const_when_params]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT [[nodecpp::no_side_effect]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST [[nodecpp::no_side_effect_when_const]]
-
-#else
-
-#define NODECPP_MAY_EXTEND_TO_THIS
-#define NODECPP_NO_AWAIT
-#define NODECPP_NAKED_STRUCT
-#define NODECPP_DEEP_CONST
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS
-#define SAFE_MEMORY_NO_AWAIT
-#define SAFE_MEMORY_AWAITABLE
-#define SAFE_MEMORY_NAKED_STRUCT
-#define SAFE_MEMORY_DEEP_CONST
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS
-#define SAFE_MEMORY_NO_SIDE_EFFECT
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST
-
-#endif
 
 
 } // namespace nodecpp::safememory

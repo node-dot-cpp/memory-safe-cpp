@@ -404,7 +404,7 @@ bool isStringLiteralType(QualType Qt) {
     return false;
 
   auto Name = getQnameForSystemSafeDb(R);
-  return Name == "nodecpp::string_literal" || Name == "nodecpp::StringLiteral";
+  return Name == "nodecpp::string_literal" || Name == "safe_memory::basic_string_literal";
 }
 
 
