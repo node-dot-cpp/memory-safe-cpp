@@ -80,7 +80,6 @@ bool isSafePtrName(const std::string& Name);
 bool isAwaitableName(const std::string &Name);
 bool isNakedPtrName(const std::string& Name);
 
-bool isOsnMethodName(const std::string& Name);
 bool isSoftPtrCastName(const std::string& Name);
 bool isWaitForAllName(const std::string& Name);
 bool isNodeBaseName(const std::string& Name);
