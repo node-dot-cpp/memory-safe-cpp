@@ -191,6 +191,29 @@ namespace safe_memory {
 		void clear() ;
 	};
 
+namespace detail {
+
+	struct node_const_iterator
+	{
+	public:
+		typedef node_const_iterator this_type;
+		typedef int* pointer;
+		typedef int& reference;
+		node_const_iterator() { }
+
+		node_const_iterator(const node_const_iterator&) = default;
+		node_const_iterator& operator=(const node_const_iterator&) = default;
+		node_const_iterator(node_const_iterator&&) = default;
+		node_const_iterator& operator=(node_const_iterator&&) = default;
+
+		reference operator*() const;
+		pointer operator->() const;
+		node_const_iterator& operator++();
+		node_const_iterator operator++(int);
+		bool operator==(const node_const_iterator& other) const;
+		bool operator!=(const node_const_iterator& other) const;
+	};
+
 	struct node_iterator 
 	{
 	public:
@@ -204,6 +227,30 @@ namespace safe_memory {
 		bool operator==(const node_iterator&);
 		bool operator!=(const node_iterator&);
 	}; // node_iterator
+
+
+	struct hashtable_const_iterator
+	{
+		typedef hashtable_const_iterator  this_type;
+		typedef int* pointer;
+		typedef int& reference;
+
+		hashtable_const_iterator() { }
+
+		hashtable_const_iterator(const hashtable_const_iterator& x) = default;
+		hashtable_const_iterator& operator=(const hashtable_const_iterator& x) = default;
+		hashtable_const_iterator(hashtable_const_iterator&&) = default;
+		hashtable_const_iterator& operator=(hashtable_const_iterator&&) = default;
+	public:
+		reference operator*() const;
+		pointer operator->() const;
+		this_type& operator++();
+		this_type operator++(int);
+		bool operator==(const this_type& other) const;
+		bool operator!=(const this_type& other) const;
+		
+	}; // hashtable_const_iterator
+
 
 	struct hashtable_iterator
 	{
@@ -273,7 +320,7 @@ namespace safe_memory {
 	};
 
 
-namespace detail {
+
 	class safe_iterator_no_checks {
 public:
 	typedef int                 difference_type;

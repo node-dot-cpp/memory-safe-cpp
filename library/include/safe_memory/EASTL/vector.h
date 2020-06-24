@@ -214,10 +214,6 @@ namespace safe_memory
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe >
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector
 	{
-		static_assert(std::is_nothrow_move_constructible<T>::value, "T must be nothrow constructible");
-		static_assert(std::is_nothrow_move_assignable<T>::value, "T must be nothrow movable");
-
-
 		// typedef VectorBase<T, Safety>                      base_type;
 		typedef vector<T, Safety>                          this_type;
 

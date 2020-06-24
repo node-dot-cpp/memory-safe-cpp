@@ -45,13 +45,13 @@ struct Bad1 {
 
 void badFunc() {
 	unordered_map<int*, int*> vp; //bad
-// CHECK: :[[@LINE-1]]:40: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:28: error: unsafe type at variable declaration
 
 	unordered_map<int, NakedStr> vstr;
-// CHECK: :[[@LINE-1]]:43: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:31: error: unsafe type at variable declaration
 
 	unordered_map<int, Bad1> b1; //bad
-// CHECK: :[[@LINE-1]]:39: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:27: error: unsafe type at variable declaration
 
 }
 
@@ -71,25 +71,25 @@ void badHashOrKeyEqual() {
 
 	// hash is not safe
 	unordered_map<int, int, NakedStr> bb0;
-// CHECK: :[[@LINE-1]]:48: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:36: error: unsafe type at variable declaration
 
 	// hash is safe but no deep_const
 	unordered_map<int, int, Safe1> bb1;
-// CHECK: :[[@LINE-1]]:45: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:33: error: unsafe type at variable declaration
 
 	// deep_const but side effect
 	unordered_map<int, int, SideEffectHash<int>> bb2;
-// CHECK: :[[@LINE-1]]:59: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:47: error: unsafe type at variable declaration
 
 	//key_equal es unsafe
 	unordered_map<int, int, std::hash<int>, NakedStr> bb10;
-// CHECK: :[[@LINE-1]]:74: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:52: error: unsafe type at variable declaration
 
 	// key_equal is safe but no deep_const
 	unordered_map<int, int, std::hash<int>, Safe1> bb11;
-// CHECK: :[[@LINE-1]]:71: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:49: error: unsafe type at variable declaration
 
 	unordered_map<int, int, std::hash<int>, SideEffectEq<int>> bb12;
-// CHECK: :[[@LINE-1]]:83: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:61: error: unsafe type at variable declaration
 }
 

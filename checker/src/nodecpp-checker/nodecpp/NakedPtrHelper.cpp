@@ -535,6 +535,11 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
     return false;
   }
 
+  //mb: hack for std::hash and std::equal_to
+  if(isImplicitDeepConstStdHashOrEqualTo(ArgI, Context, Dh)) {
+    return true;
+  }
+
   const CXXRecordDecl* Rd = ArgI->getAsCXXRecordDecl();
   if(Rd)
     Rd = getRecordWithDefinition(Rd);
@@ -616,7 +621,7 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safememory::vector") {
+  if (Name == "safe_memory::vector") {
     return KindCheck(true, templateArgIsSafe(Qt, 0, Context, Dh));
   }
 
@@ -633,9 +638,9 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safememory::hash_map" 
-    || Name == "safememory::unordered_map"
-    || Name == "safememory::unordered_multimap") {
+  if (Name == "safe_memory::detail::hash_map" 
+    || Name == "safe_memory::unordered_map"
+    || Name == "safe_memory::unordered_multimap") {
     // mb: hashmap Key,Hash, and Equal must be deep_const
     // value only needs to be safe
 
@@ -984,7 +989,7 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
       return {true, true};
     else if(attrWhenParams) {
       bool params = allTemplateArgsAreDeepConst(Dc, Context, Dh);
-      return {true, params};
+      return {params, params};
     }
     else
       return {false, false};

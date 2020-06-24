@@ -43,12 +43,12 @@ struct Bad1 {
 
 void badFunc() {
 	vector<int*> vp; //bad
-// CHECK: :[[@LINE-1]]:27: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:15: error: unsafe type at variable declaration
 
 	vector<NakedStr> vstr;
-// CHECK: :[[@LINE-1]]:31: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:19: error: unsafe type at variable declaration
 
 	vector<Bad1> b1; //bad
-// CHECK: :[[@LINE-1]]:27: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:15: error: unsafe type at variable declaration
 }
 
