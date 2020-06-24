@@ -9,7 +9,7 @@
  */
 
 
-namespace safememory {
+namespace safe_memory {
 
 	struct hash
 	{
@@ -93,7 +93,7 @@ namespace safememory {
 		void pop_back();
 
 		this_type& insert(size_type position, const this_type& x);
-		this_type&       erase(size_type position = 0, size_type n);
+		this_type&       erase(size_type position = 0, size_type n = 0);
 		void             clear() ;
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
 		size_type find(const this_type& x,  size_type position = 0) const ;

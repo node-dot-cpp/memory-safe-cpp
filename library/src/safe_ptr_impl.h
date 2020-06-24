@@ -587,8 +587,8 @@ public:
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
 		t.setPtr( nullptr );
 	}
-	owning_ptr_base_impl( owning_ptr_base_impl<T>& other ) = delete;
-	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>& other ) = delete;
+	owning_ptr_base_impl( const owning_ptr_base_impl<T>& other ) = delete;
+	owning_ptr_base_impl& operator = ( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
 	{
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
@@ -766,13 +766,13 @@ public:
 
 	owning_ptr_impl( make_owning_t mo, T* t_ ) : owning_ptr_base_impl<T>( mo, t_ ) {}
 	owning_ptr_impl() : owning_ptr_base_impl<T>() {}
-	owning_ptr_impl( owning_ptr_impl<T>& other ) = delete;
+	owning_ptr_impl( const owning_ptr_impl<T>& other ) = delete;
 	owning_ptr_impl( owning_ptr_impl<T>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
 	template<class T1>
 	owning_ptr_impl( owning_ptr_impl<T1>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
 	owning_ptr_impl( std::nullptr_t nulp ) : owning_ptr_base_impl<T>( nulp ) {}
 
-	owning_ptr_impl& operator = ( owning_ptr_impl<T>& other ) = delete;
+	owning_ptr_impl& operator = ( const owning_ptr_impl<T>& other ) = delete;
 	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other ) { 
 		if ( this == &other ) return *this;
 		owning_ptr_base_impl<T>::operator = ( std::move( other ) );

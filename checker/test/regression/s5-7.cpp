@@ -1,6 +1,6 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_ptr.h>
+#include <safe_memory/safe_ptr.h>
 #include <server.h>
 
 using namespace nodecpp::safememory;

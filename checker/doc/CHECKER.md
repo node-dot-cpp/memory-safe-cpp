@@ -34,21 +34,18 @@ Internally, some rules are implemented in terms of the place of the code being c
 
 ### Rules implemented as AST matchers
 
-- __array-expr__ Part of __S1__, check that array subscript expressions are not used, and neither are array types.
+- __array-expr__ Part of __S1__, check that array subscript expressions are not used.
 - __asm__ Rule __S6.1__, check that `asm` directives are not used inside code.
 - __call-expr__ Rules __S1.1.1__ and __S8__, check that calls to system libraries are listed in _safe-library-db_.
 - __const__ Rules __S2.1__ and __S2.2__, check that `const_cast` is not used, neither `mutable` members.
-- __coroutine__ Rule __S9__, check that coroutines are implemented returning `[[awaitable]]` tagged types.
+- __coroutine__ Rule __S9__, check that coroutines do return `[[awaitable]]` tagged types.
 - __may-extend-lambda__ Rule __S5.7__, check lambdas passed to system calls with `[[may_extend_to_this]]` attributes.
 - __naked-assignment__ Rule __S5.1__, check assignment of `nullable_ptr` and `[[naked_struct]]` to verify scope is not extended.
-- __naked-ptr-func__ ~~I don't know, check what this is actually doing~~ Remove
 - __new-expr__ Rules __S4__ and __S4.1__, check that `new` and `delete` are not used, and that `make_owning` result is assigned to an `owning_ptr`. Also check that classes derived from `nodecpp::NodeBase` are not instantiated by the used.
-- __ptr-arithmetic__ Nothing here
 - __raw-pointer-assignment__ Rule __S5.1__, check assignment of raw pointers don't extend scope.
-- __raw-pointer-dereference__ ~~Rule __S1.2__, disable dereferencing of raw pointers~~, disabled rule.
 - __raw-ptr-expr__ Rules __S1__, __S1.1__ and __S1.2__, only allow limited set of expressions of raw pointer type. In particular, don't allow `nullptr` to initialize a raw pointer.
 - __record-decl__ Rules ..., check `class`, `struct` and `union` (non-template) declarations, to comply with _type categories_. 
-- __return-check__ Rule __S5.1__, check that `return` statement will not return a local object.
+- __return__ Rule __S5.1__, check that `return` statement will not return a local object.
 - __static-storage__ Rule __S3__, check that __global__, `static` or `thread_local` variables are `const` and of __deep-const__ types
 - __string-literal__ Rule __10.1__, check that `safe_memory::string_literal` is only constructed and assigned from string literals.
 - __temporary-expr__ check temporary expressions to comply with _type categorie_, in particular important when a temporary instantiates a template holding an union inside. 

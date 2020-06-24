@@ -24,18 +24,28 @@ const char *DiagMsgSrc = "memory-safe-cpp";
 DiagHelper NullDiagHelper;
 
 bool isOwningPtrName(const std::string &Name) {
-  return Name == "nodecpp::safememory::owning_ptr_impl" ||
-          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
+  return Name == "nodecpp::safememory::owning_ptr" ||
+          Name == "nodecpp::safememory::owning_ptr_impl" ||
           Name == "nodecpp::safememory::owning_ptr_no_checks" ||
-          Name == "nodecpp::safememory::owning_ptr_base_no_checks";
+          Name == "safe_memory::owning_ptr" ||
+          Name == "safe_memory::owning_ptr_impl" ||
+          Name == "safe_memory::owning_ptr_no_checks";
 }
 
 bool isSafePtrName(const std::string &Name) {
   return isOwningPtrName(Name) ||
+    Name == "nodecpp::safememory::soft_ptr" ||
     Name == "nodecpp::safememory::soft_ptr_impl" ||
     Name == "nodecpp::safememory::soft_ptr_no_checks" ||
+    Name == "nodecpp::safememory::soft_this_ptr" ||
     Name == "nodecpp::safememory::soft_this_ptr_impl" ||
-    Name == "nodecpp::safememory::soft_this_ptr_no_checks";
+    Name == "nodecpp::safememory::soft_this_ptr_no_checks" ||
+    Name == "safe_memory::soft_ptr" ||
+    Name == "safe_memory::soft_ptr_impl" ||
+    Name == "safe_memory::soft_ptr_no_checks" ||
+    Name == "safe_memory::soft_this_ptr" ||
+    Name == "safe_memory::soft_this_ptr_impl" ||
+    Name == "safe_memory::soft_this_ptr_no_checks";
 }
 
 bool isAwaitableName(const std::string &Name) {
@@ -44,11 +54,15 @@ bool isAwaitableName(const std::string &Name) {
 }
 
 bool isNakedPtrName(const std::string &Name) {
+  // TODO remove naked_ptr
   return Name == "nodecpp::safememory::naked_ptr_impl" ||
          Name == "nodecpp::safememory::naked_ptr_no_checks" ||
          Name == "nodecpp::safememory::nullable_ptr" ||
          Name == "nodecpp::safememory::nullable_ptr_impl" ||
-         Name == "nodecpp::safememory::nullable_ptr_no_checks";
+         Name == "nodecpp::safememory::nullable_ptr_no_checks" ||
+         Name == "safe_memory::nullable_ptr" ||
+         Name == "safe_memory::nullable_ptr_impl" ||
+         Name == "safe_memory::nullable_ptr_no_checks";
 }
 
 bool isOsnMethodName(const std::string& Name) {
@@ -73,7 +87,9 @@ bool isOsnMethodName(const std::string& Name) {
 
 bool isSoftPtrCastName(const std::string& Name) {
   return Name == "nodecpp::safememory::soft_ptr_static_cast" ||
-          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast";
+          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast" ||
+          Name == "safe_memory::soft_ptr_static_cast" ||
+          Name == "safe_memory::soft_ptr_reinterpret_cast";
 }
 
 bool isWaitForAllName(const std::string& Name) {

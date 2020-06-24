@@ -1,6 +1,6 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <string_literal.h>
+#include <safe_memory/string_literal.h>
 
 using namespace nodecpp;
 
