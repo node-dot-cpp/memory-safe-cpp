@@ -83,7 +83,9 @@ bool isNakedPtrName(const std::string& Name);
 bool isSoftPtrCastName(const std::string& Name);
 bool isWaitForAllName(const std::string& Name);
 bool isNodeBaseName(const std::string& Name);
-bool isStdHashOrEqualToName(const std::string& Name);
+// bool isStdHashOrEqualToName(const std::string& Name);
+bool isStdMoveOrForward(const std::string &Name);
+
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
@@ -126,7 +128,7 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context, DiagHel
 KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+//bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 bool isSafePtrType(QualType Qt);
 bool isAwaitableType(QualType Qt);

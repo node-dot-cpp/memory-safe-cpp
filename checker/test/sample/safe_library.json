@@ -40,6 +40,7 @@
     "std::experimental::coroutines_v1::coroutine_handle",
     "std::experimental::suspend_never",
     "std::function",
+    "std::hash",
     "std::vector",
   ],
   "functions" : [
@@ -268,6 +269,7 @@
     "std::experimental::suspend_never::await_suspend",
     "std::forward",
     "std::function::operator=",
+    "std::hash::operator()",
     "std::make_pair",
     "std::move",
     "std::operator==",

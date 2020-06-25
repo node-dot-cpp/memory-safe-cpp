@@ -70,6 +70,7 @@
 #include <iterator>
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/safe_alloc.h>
+#include <safe_memory/functional.h>
 #include <functional>
 #include <utility>
 #include <algorithm>
@@ -595,7 +596,7 @@ namespace safe_memory::detail
 	///
 	struct mod_range_hashing
 	{
-		uint32_t operator()(size_t r, uint32_t n) const
+		uint32_t operator()(std::size_t r, uint32_t n) const
 			{ return r % n; }
 	};
 
@@ -837,7 +838,7 @@ namespace safe_memory::detail
 			{ return mEqual; }
 
 	protected:
-		typedef size_t hash_code_t;
+		typedef std::size_t hash_code_t;
 		typedef uint32_t bucket_index_t;
 		typedef hash_node<Value, Safety, false> node_type;
 
@@ -1569,6 +1570,9 @@ namespace safe_memory::detail
 			mRehashPolicy()/*,
 			mAllocator(allocator)*/
 	{
+		auto P1 = &Eq::operator();
+		auto P2 = &H1::operator();
+
 		// if(nBucketCount < 2)  // If we are starting in an initially empty state, with no memory allocation done.
 		// 	reset_lose_memory();
 		// else // Else we are creating a potentially non-empty hashtable...
@@ -2041,11 +2045,11 @@ namespace safe_memory::detail
 	///
 	// template <typename H, typename U>
 	// inline typename H::iterator hashtable_find(H& hashTable, U u)
-	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+	// 	{ return hashTable.find_as(u, hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
 	// template <typename H, typename U>
 	// inline typename H::const_iterator hashtable_find(const H& hashTable, U u)
-	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+	// 	{ return hashTable.find_as(u, hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
 
 
@@ -2065,7 +2069,7 @@ namespace safe_memory::detail
 	// template <typename U>
 	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
 	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
-	// 	{ return std::hashtable_find(*this, other); }
+	// 	{ return hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
 		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }

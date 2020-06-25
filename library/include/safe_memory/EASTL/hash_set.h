@@ -124,7 +124,7 @@ namespace safe_memory
 	///     hash_set<string> hashSet;
 	///     i = hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
-	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
+	template <typename Value, typename Hash = hash<Value>, typename Predicate = equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_set
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
@@ -243,7 +243,7 @@ namespace safe_memory
 	/// except that contained elements need not be unique. See the documentation 
 	/// for hash_set for details.
 	///
-	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
+	template <typename Value, typename Hash = hash<Value>, typename Predicate = equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multiset
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,

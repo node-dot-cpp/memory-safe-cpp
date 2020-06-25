@@ -12,6 +12,10 @@ namespace std {
  	void move();
  	void forward();
 
+	struct hash	{
+		long operator()() const;
+	};
+
 	class function {
 		void operator=(function&);
 	};

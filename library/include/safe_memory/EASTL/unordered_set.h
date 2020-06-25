@@ -56,8 +56,8 @@ namespace safe_memory
 	///
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Value,
-				  typename Hash = std::hash<Value>,
-				  typename Predicate = std::equal_to<Value>,
+				  typename Hash = hash<Value>,
+				  typename Predicate = equal_to<Value>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
 		using unordered_set = hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>;
@@ -70,8 +70,8 @@ namespace safe_memory
 	///
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Value,
-				  typename Hash = std::hash<Value>,
-				  typename Predicate = std::equal_to<Value>,
+				  typename Hash = hash<Value>,
+				  typename Predicate = equal_to<Value>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
 		using unordered_multiset = hash_multiset<Value, Hash, Predicate, Safety, bCacheHashCode>;

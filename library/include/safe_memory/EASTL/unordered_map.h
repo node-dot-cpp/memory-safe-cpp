@@ -38,6 +38,7 @@
 #include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/hash_map.h>
 
+
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
@@ -56,8 +57,8 @@ namespace safe_memory
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Key,
 				  typename T,
-				  typename Hash = std::hash<Key>,
-				  typename Predicate = std::equal_to<Key>,
+				  typename Hash = hash<Key>,
+				  typename Predicate = equal_to<Key>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
 		using unordered_map = detail::hash_map<Key, T, Hash, Predicate, Safety, bCacheHashCode>;
@@ -71,8 +72,8 @@ namespace safe_memory
 	#if !defined(EA_COMPILER_NO_TEMPLATE_ALIASES)
 		template <typename Key,
 				  typename T,
-				  typename Hash = std::hash<Key>,
-				  typename Predicate = std::equal_to<Key>,
+				  typename Hash = hash<Key>,
+				  typename Predicate = equal_to<Key>,
 				  memory_safety Safety = memory_safety::safe,
 				  bool bCacheHashCode = false>
 		using unordered_multimap = detail::hash_multimap<Key, T, Hash, Predicate, Safety, bCacheHashCode>;

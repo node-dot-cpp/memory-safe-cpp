@@ -56,40 +56,55 @@ void badFunc() {
 }
 
 
-
 template<class Key>
-class [[nodecpp::deep_const]] SideEffectHash {
-	size_t operator()(const Key&) {return 0;}
+struct BadHash {
+	size_t operator()(const Key&) const {return 0;}
 };
 
 template<class Key>
-class [[nodecpp::deep_const]] SideEffectEq {
-	constexpr bool operator()(const Key&l, const Key&r) {return l == r;}
+struct [[nodecpp::deep_const]] SideEffectHash {
+	size_t operator()(const Key&) const {return 0;}
+};
+
+template<class Key>
+struct BadEq {
+	constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
+};
+
+template<class Key>
+struct [[nodecpp::deep_const]] SideEffectEq {
+	constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
+};
+
+
+struct [[nodecpp::deep_const]] KeyWithSideEffectEqual {
+	bool operator==(const KeyWithSideEffectEqual& o) const {return false;}
+};
+
+template<class Key>
+struct [[nodecpp::deep_const]] GoodHash {
+	[[nodecpp::no_side_effect]] std::size_t operator()(const Key&) const {return 0;}
 };
 
 void badHashOrKeyEqual() {
 
-	// hash is not safe
-	unordered_map<int, int, NakedStr> bb0;
-// CHECK: :[[@LINE-1]]:36: error: unsafe type at variable declaration
-
-	// hash is safe but no deep_const
-	unordered_map<int, int, Safe1> bb1;
+	// hash is no deep_const
+	unordered_map<int, int, BadHash<int>> bb1;
 // CHECK: :[[@LINE-1]]:33: error: unsafe type at variable declaration
 
 	// deep_const but side effect
 	unordered_map<int, int, SideEffectHash<int>> bb2;
 // CHECK: :[[@LINE-1]]:47: error: unsafe type at variable declaration
 
-	//key_equal es unsafe
-	unordered_map<int, int, std::hash<int>, NakedStr> bb10;
+	// key_equal is safe but no deep_const
+	unordered_map<int, int, safe_memory::hash<int>, BadEq<int>> bb10;
 // CHECK: :[[@LINE-1]]:52: error: unsafe type at variable declaration
 
-	// key_equal is safe but no deep_const
-	unordered_map<int, int, std::hash<int>, Safe1> bb11;
-// CHECK: :[[@LINE-1]]:49: error: unsafe type at variable declaration
-
-	unordered_map<int, int, std::hash<int>, SideEffectEq<int>> bb12;
+	unordered_map<int, int, safe_memory::hash<int>, SideEffectEq<int>> bb12;
 // CHECK: :[[@LINE-1]]:61: error: unsafe type at variable declaration
+
+	//here the default safe_memory::equal_to<KeyWithSideEffectEqual> has side-effects
+	unordered_map<KeyWithSideEffectEqual, int, GoodHash<KeyWithSideEffectEqual>> bb13;
+// CHECK: :[[@LINE-1]]:79: error: unsafe type at variable declaration
 }
 

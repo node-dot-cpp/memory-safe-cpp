@@ -124,6 +124,7 @@
 #include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <safe_memory/string_literal.h>
+#include <safe_memory/functional.h>
 //#include <EASTL/allocator.h>
 #include <string>
 #include <iterator>
@@ -444,7 +445,7 @@ namespace safe_memory
 
 		struct Layout
 		{
-			size_t _size = 0;
+			std::size_t _size = 0;
 			owning_heap_type _heap;
 
 
@@ -869,7 +870,7 @@ namespace safe_memory
 		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type&   sprintf(const_pointer pFormat, ...);
 
-		size_t hash() const EA_NOEXCEPT;
+		std::size_t hash() const EA_NOEXCEPT;
 
 		bool validate() const EA_NOEXCEPT;
 		detail::iterator_validity  validate_iterator(const_pointer i) const EA_NOEXCEPT;
@@ -918,7 +919,7 @@ namespace safe_memory
 			if(sz < 0)
 				return buffer;
 			
-			buffer.resize(static_cast<size_t>(sz));
+			buffer.resize(static_cast<std::size_t>(sz));
 			// snprintf will write ending '\0'
 			std::snprintf(buffer.data(), buffer.size() + 1, fmt, arg);
 			return buffer;
@@ -932,7 +933,7 @@ namespace safe_memory
 			if(sz < 0)
 				return buffer;
 			
-			buffer.resize(static_cast<size_t>(sz));
+			buffer.resize(static_cast<std::size_t>(sz));
 			// snprintf will write ending '\0'
 			std::swprintf(buffer.data(), buffer.size() + 1, fmt, arg);
 			return buffer;
@@ -1944,7 +1945,7 @@ namespace safe_memory
 		// and thus we should do the friendly thing and ignore the invalid characters as opposed
 		// to making the user of this function handle exceptions that are easily forgotten.
 
-		const size_t         kBufferSize = 512;
+		const std::size_t         kBufferSize = 512;
 		value_type           selfBuffer[kBufferSize];   // This assumes that value_type is one of char8_t, char16_t, char32_t, or wchar_t. Or more importantly, a type with a trivial constructor and destructor.
 		pointer const    selfBufferEnd = selfBuffer + kBufferSize;
 		const OtherCharType* pOtherEnd = pOther + n;
@@ -2243,12 +2244,12 @@ namespace safe_memory
 		const size_type n = (size_type)(pEnd - pBegin);
 		if(n <= internalLayout().GetSize())
 		{
-			memmove(internalLayout().BeginPtr(), pBegin, (size_t)n * sizeof(value_type));
+			memmove(internalLayout().BeginPtr(), pBegin, (std::size_t)n * sizeof(value_type));
 			erase_unsafe(internalLayout().BeginPtr() + n, internalLayout().EndPtr());
 		}
 		else
 		{
-			memmove(internalLayout().BeginPtr(), pBegin, (size_t)(internalLayout().GetSize()) * sizeof(value_type));
+			memmove(internalLayout().BeginPtr(), pBegin, (std::size_t)(internalLayout().GetSize()) * sizeof(value_type));
 			append_unsafe(pBegin + internalLayout().GetSize(), pEnd);
 		}
 		return *this;
@@ -2468,7 +2469,7 @@ namespace safe_memory
 					const size_type nSavedSize = internalLayout().GetSize();
 					CharStringUninitializedCopy((internalLayout().EndPtr() - n) + 1, internalLayout().EndPtr() + 1, internalLayout().EndPtr() + 1);
 					internalLayout().SetSize(nSavedSize + n);
-					memmove(const_cast<pointer>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
+					memmove(const_cast<pointer>(p) + n, p, (std::size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
 					CharTypeAssignN(const_cast<pointer>(p), n, c);
 				}
 				else
@@ -2569,8 +2570,8 @@ namespace safe_memory
 					const size_type nSavedSize = internalLayout().GetSize();
 					CharStringUninitializedCopy((internalLayout().EndPtr() - n) + 1, internalLayout().EndPtr() + 1, internalLayout().EndPtr() + 1);
 					internalLayout().SetSize(nSavedSize + n);
-					memmove(const_cast<pointer>(p) + n, p, (size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
-					memmove(const_cast<pointer>(p), pBegin, (size_t)(n) * sizeof(value_type));
+					memmove(const_cast<pointer>(p) + n, p, (std::size_t)((nElementsAfter - n) + 1) * sizeof(value_type));
+					memmove(const_cast<pointer>(p), pBegin, (std::size_t)(n) * sizeof(value_type));
 				}
 				else
 				{
@@ -2705,7 +2706,7 @@ namespace safe_memory
 				EASTL_FAIL_MSG("basic_string::erase -- invalid position");
 		#endif
 
-		memmove(const_cast<pointer>(p), p + 1, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
+		memmove(const_cast<pointer>(p), p + 1, (std::size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
 		internalLayout().SetSize(internalLayout().GetSize() - 1);
 		return const_cast<pointer>(p);
 	}
@@ -2723,7 +2724,7 @@ namespace safe_memory
 
 		if(pBegin != pEnd)
 		{
-			memmove(const_cast<pointer>(pBegin), pEnd, (size_t)((internalLayout().EndPtr() - pEnd) + 1) * sizeof(value_type));
+			memmove(const_cast<pointer>(pBegin), pEnd, (std::size_t)((internalLayout().EndPtr() - pEnd) + 1) * sizeof(value_type));
 			const size_type n = (size_type)(pEnd - pBegin);
 			internalLayout().SetSize(internalLayout().GetSize() - n);
 		}
@@ -2973,9 +2974,9 @@ namespace safe_memory
 		if(nLength1 >= nLength2) // If we have a non-expanding operation...
 		{
 			if((pBegin2 > pEnd1) || (pEnd2 <= pBegin1))  // If we have a non-overlapping operation...
-				memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
+				memcpy(const_cast<pointer>(pBegin1), pBegin2, (std::size_t)(pEnd2 - pBegin2) * sizeof(value_type));
 			else
-				memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pEnd2 - pBegin2) * sizeof(value_type));
+				memmove(const_cast<pointer>(pBegin1), pBegin2, (std::size_t)(pEnd2 - pBegin2) * sizeof(value_type));
 			erase_unsafe(pBegin1 + nLength2, pEnd1);
 		}
 		else // Else we are expanding.
@@ -2985,9 +2986,9 @@ namespace safe_memory
 				const_pointer const pMid2 = pBegin2 + nLength1;
 
 				if((pEnd2 <= pBegin1) || (pBegin2 > pEnd1))
-					memcpy(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
+					memcpy(const_cast<pointer>(pBegin1), pBegin2, (std::size_t)(pMid2 - pBegin2) * sizeof(value_type));
 				else
-					memmove(const_cast<pointer>(pBegin1), pBegin2, (size_t)(pMid2 - pBegin2) * sizeof(value_type));
+					memmove(const_cast<pointer>(pBegin1), pBegin2, (std::size_t)(pMid2 - pBegin2) * sizeof(value_type));
 				insert_unsafe(pEnd1, pMid2, pEnd2);
 			}
 			else // else we have an overlapping operation.
@@ -3708,7 +3709,7 @@ namespace safe_memory
 		const difference_type n1   = pEnd1 - pBegin1;
 		const difference_type n2   = pEnd2 - pBegin2;
 		const difference_type nMin = std::min(n1, n2);
-		const int       cmp  = Compare(pBegin1, pBegin2, static_cast<size_t>(nMin));
+		const int       cmp  = Compare(pBegin1, pBegin2, static_cast<std::size_t>(nMin));
 
 		return (cmp != 0 ? cmp : (n1 < n2 ? -1 : (n1 > n2 ? 1 : 0)));
 	}
@@ -3761,7 +3762,7 @@ namespace safe_memory
 		if((internalLayout().EndPtr() + 1) <= internalLayout().CapacityPtr())
 		{
 			const size_type nSavedSize = internalLayout().GetSize();
-			memmove(const_cast<pointer>(p) + 1, p, (size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
+			memmove(const_cast<pointer>(p) + 1, p, (std::size_t)(internalLayout().EndPtr() - p) * sizeof(value_type));
 			*(internalLayout().EndPtr() + 1) = 0;
 			*pNewPosition = c;
 			internalLayout().SetSize(nSavedSize + 1);
@@ -4372,7 +4373,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline size_t basic_string<T, Safety>::hash() const EA_NOEXCEPT
+	inline std::size_t basic_string<T, Safety>::hash() const EA_NOEXCEPT
 	{
 		// To consider: limit p to at most 256 chars.
 		auto p = begin_unsafe();
@@ -4381,7 +4382,7 @@ namespace safe_memory
 //			while((c = *p++) != 0) // Using '!=' disables compiler warnings.
 		for(; p != e; ++p) 
 			result = (result * 16777619) ^ static_cast<unsigned int>(*p);
-		return static_cast<size_t>(result);
+		return static_cast<std::size_t>(result);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -4615,12 +4616,12 @@ namespace safe_memory
 	///    #include <EASTL/hash_set.h>
 	///    hash_set<string> stringHashSet;
 	///
-	template <typename T> struct hash;
+//	template <typename T> struct hash;
 
 	template <>
 	struct hash<string>
 	{
-		size_t operator()(const string& x) const
+		std::size_t operator()(const string& x) const
 		{
 			return x.hash();
 		}
@@ -4629,7 +4630,7 @@ namespace safe_memory
 	template <>
 	struct hash<string16>
 	{
-		size_t operator()(const string16& x) const
+		std::size_t operator()(const string16& x) const
 		{
 			return x.hash();
 		}
@@ -4638,7 +4639,7 @@ namespace safe_memory
 	template <>
 	struct hash<string32>
 	{
-		size_t operator()(const string32& x) const
+		std::size_t operator()(const string32& x) const
 		{
 			return x.hash();
 		}
@@ -4648,7 +4649,7 @@ namespace safe_memory
 	template <>
 	struct hash<wstring>
 	{
-		size_t operator()(const wstring& x) const
+		std::size_t operator()(const wstring& x) const
 		{
 			return x.hash();
 		}

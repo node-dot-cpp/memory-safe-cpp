@@ -435,13 +435,13 @@ template<class K, class V, class H>
 using EastlMap2 = eastl::unordered_map<K, V, H>;
 
 template<class K, class V>
-using SafeMap1 = safe_memory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safe_memory::memory_safety::safe>;
+using SafeMap1 = safe_memory::unordered_map<K, V, safe_memory::hash<K>, std::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V, class H>
 using SafeMap2 = safe_memory::unordered_map<K, V, H, std::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V>
-using UnsafeMap1 = safe_memory::unordered_map<K, V, std::hash<K>, std::equal_to<K>, safe_memory::memory_safety::none>;
+using UnsafeMap1 = safe_memory::unordered_map<K, V, safe_memory::hash<K>, std::equal_to<K>, safe_memory::memory_safety::none>;
 
 template<class K, class V, class H>
 using UnsafeMap2 = safe_memory::unordered_map<K, V, H, std::equal_to<K>, safe_memory::memory_safety::none>;

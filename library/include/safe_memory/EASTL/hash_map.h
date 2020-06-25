@@ -127,7 +127,7 @@ namespace safe_memory::detail
 	///     hash_map<string, int> hashMap;
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
-	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
+	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_map
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
@@ -331,7 +331,7 @@ namespace safe_memory::detail
 	/// except that contained elements need not be unique. See the 
 	/// documentation for hash_set for details.
 	///
-	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
+	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>,
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multimap
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,

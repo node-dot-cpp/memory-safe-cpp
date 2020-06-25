@@ -698,14 +698,14 @@ int TestHash()
 		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
 		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
 
 		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
-		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
 		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
@@ -1300,7 +1300,7 @@ int TestHash()
 		// Regression of user reported compiler error in hashtable sfinae mechanism 
 		{
 			TestObject::Reset();
-			safe_memory::unordered_set<TestObject> toSet;
+			safe_memory::unordered_set<TestObject, hash_TestObject> toSet;
 			toSet.emplace(3, 4, 5);
 		}
 	}

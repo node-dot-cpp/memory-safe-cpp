@@ -101,11 +101,17 @@ bool isNodeBaseName(const std::string& Name) {
     Name == "nodecpp::net::NodeBase";
 }
 
-bool isStdHashOrEqualToName(const std::string &Name) {
-  return Name == "std::hash" ||
-          Name == "std::equal_to";
-}
+// bool isStdHashOrEqualToName(const std::string &Name) {
+//   return Name == "std::hash" ||
+//           Name == "std::equal_to";
+// }
 
+bool isStdMoveOrForward(const std::string &Name) {
+  return Name == "std::move" ||
+          Name == "std::__1::move" || 
+          Name == "std::forward" || 
+          Name == "std::__1::forward";
+}
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
@@ -536,9 +542,9 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
   }
 
   //mb: hack for std::hash and std::equal_to
-  if(isImplicitDeepConstStdHashOrEqualTo(ArgI, Context, Dh)) {
-    return true;
-  }
+  // if(isImplicitDeepConstStdHashOrEqualTo(ArgI, Context, Dh)) {
+  //   return true;
+  // }
 
   const CXXRecordDecl* Rd = ArgI->getAsCXXRecordDecl();
   if(Rd)
@@ -687,26 +693,26 @@ bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, Diag
   return true;
 }
 
-bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
+// bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
 
-  assert(Qt.isCanonical());
+//   assert(Qt.isCanonical());
 
-  std::string Name = getQnameForSystemSafeDb(Qt);
-  if(!isStdHashOrEqualToName(Name))
-    return false;
+//   std::string Name = getQnameForSystemSafeDb(Qt);
+//   if(!isStdHashOrEqualToName(Name))
+//     return false;
 
-  QualType Arg = getTemplateArgType(Qt, 0);
-  auto Kc = isDeepConstType(Arg, Context, Dh);
-  if(!Kc)
-    return false;
-  else if(!Kc.isOk()) {
-    // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
-    // Dh.diag(Sl, "owned type is not [[deep_const]]");
-    return false;
-  }
+//   QualType Arg = getTemplateArgType(Qt, 0);
+//   auto Kc = isDeepConstType(Arg, Context, Dh);
+//   if(!Kc)
+//     return false;
+//   else if(!Kc.isOk()) {
+//     // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
+//     // Dh.diag(Sl, "owned type is not [[deep_const]]");
+//     return false;
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 bool isSafePtrType(QualType Qt) {
 
@@ -1083,8 +1089,8 @@ KindCheck TypeChecker::isDeepConstType(QualType Qt) {
   // } else if (isLambdaType(Qt)) {
   //   return false;
   
-  } else if (isImplicitDeepConstStdHashOrEqualTo(Qt, Context, Dh)) {
-    return {true, true};
+  // } else if (isImplicitDeepConstStdHashOrEqualTo(Qt, Context, Dh)) {
+  //   return {true, true};
   } else if (isDeepConstOwningPtrType(Qt, Context, Dh)) {
     return {true, true};
   } else if (isSafePtrType(Qt)) {
