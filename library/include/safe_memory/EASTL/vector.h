@@ -37,25 +37,15 @@
 // std::vector class.
 // The primary distinctions between this vector and std::vector are:
 //    - vector has a couple extension functions that increase performance.
-//    - vector can contain objects with alignment requirements. std::vector 
-//      cannot do so without a bit of tedious non-portable effort.
-//    - vector supports debug memory naming natively.
 //    - vector is easier to read, debug, and visualize.
-//    - vector is savvy to an environment that doesn't have exception handling,
-//      as is sometimes the case with console or embedded environments.
 //    - vector has less deeply nested function calls and allows the user to 
 //      enable forced inlining in debug builds in order to reduce bloat.
 //    - vector<bool> is a vector of boolean values and not a bit vector.
-//    - vector guarantees that memory is contiguous and that vector::iterator
-//      is nothing more than a pointer to T.
 //    - vector has an explicit data() method for obtaining a pointer to storage 
 //      which is safe to call even if the block is empty. This avoids the 
 //      common &v[0], &v.front(), and &*v.begin() constructs that trigger false 
 //      asserts in STL debugging modes.
 //    - vector data is guaranteed to be contiguous.
-//    - vector has a set_capacity() function which frees excess capacity. 
-//      The only way to do this with std::vector is via the cryptic non-obvious 
-//      trick of using: vector<SomeClass>(x).swap(x);
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -100,113 +90,8 @@
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
 #endif
 
-// #if EASTL_NOMINMAX
-// 	#ifdef min
-// 		#undef min
-// 	#endif
-// 	#ifdef max
-// 		#undef max
-// 	#endif
-// #endif
-
 namespace safe_memory
 {
-
-	/// EASTL_VECTOR_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_VECTOR_DEFAULT_NAME
-	// 	#define EASTL_VECTOR_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " vector" // Unless the user overrides something, this is "EASTL vector".
-	// #endif
-
-
-	/// EASTL_VECTOR_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_VECTOR_DEFAULT_ALLOCATOR
-	// 	#define EASTL_VECTOR_DEFAULT_ALLOCATOR allocator_type(EASTL_VECTOR_DEFAULT_NAME)
-	// #endif
-
-
-
-	/// VectorBase
-	///
-	/// The reason we have a VectorBase class is that it makes exception handling
-	/// simpler to implement because memory allocation is implemented entirely 
-	/// in this class. If a user creates a vector which needs to allocate
-	/// memory in the constructor, VectorBase handles it. If an exception is thrown
-	/// by the allocator then the exception throw jumps back to the user code and 
-	/// no try/catch code need be written in the vector or VectorBase constructor. 
-	/// If an exception is thrown in the vector (not VectorBase) constructor, the 
-	/// destructor for VectorBase will be called automatically (and free the allocated
-	/// memory) before the execution jumps back to the user code.
-	/// However, if the vector class were to handle both allocation and initialization
-	/// then it would have no choice but to implement an explicit try/catch statement
-	/// for all pathways that allocate memory. This increases code size and decreases
-	/// performance and makes the code a little harder read and maintain.
-	///
-	/// The C++ standard (15.2 paragraph 2) states: 
-	///    "An object that is partially constructed or partially destroyed will
-	///     have destructors executed for all its fully constructed subobjects,
-	///     that is, for subobjects for which the constructor has been completed
-	///     execution and the destructor has not yet begun execution."
-	///
-	/// The C++ standard (15.3 paragraph 11) states: 
-	///    "The fully constructed base classes and members of an object shall 
-	///     be destroyed before entering the handler of a function-try-block
-	///     of a constructor or destructor for that block."
-	///
-	// template <typename T, memory_safety Safety>
-	// struct VectorBase
-	// {
-	// 	// typedef Allocator    allocator_type;
-	// 	// typedef std::size_t       size_type;
-	// 	// typedef std::ptrdiff_t    difference_type;
-
-
-	// 	#if defined(_MSC_VER) && (_MSC_VER >= 1400) && (_MSC_VER <= 1600) && !EASTL_STD_CPP_ONLY  // _MSC_VER of 1400 means VS2005, 1600 means VS2010. VS2012 generates errors with usage of enum:size_type.
-	// 		enum : size_type {                      // Use Microsoft enum language extension, allowing for smaller debug symbols than using a static const. Users have been affected by this.
-	// 			npos     = (size_type)-1,
-	// 			kMaxSize = (size_type)-2
-	// 		};
-	// 	#else
-	// 		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
-	// 		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
-	// 	#endif
-
-	// protected:
-	// 	owning_heap_type							mHeap;
-	// 	T*                                          mpBegin;
-	// 	T*                                          mpEnd;
-		// eastl::compressed_pair<T*, allocator_type>  mCapacityAllocator;
-		// T*	                                        mCapacity;
-
-		// T*& internalCapacityPtr() EA_NOEXCEPT { return mCapacity; }
-		// T* const& internalCapacityPtr() const EA_NOEXCEPT { return mCapacity; }
-		// allocator_type&  internalAllocator() EA_NOEXCEPT { return mCapacityAllocator.second(); }
-		// const allocator_type&  internalAllocator() const EA_NOEXCEPT { return mCapacityAllocator.second(); }
-
-	// public:
-	// 	VectorBase();
-	// 	// VectorBase(const allocator_type& allocator);
-	// 	VectorBase(size_type n/*, const allocator_type& allocator*/);
-
-	//    ~VectorBase();
-
-		// const allocator_type& get_allocator() const EA_NOEXCEPT;
-		// allocator_type&       get_allocator() EA_NOEXCEPT;
-		// void                  set_allocator(const allocator_type& allocator);
-
-	// protected:
-		// owning_heap_type  DoAllocate(size_type n);
-		// void      DoFree(T* p, size_type n);
-		// size_type GetNewCapacity(size_type currentCapacity);
-
-	// }; // VectorBase
-
-
-
-
 	/// vector
 	///
 	/// Implements a dynamic array.
@@ -214,7 +99,6 @@ namespace safe_memory
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe >
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector
 	{
-		// typedef VectorBase<T, Safety>                      base_type;
 		typedef vector<T, Safety>                          this_type;
 
 	public:
@@ -246,16 +130,6 @@ namespace safe_memory
 		typedef reverse_iterator_safe             					reverse_iterator;
 		typedef const_reverse_iterator_safe							const_reverse_iterator;    
 
-		// using base_type::mpBegin;
-		// using base_type::mpEnd;
-		// using base_type::mCapacity;
-		// using base_type::npos;
-		// using base_type::GetNewCapacity;
-		// using base_type::DoAllocate;
-		// using base_type::DoFree;
-		// using base_type::internalCapacityPtr;
-		// using base_type::internalAllocator;
-
 		static const size_type npos     = (size_type)-1;      /// 'npos' means non-valid position or simply non-position.
 		static const size_type kMaxSize = (size_type)-2;      /// -1 is reserved for 'npos'. It also happens to be slightly beneficial that kMaxSize is a value less than -1, as it helps us deal with potential integer wraparound issues.
 		static constexpr memory_safety is_safe = Safety;
@@ -264,7 +138,6 @@ namespace safe_memory
 		owning_heap_type							mHeap;
 		T*                                          mpBegin;
 		T*                                          mpEnd;
-		// eastl::compressed_pair<T*, allocator_type>  mCapacityAllocator;
 		T*	                                        mCapacity;
 
 	public:

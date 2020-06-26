@@ -35,21 +35,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 // This file implements a hashtable, much like the C++11 unordered_set/unordered_map.
 // proposed classes.
-// The primary distinctions between this hashtable and C++11 unordered containers are:
-//    - hashtable is savvy to an environment that doesn't have exception handling,
-//      as is sometimes the case with console or embedded environments.
-//    - hashtable is slightly more space-efficient than a conventional std hashtable 
-//      implementation on platforms with 64 bit size_t.  This is 
-//      because std STL uses size_t (64 bits) in data structures whereby 32 bits 
-//      of data would be fine.
-//    - hashtable can contain objects with alignment requirements. TR1 hash tables 
-//      cannot do so without a bit of tedious non-portable effort.
-//    - hashtable supports debug memory naming natively.
-//    - hashtable provides a find function that lets you specify a type that is 
-//      different from the hash table key type. This is particularly useful for 
-//      the storing of string objects but finding them by char pointers.
-//    - hashtable provides a lower level insert function which lets the caller 
-//      specify the hash code and optionally the node instance.
 ///////////////////////////////////////////////////////////////////////////////
 
 
@@ -93,44 +78,6 @@
 
 namespace safe_memory::detail
 {
-
-	/// EASTL_HASHTABLE_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASHTABLE_DEFAULT_NAME
-	// 	#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
-	// #endif
-
-
-	/// EASTL_HASHTABLE_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASHTABLE_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASHTABLE_DEFAULT_ALLOCATOR allocator_type(EASTL_HASHTABLE_DEFAULT_NAME)
-	// #endif
-
-	
-	/// kHashtableAllocFlagBuckets
-	/// Flag to allocator which indicates that we are allocating buckets and not nodes.
-	// enum { kHashtableAllocFlagBuckets = 0x00400000 };
-
-
-	/// gpEmptyBucketArray
-	///
-	/// A shared representation of an empty hash table. This is present so that
-	/// a new empty hashtable allocates no memory. It has two entries, one for 
-	/// the first lone empty (NULL) bucket, and one for the non-NULL trailing sentinel.
-	/// 
-	// extern EASTL_API void* gpEmptyBucketArray[2];
-
-
-	/// EASTL_MACRO_SWAP
-	///
-	/// Use EASTL_MACRO_SWAP because GCC (at least v4.6-4.8) has a bug where it fails to compile eastl::swap(mpBucketArray, x.mpBucketArray).
-	///
-	// #define EASTL_MACRO_SWAP(Type, a, b) \
-	// 	{ Type temp = a; a = b; b = temp; }
-
 	/// use_self
 	///
 	/// operator()(x) simply returns x. Used in sets, as opposed to maps.
@@ -178,10 +125,6 @@ namespace safe_memory::detail
 	template <typename Value, memory_safety Safety, bool bCacheHashCode>
 	struct hash_node;
 
-	// EA_DISABLE_VC_WARNING(4625 4626) // "copy constructor / assignment operator could not be generated because a base class copy constructor is inaccessible or deleted"
-	// #ifdef EA_COMPILER_MSVC_2015
-	// 	EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
-	// #endif
 		template <typename Value, memory_safety Safety>
 		struct hash_node<Value, Safety, true>
 		{
@@ -212,12 +155,6 @@ namespace safe_memory::detail
 			owning_ptr<hash_node, Safety> mpNext;
 
 		} EASTL_MAY_ALIAS;
-
-	// #ifdef EA_COMPILER_MSVC_2015
-	// 	EA_RESTORE_VC_WARNING()
-	// #endif
-	// EA_RESTORE_VC_WARNING()
-
 
 	// has_hashcode_member
 	//
@@ -401,15 +338,6 @@ namespace safe_memory::detail
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
 		friend class hashtable;
 
-		// template <typename, bool, memory_safety>
-		// friend struct hashtable_iterator;
-
-		// template <typename V, bool b, memory_safety s>
-		// friend bool operator==(const hashtable_const_iterator<V, b, s>&, const hashtable_const_iterator<V, b, s>&);
-
-		// template <typename V, bool b, memory_safety s>
-		// friend bool operator!=(const hashtable_const_iterator<V, b, s>&, const hashtable_const_iterator<V, b, s>&);
-
 		node_ptr  mpNode;      // Current node within current bucket.
 		bucket_it mpBucket;    // Current bucket.
 
@@ -485,7 +413,7 @@ namespace safe_memory::detail
 	public:
 		typedef hashtable_const_iterator<Value, bCacheHashCode, Safety>           base_type;
 		typedef hashtable_iterator<Value, bCacheHashCode, Safety>        this_type;
-//		typedef hashtable_iterator<Value, false, bCacheHashCode, Safety>         this_type_non_const;
+
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
 		typedef Value*											 		 pointer;
@@ -522,19 +450,6 @@ namespace safe_memory::detail
 
 		hashtable_iterator(hashtable_iterator&& x) = default;
 		hashtable_iterator& operator=(hashtable_iterator&& x) = default;
-
-		// non const to const convertion
-		// template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
-		// hashtable_iterator(const NonConstT& x)
-		// 	: base_type(x.mpNode, x.mpBucket) { }
-
-		// template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
-		// hashtable_iterator& operator=(const NonConstT& x) {
-		// 	this->mpNode = x.mpNode;
-		// 	this->mpBucket = x.mpBucket;
-
-		// 	return *this;
-		// }
 
 		reference operator*() const
 			{ return base_type::mpNode->mValue; }
@@ -956,6 +871,8 @@ namespace safe_memory::detail
 	///
 	/// Key and Value: arbitrary CopyConstructible types.
 	///
+	/// Safety: enum to enable or disable safe iterators
+	///
 	/// ExtractKey: function object that takes a object of type Value
 	/// and returns a value of type Key.
 	///
@@ -1040,7 +957,7 @@ namespace safe_memory::detail
 		typedef typename ExtractKey::result_type                                                    mapped_type;
 		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>            hash_code_base_type;
 		typedef typename hash_code_base_type::hash_code_t                                           hash_code_t;
-		// typedef Allocator                                                                           allocator_type;
+
 		typedef Equal                                                                               key_equal;
 		typedef std::ptrdiff_t                                                                           difference_type;
 		typedef std::size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
@@ -1048,14 +965,11 @@ namespace safe_memory::detail
 		typedef const value_type&                                                                   const_reference;
 
 		typedef node_const_iterator<value_type, bCacheHashCode, Safety>              const_local_iterator;
-		// typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>              local_iterator;
-		// typedef node_iterator<value_type, true,               bCacheHashCode, Safety>              const_local_iterator;
 		typedef std::conditional_t<bMutableIterators, node_iterator<value_type, bCacheHashCode, Safety>, const_local_iterator> local_iterator;
-
-		// typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
 
 		typedef hashtable_const_iterator<value_type, bCacheHashCode, Safety>         const_iterator;
 		typedef std::conditional_t<bMutableIterators, hashtable_iterator<value_type, bCacheHashCode, Safety>, const_iterator> iterator;
+
 		typedef hash_node<value_type, Safety, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
 		typedef hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, 
@@ -1086,18 +1000,11 @@ namespace safe_memory::detail
 		static const bool kCacheHashCode = bCacheHashCode;
 		static constexpr memory_safety is_safe = Safety;
 
-		// enum
-		// {
-		// 	// This enumeration is deprecated in favor of eastl::kHashtableAllocFlagBuckets.
-		// 	kAllocFlagBuckets = safememory::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
-		// };
-
 	protected:
 		owning_bucket_type     mpBucketArray;
 		size_type       mnBucketCount;
 		size_type       mnElementCount;
 		RehashPolicy    mRehashPolicy;  // To do: Use base class optimization to make this go away.
-		// allocator_type  mAllocator;     // To do: Use base class optimization to make this go away.
 
 
 	public:
@@ -1519,39 +1426,6 @@ namespace safe_memory::detail
 		// node_type* DoFindNodeT(node_type* pNode, const U& u, BinaryPredicate predicate) const;
 
 	}; // class hashtable
-
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// node_iterator_base
-	///////////////////////////////////////////////////////////////////////
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode == b.mpNode; }
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode != b.mpNode; }
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// hashtable_iterator_base
-	///////////////////////////////////////////////////////////////////////
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return !operator==(a, b); }
-
-
 
 
 	///////////////////////////////////////////////////////////////////////

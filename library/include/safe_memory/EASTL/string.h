@@ -38,31 +38,16 @@
 //    - basic_string has a few extension functions that allow for increased performance.
 //    - basic_string has a few extension functions that make use easier,
 //      such as a member sprintf function and member tolower/toupper functions.
-//    - basic_string supports debug memory naming natively.
 //    - basic_string is easier to read, debug, and visualize.
-//    - basic_string internally manually expands basic functions such as begin(),
-//      size(), etc. in order to improve debug performance and optimizer success.
-//    - basic_string is savvy to an environment that doesn't have exception handling,
-//      as is sometimes the case with console or embedded environments.
 //    - basic_string has less deeply nested function calls and allows the user to
 //      enable forced inlining in debug builds in order to reduce bloat.
 //    - basic_string doesn't use char traits. As a result, EASTL assumes that
 //      strings will hold characters and not exotic things like widgets. At the
 //      very least, basic_string assumes that the value_type is a POD.
-//    - basic_string::size_type is defined as eastl_size_t instead of size_t in
-//      order to save memory and run faster on 64 bit systems.
 //    - basic_string data is guaranteed to be contiguous.
 //    - basic_string data is guaranteed to be 0-terminated, and the c_str() function
 //      is guaranteed to return the same pointer as the data() which is guaranteed
 //      to be the same value as &string[0].
-//    - basic_string has a set_capacity() function which frees excess capacity.
-//      The only way to do this with std::basic_string is via the cryptic non-obvious
-//      trick of using: basic_string<char>(x).swap(x);
-//    - basic_string has a force_size() function, which unilaterally moves the string
-//      end position (mpEnd) to the given location. Useful for when the user writes
-//      into the string via some extenal means such as C strcpy or sprintf.
-//    - basic_string substr() deviates from the standard and returns a string with
-//		a copy of this->get_allocator()
 ///////////////////////////////////////////////////////////////////////////////
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -169,135 +154,9 @@
 
 
 #include <safe_memory/EASTL/internal/char_traits.h>
-//#include <string_view>
-
-
-///////////////////////////////////////////////////////////////////////////////
-// EASTL_STRING_EXPLICIT
-//
-// See EASTL_STRING_OPT_EXPLICIT_CTORS for documentation.
-//
-// #if EASTL_STRING_OPT_EXPLICIT_CTORS
-// 	#define EASTL_STRING_EXPLICIT explicit
-// #else
-// 	#define EASTL_STRING_EXPLICIT
-// #endif
-///////////////////////////////////////////////////////////////////////////////
-
-
-///////////////////////////////////////////////////////////////////////////////
-// Vsnprintf
-//
-// The user is expected to supply these functions one way or another. Note that
-// these functions are expected to accept parameters as per the C99 standard.
-// These functions can deal with C99 standard return values or Microsoft non-standard
-// return values but act more efficiently if implemented via the C99 style.
-//
-// In the case of EASTL_EASTDC_VSNPRINTF == 1, the user is expected to either
-// link EAStdC or provide the functions below that act the same. In the case of
-// EASTL_EASTDC_VSNPRINTF == 0, the user is expected to provide the function
-// implementations, and may simply use C vsnprintf if desired, though it's not
-// completely portable between compilers.
-//
-// #if EASTL_EASTDC_VSNPRINTF
-// 	namespace EA
-// 	{
-// 		namespace StdC
-// 		{
-// 			// Provided by the EAStdC package or by the user.
-// 			EASTL_EASTDC_API int Vsnprintf(char*  EA_RESTRICT pDestination, size_t n, const char*  EA_RESTRICT pFormat, va_list arguments);
-// 			EASTL_EASTDC_API int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments);
-// 			EASTL_EASTDC_API int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments);
-// 			#if EA_CHAR8_UNIQUE
-// 				EASTL_EASTDC_API int Vsnprintf(char8_t*  EA_RESTRICT pDestination, size_t n, const char8_t*  EA_RESTRICT pFormat, va_list arguments);
-// 			#endif
-// //			#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-// 				EASTL_EASTDC_API int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments);
-// //			#endif
-// 		}
-// 	}
-
-// 	namespace eastl
-// 	{
-// 		inline int Vsnprintf(char* EA_RESTRICT pDestination, size_t n, const char* EA_RESTRICT pFormat, va_list arguments)
-// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
-
-// 		inline int Vsnprintf(char16_t* EA_RESTRICT pDestination, size_t n, const char16_t* EA_RESTRICT pFormat, va_list arguments)
-// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
-
-// 		inline int Vsnprintf(char32_t* EA_RESTRICT pDestination, size_t n, const char32_t* EA_RESTRICT pFormat, va_list arguments)
-// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
-
-// 		#if EA_CHAR8_UNIQUE
-// 			inline int Vsnprintf(char8_t* EA_RESTRICT pDestination, size_t n, const char8_t* EA_RESTRICT pFormat, va_list arguments)
-// 				{ return EA::StdC::Vsnprintf((char*)pDestination, n, (const char*)pFormat, arguments); }
-// 		#endif
-
-// //		#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-// 			inline int Vsnprintf(wchar_t* EA_RESTRICT pDestination, size_t n, const wchar_t* EA_RESTRICT pFormat, va_list arguments)
-// 			{ return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments); }
-// //		#endif
-// 	}
-// #else
-// 	// User-provided functions.
-// 	extern int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arguments);
-// 	extern int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments);
-// 	extern int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments);
-// 	#if EA_CHAR8_UNIQUE
-// 		extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
-// 	#endif
-// 	// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-// 		extern int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments);
-// 	// #endif
-
-// 	namespace nodecpp
-// 	{
-// 		inline int Vsnprintf(char* pDestination, size_t n, const char* pFormat, va_list arguments)
-// 			{ return std::vsnprintf(pDestination, n, pFormat, arguments); }
-
-// 		inline int Vsnprintf(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
-// 			{ throw std::exception("Not implemented yet!"); }
-
-// 		inline int Vsnprintf(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
-// 			{ throw std::exception("Not implemented yet!"); }
-
-// 		#if EA_CHAR8_UNIQUE
-// 			inline int Vsnprintf(char8_t* pDestination, size_t n, const char8_t* pFormat, va_list arguments)
-// 				{ return Vsnprintf8(pDestination, n, pFormat, arguments); }
-// 		#endif
-
-// 		// #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
-// 			inline int Vsnprintf(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments)
-// 				{ throw std::exception("Not implemented yet!"); }
-// 		// #endif
-// 	}
-// #endif
-///////////////////////////////////////////////////////////////////////////////
-
-
 
 namespace safe_memory
 {
-
-	/// EASTL_BASIC_STRING_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_BASIC_STRING_DEFAULT_NAME
-	// 	#define EASTL_BASIC_STRING_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " basic_string" // Unless the user overrides something, this is "EASTL basic_string".
-	// #endif
-
-
-	/// EASTL_BASIC_STRING_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_BASIC_STRING_DEFAULT_ALLOCATOR
-	// 	#define EASTL_BASIC_STRING_DEFAULT_ALLOCATOR allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME)
-	// #endif
-
-
-
-
-
 	///////////////////////////////////////////////////////////////////////////////
 	/// basic_string
 	///
@@ -366,82 +225,12 @@ namespace safe_memory
 //		struct CtorConvert{};
 
 	protected:
-	// 	// Masks used to determine if we are in SSO or Heap
-	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
-	// 		// Big Endian use LSB, unless we want to reorder struct layouts on endianness, Bit is set when we are in Heap
-	// 		static constexpr size_type kHeapMask = 0x1;
-	// 		static constexpr size_type kSSOMask  = 0x1;
-	// 	#else
-	// 		// Little Endian use MSB
-	// 		static constexpr size_type kHeapMask = ~(size_type(~size_type(0)) >> 1);
-	// 		static constexpr size_type kSSOMask  = 0x80;
-	// 	#endif
-
-	//  public:
-	// 	#ifdef EA_SYSTEM_BIG_ENDIAN
 		static_assert(sizeof(size_type) >= sizeof(int), "Fix size!");
 		static constexpr size_type kMaxSize = static_cast<size_type>(INT_MAX);
 
 		static_assert(std::is_same<T, char>::value || std::is_same<T, wchar_t>::value ||
 			std::is_same<T, char16_t>::value || std::is_same<T, char32_t>::value,
 			"Type not supported!"); 
-	// 	#else
-	// 		static constexpr size_type kMaxSize = ~kHeapMask;
-	// 	#endif
-
-	// protected:
-	// 	// The view of memory when the string data is obtained from the allocator.
-	// 	struct HeapLayout
-	// 	{
-	// 		pointer mpBegin;  // Begin of string.
-	// 		size_type mnSize;     // Size of the string. Number of characters currently in the string, not including the trailing '0'
-	// 		size_type mnCapacity; // Capacity of the string. Number of characters string can hold, not including the trailing '0'
-	// 	};
-
-	// 	template <typename CharT, size_t = sizeof(CharT)>
-	// 	struct SSOPadding
-	// 	{
-	// 		char padding[sizeof(CharT) - sizeof(char)];
-	// 	};
-
-	// 	template <typename CharT>
-	// 	struct SSOPadding<CharT, 1>
-	// 	{
-	// 		// template specialization to remove the padding structure to avoid warnings on zero length arrays
-	// 		// also, this allows us to take advantage of the empty-base-class optimization.
-	// 	};
-
-	// 	// The view of memory when the string data is able to store the string data locally (without a heap allocation).
-	// 	struct SSOLayout
-	// 	{
-	// 		static constexpr size_type SSO_CAPACITY = (sizeof(HeapLayout) - sizeof(char)) / sizeof(value_type);
-
-	// 		// mnSize must correspond to the last byte of HeapLayout.mnCapacity, so we don't want the compiler to insert
-	// 		// padding after mnSize if sizeof(value_type) != 1; Also ensures both layouts are the same size.
-	// 		struct SSOSize : SSOPadding<value_type>
-	// 		{
-	// 			char mnRemainingSize;
-	// 		};
-
-	// 		value_type mData[SSO_CAPACITY]; // Local buffer for string data.
-	// 		SSOSize mRemainingSizeField;
-	// 	};
-
-	// 	// This view of memory is a utility structure for easy copying of the string data.
-	// 	struct RawLayout
-	// 	{
-	// 		char mBuffer[sizeof(HeapLayout)];
-	// 	};
-
-	// 	static_assert(sizeof(SSOLayout)  == sizeof(HeapLayout), "heap and sso layout structures must be the same size");
-	// 	static_assert(sizeof(HeapLayout) == sizeof(RawLayout),  "heap and raw layout structures must be the same size");
-
-	// 	// This implements the 'short string optimization' or SSO. SSO reuses the existing storage of string class to
-	// 	// hold string data short enough to fit therefore avoiding a heap allocation. The number of characters stored in
-	// 	// the string SSO buffer is variable and depends on the string character width. This implementation favors a
-	// 	// consistent string size than increasing the size of the string local data to accommodate a consistent number
-	// 	// of characters despite character width.
-
 
 		struct Layout
 		{
@@ -450,109 +239,38 @@ namespace safe_memory
 
 
 			Layout() { }
-			Layout(const Layout& other) = delete; //                                { Copy(*this, other); }
-			Layout(Layout&& other) = default; //                                    { Move(*this, other); }
-			Layout& operator=(const Layout& other) = delete; //                    { Copy(*this, other); return *this; }
-			Layout& operator=(Layout&& other) = default; //                        { Move(*this, other); return *this; }
+			Layout(const Layout& other) = delete;
+			Layout(Layout&& other) = default;
+			Layout& operator=(const Layout& other) = delete;
+			Layout& operator=(Layout&& other) = default;
 
-			// We are using Heap when the bit is set, easier to conceptualize checking IsHeap instead of IsSSO
-			// inline bool IsHeap() const EA_NOEXCEPT                    { return true; }
-			// inline bool IsSSO() const EA_NOEXCEPT                     { return !IsHeap(); }
-			// inline pointer SSOBufferPtr() EA_NOEXCEPT             { return sso.mData; }
-			// inline const_pointer SSOBufferPtr() const EA_NOEXCEPT { return sso.mData; }
-
-			// Largest value for SSO.mnSize == 23, which has two LSB bits set, but on big-endian (BE)
-			// use least significant bit (LSB) to denote heap so shift.
-			// inline size_type GetSSOSize() const EA_NOEXCEPT
-			// {
-			// 	#ifdef EA_SYSTEM_BIG_ENDIAN
-			// 		return SSOLayout::SSO_CAPACITY - (sso.mRemainingSizeField.mnRemainingSize >> 2);
-			// 	#else
-			// 		return (SSOLayout::SSO_CAPACITY - sso.mRemainingSizeField.mnRemainingSize);
-			// 	#endif
-			// }
-//			inline size_type GetHeapSize() const EA_NOEXCEPT { return heap.mnSize; }
 			inline size_type GetSize() const EA_NOEXCEPT     { return _size; }
 
-			// inline void SetSSOSize(size_type size) EA_NOEXCEPT
-			// {
-			// 	#ifdef EA_SYSTEM_BIG_ENDIAN
-			// 		sso.mRemainingSizeField.mnRemainingSize = (char)((SSOLayout::SSO_CAPACITY - size) << 2);
-			// 	#else
-			// 		sso.mRemainingSizeField.mnRemainingSize = (char)(SSOLayout::SSO_CAPACITY - size);
-			// 	#endif
-			// }
-
-//			inline void SetHeapSize(size_type size) EA_NOEXCEPT          { heap->set_size_unsafe(size); }
 			inline void SetSize(size_type size) EA_NOEXCEPT              { _size = size; }
 
 			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return GetHeapCapacity() - _size; }
 
-			// inline pointer HeapBeginPtr() EA_NOEXCEPT                { return heap.mpBegin; };
-			// inline const_pointer HeapBeginPtr() const EA_NOEXCEPT    { return heap.mpBegin; };
-
-			// inline pointer SSOBeginPtr() EA_NOEXCEPT                 { return sso.mData; }
-			// inline const_pointer SSOBeginPtr() const EA_NOEXCEPT     { return sso.mData; }
-
 			inline pointer BeginPtr() EA_NOEXCEPT                    { return _heap->begin(); }
 			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return _heap->begin(); }
-
-			// inline pointer HeapEndPtr() EA_NOEXCEPT                  { return heap.mpBegin + heap.mnSize; }
-			// inline const_pointer HeapEndPtr() const EA_NOEXCEPT      { return heap.mpBegin + heap.mnSize; }
-
-			// inline pointer SSOEndPtr() EA_NOEXCEPT                   { return sso.mData + GetSSOSize(); }
-			// inline const_pointer SSOEndPtr() const EA_NOEXCEPT       { return sso.mData + GetSSOSize(); }
 
 			// Points to end of character stream, *ptr == '0'
 			inline pointer EndPtr() EA_NOEXCEPT                      { return _heap->begin() + _size; }
 			inline const_pointer EndPtr() const EA_NOEXCEPT          { return _heap->begin() + _size; }
-
-			// inline pointer HeapCapacityPtr() EA_NOEXCEPT             { return heap.mpBegin + GetHeapCapacity(); }
-			// inline const_pointer HeapCapacityPtr() const EA_NOEXCEPT { return heap.mpBegin + GetHeapCapacity(); }
-
-			// inline pointer SSOCapcityPtr() EA_NOEXCEPT               { return sso.mData + SSOLayout::SSO_CAPACITY; }
-			// inline const_pointer SSOCapcityPtr() const EA_NOEXCEPT   { return sso.mData + SSOLayout::SSO_CAPACITY; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- only true when size() == capacity()
 			inline pointer CapacityPtr() EA_NOEXCEPT                 { return _heap->begin() + GetHeapCapacity(); }
 			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return _heap->begin() + GetHeapCapacity(); }
 
 			inline void SetNewHeap(owning_heap_type&& new_heap) { _heap = std::move(new_heap); }
-			// inline void SetHeapBeginPtr(pointer pBegin) EA_NOEXCEPT  { heap.mpBegin = pBegin; }
 			inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(_heap); }
-			// inline bool IsSoftHeapPtr(const soft_heap_type& soft) const EA_NOEXCEPT { return soft == _heap; }
 
-			// inline void SetHeapCapacity(size_type cap) EA_NOEXCEPT
-			// {
-			// #ifdef EA_SYSTEM_BIG_ENDIAN
-			// 	heap.mnCapacity = (cap << 1) | kHeapMask;
-			// #else
-			// 	heap.mnCapacity = (cap | kHeapMask);
-			// #endif
-			// }
-
-			inline size_type GetHeapCapacity() const EA_NOEXCEPT
-			{
-				return _heap ? _heap->capacity() - 1 : 0;
-			}
-
-			// inline void Copy(Layout& dst, const Layout& src) { dst.raw = src.raw; }
-			// inline void Move(Layout& dst, Layout& src) EA_NOEXCEPT       { std::swap(dst.raw, src.raw); }
-			// inline void Swap(Layout& a, Layout& b) EA_NOEXCEPT           { std::swap(a.raw, b.raw); }
-
-			// inline void Reset() EA_NOEXCEPT { 
-			// 	_heap = nullptr;
-			// 	_size = 0;
-			// }
+			inline size_type GetHeapCapacity() const EA_NOEXCEPT { return _heap ? _heap->capacity() - 1 : 0; }
 		};
 
 		Layout          mPair_first;
-		// allocator_type  mPair_second;
 
 		inline Layout& internalLayout() EA_NOEXCEPT                        { return mPair_first; }
 		inline const Layout& internalLayout() const EA_NOEXCEPT            { return mPair_first; }
-		// inline allocator_type& internalAllocator() EA_NOEXCEPT             { return mPair_second; }
-		// inline const allocator_type& internalAllocator() const EA_NOEXCEPT { return mPair_second; }
 		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return internalLayout().GetSoftHeapPtr(); }
 
 	public:

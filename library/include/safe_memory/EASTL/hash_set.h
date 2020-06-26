@@ -58,37 +58,6 @@
 
 namespace safe_memory
 {
-
-	/// EASTL_HASH_SET_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_SET_DEFAULT_NAME
-	// 	#define EASTL_HASH_SET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_set" // Unless the user overrides something, this is "EASTL hash_set".
-	// #endif
-
-
-	/// EASTL_HASH_MULTISET_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_MULTISET_DEFAULT_NAME
-	// 	#define EASTL_HASH_MULTISET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multiset" // Unless the user overrides something, this is "EASTL hash_multiset".
-	// #endif
-
-
-	/// EASTL_HASH_SET_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASH_SET_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_SET_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_SET_DEFAULT_NAME)
-	// #endif
-
-	/// EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MULTISET_DEFAULT_NAME)
-	// #endif
-
 	/// hash_set
 	///
 	/// Implements a hash_set, which is a hashed unique-item container.
