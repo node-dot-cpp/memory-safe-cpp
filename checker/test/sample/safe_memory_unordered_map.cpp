@@ -86,11 +86,17 @@ struct [[nodecpp::deep_const]] GoodHash {
 	[[nodecpp::no_side_effect]] std::size_t operator()(const Key&) const {return 0;}
 };
 
+template<class Key>
+struct [[nodecpp::deep_const]] GoodEq {
+	[[nodecpp::no_side_effect]] constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
+// CHECK: :[[@LINE-1]]:98: error: function with no_side_effect attribute can call only
+};
+
 void badHashOrKeyEqual() {
 
 	// hash is no deep_const
 	unordered_map<int, int, BadHash<int>> bb1;
-// CHECK: :[[@LINE-1]]:33: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:40: error: unsafe type at variable declaration
 
 	// deep_const but side effect
 	unordered_map<int, int, SideEffectHash<int>> bb2;
@@ -98,13 +104,14 @@ void badHashOrKeyEqual() {
 
 	// key_equal is safe but no deep_const
 	unordered_map<int, int, safe_memory::hash<int>, BadEq<int>> bb10;
-// CHECK: :[[@LINE-1]]:52: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:62: error: unsafe type at variable declaration
 
 	unordered_map<int, int, safe_memory::hash<int>, SideEffectEq<int>> bb12;
-// CHECK: :[[@LINE-1]]:61: error: unsafe type at variable declaration
+// CHECK: :[[@LINE-1]]:69: error: unsafe type at variable declaration
 
-	//here the default safe_memory::equal_to<KeyWithSideEffectEqual> has side-effects
-	unordered_map<KeyWithSideEffectEqual, int, GoodHash<KeyWithSideEffectEqual>> bb13;
-// CHECK: :[[@LINE-1]]:79: error: unsafe type at variable declaration
+
+
+	//here the instantiation of GoodEq triggers the error at GoodEq::operator()
+	unordered_map<KeyWithSideEffectEqual, int, GoodHash<KeyWithSideEffectEqual>, GoodEq<KeyWithSideEffectEqual>> bb14;
 }
 

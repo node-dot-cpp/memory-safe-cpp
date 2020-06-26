@@ -1570,9 +1570,11 @@ namespace safe_memory::detail
 			mRehashPolicy()/*,
 			mAllocator(allocator)*/
 	{
+#ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
+// checker needs this to actually instantiate the operator method
 		auto P1 = &Eq::operator();
 		auto P2 = &H1::operator();
-
+#endif
 		// if(nBucketCount < 2)  // If we are starting in an initially empty state, with no memory allocation done.
 		// 	reset_lose_memory();
 		// else // Else we are creating a potentially non-empty hashtable...
