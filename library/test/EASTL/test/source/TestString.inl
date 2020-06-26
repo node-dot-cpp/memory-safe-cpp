@@ -1616,14 +1616,14 @@ int TEST_STRING_NAME()
 	}
 
 	// size_type copy(value_type* p, size_type n, size_type position = 0) const;
-	{
-		typename StringType::value_type buf[64];
+	// {
+	// 	typename StringType::value_type buf[64];
 
-		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.copy(buf, 10, 10);
+	// 	StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// 	str.copy(buf, 10, 10);
 
-		VERIFY(EA::StdC::Memcmp(buf, LITERAL("klmnopqrst"), 10) == 0);
-	}
+	// 	VERIFY(EA::StdC::Memcmp(buf, LITERAL("klmnopqrst"), 10) == 0);
+	// }
 
 	// size_type find(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
 	// size_type find(const value_type* p, size_type position = 0) const;

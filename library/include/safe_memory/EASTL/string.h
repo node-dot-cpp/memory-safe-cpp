@@ -1365,7 +1365,7 @@ namespace safe_memory
 		{
 			// In here the string is transition from heap->heap, heap->sso or sso->heap
 
-			if(EASTL_LIKELY(n))
+			if(NODECPP_LIKELY(n))
 			{
 
 				// if(n <= SSOLayout::SSO_CAPACITY)
@@ -2622,7 +2622,7 @@ namespace safe_memory
 	typename basic_string<T, Safety>::size_type
 	basic_string<T, Safety>::find_unsafe(const_pointer p, size_type position, size_type n) const
 	{
-		if(EASTL_LIKELY((position < internalLayout().GetSize())))
+		if(NODECPP_LIKELY((position < internalLayout().GetSize())))
 		{
 			const_pointer const pBegin = internalLayout().BeginPtr() + position;
 			const const_pointer pResult   = CharTypeStringSearch(pBegin, internalLayout().EndPtr(), p, p + n);
@@ -2638,7 +2638,7 @@ namespace safe_memory
 	typename basic_string<T, Safety>::size_type
 	basic_string<T, Safety>::find(value_type c, size_type position) const noexcept
 	{
-		if(EASTL_LIKELY(position < internalLayout().GetSize()))// If the position is valid...
+		if(NODECPP_LIKELY(position < internalLayout().GetSize()))// If the position is valid...
 		{
 			const const_pointer pResult = std::find(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), c);
 
@@ -2691,9 +2691,9 @@ namespace safe_memory
 		// never return npos, unlike the case with find.
 		const size_type nLength = internalLayout().GetSize();
 
-		if(EASTL_LIKELY(n <= nLength))
+		if(NODECPP_LIKELY(n <= nLength))
 		{
-			if(EASTL_LIKELY(n))
+			if(NODECPP_LIKELY(n))
 			{
 				const const_pointer pEnd    = internalLayout().BeginPtr() + std::min(nLength - n, position) + n;
 				const const_pointer pResult = CharTypeStringRSearch(internalLayout().BeginPtr(), pEnd, p, p + n);
@@ -2715,7 +2715,7 @@ namespace safe_memory
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
 
-		if(EASTL_LIKELY(nLength))
+		if(NODECPP_LIKELY(nLength))
 		{
 			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
 			const_pointer const pResult = CharTypeStringRFind(pEnd, internalLayout().BeginPtr(), c);
@@ -2755,7 +2755,7 @@ namespace safe_memory
 	basic_string<T, Safety>::find_first_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
 		// If position is >= size, we return npos.
-		if(EASTL_LIKELY((position < internalLayout().GetSize())))
+		if(NODECPP_LIKELY((position < internalLayout().GetSize())))
 		{
 			const_pointer const pBegin = internalLayout().BeginPtr() + position;
 			const const_pointer pResult   = CharTypeStringFindFirstOf(pBegin, internalLayout().EndPtr(), p, p + n);
@@ -2805,7 +2805,7 @@ namespace safe_memory
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
 
-		if(EASTL_LIKELY(nLength))
+		if(NODECPP_LIKELY(nLength))
 		{
 			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
 			const_pointer const pResult = CharTypeStringRFindFirstOf(pEnd, internalLayout().BeginPtr(), p, p + n);
@@ -2852,7 +2852,7 @@ namespace safe_memory
 	typename basic_string<T, Safety>::size_type
 	basic_string<T, Safety>::find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const
 	{
-		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
+		if(NODECPP_LIKELY(position <= internalLayout().GetSize()))
 		{
 			const const_pointer pResult =
 			    CharTypeStringFindFirstNotOf(internalLayout().BeginPtr() + position, internalLayout().EndPtr(), p, p + n);
@@ -2868,7 +2868,7 @@ namespace safe_memory
 	typename basic_string<T, Safety>::size_type
 	basic_string<T, Safety>::find_first_not_of(value_type c, size_type position) const noexcept
 	{
-		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
+		if(NODECPP_LIKELY(position <= internalLayout().GetSize()))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringFindFirstNotOf(pBegin, pEnd, c).
 			const const_pointer pResult =
@@ -2910,7 +2910,7 @@ namespace safe_memory
 	{
 		const size_type nLength = internalLayout().GetSize();
 
-		if(EASTL_LIKELY(nLength))
+		if(NODECPP_LIKELY(nLength))
 		{
 			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
 			const_pointer const pResult = CharTypeStringRFindFirstNotOf(pEnd, internalLayout().BeginPtr(), p, p + n);
@@ -2928,7 +2928,7 @@ namespace safe_memory
 	{
 		const size_type nLength = internalLayout().GetSize();
 
-		if(EASTL_LIKELY(nLength))
+		if(NODECPP_LIKELY(nLength))
 		{
 			// Todo: Possibly make a specialized version of CharTypeStringRFindFirstNotOf(pBegin, pEnd, c).
 			const_pointer const pEnd    = internalLayout().BeginPtr() + std::min(nLength - 1, position) + 1;
@@ -3291,8 +3291,8 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::size_type
 	basic_string<T, Safety>::GetNewCapacity(size_type currentCapacity, size_type minimumRequiredCapacity)
 	{
-		if(NODECPP_UNLIKELY(minimumRequiredCapacity > max_size()))
-			ThrowLengthException("basic_string::GetNewCapacity -- minimumRequiredCapacity > max_size()");
+		if(NODECPP_UNLIKELY(minimumRequiredCapacity > kMaxSize))
+			ThrowLengthException("basic_string::GetNewCapacity -- minimumRequiredCapacity > kMaxSize");
 
 		const size_type nNewCapacity = std::max(minimumRequiredCapacity, currentCapacity * 2);
 

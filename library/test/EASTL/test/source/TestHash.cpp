@@ -227,11 +227,11 @@ int TestHash()
 
 		// const char*     get_name() const;
 		// void            set_name(const char* pName);
-		#if EASTL_NAME_ENABLED
-			hashMap.get_allocator().set_name("test");
-			const char* pName = hashMap.get_allocator().get_name();
-			EATEST_VERIFY(equal(pName, pName + 5, "test"));
-		#endif
+		// #if EASTL_NAME_ENABLED
+		// 	hashMap.get_allocator().set_name("test");
+		// 	const char* pName = hashMap.get_allocator().get_name();
+		// 	EATEST_VERIFY(equal(pName, pName + 5, "test"));
+		// #endif
 	}
 
 

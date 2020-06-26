@@ -69,6 +69,12 @@
 
 namespace safe_memory::detail
 {
+#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 303) && !defined(EA_COMPILER_RVCT)
+	#define EASTL_MAY_ALIAS __attribute__((__may_alias__))
+#else
+	#define EASTL_MAY_ALIAS
+#endif
+
 	/// use_self
 	///
 	/// operator()(x) simply returns x. Used in sets, as opposed to maps.
@@ -523,7 +529,7 @@ namespace safe_memory::detail
 	/// Default value for rehash policy. Bucket size is (usually) the
 	/// smallest prime that keeps the load factor small enough.
 	///
-	struct EASTL_API prime_rehash_policy
+	struct prime_rehash_policy
 	{
 	public:
 		float            mfMaxLoadFactor;
@@ -1403,7 +1409,7 @@ namespace safe_memory::detail
 		soft_node_type DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const;
 
 
-		static [[noreturn]]
+		[[noreturn]] static
 		void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
 
 		// template <typename T>
@@ -1448,7 +1454,7 @@ namespace safe_memory::detail
 		// 	reset_lose_memory();
 		// else // Else we are creating a potentially non-empty hashtable...
 		// {
-			EASTL_ASSERT(nBucketCount < 10000000);
+			// EASTL_ASSERT(nBucketCount < 10000000);
 			mnBucketCount = (size_type)mRehashPolicy.GetNextBucketCount((uint32_t)nBucketCount);
 			mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
 		// }
@@ -1772,7 +1778,7 @@ namespace safe_memory::detail
 	{
 		// We allocate one extra bucket to hold a sentinel, an arbitrary
 		// non-null pointer. Iterator increment relies on this.
-		EASTL_ASSERT(n > 1); // We reserve an mnBucketCount of 1 for the shared gpEmptyBucketArray.
+		// EASTL_ASSERT(n > 1); // We reserve an mnBucketCount of 1 for the shared gpEmptyBucketArray.
 // 		static_assert(kHashtableAllocFlagBuckets == 0x00400000); // Currently we expect this to be so, because the allocator has a copy of this enum.
 // //		node_type** const pBucketArray = (node_type**)EASTLAllocAlignedFlags(mAllocator, (n + 1) * sizeof(node_type*), EASTL_ALIGN_OF(node_type*), 0, kHashtableAllocFlagBuckets);
 // 		node_type** const pBucketArray = (node_type**)safememory::lib_helpers::allocate_memory((n + 1) * sizeof(node_type*), alignof(node_type*), 0, kHashtableAllocFlagBuckets);

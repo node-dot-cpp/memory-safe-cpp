@@ -10,7 +10,7 @@
 #include <EABase/eabase.h>
 #include <EATest/EATest.h>
 //#include <EASTL/allocator.h> // for eastl::allocator
-#include <safe_memory/EASTL/internal/config.h>
+#include <EASTL/internal/config.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>

@@ -459,7 +459,7 @@ namespace safe_memory
 
 	// 	// If n is zero, then we allocate no memory and just return nullptr. 
 	// 	// This is fine, as our default ctor initializes with NULL pointers. 
-	// 	if(EASTL_LIKELY(n))
+	// 	if(NODECPP_LIKELY(n))
 	// 	{
 	// 		// auto* p = (T*)safememory::lib_helpers::allocate_memory(n * sizeof(T), alignof(T), 0);
 	// 		// EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
@@ -1037,7 +1037,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::operator[](size_type n)
 	{
-		if constexpr(is_safe == safety::safe)
+		if constexpr(is_safe == memory_safety::safe)
 			return at(n);
 		else
 			return *(mpBegin + n);
@@ -1048,7 +1048,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::operator[](size_type n) const
 	{
-		if constexpr(is_safe == safety::safe)
+		if constexpr(is_safe == memory_safety::safe)
 			return at(n);
 		else
 			return *(mpBegin + n);
@@ -1085,7 +1085,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::front()
 	{
-		if constexpr(is_safe == safety::safe) {
+		if constexpr(is_safe == memory_safety::safe) {
 			// We don't allow the user to reference an empty container.
 			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::front -- empty vector");
@@ -1099,7 +1099,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::front() const
 	{
-		if constexpr(is_safe == safety::safe) {
+		if constexpr(is_safe == memory_safety::safe) {
 			// We don't allow the user to reference an empty container.
 			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::front -- empty vector");
@@ -1113,7 +1113,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::back()
 	{
-		if constexpr(is_safe == safety::safe) {
+		if constexpr(is_safe == memory_safety::safe) {
 			// We don't allow the user to reference an empty container.
 			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::back -- empty vector");
@@ -1127,7 +1127,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::back() const
 	{
-		if constexpr(is_safe == safety::safe) {
+		if constexpr(is_safe == memory_safety::safe) {
 			// We don't allow the user to reference an empty container.
 			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::back -- empty vector");
@@ -1186,7 +1186,7 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	inline void vector<T, Safety>::pop_back()
 	{
-		if constexpr(is_safe == safety::safe) {
+		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::pop_back -- empty vector");
 		}
@@ -2116,7 +2116,7 @@ namespace safe_memory
 			// creating a temporary value on the stack here is not an optimal way to solve this because sizeof(value_type) may be
 			// too much for the given platform. An alternative solution may be to specialize this function for the case of the
 			// argument being const value_type& or value_type&&.
-			EASTL_ASSERT(position < mpEnd);                                 // While insert at end() is valid, our design is such that calling code should handle that case before getting here, as our streamlined logic directly doesn't handle this particular case due to resulting negative ranges.
+			// EASTL_ASSERT(position < mpEnd);                                 // While insert at end() is valid, our design is such that calling code should handle that case before getting here, as our streamlined logic directly doesn't handle this particular case due to resulting negative ranges.
 			#if EASTL_USE_FORWARD_WORKAROUND
 				auto value = value_type(std::forward<Args>(args)...);     // Workaround for compiler bug in VS2013 which results in a compiler internal crash while compiling this code.
 			#else

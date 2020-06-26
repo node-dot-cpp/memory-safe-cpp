@@ -55,7 +55,7 @@ struct array_of2
 		char dummy;
 	};
 
-	static [[noreturn]]
+	[[noreturn]] static
 	void throwPointerOutOfRange(const char* msg) {
 		throw std::out_of_range(msg);
 	}
