@@ -1411,6 +1411,10 @@ namespace safe_memory::detail
 		void       DoRehash(size_type nBucketCount);
 		soft_node_type DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const;
 
+
+		static [[noreturn]]
+		void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+
 		// template <typename T>
 		// ENABLE_IF_HAS_HASHCODE(T, node_type) DoFindNode(T* pNode, hash_code_t c) const
 		// {

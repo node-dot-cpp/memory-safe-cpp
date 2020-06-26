@@ -51,8 +51,9 @@
 //     - Predefine individual defines (e.g. EASTL_ASSERT).
 //
 ///////////////////////////////////////////////////////////////////////////////
-#define EASTL_EXCEPTIONS_ENABLED 1
+// #define EASTL_EXCEPTIONS_ENABLED 1
 #define EASTL_ASSERT_ENABLED 0
+#define EASTL_STRING_OPT_LENGTH_ERRORS 1
 
 // ///////////////////////////////////////////////////////////////////////////////
 // // EASTL_USER_CONFIG_HEADER

@@ -229,13 +229,13 @@ namespace safe_memory::detail
 
 			if (it == base_type::end())
 			{
-				#if EASTL_EXCEPTIONS_ENABLED
+				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
+					base_type::ThrowRangeException("invalid hash_map<K, T> key");
+				// #else
+				// 	// assert false if asserts enabled
+				// 	EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
 			return it->second;
@@ -248,13 +248,13 @@ namespace safe_memory::detail
 
 			if (it == base_type::end())
 			{
-				#if EASTL_EXCEPTIONS_ENABLED
+				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
+					base_type::ThrowRangeException("invalid hash_map<K, T> key");
+				// #else
+				// 	// assert false if asserts enabled
+				// 	EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
 			return it->second;

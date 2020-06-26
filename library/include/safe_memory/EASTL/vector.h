@@ -374,10 +374,9 @@ namespace safe_memory
 
 		void DoSwap(this_type& x) noexcept;
 
-		[[noreturn]] static void ThrowLengthException();
-		[[noreturn]] static void ThrowRangeException();
-		[[noreturn]] static void ThrowInvalidArgumentException();
-		[[noreturn]] static void ThrowMaxSizeException();
+		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+		[[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw std::out_of_range(msg); }
 
 		static
 		const_pointer_pair CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd);
@@ -934,7 +933,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::size_type
 	vector<T, Safety>::size() const noexcept
 	{
-		return (size_type)(mpEnd - mpBegin);
+		return static_cast<size_type>(mpEnd - mpBegin);
 	}
 
 
@@ -1048,15 +1047,10 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::operator[](size_type n)
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container. But this was merely grandfathered in and ideally we shouldn't allow such access to [0].
-			if(EASTL_UNLIKELY((n != 0) && (n >= (static_cast<size_type>(mpEnd - mpBegin)))))
-				EASTL_FAIL_MSG("vector::operator[] -- out of range");
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				EASTL_FAIL_MSG("vector::operator[] -- out of range");
-		#endif
-
-		return *(mpBegin + n);
+		if constexpr(is_safe == safety::safe)
+			return at(n);
+		else
+			return *(mpBegin + n);
 	}
 
 
@@ -1064,15 +1058,10 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::operator[](size_type n) const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED    // We allow the user to use a reference to v[0] of an empty container. But this was merely grandfathered in and ideally we shouldn't allow such access to [0].
-			if(EASTL_UNLIKELY((n != 0) && (n >= (static_cast<size_type>(mpEnd - mpBegin)))))
-				EASTL_FAIL_MSG("vector::operator[] -- out of range");
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				EASTL_FAIL_MSG("vector::operator[] -- out of range");
-		#endif
-
-		return *(mpBegin + n);
+		if constexpr(is_safe == safety::safe)
+			return at(n);
+		else
+			return *(mpBegin + n);
 	}
 
 
@@ -1084,13 +1073,8 @@ namespace safe_memory
 		// the requested position is out of range by throwing an 
 		// out_of_range exception.
 
-		// #if EASTL_EXCEPTIONS_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				throw std::out_of_range("vector::at -- out of range");
-		// #elif EASTL_ASSERT_ENABLED
-		// 	if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-		// 		EASTL_FAIL_MSG("vector::at -- out of range");
-		// #endif
+		if(EASTL_UNLIKELY(n >= size()))
+			ThrowRangeException("vector::at -- out of range");
 
 		return *(mpBegin + n);
 	}
@@ -1100,13 +1084,8 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::at(size_type n) const
 	{
-		// #if EASTL_EXCEPTIONS_ENABLED
-			if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-				throw std::out_of_range("vector::at -- out of range");
-		// #elif EASTL_ASSERT_ENABLED
-		// 	if(EASTL_UNLIKELY(n >= (static_cast<size_type>(mpEnd - mpBegin))))
-		// 		EASTL_FAIL_MSG("vector::at -- out of range");
-		// #endif
+		if(EASTL_UNLIKELY(n >= size()))
+			ThrowRangeException("vector::at -- out of range");
 
 		return *(mpBegin + n);
 	}
@@ -1116,12 +1095,11 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::front()
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin)) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("vector::front -- empty vector");
-		#endif
+		if constexpr(is_safe == safety::safe) {
+			// We don't allow the user to reference an empty container.
+			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+				ThrowRangeException("vector::front -- empty vector");
+		}
 
 		return *mpBegin;
 	}
@@ -1131,12 +1109,11 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::front() const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin)) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("vector::front -- empty vector");
-		#endif
+		if constexpr(is_safe == safety::safe) {
+			// We don't allow the user to reference an empty container.
+			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+				ThrowRangeException("vector::front -- empty vector");
+		}
 
 		return *mpBegin;
 	}
@@ -1146,12 +1123,11 @@ namespace safe_memory
 	inline typename vector<T, Safety>::reference
 	vector<T, Safety>::back()
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin)) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("vector::back -- empty vector");
-		#endif
+		if constexpr(is_safe == safety::safe) {
+			// We don't allow the user to reference an empty container.
+			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+				ThrowRangeException("vector::back -- empty vector");
+		}
 
 		return *(mpEnd - 1);
 	}
@@ -1161,12 +1137,11 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::back() const
 	{
-		#if EASTL_EMPTY_REFERENCE_ASSERT_ENABLED
-			// We allow the user to reference an empty container.
-		#elif EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin)) // We don't allow the user to reference an empty container.
-				EASTL_FAIL_MSG("vector::back -- empty vector");
-		#endif
+		if constexpr(is_safe == safety::safe) {
+			// We don't allow the user to reference an empty container.
+			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+				ThrowRangeException("vector::back -- empty vector");
+		}
 
 		return *(mpEnd - 1);
 	}
@@ -1221,10 +1196,10 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	inline void vector<T, Safety>::pop_back()
 	{
-		#if EASTL_ASSERT_ENABLED
+		if constexpr(is_safe == safety::safe) {
 			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
-				EASTL_FAIL_MSG("vector::pop_back -- empty vector");
-		#endif
+				ThrowRangeException("vector::pop_back -- empty vector");
+		}
 
 		--mpEnd;
 		mpEnd->~value_type();
@@ -1279,11 +1254,6 @@ namespace safe_memory
 	inline typename vector<T, Safety>::pointer
 	vector<T, Safety>::insert_unsafe(const_pointer position, const value_type& value)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
-				EASTL_FAIL_MSG("vector::insert -- invalid position");
-		#endif
-
 		// We implment a quick pathway for the case that the insertion position is at the end and we have free capacity for it.
 		const std::ptrdiff_t n = position - mpBegin; // Save this because we might reallocate.
 
@@ -1392,11 +1362,6 @@ namespace safe_memory
 	inline typename vector<T, Safety>::pointer
 	vector<T, Safety>::erase_unsafe(const_pointer position)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
-				EASTL_FAIL_MSG("vector::erase -- invalid position");
-		#endif
-
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);        
 
@@ -1412,11 +1377,6 @@ namespace safe_memory
 	inline typename vector<T, Safety>::pointer
 	vector<T, Safety>::erase_unsafe(const_pointer first, const_pointer last)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((first < mpBegin) || (first > mpEnd) || (last < mpBegin) || (last > mpEnd) || (last < first)))
-				EASTL_FAIL_MSG("vector::erase -- invalid position");
-		#endif
- 
 		if (first != last)
 		{
 			pointer const position = const_cast<value_type*>(std::move(const_cast<value_type*>(last), const_cast<value_type*>(mpEnd), const_cast<value_type*>(first)));
@@ -1614,7 +1574,7 @@ namespace safe_memory
 		// TODO, allocated heap should be zeroed 
 
 		if(EASTL_UNLIKELY(n > kMaxSize))
-			ThrowMaxSizeException();
+			ThrowMaxSizeException("vector -- size too big");
 
 		// TODO remove this once we are correctly asking iibmalloc
 		// about possible allocation sizes. Since iibmalloc usually
@@ -1871,11 +1831,6 @@ namespace safe_memory
 	template <typename BidirectionalIterator>
 	void vector<T, Safety>::DoInsertFromIterator(const_pointer position, BidirectionalIterator first, BidirectionalIterator last, std::bidirectional_iterator_tag)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
-				EASTL_FAIL_MSG("vector::insert -- invalid position");
-		#endif
-
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);
 
@@ -1951,11 +1906,6 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	void vector<T, Safety>::DoInsertValues(const_pointer position, size_type n, const value_type& value)
 	{
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
-				EASTL_FAIL_MSG("vector::insert -- invalid position");
-		#endif
-
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);
 
@@ -2167,11 +2117,6 @@ namespace safe_memory
 		// so we need to be sure to handle that case. This is different from insert(position, const value_type&) because in 
 		// this case value is potentially being modified.
 
-		#if EASTL_ASSERT_ENABLED
-			if(EASTL_UNLIKELY((position < mpBegin) || (position > mpEnd)))
-				EASTL_FAIL_MSG("vector::insert/emplace -- invalid position");
-		#endif
-
 		// C++11 stipulates that position is const_iterator, but the return value is iterator.
 		pointer destPosition = const_cast<value_type*>(position);
 
@@ -2278,57 +2223,6 @@ namespace safe_memory
 
 	/* static */
 	template <typename T, memory_safety Safety>
-	[[noreturn]]
-	inline void vector<T, Safety>::ThrowLengthException()
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			throw std::length_error("vector -- length_error");
-		#elif EASTL_ASSERT_ENABLED
-			EASTL_FAIL_MSG("vector -- length_error");
-		#endif
-	}
-
-
-	/* static */
-	template <typename T, memory_safety Safety>
-	[[noreturn]]
-	inline void vector<T, Safety>::ThrowRangeException()
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			throw std::out_of_range("vector -- out of range");
-		#elif EASTL_ASSERT_ENABLED
-			EASTL_FAIL_MSG("vector -- out of range");
-		#endif
-	}
-
-
-	/* static */
-	template <typename T, memory_safety Safety>
-	[[noreturn]]
-	inline void vector<T, Safety>::ThrowInvalidArgumentException()
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			throw std::invalid_argument("vector -- invalid argument");
-		#elif EASTL_ASSERT_ENABLED
-			EASTL_FAIL_MSG("vector -- invalid argument");
-		#endif
-	}
-
-	/* static */
-	template <typename T, memory_safety Safety>
-	[[noreturn]]
-	inline void vector<T, Safety>::ThrowMaxSizeException()
-	{
-		#if EASTL_EXCEPTIONS_ENABLED
-			throw std::out_of_range("vector -- size too big");
-		#elif EASTL_ASSERT_ENABLED
-			EASTL_FAIL_MSG("vector -- invalid argument");
-		#endif
-	}
-
-
-	/* static */
-	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer_pair
 	vector<T, Safety>::CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
@@ -2339,7 +2233,7 @@ namespace safe_memory
 			return const_pointer_pair(b, e);
 		}
 
-		ThrowInvalidArgumentException();
+		ThrowInvalidArgumentException("vector -- invalid argument");
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2349,7 +2243,7 @@ namespace safe_memory
 			return it.get_raw_ptr();
 		}
 
-		ThrowInvalidArgumentException();
+		ThrowInvalidArgumentException("vector -- invalid argument");
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2363,7 +2257,7 @@ namespace safe_memory
 			return const_pointer_pair(b, e);
 		}
 
-		ThrowInvalidArgumentException();
+		ThrowInvalidArgumentException("vector -- invalid argument");
 	}
 
 	template <typename T, memory_safety Safety>
