@@ -28,6 +28,7 @@
 #ifndef SAFE_MEMORY_STRING_LITERAL_H
 #define SAFE_MEMORY_STRING_LITERAL_H
 
+#include <safe_memory/checker_attributes.h>
 
 namespace safe_memory
 {

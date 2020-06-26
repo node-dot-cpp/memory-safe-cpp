@@ -21,7 +21,7 @@ namespace checker {
 
 void ArrayExprCheck::registerMatchers(MatchFinder *Finder) {
 
-  Finder->addMatcher(typeLoc(loc(arrayType())).bind("type"), this);
+//  Finder->addMatcher(typeLoc(loc(arrayType())).bind("type"), this);
 
   Finder->addMatcher(
       arraySubscriptExpr()
@@ -32,10 +32,10 @@ void ArrayExprCheck::registerMatchers(MatchFinder *Finder) {
 
 void ArrayExprCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if (auto T = Result.Nodes.getNodeAs<TypeLoc>("type")) {
-    diag(T->getLocStart(), "do not use arrays");
-    return;
-  }
+  // if (auto T = Result.Nodes.getNodeAs<TypeLoc>("type")) {
+  //   diag(T->getLocStart(), "do not use arrays");
+  //   return;
+  // }
 
   if (auto Ex = Result.Nodes.getNodeAs<ArraySubscriptExpr>("expr")) {
     diag(Ex->getRBracketLoc(), "(S1) array expression not allowed");

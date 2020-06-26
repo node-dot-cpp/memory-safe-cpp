@@ -55,9 +55,9 @@ struct array_of2
 		char dummy;
 	};
 
-	[[noreturn]]
-	void throwPointerOutOfRange() const {
-		throw std::out_of_range("array_of2 -- out of range");
+	[[noreturn]] static
+	void throwPointerOutOfRange(const char* msg) {
+		throw std::out_of_range(msg);
 	}
 
 public:
@@ -73,14 +73,14 @@ public:
 
 	T& at(size_t ix) {
 		if(ix >= _capacity)
-			throwPointerOutOfRange();
+			throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
 
 		return _begin[ix];
 	}
 	
 	const T& at(size_t ix) const {
 		if(ix >= _capacity)
-			throwPointerOutOfRange();
+			throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
 
 		return _begin[ix];
 	}
@@ -97,7 +97,7 @@ public:
 		// allow returning 'end()' pointer
 		// caller is responsible of not dereferencing it
 		if(ix > _capacity)
-			throwPointerOutOfRange();
+			throwPointerOutOfRange("array_of2::get_raw_ptr(): ix > _capacity");
 		
 		return _begin + ix;
 	}

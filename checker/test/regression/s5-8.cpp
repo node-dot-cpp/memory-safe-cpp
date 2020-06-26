@@ -2,7 +2,7 @@
 
 #include <utility>
 #include <awaitable.h>
-#include <safe_ptr.h>
+#include <safe_memory/safe_ptr.h>
 
 using namespace nodecpp::safememory;
 

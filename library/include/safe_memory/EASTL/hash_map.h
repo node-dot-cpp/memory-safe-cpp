@@ -45,53 +45,12 @@
 #define SAFE_MEMORY_EASTL_HASH_MAP_H
 
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safe_memory/EASTL/utility.h>
 #include <utility>
-
-// #if defined(EA_PRAGMA_ONCE_SUPPORTED)
-// 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
-// #endif
-
-
 
 namespace safe_memory::detail
 {
-
-	/// EASTL_HASH_MAP_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_MAP_DEFAULT_NAME
-	// 	#define EASTL_HASH_MAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_map" // Unless the user overrides something, this is "EASTL hash_map".
-	// #endif
-
-
-	/// EASTL_HASH_MULTIMAP_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_MULTIMAP_DEFAULT_NAME
-	// 	#define EASTL_HASH_MULTIMAP_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multimap" // Unless the user overrides something, this is "EASTL hash_multimap".
-	// #endif
-
-
-	/// EASTL_HASH_MAP_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASH_MAP_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_MAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MAP_DEFAULT_NAME)
-	// #endif
-
-	// /// EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
-	// ///
-	// #ifndef EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_MULTIMAP_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MULTIMAP_DEFAULT_NAME)
-	// #endif
-
-
-
 	/// hash_map
 	///
 	/// Implements a hash_map, which is a hashed associative container.
@@ -127,7 +86,7 @@ namespace safe_memory::detail
 	///     hash_map<string, int> hashMap;
 	///     i = hashMap.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
-	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>, 
+	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_map
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,
@@ -262,13 +221,13 @@ namespace safe_memory::detail
 
 			if (it == base_type::end())
 			{
-				#if EASTL_EXCEPTIONS_ENABLED
+				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
+					base_type::ThrowRangeException("invalid hash_map<K, T> key");
+				// #else
+				// 	// assert false if asserts enabled
+				// 	EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
 			return it->second;
@@ -281,13 +240,13 @@ namespace safe_memory::detail
 
 			if (it == base_type::end())
 			{
-				#if EASTL_EXCEPTIONS_ENABLED
+				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
-					throw std::out_of_range("invalid hash_map<K, T> key");
-				#else
-					// assert false if asserts enabled
-					EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
-				#endif
+					base_type::ThrowRangeException("invalid hash_map<K, T> key");
+				// #else
+				// 	// assert false if asserts enabled
+				// 	EASTL_ASSERT_MSG(false, "invalid hash_map<K, T> key");
+				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
 			return it->second;
@@ -331,7 +290,7 @@ namespace safe_memory::detail
 	/// except that contained elements need not be unique. See the 
 	/// documentation for hash_set for details.
 	///
-	template <typename Key, typename T, typename Hash = std::hash<Key>, typename Predicate = std::equal_to<Key>,
+	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>,
 			  memory_safety Safety = safeness_declarator<std::pair<const Key, T>>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multimap
 		: public hashtable<Key, std::pair<const Key, T>, Safety, use_first<std::pair<const Key, T> >, Predicate,

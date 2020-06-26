@@ -64,7 +64,7 @@
 
 
 #include <EATest/internal/Config.h>
-//#include <safememory/EASTL/internal/config.h> // for size_t
+//#include <EASTL/internal/config.h> // for size_t
 #include <string>
 #include <vector>
 #include <stddef.h>

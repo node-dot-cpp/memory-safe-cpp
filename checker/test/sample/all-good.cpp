@@ -1,10 +1,10 @@
 // RUN: nodecpp-checker %s | FileCheck %s -allow-empty -implicit-check-not="{{warning|error}}:"
 
-#include <safe_ptr.h>
+#include <safe_memory/safe_ptr.h>
 
 /* This file should not generate any warning */
 
-using namespace nodecpp::safememory;
+using namespace safe_memory;
 
 class X { };
 

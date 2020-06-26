@@ -45,50 +45,12 @@
 #define SAFE_MEMORY_EASTL_HASH_SET_H
 
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safe_memory/EASTL/utility.h>
-
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
-#endif
-
 
 
 namespace safe_memory
 {
-
-	/// EASTL_HASH_SET_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_SET_DEFAULT_NAME
-	// 	#define EASTL_HASH_SET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_set" // Unless the user overrides something, this is "EASTL hash_set".
-	// #endif
-
-
-	/// EASTL_HASH_MULTISET_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASH_MULTISET_DEFAULT_NAME
-	// 	#define EASTL_HASH_MULTISET_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hash_multiset" // Unless the user overrides something, this is "EASTL hash_multiset".
-	// #endif
-
-
-	/// EASTL_HASH_SET_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASH_SET_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_SET_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_SET_DEFAULT_NAME)
-	// #endif
-
-	/// EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASH_MULTISET_DEFAULT_ALLOCATOR allocator_type(EASTL_HASH_MULTISET_DEFAULT_NAME)
-	// #endif
-
 	/// hash_set
 	///
 	/// Implements a hash_set, which is a hashed unique-item container.
@@ -124,7 +86,7 @@ namespace safe_memory
 	///     hash_set<string> hashSet;
 	///     i = hashSet.find_as("hello", hash<char*>(), equal_to_2<string, char*>());
 	///
-	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
+	template <typename Value, typename Hash = hash<Value>, typename Predicate = equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_set
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,
@@ -243,7 +205,7 @@ namespace safe_memory
 	/// except that contained elements need not be unique. See the documentation 
 	/// for hash_set for details.
 	///
-	template <typename Value, typename Hash = std::hash<Value>, typename Predicate = std::equal_to<Value>, 
+	template <typename Value, typename Hash = hash<Value>, typename Predicate = equal_to<Value>, 
 			  memory_safety Safety = safeness_declarator<Value>::is_safe, bool bCacheHashCode = false>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS hash_multiset
 		: public detail::hashtable<Value, Value, Safety, detail::use_self<Value>, Predicate,

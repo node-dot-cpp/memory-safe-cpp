@@ -1,8 +1,9 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_ptr.h>
+#include <safe_memory/safe_ptr.h>
 
 using namespace nodecpp::safememory;
+
 
 struct Safe1 {
 	int i = 0;

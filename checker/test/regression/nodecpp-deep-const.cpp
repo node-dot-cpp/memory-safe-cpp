@@ -1,13 +1,13 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_ptr.h>
-#include <safememory/string.h>
+#include <safe_memory/safe_ptr.h>
+#include <deep_const_type.h>
 
 using namespace nodecpp::safememory;
 
 struct [[nodecpp::deep_const]] DeepConst {
     int l;
-    safememory::string str;
+    nodecpp::deep_const_type str;
 };
 
 struct DeepConst;

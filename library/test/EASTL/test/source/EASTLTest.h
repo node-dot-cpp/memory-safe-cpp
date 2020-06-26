@@ -10,7 +10,7 @@
 #include <EABase/eabase.h>
 #include <EATest/EATest.h>
 //#include <EASTL/allocator.h> // for eastl::allocator
-#include <safe_memory/EASTL/internal/config.h>
+#include <EASTL/internal/config.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
@@ -496,18 +496,11 @@ inline bool operator<(const TestObject& t1, const TestObject& t2)
 	{ return t1.mX < t2.mX; }
 
 
-// TestObject hash
-// Normally you don't want to put your hash functions in the eastl namespace, as that namespace is owned by EASTL.
-// However, these are the EASTL unit tests and we can say that they are also owned by EASTL.
-namespace std
+struct hash_TestObject
 {
-	template <> 
-	struct hash<TestObject>
-	{
-		size_t operator()(const TestObject& a) const 
-			{ return static_cast<size_t>(a.mX); }
-	};
-}
+	size_t operator()(const TestObject& a) const 
+		{ return static_cast<size_t>(a.mX); }
+};
 
 
 // use_mX

@@ -24,18 +24,42 @@ const char *DiagMsgSrc = "memory-safe-cpp";
 DiagHelper NullDiagHelper;
 
 bool isOwningPtrName(const std::string &Name) {
-  return Name == "nodecpp::safememory::owning_ptr_impl" ||
-          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
+  // mb: 'base' ones are needed for methods at isSystemSafeFunction
+  return Name == "nodecpp::safememory::owning_ptr" ||
+          Name == "nodecpp::safememory::owning_ptr_impl" ||
           Name == "nodecpp::safememory::owning_ptr_no_checks" ||
-          Name == "nodecpp::safememory::owning_ptr_base_no_checks";
+          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
+          Name == "nodecpp::safememory::owning_ptr_base_no_checks" ||
+          Name == "safe_memory::owning_ptr" ||
+          Name == "safe_memory::owning_ptr_impl" ||
+          Name == "safe_memory::owning_ptr_no_checks" ||
+          Name == "safe_memory::owning_ptr_base_impl" ||
+          Name == "safe_memory::owning_ptr_base_no_checks";
 }
 
 bool isSafePtrName(const std::string &Name) {
+  // mb: 'base' ones are needed for methods at isSystemSafeFunction
   return isOwningPtrName(Name) ||
+    Name == "nodecpp::safememory::soft_ptr" ||
     Name == "nodecpp::safememory::soft_ptr_impl" ||
     Name == "nodecpp::safememory::soft_ptr_no_checks" ||
+    Name == "nodecpp::safememory::soft_ptr_base_impl" ||
+    Name == "nodecpp::safememory::soft_ptr_base_no_checks" ||
+    Name == "nodecpp::safememory::soft_this_ptr" ||
     Name == "nodecpp::safememory::soft_this_ptr_impl" ||
-    Name == "nodecpp::safememory::soft_this_ptr_no_checks";
+    Name == "nodecpp::safememory::soft_this_ptr_no_checks" ||
+    Name == "nodecpp::safememory::soft_this_ptr_base_impl" ||
+    Name == "nodecpp::safememory::soft_this_ptr_base_no_checks" ||
+    Name == "safe_memory::soft_ptr" ||
+    Name == "safe_memory::soft_ptr_impl" ||
+    Name == "safe_memory::soft_ptr_no_checks" ||
+    Name == "safe_memory::soft_ptr_base_impl" ||
+    Name == "safe_memory::soft_ptr_base_no_checks" ||
+    Name == "safe_memory::soft_this_ptr" ||
+    Name == "safe_memory::soft_this_ptr_impl" ||
+    Name == "safe_memory::soft_this_ptr_no_checks" ||
+    Name == "safe_memory::soft_this_ptr_base_impl" ||
+    Name == "safe_memory::soft_this_ptr_base_no_checks";
 }
 
 bool isAwaitableName(const std::string &Name) {
@@ -44,36 +68,27 @@ bool isAwaitableName(const std::string &Name) {
 }
 
 bool isNakedPtrName(const std::string &Name) {
+  // mb: 'base' ones are needed for methods at isSystemSafeFunction
+  // TODO remove naked_ptr
   return Name == "nodecpp::safememory::naked_ptr_impl" ||
          Name == "nodecpp::safememory::naked_ptr_no_checks" ||
          Name == "nodecpp::safememory::nullable_ptr" ||
          Name == "nodecpp::safememory::nullable_ptr_impl" ||
-         Name == "nodecpp::safememory::nullable_ptr_no_checks";
-}
-
-bool isOsnMethodName(const std::string& Name) {
-
-  //hardcode methods that are very important for implementation
-
-  auto it = Name.rfind("::");
-  if(it != std::string::npos) {
-    std::string Prefix = Name.substr(0, it);
-    if (isSafePtrName(Prefix) || isNakedPtrName(Prefix)) {
-      std::string Post = Name.substr(it + 2);
-      return Post == "operator*" || 
-              Post == "operator->" ||
-              Post == "operator=" ||
-              Post == "operator bool" ||
-              Post == "get";
-    }
-  }
-
-  return false;
+         Name == "nodecpp::safememory::nullable_ptr_no_checks" ||
+         Name == "nodecpp::safememory::nullable_ptr_base_impl" ||
+         Name == "nodecpp::safememory::nullable_ptr_base_no_checks" ||
+         Name == "safe_memory::nullable_ptr" ||
+         Name == "safe_memory::nullable_ptr_impl" ||
+         Name == "safe_memory::nullable_ptr_no_checks" ||
+         Name == "safe_memory::nullable_ptr_base_impl" ||
+         Name == "safe_memory::nullable_ptr_base_no_checks";
 }
 
 bool isSoftPtrCastName(const std::string& Name) {
   return Name == "nodecpp::safememory::soft_ptr_static_cast" ||
-          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast";
+          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast" ||
+          Name == "safe_memory::soft_ptr_static_cast" ||
+          Name == "safe_memory::soft_ptr_reinterpret_cast";
 }
 
 bool isWaitForAllName(const std::string& Name) {
@@ -86,11 +101,17 @@ bool isNodeBaseName(const std::string& Name) {
     Name == "nodecpp::net::NodeBase";
 }
 
-bool isStdHashOrEqualToName(const std::string &Name) {
-  return Name == "std::hash" ||
-          Name == "std::equal_to";
-}
+// bool isStdHashOrEqualToName(const std::string &Name) {
+//   return Name == "std::hash" ||
+//           Name == "std::equal_to";
+// }
 
+bool isStdMoveOrForward(const std::string &Name) {
+  return Name == "std::move" ||
+          Name == "std::__1::move" || 
+          Name == "std::forward" || 
+          Name == "std::__1::forward";
+}
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
@@ -389,7 +410,7 @@ bool isStringLiteralType(QualType Qt) {
     return false;
 
   auto Name = getQnameForSystemSafeDb(R);
-  return Name == "nodecpp::string_literal" || Name == "nodecpp::StringLiteral";
+  return Name == "nodecpp::string_literal" || Name == "safe_memory::basic_string_literal";
 }
 
 
@@ -520,6 +541,11 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
     return false;
   }
 
+  //mb: hack for std::hash and std::equal_to
+  // if(isImplicitDeepConstStdHashOrEqualTo(ArgI, Context, Dh)) {
+  //   return true;
+  // }
+
   const CXXRecordDecl* Rd = ArgI->getAsCXXRecordDecl();
   if(Rd)
     Rd = getRecordWithDefinition(Rd);
@@ -601,7 +627,7 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safememory::vector") {
+  if (Name == "safe_memory::vector") {
     return KindCheck(true, templateArgIsSafe(Qt, 0, Context, Dh));
   }
 
@@ -618,9 +644,9 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safememory::hash_map" 
-    || Name == "safememory::unordered_map"
-    || Name == "safememory::unordered_multimap") {
+  if (Name == "safe_memory::detail::hash_map" 
+    || Name == "safe_memory::unordered_map"
+    || Name == "safe_memory::unordered_multimap") {
     // mb: hashmap Key,Hash, and Equal must be deep_const
     // value only needs to be safe
 
@@ -667,26 +693,26 @@ bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, Diag
   return true;
 }
 
-bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
+// bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
 
-  assert(Qt.isCanonical());
+//   assert(Qt.isCanonical());
 
-  std::string Name = getQnameForSystemSafeDb(Qt);
-  if(!isStdHashOrEqualToName(Name))
-    return false;
+//   std::string Name = getQnameForSystemSafeDb(Qt);
+//   if(!isStdHashOrEqualToName(Name))
+//     return false;
 
-  QualType Arg = getTemplateArgType(Qt, 0);
-  auto Kc = isDeepConstType(Arg, Context, Dh);
-  if(!Kc)
-    return false;
-  else if(!Kc.isOk()) {
-    // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
-    // Dh.diag(Sl, "owned type is not [[deep_const]]");
-    return false;
-  }
+//   QualType Arg = getTemplateArgType(Qt, 0);
+//   auto Kc = isDeepConstType(Arg, Context, Dh);
+//   if(!Kc)
+//     return false;
+//   else if(!Kc.isOk()) {
+//     // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
+//     // Dh.diag(Sl, "owned type is not [[deep_const]]");
+//     return false;
+//   }
 
-  return true;
-}
+//   return true;
+// }
 
 bool isSafePtrType(QualType Qt) {
 
@@ -969,7 +995,7 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
       return {true, true};
     else if(attrWhenParams) {
       bool params = allTemplateArgsAreDeepConst(Dc, Context, Dh);
-      return {true, params};
+      return {params, params};
     }
     else
       return {false, false};
@@ -1063,8 +1089,8 @@ KindCheck TypeChecker::isDeepConstType(QualType Qt) {
   // } else if (isLambdaType(Qt)) {
   //   return false;
   
-  } else if (isImplicitDeepConstStdHashOrEqualTo(Qt, Context, Dh)) {
-    return {true, true};
+  // } else if (isImplicitDeepConstStdHashOrEqualTo(Qt, Context, Dh)) {
+  //   return {true, true};
   } else if (isDeepConstOwningPtrType(Qt, Context, Dh)) {
     return {true, true};
   } else if (isSafePtrType(Qt)) {

@@ -29,6 +29,8 @@ The `nodecpp-instrument` tool does 3 steps to instrument the client code.
 3. Insert `dezombiefy` calls: Last we detect l-values needing dezombiefication, do a simple flow analysis to avoid superfluos calls when possible, and insert the actual calls to the (already modified at previous stage) code.
 
 
+As a result, we get a _dezombiefied_ `.cpp` file, where user (and not system) `#include` has already been expanded. Such file must then be compiled with the target C++ compiler.
+
 
 Woring with templates
 ---------------------

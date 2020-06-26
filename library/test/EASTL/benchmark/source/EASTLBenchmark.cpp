@@ -7,7 +7,7 @@
 #include "EASTLTest.h"
 #include <string>
 #include <EAMain/EAMain.h>
-#include <safe_memory/EASTL/internal/config.h>
+#include <EASTL/internal/config.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)

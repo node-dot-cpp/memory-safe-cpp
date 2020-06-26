@@ -227,11 +227,11 @@ int TestHash()
 
 		// const char*     get_name() const;
 		// void            set_name(const char* pName);
-		#if EASTL_NAME_ENABLED
-			hashMap.get_allocator().set_name("test");
-			const char* pName = hashMap.get_allocator().get_name();
-			EATEST_VERIFY(equal(pName, pName + 5, "test"));
-		#endif
+		// #if EASTL_NAME_ENABLED
+		// 	hashMap.get_allocator().set_name("test");
+		// 	const char* pName = hashMap.get_allocator().get_name();
+		// 	EATEST_VERIFY(equal(pName, pName + 5, "test"));
+		// #endif
 	}
 
 
@@ -389,7 +389,7 @@ int TestHash()
 		// const_local_iterator end(size_type n) const;
 
 		HashSetInt::size_type b = hashSet.bucket_count() - 1;
-		std::hash<int> IntHash;
+		safe_memory::hash<int> IntHash;
 		for(HashSetInt::const_local_iterator cli = hashSet.begin(b); cli != hashSet.end(b); ++cli)
 		{
 			int v = *cli;
@@ -698,14 +698,14 @@ int TestHash()
 		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
 		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
 
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
+		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
 
 		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 		nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 
-		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
-		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
+		nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
 
 		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
 		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
@@ -1300,7 +1300,7 @@ int TestHash()
 		// Regression of user reported compiler error in hashtable sfinae mechanism 
 		{
 			TestObject::Reset();
-			safe_memory::unordered_set<TestObject> toSet;
+			safe_memory::unordered_set<TestObject, hash_TestObject> toSet;
 			toSet.emplace(3, 4, 5);
 		}
 	}

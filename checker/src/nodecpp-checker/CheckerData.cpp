@@ -48,6 +48,8 @@ bool CheckerData::isFromUnsafeNamespace(const std::string& Name) const {
   return false;
 }
 
+
+
 bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
   
   if(!D)
@@ -57,6 +59,15 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
   if(NoSideEffectFuncs.find(D) != NoSideEffectFuncs.end())
     return true;
 
+  if(D->getTemplateInstantiationPattern()) {
+    D = D->getTemplateInstantiationPattern();
+  }
+
+  std::string Name = getQnameForSystemSafeDb(D);
+  if(isStdMoveOrForward(Name)) {
+    NoSideEffectFuncs.insert(D);
+    return true;
+  }
 
   if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
     NoSideEffectFuncs.insert(D);
@@ -71,14 +82,14 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
       return true;
     }
     //make implicit when std::hash and std::equal_to on operator()
-    if(M->isOverloadedOperator() && M->getOverloadedOperator() == OO_Call) {
-      auto Rd = M->getParent();
-      std::string Name = getQnameForSystemSafeDb(Rd);
-      if(isStdHashOrEqualToName(Name)) {
-        NoSideEffectFuncs.insert(D);
-        return true;
-      }
-    }
+    // if(M->isOverloadedOperator() && M->getOverloadedOperator() == OO_Call) {
+    //   auto Rd = M->getParent();
+    //   std::string Name = getQnameForSystemSafeDb(Rd);
+    //   if(isStdHashOrEqualToName(Name)) {
+    //     NoSideEffectFuncs.insert(D);
+    //     return true;
+    //   }
+    // }
   }
 
   return false;
@@ -122,8 +133,8 @@ void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
 
   TypeChecker Tc(Context, Dh);
 
-  bool S = Tc.isSafeType(Qt);
-  assert(!S);
+  Tc.isSafeType(Qt);
+// /  assert(!S);
 }
 
 bool CheckerData::isDeterministic(clang::QualType Qt) {
@@ -165,8 +176,7 @@ void CheckerData::reportDeterministicDetail(clang::QualType Qt) {
 
   TypeChecker Tc(Context, Dh);
 
-  bool S = Tc.isDeterministicType(Qt);
-  assert(!S);
+  Tc.isDeterministicType(Qt);
 }
 
 

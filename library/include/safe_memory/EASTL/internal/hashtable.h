@@ -35,41 +35,18 @@
 ///////////////////////////////////////////////////////////////////////////////
 // This file implements a hashtable, much like the C++11 unordered_set/unordered_map.
 // proposed classes.
-// The primary distinctions between this hashtable and C++11 unordered containers are:
-//    - hashtable is savvy to an environment that doesn't have exception handling,
-//      as is sometimes the case with console or embedded environments.
-//    - hashtable is slightly more space-efficient than a conventional std hashtable 
-//      implementation on platforms with 64 bit size_t.  This is 
-//      because std STL uses size_t (64 bits) in data structures whereby 32 bits 
-//      of data would be fine.
-//    - hashtable can contain objects with alignment requirements. TR1 hash tables 
-//      cannot do so without a bit of tedious non-portable effort.
-//    - hashtable supports debug memory naming natively.
-//    - hashtable provides a find function that lets you specify a type that is 
-//      different from the hash table key type. This is particularly useful for 
-//      the storing of string objects but finding them by char pointers.
-//    - hashtable provides a lower level insert function which lets the caller 
-//      specify the hash code and optionally the node instance.
 ///////////////////////////////////////////////////////////////////////////////
 
 
 #ifndef SAFE_MEMORY_EASTL_INTERNAL_HASHTABLE_H
 #define SAFE_MEMORY_EASTL_INTERNAL_HASHTABLE_H
 
-
-//#include <EABase/eabase.h>
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
-#endif
-
-#include <safe_memory/EASTL/internal/config.h>
-//#include <safe_memory/EASTL/type_traits.h>
-#include <type_traits>
-//#include <EASTL/allocator.h>
-//#include <safe_memory/EASTL/iterator.h>
-#include <iterator>
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/safe_alloc.h>
+#include <safe_memory/functional.h>
+
+#include <type_traits>
+#include <iterator>
 #include <functional>
 #include <utility>
 #include <algorithm>
@@ -92,43 +69,11 @@
 
 namespace safe_memory::detail
 {
-
-	/// EASTL_HASHTABLE_DEFAULT_NAME
-	///
-	/// Defines a default container name in the absence of a user-provided name.
-	///
-	// #ifndef EASTL_HASHTABLE_DEFAULT_NAME
-	// 	#define EASTL_HASHTABLE_DEFAULT_NAME EASTL_DEFAULT_NAME_PREFIX " hashtable" // Unless the user overrides something, this is "EASTL hashtable".
-	// #endif
-
-
-	/// EASTL_HASHTABLE_DEFAULT_ALLOCATOR
-	///
-	// #ifndef EASTL_HASHTABLE_DEFAULT_ALLOCATOR
-	// 	#define EASTL_HASHTABLE_DEFAULT_ALLOCATOR allocator_type(EASTL_HASHTABLE_DEFAULT_NAME)
-	// #endif
-
-	
-	/// kHashtableAllocFlagBuckets
-	/// Flag to allocator which indicates that we are allocating buckets and not nodes.
-	// enum { kHashtableAllocFlagBuckets = 0x00400000 };
-
-
-	/// gpEmptyBucketArray
-	///
-	/// A shared representation of an empty hash table. This is present so that
-	/// a new empty hashtable allocates no memory. It has two entries, one for 
-	/// the first lone empty (NULL) bucket, and one for the non-NULL trailing sentinel.
-	/// 
-	// extern EASTL_API void* gpEmptyBucketArray[2];
-
-
-	/// EASTL_MACRO_SWAP
-	///
-	/// Use EASTL_MACRO_SWAP because GCC (at least v4.6-4.8) has a bug where it fails to compile eastl::swap(mpBucketArray, x.mpBucketArray).
-	///
-	// #define EASTL_MACRO_SWAP(Type, a, b) \
-	// 	{ Type temp = a; a = b; b = temp; }
+#if defined(__GNUC__) && (((__GNUC__ * 100) + __GNUC_MINOR__) >= 303) && !defined(EA_COMPILER_RVCT)
+	#define EASTL_MAY_ALIAS __attribute__((__may_alias__))
+#else
+	#define EASTL_MAY_ALIAS
+#endif
 
 	/// use_self
 	///
@@ -177,10 +122,6 @@ namespace safe_memory::detail
 	template <typename Value, memory_safety Safety, bool bCacheHashCode>
 	struct hash_node;
 
-	// EA_DISABLE_VC_WARNING(4625 4626) // "copy constructor / assignment operator could not be generated because a base class copy constructor is inaccessible or deleted"
-	// #ifdef EA_COMPILER_MSVC_2015
-	// 	EA_DISABLE_VC_WARNING(5026) // disable warning: "move constructor was implicitly defined as deleted"
-	// #endif
 		template <typename Value, memory_safety Safety>
 		struct hash_node<Value, Safety, true>
 		{
@@ -211,12 +152,6 @@ namespace safe_memory::detail
 			owning_ptr<hash_node, Safety> mpNext;
 
 		} EASTL_MAY_ALIAS;
-
-	// #ifdef EA_COMPILER_MSVC_2015
-	// 	EA_RESTORE_VC_WARNING()
-	// #endif
-	// EA_RESTORE_VC_WARNING()
-
 
 	// has_hashcode_member
 	//
@@ -400,15 +335,6 @@ namespace safe_memory::detail
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
 		friend class hashtable;
 
-		// template <typename, bool, memory_safety>
-		// friend struct hashtable_iterator;
-
-		// template <typename V, bool b, memory_safety s>
-		// friend bool operator==(const hashtable_const_iterator<V, b, s>&, const hashtable_const_iterator<V, b, s>&);
-
-		// template <typename V, bool b, memory_safety s>
-		// friend bool operator!=(const hashtable_const_iterator<V, b, s>&, const hashtable_const_iterator<V, b, s>&);
-
 		node_ptr  mpNode;      // Current node within current bucket.
 		bucket_it mpBucket;    // Current bucket.
 
@@ -484,7 +410,7 @@ namespace safe_memory::detail
 	public:
 		typedef hashtable_const_iterator<Value, bCacheHashCode, Safety>           base_type;
 		typedef hashtable_iterator<Value, bCacheHashCode, Safety>        this_type;
-//		typedef hashtable_iterator<Value, false, bCacheHashCode, Safety>         this_type_non_const;
+
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
 		typedef Value*											 		 pointer;
@@ -521,19 +447,6 @@ namespace safe_memory::detail
 
 		hashtable_iterator(hashtable_iterator&& x) = default;
 		hashtable_iterator& operator=(hashtable_iterator&& x) = default;
-
-		// non const to const convertion
-		// template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
-		// hashtable_iterator(const NonConstT& x)
-		// 	: base_type(x.mpNode, x.mpBucket) { }
-
-		// template<typename NonConstT, typename X = std::enable_if_t<std::is_same<NonConstT, this_type_non_const>::value>>
-		// hashtable_iterator& operator=(const NonConstT& x) {
-		// 	this->mpNode = x.mpNode;
-		// 	this->mpBucket = x.mpBucket;
-
-		// 	return *this;
-		// }
 
 		reference operator*() const
 			{ return base_type::mpNode->mValue; }
@@ -595,7 +508,7 @@ namespace safe_memory::detail
 	///
 	struct mod_range_hashing
 	{
-		uint32_t operator()(size_t r, uint32_t n) const
+		uint32_t operator()(std::size_t r, uint32_t n) const
 			{ return r % n; }
 	};
 
@@ -616,7 +529,7 @@ namespace safe_memory::detail
 	/// Default value for rehash policy. Bucket size is (usually) the
 	/// smallest prime that keeps the load factor small enough.
 	///
-	struct EASTL_API prime_rehash_policy
+	struct prime_rehash_policy
 	{
 	public:
 		float            mfMaxLoadFactor;
@@ -837,7 +750,7 @@ namespace safe_memory::detail
 			{ return mEqual; }
 
 	protected:
-		typedef size_t hash_code_t;
+		typedef std::size_t hash_code_t;
 		typedef uint32_t bucket_index_t;
 		typedef hash_node<Value, Safety, false> node_type;
 
@@ -955,6 +868,8 @@ namespace safe_memory::detail
 	///
 	/// Key and Value: arbitrary CopyConstructible types.
 	///
+	/// Safety: enum to enable or disable safe iterators
+	///
 	/// ExtractKey: function object that takes a object of type Value
 	/// and returns a value of type Key.
 	///
@@ -1039,22 +954,19 @@ namespace safe_memory::detail
 		typedef typename ExtractKey::result_type                                                    mapped_type;
 		typedef hash_code_base<Key, Value, ExtractKey, Equal, H1, H2, H, Safety, bCacheHashCode>            hash_code_base_type;
 		typedef typename hash_code_base_type::hash_code_t                                           hash_code_t;
-		// typedef Allocator                                                                           allocator_type;
+
 		typedef Equal                                                                               key_equal;
 		typedef std::ptrdiff_t                                                                           difference_type;
-		typedef std::size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::size_t                                                                              size_type;
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
 
 		typedef node_const_iterator<value_type, bCacheHashCode, Safety>              const_local_iterator;
-		// typedef node_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>              local_iterator;
-		// typedef node_iterator<value_type, true,               bCacheHashCode, Safety>              const_local_iterator;
 		typedef std::conditional_t<bMutableIterators, node_iterator<value_type, bCacheHashCode, Safety>, const_local_iterator> local_iterator;
-
-		// typedef hashtable_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
 
 		typedef hashtable_const_iterator<value_type, bCacheHashCode, Safety>         const_iterator;
 		typedef std::conditional_t<bMutableIterators, hashtable_iterator<value_type, bCacheHashCode, Safety>, const_iterator> iterator;
+
 		typedef hash_node<value_type, Safety, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
 		typedef hashtable<Key, Value, Safety, ExtractKey, Equal, H1, H2, H, 
@@ -1085,18 +997,11 @@ namespace safe_memory::detail
 		static const bool kCacheHashCode = bCacheHashCode;
 		static constexpr memory_safety is_safe = Safety;
 
-		// enum
-		// {
-		// 	// This enumeration is deprecated in favor of eastl::kHashtableAllocFlagBuckets.
-		// 	kAllocFlagBuckets = safememory::kHashtableAllocFlagBuckets                  // Flag to allocator which indicates that we are allocating buckets and not nodes.
-		// };
-
 	protected:
 		owning_bucket_type     mpBucketArray;
 		size_type       mnBucketCount;
 		size_type       mnElementCount;
 		RehashPolicy    mRehashPolicy;  // To do: Use base class optimization to make this go away.
-		// allocator_type  mAllocator;     // To do: Use base class optimization to make this go away.
 
 
 	public:
@@ -1118,8 +1023,8 @@ namespace safe_memory::detail
 		// hashtable(this_type&& x, const allocator_type& allocator);
 	   ~hashtable();
 
-		// const allocator_type& get_allocator() const EA_NOEXCEPT;
-		// allocator_type&       get_allocator() EA_NOEXCEPT;
+		// const allocator_type& get_allocator() const noexcept;
+		// allocator_type&       get_allocator() noexcept;
 		// void                  set_allocator(const allocator_type& allocator);
 
 		this_type& operator=(const this_type& x);
@@ -1128,7 +1033,7 @@ namespace safe_memory::detail
 
 		void swap(this_type& x);
 
-		iterator begin() EA_NOEXCEPT
+		iterator begin() noexcept
 		{
 			iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
@@ -1136,10 +1041,10 @@ namespace safe_memory::detail
 			return i;
 		}
 
-		const_iterator begin() const EA_NOEXCEPT
+		const_iterator begin() const noexcept
 			{ return cbegin(); }
 
-		const_iterator cbegin() const EA_NOEXCEPT
+		const_iterator cbegin() const noexcept
 		{
 			const_iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
@@ -1147,53 +1052,53 @@ namespace safe_memory::detail
 			return i;
 		}
 
-		iterator end() EA_NOEXCEPT
+		iterator end() noexcept
 			{ return iterator(GetBucketArrayIt() + mnBucketCount); }
 
-		const_iterator end() const EA_NOEXCEPT
+		const_iterator end() const noexcept
 			{ return cend(); }
 
-		const_iterator cend() const EA_NOEXCEPT
+		const_iterator cend() const noexcept
 			{ return const_iterator(GetBucketArrayIt() + mnBucketCount); }
 
 		// Returns an iterator to the first item in bucket n.
-		local_iterator begin(size_type n) EA_NOEXCEPT
+		local_iterator begin(size_type n) noexcept
 			{ return local_iterator(mpBucketArray->at(n)); }
 
-		const_local_iterator begin(size_type n) const EA_NOEXCEPT
+		const_local_iterator begin(size_type n) const noexcept
 			{ return const_local_iterator(mpBucketArray->at(n)); }
 
-		const_local_iterator cbegin(size_type n) const EA_NOEXCEPT
+		const_local_iterator cbegin(size_type n) const noexcept
 			{ return const_local_iterator(mpBucketArray->at(n)); }
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
-		local_iterator end(size_type) EA_NOEXCEPT
+		local_iterator end(size_type) noexcept
 			{ return local_iterator(); }
 
-		const_local_iterator end(size_type) const EA_NOEXCEPT
+		const_local_iterator end(size_type) const noexcept
 			{ return const_local_iterator(); }
 
-		const_local_iterator cend(size_type) const EA_NOEXCEPT
+		const_local_iterator cend(size_type) const noexcept
 			{ return const_local_iterator(); }
 
-		bool empty() const EA_NOEXCEPT
+		bool empty() const noexcept
 			{ return mnElementCount == 0; }
 
-		size_type size() const EA_NOEXCEPT
+		size_type size() const noexcept
 			{ return mnElementCount; }
 
-		size_type bucket_count() const EA_NOEXCEPT
+		size_type bucket_count() const noexcept
 			{ return mnBucketCount; }
 
-		size_type bucket_size(size_type n) const EA_NOEXCEPT
+		size_type bucket_size(size_type n) const noexcept
 			{ return (size_type)std::distance(begin(n), end(n)); }
 
-		//size_type bucket(const key_type& k) const EA_NOEXCEPT
+		//size_type bucket(const key_type& k) const noexcept
 		//    { return bucket_index(k, (hash code here), (uint32_t)mnBucketCount); }
 
 		// Returns the ratio of element count to bucket count. A return value of 1 means 
 		// there's an optimal 1 bucket for each element.
-		float load_factor() const EA_NOEXCEPT
+		float load_factor() const noexcept
 			{ return (float)mnElementCount / (float)mnBucketCount; }
 
 		// Inherited from the base class.
@@ -1210,7 +1115,7 @@ namespace safe_memory::detail
 
 		/// Generalization of get_max_load_factor. This is an extension that's
 		/// not present in C++ hash tables (unordered containers).
-		const rehash_policy_type& rehash_policy() const EA_NOEXCEPT
+		const rehash_policy_type& rehash_policy() const noexcept
 			{ return mRehashPolicy; }
 
 		/// Generalization of set_max_load_factor. This is an extension that's
@@ -1282,7 +1187,7 @@ namespace safe_memory::detail
 
 		void clear();
 		void clear(bool clearBuckets);                  // If clearBuckets is true, we free the bucket memory and set the bucket count back to the newly constructed count.
-		// void reset_lose_memory() EA_NOEXCEPT;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
+		// void reset_lose_memory() noexcept;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 		void rehash(size_type nBucketCount);
 		void reserve(size_type nElementCount);
 
@@ -1381,7 +1286,7 @@ namespace safe_memory::detail
 		// std::pair<iterator, iterator> find_range_by_hash(hash_code_t c);
 		// std::pair<const_iterator, const_iterator> find_range_by_hash(hash_code_t c) const;
 
-		size_type count(const key_type& k) const EA_NOEXCEPT;
+		size_type count(const key_type& k) const noexcept;
 
 		std::pair<iterator, iterator>             equal_range(const key_type& k);
 		std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
@@ -1402,7 +1307,7 @@ namespace safe_memory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const noexcept
 		{
 			return irt.first;
 		}
@@ -1410,7 +1315,7 @@ namespace safe_memory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const noexcept
 		{
 			return irt;
 		}
@@ -1503,6 +1408,10 @@ namespace safe_memory::detail
 		void       DoRehash(size_type nBucketCount);
 		soft_node_type DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const;
 
+
+		[[noreturn]] static
+		void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+
 		// template <typename T>
 		// ENABLE_IF_HAS_HASHCODE(T, node_type) DoFindNode(T* pNode, hash_code_t c) const
 		// {
@@ -1518,39 +1427,6 @@ namespace safe_memory::detail
 		// node_type* DoFindNodeT(node_type* pNode, const U& u, BinaryPredicate predicate) const;
 
 	}; // class hashtable
-
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// node_iterator_base
-	///////////////////////////////////////////////////////////////////////
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator==(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode == b.mpNode; }
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator!=(const node_iterator_base<Value, bCacheHashCode, Safety>& a, const node_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode != b.mpNode; }
-
-
-
-
-	///////////////////////////////////////////////////////////////////////
-	// hashtable_iterator_base
-	///////////////////////////////////////////////////////////////////////
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator==(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return a.mpNode == b.mpNode && a.mpBucket == b.mpBucket; }
-
-	// template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	// inline bool operator!=(const hashtable_iterator_base<Value, bCacheHashCode, Safety>& a, const hashtable_iterator_base<Value, bCacheHashCode, Safety>& b)
-	// 	{ return !operator==(a, b); }
-
-
 
 
 	///////////////////////////////////////////////////////////////////////
@@ -1569,11 +1445,16 @@ namespace safe_memory::detail
 			mRehashPolicy()/*,
 			mAllocator(allocator)*/
 	{
+#ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
+// checker needs this to actually instantiate the operator method
+		auto P1 = &Eq::operator();
+		auto P2 = &H1::operator();
+#endif
 		// if(nBucketCount < 2)  // If we are starting in an initially empty state, with no memory allocation done.
 		// 	reset_lose_memory();
 		// else // Else we are creating a potentially non-empty hashtable...
 		// {
-			EASTL_ASSERT(nBucketCount < 10000000);
+			// EASTL_ASSERT(nBucketCount < 10000000);
 			mnBucketCount = (size_type)mRehashPolicy.GetNextBucketCount((uint32_t)nBucketCount);
 			mpBucketArray = DoAllocateBuckets(mnBucketCount); // mnBucketCount will always be at least 2.
 		// }
@@ -1716,7 +1597,7 @@ namespace safe_memory::detail
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// inline const typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const EA_NOEXCEPT
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const noexcept
 	// {
 	// 	return mAllocator;
 	// }
@@ -1726,7 +1607,7 @@ namespace safe_memory::detail
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() EA_NOEXCEPT
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() noexcept
 	// {
 	// 	return mAllocator;
 	// }
@@ -1897,7 +1778,7 @@ namespace safe_memory::detail
 	{
 		// We allocate one extra bucket to hold a sentinel, an arbitrary
 		// non-null pointer. Iterator increment relies on this.
-		EASTL_ASSERT(n > 1); // We reserve an mnBucketCount of 1 for the shared gpEmptyBucketArray.
+		// EASTL_ASSERT(n > 1); // We reserve an mnBucketCount of 1 for the shared gpEmptyBucketArray.
 // 		static_assert(kHashtableAllocFlagBuckets == 0x00400000); // Currently we expect this to be so, because the allocator has a copy of this enum.
 // //		node_type** const pBucketArray = (node_type**)EASTLAllocAlignedFlags(mAllocator, (n + 1) * sizeof(node_type*), EASTL_ALIGN_OF(node_type*), 0, kHashtableAllocFlagBuckets);
 // 		node_type** const pBucketArray = (node_type**)safememory::lib_helpers::allocate_memory((n + 1) * sizeof(node_type*), alignof(node_type*), 0, kHashtableAllocFlagBuckets);
@@ -2041,11 +1922,11 @@ namespace safe_memory::detail
 	///
 	// template <typename H, typename U>
 	// inline typename H::iterator hashtable_find(H& hashTable, U u)
-	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+	// 	{ return hashTable.find_as(u, hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
 	// template <typename H, typename U>
 	// inline typename H::const_iterator hashtable_find(const H& hashTable, U u)
-	// 	{ return hashTable.find_as(u, std::hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
+	// 	{ return hashTable.find_as(u, hash<U>(), eastl::equal_to_2<const typename H::key_type, U>()); }
 
 
 
@@ -2065,7 +1946,7 @@ namespace safe_memory::detail
 	// template <typename U>
 	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
 	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other) const
-	// 	{ return std::hashtable_find(*this, other); }
+	// 	{ return hashtable_find(*this, other); }
 		// VC++ doesn't appear to like the following, though it seems correct to me.
 		// So we implement the workaround above until we can straighten this out.
 		//{ return find_as(other, eastl::hash<U>(), eastl::equal_to_2<const key_type, U>()); }
@@ -2120,7 +2001,7 @@ namespace safe_memory::detail
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const EA_NOEXCEPT
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const noexcept
 	{
 		const hash_code_t c      = get_hash_code(k);
 		const size_type   n      = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -3287,7 +3168,7 @@ namespace safe_memory::detail
 
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() EA_NOEXCEPT
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() noexcept
 	// {
 	// 	// The reset function is a special extension function which unilaterally 
 	// 	// resets the container to an empty state without freeing the memory of 

@@ -33,9 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/string.h>
-//#include <EABase/eabase.h>
 #include <string.h>
 
 
@@ -310,7 +308,7 @@ namespace safe_memory
 	// DecodePart
 	///////////////////////////////////////////////////////////////////////////
 
-	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char*& pDest, char* pDestEnd)
+	bool DecodePart(const char*& pSrc, const char* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -326,7 +324,7 @@ namespace safe_memory
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
+	bool DecodePart(const char*& pSrc, const char* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
 	{
 		bool success = true;
 
@@ -336,7 +334,7 @@ namespace safe_memory
 		return success;
 	}
 
-	EASTL_API bool DecodePart(const char*& pSrc, const char* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
+	bool DecodePart(const char*& pSrc, const char* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
 	{
 		bool success = true;
 
@@ -347,11 +345,11 @@ namespace safe_memory
 	}
 
 
-	EASTL_API bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char*& pDest, char* pDestEnd)
+	bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		bool success = true;
 
-		EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
+		// EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
 		pDestEnd -= 6; // Do this so that we can avoid dest buffer size checking in the loop below and the function it calls.
 
 		while(success && (pSrc < pSrcEnd) && (pDest < pDestEnd))
@@ -360,7 +358,7 @@ namespace safe_memory
 		return success;
 	}
 
-	EASTL_API bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
+	bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -376,7 +374,7 @@ namespace safe_memory
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
+	bool DecodePart(const char16_t*& pSrc, const char16_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -391,11 +389,11 @@ namespace safe_memory
 	}
 
 
-	EASTL_API bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char*& pDest, char* pDestEnd)
+	bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char*& pDest, char* pDestEnd)
 	{
 		bool success = true;
 
-		EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
+		// EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
 		pDestEnd -= 6; // Do this so that we can avoid dest buffer size checking in the loop below and the function it calls.
 
 		while(success && (pSrc < pSrcEnd) && (pDest < pDestEnd))
@@ -404,7 +402,7 @@ namespace safe_memory
 		return success;
 	}
 
-	EASTL_API bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
+	bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -418,7 +416,7 @@ namespace safe_memory
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
+	bool DecodePart(const char32_t*& pSrc, const char32_t* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -434,11 +432,11 @@ namespace safe_memory
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const int*& pSrc, const int* pSrcEnd, char*&  pDest, char* pDestEnd)
+	bool DecodePart(const int*& pSrc, const int* pSrcEnd, char*&  pDest, char* pDestEnd)
 	{
 		bool success = true;
 
-		EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
+		// EASTL_ASSERT((pDest + 6) < pDestEnd); // The user must provide ample buffer space, preferably 256 chars or more.
 		pDestEnd -= 6; // Do this so that we can avoid dest buffer size checking in the loop below and the function it calls.
 
 		while(success && (pSrc < pSrcEnd) && (pDest < pDestEnd))
@@ -447,7 +445,7 @@ namespace safe_memory
 		return success;
 	}
 
-	EASTL_API bool DecodePart(const int*& pSrc, const int* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
+	bool DecodePart(const int*& pSrc, const int* pSrcEnd, char16_t*& pDest, char16_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);
@@ -461,7 +459,7 @@ namespace safe_memory
 		return true;
 	}
 
-	EASTL_API bool DecodePart(const int*& pSrc, const int* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
+	bool DecodePart(const int*& pSrc, const int* pSrcEnd, char32_t*& pDest, char32_t* pDestEnd)
 	{
 		size_t sourceSize = (size_t)(pSrcEnd - pSrc);
 		size_t destSize   = (size_t)(pDestEnd - pDest);

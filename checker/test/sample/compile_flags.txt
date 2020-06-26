@@ -1,6 +1,6 @@
 -std=c++17
 -isystem
-../../../library/src
+../../../library/include
 -isystem
 ../../../library/src/iibmalloc/src
 -isystem

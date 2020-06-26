@@ -8,6 +8,9 @@
  * 
  */
 
+#include "safe_db_std.hpp"
+#include "safe_db_safe_memory.hpp"
+#include "safe_db_nodecpp.hpp"
 
 namespace fmt {
 namespace v5 {
@@ -47,6 +50,15 @@ namespace std {
 
 }
 
+namespace safe_memory {
+	void make_owning();
+	void soft_ptr_static_cast();
+	// osn ptrs are hardcoded with special safety rules
+	// class owning_ptr;
+	// class soft_ptr;
+	// class nullable_ptr;
+}
+
 namespace nodecpp {
 	void isException();
 	void getException();
@@ -66,14 +78,6 @@ namespace nodecpp {
 		void size();
 	};
 
-namespace safememory {
-	void make_owning();
-	void soft_ptr_static_cast();
-	// osn ptrs are hardcoded with special safety rules
-	// class owning_ptr;
-	// class soft_ptr;
-	// class nullable_ptr;
-}
 namespace log {
 	void log();
 }

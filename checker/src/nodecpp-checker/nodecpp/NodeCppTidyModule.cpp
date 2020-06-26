@@ -20,11 +20,8 @@
 #include "CoroutineCheck.h"
 #include "MayExtendLambdaCheck.h"
 #include "NakedAssignmentCheck.h"
-#include "NakedPtrFuncCheck.h"
 #include "NewExprCheck.h"
-#include "PtrArithmeticCheck.h"
 #include "RawPointerAssignmentCheck.h"
-#include "RawPointerDereferenceCheck.h"
 #include "RawPtrExprCheck.h"
 #include "RecordDeclCheck.h"
 #include "ReturnCheck.h"
@@ -54,18 +51,12 @@ public:
         "nodecpp-may-extend-lambda");
     CheckFactories.registerCheck<NakedAssignmentCheck>(
         "nodecpp-naked-assignment");
-    CheckFactories.registerCheck<NakedPtrFuncCheck>(
-        "nodecpp-naked-ptr-func");
     CheckFactories.registerCheck<ReturnCheck>(
         "nodecpp-return");
     CheckFactories.registerCheck<NewExprCheck>(
         "nodecpp-new-expr");
-    CheckFactories.registerCheck<PtrArithmeticCheck>(
-        "nodecpp-ptr-arithmetic");
     CheckFactories.registerCheck<RawPointerAssignmentCheck>(
         "nodecpp-raw-pointer-assignment");
-    CheckFactories.registerCheck<RawPointerDereferenceCheck>(
-        "nodecpp-raw-pointer-dereference");
     CheckFactories.registerCheck<RawPtrExprCheck>(
         "nodecpp-raw-ptr-expr");
     CheckFactories.registerCheck<RecordDeclCheck>(

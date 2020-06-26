@@ -1,7 +1,6 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_ptr.h>
-#include <safememory/string.h>
+#include <safe_memory/safe_ptr.h>
 
 using namespace nodecpp::safememory;
 
@@ -43,4 +42,53 @@ void badFunc() {
     Other o;
 // CHECK: :[[@LINE-1]]:11: error: function with no_side_effect attribute can call only other no side effect functions [no-side-effect]
 }
+
+class SomeClass {
+    [[nodecpp::no_side_effect]]
+    void badMethod() {
+        func(1, 2);//ok
+        normalFunc();//bad
+// CHECK: :[[@LINE-1]]:9: error: function with no_side_effect attribute can call only other no side effect functions [no-side-effect]
+    }
+
+};
+
+
+
+class MyClass {
+public:
+	bool operator==(const MyClass& other) const {
+		return false;
+	}
+};
+
+template<class T>
+class EqualTo {
+public:
+    //for this error we must trigger the actual instantiation of this method
+	[[nodecpp::no_side_effect]] bool operator()(const T& l, const T& r) const {
+		return l == r;
+// CHECK: :[[@LINE-1]]:12: error: function with no_side_effect attribute can call only other no side effect functions
+	}
+};
+
+template<class T, class Eq = EqualTo<T>>
+class Container {
+	T t;
+	Eq eq;
+public:
+	bool isEq() const {
+		return eq(t, t);
+	}
+};
+
+void func() {
+
+	Container<MyClass> mc;
+	// we must trigger the actual instantiation of the method above
+	bool b = mc.isEq();
+}
+
+
+
 

@@ -48,19 +48,6 @@ class NoSideEffectASTVisitor
   /// \brief flags if we are currently visiting a \c [[NoSideEffect]] function or method 
   bool NoSideEffect = false;
 
-  /// \brief riia class to help with declarations inside other declarations
-  struct FlagRiia {
-    bool &V;
-    bool OldValue;
-    FlagRiia(bool &V) :V(V) {
-      OldValue = V;
-      V = false;
-    }
-    ~FlagRiia() {
-      V = OldValue;
-    }
-  };
-
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
                          DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
@@ -71,31 +58,60 @@ class NoSideEffectASTVisitor
 
 public:
 
+  bool shouldVisitImplicitCode() const { return true; }
+  bool shouldVisitTemplateInstantiations() const { return true; }  
+
   explicit NoSideEffectASTVisitor(ClangTidyContext *Context): Context(Context) {}
 
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
 
-    if(!D)
-      return true;
+  // bool TraverseDecl(Decl *D) {
+  //   //mb: we don't traverse decls in system-headers
+  //   //TranslationUnitDecl has an invalid location, but needs traversing anyway
 
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
+  //   if(!D)
+  //     return true;
 
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
+  //   else if (isa<TranslationUnitDecl>(D))
+  //     return Super::TraverseDecl(D);
 
-    else
-      return Super::TraverseDecl(D);
-  }
+  //   // else if(isSystemLocation(Context, D->getLocation()))
+  //   //     return true;
+
+  //   else
+  //     return Super::TraverseDecl(D);
+  // }
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 
-    FlagRiia Riia(NoSideEffect);
-    NoSideEffect = getCheckHelper()->isNoSideEffect(D);
+    if(NoSideEffect) {
+      Context->diagError2(D->getLocation(), "no-side-effect", "internal error");
+      return false;
+    }
 
-    return Super::TraverseFunctionDecl(D);;
+    if(isSystemSafeFunction(D, Context)) {
+      // don't traverse, assume is ok
+      return true;
+    }
+
+    bool Flag = getCheckHelper()->isNoSideEffect(D);
+
+    bool Result = true;    
+    if(D->doesThisDeclarationHaveABody()) {
+      NoSideEffect = Flag;
+      Result = TraverseStmt(D->getBody()); // Function body.
+      NoSideEffect = false;
+    }
+    return Result;
+  }
+
+  bool TraverseCXXMethodDecl(clang::CXXMethodDecl *D) {
+
+    return TraverseFunctionDecl(D);
+  }
+
+  bool TraverseCXXConstructorDecl(clang::CXXConstructorDecl *D) {
+
+    return TraverseFunctionDecl(D);
   }
 
   bool VisitCallExpr(CallExpr *E) {
@@ -108,6 +124,16 @@ public:
     }
 
     return Super::VisitCallExpr(E);
+  }
+
+  bool VisitLambdaExpr(LambdaExpr *E) {
+
+    if(NoSideEffect) {
+      Context->diagError2(E->getExprLoc(), "no-side-effect", "lambda not supported inside no_side_effect function");
+      return true;
+    }
+
+    return Super::VisitLambdaExpr(E);
   }
 
   bool VisitCXXConstructExpr(CXXConstructExpr *E) {

@@ -34,6 +34,14 @@ void NewExprCheck::registerMatchers(MatchFinder *Finder) {
       callExpr(callee(functionDecl(hasName("nodecpp::safememory::make_owning"))))
           .bind("make"),
       this);
+  Finder->addMatcher(
+      callExpr(callee(functionDecl(hasName("safe_memory::make_owning"))))
+          .bind("make"),
+      this);
+  Finder->addMatcher(
+      callExpr(callee(functionDecl(hasName("safe_memory::make_owning2"))))
+          .bind("make"),
+      this);
 }
 
 bool NewExprCheck::checkParentExpr(ASTContext *Context, const Expr *Ex) {

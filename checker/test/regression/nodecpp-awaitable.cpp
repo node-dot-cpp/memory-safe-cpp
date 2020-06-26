@@ -3,8 +3,6 @@
 #include <utility>
 #include <awaitable.h>
 
-using namespace nodecpp;
-
 class [[nodecpp::awaitable]] UserAwaitable {
 // CHECK: :[[@LINE-1]]:30: error: (C2)
 // CHECK: :[[@LINE-2]]:30: error: unsafe type
@@ -18,13 +16,13 @@ class [[nodecpp::awaitable]] UserAwaitable {
 nodecpp::awaitable<void> func() {
 
 
-	co_await hidden_await_function();
+	co_await nodecpp::hidden_await_function();
 	
-	hidden_await_function();
+	nodecpp::hidden_await_function();
 // CHECK: :[[@LINE-1]]:2: error: (S9)
-	co_await bad_await_function();
+	co_await nodecpp::bad_await_function();
 	
-	bad_await_function();
+	nodecpp::bad_await_function();
 }
 
 
