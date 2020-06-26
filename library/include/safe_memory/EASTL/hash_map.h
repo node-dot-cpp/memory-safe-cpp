@@ -45,10 +45,8 @@
 #define SAFE_MEMORY_EASTL_HASH_MAP_H
 
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safe_memory/EASTL/utility.h>
 #include <utility>
 
 // #if defined(EA_PRAGMA_ONCE_SUPPORTED)

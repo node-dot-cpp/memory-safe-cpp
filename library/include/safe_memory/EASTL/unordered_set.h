@@ -35,7 +35,6 @@
 #ifndef SAFE_MEMORY_EASTL_UNORDERED_SET_H
 #define SAFE_MEMORY_EASTL_UNORDERED_SET_H
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/hash_set.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)

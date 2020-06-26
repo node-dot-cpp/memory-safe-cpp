@@ -48,8 +48,6 @@
 	#pragma once
 #endif
 
-#include <safe_memory/EASTL/internal/config.h>
-//#include <safe_memory/EASTL/type_traits.h>
 #include <type_traits>
 
 //EA_DISABLE_ALL_VC_WARNINGS()

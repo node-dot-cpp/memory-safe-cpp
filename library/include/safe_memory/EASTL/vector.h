@@ -53,25 +53,19 @@
 #define SAFE_MEMORY_EASTL_VECTOR_H
 
 #include <safe_memory/EASTL/internal/__undef_macros.h>
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/detail/safe_alloc.h>
-//#include <EASTL/allocator.h>
-//#include <safe_memory/EASTL/type_traits.h>
 #include <type_traits>
-//#include <safe_memory/EASTL/iterator.h>
 #include <iterator>
 #include <iterator>
 #include <algorithm>
 #include <initializer_list>
-//#include <safe_memory/EASTL/memory.h>
 #include <memory>
-//#include <EASTL/bonus/compressed_pair.h>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
 #include <new>
 #include <stddef.h>
 // #if EASTL_EXCEPTIONS_ENABLED
-	#include <stdexcept> // std::out_of_range, std::length_error.
+#include <stdexcept> // std::out_of_range, std::length_error.
 // #endif
 //EA_RESTORE_ALL_VC_WARNINGS()
 
@@ -463,7 +457,7 @@ namespace safe_memory
 	// inline typename VectorBase<T, Safety>::owning_heap_type VectorBase<T, Safety>::DoAllocate(size_type n)
 	// {
 	// 	#if EASTL_ASSERT_ENABLED
-	// 		if(EASTL_UNLIKELY(n >= 0x80000000))
+	// 		if(NODECPP_UNLIKELY(n >= 0x80000000))
 	// 			EASTL_FAIL_MSG("vector::DoAllocate -- improbably large request.");
 	// 	#endif
 
@@ -476,7 +470,7 @@ namespace safe_memory
 	// 		// return p;
 
 	// 		//TODO
-	// 		// if(EASTL_UNLIKELY(n > max_size()))
+	// 		// if(NODECPP_UNLIKELY(n > max_size()))
 	// 		// 	ThrowMaxSizeException();
 
 	// 		return detail::make_owning_array_of<T>(n);
@@ -1073,7 +1067,7 @@ namespace safe_memory
 		// the requested position is out of range by throwing an 
 		// out_of_range exception.
 
-		if(EASTL_UNLIKELY(n >= size()))
+		if(NODECPP_UNLIKELY(n >= size()))
 			ThrowRangeException("vector::at -- out of range");
 
 		return *(mpBegin + n);
@@ -1084,7 +1078,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_reference
 	vector<T, Safety>::at(size_type n) const
 	{
-		if(EASTL_UNLIKELY(n >= size()))
+		if(NODECPP_UNLIKELY(n >= size()))
 			ThrowRangeException("vector::at -- out of range");
 
 		return *(mpBegin + n);
@@ -1097,7 +1091,7 @@ namespace safe_memory
 	{
 		if constexpr(is_safe == safety::safe) {
 			// We don't allow the user to reference an empty container.
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::front -- empty vector");
 		}
 
@@ -1111,7 +1105,7 @@ namespace safe_memory
 	{
 		if constexpr(is_safe == safety::safe) {
 			// We don't allow the user to reference an empty container.
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::front -- empty vector");
 		}
 
@@ -1125,7 +1119,7 @@ namespace safe_memory
 	{
 		if constexpr(is_safe == safety::safe) {
 			// We don't allow the user to reference an empty container.
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::back -- empty vector");
 		}
 
@@ -1139,7 +1133,7 @@ namespace safe_memory
 	{
 		if constexpr(is_safe == safety::safe) {
 			// We don't allow the user to reference an empty container.
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::back -- empty vector");
 		}
 
@@ -1197,7 +1191,7 @@ namespace safe_memory
 	inline void vector<T, Safety>::pop_back()
 	{
 		if constexpr(is_safe == safety::safe) {
-			if(EASTL_UNLIKELY(mpEnd <= mpBegin))
+			if(NODECPP_UNLIKELY(mpEnd <= mpBegin))
 				ThrowRangeException("vector::pop_back -- empty vector");
 		}
 
@@ -1411,7 +1405,7 @@ namespace safe_memory
 	// vector<T, Safety>::erase_unsorted(const_iterator position)
 	// {
 	// 	#if EASTL_ASSERT_ENABLED
-	// 		if(EASTL_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
+	// 		if(NODECPP_UNLIKELY((position < mpBegin) || (position >= mpEnd)))
 	// 			EASTL_FAIL_MSG("vector::erase -- invalid position");
 	// 	#endif
 
@@ -1573,7 +1567,7 @@ namespace safe_memory
 	{
 		// TODO, allocated heap should be zeroed 
 
-		if(EASTL_UNLIKELY(n > kMaxSize))
+		if(NODECPP_UNLIKELY(n > kMaxSize))
 			ThrowMaxSizeException("vector -- size too big");
 
 		// TODO remove this once we are correctly asking iibmalloc

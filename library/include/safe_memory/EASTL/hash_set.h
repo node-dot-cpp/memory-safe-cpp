@@ -45,10 +45,8 @@
 #define SAFE_MEMORY_EASTL_HASH_SET_H
 
 
-#include <safe_memory/EASTL/internal/config.h>
 #include <safe_memory/EASTL/internal/hashtable.h>
 #include <functional>
-//#include <safe_memory/EASTL/utility.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.

@@ -47,15 +47,12 @@
 	#pragma once
 #endif
 
-#include <safe_memory/EASTL/internal/config.h>
-//#include <safe_memory/EASTL/type_traits.h>
-#include <type_traits>
-//#include <EASTL/allocator.h>
-//#include <safe_memory/EASTL/iterator.h>
-#include <iterator>
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <safe_memory/functional.h>
+
+#include <type_traits>
+#include <iterator>
 #include <functional>
 #include <utility>
 #include <algorithm>
@@ -960,7 +957,7 @@ namespace safe_memory::detail
 
 		typedef Equal                                                                               key_equal;
 		typedef std::ptrdiff_t                                                                           difference_type;
-		typedef std::size_t                                                                              size_type;     // See config.h for the definition of eastl_size_t, which defaults to size_t.
+		typedef std::size_t                                                                              size_type;
 		typedef value_type&                                                                         reference;
 		typedef const value_type&                                                                   const_reference;
 
