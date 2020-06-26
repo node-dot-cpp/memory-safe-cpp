@@ -389,7 +389,7 @@ int TestHash()
 		// const_local_iterator end(size_type n) const;
 
 		HashSetInt::size_type b = hashSet.bucket_count() - 1;
-		std::hash<int> IntHash;
+		safe_memory::hash<int> IntHash;
 		for(HashSetInt::const_local_iterator cli = hashSet.begin(b); cli != hashSet.end(b); ++cli)
 		{
 			int v = *cli;
