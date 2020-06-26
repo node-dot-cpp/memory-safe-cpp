@@ -41,12 +41,6 @@
 #ifndef SAFE_MEMORY_EASTL_INTERNAL_HASHTABLE_H
 #define SAFE_MEMORY_EASTL_INTERNAL_HASHTABLE_H
 
-
-//#include <EABase/eabase.h>
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
-#endif
-
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <safe_memory/functional.h>

@@ -44,10 +44,6 @@
 #ifndef SAFE_MEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
 #define SAFE_MEMORY_EASTL_INTERNAL_CHAR_TRAITS_H
 
-#if defined(EA_PRAGMA_ONCE_SUPPORTED)
-	#pragma once
-#endif
-
 #include <type_traits>
 
 //EA_DISABLE_ALL_VC_WARNINGS()
