@@ -92,7 +92,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     + for pointers/references originating from `owning_ptr<>` or `safe_ptr<>`, scope is always "infinity"
     + for pointers/references originating from on-stack objects, scopes are nested according to lifetimes of respective objects
     + scopes cannot overlap, so operation "scope is larger than another scope" is clearly defined
-    + TEST CASES/PROHIBIT: return pointer to local variable, TODO
+    + TEST CASES/PROHIBIT: `int& ff() { int i = 0; return i; }`
   + **[Rule S5.2]** If we cannot find a scope of pointer/reference returned by a function, looking only at its signature - it is an error.
     + if any function takes ONLY ONE pointer (this includes `safe_ptr<>` and `owning_ptr<>`, AND `this` pointer if applicable), and returns more or one pointers/references, we SHOULD deduce that all returned pointers are of the same scope as the pointer passed to it
       - similar logic applies if the function takes ONLY ONE non-const pointer AND returns non-const pointer
@@ -154,7 +154,7 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/ALLOW: `int i = co_await af();`, `co_await af();`
 * **[Rule S10]** Prohibit using unsafe collections and iterators
   - Collections, such as `std::vector<...>`, `std::string`, etc,  and iterators internally use unsafe memory management, and, therefore, must be prohibited. Safe collections (such as `nodecpp::vector<...>` should be used instead.
-    - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc; ` 
+    - TEST CASES/PROHIBIT: `std::vector<...> v`, `std::string s`, etc;
     - TEST CASES/ALLOW: `nodecpp::vector<...> v`, `nodecpp::string s`, etc; 
   - **[Rule S10.1]** support StringLiteral class - it can be created ONLY from string literal, OR from another string literal.
     - TEST CASES/PROHIBIT: `const char* s = "abc"; StringLiteral x = s;`, `void fsl(StringLiteral x) {} ... const char* s = "abc"; fsl(s);`
@@ -172,7 +172,6 @@ Consistency checks always apply (regardless of the command line, and any attribu
     - TEST CASES/ALLOW: `[[nodecpp::no_side_effect]] void f() { otherNoSideEffect(); TRACE("Done!");}`
 
   - **[Rule S10.4]** hashed contaniner `unordered_map<Key, Value, Hash, KeyEqual>` must have a `Key` type parameter that is compatible with *deep_const* requirements. `Hash` and `KeyEqual` type parameters must be compatible also with *deep_const* requirements and both have a definition of `operator()` comptatible with *no_side_effect* requirements.
-    - **[Rule S10.4.1]** `std::hash` and `std::equal_to` are treated as implicit `[[nodecpp::deep_const]]` and their `operator()` as implicit `[[nodecpp::no_side_effect]]`.
     - TEST CASES/PROHIBIT: `unordered_map<soft_ptr<int>, int> m;` 
     - TEST CASES/ALLOW: `unordered_map<string, int> m;`, `class [[nodecpp::deep_const]] MyHash { [[nodecpp::no_side_effect]] size_t operator()(const Key& k) {...}}; unordered_map<Key, string, MyHash> m;`
 
