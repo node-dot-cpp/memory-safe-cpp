@@ -244,39 +244,39 @@ namespace safe_memory
 			Layout& operator=(const Layout& other) = delete;
 			Layout& operator=(Layout&& other) = default;
 
-			inline size_type GetSize() const EA_NOEXCEPT     { return _size; }
+			inline size_type GetSize() const noexcept     { return _size; }
 
-			inline void SetSize(size_type size) EA_NOEXCEPT              { _size = size; }
+			inline void SetSize(size_type size) noexcept              { _size = size; }
 
-			inline size_type GetRemainingCapacity() const EA_NOEXCEPT    { return GetHeapCapacity() - _size; }
+			inline size_type GetRemainingCapacity() const noexcept    { return GetHeapCapacity() - _size; }
 
-			inline pointer BeginPtr() EA_NOEXCEPT                    { return _heap->begin(); }
-			inline const_pointer BeginPtr() const EA_NOEXCEPT        { return _heap->begin(); }
+			inline pointer BeginPtr() noexcept                    { return _heap->begin(); }
+			inline const_pointer BeginPtr() const noexcept        { return _heap->begin(); }
 
 			// Points to end of character stream, *ptr == '0'
-			inline pointer EndPtr() EA_NOEXCEPT                      { return _heap->begin() + _size; }
-			inline const_pointer EndPtr() const EA_NOEXCEPT          { return _heap->begin() + _size; }
+			inline pointer EndPtr() noexcept                      { return _heap->begin() + _size; }
+			inline const_pointer EndPtr() const noexcept          { return _heap->begin() + _size; }
 
 			// Points to end of the buffer at the terminating '0', *ptr == '0' <- only true when size() == capacity()
-			inline pointer CapacityPtr() EA_NOEXCEPT                 { return _heap->begin() + GetHeapCapacity(); }
-			inline const_pointer CapacityPtr() const EA_NOEXCEPT     { return _heap->begin() + GetHeapCapacity(); }
+			inline pointer CapacityPtr() noexcept                 { return _heap->begin() + GetHeapCapacity(); }
+			inline const_pointer CapacityPtr() const noexcept     { return _heap->begin() + GetHeapCapacity(); }
 
 			inline void SetNewHeap(owning_heap_type&& new_heap) { _heap = std::move(new_heap); }
-			inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return soft_heap_type(_heap); }
+			inline soft_heap_type GetSoftHeapPtr() const noexcept        { return soft_heap_type(_heap); }
 
-			inline size_type GetHeapCapacity() const EA_NOEXCEPT { return _heap ? _heap->capacity() - 1 : 0; }
+			inline size_type GetHeapCapacity() const noexcept { return _heap ? _heap->capacity() - 1 : 0; }
 		};
 
 		Layout          mPair_first;
 
-		inline Layout& internalLayout() EA_NOEXCEPT                        { return mPair_first; }
-		inline const Layout& internalLayout() const EA_NOEXCEPT            { return mPair_first; }
-		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT        { return internalLayout().GetSoftHeapPtr(); }
+		inline Layout& internalLayout() noexcept                        { return mPair_first; }
+		inline const Layout& internalLayout() const noexcept            { return mPair_first; }
+		inline soft_heap_type GetSoftHeapPtr() const noexcept        { return internalLayout().GetSoftHeapPtr(); }
 
 	public:
 		// Constructor, destructor
-		basic_string() EA_NOEXCEPT;
-		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
+		basic_string() noexcept;
+		// explicit basic_string(const allocator_type& allocator) noexcept;
 		basic_string(const this_type& x, size_type position, size_type n = npos);
 		basic_string(literal_type x);
 		// basic_string(const_pointer p, size_type n/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
@@ -290,7 +290,7 @@ namespace safe_memory
 //		basic_string(CtorSprintf, const_pointer pFormat, ...);
 		basic_string(std::initializer_list<value_type> init/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
 
-		basic_string(this_type&& x) EA_NOEXCEPT;
+		basic_string(this_type&& x) noexcept;
 		// basic_string(this_type&& x, const allocator_type& allocator);
 
 		// explicit basic_string(const view_type& sv/*, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR*/);
@@ -308,12 +308,12 @@ namespace safe_memory
 	   ~basic_string();
 
 		// Allocator
-		// const allocator_type& get_allocator() const EA_NOEXCEPT;
-		// allocator_type&       get_allocator() EA_NOEXCEPT;
+		// const allocator_type& get_allocator() const noexcept;
+		// allocator_type&       get_allocator() noexcept;
 		// void                  set_allocator(const allocator_type& allocator);
 
 		// Implicit conversion operator
-		// operator std::basic_string_view<T>() const EA_NOEXCEPT;
+		// operator std::basic_string_view<T>() const noexcept;
 
 		// Operator=
 		this_type& operator=(const this_type& x);
@@ -334,7 +334,7 @@ namespace safe_memory
 		// 	this_type& operator=(const OtherStringType& x);
 		// #endif
 
-		void swap(this_type& x) EA_NOEXCEPT;
+		void swap(this_type& x) noexcept;
 
 		// Assignment operations
 		this_type& assign(const this_type& x);
@@ -361,45 +361,45 @@ namespace safe_memory
 		this_type& assign_convert(basic_string_literal<OtherCharType> p);
 
 		// Iterators.
-		pointer       begin_unsafe() EA_NOEXCEPT;
-		const_pointer begin_unsafe() const EA_NOEXCEPT;
-		const_pointer cbegin_unsafe() const EA_NOEXCEPT;
+		pointer       begin_unsafe() noexcept;
+		const_pointer begin_unsafe() const noexcept;
+		const_pointer cbegin_unsafe() const noexcept;
 
-		pointer       end_unsafe() EA_NOEXCEPT;
-		const_pointer end_unsafe() const EA_NOEXCEPT;
-		const_pointer cend_unsafe() const EA_NOEXCEPT;
+		pointer       end_unsafe() noexcept;
+		const_pointer end_unsafe() const noexcept;
+		const_pointer cend_unsafe() const noexcept;
 
-		// reverse_iterator_unsafe       rbegin_unsafe() EA_NOEXCEPT;
-		// const_reverse_iterator_unsafe rbegin_unsafe() const EA_NOEXCEPT;
-		// const_reverse_iterator_unsafe crbegin_unsafe() const EA_NOEXCEPT;
+		// reverse_iterator_unsafe       rbegin_unsafe() noexcept;
+		// const_reverse_iterator_unsafe rbegin_unsafe() const noexcept;
+		// const_reverse_iterator_unsafe crbegin_unsafe() const noexcept;
 
-		// reverse_iterator_unsafe       rend_unsafe() EA_NOEXCEPT;
-		// const_reverse_iterator_unsafe rend_unsafe() const EA_NOEXCEPT;
-		// const_reverse_iterator_unsafe crend_unsafe() const EA_NOEXCEPT;
+		// reverse_iterator_unsafe       rend_unsafe() noexcept;
+		// const_reverse_iterator_unsafe rend_unsafe() const noexcept;
+		// const_reverse_iterator_unsafe crend_unsafe() const noexcept;
 
-		iterator       begin() EA_NOEXCEPT;
-		const_iterator begin() const EA_NOEXCEPT;
-		const_iterator cbegin() const EA_NOEXCEPT;
+		iterator       begin() noexcept;
+		const_iterator begin() const noexcept;
+		const_iterator cbegin() const noexcept;
 
-		iterator       end() EA_NOEXCEPT;
-		const_iterator end() const EA_NOEXCEPT;
-		const_iterator cend() const EA_NOEXCEPT;
+		iterator       end() noexcept;
+		const_iterator end() const noexcept;
+		const_iterator cend() const noexcept;
 
-		reverse_iterator       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator crbegin() const EA_NOEXCEPT;
+		reverse_iterator       rbegin() noexcept;
+		const_reverse_iterator rbegin() const noexcept;
+		const_reverse_iterator crbegin() const noexcept;
 
-		reverse_iterator       rend() EA_NOEXCEPT;
-		const_reverse_iterator rend() const EA_NOEXCEPT;
-		const_reverse_iterator crend() const EA_NOEXCEPT;
+		reverse_iterator       rend() noexcept;
+		const_reverse_iterator rend() const noexcept;
+		const_reverse_iterator crend() const noexcept;
 
 
 		// Size-related functionality
-		bool      empty() const EA_NOEXCEPT;
-		size_type size() const EA_NOEXCEPT;
-		size_type length() const EA_NOEXCEPT;
-		size_type max_size() const EA_NOEXCEPT;
-		size_type capacity() const EA_NOEXCEPT;
+		bool      empty() const noexcept;
+		size_type size() const noexcept;
+		size_type length() const noexcept;
+		size_type max_size() const noexcept;
+		size_type capacity() const noexcept;
 		void      resize(size_type n, value_type c);
 		void      resize(size_type n);
 		void      reserve(size_type = 0);
@@ -408,9 +408,9 @@ namespace safe_memory
 		void 	  shrink_to_fit();
 
 		// Raw access
-		const_pointer data() const  EA_NOEXCEPT;
-		      pointer data()        EA_NOEXCEPT;
-		const_pointer c_str() const EA_NOEXCEPT;
+		const_pointer data() const  noexcept;
+		      pointer data()        noexcept;
+		const_pointer c_str() const noexcept;
 
 		// Element access
 		reference       operator[](size_type n);
@@ -481,10 +481,10 @@ namespace safe_memory
 		// reverse_iterator_unsafe erase_unsafe(reverse_iterator_unsafe first, reverse_iterator_unsafe last);
 		reverse_iterator erase(crsafe_it_arg position);
 		reverse_iterator erase(crsafe_it_arg first, crsafe_it_arg last);
-		void             clear() EA_NOEXCEPT;
+		void             clear() noexcept;
 
 		// Detach memory
-		// pointer detach() EA_NOEXCEPT;
+		// pointer detach() noexcept;
 
 		// Replacement operations
 		this_type&  replace(size_type position, size_type n,  const this_type& x);
@@ -510,52 +510,52 @@ namespace safe_memory
 		size_type   copy(pointer p, size_type n, size_type position = 0) const;
 
 		// Find operations
-		size_type find(const this_type& x,  size_type position = 0) const EA_NOEXCEPT;
+		size_type find(const this_type& x,  size_type position = 0) const noexcept;
 		size_type find_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find(literal_type x, size_type position = 0) const;
 		size_type find_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type find(value_type c, size_type position = 0) const EA_NOEXCEPT;
+		size_type find(value_type c, size_type position = 0) const noexcept;
 
 		// Reverse find operations
-		size_type rfind(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
+		size_type rfind(const this_type& x,  size_type position = npos) const noexcept;
 		size_type rfind_unsafe(const_pointer p, size_type position = npos) const;
 		size_type rfind(literal_type x, size_type position = npos) const;
 		size_type rfind_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type rfind(value_type c, size_type position = npos) const EA_NOEXCEPT;
+		size_type rfind(value_type c, size_type position = npos) const noexcept;
 
 		// Find first-of operations
-		size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
+		size_type find_first_of(const this_type& x, size_type position = 0) const noexcept;
 		size_type find_first_of_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find_first_of(literal_type x, size_type position = 0) const;
 		size_type find_first_of_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type find_first_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
+		size_type find_first_of(value_type c, size_type position = 0) const noexcept;
 
 		// Find last-of operations
-		size_type find_last_of(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
+		size_type find_last_of(const this_type& x, size_type position = npos) const noexcept;
 		size_type find_last_of_unsafe(const_pointer p, size_type position = npos) const;
 		size_type find_last_of(literal_type x, size_type position = npos) const;
 		size_type find_last_of_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type find_last_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
+		size_type find_last_of(value_type c, size_type position = npos) const noexcept;
 
 		// Find first not-of operations
-		size_type find_first_not_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
+		size_type find_first_not_of(const this_type& x, size_type position = 0) const noexcept;
 		size_type find_first_not_of_unsafe(const_pointer p, size_type position = 0) const;
 		size_type find_first_not_of(literal_type x, size_type position = 0) const;
 		size_type find_first_not_of_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type find_first_not_of(value_type c, size_type position = 0) const EA_NOEXCEPT;
+		size_type find_first_not_of(value_type c, size_type position = 0) const noexcept;
 
 		// Find last not-of operations
-		size_type find_last_not_of(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
+		size_type find_last_not_of(const this_type& x,  size_type position = npos) const noexcept;
 		size_type find_last_not_of_unsafe(const_pointer p, size_type position = npos) const;
 		size_type find_last_not_of(literal_type x, size_type position = npos) const;
 		size_type find_last_not_of_unsafe(const_pointer p, size_type position, size_type n) const;
-		size_type find_last_not_of(value_type c, size_type position = npos) const EA_NOEXCEPT;
+		size_type find_last_not_of(value_type c, size_type position = npos) const noexcept;
 
 		// Substring functionality
 		this_type substr(size_type position = 0, size_type n = npos) const;
 
 		// Comparison operations
-		int        compare(const this_type& x) const EA_NOEXCEPT;
+		int        compare(const this_type& x) const noexcept;
 		int        compare(size_type pos1, size_type n1, const this_type& x) const;
 		int        compare(size_type pos1, size_type n1, const this_type& x, size_type pos2, size_type n2) const;
 		int        compare_unsafe(const_pointer p) const;
@@ -567,7 +567,7 @@ namespace safe_memory
 		static int compare(csafe_it_arg itBegin1, csafe_it_arg itEnd1, csafe_it_arg itBegin2, csafe_it_arg itEnd2);
 
 		// Case-insensitive comparison functions. Not part of C++ this_type. Only ASCII-level locale functionality is supported. Thus this is not suitable for localization purposes.
-		// int        comparei(const this_type& x) const EA_NOEXCEPT;
+		// int        comparei(const this_type& x) const noexcept;
 		// int        comparei(const_pointer p) const;
 		// static int comparei(const_pointer pBegin1, const_pointer pEnd1, const_pointer pBegin2, const_pointer pEnd2);
 
@@ -588,11 +588,11 @@ namespace safe_memory
 		// this_type&   sprintf_va_list(const_pointer pFormat, va_list arguments);
 		// this_type&   sprintf(const_pointer pFormat, ...);
 
-		std::size_t hash() const EA_NOEXCEPT;
+		std::size_t hash() const noexcept;
 
-		bool validate() const EA_NOEXCEPT;
-		detail::iterator_validity  validate_iterator(const_pointer i) const EA_NOEXCEPT;
-		detail::iterator_validity  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
+		bool validate() const noexcept;
+		detail::iterator_validity  validate_iterator(const_pointer i) const noexcept;
+		detail::iterator_validity  validate_iterator(csafe_it_arg i) const noexcept;
 
 	protected:
 		// Helper functions for initialization/insertion operations.
@@ -609,7 +609,7 @@ namespace safe_memory
 		void        RangeInitialize(const_pointer pBegin);
 		void        SizeInitialize(size_type n, value_type c);
 
-		// bool        IsSSO() const EA_NOEXCEPT;
+		// bool        IsSSO() const noexcept;
 
 		[[noreturn]] static void ThrowLengthException();
 		[[noreturn]] static void ThrowRangeException();
@@ -686,7 +686,7 @@ namespace safe_memory
 	///////////////////////////////////////////////////////////////////////////////
 
 	template <typename T, memory_safety Safety>
-	inline basic_string<T, Safety>::basic_string() EA_NOEXCEPT
+	inline basic_string<T, Safety>::basic_string() noexcept
 	    /*: mPair_second(allocator_type(EASTL_BASIC_STRING_DEFAULT_NAME))*/
 	{
 		AllocateSelf();
@@ -694,7 +694,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// inline basic_string<T, Safety>::basic_string(const allocator_type& allocator) EA_NOEXCEPT
+	// inline basic_string<T, Safety>::basic_string(const allocator_type& allocator) noexcept
 	//     : mPair_second(allocator)
 	// {
 	// 	AllocateSelf();
@@ -852,7 +852,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	basic_string<T, Safety>::basic_string(this_type&& x) EA_NOEXCEPT
+	basic_string<T, Safety>::basic_string(this_type&& x) noexcept
 		// : mPair_second(x.get_allocator())
 	{
 		// internalLayout() = std::move(x.internalLayout());
@@ -887,7 +887,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline const typename basic_string<T, Safety>::allocator_type&
-	// basic_string<T, Safety>::get_allocator() const EA_NOEXCEPT
+	// basic_string<T, Safety>::get_allocator() const noexcept
 	// {
 	// 	return internalAllocator();
 	// }
@@ -895,7 +895,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::allocator_type&
-	// basic_string<T, Safety>::get_allocator() EA_NOEXCEPT
+	// basic_string<T, Safety>::get_allocator() noexcept
 	// {
 	// 	return internalAllocator();
 	// }
@@ -910,7 +910,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::data()  const EA_NOEXCEPT
+	basic_string<T, Safety>::data()  const noexcept
 	{
 		return internalLayout().BeginPtr();
 	}
@@ -918,21 +918,21 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::c_str() const EA_NOEXCEPT
+	basic_string<T, Safety>::c_str() const noexcept
 	{
 		return internalLayout().BeginPtr();
 	}
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::pointer
-	basic_string<T, Safety>::data() EA_NOEXCEPT
+	basic_string<T, Safety>::data() noexcept
 	{
 		return internalLayout().BeginPtr();
 	}
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::pointer
-	basic_string<T, Safety>::begin_unsafe() EA_NOEXCEPT
+	basic_string<T, Safety>::begin_unsafe() noexcept
 	{
 		return pointer(internalLayout().BeginPtr());
 	}
@@ -940,7 +940,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::pointer
-	basic_string<T, Safety>::end_unsafe() EA_NOEXCEPT
+	basic_string<T, Safety>::end_unsafe() noexcept
 	{
 		return pointer(internalLayout().EndPtr());
 	}
@@ -948,7 +948,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::begin_unsafe() const EA_NOEXCEPT
+	basic_string<T, Safety>::begin_unsafe() const noexcept
 	{
 		return const_pointer(internalLayout().BeginPtr());
 	}
@@ -956,7 +956,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::cbegin_unsafe() const EA_NOEXCEPT
+	basic_string<T, Safety>::cbegin_unsafe() const noexcept
 	{
 		return const_pointer(internalLayout().BeginPtr());
 	}
@@ -964,7 +964,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::end_unsafe() const EA_NOEXCEPT
+	basic_string<T, Safety>::end_unsafe() const noexcept
 	{
 		return const_pointer(internalLayout().EndPtr());
 	}
@@ -972,7 +972,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_pointer
-	basic_string<T, Safety>::cend_unsafe() const EA_NOEXCEPT
+	basic_string<T, Safety>::cend_unsafe() const noexcept
 	{
 		return const_pointer(internalLayout().EndPtr());
 	}
@@ -980,7 +980,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::reverse_iterator_unsafe
-	// basic_string<T, Safety>::rbegin_unsafe() EA_NOEXCEPT
+	// basic_string<T, Safety>::rbegin_unsafe() noexcept
 	// {
 	// 	return reverse_iterator_unsafe(end_unsafe());
 	// }
@@ -988,7 +988,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::reverse_iterator_unsafe
-	// basic_string<T, Safety>::rend_unsafe() EA_NOEXCEPT
+	// basic_string<T, Safety>::rend_unsafe() noexcept
 	// {
 	// 	return reverse_iterator_unsafe(begin_unsafe());
 	// }
@@ -996,7 +996,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
-	// basic_string<T, Safety>::rbegin_unsafe() const EA_NOEXCEPT
+	// basic_string<T, Safety>::rbegin_unsafe() const noexcept
 	// {
 	// 	return const_reverse_iterator_unsafe(end_unsafe());
 	// }
@@ -1004,7 +1004,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
-	// basic_string<T, Safety>::crbegin_unsafe() const EA_NOEXCEPT
+	// basic_string<T, Safety>::crbegin_unsafe() const noexcept
 	// {
 	// 	return const_reverse_iterator_unsafe(end_unsafe());
 	// }
@@ -1012,7 +1012,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
-	// basic_string<T, Safety>::rend_unsafe() const EA_NOEXCEPT
+	// basic_string<T, Safety>::rend_unsafe() const noexcept
 	// {
 	// 	return const_reverse_iterator_unsafe(begin_unsafe());
 	// }
@@ -1020,14 +1020,14 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::const_reverse_iterator_unsafe
-	// basic_string<T, Safety>::crend_unsafe() const EA_NOEXCEPT
+	// basic_string<T, Safety>::crend_unsafe() const noexcept
 	// {
 	// 	return const_reverse_iterator_unsafe(begin_unsafe());
 	// }
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::iterator
-	basic_string<T, Safety>::begin() EA_NOEXCEPT
+	basic_string<T, Safety>::begin() noexcept
 	{
 		return iterator::make(GetSoftHeapPtr());
 	}
@@ -1035,7 +1035,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::iterator
-	basic_string<T, Safety>::end() EA_NOEXCEPT
+	basic_string<T, Safety>::end() noexcept
 	{
 		return iterator::make(GetSoftHeapPtr(), size());
 	}
@@ -1043,7 +1043,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_iterator
-	basic_string<T, Safety>::begin() const EA_NOEXCEPT
+	basic_string<T, Safety>::begin() const noexcept
 	{
 		return const_iterator::make(GetSoftHeapPtr());
 	}
@@ -1051,7 +1051,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_iterator
-	basic_string<T, Safety>::cbegin() const EA_NOEXCEPT
+	basic_string<T, Safety>::cbegin() const noexcept
 	{
 		return const_iterator::make(GetSoftHeapPtr());
 	}
@@ -1059,7 +1059,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_iterator
-	basic_string<T, Safety>::end() const EA_NOEXCEPT
+	basic_string<T, Safety>::end() const noexcept
 	{
 		return const_iterator::make(GetSoftHeapPtr(), size());
 	}
@@ -1067,14 +1067,14 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_iterator
-	basic_string<T, Safety>::cend() const EA_NOEXCEPT
+	basic_string<T, Safety>::cend() const noexcept
 	{
 		return const_iterator::make(GetSoftHeapPtr(), size());
 	}
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::reverse_iterator
-	basic_string<T, Safety>::rbegin() EA_NOEXCEPT
+	basic_string<T, Safety>::rbegin() noexcept
 	{
 		return reverse_iterator(end());
 	}
@@ -1082,7 +1082,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::reverse_iterator
-	basic_string<T, Safety>::rend() EA_NOEXCEPT
+	basic_string<T, Safety>::rend() noexcept
 	{
 		return reverse_iterator(begin());
 	}
@@ -1090,7 +1090,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_reverse_iterator
-	basic_string<T, Safety>::rbegin() const EA_NOEXCEPT
+	basic_string<T, Safety>::rbegin() const noexcept
 	{
 		return const_reverse_iterator(end());
 	}
@@ -1098,7 +1098,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_reverse_iterator
-	basic_string<T, Safety>::crbegin() const EA_NOEXCEPT
+	basic_string<T, Safety>::crbegin() const noexcept
 	{
 		return const_reverse_iterator(end());
 	}
@@ -1106,7 +1106,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_reverse_iterator
-	basic_string<T, Safety>::rend() const EA_NOEXCEPT
+	basic_string<T, Safety>::rend() const noexcept
 	{
 		return const_reverse_iterator(begin());
 	}
@@ -1114,20 +1114,20 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::const_reverse_iterator
-	basic_string<T, Safety>::crend() const EA_NOEXCEPT
+	basic_string<T, Safety>::crend() const noexcept
 	{
 		return const_reverse_iterator(begin());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool basic_string<T, Safety>::empty() const EA_NOEXCEPT
+	inline bool basic_string<T, Safety>::empty() const noexcept
 	{
 		return (size() == 0);
 	}
 
 
 	// template <typename T, memory_safety Safety>
-	// inline bool basic_string<T, Safety>::IsSSO() const EA_NOEXCEPT
+	// inline bool basic_string<T, Safety>::IsSSO() const noexcept
 	// {
 	// 	return internalLayout().IsSSO();
 	// }
@@ -1135,7 +1135,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::size() const EA_NOEXCEPT
+	basic_string<T, Safety>::size() const noexcept
 	{
 		return internalLayout().GetSize();
 	}
@@ -1143,7 +1143,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::length() const EA_NOEXCEPT
+	basic_string<T, Safety>::length() const noexcept
 	{
 		return internalLayout().GetSize();
 	}
@@ -1151,7 +1151,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::max_size() const EA_NOEXCEPT
+	basic_string<T, Safety>::max_size() const noexcept
 	{
 		return kMaxSize;
 	}
@@ -1159,7 +1159,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::capacity() const EA_NOEXCEPT
+	basic_string<T, Safety>::capacity() const noexcept
 	{
 		// if (internalLayout().IsHeap())
 		// {
@@ -1198,7 +1198,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// basic_string<T,Allocator>::operator std::basic_string_view<T>() const EA_NOEXCEPT
+	// basic_string<T,Allocator>::operator std::basic_string_view<T>() const noexcept
 	// {
 	// 	return std::basic_string_view<T>(data(), size());
 	// }
@@ -1445,7 +1445,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline void basic_string<T, Safety>::clear() EA_NOEXCEPT
+	inline void basic_string<T, Safety>::clear() noexcept
 	{
 		internalLayout().SetSize(0);
 		*internalLayout().BeginPtr() = value_type(0);
@@ -1454,7 +1454,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename basic_string<T, Safety>::pointer
-	// basic_string<T, Safety>::detach() EA_NOEXCEPT
+	// basic_string<T, Safety>::detach() noexcept
 	// {
 	// 	// The detach function is an extension function which simply forgets the
 	// 	// owned pointer. It doesn't free it but rather assumes that the user
@@ -2787,7 +2787,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	void basic_string<T, Safety>::swap(this_type& x) EA_NOEXCEPT
+	void basic_string<T, Safety>::swap(this_type& x) noexcept
 	{
 		// if(get_allocator() == x.get_allocator() || (internalLayout().IsSSO() && x.internalLayout().IsSSO())) // If allocators are equivalent...
 		// {
@@ -2805,7 +2805,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find(const this_type& x, size_type position) const noexcept
 	{
 		return find_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -2851,7 +2851,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find(value_type c, size_type position) const noexcept
 	{
 		// It is not clear what the requirements are for position, but since the C++ standard
 		// appears to be silent it is assumed for now that position can be any value.
@@ -2873,7 +2873,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::rfind(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::rfind(const this_type& x, size_type position) const noexcept
 	{
 		return rfind_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -2932,7 +2932,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::rfind(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::rfind(value_type c, size_type position) const noexcept
 	{
 		// If n is zero or position is >= size, we return npos.
 		const size_type nLength = internalLayout().GetSize();
@@ -2951,7 +2951,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_first_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_first_of(const this_type& x, size_type position) const noexcept
 	{
 		return find_first_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -2991,7 +2991,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_first_of(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_first_of(value_type c, size_type position) const noexcept
 	{
 		return find(c, position);
 	}
@@ -2999,7 +2999,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_last_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_last_of(const this_type& x, size_type position) const noexcept
 	{
 		return find_last_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -3041,7 +3041,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_last_of(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_last_of(value_type c, size_type position) const noexcept
 	{
 		return rfind(c, position);
 	}
@@ -3049,7 +3049,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_first_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_first_not_of(const this_type& x, size_type position) const noexcept
 	{
 		return find_first_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -3088,7 +3088,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_first_not_of(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_first_not_of(value_type c, size_type position) const noexcept
 	{
 		if(EASTL_LIKELY(position <= internalLayout().GetSize()))
 		{
@@ -3105,7 +3105,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_last_not_of(const this_type& x, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_last_not_of(const this_type& x, size_type position) const noexcept
 	{
 		return find_last_not_of_unsafe(x.internalLayout().BeginPtr(), position, x.internalLayout().GetSize());
 	}
@@ -3146,7 +3146,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	typename basic_string<T, Safety>::size_type
-	basic_string<T, Safety>::find_last_not_of(value_type c, size_type position) const EA_NOEXCEPT
+	basic_string<T, Safety>::find_last_not_of(value_type c, size_type position) const noexcept
 	{
 		const size_type nLength = internalLayout().GetSize();
 
@@ -3184,7 +3184,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline int basic_string<T, Safety>::compare(const this_type& x) const EA_NOEXCEPT
+	inline int basic_string<T, Safety>::compare(const this_type& x) const noexcept
 	{
 		return compare_unsafe(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	}
@@ -3458,7 +3458,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// inline int basic_string<T, Safety>::comparei(const this_type& x) const EA_NOEXCEPT
+	// inline int basic_string<T, Safety>::comparei(const this_type& x) const noexcept
 	// {
 	// 	return comparei(internalLayout().BeginPtr(), internalLayout().EndPtr(), x.internalLayout().BeginPtr(), x.internalLayout().EndPtr());
 	// }
@@ -4091,7 +4091,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline std::size_t basic_string<T, Safety>::hash() const EA_NOEXCEPT
+	inline std::size_t basic_string<T, Safety>::hash() const noexcept
 	{
 		// To consider: limit p to at most 256 chars.
 		auto p = begin_unsafe();
@@ -4104,7 +4104,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool basic_string<T, Safety>::validate() const EA_NOEXCEPT
+	inline bool basic_string<T, Safety>::validate() const noexcept
 	{
 		if((internalLayout().BeginPtr() == nullptr) || (internalLayout().EndPtr() == nullptr))
 			return false;
@@ -4119,7 +4119,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(const_pointer i) const noexcept
 	{
 		if(i == nullptr)
 		 	return detail::iterator_validity::Null;
@@ -4139,7 +4139,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	inline detail::iterator_validity basic_string<T, Safety>::validate_iterator(csafe_it_arg i) const noexcept
 	{
 		if(i == const_iterator())
 		 	return detail::iterator_validity::Null;
@@ -4446,10 +4446,10 @@ namespace safe_memory
 	//     {
 	// 	    inline namespace string_literals
 	// 	    {
-	// 			inline string operator"" s(const char* str, size_t len) EA_NOEXCEPT { return {str, string::size_type(len)}; }
-	// 			inline u16string operator"" s(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
-	// 			inline u32string operator"" s(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
-	// 			inline wstring operator"" s(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
+	// 			inline string operator"" s(const char* str, size_t len) noexcept { return {str, string::size_type(len)}; }
+	// 			inline u16string operator"" s(const char16_t* str, size_t len) noexcept { return {str, u16string::size_type(len)}; }
+	// 			inline u32string operator"" s(const char32_t* str, size_t len) noexcept { return {str, u32string::size_type(len)}; }
+	// 			inline wstring operator"" s(const wchar_t* str, size_t len) noexcept { return {str, wstring::size_type(len)}; }
 	// 	    }
 	//     }
 	// 	EA_RESTORE_VC_WARNING()  // warning: 4455

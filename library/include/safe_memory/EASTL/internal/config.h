@@ -53,13 +53,6 @@
 ///////////////////////////////////////////////////////////////////////////////
 #define EASTL_EXCEPTIONS_ENABLED 1
 #define EASTL_ASSERT_ENABLED 0
-#define EASTL_EASTDC_VSNPRINTF 0
-
-#if !defined(EA_NOEXCEPT)
-	#define EA_NOEXCEPT noexcept
-	#define EA_NOEXCEPT_IF(predicate) noexcept((predicate))
-	#define EA_NOEXCEPT_EXPR(expression) noexcept((expression))
-#endif
 
 // ///////////////////////////////////////////////////////////////////////////////
 // // EASTL_USER_CONFIG_HEADER

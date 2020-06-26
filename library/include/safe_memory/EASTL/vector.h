@@ -142,12 +142,12 @@ namespace safe_memory
 
 	public:
 		vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/;
-		// explicit vector(const allocator_type& allocator) EA_NOEXCEPT;
+		// explicit vector(const allocator_type& allocator) noexcept;
 		explicit vector(size_type n/*, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR*/);
 		vector(size_type n, const value_type& value/*, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR*/);
 		vector(const this_type& x);
 		// vector(const this_type& x, const allocator_type& allocator);
-		vector(this_type&& x) EA_NOEXCEPT;
+		vector(this_type&& x) noexcept;
 		// vector(this_type&& x, const allocator_type& allocator);
 		vector(std::initializer_list<value_type> ilist/*, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR*/);
 
@@ -159,9 +159,9 @@ namespace safe_memory
 
 		this_type& operator=(const this_type& x);
 		this_type& operator=(std::initializer_list<value_type> ilist);
-		this_type& operator=(this_type&& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value)
+		this_type& operator=(this_type&& x) noexcept;
 
-		void swap(this_type& x); // TODO(c++17): noexcept(allocator_traits<Allocator>::propagate_on_container_move_assignment::value || allocator_traits<Allocator>::is_always_equal::value)
+		void swap(this_type& x) noexcept;
 
 		void assign(size_type n, const value_type& value);
 
@@ -172,42 +172,42 @@ namespace safe_memory
 
 		void assign(std::initializer_list<value_type> ilist);
 
-		pointer       begin_unsafe() EA_NOEXCEPT;
-		const_pointer begin_unsafe() const EA_NOEXCEPT;
-		const_pointer cbegin_unsafe() const EA_NOEXCEPT;
+		pointer       begin_unsafe() noexcept;
+		const_pointer begin_unsafe() const noexcept;
+		const_pointer cbegin_unsafe() const noexcept;
 
-		pointer       end_unsafe() EA_NOEXCEPT;
-		const_pointer end_unsafe() const EA_NOEXCEPT;
-		const_pointer cend_unsafe() const EA_NOEXCEPT;
+		pointer       end_unsafe() noexcept;
+		const_pointer end_unsafe() const noexcept;
+		const_pointer cend_unsafe() const noexcept;
 
-		reverse_iterator_unsafe       rbegin_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator_unsafe rbegin_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator_unsafe crbegin_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rbegin_unsafe() noexcept;
+		const_reverse_iterator_unsafe rbegin_unsafe() const noexcept;
+		const_reverse_iterator_unsafe crbegin_unsafe() const noexcept;
 
-		reverse_iterator_unsafe       rend_unsafe() EA_NOEXCEPT;
-		const_reverse_iterator_unsafe rend_unsafe() const EA_NOEXCEPT;
-		const_reverse_iterator_unsafe crend_unsafe() const EA_NOEXCEPT;
+		reverse_iterator_unsafe       rend_unsafe() noexcept;
+		const_reverse_iterator_unsafe rend_unsafe() const noexcept;
+		const_reverse_iterator_unsafe crend_unsafe() const noexcept;
 
-		iterator_safe       begin() EA_NOEXCEPT;
-		const_iterator_safe begin() const EA_NOEXCEPT;
-		const_iterator_safe cbegin() const EA_NOEXCEPT;
+		iterator_safe       begin() noexcept;
+		const_iterator_safe begin() const noexcept;
+		const_iterator_safe cbegin() const noexcept;
 
-		iterator_safe       end() EA_NOEXCEPT;
-		const_iterator_safe end() const EA_NOEXCEPT;
-		const_iterator_safe cend() const EA_NOEXCEPT;
+		iterator_safe       end() noexcept;
+		const_iterator_safe end() const noexcept;
+		const_iterator_safe cend() const noexcept;
 
-		reverse_iterator_safe       rbegin() EA_NOEXCEPT;
-		const_reverse_iterator_safe rbegin() const EA_NOEXCEPT;
-		const_reverse_iterator_safe crbegin() const EA_NOEXCEPT;
+		reverse_iterator_safe       rbegin() noexcept;
+		const_reverse_iterator_safe rbegin() const noexcept;
+		const_reverse_iterator_safe crbegin() const noexcept;
 
-		reverse_iterator_safe       rend() EA_NOEXCEPT;
-		const_reverse_iterator_safe rend() const EA_NOEXCEPT;
-		const_reverse_iterator_safe crend() const EA_NOEXCEPT;
+		reverse_iterator_safe       rend() noexcept;
+		const_reverse_iterator_safe rend() const noexcept;
+		const_reverse_iterator_safe crend() const noexcept;
 
-		bool      empty() const EA_NOEXCEPT;
-		size_type size() const EA_NOEXCEPT;
-		size_type capacity() const EA_NOEXCEPT;
-		size_type max_size() const EA_NOEXCEPT;
+		bool      empty() const noexcept;
+		size_type size() const noexcept;
+		size_type capacity() const noexcept;
+		size_type max_size() const noexcept;
 
 		void resize(size_type n, const value_type& value);
 		void resize(size_type n);
@@ -215,8 +215,8 @@ namespace safe_memory
 		// void set_capacity(size_type n = base_type::npos);   // Revises the capacity to the user-specified value. Resizes the container to match the capacity if the requested capacity n is less than the current size. If n == npos then the capacity is reallocated (if necessary) such that capacity == size.
 		void shrink_to_fit();                               // C++11 function which is the same as set_capacity().
 
-		pointer       data() EA_NOEXCEPT;
-		const_pointer data() const EA_NOEXCEPT;
+		pointer       data() noexcept;
+		const_pointer data() const noexcept;
 
 		reference       operator[](size_type n);
 		const_reference operator[](size_type n) const;
@@ -279,12 +279,12 @@ namespace safe_memory
 		// reverse_iterator erase(const_reverse_iterator first, const_reverse_iterator last);
 		// reverse_iterator erase_unsorted(const_reverse_iterator position);
 
-		void clear() EA_NOEXCEPT;
-		// void reset_lose_memory() EA_NOEXCEPT;                       // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
+		void clear() noexcept;
+		// void reset_lose_memory() noexcept;                       // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 
-		bool validate() const EA_NOEXCEPT;
-		detail::iterator_validity  validate_iterator(const_pointer i) const EA_NOEXCEPT;
-		detail::iterator_validity  validate_iterator(csafe_it_arg i) const EA_NOEXCEPT;
+		bool validate() const noexcept;
+		detail::iterator_validity  validate_iterator(const_pointer i) const noexcept;
+		detail::iterator_validity  validate_iterator(csafe_it_arg i) const noexcept;
 
 	protected:
 		// These functions do the real work of maintaining the vector. You will notice
@@ -307,7 +307,7 @@ namespace safe_memory
 		}
 
 		/// Set a soft_ptr to the heap, mostly used by safe iterators
-		inline soft_heap_type GetSoftHeapPtr() const EA_NOEXCEPT {
+		inline soft_heap_type GetSoftHeapPtr() const noexcept {
 			return soft_heap_type(mHeap);
 		}
 
@@ -372,7 +372,7 @@ namespace safe_memory
 
 		void DoGrow(size_type n);
 
-		void DoSwap(this_type& x);
+		void DoSwap(this_type& x) noexcept;
 
 		[[noreturn]] static void ThrowLengthException();
 		[[noreturn]] static void ThrowRangeException();
@@ -439,7 +439,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline const typename VectorBase<T, Safety>::allocator_type&
-	// VectorBase<T, Safety>::get_allocator() const EA_NOEXCEPT
+	// VectorBase<T, Safety>::get_allocator() const noexcept
 	// {
 	// 	return internalAllocator();
 	// }
@@ -447,7 +447,7 @@ namespace safe_memory
 
 	// template <typename T, memory_safety Safety>
 	// inline typename VectorBase<T, Safety>::allocator_type&
-	// VectorBase<T, Safety>::get_allocator() EA_NOEXCEPT
+	// VectorBase<T, Safety>::get_allocator() noexcept
 	// {
 	// 	return internalAllocator();
 	// }
@@ -525,7 +525,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// inline vector<T, Safety>::vector(const allocator_type& allocator) EA_NOEXCEPT
+	// inline vector<T, Safety>::vector(const allocator_type& allocator) noexcept
 	// 	: base_type(allocator)
 	// {
 	// 	// Empty
@@ -573,7 +573,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline vector<T, Safety>::vector(this_type&& x) EA_NOEXCEPT
+	inline vector<T, Safety>::vector(this_type&& x) noexcept
 		// : base_type(/*std::move(x.internalAllocator())*/)  // vector requires move-construction of allocator in this case.
 	{
 		SetNewHeap(DoAllocate(0));
@@ -684,7 +684,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	typename vector<T, Safety>::this_type&
-	vector<T, Safety>::operator=(this_type&& x)
+	vector<T, Safety>::operator=(this_type&& x) noexcept
 	{
 		if(this != &x)
 		{
@@ -733,7 +733,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::pointer
-	vector<T, Safety>::begin_unsafe() EA_NOEXCEPT
+	vector<T, Safety>::begin_unsafe() noexcept
 	{
 		return mpBegin;
 	}
@@ -741,7 +741,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer
-	vector<T, Safety>::begin_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::begin_unsafe() const noexcept
 	{
 		return mpBegin;
 	}
@@ -749,7 +749,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer
-	vector<T, Safety>::cbegin_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::cbegin_unsafe() const noexcept
 	{
 		return mpBegin;
 	}
@@ -757,7 +757,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::pointer
-	vector<T, Safety>::end_unsafe() EA_NOEXCEPT
+	vector<T, Safety>::end_unsafe() noexcept
 	{
 		return mpEnd;
 	}
@@ -765,7 +765,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer
-	vector<T, Safety>::end_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::end_unsafe() const noexcept
 	{
 		return mpEnd;
 	}
@@ -773,7 +773,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer
-	vector<T, Safety>::cend_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::cend_unsafe() const noexcept
 	{
 		return mpEnd;
 	}
@@ -781,7 +781,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::reverse_iterator_unsafe
-	vector<T, Safety>::rbegin_unsafe() EA_NOEXCEPT
+	vector<T, Safety>::rbegin_unsafe() noexcept
 	{
 		return reverse_iterator_unsafe(mpEnd);
 	}
@@ -789,7 +789,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
-	vector<T, Safety>::rbegin_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::rbegin_unsafe() const noexcept
 	{
 		return const_reverse_iterator_unsafe(mpEnd);
 	}
@@ -797,7 +797,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
-	vector<T, Safety>::crbegin_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::crbegin_unsafe() const noexcept
 	{
 		return const_reverse_iterator_unsafe(mpEnd);
 	}
@@ -805,7 +805,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::reverse_iterator_unsafe
-	vector<T, Safety>::rend_unsafe() EA_NOEXCEPT
+	vector<T, Safety>::rend_unsafe() noexcept
 	{
 		return reverse_iterator_unsafe(mpBegin);
 	}
@@ -813,7 +813,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
-	vector<T, Safety>::rend_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::rend_unsafe() const noexcept
 	{
 		return const_reverse_iterator_unsafe(mpBegin);
 	}
@@ -821,7 +821,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_unsafe
-	vector<T, Safety>::crend_unsafe() const EA_NOEXCEPT
+	vector<T, Safety>::crend_unsafe() const noexcept
 	{
 		return const_reverse_iterator_unsafe(mpBegin);
 	}
@@ -830,7 +830,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::iterator_safe
-	vector<T, Safety>::begin() EA_NOEXCEPT
+	vector<T, Safety>::begin() noexcept
 	{
 		return iterator_safe::make(GetSoftHeapPtr());
 	}
@@ -838,7 +838,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_iterator_safe
-	vector<T, Safety>::begin() const EA_NOEXCEPT
+	vector<T, Safety>::begin() const noexcept
 	{
 		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
@@ -846,7 +846,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_iterator_safe
-	vector<T, Safety>::cbegin() const EA_NOEXCEPT
+	vector<T, Safety>::cbegin() const noexcept
 	{
 		return const_iterator_safe::make(GetSoftHeapPtr());
 	}
@@ -854,7 +854,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::iterator_safe
-	vector<T, Safety>::end() EA_NOEXCEPT
+	vector<T, Safety>::end() noexcept
 	{
 		return iterator_safe::make(GetSoftHeapPtr(), size());
 	}
@@ -862,7 +862,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_iterator_safe
-	vector<T, Safety>::end() const EA_NOEXCEPT
+	vector<T, Safety>::end() const noexcept
 	{
 		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
@@ -870,7 +870,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_iterator_safe
-	vector<T, Safety>::cend() const EA_NOEXCEPT
+	vector<T, Safety>::cend() const noexcept
 	{
 		return const_iterator_safe::make(GetSoftHeapPtr(), size());
 	}
@@ -878,7 +878,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::reverse_iterator_safe
-	vector<T, Safety>::rbegin() EA_NOEXCEPT
+	vector<T, Safety>::rbegin() noexcept
 	{
 		return reverse_iterator_safe(end());
 	}
@@ -886,7 +886,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_safe
-	vector<T, Safety>::rbegin() const EA_NOEXCEPT
+	vector<T, Safety>::rbegin() const noexcept
 	{
 		return const_reverse_iterator_safe(end());
 	}
@@ -894,7 +894,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_safe
-	vector<T, Safety>::crbegin() const EA_NOEXCEPT
+	vector<T, Safety>::crbegin() const noexcept
 	{
 		return const_reverse_iterator_safe(end());
 	}
@@ -902,7 +902,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::reverse_iterator_safe
-	vector<T, Safety>::rend() EA_NOEXCEPT
+	vector<T, Safety>::rend() noexcept
 	{
 		return reverse_iterator_safe(begin());
 	}
@@ -910,7 +910,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_safe
-	vector<T, Safety>::rend() const EA_NOEXCEPT
+	vector<T, Safety>::rend() const noexcept
 	{
 		return const_reverse_iterator_safe(begin());
 	}
@@ -918,13 +918,13 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_reverse_iterator_safe
-	vector<T, Safety>::crend() const EA_NOEXCEPT
+	vector<T, Safety>::crend() const noexcept
 	{
 		return const_reverse_iterator_safe(begin());
 	}
 
 	template <typename T, memory_safety Safety>
-	bool vector<T, Safety>::empty() const EA_NOEXCEPT
+	bool vector<T, Safety>::empty() const noexcept
 	{
 		return (mpBegin == mpEnd);
 	}
@@ -932,7 +932,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::size_type
-	vector<T, Safety>::size() const EA_NOEXCEPT
+	vector<T, Safety>::size() const noexcept
 	{
 		return (size_type)(mpEnd - mpBegin);
 	}
@@ -940,14 +940,14 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::size_type
-	vector<T, Safety>::capacity() const EA_NOEXCEPT
+	vector<T, Safety>::capacity() const noexcept
 	{
 		return (size_type)(mCapacity - mpBegin);
 	}
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::size_type
-	vector<T, Safety>::max_size() const EA_NOEXCEPT
+	vector<T, Safety>::max_size() const noexcept
 	{
 		return kMaxSize;
 	}
@@ -1030,7 +1030,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::pointer
-	vector<T, Safety>::data() EA_NOEXCEPT
+	vector<T, Safety>::data() noexcept
 	{
 		return mpBegin;
 	}
@@ -1038,7 +1038,7 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer
-	vector<T, Safety>::data() const EA_NOEXCEPT
+	vector<T, Safety>::data() const noexcept
 	{
 		return mpBegin;
 	}
@@ -1549,7 +1549,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline void vector<T, Safety>::clear() EA_NOEXCEPT
+	inline void vector<T, Safety>::clear() noexcept
 	{
 		std::destroy(mpBegin, mpEnd);
 		mpEnd = mpBegin;
@@ -1557,7 +1557,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// inline void vector<T, Safety>::reset_lose_memory() EA_NOEXCEPT
+	// inline void vector<T, Safety>::reset_lose_memory() noexcept
 	// {
 	// 	// The reset function is a special extension function which unilaterally 
 	// 	// resets the container to an empty state without freeing the memory of 
@@ -1574,7 +1574,7 @@ namespace safe_memory
 	// is false by default). EASTL doesn't have allocator_traits and so this doesn't directly apply,
 	// but EASTL has the effective behavior of propagate_on_container_swap = false for all allocators. 
 	template <typename T, memory_safety Safety>
-	inline void vector<T, Safety>::swap(this_type& x)
+	inline void vector<T, Safety>::swap(this_type& x) noexcept
 	{
 	// #if defined(EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR) && EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR
 	// 	if(internalAllocator() == x.internalAllocator()) // If allocators are equivalent...
@@ -2055,7 +2055,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline void vector<T, Safety>::DoSwap(this_type& x)
+	inline void vector<T, Safety>::DoSwap(this_type& x) noexcept
 	{
 		std::swap(mHeap,      x.mHeap);
 		std::swap(mpBegin,    x.mpBegin);
@@ -2367,7 +2367,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool vector<T, Safety>::validate() const EA_NOEXCEPT
+	inline bool vector<T, Safety>::validate() const noexcept
 	{
 		if(mpEnd < mpBegin)
 			return false;
@@ -2378,7 +2378,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator(const_pointer i) const EA_NOEXCEPT
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator(const_pointer i) const noexcept
 	{
 		// TODO move as method of iterator
 		if(i == nullptr)
@@ -2399,7 +2399,7 @@ namespace safe_memory
 	}
 
 	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator(csafe_it_arg i) const EA_NOEXCEPT
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator(csafe_it_arg i) const noexcept
 	{
 		return i.validate_iterator(cbegin(), cend());
 	}
@@ -2452,7 +2452,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline void swap(vector<T, Safety>& a, vector<T, Safety>& b) EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(a.swap(b)))
+	inline void swap(vector<T, Safety>& a, vector<T, Safety>& b) noexcept
 	{
 		a.swap(b);
 	}

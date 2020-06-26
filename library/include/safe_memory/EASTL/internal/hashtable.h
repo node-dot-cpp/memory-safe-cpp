@@ -1026,8 +1026,8 @@ namespace safe_memory::detail
 		// hashtable(this_type&& x, const allocator_type& allocator);
 	   ~hashtable();
 
-		// const allocator_type& get_allocator() const EA_NOEXCEPT;
-		// allocator_type&       get_allocator() EA_NOEXCEPT;
+		// const allocator_type& get_allocator() const noexcept;
+		// allocator_type&       get_allocator() noexcept;
 		// void                  set_allocator(const allocator_type& allocator);
 
 		this_type& operator=(const this_type& x);
@@ -1036,7 +1036,7 @@ namespace safe_memory::detail
 
 		void swap(this_type& x);
 
-		iterator begin() EA_NOEXCEPT
+		iterator begin() noexcept
 		{
 			iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
@@ -1044,10 +1044,10 @@ namespace safe_memory::detail
 			return i;
 		}
 
-		const_iterator begin() const EA_NOEXCEPT
+		const_iterator begin() const noexcept
 			{ return cbegin(); }
 
-		const_iterator cbegin() const EA_NOEXCEPT
+		const_iterator cbegin() const noexcept
 		{
 			const_iterator i(GetBucketArrayIt());
 			if(!i.mpNode)
@@ -1055,53 +1055,53 @@ namespace safe_memory::detail
 			return i;
 		}
 
-		iterator end() EA_NOEXCEPT
+		iterator end() noexcept
 			{ return iterator(GetBucketArrayIt() + mnBucketCount); }
 
-		const_iterator end() const EA_NOEXCEPT
+		const_iterator end() const noexcept
 			{ return cend(); }
 
-		const_iterator cend() const EA_NOEXCEPT
+		const_iterator cend() const noexcept
 			{ return const_iterator(GetBucketArrayIt() + mnBucketCount); }
 
 		// Returns an iterator to the first item in bucket n.
-		local_iterator begin(size_type n) EA_NOEXCEPT
+		local_iterator begin(size_type n) noexcept
 			{ return local_iterator(mpBucketArray->at(n)); }
 
-		const_local_iterator begin(size_type n) const EA_NOEXCEPT
+		const_local_iterator begin(size_type n) const noexcept
 			{ return const_local_iterator(mpBucketArray->at(n)); }
 
-		const_local_iterator cbegin(size_type n) const EA_NOEXCEPT
+		const_local_iterator cbegin(size_type n) const noexcept
 			{ return const_local_iterator(mpBucketArray->at(n)); }
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
-		local_iterator end(size_type) EA_NOEXCEPT
+		local_iterator end(size_type) noexcept
 			{ return local_iterator(); }
 
-		const_local_iterator end(size_type) const EA_NOEXCEPT
+		const_local_iterator end(size_type) const noexcept
 			{ return const_local_iterator(); }
 
-		const_local_iterator cend(size_type) const EA_NOEXCEPT
+		const_local_iterator cend(size_type) const noexcept
 			{ return const_local_iterator(); }
 
-		bool empty() const EA_NOEXCEPT
+		bool empty() const noexcept
 			{ return mnElementCount == 0; }
 
-		size_type size() const EA_NOEXCEPT
+		size_type size() const noexcept
 			{ return mnElementCount; }
 
-		size_type bucket_count() const EA_NOEXCEPT
+		size_type bucket_count() const noexcept
 			{ return mnBucketCount; }
 
-		size_type bucket_size(size_type n) const EA_NOEXCEPT
+		size_type bucket_size(size_type n) const noexcept
 			{ return (size_type)std::distance(begin(n), end(n)); }
 
-		//size_type bucket(const key_type& k) const EA_NOEXCEPT
+		//size_type bucket(const key_type& k) const noexcept
 		//    { return bucket_index(k, (hash code here), (uint32_t)mnBucketCount); }
 
 		// Returns the ratio of element count to bucket count. A return value of 1 means 
 		// there's an optimal 1 bucket for each element.
-		float load_factor() const EA_NOEXCEPT
+		float load_factor() const noexcept
 			{ return (float)mnElementCount / (float)mnBucketCount; }
 
 		// Inherited from the base class.
@@ -1118,7 +1118,7 @@ namespace safe_memory::detail
 
 		/// Generalization of get_max_load_factor. This is an extension that's
 		/// not present in C++ hash tables (unordered containers).
-		const rehash_policy_type& rehash_policy() const EA_NOEXCEPT
+		const rehash_policy_type& rehash_policy() const noexcept
 			{ return mRehashPolicy; }
 
 		/// Generalization of set_max_load_factor. This is an extension that's
@@ -1190,7 +1190,7 @@ namespace safe_memory::detail
 
 		void clear();
 		void clear(bool clearBuckets);                  // If clearBuckets is true, we free the bucket memory and set the bucket count back to the newly constructed count.
-		// void reset_lose_memory() EA_NOEXCEPT;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
+		// void reset_lose_memory() noexcept;           // This is a unilateral reset to an initially empty state. No destructors are called, no deallocation occurs.
 		void rehash(size_type nBucketCount);
 		void reserve(size_type nElementCount);
 
@@ -1289,7 +1289,7 @@ namespace safe_memory::detail
 		// std::pair<iterator, iterator> find_range_by_hash(hash_code_t c);
 		// std::pair<const_iterator, const_iterator> find_range_by_hash(hash_code_t c) const;
 
-		size_type count(const key_type& k) const EA_NOEXCEPT;
+		size_type count(const key_type& k) const noexcept;
 
 		std::pair<iterator, iterator>             equal_range(const key_type& k);
 		std::pair<const_iterator, const_iterator> equal_range(const key_type& k) const;
@@ -1310,7 +1310,7 @@ namespace safe_memory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const noexcept
 		{
 			return irt.first;
 		}
@@ -1318,7 +1318,7 @@ namespace safe_memory::detail
 		template <typename BoolConstantT>
 		iterator DoGetResultIterator(BoolConstantT,
 		                             const insert_return_type& irt,
-		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const EA_NOEXCEPT
+		                             SM_DISABLE_IF_TRUETYPE(BoolConstantT) = nullptr) const noexcept
 		{
 			return irt;
 		}
@@ -1596,7 +1596,7 @@ namespace safe_memory::detail
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// inline const typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const EA_NOEXCEPT
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() const noexcept
 	// {
 	// 	return mAllocator;
 	// }
@@ -1606,7 +1606,7 @@ namespace safe_memory::detail
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	// inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::allocator_type&
-	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() EA_NOEXCEPT
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::get_allocator() noexcept
 	// {
 	// 	return mAllocator;
 	// }
@@ -2000,7 +2000,7 @@ namespace safe_memory::detail
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const EA_NOEXCEPT
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const noexcept
 	{
 		const hash_code_t c      = get_hash_code(k);
 		const size_type   n      = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -3167,7 +3167,7 @@ namespace safe_memory::detail
 
 	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() EA_NOEXCEPT
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reset_lose_memory() noexcept
 	// {
 	// 	// The reset function is a special extension function which unilaterally 
 	// 	// resets the container to an empty state without freeing the memory of 
