@@ -47,6 +47,7 @@ using ::nodecpp::safememory::soft_ptr_static_cast;
 using ::nodecpp::safememory::soft_ptr_reinterpret_cast;
 using ::nodecpp::safememory::nullable_cast;
 
+using ::nodecpp::safememory::make_owning_t;
 
 
 using ::nodecpp::safememory::memory_safety;

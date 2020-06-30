@@ -103,8 +103,8 @@ namespace safe_memory
 		typedef std::ptrdiff_t    							  difference_type;
 		// typedef typename base_type::allocator_type            allocator_type;
 
-		typedef owning_ptr<detail::array_of2<T>, Safety> 					owning_heap_type;
-		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, Safety> soft_heap_type;
+		typedef owning_ptr<detail::array_of2<T, Safety>, Safety> 					owning_heap_type;
+		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T, Safety>, Safety> soft_heap_type;
 
 		typedef detail::safe_array_iterator<T, Safety>		iterator_safe;
 		typedef detail::safe_array_iterator<const T, Safety>	const_iterator_safe;

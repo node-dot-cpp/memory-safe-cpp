@@ -980,8 +980,8 @@ namespace safe_memory::detail
 
 		typedef owning_ptr<node_type, Safety>                                                      owning_node_type;
 		typedef soft_ptr_with_zero_offset<node_type, Safety>                               soft_node_type;
-		typedef owning_ptr<array_of2<owning_node_type>, Safety>                                    owning_bucket_type;
-		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type>, Safety>             soft_bucket_type;
+		typedef owning_ptr<array_of2<owning_node_type, Safety>, Safety>                                    owning_bucket_type;
+		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type, Safety>, Safety>             soft_bucket_type;
 
 
 

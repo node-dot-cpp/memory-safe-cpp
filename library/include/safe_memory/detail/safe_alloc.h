@@ -42,10 +42,12 @@ enum class iterator_validity {
 	xxx_Broken_xxx       // invalid and escaping safety rules
 };
 
-template<class T>
+template<class T, memory_safety Safety>
 struct array_of2
 {
-	typedef array_of2<T> this_type;
+	typedef array_of2<T, Safety> this_type;
+
+	static constexpr memory_safety is_safe = Safety;
 
 	size_t _capacity = 0;
 
@@ -72,15 +74,19 @@ public:
 	~array_of2() {}
 
 	T& at(size_t ix) {
-		if(ix >= _capacity)
-			throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
+		if constexpr ( Safety == memory_safety::safe ) {
+			if(ix >= _capacity)
+				throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
+		}
 
 		return _begin[ix];
 	}
 	
 	const T& at(size_t ix) const {
-		if(ix >= _capacity)
-			throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
+		if constexpr ( Safety == memory_safety::safe ) {
+			if(ix >= _capacity)
+				throwPointerOutOfRange("array_of2::at(): ix >= _capacity");
+		}
 
 		return _begin[ix];
 	}
@@ -93,12 +99,14 @@ public:
 		return _begin[ix];
 	}
 
-	T* get_raw_ptr(size_t ix) {
+	const T* get_raw_ptr(size_t ix) const {
 		// allow returning 'end()' pointer
 		// caller is responsible of not dereferencing it
-		if(ix > _capacity)
-			throwPointerOutOfRange("array_of2::get_raw_ptr(): ix > _capacity");
-		
+		if constexpr ( Safety == memory_safety::safe ) {
+			if(ix > _capacity)
+				throwPointerOutOfRange("array_of2::get_raw_ptr(): ix > _capacity");
+		}
+
 		return _begin + ix;
 	}
 
@@ -110,30 +118,35 @@ public:
 	static
 	size_t calculateSize(size_t size) {
 		// TODO here we should fine tune the sizes of array_of2<T> 
-		return sizeof(array_of2<T>) + (sizeof(T) * size);
+		return sizeof(this_type) + (sizeof(T) * size);
 	}
 };
 
 
 template<class T>
-NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T>> make_owning_array_of_impl(size_t size) {
-	using namespace nodecpp::safememory;
-	size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
+NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T, memory_safety::safe>> make_owning_array_of_impl(size_t size) {
+
+	using nodecpp::safememory::FirstControlBlock;
+	using nodecpp::safememory::owning_ptr_impl;
+	
+	typedef array_of2<T, memory_safety::safe> array_type;
+
+	size_t head = sizeof(FirstControlBlock) - nodecpp::safememory::getPrefixByteCount();
 	
 	// TODO here we should fine tune the sizes of array_of2<T> 
-	size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
-	void* data = zombieAllocate(total);
+	size_t total = head + sizeof(array_type) + (sizeof(T) * size);
+	void* data = nodecpp::safememory::zombieAllocate(total);
 
 	// non trivial types get zeroed memory, just in case we get to deref
 	// a non initialized position
 	if constexpr (!std::is_trivial<T>::value)
 		std::memset(data, 0, total);
 
-	array_of2<T>* dataForObj = reinterpret_cast<array_of2<T>*>(reinterpret_cast<uintptr_t>(data) + head);
-	owning_ptr_impl<array_of2<T>> op(make_owning_t(), dataForObj);
+	array_type* dataForObj = reinterpret_cast<array_type*>(reinterpret_cast<uintptr_t>(data) + head);
+	owning_ptr_impl<array_type> op(make_owning_t(), dataForObj);
 	// void* stackTmp = thg_stackPtrForMakeOwningCall;
 	// thg_stackPtrForMakeOwningCall = dataForObj;
-	/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_of2<T>(size);
+	/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_type(size);
 	// thg_stackPtrForMakeOwningCall = stackTmp;
 	//return owning_ptr_impl<_Ty>(objPtr);
 	return op;
@@ -141,15 +154,18 @@ NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T>> make_owning_array_o
 
 template<class T, memory_safety Safety>
 NODISCARD 
-auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, Safety> {
+auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T, Safety>, Safety> {
+
 	using namespace nodecpp::safememory;
+	typedef array_of2<T, Safety> array_type;
+
 	if constexpr ( Safety == memory_safety::none ) {
 		size_t head = 0;
-		size_t total = head + sizeof(array_of2<T>) + (sizeof(T) * size);
+		size_t total = head + sizeof(array_type) + (sizeof(T) * size);
 		void* data = allocate( total );
-		array_of2<T>* dataForObj = reinterpret_cast<array_of2<T>*>(reinterpret_cast<uintptr_t>(data) + head);
-		owning_ptr<array_of2<T>, memory_safety::none> op( make_owning_t(), dataForObj );
-		/*array_of2<T>* objPtr = */::new ( dataForObj ) array_of2<T>(size);
+		array_type* dataForObj = reinterpret_cast<array_type*>(reinterpret_cast<uintptr_t>(data) + head);
+		nodecpp::safememory::owning_ptr_no_checks<array_type> op( make_owning_t(), dataForObj );
+		/*array_of2<T>* objPtr = */::new ( dataForObj ) array_type(size);
 		return op;
 	}
 	else
@@ -157,7 +173,7 @@ auto make_owning_array_of(size_t size) -> owning_ptr<array_of2<T>, Safety> {
 }
 
 
-template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::none>>
+template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type, memory_safety::none>, memory_safety::none>>
 class safe_iterator_no_checks
 {
 public:
@@ -212,7 +228,7 @@ public:
 	}
 
 
-	pointer get_raw_ptr() const {
+	const pointer get_raw_ptr() const {
 		return mIterator;
 	}
 
@@ -311,7 +327,7 @@ typename safe_iterator_no_checks<T, Arr>::difference_type distance(const safe_it
 }
 
 
-template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type>, memory_safety::safe>>
+template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type, memory_safety::safe>, memory_safety::safe>>
 class safe_iterator_impl
 {
 public:
@@ -380,7 +396,7 @@ public:
 	}
 
 
-	pointer get_raw_ptr() const {
+	const pointer get_raw_ptr() const {
 		return arr->get_raw_ptr(ix);
 	}
 
@@ -390,7 +406,7 @@ public:
 	}
 
 	pointer operator->() const
-		{ return arr->get_raw_ptr(ix); }
+		{ return &(arr->at(ix)); }
 
 	safe_iterator_impl& operator++()
 		{ ++ix; return *this; }
@@ -485,7 +501,7 @@ public:
 	}
 
 	pointer _Unwrapped() const {
-		return get_raw_ptr();
+		return &(arr->at(ix));
 	}
 
 	void _Seek_to(pointer to) {
