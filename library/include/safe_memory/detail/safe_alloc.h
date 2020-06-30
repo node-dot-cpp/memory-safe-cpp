@@ -483,6 +483,10 @@ public:
 		return !operator<(ri);
 	}
 
+	bool is_end() const {
+		return ix >= arr->capacity();
+	}
+
 	iterator_validity validate_iterator(const safe_iterator_impl& b, const safe_iterator_impl& end) const noexcept {
 		if(arr == nullptr)
 			return iterator_validity::Null;
@@ -514,10 +518,20 @@ typename safe_iterator_impl<T, Arr>::difference_type distance(const safe_iterato
 	return r - l;
 }
 
+
 template<class T, memory_safety Safety>
 using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
 			safe_iterator_no_checks<T>, safe_iterator_impl<T>>;
 
+// instead of using a safe_iterator_no_checks that is a simple raw pointer wrapper
+// use a safe_iterator_impl but with safety::none, this allows to ask the array_of2
+// about capacity
+template <typename T>
+using safe_iterator_impl_none = safe_iterator_impl<T, soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type, memory_safety::none>, memory_safety::none>>;
+
+template<class T, memory_safety Safety>
+using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::none,
+			safe_iterator_impl_none<T>, safe_iterator_impl<T>>;
 
 } // namespace safe_memory::detail
 
