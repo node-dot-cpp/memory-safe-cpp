@@ -451,8 +451,11 @@ public:
 		{ return arr->at(ix + n); }
 
 	bool operator==(const safe_iterator_impl& ri) const {
+		// comparison only between the same arr or nullptr
 		if (arr == ri.arr)
 			return ix == ri.ix;
+		else if (arr == nullptr || ri.arr == nullptr)
+			return false;
 
 		throw std::invalid_argument("Iterators don't match");
 	}
@@ -505,7 +508,7 @@ public:
 	}
 
 	pointer _Unwrapped() const {
-		return &(arr->at(ix));
+		return const_cast<pointer>(arr->get_raw_ptr(ix));
 	}
 
 	void _Seek_to(pointer to) {

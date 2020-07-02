@@ -365,14 +365,9 @@ namespace safe_memory::detail
 		void increment()
 		{
 			mpNode = mpNode->mpNext;
-
-			while (mpNode == nullptr) {
-				++mpBucket;
-				if (mpBucket.is_end())
-					return;
-				mpNode = *mpBucket;
-			}
+			increment_bucket_if_null();
 		}
+
 	public:
 		reference operator*() const
 			{ return mpNode->mValue; }
@@ -1026,7 +1021,8 @@ namespace safe_memory::detail
 
 		iterator begin() noexcept
 		{
-			iterator i(nullptr, GetBucketArrayIt(0));
+			auto it = GetBucketArrayIt(0);
+			iterator i(*it, it);
 			i.increment_bucket_if_null();
 			return i;
 		}
@@ -1036,7 +1032,8 @@ namespace safe_memory::detail
 
 		const_iterator cbegin() const noexcept
 		{
-			const_iterator i(nullptr, GetBucketArrayIt(0));
+			auto it = GetBucketArrayIt(0);
+			const_iterator i(*it, it);
 			i.increment_bucket_if_null();
 			return i;
 		}
