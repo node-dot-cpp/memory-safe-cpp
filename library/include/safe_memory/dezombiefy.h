@@ -32,7 +32,7 @@
 #include <safe_memory_error.h>
 #include <utility>
 
-namespace safe_memory {
+namespace safememory {
 
 using nodecpp::safememory::isPointerNotZombie;
 using nodecpp::error::early_detected_zombie_pointer_access;
