@@ -360,6 +360,7 @@ int testWithLest( int argc, char * argv[] )
 
 				vnp2 = nullptr;
 				int* pint;
+//				pint = nullable_cast(vnp2);
 				EXPECT_THROWS( pint = nullable_cast(vnp2) );
 
 				testing::dummy_objects::LargeDerived* pl;
@@ -537,9 +538,9 @@ int testWithLest( int argc, char * argv[] )
 			{
 				owning_ptr<StructureWithSoftIntPtr> opS = make_owning<StructureWithSoftIntPtr>();
 				auto ptr = &(opS->n);
-				EXPECT_NO_THROW( *(safe_memory::dezombiefy(ptr)) = 17 );
+				EXPECT_NO_THROW( *(safememory::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-				EXPECT_THROWS( *(safe_memory::dezombiefy(ptr)) = 27 );
+				EXPECT_THROWS( *(safememory::dezombiefy(ptr)) = 27 );
 			}
 		},
 
@@ -1320,6 +1321,7 @@ int main( int argc, char * argv[] )
 	nodecpp::log::Log log;
 	log.level = nodecpp::log::LogLevel::info;
 	log.add( stdout );
+	nodecpp::logging_impl::currentLog = &log;
 
 	interceptNewDeleteOperators( true );
 
@@ -1327,20 +1329,28 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
-	nodecpp::safememory::owning_ptr<int> op = nodecpp::safememory::make_owning<int>( 3 );
-	nodecpp::safememory::soft_ptr<int>* sp = new nodecpp::safememory::soft_ptr<int>;
-	*sp = op;
-	op = nullptr;
-	try { *(*sp) = 4; }
-	catch (nodecpp::error::error e)
-	{
-		e.log( log, nodecpp::log::LogLevel::fatal );
-	}
-	return 0;
-
 	testSoftPtrsWithZeroOffset();
 	testOwningPtrWithManDel();
-//	return 0;
+
+	{
+		owning_ptr<const int> opci = make_owning<const int>(3);
+		soft_ptr<const int> si = opci;
+		int k = *si;
+		owning_ptr<int> opi = make_owning<int>(33);
+		si = opi;
+		const int* pcint = &k;
+		nullable_ptr<const int> npcint = pcint;
+		nullable_ptr<int> npint = &k;
+		npcint = &k;
+		npcint = npint;
+		//*opci = 4;
+		/*owning_ptr<int> opci = make_owning<int>(3);
+		soft_ptr<const int> si = opci;
+		int k = *si;
+		owning_ptr<int> opi = make_owning<int>(33);
+		si = opi;
+		*opci = 4;*/
+	}
 
 //temptest(); return 0;
 	//test_soft_this_ptr(); return 0;
@@ -1386,8 +1396,7 @@ int main( int argc, char * argv[] )
 	killAllZombies();
 	interceptNewDeleteOperators( false );
 
-	nodecpp::log::default_log::info( "about to exit...                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         " );
+	nodecpp::log::default_log::fatal( "about to exit..." );
 
-	printf( "TESTING DONE\n" );
 	return 0;
 }

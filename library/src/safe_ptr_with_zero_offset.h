@@ -321,18 +321,26 @@ public:
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	NODISCARD owning_ptr_base_impl<_Ty> make_owning_base_impl(_Types&&... _Args)
-	{
+NODISCARD owning_ptr_base_impl<_Ty> make_owning_base_impl(_Types&&... _Args)
+{
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr_base_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
-	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-	thg_stackPtrForMakeOwningCall = stackTmp;
-	//return owning_ptr_impl<_Ty>(objPtr);
-	return op;
+	owning_ptr_base_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	try {
+		new (dataForObj) _Ty(::std::forward<_Types>(_Args)...);
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		return op;
 	}
+	catch (...) {
+		killUnderconsructedOP( op );
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		zombieDeallocate(data);
+		throw;
+	}
+	//return owning_ptr_impl<_Ty>(objPtr);
+}
 
 template<class _Ty,
 	class... _Types,
@@ -340,9 +348,14 @@ template<class _Ty,
 NODISCARD owning_ptr_base_no_checks<_Ty> make_owning_base_no_checks(_Types&&... _Args)
 {
 	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
-	owning_ptr_base_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
-	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
-	return op;
+	try {
+		new (data) _Ty(::std::forward<_Types>(_Args)...);
+		owning_ptr_base_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
+		return op;
+	}
+	catch (...) {
+		deallocate(data);
+	}
 }
 
 template<class T> bool operator != (const owning_ptr_no_checks<T>& p1, const soft_ptr_with_zero_offset_no_checks<T>& p2 ) { return p2 != p1; }

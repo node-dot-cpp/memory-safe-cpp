@@ -31,9 +31,9 @@
 #include "safe_ptr_common.h"
 #include "../include/nodecpp_error/nodecpp_error.h"
 #include "safe_memory_error.h"
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 #include <stack_info.h>
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 namespace nodecpp::safememory
 {
@@ -77,11 +77,12 @@ inline
 void throwPointerOutOfRange()
 {
 	// TODO: actual implementation
-	throw std::bad_alloc();
+//	throw std::bad_alloc();
+		throw ::nodecpp::error::out_of_range;
 }
 
 
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 struct DbgCreationInfo
 {
 	enum Origination { inizero=0, reset=1, created=2, movedin=3, movedout=4 };
@@ -103,8 +104,8 @@ struct DbgCreationInfo
 		origination = Origination::movedin;
 		return *this;
 	}
-	void init( Origination o ) { 
-		creationPoint.init(); 
+	void init( Origination o, const char* call2strip = nullptr ) { 
+		creationPoint.init( call2strip ); 
 		origination = o;
 	}
 	void swap( DbgCreationInfo& other ) {
@@ -128,9 +129,17 @@ struct DbgDestructionInfo
 	Destruction destruction = Destruction::alive;
 	static constexpr const char* destructionStr[] = { "", "destructing its owning_ptr<>", "resetting its own_ptr<>", "nulling its owning_ptr<>" };
 	nodecpp::StackInfo destructionPoint;
-	void init( Destruction d ) { 
-		destructionPoint.init(); 
+	void init( Destruction d, const char* call2strip = nullptr ) { 
+		destructionPoint.init( call2strip ); 
 		destruction = d;
+	}
+	void swap( DbgDestructionInfo& other ) {
+		auto tmpo = destruction;
+		destruction = other.destruction;
+		other.destruction = tmpo;
+		nodecpp::StackInfo tmpc( std::move( destructionPoint ) );
+		destructionPoint = std::move( other.destructionPoint );
+		other.destructionPoint = std::move( tmpc );
 	}
 	std::string toStr() const {
 		if ( nodecpp::impl::isDataStackInfo( destructionPoint ) )
@@ -143,6 +152,10 @@ struct DbgCreationAndDestructionInfo
 {
 	DbgCreationInfo creationInfo;
 	DbgDestructionInfo destructionInfo;
+	void swap( DbgCreationAndDestructionInfo& other ) {
+		creationInfo.swap( other. creationInfo );
+		destructionInfo.swap( other. destructionInfo );
+	}
 	std::string toStr() const {
 		return creationInfo.toStr() + destructionInfo.toStr();
 	}
@@ -150,7 +163,7 @@ struct DbgCreationAndDestructionInfo
 namespace impl {
 	NODECPP_NOINLINE void dbgThrowNullPtrAccess( const DbgCreationAndDestructionInfo& info );
 } // namespace impl
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 
 template<class T> class soft_ptr_base_impl; // forward declaration
@@ -486,6 +499,9 @@ class owning_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
+	template<class TT>
+	friend void killUnderconsructedOP( owning_ptr_base_impl<TT>& );
+
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_ptr_with_zombie_property_; 
 #else
@@ -502,12 +518,12 @@ class owning_ptr_base_impl
 		//bool isZombie() const { return base_pointer_t::is_sombie(); }
 	};
 	ObjectPointer<T> t; // the only data member!
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	DbgCreationInfo creationInfo;
 	void dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction reason )
 	{
 		DbgDestructionInfo destructionInfo;
-		destructionInfo.init( reason );
+		destructionInfo.init( reason, "dbgSetDestructionPointInfo" );
 		FirstControlBlock* cb = getControlBlock();
 		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
 			if ( cb->slots[i].isUsed() )
@@ -523,7 +539,7 @@ class owning_ptr_base_impl
 					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->dbgObjectStatus.creationInfo = creationInfo;
 				}
 	}
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 	FirstControlBlock* getControlBlock() { return getControlBlock_(t.getPtr()); }
 	const FirstControlBlock* getControlBlock() const { return getControlBlock_(t.getPtr()); }
@@ -576,24 +592,24 @@ public:
 		t.setPtr( t_ );
 		getControlBlock()->init();
 		dbgCheckValidity();
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::created );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 	owning_ptr_base_impl()
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		t.setPtr( nullptr );
 	}
 	owning_ptr_base_impl( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl& operator = ( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
@@ -601,9 +617,9 @@ public:
 	}
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		if ( this == &other ) return *this;
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
@@ -614,9 +630,9 @@ public:
 	template<class T1>
 	owning_ptr_base_impl( owning_ptr_base_impl<T1>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		t.setTypedPtr( other.t.getTypedPtr() ); // implicit cast, if at all possible
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
@@ -625,9 +641,9 @@ public:
 	template<class T1>
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		if ( this == &other ) return *this;
 		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
@@ -637,17 +653,17 @@ public:
 	}
 	owning_ptr_base_impl( std::nullptr_t nulp )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		t.setPtr( nullptr );
 	}
 	owning_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::reset );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		return *this;
 	}
 	~owning_ptr_base_impl()
@@ -662,10 +678,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
-			updatePtrForListItemsWithInvalidPtr();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::dtoring );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setZombie();
@@ -679,10 +695,10 @@ public:
 		if ( NODECPP_LIKELY(t.getTypedPtr()) )
 		{
 			destruct( t.getTypedPtr() );
-			updatePtrForListItemsWithInvalidPtr();
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::resetting );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 			t.setPtr( nullptr );
@@ -697,9 +713,9 @@ public:
 		other.t = tmp;
 		other.dbgCheckValidity();
 		dbgCheckValidity();
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.swap( other.creationInfo );
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 
 	nullable_ptr_impl<T> get() const
@@ -796,24 +812,32 @@ public:
 	}
 };
 
+template<class T>
+void killUnderconsructedOP( owning_ptr_base_impl<T>& p ) { p.t.setPtr( nullptr ); }
+
 template<class _Ty,
 	class... _Types,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
-	NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
-	{
+NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
+{
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
-	_Ty* objPtr = new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
-	thg_stackPtrForMakeOwningCall = stackTmp;
-	//return owning_ptr_impl<_Ty>(objPtr);
-	return op;
+	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+	try { 
+		new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		return op;
 	}
+	catch( ... ) {
+		killUnderconsructedOP( op );
+		thg_stackPtrForMakeOwningCall = stackTmp;
+		zombieDeallocate(data);
+		throw;
+	}
+}
 
-
-#define NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 
 #ifdef NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION
 //NODECPP_FORCEINLINE
@@ -890,9 +914,9 @@ class soft_ptr_base_impl
 		bool isOnStack() { return has_flag<0>(); }
 	};
 	Pointers<T> pointers; // the only data member!
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	DbgCreationAndDestructionInfo dbgObjectStatus;
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 	T* getDereferencablePtr() const { return reinterpret_cast<T*>( pointers.get_ptr() ); }
 	void* getAllocatedPtr() const {return pointers.get_allocated_ptr(); }
@@ -1031,6 +1055,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 	template<class T1>
 	soft_ptr_base_impl<T>& operator = ( const soft_ptr_base_impl<T1>& other )
@@ -1049,6 +1076,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		return *this;
 	}
 	soft_ptr_base_impl( const soft_ptr_base_impl<T>& other )
@@ -1065,6 +1095,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>& other )
 	{
@@ -1082,6 +1115,9 @@ public:
 				init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		return *this;
 	}
 
@@ -1121,6 +1157,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = std::move( other.dbgObjectStatus );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 
 	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>&& other )
@@ -1167,6 +1206,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = std::move( other.dbgObjectStatus );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		return *this;
 	}
 
@@ -1223,6 +1265,9 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 	soft_ptr_base_impl( const soft_ptr_base_impl<T>& other, T* t_ )
 	{
@@ -1240,12 +1285,22 @@ public:
 				init( t_, other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus = other.dbgObjectStatus;
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 
-	soft_ptr_base_impl( std::nullptr_t nulp ) {}
+	soft_ptr_base_impl( std::nullptr_t nulp ) {
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus.creationInfo.init( DbgCreationInfo::Origination::inizero );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+	}
 	soft_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
 		reset();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus.destructionInfo.init( DbgDestructionInfo::Destruction::nulling );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		return *this;
 	}
 
@@ -1304,6 +1359,9 @@ public:
 		}
 		other.dbgCheckMySlotConsistency();
 		dbgCheckMySlotConsistency();
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+		dbgObjectStatus.swap( other.dbgObjectStatus );
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 
 	nullable_ptr_impl<T> get() const
@@ -1592,29 +1650,29 @@ public:
 		soft_ptr_base_impl<T>::swap(other);
 	}
 
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	void dbgTestForNullAndThrowNullPtrAccess() const
 	{
 		if ( this->getDereferencablePtr() )
 			return;
 		impl::dbgThrowNullPtrAccess( this->dbgObjectStatus );
 	}
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 	nullable_ptr_impl<T> get() const
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		dbgTestForNullAndThrowNullPtrAccess();
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 		return soft_ptr_base_impl<T>::get();
 	}
 
 	T& operator * () const
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		dbgTestForNullAndThrowNullPtrAccess();
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 		checkNotNullAllSizes( this->getDereferencablePtr() );
 		return *(this->getDereferencablePtr());
@@ -1622,9 +1680,9 @@ public:
 
 	T* operator -> () const 
 	{
-#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		dbgTestForNullAndThrowNullPtrAccess();
-#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO
+#endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
 		checkNotNullLargeSize( this->getDereferencablePtr() );
 		return this->getDereferencablePtr();
