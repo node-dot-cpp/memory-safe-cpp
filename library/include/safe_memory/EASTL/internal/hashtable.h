@@ -357,13 +357,13 @@ namespace safe_memory::detail
 		hashtable_base_iterator& operator=(hashtable_base_iterator&&) = default;
 
 	// allow non-const to const convertion
-	template<typename X = std::enable_if_t<bConst>>
-	hashtable_base_iterator(const hashtable_base_iterator<Value, false, bCacheHashCode, Safety>& ri)
+	template<bool B = false, typename X = std::enable_if_t<bConst>>
+	hashtable_base_iterator(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri)
 		: mpNode(ri.mpNode), mpBucket(ri.mpBucket) {}
 
 	// allow non-const to const convertion
-	template<typename X = std::enable_if_t<bConst>>
-	hashtable_base_iterator& operator=(const hashtable_base_iterator<Value, false, bCacheHashCode, Safety>& ri) {
+	template<bool B = false, typename X = std::enable_if_t<bConst>>
+	hashtable_base_iterator& operator=(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri) {
 		this->mpNode = ri.mpNode;
 		this->mpBucket = ri.mpBucket;
 		return *this;

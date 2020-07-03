@@ -194,6 +194,7 @@ public:
 	typedef T									value_type;
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
+	typedef const T*							const_pointer;
 	typedef T&	 								reference;
 	typedef SoftArrayOfPtr  					soft_array_of_prt;
 
@@ -246,7 +247,7 @@ public:
 	}
 
 
-	const pointer get_raw_ptr() const {
+	const_pointer get_raw_ptr() const {
 		return mIterator;
 	}
 
@@ -354,6 +355,7 @@ public:
 	typedef typename std::remove_const<T>::type non_const_value_type;
 	typedef std::ptrdiff_t                      difference_type;
 	typedef T*   								pointer;
+	typedef const T*							const_pointer;
 	typedef T&									reference;
 	typedef SoftArrayOfPtr 						soft_array_of_prt;
 
@@ -389,16 +391,8 @@ public:
 	}
 
 	// GCC and clang fail to generate defaultd copy ctor/assign
-	safe_iterator_impl(const safe_iterator_impl& ri) 
-		:arr(ri.arr), ix(ri.ix) {}
-		
-	safe_iterator_impl& operator=(const safe_iterator_impl& ri) {
-		if(this != &ri) {
-			this->arr = ri.arr;
-			this->ix = ri.ix;
-		}
-		return *this;
-	}
+	safe_iterator_impl(const safe_iterator_impl& ri) = default;
+	safe_iterator_impl& operator=(const safe_iterator_impl& ri) = default;
 
 	safe_iterator_impl(safe_iterator_impl&& ri) = default; 
 	safe_iterator_impl& operator=(safe_iterator_impl&& ri) = default;
@@ -417,7 +411,7 @@ public:
 	}
 
 
-	const pointer get_raw_ptr() const {
+	const_pointer get_raw_ptr() const {
 		return arr->get_raw_ptr(ix);
 	}
 
