@@ -433,8 +433,8 @@ void BenchmarkVector()
 {
 	EASTLTest_Printf("Vector\n");
 
-	BenchmarkVectorTempl<1, StdVec>();
-	BenchmarkVectorTempl<2, EastlVec>();
+	BenchmarkVectorTempl<1, EastlVec>();
+	BenchmarkVectorTempl<2, StdVec>();
 	BenchmarkVectorTempl<3, SafeVec>();
 	BenchmarkVectorTempl<4, UnsafeVec>();
 }

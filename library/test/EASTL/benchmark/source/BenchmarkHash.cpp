@@ -450,8 +450,8 @@ void BenchmarkHash()
 {
 	EASTLTest_Printf("HashMap\n");
 
-	BenchmarkHashTempl<1, StdMap1, StdMap2>();
-	BenchmarkHashTempl<2, EastlMap1, EastlMap2>();
+	BenchmarkHashTempl<1, EastlMap1, EastlMap2>();
+	BenchmarkHashTempl<2, StdMap1, StdMap2>();
 	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
 	BenchmarkHashTempl<4, UnsafeMap1, UnsafeMap2>();
 }

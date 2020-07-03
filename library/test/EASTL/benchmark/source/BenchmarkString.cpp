@@ -492,8 +492,8 @@ void BenchmarkString()
 	typedef safe_memory::basic_string<char8_t, safe_memory::memory_safety::none> Unsafe8;
 	typedef safe_memory::basic_string<char16_t, safe_memory::memory_safety::none> Unsafe16;
 
-	BenchmarkStringTempl<1, Std8, Std16>();
-	BenchmarkStringTempl<2, Ea8, Ea16>();
+	BenchmarkStringTempl<1, Ea8, Ea16>();
+	BenchmarkStringTempl<2, Std8, Std16>();
 	BenchmarkStringTempl<3, Safe8, Safe16>();
 	BenchmarkStringTempl<4, Unsafe8, Unsafe16>();
 }
