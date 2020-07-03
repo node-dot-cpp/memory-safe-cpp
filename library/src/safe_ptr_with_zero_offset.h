@@ -199,9 +199,9 @@ public:
  
 	soft_ptr_with_zero_offset_no_checks() {}
 
-	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner )
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t)
 	{
-		ptr = owner.t;
+		// ptr = owner.t;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
 	{
@@ -210,9 +210,9 @@ public:
 	}
 
 
-	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner )
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner ) :ptr(owner.t)
 	{
-		ptr = owner.t;
+		// ptr = owner.t;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_base_no_checks<T>& owner )
 	{
@@ -221,9 +221,9 @@ public:
 	}
 
 
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other )
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr)
 	{
-		ptr = other.ptr;
+		// ptr = other.ptr;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
 	{
@@ -314,7 +314,7 @@ public:
 
 	~soft_ptr_with_zero_offset_no_checks()
 	{
-		ptr = nullptr;
+		// ptr = nullptr;
 	}
 };
 

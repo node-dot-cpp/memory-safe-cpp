@@ -329,7 +329,7 @@ namespace safe_memory::detail
 
 
 		typedef soft_ptr_with_zero_offset<node_type, Safety>	node_ptr;
-		typedef safe_array_iterator2<owning_ptr<node_type, Safety>, Safety>	bucket_it;
+		typedef safe_array_iterator<owning_ptr<node_type, Safety>, Safety>	bucket_it;
 
 		static constexpr memory_safety is_safe = Safety;
 
@@ -357,13 +357,13 @@ namespace safe_memory::detail
 		hashtable_base_iterator& operator=(hashtable_base_iterator&&) = default;
 
 	// allow non-const to const convertion
-	template<typename V, typename X = std::enable_if_t<bConst>>
-	hashtable_base_iterator(const hashtable_base_iterator<V, false, bCacheHashCode, Safety>& ri)
+	template<bool B, typename X = std::enable_if_t<bConst != B>>
+	hashtable_base_iterator(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri)
 		: mpNode(ri.mpNode), mpBucket(ri.mpBucket) {}
 
 	// allow non-const to const convertion
-	template<typename V, typename X = std::enable_if_t<bConst>>
-	hashtable_base_iterator& operator=(const hashtable_base_iterator<V, false, bCacheHashCode, Safety>& ri) {
+	template<bool B, typename X = std::enable_if_t<bConst != B>>
+	hashtable_base_iterator& operator=(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri) {
 		this->mpNode = ri.mpNode;
 		this->mpBucket = ri.mpBucket;
 		return *this;
@@ -376,8 +376,8 @@ namespace safe_memory::detail
 		{
 			while(mpNode == nullptr) { // We store an extra bucket at the end 
 				++mpBucket;
-				if(mpBucket.is_end())
-					return;          // of the bucket array so that finding the end of the bucket
+				// if(mpBucket.is_end())
+				// 	return;          // of the bucket array so that finding the end of the bucket
 				mpNode = *mpBucket;      // array is quick and simple.
 			}
 		}
@@ -1003,13 +1003,18 @@ namespace safe_memory::detail
 		}
 
 		iterator end() noexcept
-			{ return iterator(nullptr, GetBucketArrayIt(mnBucketCount)); }
+			{ 
+				auto it = GetBucketArrayIt(mnBucketCount);
+				return iterator(*it, it);
+				}
 
 		const_iterator end() const noexcept
 			{ return cend(); }
 
 		const_iterator cend() const noexcept
-			{ return const_iterator(nullptr, GetBucketArrayIt(mnBucketCount)); }
+			{ 
+				auto it = GetBucketArrayIt(mnBucketCount);
+				return const_iterator(*it, it); }
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) noexcept
@@ -1245,8 +1250,8 @@ namespace safe_memory::detail
 		iterator_validity  validate_iterator(const_iterator i) const;
 
 	protected:
-		safe_array_iterator2<owning_node_type, Safety> GetBucketArrayIt(size_t n) const { 
-			return safe_array_iterator2<owning_node_type, Safety>::make(mpBucketArray, n);
+		safe_array_iterator<owning_node_type, Safety> GetBucketArrayIt(size_t n) const { 
+			return safe_array_iterator<owning_node_type, Safety>::make(mpBucketArray, n);
 		}
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
@@ -1727,8 +1732,13 @@ namespace safe_memory::detail
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::owning_bucket_type
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateBuckets(size_type n)
 	{
-		owning_bucket_type pBucketArray = make_owning_array_of<owning_node_type, S>(n);
-		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->begin() + n);
+		owning_bucket_type pBucketArray = make_owning_array_of<owning_node_type, S>(n + 1);
+		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->begin() + n + 1);
+
+		//create a fake (zoombie) end() node, key must be default constructed
+		auto end = make_owning_2<node_type, S>();
+		end->~node_type();
+		pBucketArray->at(n) = std::move(end);
 
 		return pBucketArray;
 	}
