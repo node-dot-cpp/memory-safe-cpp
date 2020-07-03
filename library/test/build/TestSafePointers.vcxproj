@@ -277,7 +277,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -292,7 +292,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_USE_GENERIC_STRUCTS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_USE_GENERIC_STRUCTS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -366,7 +366,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -385,7 +385,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -404,7 +404,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=NONE;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
