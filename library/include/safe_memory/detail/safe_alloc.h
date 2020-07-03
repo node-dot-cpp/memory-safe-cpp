@@ -102,6 +102,21 @@ public:
 	const T* get_raw_ptr(size_t ix) const {
 		// allow returning 'end()' pointer
 		// caller is responsible of not dereferencing it
+
+		// is this check superfluos?
+		if constexpr ( Safety == memory_safety::safe ) {
+			if(ix > _capacity)
+				throwPointerOutOfRange("array_of2::get_raw_ptr(): ix > _capacity");
+		}
+
+		return _begin + ix;
+	}
+
+	T* get_raw_ptr(size_t ix) {
+		// allow returning 'end()' pointer
+		// caller is responsible of not dereferencing it
+
+		// is this check superfluos?
 		if constexpr ( Safety == memory_safety::safe ) {
 			if(ix > _capacity)
 				throwPointerOutOfRange("array_of2::get_raw_ptr(): ix > _capacity");
@@ -126,12 +141,9 @@ public:
 template<class T>
 NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T, memory_safety::safe>> make_owning_array_of_impl(size_t size) {
 
-	using nodecpp::safememory::FirstControlBlock;
-	using nodecpp::safememory::owning_ptr_impl;
-	
 	typedef array_of2<T, memory_safety::safe> array_type;
 
-	size_t head = sizeof(FirstControlBlock) - nodecpp::safememory::getPrefixByteCount();
+	size_t head = sizeof(nodecpp::safememory::FirstControlBlock) - nodecpp::safememory::getPrefixByteCount();
 	
 	// TODO here we should fine tune the sizes of array_of2<T> 
 	size_t total = head + sizeof(array_type) + (sizeof(T) * size);
@@ -143,7 +155,7 @@ NODISCARD nodecpp::safememory::owning_ptr_impl<array_of2<T, memory_safety::safe>
 		std::memset(data, 0, total);
 
 	array_type* dataForObj = reinterpret_cast<array_type*>(reinterpret_cast<uintptr_t>(data) + head);
-	owning_ptr_impl<array_type> op(make_owning_t(), dataForObj);
+	nodecpp::safememory::owning_ptr_impl<array_type> op(make_owning_t(), dataForObj);
 	// void* stackTmp = thg_stackPtrForMakeOwningCall;
 	// thg_stackPtrForMakeOwningCall = dataForObj;
 	/*array_of2<_Ty>* objPtr = */::new ( dataForObj ) array_type(size);
@@ -202,12 +214,18 @@ private:
 	explicit safe_iterator_no_checks(pointer ptr)
 		: mIterator(ptr) {}
 public:
-
-	static safe_iterator_no_checks make(soft_array_of_prt arr, size_t ix = 0) {
-		return safe_iterator_no_checks(arr->begin() + ix);
+	template<class PTR>
+	static safe_iterator_no_checks make(const PTR& arr, size_t ix = 0) {
+		// non safe function, we know ix is in range
+		return safe_iterator_no_checks(arr->get_raw_ptr(ix));
 	}
+	
+	// static safe_iterator_no_checks make(soft_array_of_prt arr, size_t ix = 0) {
+	// 	return safe_iterator_no_checks(arr->begin() + ix);
+	// }
 
-	static safe_iterator_no_checks make(soft_array_of_prt, pointer ptr) {
+	template<class PTR>
+	static safe_iterator_no_checks make(const PTR&, pointer ptr) {
 		return safe_iterator_no_checks(ptr);
 	}
 
@@ -355,15 +373,18 @@ public:
 	safe_iterator_impl() {}
 
 private:
-	safe_iterator_impl(soft_array_of_prt arr, size_t ix)
+	template<class PTR>
+	safe_iterator_impl(const PTR& arr, size_t ix)
 		: arr(arr), ix(ix) {}
 
 public:
-	static safe_iterator_impl make(soft_array_of_prt arr, size_t ix = 0) {
+	template<class PTR>
+	static safe_iterator_impl make(const PTR& arr, size_t ix = 0) {
 		return safe_iterator_impl(arr, ix);
 	}
 
-	static safe_iterator_impl make(soft_array_of_prt arr, pointer to) {
+	template<class PTR>
+	static safe_iterator_impl make(const PTR& arr, pointer to) {
 		return safe_iterator_impl(arr, to - arr->begin());
 	}
 
@@ -508,7 +529,7 @@ public:
 	}
 
 	pointer _Unwrapped() const {
-		return const_cast<pointer>(arr->get_raw_ptr(ix));
+		return arr->get_raw_ptr(ix);
 	}
 
 	void _Seek_to(pointer to) {
