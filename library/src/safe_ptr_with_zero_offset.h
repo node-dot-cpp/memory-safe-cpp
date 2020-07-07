@@ -122,9 +122,12 @@ public:
 
 	soft_ptr_impl<T> get() const
 	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-		FirstControlBlock* cb = getControlBlock_( ptr );
-		return soft_ptr_impl<T>( cb, ptr );
+		if(NODECPP_LIKELY(ptr != nullptr)) {
+			FirstControlBlock* cb = getControlBlock_( ptr );
+			return soft_ptr_impl<T>( cb, ptr );
+		}
+		else
+			return soft_ptr_impl<T>();
 	}
 
 	explicit operator bool() const noexcept
@@ -197,14 +200,22 @@ public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
  
-	soft_ptr_with_zero_offset_no_checks() {}
+	soft_ptr_with_zero_offset_no_checks() {
+		extern int CountSoftDefaultCtor;
+		++CountSoftDefaultCtor;
+
+	}
 
 	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t)
 	{
+		extern int CountSoftOwnCtor;
+		++CountSoftOwnCtor;
 		// ptr = owner.t;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
 	{
+		extern int CountSoftOwnAssign;
+		++CountSoftOwnAssign;
 		ptr = owner.t;
 		return *this;
 	}
@@ -212,10 +223,14 @@ public:
 
 	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner ) :ptr(owner.t)
 	{
+		extern int CountSoftOwnCtor;
+		++CountSoftOwnCtor;
 		// ptr = owner.t;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_base_no_checks<T>& owner )
 	{
+		extern int CountSoftOwnAssign;
+		++CountSoftOwnAssign;
 		ptr = owner.t;
 		return *this;
 	}
@@ -223,10 +238,14 @@ public:
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr)
 	{
+		extern int CountSoftCopyCtor;
+		++CountSoftCopyCtor;
 		// ptr = other.ptr;
 	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
 	{
+		extern int CountSoftCopyAssign;
+		++CountSoftCopyAssign;
 		ptr = other.ptr;
 		return *this;
 	}
@@ -235,12 +254,17 @@ public:
 	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& other )
 	{
 		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
+		extern int CountSoftMoveCtor;
+		++CountSoftMoveCtor;
 		if ( this == &other ) return;
 		ptr = other.ptr;
 	}
 
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( soft_ptr_with_zero_offset_no_checks<T>&& other )
 	{
+		extern int CountSoftMoveAssign;
+		++CountSoftMoveAssign;
+
 		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
 		if ( this == &other ) return *this;
 		ptr = other.ptr;
@@ -263,9 +287,9 @@ public:
 
 	soft_ptr_no_checks<T> get() const
 	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-		FirstControlBlock* cb = getControlBlock_( ptr );
-		return soft_ptr_no_checks<T>( cb, ptr );
+//		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
+//		FirstControlBlock* cb = getControlBlock_( ptr );
+		return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
 	}
 
 	explicit operator bool() const noexcept
@@ -314,7 +338,9 @@ public:
 
 	~soft_ptr_with_zero_offset_no_checks()
 	{
-		// ptr = nullptr;
+		extern int CountSoftPtrZeroNoChecksDtor;
+		++CountSoftPtrZeroNoChecksDtor;
+		 ptr = nullptr;
 	}
 };
 
