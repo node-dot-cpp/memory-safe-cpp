@@ -545,11 +545,14 @@ using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
 // use a safe_iterator_impl but with safety::none, this allows to ask the array_of2
 // about capacity
 template <typename T>
-using safe_iterator_impl_none = safe_iterator_impl<T, soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type, memory_safety::none>, memory_safety::none>>;
+using safe_iterator_impl_none = safe_iterator_impl<T, soft_ptr<array_of2<typename std::remove_const<T>::type, memory_safety::none>, memory_safety::none>>;
+
+template <typename T>
+using safe_iterator_impl_safe = safe_iterator_impl<T, soft_ptr<array_of2<typename std::remove_const<T>::type, memory_safety::safe>, memory_safety::safe>>;
 
 template<class T, memory_safety Safety>
 using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::none,
-			safe_iterator_impl_none<T>, safe_iterator_impl<T>>;
+			safe_iterator_impl_none<T>, safe_iterator_impl_safe<T>>;
 
 } // namespace safe_memory::detail
 

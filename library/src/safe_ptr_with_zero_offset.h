@@ -200,73 +200,35 @@ public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
  
-	soft_ptr_with_zero_offset_no_checks() {
-		extern int CountSoftDefaultCtor;
-		++CountSoftDefaultCtor;
+	soft_ptr_with_zero_offset_no_checks() { }
 
-	}
-
-	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t)
-	{
-		extern int CountSoftOwnCtor;
-		++CountSoftOwnCtor;
-		// ptr = owner.t;
-	}
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t) {	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
 	{
-		extern int CountSoftOwnAssign;
-		++CountSoftOwnAssign;
 		ptr = owner.t;
 		return *this;
 	}
 
 
-	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner ) :ptr(owner.t)
-	{
-		extern int CountSoftOwnCtor;
-		++CountSoftOwnCtor;
-		// ptr = owner.t;
-	}
+	soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner ) :ptr(owner.t) { }
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_base_no_checks<T>& owner )
 	{
-		extern int CountSoftOwnAssign;
-		++CountSoftOwnAssign;
 		ptr = owner.t;
 		return *this;
 	}
 
 
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr)
-	{
-		extern int CountSoftCopyCtor;
-		++CountSoftCopyCtor;
-		// ptr = other.ptr;
-	}
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr) { }
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
 	{
-		extern int CountSoftCopyAssign;
-		++CountSoftCopyAssign;
 		ptr = other.ptr;
 		return *this;
 	}
 
 
-	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& other )
-	{
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		extern int CountSoftMoveCtor;
-		++CountSoftMoveCtor;
-		if ( this == &other ) return;
-		ptr = other.ptr;
-	}
-
+	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& other ) :ptr(other.ptr) { }
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( soft_ptr_with_zero_offset_no_checks<T>&& other )
 	{
-		extern int CountSoftMoveAssign;
-		++CountSoftMoveAssign;
-
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		if ( this == &other ) return *this;
 		ptr = other.ptr;
 		return *this;
 	}
@@ -340,7 +302,6 @@ public:
 	{
 		extern int CountSoftPtrZeroNoChecksDtor;
 		++CountSoftPtrZeroNoChecksDtor;
-		 ptr = nullptr;
 	}
 };
 

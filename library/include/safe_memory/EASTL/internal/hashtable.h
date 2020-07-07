@@ -328,7 +328,7 @@ namespace safe_memory::detail
 		typedef std::forward_iterator_tag                                iterator_category;
 
 
-		typedef soft_ptr_with_zero_offset<node_type, Safety>	node_ptr;
+		typedef soft_ptr<node_type, Safety>	node_ptr;
 		typedef safe_array_iterator2<owning_ptr<node_type, Safety>, Safety>	bucket_it;
 
 		static constexpr memory_safety is_safe = Safety;
@@ -342,8 +342,14 @@ namespace safe_memory::detail
 		node_ptr  mpNode;      // Current node within current bucket.
 		bucket_it mpBucket;    // Current bucket.
 
-		hashtable_base_iterator(node_ptr pNode, bucket_it pBucket)
-			: mpNode(pNode), mpBucket(pBucket) { }
+
+		template<class PTR1, class PTR2>
+		hashtable_base_iterator(const PTR1& pNode, const PTR2& pBucket, size_t n)
+			: mpNode(pNode.get()), mpBucket(bucket_it::make(pBucket, n)) { }
+
+
+		hashtable_base_iterator(soft_ptr_with_zero_offset<node_type, Safety> pNode, bucket_it pBucket)
+			: mpNode(pNode.get()), mpBucket(pBucket) { }
 		hashtable_base_iterator(std::nullptr_t nulp, bucket_it pBucket)
 			: mpNode(nulp), mpBucket(pBucket) { }
 
@@ -2638,7 +2644,8 @@ namespace safe_memory::detail
 			// #endif
 		}
 
-		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt(n)), false);
+		return std::pair<iterator, bool>(std::piecewise_construct, std::forward_as_tuple(pNode, mpBucketArray, n), std::make_tuple(false));
+//		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt(n)), false);
 	}
 
 
