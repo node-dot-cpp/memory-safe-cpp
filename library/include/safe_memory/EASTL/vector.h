@@ -297,9 +297,9 @@ namespace safe_memory
 		}
 
 		/// Set a soft_ptr to the heap, mostly used by safe iterators
-		inline soft_heap_type GetSoftHeapPtr() const noexcept {
-			return soft_heap_type(mHeap);
-		}
+		// inline soft_heap_type GetSoftHeapPtr() const noexcept {
+		// 	return soft_heap_type(mHeap);
+		// }
 
 		// struct should_copy_tag{}; struct should_move_tag : public should_copy_tag{};
 
@@ -821,7 +821,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::iterator_safe
 	vector<T, Safety>::begin() noexcept
 	{
-		return iterator_safe::make(GetSoftHeapPtr());
+		return iterator_safe::makeIx(mHeap, 0);
 	}
 
 
@@ -829,7 +829,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::begin() const noexcept
 	{
-		return const_iterator_safe::make(GetSoftHeapPtr());
+		return const_iterator_safe::makeIx(mHeap, 0);
 	}
 
 
@@ -837,7 +837,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::cbegin() const noexcept
 	{
-		return const_iterator_safe::make(GetSoftHeapPtr());
+		return const_iterator_safe::makeIx(mHeap, 0);
 	}
 
 
@@ -845,7 +845,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::iterator_safe
 	vector<T, Safety>::end() noexcept
 	{
-		return iterator_safe::make(GetSoftHeapPtr(), size());
+		return iterator_safe::makeIx(mHeap, size());
 	}
 
 
@@ -853,7 +853,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::end() const noexcept
 	{
-		return const_iterator_safe::make(GetSoftHeapPtr(), size());
+		return const_iterator_safe::makeIx(mHeap, size());
 	}
 
 
@@ -861,7 +861,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_iterator_safe
 	vector<T, Safety>::cend() const noexcept
 	{
-		return const_iterator_safe::make(GetSoftHeapPtr(), size());
+		return const_iterator_safe::makeIx(mHeap, size());
 	}
 
 
@@ -1221,7 +1221,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = emplace_unsafe(p, std::forward<Args>(args)...);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -1303,7 +1303,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, value);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1313,7 +1313,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, std::move(value));
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1323,7 +1323,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, n, value);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1334,7 +1334,7 @@ namespace safe_memory
 		const_pointer p = CheckMineAndGet(position);
 		const_pointer_pair other = CheckAndGet(first, last);
 		pointer r = insert_unsafe(p, other.first, other.second);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1344,7 +1344,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = insert_unsafe(p, ilist);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1383,7 +1383,7 @@ namespace safe_memory
 	{
 		const_pointer p = CheckMineAndGet(position);
 		pointer r = erase_unsafe(p);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 
@@ -1393,7 +1393,7 @@ namespace safe_memory
 	{
 		const_pointer_pair p = CheckMineAndGet(first, last);
 		pointer r = erase_unsafe(p.first, p.second);
-		return iterator_safe::make(GetSoftHeapPtr(), r);
+		return iterator_safe::makePtr(mHeap, r);
 	}
 
 	// template <typename T, memory_safety Safety>

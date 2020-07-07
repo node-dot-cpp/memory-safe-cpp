@@ -1357,6 +1357,7 @@ public:
 	~soft_ptr_base_impl()
 	{
 		dbgCheckMySlotConsistency();
+		NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR();
 		INCREMENT_ONSTACK_SAFE_PTR_DESTRUCTION_COUNT()
 		if( getDereferencablePtr() != nullptr ) {
 			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, getAllocatedPtr() );

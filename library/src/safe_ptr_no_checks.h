@@ -347,7 +347,7 @@ public:
 	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
 	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
 
-	~soft_ptr_base_no_checks() {}
+	~soft_ptr_base_no_checks() { NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR(); }
 };
 
 template<class T>

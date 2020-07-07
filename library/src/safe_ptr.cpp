@@ -32,6 +32,11 @@ thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount = 0;
 thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount = 0;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
+#ifdef NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
+thread_local std::size_t nodecpp::safememory::CountSoftPtrZeroOffsetDtor = 0;
+thread_local std::size_t nodecpp::safememory::CountSoftPtrBaseDtor = 0;
+#endif // NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
+
 thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
 
 #if defined NODECPP_USE_NEW_DELETE_ALLOC

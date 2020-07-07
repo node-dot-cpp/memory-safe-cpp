@@ -255,7 +255,7 @@ namespace safe_memory
 			inline const_pointer CapacityPtr() const noexcept     { return _heap->begin() + GetHeapCapacity(); }
 
 			inline void SetNewHeap(owning_heap_type&& new_heap) { _heap = std::move(new_heap); }
-			inline soft_heap_type GetSoftHeapPtr() const noexcept        { return soft_heap_type(_heap); }
+//			inline soft_heap_type GetSoftHeapPtr() const noexcept        { return soft_heap_type(_heap); }
 
 			inline size_type GetHeapCapacity() const noexcept { return _heap ? _heap->capacity() - 1 : 0; }
 		};
@@ -264,7 +264,7 @@ namespace safe_memory
 
 		inline Layout& internalLayout() noexcept                        { return mPair_first; }
 		inline const Layout& internalLayout() const noexcept            { return mPair_first; }
-		inline soft_heap_type GetSoftHeapPtr() const noexcept        { return internalLayout().GetSoftHeapPtr(); }
+		// inline soft_heap_type GetSoftHeapPtr() const noexcept        { return internalLayout().GetSoftHeapPtr(); }
 
 	public:
 		// Constructor, destructor
@@ -1021,7 +1021,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::iterator
 	basic_string<T, Safety>::begin() noexcept
 	{
-		return iterator::make(GetSoftHeapPtr());
+		return iterator::makeIx(internalLayout()._heap, 0);
 	}
 
 
@@ -1029,7 +1029,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::iterator
 	basic_string<T, Safety>::end() noexcept
 	{
-		return iterator::make(GetSoftHeapPtr(), size());
+		return iterator::makeIx(internalLayout()._heap, size());
 	}
 
 
@@ -1037,7 +1037,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::begin() const noexcept
 	{
-		return const_iterator::make(GetSoftHeapPtr());
+		return const_iterator::makeIx(internalLayout()._heap, 0);
 	}
 
 
@@ -1045,7 +1045,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::cbegin() const noexcept
 	{
-		return const_iterator::make(GetSoftHeapPtr());
+		return const_iterator::makeIx(internalLayout()._heap, 0);
 	}
 
 
@@ -1053,7 +1053,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::end() const noexcept
 	{
-		return const_iterator::make(GetSoftHeapPtr(), size());
+		return const_iterator::makeIx(internalLayout()._heap, size());
 	}
 
 
@@ -1061,7 +1061,7 @@ namespace safe_memory
 	inline typename basic_string<T, Safety>::const_iterator
 	basic_string<T, Safety>::cend() const noexcept
 	{
-		return const_iterator::make(GetSoftHeapPtr(), size());
+		return const_iterator::makeIx(internalLayout()._heap, size());
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2267,7 +2267,7 @@ namespace safe_memory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, c);
-		return iterator::make(GetSoftHeapPtr(), r);
+		return iterator::makePtr(internalLayout()._heap, r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2276,7 +2276,7 @@ namespace safe_memory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, n, c);
-		return iterator::make(GetSoftHeapPtr(), r);
+		return iterator::makePtr(internalLayout()._heap, r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2286,7 +2286,7 @@ namespace safe_memory
 		const_pointer p = checkMineAndGet(it);
 		const_pointer_pair p2 = checkAndGet(itBegin, itEnd);
 		pointer r = insert_unsafe(p, p2.first, p2.second);
-		return iterator::make(GetSoftHeapPtr(), r);
+		return iterator::makePtr(internalLayout()._heap, r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2295,7 +2295,7 @@ namespace safe_memory
 	{
 		const_pointer p = checkMineAndGet(it);
 		pointer r = insert_unsafe(p, ilist.begin(), ilist.end());
-		return iterator::make(GetSoftHeapPtr(), r);
+		return iterator::makePtr(internalLayout()._heap, r);
 	}
 
 	template <typename T, memory_safety Safety>
@@ -2338,7 +2338,7 @@ namespace safe_memory
 		const_pointer p = checkMineAndGet(it);
 		pointer i = erase_unsafe(p);
 		// size_t dst = std::distance(begin_unsafe(),  i);
-		return iterator::make(GetSoftHeapPtr(), i);
+		return iterator::makePtr(internalLayout()._heap, i);
 	}
 	template <typename T, memory_safety Safety>
 	inline typename basic_string<T, Safety>::iterator
@@ -2347,7 +2347,7 @@ namespace safe_memory
 		const_pointer_pair p = checkMineAndGet(itBegin, itEnd);
 		pointer i = erase_unsafe(p.first, p.second);
 		// difference_type dst = std::distance(begin_unsafe(),  i);
-		return iterator::make(GetSoftHeapPtr(), i);
+		return iterator::makePtr(internalLayout()._heap, i);
 	}
 
 	// template <typename T, memory_safety Safety>
@@ -3788,7 +3788,7 @@ namespace safe_memory
 	{
 		if(i == const_iterator())
 		 	return detail::iterator_validity::Null;
-		else if(i.arr == internalLayout().GetSoftHeapPtr()) {
+		else if(i.arr == internalLayout()._heap) {
 
 			const_pointer p = i.get_raw_ptr();
 			if(p < internalLayout().EndPtr())

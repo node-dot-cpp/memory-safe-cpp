@@ -68,7 +68,6 @@ public:
 		return *this;
 	}
 
-
 	soft_ptr_with_zero_offset_impl( const owning_ptr_base_impl<T>& owner )
 	{
 		ptr = owner.t.getTypedPtr();
@@ -79,6 +78,15 @@ public:
 		return *this;
 	}
 
+	soft_ptr_with_zero_offset_impl( const soft_ptr_impl<T>& other )
+	{
+		ptr = other.getDereferencablePtr();
+	}
+	soft_ptr_with_zero_offset_impl<T>& operator = ( const soft_ptr_impl<T>& other )
+	{
+		ptr = other.getDereferencablePtr();
+		return *this;
+	}
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<T>& other )
 	{
@@ -176,7 +184,8 @@ public:
 
 	~soft_ptr_with_zero_offset_impl()
 	{
-		ptr = nullptr;
+		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
+//		ptr = nullptr;
 	}
 };
 
@@ -217,6 +226,12 @@ public:
 		return *this;
 	}
 
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_no_checks<T>& other ) :ptr(other.t) { }
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other )
+	{
+		ptr = other.t;
+		return *this;
+	}
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr) { }
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
@@ -300,8 +315,7 @@ public:
 
 	~soft_ptr_with_zero_offset_no_checks()
 	{
-		extern int CountSoftPtrZeroNoChecksDtor;
-		++CountSoftPtrZeroNoChecksDtor;
+		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
 	}
 };
 

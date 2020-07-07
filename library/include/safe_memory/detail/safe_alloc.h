@@ -216,7 +216,7 @@ private:
 		: mIterator(ptr) {}
 public:
 	template<class PTR>
-	static safe_iterator_no_checks make(const PTR& arr, size_t ix = 0) {
+	static safe_iterator_no_checks makeIx(const PTR& arr, size_t ix = 0) {
 		// non safe function, we know ix is in range
 		return safe_iterator_no_checks(arr->get_raw_ptr(ix));
 	}
@@ -226,7 +226,7 @@ public:
 	// }
 
 	template<class PTR>
-	static safe_iterator_no_checks make(const PTR&, pointer ptr) {
+	static safe_iterator_no_checks makePtr(const PTR&, pointer ptr) {
 		return safe_iterator_no_checks(ptr);
 	}
 
@@ -346,7 +346,7 @@ typename safe_iterator_no_checks<T, Arr>::difference_type distance(const safe_it
 }
 
 
-template <typename T, typename SoftArrayOfPtr = soft_ptr_with_zero_offset<array_of2<typename std::remove_const<T>::type, memory_safety::safe>, memory_safety::safe>>
+template <typename T, typename SoftArrayOfPtr = soft_ptr<array_of2<typename std::remove_const<T>::type, memory_safety::safe>, memory_safety::safe>>
 class safe_iterator_impl
 {
 public:
@@ -381,12 +381,12 @@ private:
 
 public:
 	template<class PTR>
-	static safe_iterator_impl make(const PTR& arr, size_t ix = 0) {
+	static safe_iterator_impl makeIx(const PTR& arr, size_t ix = 0) {
 		return safe_iterator_impl(arr, ix);
 	}
 
 	template<class PTR>
-	static safe_iterator_impl make(const PTR& arr, pointer to) {
+	static safe_iterator_impl makePtr(const PTR& arr, pointer to) {
 		return safe_iterator_impl(arr, to - arr->begin());
 	}
 
