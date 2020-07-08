@@ -28,17 +28,21 @@
 #ifndef SAFETY_EXCLUSIONS_H
 #define SAFETY_EXCLUSIONS_H
 
+// NOTE:
+//	this file (more precisely, a file path defined as NODECPP_MEMORY_SAFETY_EXCLUSIONS) is included within namespace nodecpp::safe_memory (see safe_ptr_common.h for details)
+//	Threrefore, nodecpp::safe_memory::... qualification is nor required (moreover, gcc will be against that :) )
+
 /* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
+template<> struct safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
 
 
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
+template<> struct safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 
 namespace testing::dummy_objects {
 struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
 }
-template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr memory_safety is_safe = memory_safety::none; }; // user-defined exclusion
+template<> struct safeness_declarator<testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr memory_safety is_safe = memory_safety::none; }; // user-defined exclusion
 
 
 #endif
