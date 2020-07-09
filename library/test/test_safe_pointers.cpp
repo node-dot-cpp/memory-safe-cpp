@@ -1315,6 +1315,15 @@ void testOwningPtrWithManDel()
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp2 );
 }
 
+void testStackInfoAndptrLifecycle()
+{
+	soft_ptr<int>* psp = new soft_ptr<int>; // explicitly non-stack
+	{
+		owning_ptr<int> op = make_owning<int>( 3 );
+		*psp = op;
+	}
+	printf( "we should not be here with value %d\n", *(*psp) );
+}
 
 int main( int argc, char * argv[] )
 {
@@ -1391,6 +1400,17 @@ int main( int argc, char * argv[] )
 	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+
+	try { testStackInfoAndptrLifecycle(); }
+	catch (nodecpp::error::error e)
+	{
+		e.log(log, nodecpp::log::LogLevel::fatal);
+	}
+	catch (...)
+	{
+		nodecpp::log::default_log::fatal("Unknown error happened. About to exit...");
+		return 0;
+	}
 	nodecpp::log::default_log::error( "about to exit main()..." );
 
 	killAllZombies();
