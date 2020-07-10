@@ -34,6 +34,7 @@
 #include <memory>
 #include <stdint.h>
 #include <safe_memory/checker_attributes.h>
+#include <allocator_template.h>
 
 namespace nodecpp::safememory
 {
@@ -89,6 +90,7 @@ inline void killAllZombies() { g_AllocManager.killAllZombies(); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNewDeleteOperators( doIntercept ? &g_AllocManager : nullptr ) != nullptr;}
 
+#if 0
 template<bool iib, class _Ty>
 class selective_allocator
 {
@@ -271,6 +273,21 @@ bool operator==( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noex
 template< class T1, class T2 >
 bool operator!=( const stdallocator<T1>& lhs, const stdallocator<T2>& rhs ) noexcept { return false; }
 
+#endif // 0
+
+struct IIBRawAllocator
+{
+	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::nodecpp::safememory::allocate( allocSize ); }
+	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::nodecpp::safememory::allocate( allocSize ); }
+	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::nodecpp::safememory::deallocate( ptr ); }
+};
+
+template<class _Ty>
+using iiballocator = selective_allocator<IIBRawAllocator, _Ty>;
+template< class T1, class T2 >
+bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
+template< class T1, class T2 >
+bool operator!=( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return false; }
 
 } // namespace nodecpp::safememory
 
