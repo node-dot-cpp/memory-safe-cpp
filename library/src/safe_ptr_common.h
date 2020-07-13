@@ -406,7 +406,7 @@ struct safeness_declarator {
 template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
 
-#define NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
+//#define NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 #ifdef NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 extern thread_local std::size_t CountSoftPtrZeroOffsetDtor;
 extern thread_local std::size_t CountSoftPtrBaseDtor;

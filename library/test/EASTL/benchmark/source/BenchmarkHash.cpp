@@ -81,9 +81,17 @@ namespace
 	void TestIteration(EA::StdC::Stopwatch& stopwatch, const Container& c, const Value& findValue)
 	{
 		stopwatch.Restart();
-		typename Container::const_iterator it = std::find(c.begin(), c.end(), findValue); // It shouldn't matter what find implementation we use here, as it merely iterates values.
+		//typename Container::const_iterator it = std::find(c.begin(), c.end(), findValue);
+		typename Container::const_iterator it = c.begin();
+		typename Container::const_iterator last = c.end();
+		for (; it != last; ++it) {
+			if (*it == findValue) {
+				break;
+			}
+		}
+
 		stopwatch.Stop();
-		if(it != c.end())
+		if(it != last)
 			sprintf(Benchmark::gScratchBuffer, "%p", &*it);
 	}
 

@@ -312,7 +312,7 @@ namespace safe_memory::detail
 	/// We define the const_iterator as a base class.
 	///
 	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
-	struct hashtable_base_iterator
+	class hashtable_base_iterator
 	{
 	public:
 		typedef hashtable_base_iterator<Value, bConst, bCacheHashCode, Safety> this_type;
@@ -334,23 +334,20 @@ namespace safe_memory::detail
 		static constexpr memory_safety is_safe = Safety;
 
 
-	protected:
-	public:
+	private:
 		template <typename, typename, memory_safety, typename, typename, typename, typename, typename, typename, bool, bool, bool>
 		friend class hashtable;
+		template <typename, bool, bool, memory_safety>
+		friend class hashtable_base_iterator;
 
 		node_ptr  mpNode;      // Current node within current bucket.
 		bucket_it mpBucket;    // Current bucket.
 
 
-		template<class ZERO, class OWN>
-		hashtable_base_iterator(const ZERO& pNode, const OWN& pBucket, size_t n)
-			: mpNode(pNode.get()), mpBucket(bucket_it::makeIx(pBucket, n)) { }
-
 		//begin() constructor
 		template<class OWN>
-		hashtable_base_iterator(const OWN& pBucket)
-			: mpNode(pBucket->at_unsafe(0)), mpBucket(bucket_it::makeIx(pBucket, 0)) {
+		hashtable_base_iterator(const OWN& pBucket, size_t n)
+			: mpNode(pBucket->at_unsafe(n)), mpBucket(bucket_it::makeIx(pBucket, n)) {
 				increment_bucket_if_null();
 			 }
 
@@ -359,27 +356,46 @@ namespace safe_memory::detail
 		hashtable_base_iterator(std::nullptr_t, const OWN& pBucket, size_t n)
 			: mpNode(), mpBucket(bucket_it::makeIx(pBucket, n)) {}
 
+		// internal use only for const to non-const
+		hashtable_base_iterator(const node_ptr&  pNode, const bucket_it& pBucket)
+			: mpNode(pNode), mpBucket(pBucket) 
+		{}
+
 	public:
+		// has to be public because used with pair piecewise_construct
+		// but non-safe code won't be able to call it because 
+		// soft_ptr_with_zero_offset is non-safe
+		template<class OWN>
+		hashtable_base_iterator(const soft_ptr_with_zero_offset<node_type, Safety>& pNode, const OWN& pBucket, size_t n)
+			: mpNode(pNode.get()), mpBucket(bucket_it::makeIx(pBucket, n)) 
+		{ }
+
 		hashtable_base_iterator() { }
 
 		hashtable_base_iterator(const hashtable_base_iterator& x) = default;
 		hashtable_base_iterator& operator=(const hashtable_base_iterator& x) = default;
 
-		hashtable_base_iterator(hashtable_base_iterator&&) = default;
-		hashtable_base_iterator& operator=(hashtable_base_iterator&&) = default;
+		hashtable_base_iterator(hashtable_base_iterator&& other) :mpNode(std::move(other.mpNode)), mpBucket(std::move(other.mpBucket))
+		{}
+		hashtable_base_iterator& operator=(hashtable_base_iterator&& other) {
+			if(&other == this) return *this;
+			mpNode = std::move(other.mpNode);
+			mpBucket = std::move(other.mpBucket);
+			return *this;
+		}
 
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst != B>>
-	hashtable_base_iterator(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri)
-		: mpNode(ri.mpNode), mpBucket(ri.mpBucket) {}
+		// allow non-const to const convertion
+		template<bool B, typename X = std::enable_if_t<bConst && !B>>
+		hashtable_base_iterator(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri)
+			: mpNode(ri.mpNode), mpBucket(ri.mpBucket) {}
 
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst != B>>
-	hashtable_base_iterator& operator=(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri) {
-		this->mpNode = ri.mpNode;
-		this->mpBucket = ri.mpBucket;
-		return *this;
-	}
+		// allow non-const to const convertion
+		template<bool B, typename X = std::enable_if_t<bConst && !B>>
+		hashtable_base_iterator& operator=(const hashtable_base_iterator<Value, B, bCacheHashCode, Safety>& ri) {
+			this->mpNode = ri.mpNode;
+			this->mpBucket = ri.mpBucket;
+			return *this;
+		}
 
 
 
@@ -1001,7 +1017,7 @@ namespace safe_memory::detail
 			// iterator i(*it, it);
 			// i.increment_bucket_if_null();
 			// return i;
-			return iterator(mpBucketArray);
+			return iterator(mpBucketArray, 0);
 		}
 
 		const_iterator begin() const noexcept
@@ -1013,7 +1029,7 @@ namespace safe_memory::detail
 			// const_iterator i(*it, it);
 			// i.increment_bucket_if_null();
 			// return i;
-			return const_iterator(mpBucketArray);
+			return const_iterator(mpBucketArray, 0);
 		}
 
 		iterator end() noexcept
@@ -1720,6 +1736,7 @@ namespace safe_memory::detail
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNode(owning_node_type pNode)
 	{
+		//pNode.reset();
 		// pNode->~node_type();
 		// // EASTLFree(mAllocator, pNode, sizeof(node_type));
 		// safememory::lib_helpers::EASTLFree(pNode, sizeof(node_type));
@@ -1734,13 +1751,16 @@ namespace safe_memory::detail
 		if(pNodeArray) {
 			for(size_type i = 0; i < n; ++i)
 			{
-				// owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
-				// while(pNode)
-				// {
-				// 	owning_node_type pTempNode = std::move(pNode->mpNext);
-				// 	DoFreeNode(std::move(pNode));
-				// 	pNode = std::move(pTempNode);
-				// }
+				//mb: we do it the hard way, beacuse just setting the array
+				// to nullptr and doing a chain delete may do a stack overflow
+				owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
+				while(pNode)
+				{
+					owning_node_type pTempNode = std::move(pNode->mpNext);
+					pNode = nullptr;
+					pNode = std::move(pTempNode);
+					// pNode = std::move(pNode->mpNext);
+				}
 				pNodeArray->at_unsafe(i) = nullptr;
 			}
 		}
@@ -1821,7 +1841,10 @@ namespace safe_memory::detail
 		const bucket_index_t n = bucket_index(k, c, (uint32_t)mnBucketCount);
 
 		soft_node_type pNode = DoFindNode(n, k, c);
-		return pNode ? iterator(pNode, mpBucketArray, n) : end();
+		if (pNode)
+			return iterator(pNode, mpBucketArray, n);
+		else
+			return end();
 	}
 
 
@@ -3030,7 +3053,7 @@ namespace safe_memory::detail
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator i)
 	{
-		iterator iNext(i); // Convert from const_iterator to iterator while constructing.
+		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
 		++iNext;
 
 		soft_node_type pNode        =  i.mpNode;
@@ -3039,6 +3062,7 @@ namespace safe_memory::detail
 		if(*i.mpBucket == pNode) {
 			owning_node_type tmp = std::move(*i.mpBucket);
 			*i.mpBucket = std::move(tmp->mpNext);
+			//tmp.reset();
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
@@ -3057,6 +3081,7 @@ namespace safe_memory::detail
 
 			owning_node_type tmp = std::move(pNodeCurrent->mpNext);
 			pNodeCurrent->mpNext = std::move(tmp->mpNext);
+			//tmp.reset();
 			DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
@@ -3074,7 +3099,7 @@ namespace safe_memory::detail
 	{
 		while(first != last)
 			first = erase(first);
-		return iterator(first);
+		return iterator(first.mpNode, first.mpBucket);
 	}
 
 
