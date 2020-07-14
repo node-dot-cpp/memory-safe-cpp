@@ -1101,7 +1101,7 @@ public:
 		dbgObjectStatus = other.dbgObjectStatus;
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
-	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>& other )
+	soft_ptr_base_impl<T>& operator = ( const soft_ptr_base_impl<T>& other )
 	{
 		if ( this == &other ) return *this;
 		bool iWasOnStack = isOnStack();
@@ -1575,7 +1575,7 @@ public:
 		return *this;
 	}
 	soft_ptr_impl( const soft_ptr_impl<T>& other ) : soft_ptr_base_impl<T>(other) {}
-	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T>& other )
+	soft_ptr_impl<T>& operator = ( const soft_ptr_impl<T>& other )
 	{
 		soft_ptr_base_impl<T>::operator = (other);
 		return *this;
