@@ -1760,10 +1760,10 @@ protected:
 				owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
 				while(pNode)
 				{
-					// owning_node_type pTempNode = std::move(pNode->mpNext);
+					owning_node_type pTempNode = std::move(pNode->mpNext);
 					// pNode.reset();
-					// pNode = std::move(pTempNode);
-					pNode = std::move(pNode->mpNext);
+					pNode = std::move(pTempNode);
+					// pNode = std::move(pNode->mpNext);
 				}
 				// pNodeArray->at_unsafe(i).reset();
 			}
@@ -3079,10 +3079,10 @@ protected:
 		// soft_node_type pNodeCurrent = *i.mpBucket;
 
 		if(*i.mpBucket == pNode) {
-			// owning_node_type tmp = std::move(*i.mpBucket);
-			// *i.mpBucket = std::move(tmp->mpNext);
+			owning_node_type tmp = std::move((*i.mpBucket)->mpNext);
+			*i.mpBucket = std::move(tmp);
 			// tmp.reset();
-			*i.mpBucket = std::move((*i.mpBucket)->mpNext);
+			// *i.mpBucket = std::move((*i.mpBucket)->mpNext);
 			// DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
@@ -3099,10 +3099,10 @@ protected:
 				pNodeNext    = pNodeCurrent->mpNext;
 			}
 
-			// owning_node_type tmp = std::move(pNodeCurrent->mpNext);
-			// pNodeCurrent->mpNext = std::move(tmp->mpNext);
+			owning_node_type tmp = std::move(pNodeCurrent->mpNext->mpNext);
+			pNodeCurrent->mpNext = std::move(tmp);
 			// tmp.reset();
-			pNodeCurrent->mpNext = std::move(pNodeCurrent->mpNext->mpNext);
+			// pNodeCurrent->mpNext = std::move(pNodeCurrent->mpNext->mpNext);
 //			DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
@@ -3138,7 +3138,9 @@ protected:
 		soft_node_type pNode = mpBucketArray->at_unsafe(n);
 		if(pNode) {
 			if(compare(k, c, *pNode)) {
-				mpBucketArray->at_unsafe(n) = std::move(pNode->mpNext);
+				owning_node_type tmp = std::move(pNode->mpNext);
+				mpBucketArray->at_unsafe(n) = std::move(tmp);
+
 				--mnElementCount;
 				if constexpr (bU)
 					return 1;
@@ -3149,7 +3151,8 @@ protected:
 		if(pNode) { //test again
 			while(pNode->mpNext) {
 				if(compare(k, c, *(pNode->mpNext))) {
-					pNode->mpNext = std::move(pNode->mpNext->mpNext);
+					owning_node_type tmp = std::move(pNode->mpNext->mpNext);
+					pNode->mpNext = std::move(tmp);
 					--mnElementCount;
 					if constexpr (bU)
 						return 1;
