@@ -166,7 +166,7 @@ namespace dummy_objects {
 			uint64_t sn1; 
 			uint64_t sn2; 
 			uint64_t sn3; 
-			bool operator == ( const MyNonPointerMembers& other ) { return sn == other.sn && sn1 == other.sn1 && sn2 == other.sn2 && sn3 == other.sn3; }
+			bool operator == ( const MyNonPointerMembers& other ) const { return sn == other.sn && sn1 == other.sn1 && sn2 == other.sn2 && sn3 == other.sn3; }
 		};
 		MyNonPointerMembers getMyNonPointerMembers() {
 			MyNonPointerMembers ret;

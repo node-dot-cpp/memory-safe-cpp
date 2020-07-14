@@ -225,8 +225,14 @@ template<class _Ty,
 NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 {
 	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
+	try {
+		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
+	}
+	catch (...) {
+		deallocate( data );
+		throw;
+	}
 	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
-	_Ty* objPtr = new ( data ) _Ty(::std::forward<_Types>(_Args)...);
 	return op;
 }
 
