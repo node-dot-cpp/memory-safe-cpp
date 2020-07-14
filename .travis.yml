@@ -1,24 +1,20 @@
 language: cpp
 os: linux
 dist: bionic
-script:
-  - mkdir build
-  - cd build
-  - cmake -DCMAKE_BUILD_TYPE=Release ..
-  - cmake --build .
-  - ctest --output-on-failure -E foundation
+addons:
+  apt:
+    packages: libunwind-dev
+notifications:
+  email:
+    if: branch = master OR branch = develop
+script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
 jobs:
   include:
     - name: Linux GCC
       compiler: gcc
     - name: Windows MSVC
       os: windows
-      script:
-        - mkdir build
-        - cd build
-        - cmake -G "Visual Studio 15 2017 Win64" ..
-        - cmake --build . --config Release
-        - ctest -C Release --output-on-failure
+      script: ./library/src/iibmalloc/src/foundation/tools/travis-windows-msvc.bat
     - name: macOS Clang
       os: osx        
       compiler: clang
