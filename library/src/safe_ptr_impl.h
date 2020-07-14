@@ -621,6 +621,7 @@ public:
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		if ( this == &other ) return *this;
+		reset();
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
 		other.dbgCheckValidity();
@@ -645,6 +646,7 @@ public:
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		if ( this == &other ) return *this;
+		reset();
 		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
 		other.dbgCheckValidity();
