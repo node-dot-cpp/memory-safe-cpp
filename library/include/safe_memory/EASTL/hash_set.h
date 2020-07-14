@@ -333,11 +333,11 @@ namespace safe_memory
 
 		// For set (with its unique keys), we need only test that each element in a can be found in b,
 		// as there can be only one such pairing per element. multiset needs to do a something more elaborate.
-		for(const_iterator ai = a.begin(), aiEnd = a.end(), biEnd = b.end(); ai != aiEnd; ++ai)
+		for(auto ai = a.begin(), aiEnd = a.end(); ai != aiEnd; ++ai)
 		{
-			const_iterator bi = b.find(*ai);
+			auto bi = b.DoFindNode(*ai);
 
-			if((bi == biEnd) || !(*ai == *bi)) // We have to compare values in addition to making sure the lookups succeeded. This is because the lookup is done via the user-supplised Predicate
+			if((!bi) || !(*ai == bi->mValue)) // We have to compare values in addition to making sure the lookups succeeded. This is because the lookup is done via the user-supplised Predicate
 				return false;                  // which isn't strictly required to be identical to the Value operator==, though 99% of the time it will be so.  
 		}
 

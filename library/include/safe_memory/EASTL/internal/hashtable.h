@@ -210,10 +210,10 @@ namespace safe_memory::detail
 		friend class hashtable;
 
 	protected:
-		soft_ptr_with_zero_offset<node_type, Safety> mpNode;
+		soft_ptr<node_type, Safety> mpNode;
 
 		explicit node_const_iterator(soft_ptr_with_zero_offset<node_type, Safety> pNode)
-			: mpNode(pNode) { }
+			: mpNode(pNode.get()) { }
 
 		void increment()
 			{ mpNode = mpNode->mpNext; }
@@ -941,8 +941,8 @@ namespace safe_memory::detail
 		typedef node_const_iterator<value_type, bCacheHashCode, Safety>              const_local_iterator;
 		typedef std::conditional_t<bMutableIterators, node_iterator<value_type, bCacheHashCode, Safety>, const_local_iterator> local_iterator;
 
-		typedef hashtable_const_iterator<value_type, bCacheHashCode, Safety>         const_iterator;
-		typedef std::conditional_t<bMutableIterators, hashtable_iterator<value_type, bCacheHashCode, Safety>, const_iterator> iterator;
+		typedef hashtable_base_iterator<value_type, true, bCacheHashCode, Safety>         const_iterator;
+		typedef hashtable_base_iterator<value_type, !bMutableIterators, bCacheHashCode, Safety>         iterator;
 
 		typedef hash_node<value_type, Safety, bCacheHashCode>                                               node_type;
 		typedef typename std::conditional_t<bUniqueKeys, std::pair<iterator, bool>, iterator>       insert_return_type;
@@ -1048,6 +1048,7 @@ namespace safe_memory::detail
 				// return const_iterator(*it, it);
 				return const_iterator(nullptr, mpBucketArray, mnBucketCount);
 			}
+
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) noexcept
@@ -1314,7 +1315,7 @@ namespace safe_memory::detail
 
 		owning_node_type  DoAllocateNodeFromKey(const key_type& key);
 		owning_node_type  DoAllocateNodeFromKey(key_type&& key);
-		void        DoFreeNode(owning_node_type pNode);
+//		void        DoFreeNode(owning_node_type pNode);
 		void        DoFreeNodes(soft_bucket_type pBucketArray, size_type);
 
 		owning_bucket_type DoAllocateBuckets(size_type n);
@@ -1384,21 +1385,24 @@ namespace safe_memory::detail
 		// DoInsertKey is supposed to get hash_code_t c  = get_hash_code(key).
 		// it is done in case application has it's own hashset/hashmap-like containter, where hash code is for some reason known prior the insert
 		// this allows to save some performance, especially with heavy hash functions
-		std::pair<iterator, bool> DoInsertKey(std::true_type, const key_type& key, hash_code_t c);
-		iterator                    DoInsertKey(std::false_type, const key_type& key, hash_code_t c);
-		std::pair<iterator, bool> DoInsertKey(std::true_type, key_type&& key, hash_code_t c);
-		iterator                    DoInsertKey(std::false_type, key_type&& key, hash_code_t c);
+		soft_node_type DoInsertKey(std::true_type, const key_type& key);
+		// iterator                    DoInsertKey(std::false_type, const key_type& key, hash_code_t c);
+		soft_node_type DoInsertKey(std::true_type, key_type&& key);
+		// iterator                    DoInsertKey(std::false_type, key_type&& key, hash_code_t c);
 
 		// We keep DoInsertKey overload without third parameter, for compatibility with older revisions of EASTL (3.12.07 and earlier)
 		// It used to call get_hash_code as a first call inside the DoInsertKey.
-		std::pair<iterator, bool> DoInsertKey(std::true_type, const key_type& key)  { return DoInsertKey(std::true_type(),  key, get_hash_code(key)); }
-		iterator                    DoInsertKey(std::false_type, const key_type& key) { return DoInsertKey(std::false_type(), key, get_hash_code(key)); }
-		std::pair<iterator, bool> DoInsertKey(std::true_type, key_type&& key)       { return DoInsertKey(std::true_type(),  std::move(key), get_hash_code(key)); }
-		iterator                    DoInsertKey(std::false_type, key_type&& key)      { return DoInsertKey(std::false_type(), std::move(key), get_hash_code(key)); }
+		// soft_node_type DoInsertKey(std::true_type, const key_type& key)  { return DoInsertKey(std::true_type(),  key, get_hash_code(key)); }
+		// iterator                    DoInsertKey(std::false_type, const key_type& key) { return DoInsertKey(std::false_type(), key, get_hash_code(key)); }
+		// soft_node_type DoInsertKey(std::true_type, key_type&& key)       { return DoInsertKey(std::true_type(),  std::move(key), get_hash_code(key)); }
+		// iterator                    DoInsertKey(std::false_type, key_type&& key)      { return DoInsertKey(std::false_type(), std::move(key), get_hash_code(key)); }
 
 		void DoInit();
 		void       DoRehash(size_type nBucketCount);
 		// soft_node_type DoFindNode(soft_node_type pNode, const key_type& k, hash_code_t c) const;
+public:
+		soft_node_type DoFindNode(const key_type& k) const;
+protected:
 		soft_node_type DoFindNode(bucket_index_t bucket, const key_type& k, hash_code_t c) const;
 
 
@@ -1732,15 +1736,15 @@ namespace safe_memory::detail
 	}
 
 
-	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNode(owning_node_type pNode)
-	{
-		//pNode.reset();
-		// pNode->~node_type();
-		// // EASTLFree(mAllocator, pNode, sizeof(node_type));
-		// safememory::lib_helpers::EASTLFree(pNode, sizeof(node_type));
-	}
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeNode(owning_node_type pNode)
+	// {
+	// 	//pNode.reset();
+	// 	// pNode->~node_type();
+	// 	// // EASTLFree(mAllocator, pNode, sizeof(node_type));
+	// 	// safememory::lib_helpers::EASTLFree(pNode, sizeof(node_type));
+	// }
 
 
 
@@ -1756,12 +1760,12 @@ namespace safe_memory::detail
 				owning_node_type pNode = std::move(pNodeArray->at_unsafe(i));
 				while(pNode)
 				{
-					owning_node_type pTempNode = std::move(pNode->mpNext);
-					pNode = nullptr;
-					pNode = std::move(pTempNode);
-					// pNode = std::move(pNode->mpNext);
+					// owning_node_type pTempNode = std::move(pNode->mpNext);
+					// pNode.reset();
+					// pNode = std::move(pTempNode);
+					pNode = std::move(pNode->mpNext);
 				}
-				pNodeArray->at_unsafe(i) = nullptr;
+				// pNodeArray->at_unsafe(i).reset();
 			}
 		}
 	}
@@ -2073,11 +2077,21 @@ namespace safe_memory::detail
 	}
 
 
+	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
+			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(const key_type& k) const
+	{
+		const hash_code_t c = get_hash_code(k);
+		const bucket_index_t n = bucket_index(k, c, (uint32_t)mnBucketCount);
+
+		return DoFindNode(n, k, c);
+	}
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type 
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::bucket_index_t n, const key_type& k, hash_code_t c) const
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(bucket_index_t n, const key_type& k, hash_code_t c) const
 	{
 		soft_node_type pNode = mpBucketArray->at_unsafe(n);
 		for(; pNode; pNode = pNode->mpNext)
@@ -2643,11 +2657,12 @@ namespace safe_memory::detail
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, const key_type& key) // true_type means bUniqueKeys is true.
 	{
-		bucket_index_t         n     = bucket_index(key, c, (uint32_t)mnBucketCount);
-		soft_node_type  pNode = DoFindNode(n, key, c);
+		hash_code_t c = get_hash_code(key);
+		bucket_index_t n = bucket_index(key, c, (uint32_t)mnBucketCount);
+		soft_node_type pNode = DoFindNode(n, key, c);
 
 		if(pNode == nullptr)
 		{
@@ -2674,7 +2689,7 @@ namespace safe_memory::detail
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return MakeIteratorBoolPair(pNodeIt, n, true);
+					return pNodeIt;
 //					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt(n)), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 			// 	}
@@ -2686,60 +2701,62 @@ namespace safe_memory::detail
 			// #endif
 		}
 
-		return MakeIteratorBoolPair(pNode, n, false);
+		return pNode;
+		// return MakeIteratorBoolPair(pNode, n, false);
 //		return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt(n)), false);
 	}
 
 
 
-	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, const key_type& key, const hash_code_t c) // false_type means bUniqueKeys is false.
-	{
-		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, const key_type& key, const hash_code_t c) // false_type means bUniqueKeys is false.
+	// {
+	// 	const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
-		if(bRehash.first)
-			DoRehash(bRehash.second);
+	// 	if(bRehash.first)
+	// 		DoRehash(bRehash.second);
 
-		const bucket_index_t   n = bucket_index(key, c, (uint32_t)mnBucketCount);
+	// 	const bucket_index_t   n = bucket_index(key, c, (uint32_t)mnBucketCount);
 
-		auto pNodeNew = DoAllocateNodeFromKey(key);
-		set_code(*pNodeNew, c); // This is a no-op for most hashtables.
+	// 	auto pNodeNew = DoAllocateNodeFromKey(key);
+	// 	set_code(*pNodeNew, c); // This is a no-op for most hashtables.
 
-		// To consider: Possibly make this insertion not make equal elements contiguous.
-		// As it stands now, we insert equal values contiguously in the hashtable.
-		// The benefit is that equal_range can work in a sensible manner and that
-		// erase(value) can more quickly find equal values. The downside is that
-		// this insertion operation taking some extra time. How important is it to
-		// us that equal_range span all equal items? 
-		soft_node_type pNodePrev = DoFindNode(n, key, c);
-		soft_node_type pNodeIt = pNodeNew;
+	// 	// To consider: Possibly make this insertion not make equal elements contiguous.
+	// 	// As it stands now, we insert equal values contiguously in the hashtable.
+	// 	// The benefit is that equal_range can work in a sensible manner and that
+	// 	// erase(value) can more quickly find equal values. The downside is that
+	// 	// this insertion operation taking some extra time. How important is it to
+	// 	// us that equal_range span all equal items? 
+	// 	soft_node_type pNodePrev = DoFindNode(n, key, c);
+	// 	soft_node_type pNodeIt = pNodeNew;
 
-		if(pNodePrev == nullptr)
-		{
-			// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-			pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
-			mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
-		}
-		else
-		{
-			pNodeNew->mpNext  = std::move(pNodePrev->mpNext);
-			pNodePrev->mpNext = std::move(pNodeNew);
-		}
+	// 	if(pNodePrev == nullptr)
+	// 	{
+	// 		// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+	// 		pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
+	// 		mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
+	// 	}
+	// 	else
+	// 	{
+	// 		pNodeNew->mpNext  = std::move(pNodePrev->mpNext);
+	// 		pNodePrev->mpNext = std::move(pNodeNew);
+	// 	}
 
-		++mnElementCount;
+	// 	++mnElementCount;
 
-		return iterator(pNodeIt, mpBucketArray, n);
-	}
+	// 	return iterator(pNodeIt, mpBucketArray, n);
+	// }
 
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
 				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	std::pair<typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
+	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::soft_node_type
+	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::true_type, key_type&& key) // true_type means bUniqueKeys is true.
 	{
-		bucket_index_t         n     = bucket_index(key, c, (uint32_t)mnBucketCount);
+		hash_code_t c = get_hash_code(key);
+		bucket_index_t n = bucket_index(key, c, (uint32_t)mnBucketCount);
 		soft_node_type  pNode = DoFindNode(n, key, c);
 
 		if(pNode == nullptr)
@@ -2767,7 +2784,8 @@ namespace safe_memory::detail
 					mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
 					++mnElementCount;
 
-					return MakeIteratorBoolPair(pNodeIt, n, true);
+					return pNodeIt;
+					// return MakeIteratorBoolPair(pNodeIt, n, true);
 //					return std::pair<iterator, bool>(iterator(pNodeIt, GetBucketArrayIt(n)), true);
 			// #if EASTL_EXCEPTIONS_ENABLED
 				// }
@@ -2779,51 +2797,52 @@ namespace safe_memory::detail
 			// #endif
 		}
 
-		return MakeIteratorBoolPair(pNode, n, false);
+		return pNode;
+//		return MakeIteratorBoolPair(pNode, n, false);
 		// return std::pair<iterator, bool>(iterator(pNode, GetBucketArrayIt(n)), false);
 	}
 
 
-	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
-				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
-	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, key_type&& key, const hash_code_t c) // false_type means bUniqueKeys is false.
-	{
-		const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
+	// 			typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
+	// hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(std::false_type, key_type&& key, const hash_code_t c) // false_type means bUniqueKeys is false.
+	// {
+	// 	const std::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
 
-		if(bRehash.first)
-			DoRehash(bRehash.second);
+	// 	if(bRehash.first)
+	// 		DoRehash(bRehash.second);
 
-		const bucket_index_t   n = bucket_index(key, c, (uint32_t)mnBucketCount);
+	// 	const bucket_index_t   n = bucket_index(key, c, (uint32_t)mnBucketCount);
 
-		auto pNodeNew = DoAllocateNodeFromKey(std::move(key));
-		set_code(*pNodeNew, c); // This is a no-op for most hashtables.
+	// 	auto pNodeNew = DoAllocateNodeFromKey(std::move(key));
+	// 	set_code(*pNodeNew, c); // This is a no-op for most hashtables.
 
-		// To consider: Possibly make this insertion not make equal elements contiguous.
-		// As it stands now, we insert equal values contiguously in the hashtable.
-		// The benefit is that equal_range can work in a sensible manner and that
-		// erase(value) can more quickly find equal values. The downside is that
-		// this insertion operation taking some extra time. How important is it to
-		// us that equal_range span all equal items? 
-		soft_node_type pNodePrev = DoFindNode(n, key, c);
-		soft_node_type pNodeIt = pNodeNew;
+	// 	// To consider: Possibly make this insertion not make equal elements contiguous.
+	// 	// As it stands now, we insert equal values contiguously in the hashtable.
+	// 	// The benefit is that equal_range can work in a sensible manner and that
+	// 	// erase(value) can more quickly find equal values. The downside is that
+	// 	// this insertion operation taking some extra time. How important is it to
+	// 	// us that equal_range span all equal items? 
+	// 	soft_node_type pNodePrev = DoFindNode(n, key, c);
+	// 	soft_node_type pNodeIt = pNodeNew;
 
-		if(pNodePrev == nullptr)
-		{
-			// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
-			pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
-			mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
-		}
-		else
-		{
-			pNodeNew->mpNext  = std::move(pNodePrev->mpNext);
-			pNodePrev->mpNext = std::move(pNodeNew);
-		}
+	// 	if(pNodePrev == nullptr)
+	// 	{
+	// 		// EASTL_ASSERT((void**)mpBucketArray != &gpEmptyBucketArray[0]);
+	// 		pNodeNew->mpNext = std::move(mpBucketArray->at_unsafe(n));
+	// 		mpBucketArray->at_unsafe(n) = std::move(pNodeNew);
+	// 	}
+	// 	else
+	// 	{
+	// 		pNodeNew->mpNext  = std::move(pNodePrev->mpNext);
+	// 		pNodePrev->mpNext = std::move(pNodeNew);
+	// 	}
 
-		++mnElementCount;
+	// 	++mnElementCount;
 
-		return iterator(pNodeIt, mpBucketArray, n);
-	}
+	// 	return iterator(pNodeIt, mpBucketArray, n);
+	// }
 
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
@@ -3056,14 +3075,15 @@ namespace safe_memory::detail
 		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
 		++iNext;
 
-		soft_node_type pNode        =  i.mpNode;
-		soft_node_type pNodeCurrent = *i.mpBucket;
+		soft_node_type  pNode        =  i.mpNode;
+		// soft_node_type pNodeCurrent = *i.mpBucket;
 
 		if(*i.mpBucket == pNode) {
-			owning_node_type tmp = std::move(*i.mpBucket);
-			*i.mpBucket = std::move(tmp->mpNext);
-			//tmp.reset();
-			DoFreeNode(std::move(tmp));
+			// owning_node_type tmp = std::move(*i.mpBucket);
+			// *i.mpBucket = std::move(tmp->mpNext);
+			// tmp.reset();
+			*i.mpBucket = std::move((*i.mpBucket)->mpNext);
+			// DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
 		else
@@ -3079,10 +3099,11 @@ namespace safe_memory::detail
 				pNodeNext    = pNodeCurrent->mpNext;
 			}
 
-			owning_node_type tmp = std::move(pNodeCurrent->mpNext);
-			pNodeCurrent->mpNext = std::move(tmp->mpNext);
-			//tmp.reset();
-			DoFreeNode(std::move(tmp));
+			// owning_node_type tmp = std::move(pNodeCurrent->mpNext);
+			// pNodeCurrent->mpNext = std::move(tmp->mpNext);
+			// tmp.reset();
+			pNodeCurrent->mpNext = std::move(pNodeCurrent->mpNext->mpNext);
+//			DoFreeNode(std::move(tmp));
 			--mnElementCount;
 		}
 
@@ -3097,6 +3118,7 @@ namespace safe_memory::detail
 	inline typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator first, const_iterator last)
 	{
+		//TODO: mb: this is unsafe
 		while(first != last)
 			first = erase(first);
 		return iterator(first.mpNode, first.mpBucket);
@@ -3109,31 +3131,36 @@ namespace safe_memory::detail
 	typename hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type 
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const key_type& k)
 	{
-		// To do: Reimplement this function to do a single loop and not try to be 
-		// smart about element contiguity. The mechanism here is only a benefit if the 
-		// buckets are heavily overloaded; otherwise this mechanism may be slightly slower.
+		hash_code_t c = get_hash_code(k);
+		bucket_index_t n = bucket_index(k, c, (uint32_t)mnBucketCount);
+		const size_type nElementCountSaved = mnElementCount;
 
-		// const hash_code_t c = get_hash_code(k);
-		// const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
-		const size_type   nElementCountSaved = mnElementCount;
-
-		// auto pBucketArray = mpBucketArray + n;
-
-		// while(*pBucketArray && !compare(k, c, *pBucketArray))
-		// 	pBucketArray = &(*pBucketArray)->mpNext;
-
-		// while(*pBucketArray && compare(k, c, *pBucketArray))
-		// {
-		// 	node_type* const pNode = *pBucketArray;
-		// 	*pBucketArray = pNode->mpNext;
-		// 	DoFreeNode(pNode);
-		// 	--mnElementCount;
-		// }
-
-		std::pair<const_iterator, const_iterator> p = equal_range(k);
-		erase(p.first, p.second);
-
-		return nElementCountSaved - mnElementCount;
+		soft_node_type pNode = mpBucketArray->at_unsafe(n);
+		if(pNode) {
+			if(compare(k, c, *pNode)) {
+				mpBucketArray->at_unsafe(n) = std::move(pNode->mpNext);
+				--mnElementCount;
+				if constexpr (bU)
+					return 1;
+				else
+					pNode = mpBucketArray->at_unsafe(n);
+			}
+		}
+		if(pNode) { //test again
+			while(pNode->mpNext) {
+				if(compare(k, c, *(pNode->mpNext))) {
+					pNode->mpNext = std::move(pNode->mpNext->mpNext);
+					--mnElementCount;
+					if constexpr (bU)
+						return 1;
+				}
+				pNode = pNode->mpNext;
+			}
+		}
+		if constexpr (bU)
+			return 0;
+		else
+			return nElementCountSaved - mnElementCount;
 	}
 
 

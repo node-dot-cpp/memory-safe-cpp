@@ -210,16 +210,16 @@ namespace safe_memory::detail
 		/// element with the given key. The reason for this is that we can avoid the 
 		/// potentially expensive operation of creating and/or copying a mapped_type
 		/// object on the stack.
-		insert_return_type insert(const key_type& key)
-		{
-			return base_type::DoInsertKey(std::true_type(), key);
-		}
+		// insert_return_type insert(const key_type& key)
+		// {
+		// 	return base_type::DoInsertKey(std::true_type(), key);
+		// }
 
 		T& at(const key_type& k)
 		{
-			iterator it = base_type::find(k);
+			auto ptr = base_type::DoFindNode(k);
 
-			if (it == base_type::end())
+			if (!ptr)
 			{
 				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
@@ -230,15 +230,15 @@ namespace safe_memory::detail
 				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
-			return it->second;
+			return ptr->mValue.second;
 		}
 
 
 		const T& at(const key_type& k) const
 		{
-			const_iterator it = base_type::find(k);
+			auto ptr = base_type::DoFindNode(k);
 
-			if (it == base_type::end())
+			if (!ptr)
 			{
 				// #if EASTL_EXCEPTIONS_ENABLED
 					// throw exeption if exceptions enabled
@@ -249,19 +249,19 @@ namespace safe_memory::detail
 				// #endif
 			}
 			// undefined behaviour if exceptions and asserts are disabled and it == end()
-			return it->second;
+			return ptr->mValue.second;
 		}
 
 
-		insert_return_type insert(key_type&& key)
-		{
-			return base_type::DoInsertKey(std::true_type(), std::move(key));
-		}
+		// insert_return_type insert(key_type&& key)
+		// {
+		// 	return base_type::DoInsertKey(std::true_type(), std::move(key));
+		// }
 
 
 		mapped_type& operator[](const key_type& key)
 		{
-			return (*base_type::DoInsertKey(std::true_type(), key).first).second;
+			return base_type::DoInsertKey(std::true_type(), key)->mValue.second;
 
 			// Slower reference version:
 			//const typename base_type::iterator it = base_type::find(key);
@@ -273,7 +273,7 @@ namespace safe_memory::detail
 		mapped_type& operator[](key_type&& key)
 		{
 			// The Standard states that this function "inserts the value value_type(std::move(key), mapped_type())"
-			return (*base_type::DoInsertKey(std::true_type(), std::move(key)).first).second;
+			return base_type::DoInsertKey(std::true_type(), std::move(key))->mValue.second;
 		}
 
 
@@ -417,16 +417,16 @@ namespace safe_memory::detail
 		/// element with the given key. The reason for this is that we can avoid the 
 		/// potentially expensive operation of creating and/or copying a mapped_type
 		/// object on the stack.
-		insert_return_type insert(const key_type& key)
-		{
-			return base_type::DoInsertKey(std::false_type(), key);
-		}
+		// insert_return_type insert(const key_type& key)
+		// {
+		// 	return base_type::DoInsertKey(std::false_type(), key);
+		// }
 
 
-		insert_return_type insert(key_type&& key)
-		{
-			return base_type::DoInsertKey(std::false_type(), std::move(key));
-		}
+		// insert_return_type insert(key_type&& key)
+		// {
+		// 	return base_type::DoInsertKey(std::false_type(), std::move(key));
+		// }
 
 
 	}; // hash_multimap
@@ -449,11 +449,11 @@ namespace safe_memory::detail
 
 		// For map (with its unique keys), we need only test that each element in a can be found in b,
 		// as there can be only one such pairing per element. multimap needs to do a something more elaborate.
-		for(const_iterator ai = a.begin(), aiEnd = a.end(), biEnd = b.end(); ai != aiEnd; ++ai)
+		for(auto ai = a.begin(), aiEnd = a.end(); ai != aiEnd; ++ai)
 		{
-			const_iterator bi = b.find(ai->first);
+			auto bi = b.DoFindNode(ai->first);
 
-			if((bi == biEnd) || !(*ai == *bi))  // We have to compare the values, because lookups are done by keys alone but the full value_type of a map is a key/value pair. 
+			if((!bi) || !(*ai == bi->mValue))  // We have to compare the values, because lookups are done by keys alone but the full value_type of a map is a key/value pair. 
 				return false;                   // It's possible that two elements in the two containers have identical keys but different values.
 		}
 
