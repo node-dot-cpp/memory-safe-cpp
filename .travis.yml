@@ -1,9 +1,6 @@
 language: cpp
 os: linux
 dist: bionic
-addons:
-  apt:
-    packages: libunwind-dev
 notifications:
   email:
     if: branch = master OR branch = develop

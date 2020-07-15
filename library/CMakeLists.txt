@@ -3,21 +3,11 @@
 #-------------------------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.0)
 project(SafeMemory CXX)
-
+set(CMAKE_CXX_STANDARD 17)
 include(CTest)
 
-set (CMAKE_MODULE_PATH 
-  "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
+set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
-
-#-------------------------------------------------------------------------------------------
-# Defines
-#-------------------------------------------------------------------------------------------
-
-
-#add_definitions(-D_CHAR16T)
-
-#add_definitions(-DUSING_T_SOCKETS)
 
 
 #-------------------------------------------------------------------------------------------
@@ -30,21 +20,19 @@ add_library(safe_memory STATIC
   src/nodecpp_error.cpp
   )
 
-#-------------------------------------------------------------------------------------------
-# Export Include Directories
-#-------------------------------------------------------------------------------------------
 target_include_directories(safe_memory
   PUBLIC include
   PUBLIC src
   )
 
-#-------------------------------------------------------------------------------------------
-# Package Dependencies 
-#-------------------------------------------------------------------------------------------
 add_subdirectory(src/iibmalloc)
 
 target_link_libraries(safe_memory iibmalloc)
 
+if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
+  # we need async exceptions
+  string( REPLACE "/EHsc" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+endif()
 
 #-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
@@ -63,7 +51,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
 endif()
 
 #-------------------------------------------------------------------------------------------
-# Tests 
+# Tests and samples
 #-------------------------------------------------------------------------------------------
 add_executable(test_safe_memory
   test/test_safe_pointers.cpp
@@ -79,9 +67,5 @@ target_link_libraries(test_safe_memory safe_memory)
 
 add_test(Run_test_safe_memory test_safe_memory)
 
-
-#-------------------------------------------------------------------------------------------
-# Subdirectories 
-#-------------------------------------------------------------------------------------------
 add_subdirectory(samples)
 add_subdirectory(test/EASTL)
