@@ -1,4 +1,5 @@
 -std=c++17
+-DNODECPP_NO_STACK_INFO_IN_EXCEPTIONS
 -isystem
 ../../../library/include
 -isystem
