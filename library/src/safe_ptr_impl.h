@@ -99,6 +99,7 @@ struct DbgCreationInfo
 		origination = Origination::movedin;
 	}
 	DbgCreationInfo& operator = ( DbgCreationInfo&& other ) {
+		if ( this == &other ) return *this;
 		creationPoint = std::move( other.creationPoint );
 		other.origination = Origination::movedout;
 		origination = Origination::movedin;
@@ -617,10 +618,10 @@ public:
 	}
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
+		if ( this == &other ) return *this;
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-		if ( this == &other ) return *this;
 		reset();
 		t.setTypedPtr( other.t.getTypedPtr() );
 		other.t.init( nullptr );
@@ -642,10 +643,10 @@ public:
 	template<class T1>
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
+		if ( this == &other ) return *this;
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-		if ( this == &other ) return *this;
 		reset();
 		t = other.t; // implicit cast, if at all possible
 		other.t = nullptr;
@@ -1586,6 +1587,7 @@ public:
 
 	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T>&& other )
 	{
+		if ( this == &other ) return *this;
 		soft_ptr_base_impl<T>::operator = ( std::move(other) );
 		return *this;
 	}
@@ -1813,6 +1815,7 @@ public:
 
 	soft_ptr_impl<void>& operator = ( soft_ptr_impl<void>&& other )
 	{
+		if ( this == &other ) return *this;
 		soft_ptr_base_impl<void>::operator = ( std::move(other) );
 		return *this;
 	}

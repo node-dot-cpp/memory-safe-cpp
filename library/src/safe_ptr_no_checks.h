@@ -286,7 +286,7 @@ public:
 
 	soft_ptr_base_no_checks( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; }
 
-	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>&& other ) { if ( this == &other ) return *this; t = other.t; other.t = nullptr; return *this; }
 
 	template<class T1>
 	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = t_; }
@@ -433,6 +433,7 @@ public:
 
 	soft_ptr_no_checks<T>& operator = ( soft_ptr_no_checks<T>&& other )
 	{
+		if ( this == &other ) return *this;
 		soft_ptr_base_no_checks<T>::operator = ( std::move(other) );
 		return *this;
 	}
@@ -564,6 +565,7 @@ public:
 
 	soft_ptr_no_checks<void>& operator = ( soft_ptr_no_checks<void>&& other )
 	{
+		if ( this == &other ) return *this;
 		soft_ptr_base_no_checks<void>::operator = ( std::move(other) );
 		return *this;
 	}
