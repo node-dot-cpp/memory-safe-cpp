@@ -103,11 +103,11 @@ namespace safe_memory
 		typedef std::ptrdiff_t    							  difference_type;
 		// typedef typename base_type::allocator_type            allocator_type;
 
-		typedef owning_ptr<detail::array_of2<T, Safety>, Safety> 					owning_heap_type;
-		typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T, Safety>, Safety> soft_heap_type;
+		typedef owning_ptr<detail::array_of2<T>, Safety> 					owning_heap_type;
+		// typedef detail::soft_ptr_with_zero_offset<detail::array_of2<T>, Safety> soft_heap_type;
 
-		typedef detail::safe_array_iterator<T, Safety>		iterator_safe;
-		typedef detail::safe_array_iterator<const T, Safety>	const_iterator_safe;
+		typedef detail::safe_array_iterator<T, false, Safety>		iterator_safe;
+		typedef detail::safe_array_iterator<T, true, Safety>		const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 		typedef const const_iterator_safe&							csafe_it_arg;
@@ -2216,7 +2216,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_pointer_pair
 	vector<T, Safety>::CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
 	{
-		if(NODECPP_LIKELY(itBegin <= itEnd)) {
+		if(NODECPP_LIKELY(itBegin.is_safe_range(itEnd))) {
 			const_pointer b = itBegin.get_raw_ptr();
 			const_pointer e = itEnd.get_raw_ptr();
 
@@ -2229,7 +2229,7 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	inline typename vector<T, Safety>::const_pointer vector<T, Safety>::CheckMineAndGet(csafe_it_arg it) const
 	{
-		if(NODECPP_LIKELY(it <= end())) {
+		if(NODECPP_LIKELY(it.is_safe_range(mHeap, size()))) {
 			return it.get_raw_ptr();
 		}
 
@@ -2240,7 +2240,7 @@ namespace safe_memory
 	inline typename vector<T, Safety>::const_pointer_pair
 	vector<T, Safety>::CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
 	{
-		if(NODECPP_LIKELY(itBegin <= itEnd && itEnd <= end())) {
+		if(NODECPP_LIKELY(itBegin.is_safe_range(itEnd) && itEnd.is_safe_range(mHeap, size()))) {
 			const_pointer b = itBegin.get_raw_ptr();
 			const_pointer e = itEnd.get_raw_ptr();
 

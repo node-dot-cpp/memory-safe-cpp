@@ -28,6 +28,7 @@
 #ifndef SAFE_PTR_WITH_ZERO_OFFSET_H
 #define SAFE_PTR_WITH_ZERO_OFFSET_H
 
+#include "safe_ptr.h"
 #include "safe_ptr_common.h"
 #include "safe_ptr_impl.h"
 #include "safe_ptr_no_checks.h"

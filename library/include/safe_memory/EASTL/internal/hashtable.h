@@ -304,12 +304,10 @@ namespace safe_memory::detail
 
 	/// hashtable_base_iterator
 	///
-	/// A hashtable_iterator iterates the entire hash table and not just
+	/// A hashtable_base_iterator iterates the entire hash table and not just
 	/// nodes within a single bucket. Users in general will use a hash
 	/// table iterator much more often, as it is much like other container
 	/// iterators (e.g. vector::iterator).
-	///
-	/// We define the const_iterator as a base class.
 	///
 	template <typename Value, bool bConst, bool bCacheHashCode, memory_safety Safety>
 	class hashtable_base_iterator
@@ -329,7 +327,7 @@ namespace safe_memory::detail
 
 
 		typedef soft_ptr<node_type, Safety>	node_ptr;
-		typedef safe_array_iterator2<owning_ptr<node_type, Safety>, Safety>	bucket_it;
+		typedef safe_iterator_impl<owning_ptr<node_type, Safety>, false, Safety>	bucket_it;
 
 		static constexpr memory_safety is_safe = Safety;
 
@@ -436,13 +434,6 @@ namespace safe_memory::detail
 			{ return !operator==(other); }
 		
 	}; // hashtable_base_iterator
-
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	using hashtable_iterator = hashtable_base_iterator<Value, false, bCacheHashCode, Safety>;
-
-	template <typename Value, bool bCacheHashCode, memory_safety Safety>
-	using hashtable_const_iterator = hashtable_base_iterator<Value, true, bCacheHashCode, Safety>;
-
 
 
 	/// ht_distance
@@ -956,9 +947,9 @@ namespace safe_memory::detail
 		typedef std::integral_constant<bool, bUniqueKeys>                                           has_unique_keys_type;
 
 		typedef owning_ptr<node_type, Safety>                                                      owning_node_type;
-		typedef soft_ptr_with_zero_offset<node_type, Safety>                               soft_node_type;
-		typedef owning_ptr<array_of2<owning_node_type, Safety>, Safety>                                    owning_bucket_type;
-		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type, Safety>, Safety>             soft_bucket_type;
+		typedef soft_ptr_with_zero_offset<node_type, Safety>                               		soft_node_type;
+		typedef owning_ptr<array_of2<owning_node_type>, Safety>                                    owning_bucket_type;
+		typedef soft_ptr_with_zero_offset<array_of2<owning_node_type>, Safety>             soft_bucket_type;
 
 
 
@@ -1052,13 +1043,13 @@ namespace safe_memory::detail
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) noexcept
-			{ return local_iterator(mpBucketArray->at(n)); }
+			{ return local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		const_local_iterator begin(size_type n) const noexcept
-			{ return const_local_iterator(mpBucketArray->at(n)); }
+			{ return const_local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		const_local_iterator cbegin(size_type n) const noexcept
-			{ return const_local_iterator(mpBucketArray->at(n)); }
+			{ return const_local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
 		local_iterator end(size_type) noexcept
@@ -1288,10 +1279,6 @@ namespace safe_memory::detail
 			return std::pair<iterator, bool>(std::piecewise_construct, std::forward_as_tuple(pNode, mpBucketArray, n), std::make_tuple(b));
 		}
 
-		// safe_array_iterator2<owning_node_type, Safety> GetBucketArrayIt(size_t n) const { 
-		// 	return safe_array_iterator2<owning_node_type, Safety>::make(mpBucketArray, n);
-		// }
-
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
 		// not compile successfully at the same time. The 'bUniqueKeys' template parameter chooses at compile-time the
 		// type of 'insert_return_type' between a pair<iterator,bool> and a raw iterator. We must pick between the two
@@ -1319,7 +1306,7 @@ namespace safe_memory::detail
 		void        DoFreeNodes(soft_bucket_type pBucketArray, size_type);
 
 		owning_bucket_type DoAllocateBuckets(size_type n);
-		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
+//		void        DoFreeBuckets(owning_bucket_type pBucketArray, size_type n);
 
 		template <typename BoolConstantT, class... Args, SM_ENABLE_IF_TRUETYPE(BoolConstantT) = nullptr>
 		std::pair<iterator, bool> DoInsertValue(BoolConstantT, Args&&... args);
@@ -1547,7 +1534,8 @@ protected:
 				catch(...)
 				{
 					clear();
-					DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
+					mpBucketArray.reset(); //not really needed
+//					DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
 					throw;
 				}
 			// #endif
@@ -1672,7 +1660,7 @@ protected:
 	inline hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::~hashtable()
 	{
 		clear();
-		DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
+//		DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
 	}
 
 
@@ -1778,7 +1766,7 @@ protected:
 	hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoAllocateBuckets(size_type n)
 	{
 		owning_bucket_type pBucketArray = make_owning_array_of<owning_node_type, S>(n);
-		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->get_raw_ptr(n));
+		std::uninitialized_value_construct(pBucketArray->begin(), pBucketArray->end());
 
 		//create a fake end() node, key must be default constructed
 		//TODO this is currently being leaked, need to think a better solution
@@ -1791,18 +1779,18 @@ protected:
 
 
 
-	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
-			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
-	inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeBuckets(owning_bucket_type pBucketArray, size_type n)
-	{
-		// If n <= 1, then pBucketArray is from the shared gpEmptyBucketArray. We don't test 
-		// for pBucketArray == &gpEmptyBucketArray because one library have a different gpEmptyBucketArray
-		// than another but pass a hashtable to another. So we go by the size.
-		// if(n > 1)
-		// 	// EASTLFree(mAllocator, pBucketArray, (n + 1) * sizeof(node_type*)); // '+1' because DoAllocateBuckets allocates nBucketCount + 1 buckets in order to have a NULL sentinel at the end.
+	// template <typename K, typename V, memory_safety S, typename EK, typename Eq,
+	// 		  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+	// inline void hashtable<K, V, S, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFreeBuckets(owning_bucket_type pBucketArray, size_type n)
+	// {
+	// 	// If n <= 1, then pBucketArray is from the shared gpEmptyBucketArray. We don't test 
+	// 	// for pBucketArray == &gpEmptyBucketArray because one library have a different gpEmptyBucketArray
+	// 	// than another but pass a hashtable to another. So we go by the size.
+	// 	// if(n > 1)
+	// 	// 	// EASTLFree(mAllocator, pBucketArray, (n + 1) * sizeof(node_type*)); // '+1' because DoAllocateBuckets allocates nBucketCount + 1 buckets in order to have a NULL sentinel at the end.
 	
-		// pBucketArray will self destroy here
-	}
+	// 	// pBucketArray will self destroy here
+	// }
 
 
 	template <typename K, typename V, memory_safety S, typename EK, typename Eq,
@@ -3185,8 +3173,8 @@ protected:
 		DoFreeNodes(mpBucketArray, mnBucketCount);
 		if(clearBuckets)
 		{
-			DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
-			DoInit();
+			// DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
+			DoInit(); // mpBucketArray will be released in here
 		}
 		mnElementCount = 0;
 	}
@@ -3264,7 +3252,7 @@ protected:
 					}
 				}
 
-				DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
+//				DoFreeBuckets(std::move(mpBucketArray), mnBucketCount);
 				mnBucketCount = nNewBucketCount;
 				mpBucketArray = std::move(pNewBucketArray);
 		// #if EASTL_EXCEPTIONS_ENABLED
@@ -3275,7 +3263,8 @@ protected:
 				// We can't restore the previous state without calling the hash
 				// function again, so the only sensible recovery is to delete everything.
 				DoFreeNodes(pNewBucketArray, nNewBucketCount);
-				DoFreeBuckets(std::move(pNewBucketArray), nNewBucketCount);
+				pNewBucketArray.reset(); //not really needed
+				// DoFreeBuckets(std::move(pNewBucketArray), nNewBucketCount);
 				DoFreeNodes(mpBucketArray, mnBucketCount);
 				mnElementCount = 0;
 				throw;

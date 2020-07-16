@@ -325,7 +325,7 @@ namespace safe_memory
 	inline bool operator==(const hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>& a, 
 						   const hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>& b)
 	{
-		typedef typename hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
+//		typedef typename hash_set<Value, Hash, Predicate, Safety, bCacheHashCode>::const_iterator const_iterator;
 
 		// We implement branching with the assumption that the return value is usually false.
 		if(a.size() != b.size())
