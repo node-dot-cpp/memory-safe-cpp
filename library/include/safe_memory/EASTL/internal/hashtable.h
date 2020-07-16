@@ -327,7 +327,7 @@ namespace safe_memory::detail
 
 
 		typedef soft_ptr<node_type, Safety>	node_ptr;
-		typedef safe_array_iterator2<owning_ptr<node_type, Safety>, false, Safety>	bucket_it;
+		typedef safe_iterator_impl<owning_ptr<node_type, Safety>, false, Safety>	bucket_it;
 
 		static constexpr memory_safety is_safe = Safety;
 
@@ -1043,13 +1043,13 @@ namespace safe_memory::detail
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) noexcept
-			{ return local_iterator(mpBucketArray->at<is_safe>(n)); }
+			{ return local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		const_local_iterator begin(size_type n) const noexcept
-			{ return const_local_iterator(mpBucketArray->at<is_safe>(n)); }
+			{ return const_local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		const_local_iterator cbegin(size_type n) const noexcept
-			{ return const_local_iterator(mpBucketArray->at<is_safe>(n)); }
+			{ return const_local_iterator(mpBucketArray->template at<is_safe>(n)); }
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
 		local_iterator end(size_type) noexcept
@@ -1278,10 +1278,6 @@ namespace safe_memory::detail
 		std::pair<iterator, bool> MakeIteratorBoolPair(soft_node_type pNode, size_t n, bool b) const {
 			return std::pair<iterator, bool>(std::piecewise_construct, std::forward_as_tuple(pNode, mpBucketArray, n), std::make_tuple(b));
 		}
-
-		// safe_array_iterator2<owning_node_type, Safety> GetBucketArrayIt(size_t n) const { 
-		// 	return safe_array_iterator2<owning_node_type, Safety>::make(mpBucketArray, n);
-		// }
 
 		// We must remove one of the 'DoGetResultIterator' overloads from the overload-set (via SFINAE) because both can
 		// not compile successfully at the same time. The 'bUniqueKeys' template parameter chooses at compile-time the
