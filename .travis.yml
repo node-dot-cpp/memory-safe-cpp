@@ -40,7 +40,7 @@ jobs:
       cache:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
-          - $HOME/AppData/Local/Mozilla/sccache      
+          - $HOME/AppData/Local/Mozilla/sccache
       script: ./checker/tools/travis-windows.bat
 
   allow_failures:        

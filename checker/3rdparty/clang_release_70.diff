@@ -242,10 +242,10 @@ index dc9edac..cc221a5 100644
 +  let Documentation = [NodeCppAwaitableDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index 5a937b1..abf99bf 100644
+index 5a937b1..83f7085 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -3458,3 +3458,93 @@ the resulting instructions with the call site, rather than with the
+@@ -3458,3 +3458,92 @@ the resulting instructions with the call site, rather than with the
  corresponding line within the inlined callee.
    }];
  }
@@ -302,7 +302,7 @@ index 5a937b1..abf99bf 100644
 +  let Category = DocCatNodeCpp;
 +  let Content = [{
 +This attribute is used on function and method declaration to indicate
-+it is side effect free.  
++it is side effect free.
 +}];
 +}
 +
@@ -338,7 +338,6 @@ index 5a937b1..abf99bf 100644
 +type and therefore it must be verified by that co_await is called on instances.
 +}];
 +}
-+
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
 index b241856..bfe368b 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
@@ -473,7 +472,7 @@ index 12d7a16..cdc7d22 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index 77deed6..6bee11a 100644
+index 77deed6..6130aa3 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -5962,10 +5962,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -497,7 +496,7 @@ index 77deed6..6bee11a 100644
      return;
    }
  
-@@ -6604,6 +6610,37 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -6604,6 +6610,36 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    case ParsedAttr::AT_XRayLogArgs:
      handleXRayLogArgsAttr(S, D, AL);
      break;
@@ -531,7 +530,6 @@ index 77deed6..6bee11a 100644
 +  case ParsedAttr::AT_NodeCppAwaitable:
 +    handleSimpleAttribute<NodeCppAwaitableAttr>(S, D, AL);
 +    break;
-+    
    }
  }
  
