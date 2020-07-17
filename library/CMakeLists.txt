@@ -30,8 +30,8 @@ add_subdirectory(src/iibmalloc)
 target_link_libraries(safe_memory iibmalloc)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  # we need async exceptions
-  string( REPLACE "/EHsc" "/EHa" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
+  # remove default exceptions, because of warning
+  string( REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
 endif()
 
 #-------------------------------------------------------------------------------------------
