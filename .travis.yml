@@ -42,10 +42,21 @@ jobs:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
       script: ./checker/tools/travis-windows.bat
-
+    - name: Windows MSVC (library-db)
+      os: windows
+      env: CC=cl CXX=cl
+      install:
+        - choco install ninja
+        - choco install sccache --version=0.2.12
+      cache:
+        directories:
+          - $HOME/AppData/Local/Temp/chocolatey
+          - $HOME/AppData/Local/Mozilla/sccache
+      script: ./checker/tools/travis-windows-library-db.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
     - name: macOS Clang (checker)
     - name: Windows MSVC (checker)
+    - name: Windows MSVC (library-db)

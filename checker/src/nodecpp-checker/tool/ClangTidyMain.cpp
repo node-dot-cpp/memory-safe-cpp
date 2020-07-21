@@ -480,6 +480,8 @@ static int clangTidyMain(int Argc, const char **Argv) {
   ProfileData Profile;
   ProfileData *PPtr = EnableCheckProfile ? &Profile : nullptr;
 
+
+  llvm::InitializeAllTargets();
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();

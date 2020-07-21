@@ -271,10 +271,7 @@ public:
 
 int main(int argc, const char **argv) {
 
-    //    InitializeAllTargets();
-    // LLVMInitializeX86TargetInfo();
-    // LLVMInitializeX86TargetMC();
-    // LLVMInitializeX86AsmParser();
+  llvm::InitializeAllTargets();
   llvm::InitializeAllTargetInfos();
   llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();

@@ -2,7 +2,7 @@ set(LLVM_LINK_COMPONENTS
   AllTargetsAsmParsers
   AllTargetsDescs
   AllTargetsInfos
-  support
+  Support
   )
 
 add_clang_tool(nodecpp-checker
