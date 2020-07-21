@@ -8,6 +8,7 @@ rem to populate part of the cache. Hopefully this build will complete, cache wil
 rem and next build of the tools will have at least a partial cache so there will be some speed up,
 rem and its build will complete and upload the full cache.
 
+rem Current Travis timeout is 50 minutes, and this build takes around 35 minutes when no cache is found.
 
 rem mb: Travis-ci uses git-bash to execute scripts under Windows.
 rem But vcvars needs to be called under cmd.exe, so this .bat file forces
