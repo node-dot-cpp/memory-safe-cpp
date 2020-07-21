@@ -5,6 +5,11 @@ notifications:
   email:
     if: branch = master OR branch = develop
 script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
+addons:
+  homebrew:
+    packages:
+    - ccache
+    - sccache
 jobs:
   include:
     - name: Linux GCC
@@ -29,11 +34,9 @@ jobs:
       os: osx        
       compiler: clang
       cache: ccache
-      install: brew install ccache
       script: ./checker/tools/travis-ccache.sh
     - name: Windows MSVC (checker)
       os: windows
-      env: CC=cl CXX=cl
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -42,9 +45,8 @@ jobs:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
       script: ./checker/tools/travis-windows.bat
-    - name: Windows MSVC (library-db)
+    - name: Windows MSVC (sccache-warmup)
       os: windows
-      env: CC=cl CXX=cl
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -52,11 +54,11 @@ jobs:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
-      script: ./checker/tools/travis-windows-library-db.bat
+      script: ./checker/tools/travis-windows-sccache-warmup.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
     - name: Linux GCC (checker)
     - name: macOS Clang (checker)
     - name: Windows MSVC (checker)
-    - name: Windows MSVC (library-db)
+    - name: Windows MSVC (sccache-warmup)
