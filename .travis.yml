@@ -8,8 +8,8 @@ script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
 addons:
   homebrew:
     packages:
-    - ccache
-    - sccache
+      - ccache
+      - sccache
 jobs:
   include:
     - name: Linux GCC

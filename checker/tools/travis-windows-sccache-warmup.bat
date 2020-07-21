@@ -42,5 +42,14 @@ ninja clangDriver
 ninja clangFrontend
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
+ninja clangLex
+@if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+
+ninja clangParse
+@if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+
+ninja clangSema
+@if ERRORLEVEL 1 exit /b %ERRORLEVEL%
+
 ninja clangTooling
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
