@@ -28,7 +28,7 @@ jobs:
     - name: macOS Clang (checker)
       os: osx        
       compiler: clang
-      install: HOMEBREW_NO_AUTO_UPDATE=1 brew install ccache
+      install: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install ccache
       cache: ccache
       script: ./checker/tools/travis-ccache.sh
     - name: Windows MSVC (checker)
