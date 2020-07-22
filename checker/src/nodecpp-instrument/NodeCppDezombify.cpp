@@ -271,12 +271,9 @@ public:
 
 int main(int argc, const char **argv) {
 
-    //    InitializeAllTargets();
-    // LLVMInitializeX86TargetInfo();
-    // LLVMInitializeX86TargetMC();
-    // LLVMInitializeX86AsmParser();
-  llvm::InitializeAllTargetInfos();
-  llvm::InitializeAllTargetMCs();
+  // llvm::InitializeAllTargets();
+  // llvm::InitializeAllTargetInfos();
+  // llvm::InitializeAllTargetMCs();
   llvm::InitializeAllAsmParsers();
 
   CommonOptionsParser optionsParser(argc, argv, NodecppInstrumentCategory, cl::ZeroOrMore);
