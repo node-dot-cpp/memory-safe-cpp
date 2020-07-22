@@ -33,6 +33,9 @@ jobs:
       script: ./checker/tools/travis-ccache.sh
     - name: Windows MSVC (checker)
       os: windows
+      env:
+        - CC=cl
+        - CXX=cl
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -43,6 +46,9 @@ jobs:
       script: ./checker/tools/travis-windows.bat
     - name: Windows MSVC (sccache-warmup)
       os: windows
+      env:
+        - CC=cl
+        - CXX=cl
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
