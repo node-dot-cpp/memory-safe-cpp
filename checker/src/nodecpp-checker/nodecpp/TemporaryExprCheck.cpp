@@ -46,6 +46,13 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
     if (isStdFunctionType(Qt))
       return;
 
+    if(Qt->isConstantArrayType()) {
+      //we allow constant array type at temps for std::initializer_list
+      if(auto ArrT = Qt->getAsArrayTypeUnsafe()) {
+        Qt = ArrT->getElementType().getCanonicalType();
+      }
+    }
+
     if (getCheckHelper()->isHeapSafe(Qt))
       return;
 
