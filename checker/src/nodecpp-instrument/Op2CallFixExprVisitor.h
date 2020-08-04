@@ -99,7 +99,7 @@ class Op2CallFixExprVisitor
 
 
     SmallString<24> Ss;
-    Ss += "safememory::dz_";
+    Ss += "safe_memory::dz_";
     Ss += Text;
     Ss += "(";
     auto R0 = CodeChange::makeInsertLeft(
