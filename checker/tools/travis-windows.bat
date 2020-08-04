@@ -2,12 +2,6 @@ rem mb: Travis-ci uses git-bash to execute scripts under Windows.
 rem But vcvars needs to be called under cmd.exe, so this .bat file forces
 rem git-bash to launch a cmd.exe to execute this.
 
-
-cd checker
-call checkout.bat
-@if ERRORLEVEL 1 exit /b %ERRORLEVEL%
-
-
 rmdir /S /Q build\travis
 mkdir build\travis
 cd build\travis
@@ -33,4 +27,3 @@ ninja check-nodecpp-tools
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 cd ..\..
-cd ..

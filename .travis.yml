@@ -43,7 +43,10 @@ jobs:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
-      script: ./checker/tools/travis-windows.bat
+      script:
+        - cd checker
+        - ./checkout.bat
+        - ./tools/travis-windows.bat
     - name: Windows MSVC (sccache-warmup)
       os: windows
       env:
@@ -56,7 +59,10 @@ jobs:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
-      script: ./checker/tools/travis-windows-sccache-warmup.bat
+      script:
+        - cd checker
+        - ./checkout.bat
+        - ./tools/travis-windows-sccache-warmup.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
