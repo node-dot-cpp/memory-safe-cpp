@@ -5,6 +5,11 @@ notifications:
   email:
     if: branch = master OR branch = develop
 script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
+addons:
+  apt:
+    packages:
+      - ninja-build
+
 jobs:
   include:
     - name: Linux GCC
