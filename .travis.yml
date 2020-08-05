@@ -24,18 +24,34 @@ jobs:
     - name: Linux GCC (checker)
       compiler: gcc
       cache: ccache
-      script: ./checker/tools/travis-ccache.sh
+      env:
+        - CMAKE_CXX_COMPILER_LAUNCHER=ccache
+      script:
+        - cd checker
+        - ./checkout.sh
+        - ./tools/travis-build.sh
     - name: macOS Clang (checker)
       os: osx        
       compiler: clang
-      install: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install ccache
       cache: ccache
-      script: ./checker/tools/travis-ccache.sh
+      env:
+        - HOMEBREW_NO_AUTO_UPDATE=1
+        - HOMEBREW_NO_INSTALL_CLEANUP=1
+        - CMAKE_CXX_COMPILER_LAUNCHER=ccache
+      install:
+        - brew install ccache
+        - brew install sccache
+        - brew install ninja
+      script:
+        - cd checker
+        - ./checkout.sh
+        - ./tools/travis-build.sh
     - name: Windows MSVC (checker)
       os: windows
       env:
         - CC=cl
         - CXX=cl
+        - CMAKE_CXX_COMPILER_LAUNCHER=sccache
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -52,6 +68,7 @@ jobs:
       env:
         - CC=cl
         - CXX=cl
+        - CMAKE_CXX_COMPILER_LAUNCHER=sccache
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
