@@ -9,7 +9,6 @@ addons:
   apt:
     packages:
       - ninja-build
-
 jobs:
   include:
     - name: Linux GCC
