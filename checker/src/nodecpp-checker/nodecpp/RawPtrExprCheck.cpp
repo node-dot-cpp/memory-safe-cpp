@@ -45,6 +45,11 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   else if (isa<CXXDefaultInitExpr>(Ex))
     return;
+  else if(auto Ctor = getEnclosingCXXConstructorDeclForInit(getASTContext(), Ex)) {
+    // this is member initializers of copy/move ctor implicitly generated
+    if(Ctor->isImplicit())
+      return;
+  }
 
   // now allow some explicits
   else if (isa<CXXThisExpr>(Ex))
@@ -101,7 +106,8 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  Ex->dumpColor();
+
+  // Ex->dumpColor();
   diag(Ex->getExprLoc(), "(S1) raw pointer expression not allowed");
 }
 

@@ -1326,6 +1326,32 @@ const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* 
   return nullptr;
 }
 
+const CXXConstructorDecl* getEnclosingCXXConstructorDeclForInit(ASTContext *Context, const Stmt* St) {
+
+  if (!St)
+    return nullptr;
+
+  auto L = Context->getParents(*St);
+
+  // so far this only works for expressions inside initializers of constructors
+  if (L.begin() != L.end()) {
+    if (auto P = L.begin()->get<Stmt>())
+      return getEnclosingCXXConstructorDeclForInit(Context, P);
+    else if(auto Ctor = L.begin()->get<CXXConstructorDecl>()) {
+      return Ctor;
+    }
+    else if(auto Init = L.begin()->get<CXXCtorInitializer>()) {
+      auto L2 = Context->getParents(*Init);
+      if (L2.begin() != L2.end()) {
+        if(auto Ctor = L2.begin()->get<CXXConstructorDecl>()) {
+          return Ctor;
+        }
+      }
+    }
+  }
+
+  return nullptr;
+}
 
 
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D) {
