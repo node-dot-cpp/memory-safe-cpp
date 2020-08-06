@@ -374,18 +374,18 @@ int testWithLest( int argc, char * argv[] )
 		{
 			SETUP("Large objects with large alignment test")
 			{
-				using LargeAlignedT = LargeObjectWithControllableAlignment<0x1000, 7>;
+				using LargeAlignedT = LargeObjectWithControllableAlignment<0x1000, 5>;
 				EXPECT( sizeof(LargeAlignedT) >= 0x1000 );
 				LargeAlignedT* ptr1 = new LargeAlignedT;
 				owning_ptr<LargeAlignedT>p4klarge128aligned = make_owning<LargeAlignedT>();
-				EXPECT( (( (uintptr_t)(ptr1) ) & ((1<<7)-1)) == 0 );
+				EXPECT( (( (uintptr_t)(ptr1) ) & ((1<<5)-1)) == 0 );
 				if ( ptr1 ) delete ptr1;
 
-				using ExLargeAlignedT = LargeObjectWithControllableAlignment<0x10000, 7>;
+				using ExLargeAlignedT = LargeObjectWithControllableAlignment<0x10000, 5>;
 				EXPECT( sizeof(ExLargeAlignedT) >= 0x10000 );
 				ExLargeAlignedT* ptr2 = new ExLargeAlignedT;
 				owning_ptr<ExLargeAlignedT>p64klarge128aligned = make_owning<ExLargeAlignedT>();
-				EXPECT( (( (uintptr_t)(ptr2) ) & ((1<<7)-1)) == 0 );
+				EXPECT( (( (uintptr_t)(ptr2) ) & ((1<<5)-1)) == 0 );
 				if ( ptr1 ) delete ptr2;
 			}
 			killAllZombies();
@@ -943,7 +943,7 @@ void test__allocated_ptr_and_ptr_and_data_and_flags()
 #else
 	constexpr size_t maxData = 26;
 #endif
-	nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<maxData, 1> obj;
+	nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<3,maxData, 1> obj;
 
 	// allocated_ptr_and_ptr_and_data_and_flags::init()
 	obj.init();
@@ -1111,7 +1111,7 @@ void test__allocated_ptr_with_mask_and_flags()
 {
 	constexpr size_t maskSize = 3;
 	constexpr size_t maskMax = ((size_t)1<<maskSize)-1;
-	nodecpp::platform::allocated_ptr_with_mask_and_flags<maskSize, 1> obj;
+	nodecpp::platform::allocated_ptr_with_mask_and_flags<3,maskSize, 1> obj;
 	obj.init();
 
 	for ( size_t mask=0; mask<maskMax; ++mask )

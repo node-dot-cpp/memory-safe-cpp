@@ -55,7 +55,7 @@ namespace nodecpp
 #endif
 
 
-#ifdef NODECPP_X64
+#if defined NODECPP_X64 && !defined NODECPP_NOT_USING_IIBMALLOC
 #define NODECPP_USE_IIBMALLOC
 #else
 #define NODECPP_USE_NEW_DELETE_ALLOC
@@ -77,6 +77,8 @@ NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_All
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
+template<size_t sz, size_t alignment>
+NODECPP_FORCEINLINE void* zombieAllocateAligned() { return g_AllocManager.zombieableAllocateAligned<sz, alignment>(); }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -92,6 +94,7 @@ inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNe
 
 struct IIBRawAllocator
 {
+	static constexpr size_t guaranteed_alignment = NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT;
 	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::nodecpp::safememory::allocate( allocSize ); }
 	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::nodecpp::safememory::allocate( allocSize ); }
 	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::nodecpp::safememory::deallocate( ptr ); }
@@ -138,19 +141,24 @@ inline void killAllZombies()
 	zombieMap.clear();
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 }
-NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { void* ret = new uint8_t[ sz ]; return ret; } // TODO: proper implementation for alignment
-NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = new uint8_t[ sz ]; return ret; }
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { void* ret = ::operator new [] (sz, std::align_val_t(alignment)); return ret; } // TODO: proper implementation for alignment
+NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = ::operator new [] (sz); return ret; }
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { ::operator delete [] (ptr, std::align_val_t(alignment)); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { 
-	uint8_t* ret = new uint8_t[ 2 * sizeof(uint64_t) + sz ]; 
+	uint8_t* ret = new uint8_t[ 4 * sizeof(uint64_t) + sz ]; 
 	*reinterpret_cast<uint64_t*>(ret) = sz; 
-	return ret + 2 * sizeof(uint64_t);
+	return ret + 4 * sizeof(uint64_t);
+}
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz, size_t alignment ) { 
+	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, alignment <= 4 * sizeof(uint64_t), "alignment = {}", alignment );
+	return zombieAllocate( sz );
 }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { 
-	void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - 2 * sizeof(uint64_t)); 
+	void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - 4 * sizeof(uint64_t)); 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	size_t allocSize = *reinterpret_cast<uint64_t*>(blockStart);
-	zombieMap.insert( std::make_pair( reinterpret_cast<uint8_t*>(blockStart), 2 * sizeof(uint64_t) + allocSize ) );
+	zombieMap.insert( std::make_pair( reinterpret_cast<uint8_t*>(blockStart), 4 * sizeof(uint64_t) + allocSize ) );
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	*blockStart = zombieList_; 
 	zombieList_ = blockStart;

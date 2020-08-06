@@ -224,7 +224,9 @@ template<class _Ty,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 {
-	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty) ) );
+	static_assert( alignof(_Ty) <= NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT );
+	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty), alignof(_Ty) ) );
+	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)data & (alignof(_Ty)-1)) == 0, "indeed, alignof(_Ty) = {} and data = 0x{:x}", alignof(_Ty), (uintptr_t)data );
 	try {
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}

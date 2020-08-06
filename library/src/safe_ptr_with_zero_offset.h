@@ -325,7 +325,7 @@ template<class _Ty,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 NODISCARD owning_ptr_base_impl<_Ty> make_owning_base_impl(_Types&&... _Args)
 {
-	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocateAligned< sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty), alignof(_Ty) >() );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;

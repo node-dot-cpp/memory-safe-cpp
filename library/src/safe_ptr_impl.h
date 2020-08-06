@@ -176,10 +176,10 @@ namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; 
 
 struct FirstControlBlock // not reallocatable
 {
-	struct PtrWishFlagsForSoftPtrList : public nodecpp::platform::allocated_ptr_with_flags<2> {
+	struct PtrWishFlagsForSoftPtrList : public nodecpp::platform::allocated_ptr_with_flags<2,2> {
 	public:
-		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<2>::init(ptr_); }
-		void* getPtr() const { return nodecpp::platform::allocated_ptr_with_flags<2>::get_ptr(); }
+		void setPtr( void* ptr_ ) { nodecpp::platform::allocated_ptr_with_flags<2,2>::init(ptr_); }
+		void* getPtr() const { return nodecpp::platform::allocated_ptr_with_flags<2,2>::get_ptr(); }
 		void setUsed() { set_flag<0>(); }
 		void setUnused() { unset_flag<0>(); }
 		bool isUsed() const { return has_flag<0>(); }
@@ -276,16 +276,16 @@ struct FirstControlBlock // not reallocatable
 		}
 	};
 
-	struct PtrWithMaskAndFlag : protected nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>
+	struct PtrWithMaskAndFlag : protected nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>
 	{
-		void init() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::init(); }
-		void setPtr(SecondCBHeader* ptr) { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_ptr( ptr ); }
-		SecondCBHeader* getPtr() { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_ptr() ); }
-		const SecondCBHeader* getPtr() const { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_ptr() ); }
-		uint32_t getMask() const { return (uint32_t)(nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::get_mask()); }
-		void setMask(size_t mask) { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_mask(mask); }
-		void setZombie() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::init(); nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::set_flag<0>(); }
-		bool isZombie() { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,1>::has_flag<0>(); }
+		void init() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::init(); }
+		void setPtr(SecondCBHeader* ptr) { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::set_ptr( ptr ); }
+		SecondCBHeader* getPtr() { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::get_ptr() ); }
+		const SecondCBHeader* getPtr() const { return reinterpret_cast<SecondCBHeader*>( nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::get_ptr() ); }
+		uint32_t getMask() const { return (uint32_t)(nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::get_mask()); }
+		void setMask(size_t mask) { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::set_mask(mask); }
+		void setZombie() { nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::init(); nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::set_flag<0>(); }
+		bool isZombie() { return nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>::has_flag<0>(); }
 	};
 
 	static constexpr size_t maxSlots = 3;
@@ -823,8 +823,10 @@ template<class _Ty,
 	std::enable_if_t<!std::is_array<_Ty>::value, int> = 0>
 NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 {
-	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocate( sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty) ) );
+	static_assert( alignof(_Ty) <= NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT );
+	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocateAligned< sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty), alignof(_Ty) >() );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
+	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)dataForObj & (NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT-1)) == 0, "indeed, dataForObj = 0x{:x}", NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT, (uintptr_t)dataForObj );
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
 	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
@@ -890,15 +892,15 @@ class soft_ptr_base_impl
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<32,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<3,32,1>; 
 #else
-	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<26,1>; 
+	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<2,26,1>; 
 #endif
 #else
 #ifdef NODECPP_X64
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<32,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<3,32,1>; 
 #else
-	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<26,1>; 
+	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<2,26,1>; 
 #endif
 #endif // SAFE_PTR_DEBUG_MODE
 	template<class TT>
