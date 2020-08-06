@@ -284,7 +284,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
 
   auto B = Dc->bases();
   if (B.begin() != B.end()) {
-    Dh.diag(B.begin()->getLocStart(),
+    Dh.diag(B.begin()->getBaseTypeLoc(),
             "inheritance not allowed at naked struct");
     return false;//don't allow any bases yet
   }
@@ -1447,7 +1447,7 @@ bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
 bool NakedPtrScopeChecker::checkStack2StackAssignment(const Decl *FromDecl) {
 
   if(!AstContext || !OutScopeDecl) {
-    Check->diag(FromDecl->getLocStart(),
+    Check->diag(FromDecl->getLocation(),
                 "Internal checker error, please report", DiagnosticIDs::Error);
     return false;
   }

@@ -101,7 +101,7 @@ void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
-  // Ex->dumpColor();
+  Ex->dumpColor();
   diag(Ex->getExprLoc(), "(S1) raw pointer expression not allowed");
 }
 
