@@ -14,7 +14,7 @@ int function(TestObj&, TestObj&, TestObj&);
 template<class ... ARGS>
 void execute(ARGS&& ... args) {
     auto i = function(args...);
-// CHECK-FIXES: auto i = function(safememory::dezombiefy( args )...);
+// CHECK-FIXES: auto i = function(safe_memory::dezombiefy( args )...);
 }
 
 
