@@ -18,7 +18,7 @@ public:
     template<class ... ARGS>
     void execute(ARGS&& ... args) {
         auto i = function(arg0, std::forward<ARGS>(args)...);
-    // CHECK-FIXES: auto i = function(safe_memory::dezombiefy( args )...);
+    // CHECK-FIXES: auto i = function(safememory::dezombiefy( args )...);
     }
 };
 

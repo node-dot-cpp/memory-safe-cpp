@@ -222,11 +222,6 @@ const FunctionDecl* getEnclosingFunctionDecl(ASTContext *Context, const Stmt* St
 /// \brief returns the enclosing \c CXXRecordDecl where this \c Stmt lives
 const CXXRecordDecl* getEnclosingCXXRecordDecl(ASTContext *Context, const Stmt* St);
 
-/// \brief returns the enclosing \c CXXConstructorDecl where this \c Stmt lives
-/// when \c Stmt is inside an initializer of such constructor
-const CXXConstructorDecl* getEnclosingCXXConstructorDeclForInit(ASTContext *Context, const Stmt* St);
-
-
 /// \brief Returns \c true if \p D is either a \c ParmVarDecl
 /// or the argument of a \c CXXCatchStmt
 bool isParmVarOrCatchVar(ASTContext *Context, const VarDecl *D);

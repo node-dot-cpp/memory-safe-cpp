@@ -99,10 +99,7 @@ bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendI
   if (!Action->BeginSourceFile(CI, Input))
     return false;
     
-  auto E = Action->Execute();
-  if(E)
-    return false;
-
+  Action->Execute();
   Action->EndSourceFile();
 
   CI.setSourceManager(nullptr);

@@ -95,7 +95,7 @@ public:
 
     bool Flag = getCheckHelper()->isNoSideEffect(D);
 
-    bool Result = true;
+    bool Result = true;    
     if(D->doesThisDeclarationHaveABody()) {
       NoSideEffect = Flag;
       Result = TraverseStmt(D->getBody()); // Function body.

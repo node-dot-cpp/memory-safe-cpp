@@ -79,7 +79,7 @@ protected:
 
       tooling::Replacement Replacement(Loc.getManager(), Range,
                                        FixIt.CodeToInsert);
-      llvm::Error Err = Error.Message.Fix[Replacement.getFilePath()].add(Replacement);
+      llvm::Error Err = Error.Fix[Replacement.getFilePath()].add(Replacement);
       // FIXME: better error handling (at least, don't let other replacements be
       // applied).
       if (Err) {
@@ -626,7 +626,7 @@ void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
   std::vector<int> Sizes;
   for (const auto &Error : Errors) {
     int Size = 0;
-    for (const auto &FileAndReplaces : Error.Message.Fix) {
+    for (const auto &FileAndReplaces : Error.Fix) {
       for (const auto &Replace : FileAndReplaces.second)
         Size += Replace.getLength();
     }
@@ -636,7 +636,7 @@ void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
   // Build events from error intervals.
   std::map<std::string, std::vector<Event>> FileEvents;
   for (unsigned I = 0; I < Errors.size(); ++I) {
-    for (const auto &FileAndReplace : Errors[I].Message.Fix) {
+    for (const auto &FileAndReplace : Errors[I].Fix) {
       for (const auto &Replace : FileAndReplace.second) {
         unsigned Begin = Replace.getOffset();
         unsigned End = Begin + Replace.getLength();
@@ -672,7 +672,7 @@ void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
 
   for (unsigned I = 0; I < Errors.size(); ++I) {
     if (!Apply[I]) {
-      Errors[I].Message.Fix.clear();
+      Errors[I].Fix.clear();
       Errors[I].Notes.emplace_back(
           "this fix will not be applied because it overlaps with another fix");
     }

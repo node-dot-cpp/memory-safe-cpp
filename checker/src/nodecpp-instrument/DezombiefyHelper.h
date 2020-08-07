@@ -40,7 +40,7 @@ bool isInSystemHeader(clang::ASTContext &Context, clang::Decl *D) {
   if (!llvm::isa<clang::TranslationUnitDecl>(D)) {
 
     auto &SourceManager = Context.getSourceManager();
-    auto ExpansionLoc = SourceManager.getExpansionLoc(D->getLocation());
+    auto ExpansionLoc = SourceManager.getExpansionLoc(D->getLocStart());
     if (ExpansionLoc.isInvalid()) {
       return true;
     }

@@ -29,6 +29,6 @@ struct Bad {
 
 		//safeFunction may be eating a zombie
 		while(safeFunction(*StPtr) + release() != 0);
-// CHECK-FIXES: while(safe_memory::dz_ne(safe_memory::dz_add(safeFunction(*StPtr) , release()) , 0));
+// CHECK-FIXES: while(safememory::dz_ne(safememory::dz_add(safeFunction(*StPtr) , release()) , 0));
 	}
 };

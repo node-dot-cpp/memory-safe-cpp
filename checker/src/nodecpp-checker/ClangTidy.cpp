@@ -125,7 +125,7 @@ public:
       }
       auto Diag = Diags.Report(Loc, Diags.getCustomDiagID(Level, "%0 [%1]"))
                   << Message.Message << Name;
-      for (const auto &FileAndReplacements : Message.Fix) {
+      for (const auto &FileAndReplacements : Error.Fix) {
         for (const auto &Repl : FileAndReplacements.second) {
           // Retrieve the source range for applicable fixes. Macro definitions
           // on the command line have locations in a virtual buffer and don't
@@ -352,7 +352,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   auto WorkingDir = Compiler.getSourceManager()
                         .getFileManager()
                         .getVirtualFileSystem()
-                        .getCurrentWorkingDirectory();
+                        ->getCurrentWorkingDirectory();
   if (WorkingDir)
     Context.setCurrentBuildDirectory(WorkingDir.get());
 
@@ -561,8 +561,7 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
                                     ASTDumpFilter,
                                     /*DumpDecls=*/true,
                                     /*Deserialize=*/false,
-                                    /*DumpLookups=*/false,
-                                    /*ASTDumpOutputFormat*/ADOF_Default);
+                                    /*DumpLookups=*/false);
     }
   };
 
@@ -584,7 +583,7 @@ void handleErrors(ClangTidyContext &Context, bool Fix,
                   unsigned &WarningsAsErrorsCount) {
   ErrorReporter Reporter(Context, Fix);
   vfs::FileSystem &FileSystem =
-      Reporter.getSourceManager().getFileManager().getVirtualFileSystem();
+      *Reporter.getSourceManager().getFileManager().getVirtualFileSystem();
   auto InitialWorkingDir = FileSystem.getCurrentWorkingDirectory();
   if (!InitialWorkingDir)
     llvm::report_fatal_error("Cannot get current working path.");

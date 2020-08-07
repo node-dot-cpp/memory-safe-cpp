@@ -44,7 +44,7 @@ void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
 
     auto Qt = Fd->getReturnType();
     if(!isAwaitableType(Qt)) {
-      diag(Fd->getLocation(), "(S9) coroutines must return nodecpp::awaitable");
+      diag(Fd->getLocStart(), "(S9) coroutines must return nodecpp::awaitable");
     }
   }
   // else if(auto Dr = Result.Nodes.getNodeAs<DeclRefExpr>("dref")) {

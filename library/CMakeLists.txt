@@ -9,6 +9,7 @@ include(CTest)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
+
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
@@ -52,28 +53,19 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Tests and samples
 #-------------------------------------------------------------------------------------------
+add_executable(test_safe_memory
+  test/test_safe_pointers.cpp
+  )
 
-set(SAFE_MEMORY_TEST_DEFAULT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
-option(SAFE_MEMORY_TEST "Run safe_memory tests" SAFE_MEMORY_TEST_DEFAULT)
-
-if (SAFE_MEMORY_TEST)
-  # only when not a subproject
-
-
-  add_executable(test_safe_memory
-    test/test_safe_pointers.cpp
-    )
-
-  if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
-      target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
-      target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
-  endif()
-
-  target_link_libraries(test_safe_memory safe_memory)
-
-  add_test(Run_test_safe_memory test_safe_memory)
-
-  add_subdirectory(samples)
-  add_subdirectory(test/EASTL)
+if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
+    target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
+    target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
 endif()
+
+target_link_libraries(test_safe_memory safe_memory)
+
+add_test(Run_test_safe_memory test_safe_memory)
+
+add_subdirectory(samples)
+add_subdirectory(test/EASTL)
