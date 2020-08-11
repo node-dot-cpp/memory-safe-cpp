@@ -75,6 +75,8 @@ namespace nodecpp::safememory
 {
 NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_AllocManager.allocate( sz ); } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
+template<size_t alignment>
+NODECPP_FORCEINLINE void* allocateAligned( size_t sz ) { return g_AllocManager.allocateAligned<alignment>( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 template<size_t sz, size_t alignment>
@@ -95,8 +97,10 @@ inline bool interceptNewDeleteOperators( bool doIntercept ) { return interceptNe
 struct IIBRawAllocator
 {
 	static constexpr size_t guaranteed_alignment = NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT;
-	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::nodecpp::safememory::allocate( allocSize ); }
-	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::nodecpp::safememory::allocate( allocSize ); }
+	template<size_t alignment = 0> 
+	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::nodecpp::safememory::allocateAligned<alignment>( allocSize ); }
+//	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::nodecpp::safememory::allocate( allocSize ); }
+	template<size_t alignment = 0> 
 	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::nodecpp::safememory::deallocate( ptr ); }
 };
 
