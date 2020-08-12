@@ -52,13 +52,13 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Tests and samples
 #-------------------------------------------------------------------------------------------
-
-set(SAFE_MEMORY_TEST_DEFAULT (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR))
-option(SAFE_MEMORY_TEST "Run safe_memory tests" SAFE_MEMORY_TEST_DEFAULT)
+set(SAFE_MEMORY_TEST OFF)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(SAFE_MEMORY_TEST ON)
+endif()
 
 if (SAFE_MEMORY_TEST)
   # only when not a subproject
-
 
   add_executable(test_safe_memory
     test/test_safe_pointers.cpp
