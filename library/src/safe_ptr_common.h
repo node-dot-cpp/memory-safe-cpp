@@ -147,8 +147,10 @@ inline void killAllZombies()
 }
 NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { void* ret = ::operator new [] (sz, std::align_val_t(alignment)); return ret; } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { void* ret = ::operator new [] (sz); return ret; }
+template<size_t alignment>
+NODECPP_FORCEINLINE void* allocateAligned( size_t sz ) { return allocate( sz, alignment ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { ::operator delete [] (ptr, std::align_val_t(alignment)); }
-NODECPP_FORCEINLINE void deallocate( void* ptr ) { delete [] ptr; }
+NODECPP_FORCEINLINE void deallocate( void* ptr ) { ::operator delete [] (ptr); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { 
 	uint8_t* ret = new uint8_t[ 4 * sizeof(uint64_t) + sz ]; 
 	*reinterpret_cast<uint64_t*>(ret) = sz; 
@@ -157,6 +159,10 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) {
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz, size_t alignment ) { 
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, alignment <= 4 * sizeof(uint64_t), "alignment = {}", alignment );
 	return zombieAllocate( sz );
+}
+template<size_t sz, size_t alignment>
+NODECPP_FORCEINLINE void* zombieAllocateAligned() {
+	return zombieAllocate(sz, alignment);
 }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { 
 	void** blockStart = reinterpret_cast<void**>(reinterpret_cast<uint8_t*>(ptr) - 4 * sizeof(uint64_t)); 

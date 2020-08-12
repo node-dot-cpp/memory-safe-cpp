@@ -5,6 +5,10 @@ notifications:
   email:
     if: branch = master OR branch = develop
 script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
+addons:
+  apt:
+    packages:
+      - ninja-build
 jobs:
   include:
     - name: Linux GCC
@@ -24,18 +28,34 @@ jobs:
     - name: Linux GCC (checker)
       compiler: gcc
       cache: ccache
-      script: ./checker/tools/travis-ccache.sh
+      env:
+        - CMAKE_CXX_COMPILER_LAUNCHER=ccache
+      script:
+        - cd checker
+        - ./checkout.sh
+        - ./tools/travis-build.sh
     - name: macOS Clang (checker)
       os: osx        
       compiler: clang
-      install: HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_CLEANUP=1 brew install ccache
       cache: ccache
-      script: ./checker/tools/travis-ccache.sh
+      env:
+        - HOMEBREW_NO_AUTO_UPDATE=1
+        - HOMEBREW_NO_INSTALL_CLEANUP=1
+        - CMAKE_CXX_COMPILER_LAUNCHER=ccache
+      install:
+        - brew install ccache
+        - brew install sccache
+        - brew install ninja
+      script:
+        - cd checker
+        - ./checkout.sh
+        - ./tools/travis-build.sh
     - name: Windows MSVC (checker)
       os: windows
       env:
         - CC=cl
         - CXX=cl
+        - CMAKE_CXX_COMPILER_LAUNCHER=sccache
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -43,12 +63,16 @@ jobs:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
-      script: ./checker/tools/travis-windows.bat
+      script:
+        - cd checker
+        - ./checkout.bat
+        - ./tools/travis-windows.bat
     - name: Windows MSVC (sccache-warmup)
       os: windows
       env:
         - CC=cl
         - CXX=cl
+        - CMAKE_CXX_COMPILER_LAUNCHER=sccache
       install:
         - choco install ninja
         - choco install sccache --version=0.2.12
@@ -56,7 +80,10 @@ jobs:
         directories:
           - $HOME/AppData/Local/Temp/chocolatey
           - $HOME/AppData/Local/Mozilla/sccache
-      script: ./checker/tools/travis-windows-sccache-warmup.bat
+      script:
+        - cd checker
+        - ./checkout.bat
+        - ./tools/travis-windows-sccache-warmup.bat
   allow_failures:        
     - name: macOS Clang
     - name: Windows Clang
