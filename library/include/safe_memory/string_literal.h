@@ -29,6 +29,7 @@
 #define SAFE_MEMORY_STRING_LITERAL_H
 
 #include <safe_memory/checker_attributes.h>
+#include <string.h>
 
 namespace safe_memory
 {
@@ -43,8 +44,8 @@ namespace safe_memory
 		basic_string_literal( basic_string_literal&& other ) = default;
 		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
 
-		// bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
-		// bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
+		bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
+		bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
 
 //		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
 //		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }

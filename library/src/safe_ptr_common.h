@@ -122,8 +122,6 @@ namespace nodecpp::safememory
 {
 template<class T>
 using iiballocator =  std::allocator<T>;
-template<class T>
-using stdallocator =  std::allocator<T>;
 
 // NOTE: while being non-optimal, following calls provide safety guarantees and can be used at least for debug purposes
 extern thread_local void** zombieList_; // must be set to zero at the beginning of a thread function
