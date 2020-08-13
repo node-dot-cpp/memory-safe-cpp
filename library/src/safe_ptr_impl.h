@@ -826,7 +826,7 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	static_assert( alignof(_Ty) <= NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT );
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocateAligned< sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty), alignof(_Ty) >() );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
-	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)dataForObj & (NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT-1)) == 0, "indeed, dataForObj = 0x{:x}", NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT, (uintptr_t)dataForObj );
+	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)dataForObj & (alignof(_Ty)-1)) == 0, "indeed, dataForObj = 0x{:x}, NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT = 0x{:x}", (uintptr_t)dataForObj, alignof(_Ty) );
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
 	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
