@@ -4,10 +4,10 @@
 #include <safe_memory/dezombiefy.h>
 #include <safe_types.h>
 
-using namespace nodecpp::safememory;
+using namespace safe_memory;
+using namespace nodecpp;
 
 int release() {	return 0; }
-
 
 struct Bad {
 

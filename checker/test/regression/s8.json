@@ -1,0 +1,10 @@
+[
+{
+  "types" : [
+    "nodecpp::Socket",
+  ],
+  "functions" : [
+    "safe_memory::make_owning",
+  ]
+}
+]

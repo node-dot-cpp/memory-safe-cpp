@@ -31,7 +31,7 @@
 #include "safe_ptr_common.h"
 #include "safe_ptr_impl.h"
 
-namespace nodecpp::safememory {
+namespace safe_memory {
 
 template<class T, bool is_safe> struct owning_ptr_type_ { typedef owning_ptr_impl<T> type; };
 template<class T> using owning_ptr = typename owning_ptr_type_<T, safeness_declarator<T>::is_safe>::type;

@@ -1,9 +1,8 @@
-// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_memory/safe_ptr.h>
 
-using namespace nodecpp;
-using namespace nodecpp::safememory;
+using namespace safe_memory;
 
 struct Safe {
 	int i = 0;
@@ -55,7 +54,6 @@ void func99() {
 
 }
 
-using namespace nodecpp;
 
 struct Some {
 	nullable_ptr<int> get();

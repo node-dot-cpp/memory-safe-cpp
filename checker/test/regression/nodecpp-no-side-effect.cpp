@@ -1,9 +1,9 @@
-// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_memory/safe_ptr.h>
-#include <safe_memory/check_at_instantiation.h>
+#include <check_at_instantiation.h>
 
-using namespace nodecpp::safememory;
+using namespace safe_memory;
 
 void normalFunc();
 

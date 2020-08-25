@@ -45,6 +45,9 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
+  if(getContext()->getGlobalOptions().DisableLibraryDb)
+    return;
+
   if(isSystemSafeFunction(Decl, getContext()))
     return;
 

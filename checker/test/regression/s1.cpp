@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 
 void bad() {

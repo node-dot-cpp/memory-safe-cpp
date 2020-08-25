@@ -28,7 +28,7 @@
 #ifndef NODECPP_SAFE_TYPES_H
 #define NODECPP_SAFE_TYPES_H
 
-namespace nodecpp::safememory {
+namespace nodecpp {
 
 struct SafeType {
 

@@ -7,7 +7,8 @@
 #define MACRO_FUNC(X, Y) (safeFunction((X), (Y)))
 #define MACRO_DO(X) (X)
 
-using namespace nodecpp::safememory;
+using namespace safe_memory;
+using namespace nodecpp;
 
 struct UnsafeType {
 

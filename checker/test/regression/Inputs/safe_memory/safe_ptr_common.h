@@ -34,10 +34,10 @@
 
 #define NODECPP_ASSERT(...)
 
-namespace nodecpp::safememory
+namespace safe_memory
 {
 	constexpr uint64_t module_id = 2;
-} // namespace nodecpp::safememory
+}
 
 
 #if defined NODECPP_MSVC
@@ -50,7 +50,7 @@ namespace nodecpp::safememory
 
 
 
-namespace nodecpp::safememory
+namespace safe_memory
 {
 #ifdef NODECPP_GCC
 extern void forcePreviousChangesToThisInDtor( void* p );
@@ -71,15 +71,15 @@ struct safeness_declarator {
 };
 
 /* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct safe_memory::safeness_declarator<double> { static constexpr bool is_safe = false; };
 */
 
 // sample code (to be removed)
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct safe_memory::safeness_declarator<double> { static constexpr bool is_safe = false; };
 namespace testing::dummy_objects {
 struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
 }
-template<> struct nodecpp::safememory::safeness_declarator<nodecpp::safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
+template<> struct safe_memory::safeness_declarator<safe_memory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
 // end of sample code (to be removed)
 
 template<class T, bool isSafe> class owning_ptr_impl; // forward declaration
@@ -90,6 +90,6 @@ template<class T> class soft_ptr_no_checks; // forward declaration
 
 
 
-} // namespace nodecpp::safememory
+} // namespace safe_memory
 
 #endif // SAFE_PTR_COMMON_H

@@ -159,9 +159,6 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
   if(Context->getCheckerData().isFromUnsafeNamespace(Name))
     return true;
 
-  if(Context->getGlobalOptions().DisableLibraryDb)
-    return true;
-
   auto &Wl = Context->getGlobalOptions().SafeTypes;
   return (Wl.find(Name) != Wl.end());
 }
@@ -171,9 +168,6 @@ bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Na
   if(Context->getCheckerData().isFromUnsafeNamespace(Name))
     return true;
 
-  if(Context->getGlobalOptions().DisableLibraryDb)
-    return true;
-    
   auto &Wl = Context->getGlobalOptions().SafeFunctions;
   return (Wl.find(Name) != Wl.end());
 }
