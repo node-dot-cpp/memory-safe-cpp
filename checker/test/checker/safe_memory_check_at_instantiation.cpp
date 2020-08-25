@@ -1,5 +1,4 @@
 // RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
-// XFAIL: *
 
 #include <check_at_instantiation.h>
 
@@ -22,14 +21,17 @@ public:
 
 void func() {
 
-	Container<MyClass, BadEqualTo<MyClass>> mc;
+	Container<MyClass, safe_memory::BadEqualTo<MyClass>> mc;
 	// we must trigger the actual instantiation of the method above
 	bool b = mc.isEq();
 
 
-	Container<MyClass, 
-	GoodEqualTo<MyClass>> mc2;
+	Container<MyClass, safe_memory::GoodEqualTo<MyClass>> mc2;
 	// we must trigger the actual instantiation of the method above
 	bool b2 = mc2.isEq();
+// in this case bad implementation wont report error. Good implementation will.
+// error is reported as located in header file, so we check the full location.
+
+// CHECK: check_at_instantiation.h:51:18: error: function with no_side_effect attribute	
 }
 

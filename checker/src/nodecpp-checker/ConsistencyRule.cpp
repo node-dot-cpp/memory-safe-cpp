@@ -26,6 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "ConsistencyRule.h"
+#include "FlagRiia.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -47,19 +48,6 @@ class RuleCASTVisitor
   ClangTidyContext *Context;
   bool IsMemoryUnsafe = false;
 //  MyStack St;
-
-  struct FlagRiia {
-    bool &V;
-    bool OldValue;
-    FlagRiia(bool &V) :V(V) {
-      OldValue = V;
-      V = true;
-    }
-    ~FlagRiia() {
-      V = OldValue;
-    }
-
-  };
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,

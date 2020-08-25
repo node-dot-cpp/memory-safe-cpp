@@ -27,6 +27,7 @@
 
 
 #include "NoSideEffectRule.h"
+#include "FlagRiia.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -46,8 +47,12 @@ class NoSideEffectASTVisitor
   ClangTidyContext *Context;
   FunctionDecl *CurrentFunc = nullptr;
 
-  /// \brief flags if we are currently visiting a \c [[NoSideEffect]] function or method 
+  /// \brief flags if we are currently visiting a \c [[no_side_effect]] function or method 
   bool NoSideEffect = false;
+
+  /// \brief flags if we are currently visiting a \c [[check_as_user_code]] namespace 
+  bool CheckAsUserCode = false;
+
 
   std::string
   getTemplateArgumentBindingsText(const TemplateParameterList *Params,
@@ -116,10 +121,25 @@ public:
 
   bool TraverseDecl(Decl *D) {
     //mb: we don't traverse decls in system-headers
-    if(shouldTraverseDecl(Context, D))
-      return Super::TraverseDecl(D);
-    else
+    if(!D)
       return true;
+    //TranslationUnitDecl has an invalid location, but needs traversing anyway
+    else if (isa<TranslationUnitDecl>(D))
+      return Super::TraverseDecl(D);
+    else if (auto Ns = dyn_cast<NamespaceDecl>(D)) {
+      if(Ns->hasAttr<SafeMemoryCheckAtInstantiationAttr>()) {
+        FlagRiia R(CheckAsUserCode);
+        return Super::TraverseDecl(D);
+      }
+      else
+        return Super::TraverseDecl(D);
+    }
+    else if(CheckAsUserCode)
+      return Super::TraverseDecl(D);
+    else if(isSystemLocation(Context, D->getLocation()))
+      return true;
+    else      
+      return Super::TraverseDecl(D);
   }
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
