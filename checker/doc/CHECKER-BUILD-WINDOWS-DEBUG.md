@@ -40,7 +40,7 @@ Then, to run manually run automated tests:
 
 To run our tool on a single test file and see the output,
 
-	cd test\sample
+	cd test\library
 	nodecpp-checker rules.cpp 
 	
 

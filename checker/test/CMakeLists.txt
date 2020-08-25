@@ -29,6 +29,7 @@ endif()
 set(NODECPP_TEST_DEPS
   nodecpp-checker
   nodecpp-instrument
+  nodecpp-safe-library
   FileCheck
   not
 )
