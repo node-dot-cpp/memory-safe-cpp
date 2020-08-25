@@ -4,13 +4,13 @@
 
 using namespace nodecpp::safememory;
 
-struct [[nodecpp::naked_struct]] NakedInner {
+struct [[safe_memory::naked_struct]] NakedInner {
     nullable_ptr<long> l;
 };
 
 
-struct [[nodecpp::naked_struct]] Naked {
-// CHECK: :[[@LINE-1]]:34: error: unsafe naked_struct declaration
+struct [[safe_memory::naked_struct]] Naked {
+// CHECK: :[[@LINE-1]]:38: error: unsafe naked_struct declaration
     nullable_ptr<int> i; //ok
     int* bad1; //bad
 

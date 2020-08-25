@@ -12,13 +12,12 @@ namespace std {
  	void move();
  	void forward();
 
-	struct hash	{
-		long operator()() const;
-	};
-
 	class function {
 		void operator=(function&);
 	};
+
+	class fake {};
+ 	void operator==(fake, fake);
 
 	// apple gcc std lib uses namespace __1
 	namespace __1 {
@@ -28,6 +27,22 @@ namespace std {
 			void operator=(function&);
 		};
 
+        // containers below are not really safe, but we allow them until we
+        // we get our own safe containers library
+
+        class vector {
+            void size();
+            void operator[](int);
+        };
+
+        class basic_string {
+            void size();
+            void substr();
+
+        };
+
+        class fake {};
+        void operator==(fake, fake);
 	}
 
 	namespace experimental {
@@ -48,5 +63,18 @@ namespace std {
 		}
 	}
 
-}
+	// containers below are not really safe, but we allow them until we
+	// we get our own safe containers library
 
+	class vector {
+		void size();
+		void operator[](int);
+	};
+
+	class basic_string {
+		void size();
+		void substr();
+
+	};
+
+}

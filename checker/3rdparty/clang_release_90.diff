@@ -1,5 +1,5 @@
 diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
-index d44a815c86..a4b72fd99b 100644
+index d44a815c..a4b72fd9 100644
 --- a/include/clang/AST/Expr.h
 +++ b/include/clang/AST/Expr.h
 @@ -1348,6 +1348,38 @@ public:
@@ -42,7 +42,7 @@ index d44a815c86..a4b72fd99b 100644
      return T->getStmtClass() == DeclRefExprClass;
    }
 diff --git a/include/clang/AST/ExprCXX.h b/include/clang/AST/ExprCXX.h
-index faddbc6d96..c8a47fb7ab 100644
+index faddbc6d..c8a47fb7 100644
 --- a/include/clang/AST/ExprCXX.h
 +++ b/include/clang/AST/ExprCXX.h
 @@ -1013,6 +1013,7 @@ public:
@@ -93,7 +93,7 @@ index faddbc6d96..c8a47fb7ab 100644
      return T->getStmtClass() == CXXThisExprClass;
    }
 diff --git a/include/clang/AST/Stmt.h b/include/clang/AST/Stmt.h
-index 403b88ac3a..083bd6ab29 100644
+index 403b88ac..083bd6ab 100644
 --- a/include/clang/AST/Stmt.h
 +++ b/include/clang/AST/Stmt.h
 @@ -367,6 +367,13 @@ protected:
@@ -127,7 +127,7 @@ index 403b88ac3a..083bd6ab29 100644
      /// The location of the "this".
      SourceLocation Loc;
 diff --git a/include/clang/ASTMatchers/ASTMatchers.h b/include/clang/ASTMatchers/ASTMatchers.h
-index 063d8217d9..aea85dd486 100644
+index 063d8217..aea85dd4 100644
 --- a/include/clang/ASTMatchers/ASTMatchers.h
 +++ b/include/clang/ASTMatchers/ASTMatchers.h
 @@ -6694,6 +6694,18 @@ AST_MATCHER_P(OMPExecutableDirective, isAllowedToContainClauseKind,
@@ -150,10 +150,10 @@ index 063d8217d9..aea85dd486 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index d39b16e62b..d49c24b032 100644
+index d39b16e6..9f1a0b45 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3274,3 +3274,63 @@ def ObjCExternallyRetained : InheritableAttr {
+@@ -3274,3 +3274,118 @@ def ObjCExternallyRetained : InheritableAttr {
    let Subjects = SubjectList<[NonParmVar, Function, Block, ObjCMethod]>;
    let Documentation = [ObjCExternallyRetainedDocs];
  }
@@ -161,67 +161,122 @@ index d39b16e62b..d49c24b032 100644
 +def NodeCppNakedStruct : Attr {
 +  let Spellings = [CXX11<"nodecpp","naked_struct">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppNakedStructDocs];
++  let Documentation = [SafeMemoryNakedStructDocs];
++}
++
++def SafeMemoryNakedStruct : Attr {
++  let Spellings = [CXX11<"safe_memory","naked_struct">];
++  let Documentation = [SafeMemoryNakedStructDocs];
 +}
 +
 +def NodeCppMayExtend : Attr {
 +  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
-+//  let Subjects = SubjectList<[ParmVar]>;
-+  let Documentation = [NodeCppMayExtendDocs];
++  let Documentation = [SafeMemoryMayExtendDocs];
++}
++
++def SafeMemoryMayExtend : Attr {
++  let Spellings = [CXX11<"safe_memory","may_extend_to_this">];
++  let Documentation = [SafeMemoryMayExtendDocs];
 +}
 +
 +def NodeCppNoAwait : Attr {
 +  let Spellings = [CXX11<"nodecpp","no_await">];
 +//  let Subjects = SubjectList<[ParmVar]>;
-+  let Documentation = [NodeCppNoAwaitDocs];
++  let Documentation = [SafeMemoryNoAwaitDocs];
++}
++
++def SafeMemoryNoAwait : Attr {
++  let Spellings = [CXX11<"safe_memory","no_await">];
++  let Documentation = [SafeMemoryNoAwaitDocs];
 +}
 +
 +def NodeCppMemoryUnsafe : Attr {
 +  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
 +//  let Subjects = SubjectList<[Namespace]>;
-+  let Documentation = [NodeCppMemoryUnsafeDocs];
++  let Documentation = [SafeMemoryMemoryUnsafeDocs];
++}
++
++def SafeMemoryMemoryUnsafe : Attr {
++  let Spellings = [CXX11<"safe_memory","memory_unsafe">];
++  let Documentation = [SafeMemoryMemoryUnsafeDocs];
 +}
 +
 +def NodeCppNonDeterministic : Attr {
 +  let Spellings = [CXX11<"nodecpp","non_deterministic">];
 +//  let Subjects = SubjectList<[Namespace]>;
-+  let Documentation = [NodeCppNonDeterministicDocs];
++  let Documentation = [SafeMemoryNonDeterministicDocs];
++}
++
++def SafeMemoryNonDeterministic : Attr {
++  let Spellings = [CXX11<"safe_memory","non_deterministic">];
++  let Documentation = [SafeMemoryNonDeterministicDocs];
 +}
 +
 +def NodeCppNoSideEffect : Attr {
 +  let Spellings = [CXX11<"nodecpp","no_side_effect">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppNoSideEffectDocs];
++  let Documentation = [SafeMemoryNoSideEffectDocs];
++}
++
++def SafeMemoryNoSideEffect : Attr {
++  let Spellings = [CXX11<"safe_memory","no_side_effect">];
++//  let Subjects = SubjectList<[CXXRecord]>;
++  let Documentation = [SafeMemoryNoSideEffectDocs];
 +}
 +
 +def NodeCppNoSideEffectWhenConst : Attr {
 +  let Spellings = [CXX11<"nodecpp","no_side_effect_when_const">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppNoSideEffectWhenConstDocs];
++  let Documentation = [SafeMemoryNoSideEffectWhenConstDocs];
++}
++
++def SafeMemoryNoSideEffectWhenConst : Attr {
++  let Spellings = [CXX11<"safe_memory","no_side_effect_when_const">];
++  let Documentation = [SafeMemoryNoSideEffectWhenConstDocs];
 +}
 +
 +def NodeCppDeepConst : Attr {
 +  let Spellings = [CXX11<"nodecpp","deep_const">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppDeepConstDocs];
++  let Documentation = [SafeMemoryDeepConstDocs];
++}
++
++def SafeMemoryDeepConst : Attr {
++  let Spellings = [CXX11<"safe_memory","deep_const">];
++  let Documentation = [SafeMemoryDeepConstDocs];
 +}
 +
 +def NodeCppDeepConstWhenParams : Attr {
 +  let Spellings = [CXX11<"nodecpp","deep_const_when_params">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppDeepConstWhenParamsDocs];
++  let Documentation = [SafeMemoryDeepConstWhenParamsDocs];
++}
++
++def SafeMemoryDeepConstWhenParams : Attr {
++  let Spellings = [CXX11<"safe_memory","deep_const_when_params">];
++  let Documentation = [SafeMemoryDeepConstWhenParamsDocs];
 +}
 +
 +def NodeCppAwaitable : Attr {
 +  let Spellings = [CXX11<"nodecpp","awaitable">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [NodeCppAwaitableDocs];
++  let Documentation = [SafeMemoryAwaitableDocs];
++}
++
++def SafeMemoryAwaitable : Attr {
++  let Spellings = [CXX11<"safe_memory","awaitable">];
++  let Documentation = [SafeMemoryAwaitableDocs];
++}
++
++def SafeMemoryCheckAtInstantiation : Attr {
++  let Spellings = [CXX11<"safe_memory","check_at_instantiation">];
++  let Documentation = [SafeMemoryCheckAtInstantiationDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index fac6116057..3a83e7c6fc 100644
+index fac61160..b9cb4cd7 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -4194,4 +4194,94 @@ be accessed on both device side and host side. It has external linkage and is
+@@ -4194,4 +4194,106 @@ be accessed on both device side and host side. It has external linkage and is
  not initialized on device side. It has internal linkage and is initialized by
  the initializer on host side.
    }];
@@ -229,23 +284,23 @@ index fac6116057..3a83e7c6fc 100644
 \ No newline at end of file
 +}
 +
-+def DocCatNodeCpp : DocumentationCategory<"Node-dot-cpp specifics"> {
++def DocCatSafeMemory : DocumentationCategory<"safe_memory specifics"> {
 +  let Content = [{
-+Node-dot-cpp specific attributes
++Attributes specifics to ``safe_memory`` checker tools and libraries.
 +  }];
 +}
 +
 +
-+def NodeCppNakedStructDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryNakedStructDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on class / struct declaration.
 +Such classes can be created only on the stack and may contain naked ptrs.
 +}];
 +}
 +
-+def NodeCppMayExtendDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryMayExtendDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on library parameter declaration to indicate that lifetime
 +of the callable object may be extended beyond the time of the call.
@@ -253,24 +308,24 @@ index fac6116057..3a83e7c6fc 100644
 +}];
 +}
 +
-+def NodeCppNoAwaitDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryNoAwaitDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on library method declaration to indicate that returned
 +awaitable doesn't need to be checked for co_await.
 +}];
 +}
 +
-+def NodeCppMemoryUnsafeDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryMemoryUnsafeDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on namespace declaration to indicate that
 +elements inside such namespace shouln't be checked for memory safety.
 +}];
 +}
 +
-+def NodeCppNonDeterministicDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryNonDeterministicDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on namespace declaration to indicate that
 +elements inside such namespace shouln't be checked for determinism.
@@ -278,32 +333,32 @@ index fac6116057..3a83e7c6fc 100644
 +}
 +
 +
-+def NodeCppNoSideEffectDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryNoSideEffectDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on function and method declaration to indicate
 +it is side effect free.
 +}];
 +}
 +
-+def NodeCppNoSideEffectWhenConstDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryNoSideEffectWhenConstDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on class declaration to indicate that all const
 +methods are [[no_side_effect]]
 +}];
 +}
 +
-+def NodeCppDeepConstDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryDeepConstDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on class declaration to indicate that a `const`
 +instance of this type is completely immutable.
 +}];
 +}
 +
-+def NodeCppDeepConstWhenParamsDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryDeepConstWhenParamsDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on class template declaration to indicate that
 +when all type parameters are [[deep_const]] then such instantiation is also
@@ -311,15 +366,27 @@ index fac6116057..3a83e7c6fc 100644
 +}];
 +}
 +
-+def NodeCppAwaitableDocs : Documentation {
-+  let Category = DocCatNodeCpp;
++def SafeMemoryAwaitableDocs : Documentation {
++  let Category = DocCatSafeMemory;
 +  let Content = [{
 +This attribute is used on class declaration to indicate that is an awaitable
 +type and therefore it must be verified by that co_await is called on instances.
 +}];
 +}
++
++def SafeMemoryCheckAtInstantiationDocs : Documentation {
++  let Category = DocCatSafeMemory;
++  let Content = [{
++This attribute is used on templates declared inside library (or not checked) code,
++and indicates checker that instantiations of this template must be checker as if
++theyr are user code. Is used when library code calls back into user provided template
++parameter types.
++}];
++}
++
++
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
-index 275c4e4365..28b5f46940 100644
+index 275c4e43..c3bf66f0 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
 +++ b/include/clang/Basic/DiagnosticSemaKinds.td
 @@ -9759,4 +9759,7 @@ def err_bit_cast_non_trivially_copyable : Error<
@@ -327,11 +394,11 @@ index 275c4e4365..28b5f46940 100644
  def err_bit_cast_type_size_mismatch : Error<
    "__builtin_bit_cast source size does not equal destination size (%0 vs %1)">;
 +
-+def err_unknown_nodecpp_attribute : Error<
++def err_unknown_safe_memory_attribute : Error<
 +  "(C1) unknown attribute %0">;
  } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
-index 6ef77b8aee..50c47a3c6b 100644
+index 6ef77b8a..50c47a3c 100644
 --- a/lib/AST/Expr.cpp
 +++ b/lib/AST/Expr.cpp
 @@ -482,6 +482,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx, ValueDecl *D,
@@ -351,7 +418,7 @@ index 6ef77b8aee..50c47a3c6b 100644
    computeDependence(Ctx);
  }
 diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index f407e0875a..f081ce09e1 100644
+index f407e087..efa2793b 100644
 --- a/lib/ASTMatchers/ASTMatchFinder.cpp
 +++ b/lib/ASTMatchers/ASTMatchFinder.cpp
 @@ -381,6 +381,7 @@ public:
@@ -369,7 +436,7 @@ index f407e0875a..f081ce09e1 100644
 +
 +  //mb: we don't traverse decls in system-headers
 +  // nor namespaces with [[nodecpp::memory_unsafe]] attr
-+  if(DeclNode->hasAttr<NodeCppMemoryUnsafeAttr>()) {
++  if(DeclNode->hasAttr<NodeCppMemoryUnsafeAttr>() || DeclNode->hasAttr<SafeMemoryMemoryUnsafeAttr>()) {
 +    return true;
 +  }
 +  else if (!isa<TranslationUnitDecl>(DeclNode)) {
@@ -405,7 +472,7 @@ index f407e0875a..f081ce09e1 100644
  public:
    MatchASTConsumer(MatchFinder *Finder,
 diff --git a/lib/ASTMatchers/ASTMatchersInternal.cpp b/lib/ASTMatchers/ASTMatchersInternal.cpp
-index 4ee32fbe94..e88e287c7b 100644
+index 4ee32fbe..e88e287c 100644
 --- a/lib/ASTMatchers/ASTMatchersInternal.cpp
 +++ b/lib/ASTMatchers/ASTMatchersInternal.cpp
 @@ -852,5 +852,7 @@ const internal::VariadicDynCastAllOfMatcher<OMPClause, OMPDefaultClause>
@@ -417,7 +484,7 @@ index 4ee32fbe94..e88e287c7b 100644
  } // end namespace ast_matchers
  } // end namespace clang
 diff --git a/lib/ASTMatchers/Dynamic/Registry.cpp b/lib/ASTMatchers/Dynamic/Registry.cpp
-index 3305805357..800db9b2d6 100644
+index 33058053..800db9b2 100644
 --- a/lib/ASTMatchers/Dynamic/Registry.cpp
 +++ b/lib/ASTMatchers/Dynamic/Registry.cpp
 @@ -522,6 +522,9 @@ RegistryMaps::RegistryMaps() {
@@ -431,7 +498,7 @@ index 3305805357..800db9b2d6 100644
  
  RegistryMaps::~RegistryMaps() = default;
 diff --git a/lib/Frontend/InitHeaderSearch.cpp b/lib/Frontend/InitHeaderSearch.cpp
-index d65d13489d..9d4fefe9fc 100644
+index d65d1348..9d4fefe9 100644
 --- a/lib/Frontend/InitHeaderSearch.cpp
 +++ b/lib/Frontend/InitHeaderSearch.cpp
 @@ -447,6 +447,12 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
@@ -448,7 +515,7 @@ index d65d13489d..9d4fefe9fc 100644
      } else {
        AddDefaultCPlusPlusIncludePaths(Lang, triple, HSOpts);
 diff --git a/lib/Rewrite/HTMLRewrite.cpp b/lib/Rewrite/HTMLRewrite.cpp
-index e304fbbed7..c961659de7 100644
+index e304fbbe..c961659d 100644
 --- a/lib/Rewrite/HTMLRewrite.cpp
 +++ b/lib/Rewrite/HTMLRewrite.cpp
 @@ -347,7 +347,7 @@ h1 { font-size:14pt }
@@ -461,7 +528,7 @@ index e304fbbed7..c961659de7 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index ee06f8ae51..48743f9d19 100644
+index ee06f8ae..88642412 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -6616,11 +6616,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -474,8 +541,8 @@ index ee06f8ae51..48743f9d19 100644
 -               : (unsigned)diag::warn_unknown_attribute_ignored)
 -        << AL;
 +
-+    if(AL.hasScope() && AL.getScopeName()->getName() == "nodecpp") {
-+      S.Diag(AL.getLoc(), diag::err_unknown_nodecpp_attribute) << AL.getName();
++    if(AL.hasScope() && AL.getScopeName()->getName() == "safe_memory") {
++      S.Diag(AL.getLoc(), diag::err_unknown_safe_memory_attribute) << AL.getName();
 +    }
 +    else {
 +	    S.Diag(AL.getLoc(),
@@ -487,7 +554,7 @@ index ee06f8ae51..48743f9d19 100644
      return;
    }
  
-@@ -7340,6 +7346,37 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -7340,6 +7346,70 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
  
    case ParsedAttr::AT_MSAllocator:
      handleMSAllocatorAttr(S, D, AL);
@@ -496,37 +563,70 @@ index ee06f8ae51..48743f9d19 100644
 +  case ParsedAttr::AT_NodeCppNakedStruct:
 +    handleSimpleAttribute<NodeCppNakedStructAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_SafeMemoryNakedStruct:
++    handleSimpleAttribute<SafeMemoryNakedStructAttr>(S, D, AL);
++    break;
 +  case ParsedAttr::AT_NodeCppMayExtend:
 +    handleSimpleAttribute<NodeCppMayExtendAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryMayExtend:
++    handleSimpleAttribute<SafeMemoryMayExtendAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppNoAwait:
 +    handleSimpleAttribute<NodeCppNoAwaitAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_SafeMemoryNoAwait:
++    handleSimpleAttribute<SafeMemoryNoAwaitAttr>(S, D, AL);
++    break;
 +  case ParsedAttr::AT_NodeCppMemoryUnsafe:
 +    handleSimpleAttribute<NodeCppMemoryUnsafeAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryMemoryUnsafe:
++    handleSimpleAttribute<SafeMemoryMemoryUnsafeAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppNonDeterministic:
 +    handleSimpleAttribute<NodeCppNonDeterministicAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_SafeMemoryNonDeterministic:
++    handleSimpleAttribute<SafeMemoryNonDeterministicAttr>(S, D, AL);
++    break;
 +  case ParsedAttr::AT_NodeCppNoSideEffect:
 +    handleSimpleAttribute<NodeCppNoSideEffectAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryNoSideEffect:
++    handleSimpleAttribute<SafeMemoryNoSideEffectAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppNoSideEffectWhenConst:
 +    handleSimpleAttribute<NodeCppNoSideEffectWhenConstAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_SafeMemoryNoSideEffectWhenConst:
++    handleSimpleAttribute<SafeMemoryNoSideEffectWhenConstAttr>(S, D, AL);
++    break;
 +  case ParsedAttr::AT_NodeCppDeepConst:
 +    handleSimpleAttribute<NodeCppDeepConstAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryDeepConst:
++    handleSimpleAttribute<SafeMemoryDeepConstAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_NodeCppDeepConstWhenParams:
 +    handleSimpleAttribute<NodeCppDeepConstWhenParamsAttr>(S, D, AL);
 +    break;
++  case ParsedAttr::AT_SafeMemoryDeepConstWhenParams:
++    handleSimpleAttribute<SafeMemoryDeepConstWhenParamsAttr>(S, D, AL);
++    break;
 +  case ParsedAttr::AT_NodeCppAwaitable:
 +    handleSimpleAttribute<NodeCppAwaitableAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryAwaitable:
++    handleSimpleAttribute<SafeMemoryAwaitableAttr>(S, D, AL);
++    break;
++  case ParsedAttr::AT_SafeMemoryCheckAtInstantiation:
++    handleSimpleAttribute<SafeMemoryCheckAtInstantiationAttr>(S, D, AL);
      break;
    }
  }
 diff --git a/lib/Sema/SemaDeclCXX.cpp b/lib/Sema/SemaDeclCXX.cpp
-index 2f9e4f961f..7b02e48b76 100644
+index 2f9e4f96..7b02e48b 100644
 --- a/lib/Sema/SemaDeclCXX.cpp
 +++ b/lib/Sema/SemaDeclCXX.cpp
 @@ -14829,8 +14829,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
@@ -549,7 +649,7 @@ index 2f9e4f961f..7b02e48b76 100644
  
    // Virtual overrides must have the same code_seg.
 diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
-index 223f1f74f3..12be23a25f 100644
+index 223f1f74..12be23a2 100644
 --- a/tools/CMakeLists.txt
 +++ b/tools/CMakeLists.txt
 @@ -39,3 +39,6 @@ add_llvm_external_project(clang-tools-extra extra)

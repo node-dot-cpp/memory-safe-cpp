@@ -32,7 +32,7 @@ struct MyServer {
 		auto l = [this, &i](nullable_ptr<nodecpp::Socket> sock) {};
 // CHECK: :[[@LINE-1]]:20: error: (S5.7)
 		srv.onEvent(l);
-	} 
+	}
 };
 
 
@@ -43,8 +43,3 @@ class Bad {
 		srv->onEvent(l);
 	}
 };
-
-
-
-
-

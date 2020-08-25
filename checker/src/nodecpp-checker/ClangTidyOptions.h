@@ -53,7 +53,10 @@ struct ClangTidyGlobalOptions {
   std::set<std::string> SafeTypes;
 
   /// \brief Allow raw pointers
-  bool AllowRawPointers = false;
+  bool DisableRawPointers = false;
+
+  /// \brief Disable library database checks
+  bool DisableLibraryDb = false;
 
 };
 

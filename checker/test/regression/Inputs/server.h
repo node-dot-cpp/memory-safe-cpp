@@ -36,10 +36,10 @@ namespace nodecpp {
 
 class Socket {};
 
-class /*[[nodecpp::owning_only]]*/ SrvMember
+class /*[[safe_memory::owning_only]]*/ SrvMember
 {
     public:
-    void onEvent(std::function<void()> cb [[nodecpp::may_extend_to_this]]);
+    void onEvent(std::function<void()> cb [[safe_memory::may_extend_to_this]]);
 };
 }
 

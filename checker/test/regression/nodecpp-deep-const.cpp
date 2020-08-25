@@ -5,7 +5,7 @@
 
 using namespace nodecpp::safememory;
 
-struct [[nodecpp::deep_const]] DeepConst {
+struct [[safe_memory::deep_const]] DeepConst {
     int l;
     nodecpp::deep_const_type str;
 };
@@ -14,14 +14,14 @@ struct DeepConst;
 // CHECK: :[[@LINE-1]]:8: error: (C3)
 
 
-struct [[nodecpp::deep_const]] BadDeepConst {
-// CHECK: :[[@LINE-1]]:32: error: unsafe deep_const attribute at declaration [deep-const]
+struct [[safe_memory::deep_const]] BadDeepConst {
+// CHECK: :[[@LINE-1]]:36: error: unsafe deep_const attribute at declaration [deep-const]
     owning_ptr<long> ptr;
 };
 
 
 template <class T>
-struct [[nodecpp::deep_const]] DeepConstTemplate {
+struct [[safe_memory::deep_const]] DeepConstTemplate {
     T t;
 };
 

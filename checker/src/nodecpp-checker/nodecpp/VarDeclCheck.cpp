@@ -152,8 +152,8 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (isRawPointerType(Qt)) {
 
-    bool Allow = getContext()->getGlobalOptions().AllowRawPointers;
-    if (!Allow) {
+    bool NoRawPtr = getContext()->getGlobalOptions().DisableRawPointers;
+    if (NoRawPtr) {
       diag(Var->getLocation(), "(S1.3) raw pointer declaration is prohibited");
       return;
     }
@@ -214,7 +214,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto Ns = getCheckHelper()->checkNakedStruct(Qt)) {
     if (Ns.isOk()) {
-      if (Var->hasAttr<NodeCppMayExtendAttr>()) {
+      if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>()) {
         diag(Var->getLocation(),
              "may_extend not implemented for naked struct variables yet");
       }
@@ -230,7 +230,7 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
   if (isLambdaType(Qt)) {
 
     //naked struct internal is checked at other place
-    if (Var->hasAttr<NodeCppMayExtendAttr>()) {
+    if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>()) {
       diag(Var->getLocation(), "may_extend not implemented for lambda");
     }
 

@@ -27,7 +27,7 @@ void safeVector() {
 }
 
 
-struct [[nodecpp::naked_struct]] NakedStr {
+struct [[safe_memory::naked_struct]] NakedStr {
 	nullable_ptr<int> ptr;
 
 	nullable_ptr<int> get() const;

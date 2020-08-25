@@ -377,7 +377,7 @@ private:
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr);
-	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T, isSafe>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T, isSafe>(cb, t) {}
 
 public:
 	soft_ptr_impl() : soft_ptr_base_impl<T, isSafe>()

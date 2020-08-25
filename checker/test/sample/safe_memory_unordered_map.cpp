@@ -27,7 +27,7 @@ void safeVector() {
 }
 
 
-struct [[nodecpp::naked_struct]] NakedStr {
+struct [[safe_memory::naked_struct]] NakedStr {
 	nullable_ptr<int> ptr;
 
 	nullable_ptr<int> get() const;
@@ -62,7 +62,7 @@ struct BadHash {
 };
 
 template<class Key>
-struct [[nodecpp::deep_const]] SideEffectHash {
+struct [[safe_memory::deep_const]] SideEffectHash {
 	size_t operator()(const Key&) const {return 0;}
 };
 
@@ -72,24 +72,24 @@ struct BadEq {
 };
 
 template<class Key>
-struct [[nodecpp::deep_const]] SideEffectEq {
+struct [[safe_memory::deep_const]] SideEffectEq {
 	constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
 };
 
 
-struct [[nodecpp::deep_const]] KeyWithSideEffectEqual {
+struct [[safe_memory::deep_const]] KeyWithSideEffectEqual {
 	bool operator==(const KeyWithSideEffectEqual& o) const {return false;}
 };
 
 template<class Key>
-struct [[nodecpp::deep_const]] GoodHash {
-	[[nodecpp::no_side_effect]] std::size_t operator()(const Key&) const {return 0;}
+struct [[safe_memory::deep_const]] GoodHash {
+	[[safe_memory::no_side_effect]] std::size_t operator()(const Key&) const {return 0;}
 };
 
 template<class Key>
-struct [[nodecpp::deep_const]] GoodEq {
-	[[nodecpp::no_side_effect]] constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
-// CHECK: :[[@LINE-1]]:98: error: function with no_side_effect attribute can call only
+struct [[safe_memory::deep_const]] GoodEq {
+	[[safe_memory::no_side_effect]] constexpr bool operator()(const Key&l, const Key&r) const {return l == r;}
+// CHECK: :[[@LINE-1]]:102: error: function with no_side_effect attribute can call only
 };
 
 void badHashOrKeyEqual() {

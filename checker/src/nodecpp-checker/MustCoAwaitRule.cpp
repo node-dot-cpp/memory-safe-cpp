@@ -112,7 +112,7 @@ public:
     else if(isSystemLocation(Context, D->getLocation()))
         return true;
 
-    else if(D->hasAttr<NodeCppMemoryUnsafeAttr>())
+    else if(D->hasAttr<NodeCppMemoryUnsafeAttr>() || D->hasAttr<SafeMemoryMemoryUnsafeAttr>())
       return true;
 
     else
@@ -268,9 +268,9 @@ public:
       // E->dumpColor();
       Decl *D = E->getCalleeDecl();
       if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
-        //if we get here, then [[no_await]] was missing
-//        diag(E->getExprLoc(), "(S9) missing [[nodecpp::no_await]] at call");
-
+        return Super::VisitCallExpr(E);
+      }
+      else if(D && D->hasAttr<SafeMemoryNoAwaitAttr>()) {
         return Super::VisitCallExpr(E);
       }
       else if(!CallWhiteList.erase(E)) {

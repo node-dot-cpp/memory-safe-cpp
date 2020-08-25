@@ -70,4 +70,15 @@ namespace nodecpp {
 	}
 }
 
+namespace safe_memory {
 
+    class BadEqualTo {
+    public:
+		bool operator()(const int& l, const int& r) const;
+    };
+
+    class GoodEqualTo {
+    public:
+        bool operator()(const int& l, const int& r) const;
+    };
+}

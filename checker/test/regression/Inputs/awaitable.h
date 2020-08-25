@@ -178,7 +178,7 @@ template<typename T>
 T wait_for_all(T t, T t2, T t3, T t4) { return t; }
 
 nodecpp::awaitable<void> await_function();
-[[nodecpp::no_await]] nodecpp::awaitable<void> no_await_function();
+[[safe_memory::no_await]] nodecpp::awaitable<void> no_await_function();
 
 } // namespace nodecpp
 
@@ -195,7 +195,7 @@ namespace std {
 
 namespace nodecpp {
 	auto hidden_await_function() {
-		struct [[nodecpp::awaitable]] HiddenAwaitable  {
+		struct [[safe_memory::awaitable]] HiddenAwaitable  {
 
 			bool await_ready() noexcept { 
 				return false;

@@ -84,6 +84,9 @@ public:
     else if(D->hasAttr<NodeCppNonDeterministicAttr>())
       return true;
 
+    else if(D->hasAttr<SafeMemoryNonDeterministicAttr>())
+      return true;
+
     else
       return Super::TraverseDecl(D);
   }

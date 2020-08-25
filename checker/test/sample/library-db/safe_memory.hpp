@@ -8,23 +8,134 @@
  * 
  */
 
+namespace nodecpp {
+	namespace safememory {
+		// temporarily here until renamed
+		void make_owning();
+		void make_owning2();
+
+		struct fake { int i = 0;};
+		class owning_ptr_impl {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			owning_ptr_impl& operator=(const owning_ptr_impl&);
+			fake& get() const;
+		};
+
+		class owning_ptr_no_checks {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			owning_ptr_no_checks& operator=(const owning_ptr_no_checks&);
+			fake& get() const;
+		};
+
+		class soft_ptr_impl {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			soft_ptr_impl& operator=(const soft_ptr_impl&);
+			fake& get() const;
+		};
+
+		class soft_ptr_no_checks {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			soft_ptr_no_checks& operator=(const soft_ptr_no_checks&);
+			fake& get() const;
+		};
+
+		class nullable_ptr_impl {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			nullable_ptr_impl& operator=(const nullable_ptr_impl&);
+			fake& get() const;
+		};
+
+		class nullable_ptr_no_checks {
+			operator bool();
+			fake* operator->() const;
+			fake& operator*() const;
+			nullable_ptr_no_checks& operator=(const nullable_ptr_no_checks&);
+			fake& get() const;
+		};
+
+	}
+}
 
 namespace safe_memory {
+
+	struct fake { int i = 0;};
+	
+	// since we don't support overloads here, these operators are valids
+	// for any type defined in the safememory namespace
+	bool operator==(fake, fake);
+	bool operator!=(fake, fake);
+	bool operator<(fake, fake);
+	bool operator<=(fake, fake);
+	bool operator>(fake, fake);
+	bool operator>=(fake, fake);
+	void swap(fake, fake);
+
+	void make_owning();
+	void make_owning2();
+
+	class owning_ptr_impl {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		owning_ptr_impl& operator=(const owning_ptr_impl&);
+		fake& get() const;
+	};
+
+	class owning_ptr_no_checks {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		owning_ptr_no_checks& operator=(const owning_ptr_no_checks&);
+		fake& get() const;
+	};
+
+	class soft_ptr_impl {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		soft_ptr_impl& operator=(const soft_ptr_impl&);
+		fake& get() const;
+	};
+
+	class soft_ptr_no_checks {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		soft_ptr_no_checks& operator=(const soft_ptr_no_checks&);
+		fake& get() const;
+	};
+
+	class nullable_ptr_impl {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		nullable_ptr_impl& operator=(const nullable_ptr_impl&);
+		fake& get() const;
+	};
+
+	class nullable_ptr_no_checks {
+		operator bool();
+		fake* operator->() const;
+		fake& operator*() const;
+		nullable_ptr_no_checks& operator=(const nullable_ptr_no_checks&);
+		fake& get() const;
+	};
 
 	struct hash
 	{
 		long operator()() const;
 	};
 
-	// since we don't support overloads here, these operators are valids
-	// for any type defined in the safememory namespace
-	bool operator==(hash, hash);
-	bool operator!=(hash, hash);
-	bool operator<(hash, hash);
-	bool operator<=(hash, hash);
-	bool operator>(hash, hash);
-	bool operator>=(hash, hash);
-	void swap(hash, hash);
 
 	class basic_string_literal
 	{
@@ -35,8 +146,8 @@ namespace safe_memory {
 		basic_string_literal( basic_string_literal&& other ) = default;
 		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
 
-		// bool operator == ( const basic_string_literal& other ) const { return strcmp( str, other.str ) == 0; }
-		// bool operator != ( const basic_string_literal& other ) const { return strcmp( str, other.str ) != 0; }
+		bool operator == ( const basic_string_literal& other ) const;
+		bool operator != ( const basic_string_literal& other ) const;
 
 //		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
 //		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }

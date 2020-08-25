@@ -30,7 +30,7 @@
 namespace nodecpp {
 
     template<class T>
-    class [[nodecpp::deep_const]] [[nodecpp::no_side_effect_when_const]] deep_const_templ {
+    class [[safe_memory::deep_const]] [[safe_memory::no_side_effect_when_const]] deep_const_templ {
     };
 
     typedef deep_const_templ<char> deep_const_type;

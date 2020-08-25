@@ -1,25 +1,26 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_memory/safe_ptr.h>
+#include <safe_memory/check_at_instantiation.h>
 
 using namespace nodecpp::safememory;
 
 void normalFunc();
 
-[[nodecpp::no_side_effect]]
+[[safe_memory::no_side_effect]]
 int func(int i, int j) {
     return i + j;   
 }
 
 int func2(int, int);
 
-[[nodecpp::no_side_effect]]
+[[safe_memory::no_side_effect]]
 int func2(int i, int j) {
 // CHECK: :[[@LINE-1]]:5: error: (C3)
     return i + j;   
 }
 
-[[nodecpp::no_side_effect]]
+[[safe_memory::no_side_effect]]
 int func3();
 
 int func3() {}
@@ -32,7 +33,7 @@ struct Other {
 };
 
 
-[[nodecpp::no_side_effect]]
+[[safe_memory::no_side_effect]]
 void badFunc() {
     func(1, 2);//ok
     normalFunc();//bad
@@ -44,7 +45,7 @@ void badFunc() {
 }
 
 class SomeClass {
-    [[nodecpp::no_side_effect]]
+    [[safe_memory::no_side_effect]]
     void badMethod() {
         func(1, 2);//ok
         normalFunc();//bad
@@ -66,7 +67,7 @@ template<class T>
 class EqualTo {
 public:
     //for this error we must trigger the actual instantiation of this method
-	[[nodecpp::no_side_effect]] bool operator()(const T& l, const T& r) const {
+	[[safe_memory::no_side_effect]] bool operator()(const T& l, const T& r) const {
 		return l == r;
 // CHECK: :[[@LINE-1]]:12: error: function with no_side_effect attribute can call only other no side effect functions
 	}

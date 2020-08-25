@@ -9,7 +9,7 @@ struct Safe {
 	int i = 0;
 };
 
-struct [[nodecpp::naked_struct]] NakedStr {
+struct [[safe_memory::naked_struct]] NakedStr {
 	nullable_ptr<Safe> s1;
 	nullable_ptr<Safe> s2;
 

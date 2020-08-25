@@ -3,9 +3,9 @@
 #include <utility>
 #include <awaitable.h>
 
-class [[nodecpp::awaitable]] UserAwaitable {
-// CHECK: :[[@LINE-1]]:30: error: (C2)
-// CHECK: :[[@LINE-2]]:30: error: unsafe type
+class [[safe_memory::awaitable]] UserAwaitable {
+// CHECK: :[[@LINE-1]]:34: error: (C2)
+// CHECK: :[[@LINE-2]]:34: error: unsafe type
 
 	bool await_ready() noexcept { return false;	}
 	void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
