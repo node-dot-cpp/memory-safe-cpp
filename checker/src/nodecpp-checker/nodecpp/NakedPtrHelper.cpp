@@ -113,33 +113,6 @@ bool isStdMoveOrForward(const std::string &Name) {
           Name == "std::__1::forward";
 }
 
-bool shouldTraverseDecl(const ClangTidyContext* Context, const clang::Decl* D) {
-
-  if(!D)
-    return false;
-  //TranslationUnitDecl has an invalid location, but needs traversing anyway
- else if (isa<TranslationUnitDecl>(D))
-    return true;
-  else if (isa<NamespaceDecl>(D))
-    return true;
-
-
-  if(auto Nd = dyn_cast<NamedDecl>(D)) {
-    
-    std::string Name = getQnameForSystemSafeDb(Nd);
-    if(isSystemSafeTypeName(Context, Name))
-      return false;
-
-    //Fallthrough
-  }
-
-  if(D->hasAttr<SafeMemoryCheckAtInstantiationAttr>()) {
-    return true;
-    //Fallthrough
-  }
-
-  return !isSystemLocation(Context, D->getLocation());
-}
 
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 

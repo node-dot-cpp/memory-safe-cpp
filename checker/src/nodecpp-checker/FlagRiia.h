@@ -25,6 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
+#ifndef NODECPP_CHECKER_FLAGRIIA_H
+#define NODECPP_CHECKER_FLAGRIIA_H
+
 namespace nodecpp {
 namespace checker {
 
@@ -42,3 +45,5 @@ struct FlagRiia {
 
 } // namespace checker
 } // namespace nodecpp
+
+#endif

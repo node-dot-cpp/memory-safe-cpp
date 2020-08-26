@@ -27,6 +27,7 @@
 
 
 #include "ReferenceOverCoAwaitRule.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -57,9 +58,8 @@ struct MyStack {
 };
 /// \brief Check that nullable_ptr are not used
 class CoroutineASTVisitor
-  : public clang::RecursiveASTVisitor<CoroutineASTVisitor> {
+  : public SafetyASTVisitor<CoroutineASTVisitor> {
 
-  ClangTidyContext *Context;
   MyStack St;
 
   /// \brief Add a diagnostic with the check's name.
@@ -72,35 +72,19 @@ class CoroutineASTVisitor
 
 public:
 
-  explicit CoroutineASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else
-      return RecursiveASTVisitor<CoroutineASTVisitor>::TraverseDecl(D);
-  }
+  explicit CoroutineASTVisitor(ClangTidyContext *Context):
+    SafetyASTVisitor<CoroutineASTVisitor>(Context) {}
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 
     MyStack::Riia Riia(St);
-    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::TraverseFunctionDecl(D);;
+    return Super::TraverseFunctionDecl(D);;
   }
 
   bool TraverseCompoundStmt(clang::CompoundStmt *S) {
 
     MyStack::Riia Riia(St);
-    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::TraverseCompoundStmt(S);;
+    return Super::TraverseCompoundStmt(S);;
   }
 
   bool VisitVarDecl(clang::VarDecl *D) {
@@ -115,7 +99,7 @@ public:
       St.add(D);
     }
 
-    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitVarDecl(D);
+    return Super::VisitVarDecl(D);
   }
 
   bool VisitCoawaitExpr(clang::CoawaitExpr *E) {
@@ -125,7 +109,7 @@ public:
         diag(E->getExprLoc(), "'co_await' here", DiagnosticIDs::Note);
       }
     }
-    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitCoawaitExpr(E);
+    return Super::VisitCoawaitExpr(E);
   }
 
   bool VisitCoyieldExpr(clang::CoyieldExpr *E) {
@@ -135,7 +119,7 @@ public:
         diag(E->getExprLoc(), "'co_yield' here", DiagnosticIDs::Note);
       }
     }
-    return clang::RecursiveASTVisitor<CoroutineASTVisitor>::VisitCoyieldExpr(E);
+    return Super::VisitCoyieldExpr(E);
   }
 
 };

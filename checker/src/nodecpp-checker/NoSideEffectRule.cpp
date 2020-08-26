@@ -27,7 +27,7 @@
 
 
 #include "NoSideEffectRule.h"
-#include "FlagRiia.h"
+#include "CHeckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -40,58 +40,52 @@ namespace checker {
 
 
 class NoSideEffectASTVisitor
-  : public RecursiveASTVisitor<NoSideEffectASTVisitor> {
+  : public SafetyASTVisitor<NoSideEffectASTVisitor> {
 
-  typedef RecursiveASTVisitor<NoSideEffectASTVisitor> Super;
-
-  ClangTidyContext *Context;
   FunctionDecl *CurrentFunc = nullptr;
 
   /// \brief flags if we are currently visiting a \c [[no_side_effect]] function or method 
   bool NoSideEffect = false;
 
-  /// \brief flags if we are currently visiting a \c [[check_as_user_code]] namespace 
-  bool CheckAsUserCode = false;
 
+  // std::string
+  // getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+  //                                       const TemplateArgumentList &Args) {
+  //   return getTemplateArgumentBindingsText(Params, Args.data(), Args.size());
+  // }
 
-  std::string
-  getTemplateArgumentBindingsText(const TemplateParameterList *Params,
-                                        const TemplateArgumentList &Args) {
-    return getTemplateArgumentBindingsText(Params, Args.data(), Args.size());
-  }
+  // std::string
+  // getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+  //                                       const TemplateArgument *Args,
+  //                                       unsigned NumArgs) {
+  //   SmallString<128> Str;
+  //   llvm::raw_svector_ostream Out(Str);
 
-  std::string
-  getTemplateArgumentBindingsText(const TemplateParameterList *Params,
-                                        const TemplateArgument *Args,
-                                        unsigned NumArgs) {
-    SmallString<128> Str;
-    llvm::raw_svector_ostream Out(Str);
+  //   if (!Params || Params->size() == 0 || NumArgs == 0)
+  //     return std::string();
 
-    if (!Params || Params->size() == 0 || NumArgs == 0)
-      return std::string();
+  //   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+  //     if (I >= NumArgs)
+  //       break;
 
-    for (unsigned I = 0, N = Params->size(); I != N; ++I) {
-      if (I >= NumArgs)
-        break;
+  //     if (I == 0)
+  //       Out << "[with ";
+  //     else
+  //       Out << ", ";
 
-      if (I == 0)
-        Out << "[with ";
-      else
-        Out << ", ";
+  //     if (const IdentifierInfo *Id = Params->getParam(I)->getIdentifier()) {
+  //       Out << Id->getName();
+  //     } else {
+  //       Out << '$' << I;
+  //     }
 
-      if (const IdentifierInfo *Id = Params->getParam(I)->getIdentifier()) {
-        Out << Id->getName();
-      } else {
-        Out << '$' << I;
-      }
+  //     Out << " = ";
+  //     Args[I].print(Context->getASTContext()->getPrintingPolicy(), Out);
+  //   }
 
-      Out << " = ";
-      Args[I].print(Context->getASTContext()->getPrintingPolicy(), Out);
-    }
-
-    Out << ']';
-    return Out.str();
-  }
+  //   Out << ']';
+  //   return Out.str();
+  // }
 
   /// \brief Add a diagnostic with the check's name.
   void diag(SourceLocation Loc, StringRef Message) {
@@ -113,34 +107,8 @@ class NoSideEffectASTVisitor
 
 public:
 
-  bool shouldVisitImplicitCode() const { return true; }
-  bool shouldVisitTemplateInstantiations() const { return true; }  
-
-  explicit NoSideEffectASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    if(!D)
-      return true;
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-    else if (auto Ns = dyn_cast<NamespaceDecl>(D)) {
-      if(Ns->hasAttr<SafeMemoryCheckAtInstantiationAttr>()) {
-        FlagRiia R(CheckAsUserCode);
-        return Super::TraverseDecl(D);
-      }
-      else
-        return Super::TraverseDecl(D);
-    }
-    else if(CheckAsUserCode)
-      return Super::TraverseDecl(D);
-    else if(isSystemLocation(Context, D->getLocation()))
-      return true;
-    else      
-      return Super::TraverseDecl(D);
-  }
+  explicit NoSideEffectASTVisitor(ClangTidyContext *Context): 
+    SafetyASTVisitor<NoSideEffectASTVisitor>(Context) {}
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 

@@ -26,7 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "ConsistencyRule.h"
-#include "FlagRiia.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -41,11 +41,8 @@ namespace checker {
 
 
 class RuleCASTVisitor
-  : public clang::RecursiveASTVisitor<RuleCASTVisitor> {
+  : public CheckerASTVisitor<RuleCASTVisitor> {
 
-  typedef clang::RecursiveASTVisitor<RuleCASTVisitor> Super;
-
-  ClangTidyContext *Context;
   bool IsMemoryUnsafe = false;
 //  MyStack St;
 
@@ -70,24 +67,8 @@ class RuleCASTVisitor
   }
 public:
 
-  explicit RuleCASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else
-      return Super::TraverseDecl(D);
-  }
+  explicit RuleCASTVisitor(ClangTidyContext *Context):
+    CheckerASTVisitor<RuleCASTVisitor>(Context) {}
 
   bool TraverseNamespaceDecl(clang::NamespaceDecl *D) {
 

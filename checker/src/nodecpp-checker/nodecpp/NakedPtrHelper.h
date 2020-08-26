@@ -86,7 +86,6 @@ bool isNodeBaseName(const std::string& Name);
 // bool isStdHashOrEqualToName(const std::string& Name);
 bool isStdMoveOrForward(const std::string &Name);
 
-bool shouldTraverseDecl(const ClangTidyContext* Context, const clang::Decl* D);
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name);

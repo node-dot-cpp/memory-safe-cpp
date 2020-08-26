@@ -150,7 +150,7 @@ index 063d8217..aea85dd4 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index d39b16e6..9f1a0b45 100644
+index d39b16e6..a25e5377 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
 @@ -3274,3 +3274,118 @@ def ObjCExternallyRetained : InheritableAttr {
@@ -268,15 +268,15 @@ index d39b16e6..9f1a0b45 100644
 +  let Documentation = [SafeMemoryAwaitableDocs];
 +}
 +
-+def SafeMemoryCheckAtInstantiation : Attr {
++def SafeMemoryCheckAsUserCode : Attr {
 +  let Spellings = [CXX11<"safe_memory","check_at_instantiation">];
-+  let Documentation = [SafeMemoryCheckAtInstantiationDocs];
++  let Documentation = [SafeMemoryCheckAsUserCodeDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index fac61160..b9cb4cd7 100644
+index fac61160..270b29bc 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -4194,4 +4194,106 @@ be accessed on both device side and host side. It has external linkage and is
+@@ -4194,4 +4194,107 @@ be accessed on both device side and host side. It has external linkage and is
  not initialized on device side. It has internal linkage and is initialized by
  the initializer on host side.
    }];
@@ -374,13 +374,14 @@ index fac61160..b9cb4cd7 100644
 +}];
 +}
 +
-+def SafeMemoryCheckAtInstantiationDocs : Documentation {
++def SafeMemoryCheckAsUserCodeDocs : Documentation {
 +  let Category = DocCatSafeMemory;
 +  let Content = [{
-+This attribute is used on templates declared inside library (or not checked) code,
-+and indicates checker that instantiations of this template must be checker as if
-+theyr are user code. Is used when library code calls back into user provided template
-+parameter types.
++This attribute is used on namespaces declared inside library code,
++and indicates checker that it should be checked as if is user code.
++Is used when library code calls back into user provided template
++parameter types, and because of that check must be made after specific
++template parameter instantiation.
 +}];
 +}
 +
@@ -528,7 +529,7 @@ index e304fbbe..c961659d 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index ee06f8ae..88642412 100644
+index ee06f8ae..af018221 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -6616,11 +6616,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -620,8 +621,8 @@ index ee06f8ae..88642412 100644
 +  case ParsedAttr::AT_SafeMemoryAwaitable:
 +    handleSimpleAttribute<SafeMemoryAwaitableAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_SafeMemoryCheckAtInstantiation:
-+    handleSimpleAttribute<SafeMemoryCheckAtInstantiationAttr>(S, D, AL);
++  case ParsedAttr::AT_SafeMemoryCheckAsUserCode:
++    handleSimpleAttribute<SafeMemoryCheckAsUserCodeAttr>(S, D, AL);
      break;
    }
  }

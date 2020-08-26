@@ -26,6 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "MustCoAwaitRule.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -38,11 +39,8 @@ namespace checker {
 
 
 class RuleS9ASTVisitor
-  : public RecursiveASTVisitor<RuleS9ASTVisitor> {
+  : public SafetyASTVisitor<RuleS9ASTVisitor> {
 
-  typedef RecursiveASTVisitor<RuleS9ASTVisitor> Super;
-
-  ClangTidyContext *Context;
   llvm::SmallSet<CallExpr*, 4> CallWhiteList;
   llvm::SmallSet<CoawaitExpr*, 4> CoawaitWhiteList;
   llvm::SmallSet<ValueDecl*, 4> DeclWhiteList;
@@ -72,7 +70,8 @@ class RuleS9ASTVisitor
 
 public:
 
-  explicit RuleS9ASTVisitor(ClangTidyContext *Context): Context(Context) {}
+  explicit RuleS9ASTVisitor(ClangTidyContext *Context):
+    SafetyASTVisitor<RuleS9ASTVisitor>(Context) {}
 
   void ReportAndClear() {
     for(auto each : DeclWhiteList) {
@@ -97,26 +96,6 @@ public:
       diag(each->getBeginLoc(), "(S9) internal check failed");
     }
     DontTraverse.clear();
-  }
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else if(D->hasAttr<NodeCppMemoryUnsafeAttr>() || D->hasAttr<SafeMemoryMemoryUnsafeAttr>())
-      return true;
-
-    else
-      return Super::TraverseDecl(D);
   }
 
   bool TraverseStmt(Stmt *St) {
@@ -306,42 +285,6 @@ public:
     DontTraverse.insert(E->getOperand());
     return Super::VisitCoawaitExpr(E);
   }
-
-  bool VisitAttributedStmt(AttributedStmt *St) {
-
-    // if(!hasSpecificAttr<NodeCppNoAwaitAttr>(St->getAttrs()))
-    //   return Super::VisitAttributedStmt(St);
-
-
-    // Stmt *Ch = St->getSubStmt();
-    // if(Expr *E = dyn_cast<Expr>(Ch)) {
-    //   E = E->IgnoreImplicit();
-    //   if(CallExpr *CallE = dyn_cast<CallExpr>(E)) {
-        
-    //     Decl *D = CallE->getCalleeDecl();
-    //     if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
-
-    //       //this is ok, white list
-    //       DontTraverse.insert(Ch);
-    //     }
-    //     else {
-    //       diag(CallE->getExprLoc(), "(S9) no_await not found at declaration");
-    //       diag(D->getLocation(), "(S9) referenced here", DiagnosticIDs::Note);
-
-    //       //white list anyway, as we already reported the issue
-    //       DontTraverse.insert(Ch);
-    //     }
-
-    //     return Super::VisitAttributedStmt(St);
-    //   }
-    // }
-
-    // diag(St->getBeginLoc(), "(S9) no_await not allowed here");
-        
-    return Super::VisitAttributedStmt(St);
-  }
-
-
 };
 
 class RuleS9ASTConsumer : public ASTConsumer {
