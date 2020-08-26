@@ -30,7 +30,7 @@
 
 #include <safe_memory/checker_attributes.h>
 
-namespace safe_memory
+namespace SAFE_MEMORY_CHECK_AS_USER_CODE safe_memory
 {
 	template<class T = void>
 	struct SAFE_MEMORY_DEEP_CONST equal_to {
@@ -38,6 +38,7 @@ namespace safe_memory
 			return lhs == rhs;
 		}
 	};
+}
 
 	//mb: this has issues with [[no_side_effect]] analysis
 	// template<>
@@ -49,6 +50,9 @@ namespace safe_memory
 	// 		}
 	// };
 
+namespace safe_memory
+{
+	
 	template <typename T> struct hash;
 
 	template <typename T>
