@@ -1,7 +1,6 @@
 // RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_memory/safe_ptr.h>
-#include <check_at_instantiation.h>
 
 using namespace safe_memory;
 

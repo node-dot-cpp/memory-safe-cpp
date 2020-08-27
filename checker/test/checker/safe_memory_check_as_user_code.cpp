@@ -1,6 +1,6 @@
 // RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <check_at_instantiation.h>
+#include <check_as_user_code.h>
 
 class MyClass {
 public:

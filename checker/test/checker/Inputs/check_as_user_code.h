@@ -41,7 +41,7 @@ public:
 
 }
 
-namespace [[safe_memory::check_at_instantiation]] safe_memory {
+namespace [[safe_memory::check_as_user_code]] safe_memory {
 
 template<class T>
 class GoodEqualTo {
