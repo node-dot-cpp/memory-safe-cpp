@@ -26,6 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "DeterminismRule.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -38,12 +39,7 @@ namespace checker {
 
 
 class RuleDASTVisitor
-  : public clang::RecursiveASTVisitor<RuleDASTVisitor> {
-
-  typedef clang::RecursiveASTVisitor<RuleDASTVisitor> Super;
-
-  ClangTidyContext *Context;
-//  MyStack St;
+  : public DeterminismASTVisitor<RuleDASTVisitor> {
 
 
   /// \brief Add a diagnostic with the check's name.
@@ -66,27 +62,8 @@ class RuleDASTVisitor
 
 public:
 
-  explicit RuleDASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else if(D->hasAttr<NodeCppNonDeterministicAttr>())
-      return true;
-
-    else
-      return Super::TraverseDecl(D);
-  }
+  explicit RuleDASTVisitor(ClangTidyContext *Context):
+    DeterminismASTVisitor<RuleDASTVisitor>(Context) {}
 
   bool VisitExplicitCastExpr(clang::ExplicitCastExpr *Expr) {
     

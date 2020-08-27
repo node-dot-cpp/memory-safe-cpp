@@ -61,9 +61,9 @@ to copy binaries to folder `/usr/local/bin`. Alternatively, if you don't have ro
 Running samples
 ---------------
 
-Go to folder with test cases `test/sample` and run:
+Go to folder with test cases `test/library` and run:
 
-	cd test/sample
+	cd test/library
 	nodecpp-checker rules.cpp
 
 You can run the tool over any of the `.cpp` files. You can add files with your own sample code on the same folder and run them.
@@ -109,7 +109,7 @@ Open downloaded file and drag into 'Applications', then open a command line cons
 
 
 After that you can follow generic __Simple build__ instrucctions for Linux.
-But keep in mind that on MacOS C++ standard library is not always correctly detected and besides things mentioned in __Troubleshooting__ you may need to edit file `checker/test/sample/compile_flags.txt` and add 4 lines similar to the following at the end:
+But keep in mind that on MacOS C++ standard library is not always correctly detected and besides things mentioned in __Troubleshooting__ you may need to edit file `checker/test/library/compile_flags.txt` and add 4 lines similar to the following at the end:
 
 	-isystem
 	/Library/Developer/CommandLineTools/usr/include/c++/v1
@@ -195,21 +195,21 @@ Troubleshooting
 
 There are some common causes to errors on automated test cases.
 
-Tests under the `regression` folder _should_ be self contained and not to fail. If you have errors there, then please fill a bug report.
-Tests under de `samples` tend to fail more easily, usually because of environment setup. Most of the time its easy to work around with some basic guidelines.
+Tests under the `check` folder _should_ be self contained and not to fail. If you have errors there, then please fill a bug report.
+Tests under `library` tend to fail more easily, usually because of environment setup. Most of the time its easy to work around with some basic guidelines.
 
-Go to the sample folder and run the tool
+Go to the library folder and run the tool
 
-	cd checker/sample
+	cd test/library
 	nodecpp-checker all-good.cpp
 
 Then you may get:
 
-1. Errors about not finding C++ standard include headers (like `<vector>`). To fix this, you will need to edit `compile_flags.txt` in the same `checker/sample` foler, and manually add the path to your system C++ library include.
+1. Errors about not finding C++ standard include headers (like `<vector>`). To fix this, you will need to edit `compile_flags.txt` in the same `test/library` foler, and manually add the path to your system C++ library include.
 
 2. Errors about not finding `foundation.h` or similar. This is most likely because there are missing submodules of the `memory-safe-cpp` repo. Please verify folders `library/src/iibmalloc` and `library/src/iibmalloc/src/foundation` are not empty. If they are please checkout repository again with `--recurse-submodules` flag set.
 
-3. Other missing includes. You may try to find the files, and add their paths to `checker/sample/compile_flags.txt`
+3. Other missing includes. You may try to find the files, and add their paths to `test/library/compile_flags.txt`
 
 
 

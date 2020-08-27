@@ -113,6 +113,7 @@ bool isStdMoveOrForward(const std::string &Name) {
           Name == "std::__1::forward";
 }
 
+
 bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
 
   auto Sm = Context->getSourceManager();
@@ -135,9 +136,18 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
   return (Wl.find(Name) != Wl.end());
 }
 
+bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name) {
+
+  if(Context->getCheckerData().isFromUnsafeNamespace(Name))
+    return true;
+
+  auto &Wl = Context->getGlobalOptions().SafeFunctions;
+  return (Wl.find(Name) != Wl.end());
+}
 
 bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Context) {
 
+  //TODO remove this from here, move to safe-library.json file
   const CXXMethodDecl* M = dyn_cast<CXXMethodDecl>(Decl);
   if(M && M->getParent()) {
     const CXXRecordDecl* Cl = M->getParent();
@@ -156,11 +166,11 @@ bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Cont
   std::string Name = getQnameForSystemSafeDb(Decl);
   
   // coroutine automatically injected call
+  // can't put it into db, so it must be hardcoded
   if (Name == "__builtin_coro_frame")
     return true;
 
-  auto &Wl = Context->getGlobalOptions().SafeFunctions;
-  return (Wl.find(Name) != Wl.end());
+  return isSystemSafeFunction(Context, Name);
 }
 
 std::string getQnameForSystemSafeDb(QualType Qt) {
@@ -247,7 +257,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
     return false;
 
   //we check explicit and implicit here
-  bool HasAttr = Dc->hasAttr<NodeCppNakedStructAttr>();
+  bool HasAttr = Dc->hasAttr<NodeCppNakedStructAttr>() || Dc->hasAttr<SafeMemoryNakedStructAttr>();
 
   // bool checkInits = false;
   // std::list<const FieldDecl*> missingInitializers;
@@ -345,6 +355,8 @@ KindCheck isNakedStructType(QualType Qt, const ClangTidyContext *Context,
 
   Dc = getRecordWithDefinition(Dc);
   if (Dc && Dc->hasAttr<NodeCppNakedStructAttr>())
+    return KindCheck(true, checkNakedStructRecord(Dc, Context));
+  if (Dc && Dc->hasAttr<SafeMemoryNakedStructAttr>())
     return KindCheck(true, checkNakedStructRecord(Dc, Context));
 
   //t->dump();
@@ -605,7 +617,7 @@ bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, const ClangTidyContext
         Dh.diag(SourceLocation(), "template parameter " + std::to_string(I) + ", '" + Name + "' is not safe");
         return false;
       }
-      auto Kc = isDeepConstType(Qt, Context, Dh); 
+      auto Kc = isDeepConstType(Qt, Context, Dh);
       if(!Kc || !Kc.isOk()) {
         std::string Name = Qt.getAsString();
         Dh.diag(SourceLocation(), "template parameter " + std::to_string(I) + ", '" + Name + "' is not [[deep_const]]");
@@ -738,7 +750,7 @@ bool isAwaitableType(QualType Qt) {
   if(isAwaitableName(Name))
     return true;
   else
-    return Dc->hasAttr<NodeCppAwaitableAttr>();
+    return Dc->hasAttr<NodeCppAwaitableAttr>() || Dc->hasAttr<SafeMemoryAwaitableAttr>();
 }
 
 bool isNodecppErrorType(QualType Qt) {
@@ -987,8 +999,8 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
-  bool attr = Dc->hasAttr<NodeCppDeepConstAttr>();
-  bool attrWhenParams = Dc->hasAttr<NodeCppDeepConstWhenParamsAttr>();
+  bool attr = Dc->hasAttr<NodeCppDeepConstAttr>() || Dc->hasAttr<SafeMemoryDeepConstAttr>();
+  bool attrWhenParams = Dc->hasAttr<NodeCppDeepConstWhenParamsAttr>() || Dc->hasAttr<SafeMemoryDeepConstWhenParamsAttr>();
 
   if(isSystemLoc) {
     if(attr)
@@ -1384,6 +1396,9 @@ bool isDerivedFromNodeBase(QualType Qt) {
   if(isNodeBaseName(Name))
     return true;
 
+  if(!R->hasDefinition())
+    return false;
+
   for(auto Each : R->bases()) {
     if(isDerivedFromNodeBase(Each.getType()))
       return true;
@@ -1394,24 +1409,31 @@ bool isDerivedFromNodeBase(QualType Qt) {
 
 bool isEmptyClass(QualType Qt) {
 
-  auto T = Qt.getCanonicalType().getTypePtr();
+  const clang::Type* T = Qt.getCanonicalType().getTypePtr();
 
   if(!T)
     return false;
 
-  auto R = T->getAsCXXRecordDecl();
-  if(!R)
+  const CXXRecordDecl* Rd = T->getAsCXXRecordDecl();
+  Rd = getRecordWithDefinition(Rd);
+  if(!Rd)
     return false;
 
-  if(!R->field_empty())
-    return false;
+  return Rd->isEmpty();
 
-  for(auto Each : R->bases()) {
-    if(!isEmptyClass(Each.getType()))
-      return false;
-  }
+  // //mb: remove this
+  // if(!R->hasDefinition())
+  //   return false;
 
-  return true;
+  // if(!R->field_empty())
+  //   return false;
+
+  // for(auto Each : R->bases()) {
+  //   if(!isEmptyClass(Each.getType()))
+  //     return false;
+  // }
+
+  // return true;
 }
 
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
@@ -1517,14 +1539,14 @@ bool NakedPtrScopeChecker::checkDeclRefExpr(const DeclRefExpr *DeclRef) {
     case Param:
       return true;
     case This:
-      return ParamVar->hasAttr<NodeCppMayExtendAttr>();
+      return ParamVar->hasAttr<NodeCppMayExtendAttr>() || ParamVar->hasAttr<SafeMemoryMayExtendAttr>();
     default:
       assert(false);
     }
   } else if (auto Var = dyn_cast<VarDecl>(FromDecl)) {
     if (Var->hasGlobalStorage())
       return true;
-    else if (Var->hasAttr<NodeCppMayExtendAttr>()) {
+    else if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>()) {
       return true;
     } else {
       if (OutScope == Stack) {
@@ -1712,7 +1734,7 @@ NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
 
     if (auto ParmVar = dyn_cast<ParmVarDecl>(Dc)) {
 
-      if (ParmVar->hasAttr<NodeCppMayExtendAttr>())
+      if (ParmVar->hasAttr<NodeCppMayExtendAttr>() || ParmVar->hasAttr<SafeMemoryMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Param, nullptr);
@@ -1724,7 +1746,7 @@ NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
     } else if (auto Var = dyn_cast<VarDecl>(Dc)) {
       if (Var->hasGlobalStorage()) // globals can't be changed
         return std::make_pair(Unknown, nullptr);
-      else if (Var->hasAttr<NodeCppMayExtendAttr>())
+      else if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Stack, Dc);

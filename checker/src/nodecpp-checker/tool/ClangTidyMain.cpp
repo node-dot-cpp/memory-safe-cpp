@@ -202,6 +202,12 @@ Disable new rules for allowing non null raw pointers.
                                         cl::init(false),
                                         cl::cat(NodecppCheckerCategory));
 
+static cl::opt<bool> NoLibraryDb("no-library-db", cl::desc(R"(
+Disable checks against safe library db, mostly used to simplify testing
+)"),
+                                        cl::init(false),
+                                        cl::cat(NodecppCheckerCategory));
+
 // static cl::opt<bool> AnalyzeTemporaryDtors("analyze-temporary-dtors",
 //                                            cl::desc(R"(
 // Enable temporary destructor-aware analysis in
@@ -328,30 +334,34 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
   //   return nullptr;
   // }
 
-  std::string ErrorMessage;
-  std::unique_ptr<JSONSafeDatabase> Safes;
-  if (!SafeLibraryDb.empty()) {
-    Safes =JSONSafeDatabase::loadFromSpecificFile(SafeLibraryDb, ErrorMessage);    
-  }
-  else {
-  // if (!BuildPath.empty()) {
-  //   Safes =
-  //       CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage);
-  // } else {
-      Safes = JSONSafeDatabase::autoDetectFromSource(FilePath,
-                                                              ErrorMessage);
-//  }
+  GlobalOptions.DisableRawPointers = NoRawPtr;
+  GlobalOptions.DisableLibraryDb = NoLibraryDb;
+
+  if(!NoLibraryDb) {
+    std::string ErrorMessage;
+    std::unique_ptr<JSONSafeDatabase> Safes;
+    if (!SafeLibraryDb.empty()) {
+      Safes =JSONSafeDatabase::loadFromSpecificFile(SafeLibraryDb, ErrorMessage);    
+    }
+    else {
+    // if (!BuildPath.empty()) {
+    //   Safes =
+    //       CompilationDatabase::autoDetectFromDirectory(BuildPath, ErrorMessage);
+    // } else {
+        Safes = JSONSafeDatabase::autoDetectFromSource(FilePath,
+                                                                ErrorMessage);
+  //  }
+    }
+
+    if (!Safes) {
+      llvm::errs() << ErrorMessage << "\nRunning without safe functions database.\n";
+    }
+    else {
+      Safes->getFunctions(GlobalOptions.SafeFunctions);
+      Safes->getTypes(GlobalOptions.SafeTypes);
+    }
   }
 
-  if (!Safes) {
-    llvm::errs() << ErrorMessage << "\nRunning without safe functions database.\n";
-  }
-  else {
-    Safes->getFunctions(GlobalOptions.SafeFunctions);
-    Safes->getTypes(GlobalOptions.SafeTypes);
-  }
-
-  GlobalOptions.AllowRawPointers = !NoRawPtr;
 
   ClangTidyOptions DefaultOptions;
   DefaultOptions.Checks = "*,-clang-diagnostic-*";

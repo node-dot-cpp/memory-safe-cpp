@@ -26,6 +26,7 @@
 * -------------------------------------------------------------------------------*/
 
 #include "MiscellaneousRule.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -38,13 +39,7 @@ namespace checker {
 
 
 class RuleM1ASTVisitor
-  : public clang::RecursiveASTVisitor<RuleM1ASTVisitor> {
-
-  typedef clang::RecursiveASTVisitor<RuleM1ASTVisitor> Super;
-
-  ClangTidyContext *Context;
-//  MyStack St;
-
+  : public CheckerASTVisitor<RuleM1ASTVisitor> {
 
   /// \brief Add a diagnostic with the check's name.
   DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
@@ -54,24 +49,8 @@ class RuleM1ASTVisitor
 
 public:
 
-  explicit RuleM1ASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-  bool TraverseDecl(Decl *D) {
-    //mb: we don't traverse decls in system-headers
-    //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-    if(!D)
-      return true;
-
-    else if (isa<TranslationUnitDecl>(D))
-      return Super::TraverseDecl(D);
-
-    else if(isSystemLocation(Context, D->getLocation()))
-        return true;
-
-    else
-      return Super::TraverseDecl(D);
-  }
+  explicit RuleM1ASTVisitor(ClangTidyContext *Context):
+    CheckerASTVisitor<RuleM1ASTVisitor>(Context) {}
 
   bool VisitCXXThrowExpr(clang::CXXThrowExpr *Expr) {
     

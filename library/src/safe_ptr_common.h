@@ -192,8 +192,8 @@ constexpr bool isPointerNotZombie(void* ptr ) { return true; }
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
-} //namespace nodecpp::safememory
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return true;}
+} //namespace nodecpp::safememory
 
 #else
 #error at least some specific allocation functionality must be selected

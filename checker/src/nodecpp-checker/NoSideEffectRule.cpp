@@ -27,6 +27,7 @@
 
 
 #include "NoSideEffectRule.h"
+#include "CHeckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
@@ -39,59 +40,88 @@ namespace checker {
 
 
 class NoSideEffectASTVisitor
-  : public RecursiveASTVisitor<NoSideEffectASTVisitor> {
+  : public SafetyASTVisitor<NoSideEffectASTVisitor> {
 
-  typedef RecursiveASTVisitor<NoSideEffectASTVisitor> Super;
+  FunctionDecl *CurrentFunc = nullptr;
 
-  ClangTidyContext *Context;
-
-  /// \brief flags if we are currently visiting a \c [[NoSideEffect]] function or method 
+  /// \brief flags if we are currently visiting a \c [[no_side_effect]] function or method 
   bool NoSideEffect = false;
 
+
+  // std::string
+  // getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+  //                                       const TemplateArgumentList &Args) {
+  //   return getTemplateArgumentBindingsText(Params, Args.data(), Args.size());
+  // }
+
+  // std::string
+  // getTemplateArgumentBindingsText(const TemplateParameterList *Params,
+  //                                       const TemplateArgument *Args,
+  //                                       unsigned NumArgs) {
+  //   SmallString<128> Str;
+  //   llvm::raw_svector_ostream Out(Str);
+
+  //   if (!Params || Params->size() == 0 || NumArgs == 0)
+  //     return std::string();
+
+  //   for (unsigned I = 0, N = Params->size(); I != N; ++I) {
+  //     if (I >= NumArgs)
+  //       break;
+
+  //     if (I == 0)
+  //       Out << "[with ";
+  //     else
+  //       Out << ", ";
+
+  //     if (const IdentifierInfo *Id = Params->getParam(I)->getIdentifier()) {
+  //       Out << Id->getName();
+  //     } else {
+  //       Out << '$' << I;
+  //     }
+
+  //     Out << " = ";
+  //     Args[I].print(Context->getASTContext()->getPrintingPolicy(), Out);
+  //   }
+
+  //   Out << ']';
+  //   return Out.str();
+  // }
+
   /// \brief Add a diagnostic with the check's name.
-  DiagnosticBuilder diag(SourceLocation Loc, StringRef Message,
-                         DiagnosticIDs::Level Level = DiagnosticIDs::Error) {
-    return Context->diag(DiagMsgSrc, Loc, Message, Level);
+  void diag(SourceLocation Loc, StringRef Message) {
+    Context->diagError2(Loc, "no-side-effect", Message);
+    if(CurrentFunc) {
+      if(CurrentFunc->isTemplateInstantiation()) {
+        // if(auto Pt = CurrentFunc->getPrimaryTemplate()) {
+        //   auto ArgL = CurrentFunc->getTemplateSpecializationArgs();
+        //   std::string Text = getTemplateArgumentBindingsText(
+        //     Pt->getTemplateParameters(), *ArgL);
+          
+          Context->diagNote(CurrentFunc->getPointOfInstantiation(), "Instantiated here");
+        // }
+      }
+    }
   }
   
   CheckHelper* getCheckHelper() const { return Context->getCheckHelper(); }
 
 public:
 
-  bool shouldVisitImplicitCode() const { return true; }
-  bool shouldVisitTemplateInstantiations() const { return true; }  
-
-  explicit NoSideEffectASTVisitor(ClangTidyContext *Context): Context(Context) {}
-
-
-  // bool TraverseDecl(Decl *D) {
-  //   //mb: we don't traverse decls in system-headers
-  //   //TranslationUnitDecl has an invalid location, but needs traversing anyway
-
-  //   if(!D)
-  //     return true;
-
-  //   else if (isa<TranslationUnitDecl>(D))
-  //     return Super::TraverseDecl(D);
-
-  //   // else if(isSystemLocation(Context, D->getLocation()))
-  //   //     return true;
-
-  //   else
-  //     return Super::TraverseDecl(D);
-  // }
+  explicit NoSideEffectASTVisitor(ClangTidyContext *Context): 
+    SafetyASTVisitor<NoSideEffectASTVisitor>(Context) {}
 
   bool TraverseFunctionDecl(clang::FunctionDecl *D) {
 
+    CurrentFunc = D;
     if(NoSideEffect) {
-      Context->diagError2(D->getLocation(), "no-side-effect", "internal error");
+      diag(D->getLocation(), "internal error");
       return false;
     }
 
-    if(isSystemSafeFunction(D, Context)) {
-      // don't traverse, assume is ok
-      return true;
-    }
+    // if(isSystemSafeFunction(D, Context)) {
+    //   // don't traverse, assume is ok
+    //   return true;
+    // }
 
     bool Flag = getCheckHelper()->isNoSideEffect(D);
 
@@ -116,10 +146,10 @@ public:
 
   bool VisitCallExpr(CallExpr *E) {
 
-    if(NoSideEffect) {
+    if(NoSideEffect && !E->isTypeDependent()) {
 
       if(!getCheckHelper()->isNoSideEffect(E->getDirectCallee())) {
-        Context->diagError2(E->getExprLoc(), "no-side-effect", "function with no_side_effect attribute can call only other no side effect functions");
+        diag(E->getExprLoc(), "function with no_side_effect attribute can call only other no side effect functions");
       }
     }
 
@@ -128,8 +158,8 @@ public:
 
   bool VisitLambdaExpr(LambdaExpr *E) {
 
-    if(NoSideEffect) {
-      Context->diagError2(E->getExprLoc(), "no-side-effect", "lambda not supported inside no_side_effect function");
+    if(NoSideEffect && !E->isTypeDependent()) {
+      diag(E->getExprLoc(), "lambda not supported inside no_side_effect function");
       return true;
     }
 
@@ -138,9 +168,9 @@ public:
 
   bool VisitCXXConstructExpr(CXXConstructExpr *E) {
 
-    if(NoSideEffect) {
+    if(NoSideEffect && !E->isTypeDependent()) {
       if(!E->getConstructor()->isTrivial()) {
-        Context->diagError2(E->getExprLoc(), "no-side-effect", "function with no_side_effect attribute can call only other no side effect functions");
+        diag(E->getExprLoc(), "function with no_side_effect attribute can call only other no side effect functions");
       }
     }
 

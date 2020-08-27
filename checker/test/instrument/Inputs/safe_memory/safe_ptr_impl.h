@@ -31,7 +31,7 @@
 #include "safe_ptr_common.h"
 #include <utility>
 
-namespace nodecpp::safememory
+namespace safe_memory
 {
 
 enum class MemorySafety {none, partial, full};
@@ -187,8 +187,8 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr_impl<T1, isSafe1>& other ) const { return t.getTypedPtr() != other.getDereferencablePtr(); }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t.getTypedPtr() != nullptr; }
 
 	// T* release() : prhibited by safity requirements
 
@@ -334,8 +334,8 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr_base_impl<T1, isSafe1>& other ) const { return getDereferencablePtr() != other.getDereferencablePtr(); }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return getDereferencablePtr() != nullptr; }
 
 	~soft_ptr_base_impl()
 	{
@@ -377,7 +377,7 @@ private:
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr);
-	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T, isSafe>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
+	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T, isSafe>(cb, t) {} // to be used for only types annotaded as [[safe_memory::owning_only]]
 
 public:
 	soft_ptr_impl() : soft_ptr_base_impl<T, isSafe>()
@@ -482,8 +482,8 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr_impl<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
 };
 
 template<>
@@ -583,8 +583,8 @@ public:
 	template<class T1, bool isSafe1>
 	bool operator != (const soft_ptr_impl<T1, isSafe1>& other ) const { return this->getDereferencablePtr() != other.getDereferencablePtr(); }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->getDereferencablePtr() != nullptr; }
 
 	void reset()
 	{
@@ -632,7 +632,7 @@ public:
 	{
 		cbPtr = getControlBlock_(thg_stackPtrForMakeOwningCall);
 		uintptr_t delta = reinterpret_cast<uint8_t*>(this) - reinterpret_cast<uint8_t*>(cbPtr);
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, delta <= UINT32_MAX, "delta = 0x{:x}", delta );
+		NODECPP_ASSERT(safe_memory::module_id, nodecpp::assert::AssertLevel::critical, delta <= UINT32_MAX, "delta = 0x{:x}", delta );
 		offset = (uint32_t)delta;
 	}
 
@@ -929,6 +929,6 @@ public:
 	}
 };
 
-} // namespace nodecpp::safememory
+} // namespace safe_memory
 
 #endif // SAFE_PTR_IMPL_H

@@ -28,9 +28,9 @@ If you look at `test.sh` (or `test.bat` under Windows), it is simple:
 
 Sets the `PATH` and runs the tool over the `test` folder. The `test` folder has some special files `test/lit.cfg` and `test/lit.site.cfg.in` used to configure lit, and also `test/CMakeLists.txt` has some special content used by `cmake` during build configuration to properly set up the test environment.
 
-Each `.cpp` in that folder is considered a test case. To add a new test case, simple add a new `.cpp` file under `test/sample` (or `test/regression`) and `llvm-lit` will automatically pick it up. 
+Each `.cpp` in that folder is considered a test case. To add a new test case, simple add a new `.cpp` file under `test/library` (or `test/checker`) and `llvm-lit` will automatically pick it up. 
 
-Important is to notice that automated tests under folder `test/regression` don't access the __std__ library on the system, nor the real `safe_ptr.h` library, they use a small _mock_ of them found in `Inputs` folders. This is done such way to have tests self contained and improve test stability. Tests under `test/samples` do use real `safe_ptr.h` library and real __std__ on the platform.
+Important is to notice that automated tests under folder `test/checker` don't access the __std__ library on the system, nor the real `safe_ptr.h` library, they use a small _mock_ of them found in `Inputs` folders. This is done such way to have tests self contained and improve test stability. Tests under `test/library` do use real `safe_ptr.h` library and real __std__ on the platform.
 
 
 Each `.cpp` file has a header line, that tells the runner how to run this particular test. In our case, they are all the same:

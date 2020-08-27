@@ -5,7 +5,10 @@
 #include <safe_types.h>
 
 #define MACRO_ADD(X, Y) ((X) + (Y))
-using namespace nodecpp::safememory;
+
+using namespace safe_memory;
+using namespace nodecpp;
+
 
 int release() {	return 0; }
 
