@@ -32,6 +32,6 @@ void func() {
 // in this case bad implementation wont report error. Good implementation will.
 // error is reported as located in header file, so we check the full location.
 
-// CHECK: check_at_instantiation.h:51:18: error: function with no_side_effect attribute	
+// CHECK: check_as_user_code.h:51:18: error: function with no_side_effect attribute	
 }
 
