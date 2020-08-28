@@ -1,5 +1,15 @@
 -std=c++17
+-stdlib=libc++
+-fcoroutines-ts
 -DNODECPP_NO_STACK_INFO_IN_EXCEPTIONS
+-isystem
+/usr/lib/llvm-9/bin/../include/c++/v1
+-isystem
+/usr/lib/llvm-9/lib/clang/9.0.0/include
+-isystem
+/Library/Developer/CommandLineTools/usr/include/c++/v1
+-isystem
+/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include
 -isystem
 ../../../library/include
 -isystem
