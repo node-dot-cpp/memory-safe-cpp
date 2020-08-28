@@ -150,7 +150,7 @@ index 063d8217..aea85dd4 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index d39b16e6..a25e5377 100644
+index d39b16e6..e21f9c59 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
 @@ -3274,3 +3274,118 @@ def ObjCExternallyRetained : InheritableAttr {
@@ -269,14 +269,14 @@ index d39b16e6..a25e5377 100644
 +}
 +
 +def SafeMemoryCheckAsUserCode : Attr {
-+  let Spellings = [CXX11<"safe_memory","check_at_instantiation">];
++  let Spellings = [CXX11<"safe_memory","check_as_user_code">];
 +  let Documentation = [SafeMemoryCheckAsUserCodeDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index fac61160..270b29bc 100644
+index fac61160..20bb299d 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
-@@ -4194,4 +4194,107 @@ be accessed on both device side and host side. It has external linkage and is
+@@ -4194,4 +4194,105 @@ be accessed on both device side and host side. It has external linkage and is
  not initialized on device side. It has internal linkage and is initialized by
  the initializer on host side.
    }];
@@ -384,8 +384,6 @@ index fac61160..270b29bc 100644
 +template parameter instantiation.
 +}];
 +}
-+
-+
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
 index 275c4e43..c3bf66f0 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
