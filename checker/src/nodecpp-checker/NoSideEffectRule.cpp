@@ -27,7 +27,7 @@
 
 
 #include "NoSideEffectRule.h"
-#include "CHeckerASTVisitor.h"
+#include "CheckerASTVisitor.h"
 #include "nodecpp/NakedPtrHelper.h"
 #include "ClangTidyDiagnosticConsumer.h"
 #include "clang/AST/ASTConsumer.h"
