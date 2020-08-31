@@ -568,39 +568,39 @@ constexpr void _Verify_range(const safe_iterator_impl<T, C, S>& _First, const sa
 }
 }
 
-namespace std {
-
-namespace sf = safe_memory;	
-namespace sfd = safe_memory::detail;	
-
-
-template <typename T, bool C>
-struct _Unwrappable<sfd::safe_iterator_no_checks<T, C>, sfd::safe_iterator_no_checks<T, C>> : std::true_type {
-};
-
-template <typename T, bool C>
-struct _Wrapped_seekable<sfd::safe_iterator_no_checks<T, C>, T*> : std::true_type {
-};
-
-template <typename T, bool C>
-struct _Range_verifiable<sfd::safe_iterator_no_checks<T, C>, sfd::safe_iterator_no_checks<T, C>> : std::true_type {
-};
-
-
-template <typename T, bool C, sf::memory_safety S>
-struct _Unwrappable<sfd::safe_iterator_impl<T, C, S>, sfd::safe_iterator_impl<T, C, S>> : std::true_type {
-};
-
-template <typename T, bool C, sf::memory_safety S>
-struct _Wrapped_seekable<sfd::safe_iterator_impl<T, C, S>, T*> : std::true_type {
-};
-
-template <typename T, bool C, sf::memory_safety S>
-struct _Range_verifiable<sfd::safe_iterator_impl<T, C, S>, sfd::safe_iterator_impl<T, C, S>> : std::true_type {
-};
-
-
-} //namespace std
+//namespace std {
+//
+//namespace sf = safe_memory;	
+//namespace sfd = safe_memory::detail;	
+//
+//
+//template <typename T, bool C>
+//struct _Unwrappable<sfd::safe_iterator_no_checks<T, C>, sfd::safe_iterator_no_checks<T, C>> : std::true_type {
+//};
+//
+//template <typename T, bool C>
+//struct _Wrapped_seekable<sfd::safe_iterator_no_checks<T, C>, T*> : std::true_type {
+//};
+//
+//template <typename T, bool C>
+//struct _Range_verifiable<sfd::safe_iterator_no_checks<T, C>, sfd::safe_iterator_no_checks<T, C>> : std::true_type {
+//};
+//
+//
+//template <typename T, bool C, sf::memory_safety S>
+//struct _Unwrappable<sfd::safe_iterator_impl<T, C, S>, sfd::safe_iterator_impl<T, C, S>> : std::true_type {
+//};
+//
+//template <typename T, bool C, sf::memory_safety S>
+//struct _Wrapped_seekable<sfd::safe_iterator_impl<T, C, S>, T*> : std::true_type {
+//};
+//
+//template <typename T, bool C, sf::memory_safety S>
+//struct _Range_verifiable<sfd::safe_iterator_impl<T, C, S>, sfd::safe_iterator_impl<T, C, S>> : std::true_type {
+//};
+//
+//
+//} //namespace std
 #endif //NODECPP_WINDOWS
 
 
