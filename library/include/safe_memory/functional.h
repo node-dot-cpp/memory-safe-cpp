@@ -29,6 +29,7 @@
 #define SAFE_MEMORY_FUNCTIONAL_H
 
 #include <safe_memory/checker_attributes.h>
+#include <typeindex>
 
 namespace SAFE_MEMORY_CHECK_AS_USER_CODE safe_memory
 {
@@ -58,6 +59,11 @@ namespace safe_memory
 	template <typename T>
 	struct SAFE_MEMORY_DEEP_CONST hash : std::enable_if_t<std::is_enum_v<T>> {
 		SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(T p) const { return std::size_t(p); }
+	};
+
+	template <>
+	struct SAFE_MEMORY_DEEP_CONST hash<std::type_index> {
+		SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(const std::type_index& p) const { return p.hash_code(); }
 	};
 
 	template <typename T> struct SAFE_MEMORY_DEEP_CONST hash<T*> // Note that we use the pointer as-is and don't divide by sizeof(T*). This is because the table is of a prime size and this division doesn't benefit distribution.
