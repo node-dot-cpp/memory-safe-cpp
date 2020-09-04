@@ -1,6 +1,29 @@
-/*******************************************************************************
-  Copyright (C) 2016 OLogN Technologies AG
-*******************************************************************************/
+/* -------------------------------------------------------------------------------
+* Copyright (c) 2020, OLogN Technologies AG
+* All rights reserved.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*     * Redistributions of source code must retain the above copyright
+*       notice, this list of conditions and the following disclaimer.
+*     * Redistributions in binary form must reproduce the above copyright
+*       notice, this list of conditions and the following disclaimer in the
+*       documentation and/or other materials provided with the distribution.
+*     * Neither the name of the OLogN Technologies AG nor the
+*       names of its contributors may be used to endorse or promote products
+*       derived from this software without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+* ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+* WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL OLogN Technologies AG BE LIABLE FOR ANY
+* DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES
+* (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+* LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND
+* ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+* (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+* SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+* -------------------------------------------------------------------------------*/
 
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/RecursiveASTVisitor.h"
@@ -21,7 +44,7 @@ using namespace std;
 
 // Apply a custom category to all command-line options so that they are the
 // only ones displayed.
-static cl::OptionCategory myToolCategory("nodecpp-safe-library options");
+static cl::OptionCategory myToolCategory("safe-memory-odr options");
 
 // CommonOptionsParser declares HelpMessage with a description of the common
 // command-line options related to the compilation database and input files.
@@ -41,13 +64,15 @@ Dump("dump", cl::desc("Generate an idl tree and dump it.\n"),
     cl::cat(myToolCategory));
 
 
-struct MappingData {
-    std::set<const CXXRecordDecl*> allTypes;
-    std::set<const FunctionDecl*> allFuncs;
+struct Element {
+    clang::SourceLocation Loc;
+    std::string MangledName;
+    unsigned OdrHash;
+};
 
-    std::set<std::string> allTypeNames;
-    std::set<std::string> allFuncNames;
-    std::set<std::string> allNames;
+struct MappingData {
+
+    std::set<const Element*> AllElements;
 
     void GenerateNames();
 };
@@ -101,66 +126,67 @@ void MappingData::GenerateNames() {
     // We generate all names and put them into set, so they get
     // lexicograph ordered, and make the tool deterministic
 
-    for(auto it = allTypes.begin(); it != allTypes.end(); ++it) {
-        auto name = getQnameForSystemSafeDb(*it);
-        allTypeNames.insert(name);
-        allNames.insert(name);
-    }    
+    // for(auto it = allTypes.begin(); it != allTypes.end(); ++it) {
+    //     auto name = getQnameForSystemSafeDb(*it);
+    //     allTypeNames.insert(name);
+    //     allNames.insert(name);
+    // }    
 
-    for(auto it = allFuncs.begin(); it != allFuncs.end(); ++it) {
-        auto name = getQnameForSystemSafeDb(*it);
-        allFuncNames.insert(name);
-        allNames.insert(name);
-    }
+    // for(auto it = allFuncs.begin(); it != allFuncs.end(); ++it) {
+    //     auto name = getQnameForSystemSafeDb(*it);
+    //     allFuncNames.insert(name);
+    //     allNames.insert(name);
+    // }    
+
 }
 
 void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "[\n{\n");
 
-    fprintf(file, "  \"names\" : [\n");
-    for(auto it = md.allNames.begin(); it != md.allNames.end(); ++it) {
-        fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
+    // fprintf(file, "  \"names\" : [\n");
+    // for(auto it = md.allNames.begin(); it != md.allNames.end(); ++it) {
+    //     fprintf(file, "    \"%s\",\n", it->c_str());
+    // }    
 
-    fprintf(file, "  \"types\" : [\n");
-    for(auto it = md.allTypeNames.begin(); it != md.allTypeNames.end(); ++it) {
-        fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
+    // fprintf(file, "  \"types\" : [\n");
+    // for(auto it = md.allTypeNames.begin(); it != md.allTypeNames.end(); ++it) {
+    //     fprintf(file, "    \"%s\",\n", it->c_str());
+    // }    
 
-    fprintf(file, "  ],\n  \"functions\" : [\n");
-    for(auto it = md.allFuncNames.begin(); it != md.allFuncNames.end(); ++it) {
-        fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
+    // fprintf(file, "  ],\n  \"functions\" : [\n");
+    // for(auto it = md.allFuncNames.begin(); it != md.allFuncNames.end(); ++it) {
+    //     fprintf(file, "    \"%s\",\n", it->c_str());
+    // }    
 
     fprintf(file, "  ]\n}\n]\n");
 }
 
 
-class FindNamedClassVisitor
-    : public RecursiveASTVisitor<FindNamedClassVisitor> {
+class CheckNamedDeclVisitor
+    : public RecursiveASTVisitor<CheckNamedDeclVisitor> {
 private:
     ASTContext *context;
     MappingData& md;
 
 public:
-    explicit FindNamedClassVisitor(ASTContext *context, MappingData& md)
+    explicit CheckNamedDeclVisitor(ASTContext *context, MappingData& md)
         : context(context), md(md) {}
 
-    bool VisitCXXRecordDecl(CXXRecordDecl *declaration) {
+    bool VisitCXXRecordDecl(CXXRecordDecl *D) {
 
-        auto canon = declaration->getCanonicalDecl();
+        if(D == D->getCanonicalDecl()) {
 
-        md.allTypes.insert(canon);
+        }
 
         return true;
     }
 
-    bool VisitFunctionDecl(FunctionDecl *declaration) {
+    bool VisitFunctionDecl(FunctionDecl *D) {
 
-        auto canon = declaration->getCanonicalDecl();
+        if(D == D->getCanonicalDecl()) {
 
-        md.allFuncs.insert(canon);
+        }
 
         return true;
     }
@@ -173,46 +199,46 @@ private:
     }
 };
 
-class FindNamedClassConsumer : public ASTConsumer {
+class CheckNamedDeclConsumer : public ASTConsumer {
 private:
     MappingData md;
 
-    FindNamedClassVisitor visitor1;
+    CheckNamedDeclVisitor visitor1;
 
     FILE* os;
 public:
-    explicit FindNamedClassConsumer(ASTContext *context, FILE* os)
+    explicit CheckNamedDeclConsumer(ASTContext *context, FILE* os)
         : visitor1(context, md), os(os)
-    {}
+    {
+        printf("ASTContext: %p\n", context);
+    }
 
     virtual void HandleTranslationUnit(ASTContext &context) {
+
+        auto tu = context.getTranslationUnitDecl();
+        printf("ASTContext: %p, Tu: %p\n", &context, tu);
         visitor1.TraverseDecl(context.getTranslationUnitDecl());
-
-        // while(visitor2.doMapping()) {
-        //     errs() << "-----------\n";
-        //     visitor2.TraverseDecl(context.getTranslationUnitDecl());
-        // }
-        md.GenerateNames();
-        SerializeData(os, md);
+        // md.GenerateNames();
+        // SerializeData(os, md);
     }
 };
 
-class FindNamedClassAction : public ASTFrontendAction {
+class CheckNamedDeclAction : public ASTFrontendAction {
 private:
     FILE* os;
 public:
-    FindNamedClassAction(FILE* os) :os(os) {}
+    CheckNamedDeclAction(FILE* os) :os(os) {}
     virtual unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &compiler, StringRef inFile) {
-        return unique_ptr<ASTConsumer>(new FindNamedClassConsumer(&compiler.getASTContext(), os));
+        return unique_ptr<ASTConsumer>(new CheckNamedDeclConsumer(&compiler.getASTContext(), os));
     }
 };
 
-class FindNamedClassActionFactory : public FrontendActionFactory {
+class CheckNamedDeclActionFactory : public FrontendActionFactory {
 private:
     FILE* os;
 public:
-    FindNamedClassActionFactory(FILE* os) :os(os) {}
-    FrontendAction *create() override { return new FindNamedClassAction(os); }
+    CheckNamedDeclActionFactory(FILE* os) :os(os) {}
+    FrontendAction *create() override { return new CheckNamedDeclAction(os); }
 };
 
 int main(int argc, const char **argv) {
@@ -224,7 +250,12 @@ int main(int argc, const char **argv) {
 
     CommonOptionsParser optionsParser(argc, argv, myToolCategory);
 
-    ClangTool tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
+    ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
+
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DSAFE_MEMORY_CHECKER_EXTENSIONS",
+            ArgumentInsertPosition::BEGIN));
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-fsyntax-only",
+            ArgumentInsertPosition::BEGIN));
 
     StringRef FileName("dummy");
     auto PathList = optionsParser.getSourcePathList();
@@ -260,5 +291,6 @@ int main(int argc, const char **argv) {
         return 1;
     }
 
-    return tool.run(new FindNamedClassActionFactory(f.get()));
+    CheckNamedDeclActionFactory Factory(f.get());
+    return Tool.run(&Factory);
 }
