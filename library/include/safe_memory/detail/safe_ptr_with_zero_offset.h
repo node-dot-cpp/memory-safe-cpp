@@ -37,6 +37,8 @@ namespace safe_memory::detail {
 
 using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
 
+using ::nodecpp::safememory::lib_helpers::make_zero_offset_t;
+
 }
 
 

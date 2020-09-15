@@ -105,7 +105,7 @@
 #ifndef SAFE_MEMORY_EASTL_STRING_H
 #define SAFE_MEMORY_EASTL_STRING_H
 
-#include <safe_memory/EASTL/internal/__undef_macros.h>
+#include <safe_memory/EASTL1/internal/__undef_macros.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <safe_memory/string_literal.h>
 #include <safe_memory/functional.h>
@@ -146,7 +146,7 @@
 #endif
 
 
-#include <safe_memory/EASTL/internal/char_traits.h>
+#include <safe_memory/EASTL1/internal/char_traits.h>
 
 namespace safe_memory
 {

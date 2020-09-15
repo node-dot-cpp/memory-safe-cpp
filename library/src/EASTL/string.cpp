@@ -33,7 +33,7 @@
 ///////////////////////////////////////////////////////////////////////////////
 
 
-#include <safe_memory/EASTL/string.h>
+#include <safe_memory/EASTL1/string.h>
 #include <string.h>
 
 

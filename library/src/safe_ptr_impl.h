@@ -461,6 +461,20 @@ struct FirstControlBlock // not reallocatable
 		//dbgCheckValidity<void>();
 	}
 	bool isZombie() { return otherAllockedSlots.isZombie(); }
+
+	template<class T>
+	void updatePtrForListItemsWithInvalidPtr()
+	{
+		FirstControlBlock* cb = this;
+		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( cb->slots[i].isUsed() )
+				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->invalidatePtr();
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
+	}
+
 };
 //static_assert( sizeof(FirstControlBlock) == 32 );
 
@@ -889,6 +903,8 @@ class soft_ptr_base_impl
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
+
+	friend struct FirstControlBlock;
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64

@@ -35,6 +35,7 @@
 
 namespace nodecpp::safememory::lib_helpers
 {
+struct make_zero_offset_t {};
 
 template<class T>
 class soft_ptr_with_zero_offset_impl
@@ -58,6 +59,11 @@ public:
 	static constexpr memory_safety is_safe = memory_safety::safe;
  
 	soft_ptr_with_zero_offset_impl() {}
+
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw )
+	{
+		ptr = raw;
+	}
 
 	soft_ptr_with_zero_offset_impl( const owning_ptr_impl<T>& owner )
 	{
@@ -196,6 +202,8 @@ template<class T> bool operator == (const owning_ptr_impl<T>& p1, const soft_ptr
 template<class T> bool operator != (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 != p1; }
 template<class T> bool operator == (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 == p1; }
 
+
+
 template<class T>
 class soft_ptr_with_zero_offset_no_checks
 {
@@ -211,6 +219,11 @@ public:
 	static constexpr memory_safety is_safe = memory_safety::none;
  
 	soft_ptr_with_zero_offset_no_checks() { }
+
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw )
+	{
+		ptr = raw;
+	}
 
 	soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t) {	}
 	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )

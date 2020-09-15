@@ -58,10 +58,11 @@ target_include_directories(EASTLTestNoCheck PUBLIC include)
 #-------------------------------------------------------------------------------------------
 # Dependencies 
 #-------------------------------------------------------------------------------------------
-add_subdirectory(packages/EABase)
+#mb: EABase and EASTL are already found from 3rdparty
+#add_subdirectory(packages/EABase)
 add_subdirectory(packages/EAAssert)
 add_subdirectory(packages/EAStdC)
-add_subdirectory(packages/EASTL)
+#add_subdirectory(packages/EASTL)
 add_subdirectory(packages/EAMain)
 add_subdirectory(packages/EATest)
 add_subdirectory(packages/EAThread)

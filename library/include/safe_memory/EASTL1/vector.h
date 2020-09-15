@@ -52,7 +52,7 @@
 #ifndef SAFE_MEMORY_EASTL_VECTOR_H
 #define SAFE_MEMORY_EASTL_VECTOR_H
 
-#include <safe_memory/EASTL/internal/__undef_macros.h>
+#include <safe_memory/EASTL1/internal/__undef_macros.h>
 #include <safe_memory/detail/safe_alloc.h>
 #include <type_traits>
 #include <iterator>

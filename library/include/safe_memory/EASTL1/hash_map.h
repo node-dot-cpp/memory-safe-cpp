@@ -45,7 +45,7 @@
 #define SAFE_MEMORY_EASTL_HASH_MAP_H
 
 
-#include <safe_memory/EASTL/internal/hashtable.h>
+#include <safe_memory/EASTL1/internal/hashtable.h>
 #include <functional>
 #include <utility>
 

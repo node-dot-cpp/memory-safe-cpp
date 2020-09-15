@@ -35,7 +35,7 @@
 #ifndef SAFE_MEMORY_EASTL_UNORDERED_MAP_H
 #define SAFE_MEMORY_EASTL_UNORDERED_MAP_H
 
-#include <safe_memory/EASTL/hash_map.h>
+#include <safe_memory/EASTL1/hash_map.h>
 
 namespace safe_memory
 {

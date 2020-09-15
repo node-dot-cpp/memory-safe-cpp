@@ -9,6 +9,10 @@ include(CTest)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
+add_subdirectory(3rdparty/EABase)
+add_subdirectory(3rdparty/EASTL)
+add_subdirectory(src/iibmalloc)
+
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
@@ -24,9 +28,8 @@ target_include_directories(safe_memory
   PUBLIC src
   )
 
-add_subdirectory(src/iibmalloc)
 
-target_link_libraries(safe_memory iibmalloc)
+target_link_libraries(safe_memory iibmalloc EASTL EABase)
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
   # remove default exceptions, because of warning

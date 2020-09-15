@@ -323,8 +323,8 @@ int TestVector()
 	{
 		// using namespace eastl;
 
-		// pointer         data();
-		// const_pointer   data() const;
+		// pointer         data_unsafe();
+		// const_pointer   data_unsafe() const;
 		// reference       front();
 		// const_reference front() const;
 		// reference       back();
@@ -335,15 +335,15 @@ int TestVector()
 		intArray[1] = 11;
 		intArray[2] = 12;
 
-		EATEST_VERIFY(intArray.data() == &intArray[0]);
-		EATEST_VERIFY(*intArray.data() == 10);
+		EATEST_VERIFY(intArray.data_unsafe() == &intArray[0]);
+		EATEST_VERIFY(*intArray.data_unsafe() == 10);
 		EATEST_VERIFY(intArray.front() == 10);
 		EATEST_VERIFY(intArray.back() == 7);
 
 		const vector<TestObject> toArrayC(10, TestObject(7));
 
-		EATEST_VERIFY(toArrayC.data() == &toArrayC[0]);
-		EATEST_VERIFY(*toArrayC.data() == TestObject(7));
+		EATEST_VERIFY(toArrayC.data_unsafe() == &toArrayC[0]);
+		EATEST_VERIFY(*toArrayC.data_unsafe() == TestObject(7));
 		EATEST_VERIFY(toArrayC.front() == TestObject(7));
 		EATEST_VERIFY(toArrayC.back() == TestObject(7));
 	}
@@ -496,21 +496,21 @@ int TestVector()
 
 		// void* push_back_uninitialized();
 
-		int64_t toCount0 = TestObject::sTOCount;
+		// int64_t toCount0 = TestObject::sTOCount;
 
-		vector<TestObject> vTO;
-		EATEST_VERIFY(TestObject::sTOCount == toCount0);
+		// vector<TestObject> vTO;
+		// EATEST_VERIFY(TestObject::sTOCount == toCount0);
 
-		for (i = 0; i < 25; i++)
-		{
-			void* pTO = vTO.push_back_uninitialized();
-			EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i)));
+		// for (i = 0; i < 25; i++)
+		// {
+		// 	void* pTO = vTO.push_back_uninitialized();
+		// 	EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i)));
 
-			new (pTO) TestObject((int)i);
-			EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i) + 1));
-			EATEST_VERIFY(vTO.back().mX == (int)i);
-			EATEST_VERIFY(vTO.validate());
-		}
+		// 	new (pTO) TestObject((int)i);
+		// 	EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i) + 1));
+		// 	EATEST_VERIFY(vTO.back().mX == (int)i);
+		// 	EATEST_VERIFY(vTO.validate());
+		// }
 	}
 
 	{
@@ -1231,8 +1231,8 @@ int TestVector()
 		vector<int> intArray(20);
 
 		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.validate_iterator(intArray.begin()) == iterator_validity::ValidCanDeref);
-		EATEST_VERIFY(intArray.validate_iterator(NULL) == iterator_validity::Null);
+		// EATEST_VERIFY(intArray.validate_iterator(intArray.begin()) == iterator_validity::ValidCanDeref);
+		// EATEST_VERIFY(intArray.validate_iterator(NULL) == iterator_validity::Null);
 	}
 
 	{

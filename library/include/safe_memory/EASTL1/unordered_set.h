@@ -35,7 +35,7 @@
 #ifndef SAFE_MEMORY_EASTL_UNORDERED_SET_H
 #define SAFE_MEMORY_EASTL_UNORDERED_SET_H
 
-#include <safe_memory/EASTL/hash_set.h>
+#include <safe_memory/EASTL1/hash_set.h>
 
 namespace safe_memory
 {
