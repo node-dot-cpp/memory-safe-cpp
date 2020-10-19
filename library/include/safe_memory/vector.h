@@ -34,15 +34,14 @@
 
 #include <EASTL/vector.h>
 #include <safe_memory/detail/allocator_to_eastl.h>
-#include <safe_memory/detail/safe_alloc.h>
 
 namespace safe_memory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : private eastl::vector<T, detail::allocator_to_eastl<T, Safety>>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : private eastl::vector<T, detail::allocator_to_eastl<Safety>>
 	{
 		typedef vector<T, Safety> 										this_type;
-		typedef eastl::vector<T, detail::allocator_to_eastl<T, Safety>> base_type;
+		typedef eastl::vector<T, detail::allocator_to_eastl<Safety>>    base_type;
 
 		template <typename T, memory_safety Safety>
 		friend bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b);
@@ -75,9 +74,10 @@ namespace safe_memory
 		using typename base_type::difference_type;
 
 		using typename base_type::allocator_type;
+		using typename base_type::array_type;
 
-		typedef detail::safe_array_iterator<T, false, Safety, true>		iterator_safe;
-		typedef detail::safe_array_iterator<T, true, Safety, true>		const_iterator_safe;
+		typedef detail::safe_array_iterator2<T, false, Safety>		iterator_safe;
+		typedef detail::safe_array_iterator2<T, true, Safety>		const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 		typedef const const_iterator_safe&							csafe_it_arg;
@@ -246,7 +246,7 @@ namespace safe_memory
 		const_pointer_pair CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const;
 
 		const base_type& AsBaseType() const noexcept { return *this; }
-		const typename allocator_type::soft_array_type& GetHeapPtr() const { return base_type::mpBegin; }
+		const array_type& GetHeapPtr() const { return base_type::mpBegin; }
 	}; // class vector
 
 
@@ -457,7 +457,7 @@ namespace safe_memory
 	vector<T, Safety>::erase(csafe_it_arg position)
 	{
 		const_pointer p = CheckMineAndGet(position);
-		pointer r = erase_unsafe(p);
+		pointer r = base_type::erase(p);
 		return iterator_safe::makePtr(GetHeapPtr(), r);
 	}
 
@@ -467,7 +467,7 @@ namespace safe_memory
 	vector<T, Safety>::erase(csafe_it_arg first, csafe_it_arg last)
 	{
 		const_pointer_pair p = CheckMineAndGet(first, last);
-		pointer r = erase_unsafe(p.first, p.second);
+		pointer r = base_type::erase(p.first, p.second);
 		return iterator_safe::makePtr(GetHeapPtr(), r);
 	}
 

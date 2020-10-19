@@ -29,19 +29,15 @@
 #define SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H
 
 #include <safe_memory/safe_ptr.h>
-#include <safe_memory/detail/safe_ptr_with_zero_offset.h>
+#include <safe_memory/detail/soft_ptr_with_zero_offset.h>
+#include <safe_memory/detail/array_of.h>
 
-#ifdef NODECPP_SAFEMEMORY_HEAVY_DEBUG
-#include <set>
-#endif
 
 namespace safe_memory::detail {
 
 using nodecpp::safememory::memory_safety;
 using nodecpp::safememory::FirstControlBlock;
 using nodecpp::safememory::module_id;
-using nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl;
-using nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks;
 using nodecpp::safememory::getPrefixByteCount;
 using nodecpp::safememory::zombieAllocate;
 using nodecpp::safememory::getControlBlock_;
@@ -51,511 +47,314 @@ using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
 
-template<class T>
-struct array_of
-{
-	typedef array_of<T> this_type;
+extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpEmptyBucketArray;
 
-	size_t _capacity = 0;
-	alignas(T) char _begin;
+template<class T, bool bConst, memory_safety Safety>
+using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::safe, 
+			array_of_iterator_impl<T, bConst, soft_ptr_with_zero_offset_impl>,
+			array_of_iterator_no_checks<T, bConst>>;
 
-	[[noreturn]] static
-	void throwPointerOutOfRange(const char* msg) {
-		throw std::out_of_range(msg);
-	}
 
-public:
-	array_of(size_t capacity) :_capacity(capacity) {}
+template<class T, bool zeroed = false>
+soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 
-	array_of(const array_of&) = delete;
-	array_of(array_of&&) = delete;
+	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 
-	array_of& operator=(const array_of&) = delete;
-	array_of& operator=(array_of&&) = delete;
+	std::size_t total = head + sizeof(T);
+	void* data = zombieAllocate(total);
 
-	~array_of() {}
+	if constexpr (zeroed)
+		std::memset(data, 0, total);
 
-	template<memory_safety Safety>
-	T& at(size_t ix) {
-		if constexpr ( Safety == memory_safety::safe ) {
-			if(ix >= _capacity)
-				throwPointerOutOfRange("array_of::at(): ix >= _capacity");
-		}
-
-		return *(begin() + ix);
-	}
-
-	template<memory_safety Safety>
-	const T& at(size_t ix) const {
-		if constexpr ( Safety == memory_safety::safe ) {
-			if(ix >= _capacity)
-				throwPointerOutOfRange("array_of::at(): ix >= _capacity");
-		}
-
-		return *(begin() + ix);
-	}
-
-	// T& at_unsafe(size_t ix) {
-	// 	return at<memory_safety::none>(ix);
-	// }
+	T* dataForObj = reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(data) + head);
 	
-	// const T& at_unsafe(size_t ix) const {
-	// 	return at<memory_safety::none>(ix);
-	// }
+	auto cb = getControlBlock_(dataForObj);
+	cb->init();
 
-	//unsafe function, allow returning a non-derefenceable pointer as end()
-	T* get_raw_ptr(size_t ix) {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::critical, ix <= _capacity );
-		return begin() + ix;
-	}
+	return {make_zero_offset_t(), dataForObj};
+}
 
-	//unsafe function, ptr should have been validated
-	size_t get_index(const T* ptr) const {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::critical, static_cast<size_t>(ptr - begin()) <= _capacity );
-		return static_cast<size_t>(ptr - begin());
-	}
+template<class T, bool zeroed = !std::is_trivial<T>::value>
+soft_ptr_with_zero_offset_impl<array_of<T>> allocate_array_impl(std::size_t count) {
 
-	size_t capacity() const { return _capacity; }
-	T* begin() const { return const_cast<T*>(reinterpret_cast<const T*>(&_begin)); }
-	T* end() const { return begin() + capacity(); }
+	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 
-	static
-	size_t calculateSize(size_t size) {
-		// TODO here we should fine tune the sizes of array_of<T> 
-		return sizeof(this_type) + (sizeof(T) * size);
-	}
-};
+	// TODO here we should fine tune the sizes of array_of2<T> 
+	std::size_t total = head + array_of<T>::calculateSize(count);
+	void* data = zombieAllocate(total);
 
+	// non trivial types get zeroed memory, just in case we get to deref
+	// a non initialized position
+	if constexpr (zeroed)
+		std::memset(data, 0, total);
 
+	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(reinterpret_cast<uintptr_t>(data) + head);
+	
+	auto cb = getControlBlock_(dataForObj);
+	cb->init();
+
+	::new ( dataForObj ) array_of<T>(count);
+
+	return {make_zero_offset_t(), dataForObj};
+}
 
 template<class T>
-struct allocator_to_eastl_impl {
-	
-	typedef soft_ptr_with_zero_offset_impl<array_of<T>> soft_array_type;
+void deallocate_impl(soft_ptr_with_zero_offset_impl<T>& p) {
 
-	soft_array_type allocate_array(std::size_t count) {
-
-		std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
-
-		// TODO here we should fine tune the sizes of array_of2<T> 
-		std::size_t total = head + array_of<T>::calculateSize(count);
-		void* data = zombieAllocate(total);
-
-		// non trivial types get zeroed memory, just in case we get to deref
-		// a non initialized position
-		if constexpr (!std::is_trivial<T>::value)
-			std::memset(data, 0, total);
-
-		array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(reinterpret_cast<uintptr_t>(data) + head);
-		
+	if (p) {
+		T* dataForObj = p.operator->();
+//		dataForObj->~T(); //we don't destruct here
 		auto cb = getControlBlock_(dataForObj);
-		cb->init();
-
-		::new ( dataForObj ) array_of<T>(count);
-
-		return soft_array_type(make_zero_offset_t(), dataForObj);
+		cb->template updatePtrForListItemsWithInvalidPtr<T>();
+		zombieDeallocate( getAllocatedBlock_(dataForObj) );
+		cb->clear();
 	}
-
-	void deallocate_array(soft_array_type p) {
-
-		if (p) {
-			array_of<T>* dataForObj = p.ptr;
-			dataForObj->~array_of<T>();
-			auto cb = getControlBlock_(dataForObj);
-			cb->template updatePtrForListItemsWithInvalidPtr<T>();
-			zombieDeallocate( getAllocatedBlock_(dataForObj) );
-			cb->clear();
-		}
-	}
-};
+}
 
 template<class T>
+void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
+
+	if (p) {
+		array_of<T>* dataForObj = p.operator->();
+		dataForObj->~array_of<T>();
+		auto cb = getControlBlock_(dataForObj);
+		cb->template updatePtrForListItemsWithInvalidPtr<array_of<T>>();
+		zombieDeallocate( getAllocatedBlock_(dataForObj) );
+		cb->clear();
+	}
+}
+
+template<class T>
+soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
+
+	std::size_t sz = sizeof(T);
+	T* dataForObj = reinterpret_cast<T*>(allocate(sz));
+	
+	return {make_zero_offset_t(), dataForObj};
+}
+
+template<class T>
+soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::size_t count) {
+	// TODO here we should fine tune the sizes of array_of2<T> 
+	std::size_t sz = array_of<T>::calculateSize(count);
+	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(allocate(sz));
+	
+	::new ( dataForObj ) array_of<T>(count);
+	return {make_zero_offset_t(), dataForObj};
+}
+
+template<class T>
+void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
+
+	if (p) {
+		T* dataForObj = p.operator->();
+		//dataForObj->~T(); //don't destruct here
+		deallocate(dataForObj);
+	}
+}
+
+template<class T>
+void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
+
+	if (p) {
+		array_of<T>* dataForObj = p.operator->();
+		dataForObj->~array_of<T>();
+		deallocate(dataForObj);
+	}
+}
+
+
+template<class T>
+void deallocate(soft_ptr_with_zero_offset_impl<T>& p) {
+	deallocate_impl(p);
+}
+
+template<class T>
+void deallocate(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
+	deallocate_array_impl(p);
+}
+
+template<class T>
+void deallocate(soft_ptr_with_zero_offset_no_checks<T>& p) {
+	deallocate_no_checks(p);
+}
+
+template<class T>
+void deallocate(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
+	deallocate_array_no_checks(p);
+}
+
+
+template<class T, memory_safety S>
+T* to_raw(const soft_ptr_with_zero_offset<T, S>& p) {
+	return p.get_raw_ptr();
+}
+
+template<class T, memory_safety S>
+soft_ptr<T, S> to_soft(const soft_ptr_with_zero_offset<T, S>& p) {
+	return p.get_soft();
+}
+
+template<class T, memory_safety S>
+soft_ptr_with_zero_offset<T, S> to_zero(const soft_ptr<T, S>& p) {
+	return p.get_soft();
+}
+
+struct allocator_to_eastl_impl {
+
+	template<class T>
+	struct pointer_types {
+		typedef soft_ptr_with_zero_offset_impl<T> pointer;
+		typedef soft_ptr_with_zero_offset_impl<array_of<T>> array;
+		typedef array_of_iterator_impl<T, false, soft_ptr_impl> array_iterator;
+		typedef array_of_iterator_impl<T, true, soft_ptr_impl> const_array_iterator;
+	};
+	
+	template<class T>
+	typename pointer_types<T>::array allocate_array(std::size_t count, int flags = 0) {
+		return allocate_array_impl<T>(count);
+	}
+
+	template<class T>
+	typename pointer_types<T>::array allocate_array_zeroed(std::size_t count, int flags = 0) {
+		return allocate_array_impl<T, true>(count);
+	}
+
+	template<class T>
+	void deallocate_array(soft_ptr_with_zero_offset_impl<array_of<T>> p, std::size_t count) {
+		deallocate(p);
+	}
+
+	template<class T>
+	typename pointer_types<T>::pointer allocate() {
+		return allocate_impl<T>();
+	}
+
+	template<class T>
+	void deallocate(soft_ptr_with_zero_offset_impl<T> p) {
+		deallocate(p);
+	}
+
+	template<class T>
+	typename pointer_types<T>::pointer get_hashtable_sentinel() const {
+		return soft_ptr_with_zero_offset_impl<T>(make_zero_offset_t(), reinterpret_cast<T*>((uintptr_t)~0));
+	}
+
+	template<class T>
+	typename pointer_types<T>::array get_empty_hashtable() const {
+		return soft_ptr_with_zero_offset_impl<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpEmptyBucketArray));
+	}
+
+	template<class T>
+	static T* to_raw(soft_ptr_with_zero_offset_impl<array_of<T>> p) {
+		return p.get_raw_ptr();
+	}
+
+	template<class T>
+	static T* to_raw(soft_ptr_with_zero_offset_impl<T> p) {
+		return p.get_raw_ptr();
+	}
+
+	bool operator==(const allocator_to_eastl_impl&) const { return true; }
+	bool operator!=(const allocator_to_eastl_impl&) const { return false; }
+	// template<class T>
+	// static T* to_raw(const typename pointer_types<T>::array_iterator& it) {
+	// 	return it.get_raw_ptr();
+	// }
+
+	// template<class T>
+	// static T* to_raw(const typename pointer_types<T>::const_array_iterator& it) {
+	// 	return it.get_raw_ptr();
+	// }
+};
+
 struct allocator_to_eastl_no_checks {
 
-	typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> soft_array_type;
+	template<class T>
+	struct pointer_types {
+		typedef soft_ptr_with_zero_offset_no_checks<T> pointer;
+		typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array;
+		typedef array_of_iterator_no_checks<T, false> array_iterator;
+		typedef array_of_iterator_no_checks<T, true> const_array_iterator;
+	};
 
-	soft_array_type allocate_array(std::size_t count) {
-		// TODO here we should fine tune the sizes of array_of2<T> 
-		std::size_t sz = array_of<T>::calculateSize(count);
-		array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(allocate(sz));
-		
-		::new ( dataForObj ) array_of<T>(count);
-		return soft_array_type(make_zero_offset_t(), dataForObj);
+	template<class T>
+	typename pointer_types<T>::pointer allocate() {
+		return allocate_no_checks<T>();
 	}
 
-	void deallocate_array(soft_array_type p) {
-
-		if (p) {
-			array_of<T>* dataForObj = p.ptr;
-			dataForObj->~array_of<T>();
-			deallocate(dataForObj);
-		}
+	template<class T>
+	void deallocate(soft_ptr_with_zero_offset_no_checks<T> p) {
+		deallocate(p);
 	}
 
+	template<class T>
+	typename pointer_types<T>::array allocate_array(std::size_t count, int flags = 0) {
+		return allocate_array_no_checks<T>(count);
+	}
+
+	template<class T>
+	typename pointer_types<T>::array allocate_array_zeroed(std::size_t count, int flags = 0) {
+		auto arr = allocate_array<T>(count);
+		memset(arr->begin(), 0, count * sizeof(T));
+		return arr;
+	}
+
+	template<class T>
+	void deallocate_array(soft_ptr_with_zero_offset_no_checks<array_of<T>> p, std::size_t count) {
+		deallocate(p);
+	}
+
+	//used by hashtable to mark 'end()'
+	template<class T>
+	typename pointer_types<T>::pointer get_hashtable_sentinel() const {
+		return soft_ptr_with_zero_offset_no_checks<T>(make_zero_offset_t(), reinterpret_cast<T*>((uintptr_t)~0));
+	}
+
+	template<class T>
+	typename pointer_types<T>::array get_empty_hashtable() const {
+		return soft_ptr_with_zero_offset_no_checks<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpEmptyBucketArray));
+	}
+
+	template<class T>
+	static T* to_raw(soft_ptr_with_zero_offset_no_checks<T> p) {
+		return p.get_raw_ptr();
+	}
+
+	template<class T>
+	static T* to_raw(soft_ptr_with_zero_offset_no_checks<array_of<T>> p) {
+		return p.get_raw_ptr();
+	}
+
+	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }
+	bool operator!=(const allocator_to_eastl_no_checks&) const { return false; }
 };
 
-
-template<class T, memory_safety Safety>
-using allocator_to_eastl = std::conditional_t<Safety == memory_safety::none,
-			allocator_to_eastl_no_checks<T>, allocator_to_eastl_impl<T>>;
+template<memory_safety Safety>
+using allocator_to_eastl = std::conditional_t<Safety == memory_safety::safe,
+			allocator_to_eastl_impl,
+			allocator_to_eastl_no_checks>;
 
 
 } // namespace safe_memory::detail
 
-namespace nodecpp::safememory::lib_helpers {
 
 
-using safe_memory::detail::array_of;
 
-template<class T>
-class soft_ptr_with_zero_offset_impl<array_of<T>>
-{
-	friend class owning_ptr_impl<array_of<T>>;
-	friend struct safe_memory::detail::allocator_to_eastl_impl<T>;
+namespace eastl {
 
-	friend struct ::nodecpp::safememory::FirstControlBlock;
-
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_base_no_checks;
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_no_checks;
-
-	array_of<T>* ptr= nullptr;
-
-	FirstControlBlock* getControlBlock() const { return getControlBlock_( ptr ); }
-	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
-
-public:
-
-	static constexpr memory_safety is_safe = memory_safety::safe;
- 
-	soft_ptr_with_zero_offset_impl() {}
-
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw )
-	{
-		ptr = raw;
-	}
-
-	soft_ptr_with_zero_offset_impl( const soft_ptr_impl<array_of<T>>& other )
-	{
-		ptr = other.getDereferencablePtr();
-	}
-	soft_ptr_with_zero_offset_impl& operator = ( const soft_ptr_impl<array_of<T>>& other )
-	{
-		ptr = other.getDereferencablePtr();
-		return *this;
-	}
-
-	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<array_of<T>>& other )
-	{
-		ptr = other.ptr;
-	}
-	soft_ptr_with_zero_offset_impl& operator = ( const soft_ptr_with_zero_offset_impl<array_of<T>>& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl<array_of<T>>&& other )
-	{
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		if ( this == &other ) return;
-		ptr = other.ptr;
-	}
-
-	soft_ptr_with_zero_offset_impl& operator = ( soft_ptr_with_zero_offset_impl<array_of<T>>&& other )
-	{
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		if ( this == &other ) return *this;
-		ptr = other.ptr;
-		return *this;
-	}
-
-	soft_ptr_with_zero_offset_impl( std::nullptr_t nulp ) {}
-	soft_ptr_with_zero_offset_impl& operator = ( std::nullptr_t nulp )
-	{
-		reset();
-		return *this;
-	}
-
-	void swap( soft_ptr_with_zero_offset_impl<array_of<T>>& other )
-	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
-
-	soft_ptr_impl<array_of<T>> get() const
-	{
-		if(NODECPP_LIKELY(ptr != nullptr)) {
-			FirstControlBlock* cb = getControlBlock_( ptr );
-			return soft_ptr_impl<array_of<T>>( cb, ptr );
-		}
-		else
-			return soft_ptr_impl<array_of<T>>();
-	}
-
-	explicit operator bool() const noexcept
-	{
-		return ptr != nullptr;
-	}
-
-	void reset() { ptr = nullptr; }
-
-	// bool operator == (const owning_ptr_impl<T>& other ) const { return ptr == other.t.getTypedPtr(); }
-	// template<class T1> 
-	// bool operator == (const owning_ptr_impl<T1>& other ) const { return ptr == other.t.getTypedPtr(); }
-
-	bool operator == (const soft_ptr_impl<array_of<T>>& other ) const { return ptr == other.getDereferencablePtr(); }
-	template<class T1> 
-	bool operator == (const soft_ptr_impl<array_of<T1>>& other ) const { return ptr == other.getDereferencablePtr(); }
-
-	bool operator == (const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) const { return ptr == other.ptr; }
-	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_impl<array_of<T1>>& other ) const { return ptr == other.ptr; }
-
-	// bool operator != (const owning_ptr_impl<T>& other ) const { return ptr != other.t.getTypedPtr(); }
-	// template<class T1> 
-	// bool operator != (const owning_ptr_impl<T1>& other ) const { return ptr != other.t.getTypedPtr(); }
-
-	bool operator != (const soft_ptr_impl<array_of<T>>& other ) const { return ptr != other.getDereferencablePtr(); }
-	template<class T1> 
-	bool operator != (const soft_ptr_impl<array_of<T1>>& other ) const { return ptr != other.getDereferencablePtr(); }
-
-	bool operator != (const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) const { return ptr != other.ptr; }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_impl<array_of<T1>>& other ) const { return ptr != other.ptr; }
-
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr != nullptr; }
-
-	// bool operator == (const T* other ) const { return get_raw_ptr() == other; }
-	// bool operator != (const T* other ) const { return get_raw_ptr() != other; }
-	// bool operator <  (const T* other ) const { return get_raw_ptr() <  other; }
-	// bool operator <= (const T* other ) const { return get_raw_ptr() <= other; }
-	// bool operator >  (const T* other ) const { return get_raw_ptr() >  other; }
-	// bool operator >= (const T* other ) const { return get_raw_ptr() >= other; }
-
-	array_of<T>& operator * () const
-	{
-		return *ptr;
-	}
-
-	array_of<T>* operator -> () const 
-	{
-		return ptr;
-	}
-
-	T* get_raw_ptr() const { return ptr ? ptr->begin() : nullptr; }
-
-	operator T*() const { return get_raw_ptr(); }
-
-	T* operator+(std::ptrdiff_t n) const { return get_raw_ptr() + n; }
-	// std::ptrdiff_t operator-(const T* other) const { return get_raw_ptr() - other; }
-
-	~soft_ptr_with_zero_offset_impl()
-	{
-		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
-//		ptr = nullptr;
-	}
-};
-
-// template<class T> bool operator != (const owning_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 != p1; }
-// template<class T> bool operator == (const owning_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 == p1; }
-
-// template<class T> bool operator != (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 != p1; }
-// template<class T> bool operator == (const soft_ptr_impl<T>& p1, const soft_ptr_with_zero_offset_impl<T>& p2 ) { return p2 == p1; }
-
-// template<class T>
-// std::ptrdiff_t operator-(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 - p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator==(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 == p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator!=(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 != p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator<(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 < p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator<=(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 <= p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator>(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 > p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator>=(const T* p1, const soft_ptr_with_zero_offset_impl<array_of<T>>& p2 ) { return p1 >= p2.get_raw_ptr(); }
-
-template<class T>
-class soft_ptr_with_zero_offset_no_checks<array_of<T>>
-{
-	friend struct safe_memory::detail::allocator_to_eastl_no_checks<T>;
-
-
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_base_no_checks;
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_no_checks;
-
-	array_of<T>* ptr = nullptr;
-
-public:
-
-	static constexpr memory_safety is_safe = memory_safety::none;
- 
-	soft_ptr_with_zero_offset_no_checks() { }
-
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, array_of<T>* raw )
-	{
-		ptr = raw;
-	}
-
-	// soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t) {	}
-	// soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
+	// template <typename T>
+	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_no_checks<T>::soft_array_type& first, T* last)
 	// {
-	// 	ptr = owner.t;
-	// 	return *this;
+	// 	eastl::destruct(first.get_raw_ptr(), last);
 	// }
 
-
-	// soft_ptr_with_zero_offset_no_checks( const owning_ptr_base_no_checks<T>& owner ) :ptr(owner.t) { }
-	// soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_base_no_checks<T>& owner )
+	// template <typename T>
+	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_impl<T>::soft_array_type& first, T* last)
 	// {
-	// 	ptr = owner.t;
-	// 	return *this;
+	// 	eastl::destruct(first.get_raw_ptr(), last);
 	// }
 
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_no_checks<array_of<T>>& other ) :ptr(other.t) { }
-	soft_ptr_with_zero_offset_no_checks& operator = ( const soft_ptr_no_checks<array_of<T>>& other )
-	{
-		ptr = other.t;
-		return *this;
-	}
-
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) :ptr(other.ptr) { }
-	soft_ptr_with_zero_offset_no_checks& operator = ( const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
-
-
-	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<array_of<T>>&& other ) :ptr(other.ptr) { }
-	soft_ptr_with_zero_offset_no_checks& operator = ( soft_ptr_with_zero_offset_no_checks<array_of<T>>&& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
-
-	soft_ptr_with_zero_offset_no_checks( std::nullptr_t nulp ) {}
-	soft_ptr_with_zero_offset_no_checks& operator = ( std::nullptr_t nulp )
-	{
-		reset();
-		return *this;
-	}
-
-	void swap( soft_ptr_with_zero_offset_no_checks<array_of<T>>& other )
-	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
-
-	soft_ptr_no_checks<array_of<T>> get() const
-	{
-//		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-//		FirstControlBlock* cb = getControlBlock_( ptr );
-		return soft_ptr_no_checks<array_of<T>>( fbc_ptr_t(), ptr );
-	}
-
-	explicit operator bool() const noexcept
-	{
-		return ptr != nullptr;
-	}
-
-	void reset() { ptr = nullptr; }
-
-	// bool operator == (const owning_ptr_no_checks<T>& other ) const { return ptr == other.t; }
-	// template<class T1> 
-	// bool operator == (const owning_ptr_no_checks<T1>& other ) const { return ptr == other.t; }
-
-	bool operator == (const soft_ptr_no_checks<array_of<T>>& other ) const { return ptr == other.getDereferencablePtr(); }
-	template<class T1> 
-	bool operator == (const soft_ptr_no_checks<array_of<T1>>& other ) const { return ptr == other.getDereferencablePtr(); }
-
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) const { return ptr == other.ptr; }
-	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<array_of<T1>>& other ) const { return ptr == other.ptr; }
-
-	// bool operator != (const owning_ptr_no_checks<T>& other ) const { return ptr != other.t; }
-	// template<class T1> 
-	// bool operator != (const owning_ptr_no_checks<T1>& other ) const { return ptr != other.t; }
-
-	bool operator != (const soft_ptr_no_checks<array_of<T>>& other ) const { return ptr != other.getDereferencablePtr(); }
-	template<class T1> 
-	bool operator != (const soft_ptr_no_checks<array_of<T1>>& other ) const { return ptr != other.getDereferencablePtr(); }
-
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) const { return ptr != other.ptr; }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<array_of<T1>>& other ) const { return ptr != other.ptr; }
-
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return ptr != nullptr; }
-
-	// bool operator == (const T* other ) const { return get_raw_ptr() == other; }
-	// bool operator != (const T* other ) const { return get_raw_ptr() != other; }
-	// bool operator <  (const T* other ) const { return get_raw_ptr() <  other; }
-	// bool operator <= (const T* other ) const { return get_raw_ptr() <= other; }
-	// bool operator >  (const T* other ) const { return get_raw_ptr() >  other; }
-	// bool operator >= (const T* other ) const { return get_raw_ptr() >= other; }
-
-	array_of<T>& operator * () const
-	{
-		return *ptr;
-	}
-
-	array_of<T>* operator -> () const 
-	{
-		return ptr;
-	}
-
-	T* get_raw_ptr() const { return ptr ? ptr->begin() : nullptr; }
-
-	operator T*() const { return get_raw_ptr(); }
-
-	T* operator+(std::ptrdiff_t n) const { return get_raw_ptr() + n; }
-	// std::ptrdiff_t operator-(const T* other) const { return get_raw_ptr() - other; }
-
-	~soft_ptr_with_zero_offset_no_checks()
-	{
-		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
-	}
-};
-
-// template<class T>
-// std::ptrdiff_t operator-(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 - p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator==(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 == p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator!=(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 != p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator<(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 < p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator<=(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 <= p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator>(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 > p2.get_raw_ptr(); }
-
-// template<class T>
-// bool operator>=(const T* p1, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p2 ) { return p1 >= p2.get_raw_ptr(); }
-
-
-} // namespace nodecpp::safememory::lib_helpers
-
-
+}
 
 #endif // SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H

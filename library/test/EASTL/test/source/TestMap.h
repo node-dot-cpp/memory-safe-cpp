@@ -18,7 +18,7 @@
 	EA_RESTORE_ALL_VC_WARNINGS()
 #endif
 
-using safe_memory::detail::use_first;
+using eastl::use_first;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestMapConstruction

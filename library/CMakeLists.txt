@@ -21,6 +21,7 @@ add_library(safe_memory STATIC
   src/EASTL/hashtable.cpp
   src/safe_ptr.cpp
   src/nodecpp_error.cpp
+  src/detail/allocator_to_eastl.cpp
   )
 
 target_include_directories(safe_memory

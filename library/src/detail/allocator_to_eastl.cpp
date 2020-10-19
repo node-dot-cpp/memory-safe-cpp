@@ -25,40 +25,11 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_SAFE_PTR_H
-#define SAFE_MEMORY_SAFE_PTR_H
+#include <safe_memory/detail/allocator_to_eastl.h>
 
-//mb: temporary hack, until we move all files to their definitive location
-// and rename namespaces acordingly
+namespace safe_memory::detail {
 
-#include "../../src/safe_ptr.h"
-
-namespace safe_memory {
-
-using ::nodecpp::safememory::owning_ptr;
-using ::nodecpp::safememory::soft_ptr;
-using ::nodecpp::safememory::soft_ptr_no_checks;
-using ::nodecpp::safememory::soft_ptr_impl;
-using ::nodecpp::safememory::soft_this_ptr;
-using ::nodecpp::safememory::nullable_ptr;
-
-using ::nodecpp::safememory::make_owning;
-using ::nodecpp::safememory::make_owning_2;
-using ::nodecpp::safememory::soft_ptr_in_constructor;
-using ::nodecpp::safememory::soft_ptr_static_cast;
-using ::nodecpp::safememory::soft_ptr_reinterpret_cast;
-using ::nodecpp::safememory::nullable_cast;
-
-using ::nodecpp::safememory::make_owning_t;
+fixed_array_of<2, soft_ptr_with_zero_offset_base> gpEmptyBucketArray = { soft_ptr_with_zero_offset_base(), soft_ptr_with_zero_offset_base(reinterpret_cast<void*>((uintptr_t)~0))};
 
 
-using ::nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::safeness_declarator;
-
-template<class T, bool Safety>
-using soft_ptr2 = std::conditional_t<Safety, 
-	::nodecpp::safememory::soft_ptr_impl<T>, ::nodecpp::safememory::soft_ptr_no_checks<T>>;
 }
-
-
-#endif //SAFE_MEMORY_SAFE_PTR_H

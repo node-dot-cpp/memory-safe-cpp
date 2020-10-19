@@ -25,21 +25,22 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-#define SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-
-//mb: temporary hack, until we move all files to their definitive location
-// and rename namespaces acordingly
-
-#include "../../../src/safe_ptr_with_zero_offset.h"
+#ifndef SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H
+#define SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H
 
 namespace safe_memory::detail {
 
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
+enum class iterator_validity {
+	Null,                // default constructed iterator
+	ValidCanDeref,       // valid, pointing a current element in the container
+	ValidEnd,			 // valid, pointing to end()
+	InvalidZoombie,	     // invalid but not escaping safe_memory rules 
+	xxx_Broken_xxx       // invalid and escaping safety rules
+};
 
-using ::nodecpp::safememory::lib_helpers::make_zero_offset_t;
 
-}
+} // namespace safe_memory::detail
 
 
-#endif //SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+
+#endif // SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H

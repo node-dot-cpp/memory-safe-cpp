@@ -19,7 +19,7 @@ EA_RESTORE_ALL_VC_WARNINGS()
 
 #ifndef EA_COMPILER_NO_STANDARD_CPP_LIBRARY
 
-using safe_memory::detail::use_self;
+using eastl::use_self;
 
 ///////////////////////////////////////////////////////////////////////////////
 // TestSetConstruction

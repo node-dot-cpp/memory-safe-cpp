@@ -29,19 +29,11 @@
 #define SAFE_MEMORY_DETAIL_SAFE_ALLOC_H
 
 #include <safe_memory/safe_ptr.h>
-#include <safe_memory/detail/safe_ptr_with_zero_offset.h>
+#include <safe_memory/detail/soft_ptr_with_zero_offset.h>
+#include <safe_memory/detail/iterator_validity.h>
 #include <iterator>
-#include <safe_memory/detail/allocator_to_eastl.h>
 
 namespace safe_memory::detail {
-
-enum class iterator_validity {
-	Null,                // default constructed iterator
-	ValidCanDeref,       // valid, pointing a current element in the container
-	ValidEnd,			 // valid, pointing to end()
-	InvalidZoombie,	     // invalid but not escaping safe_memory rules 
-	xxx_Broken_xxx       // invalid and escaping safety rules
-};
 
 template<class T>
 struct array_of2
@@ -278,7 +270,7 @@ public:
 	safe_iterator_no_checks& operator-=(difference_type n) noexcept
 		{ mIterator -= n; return *this; }
 
-	reference operator[](difference_type n) const
+	reference operator[](difference_type n) const noexcept
 		{ return mIterator[n]; }
 
 	bool operator==(const safe_iterator_no_checks& ri) const noexcept
@@ -303,12 +295,12 @@ public:
 		return !operator<(ri);
 	}
 
-	constexpr bool is_safe_range(const safe_iterator_no_checks& ri) const {
+	constexpr bool is_safe_range(const safe_iterator_no_checks& ri) const noexcept {
 		return true;
 	}
 
 	template<typename PTR>
-	constexpr bool is_safe_range(const PTR& otherArr, size_t otherIx) const {
+	constexpr bool is_safe_range(const PTR& otherArr, size_t otherIx) const noexcept {
 		return true;
 	}
 
@@ -340,7 +332,7 @@ typename safe_iterator_no_checks<T, C>::difference_type distance(const safe_iter
 }
 
 
-template <typename T, bool bConst, memory_safety Safety, bool bNew = false>
+template <typename T, bool bConst, memory_safety Safety, typename ArrayPtr = soft_ptr<array_of2<T>, Safety>>
 class safe_iterator_impl
 {
 public:
@@ -350,14 +342,12 @@ public:
 	typedef value_type*								 	pointer;
 	typedef value_type&								 	reference;
 	typedef const T*									const_pointer;
-	using soft_array_of_prt = std::conditional_t<bNew,
-			soft_ptr_with_zero_offset<array_of<T>, Safety>, 
-			soft_ptr<array_of2<T>, Safety>>;
+	typedef ArrayPtr									soft_array_of_prt;
 
 	static constexpr memory_safety is_safe = Safety;
 
 	// for non-const to const conversion
-	template<typename, bool, memory_safety, bool>
+	template<typename, bool, memory_safety, typename>
 	friend class safe_iterator_impl;
 
 private:
@@ -395,12 +385,12 @@ public:
 
 	// allow non-const to const convertion
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	safe_iterator_impl(const safe_iterator_impl<T, B, is_safe, bNew>& ri)
+	safe_iterator_impl(const safe_iterator_impl<T, B, is_safe, ArrayPtr>& ri)
 		: arr(ri.arr), ix(ri.ix) {}
 
 	// allow non-const to const convertion
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	safe_iterator_impl& operator=(const safe_iterator_impl<T, B, is_safe, bNew>& ri) {
+	safe_iterator_impl& operator=(const safe_iterator_impl<T, B, is_safe, ArrayPtr>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		return *this;
@@ -538,15 +528,18 @@ public:
 	}
 };
 
-template <typename T, bool C, memory_safety S, bool N>
+template <typename T, bool C, memory_safety S, typename N>
 typename safe_iterator_impl<T, C, S, N>::difference_type distance(const safe_iterator_impl<T, C, S, N>& l, const safe_iterator_impl<T, C, S, N>& r) {
 	return r - l;
 }
 
 
-template<class T, bool bConst, memory_safety Safety, bool bNew = false>
-using safe_array_iterator = std::conditional_t<Safety == memory_safety::none,
-			safe_iterator_no_checks<T, bConst>, safe_iterator_impl<T, bConst, memory_safety::safe, bNew>>;
+template<class T, bool bConst, memory_safety Safety>
+using safe_array_iterator = std::conditional_t<Safety == memory_safety::safe,
+			safe_iterator_impl<T, bConst, memory_safety::safe>,
+			safe_iterator_no_checks<T, bConst>>;
+
+
 
 } // namespace safe_memory::detail
 

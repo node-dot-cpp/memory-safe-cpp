@@ -107,7 +107,7 @@ int EAMain(int argc, char* argv[])
 	// testSuite.AddTest("FixedTupleVector",		TestFixedTupleVector);
 	// testSuite.AddTest("FixedVector",			TestFixedVector);
 	// testSuite.AddTest("Functional",				TestFunctional);
-	// testSuite.AddTest("Hash",					TestHash);
+	testSuite.AddTest("Hash",					TestHash);
 	// testSuite.AddTest("Heap",					TestHeap);
 	// testSuite.AddTest("IntrusiveHash",			TestIntrusiveHash);
 	// testSuite.AddTest("IntrusiveList",			TestIntrusiveList);
@@ -142,7 +142,7 @@ int EAMain(int argc, char* argv[])
 	// testSuite.AddTest("TypeTraits",				TestTypeTraits);
 	// testSuite.AddTest("Utility",				TestUtility);
 	// testSuite.AddTest("Variant",				TestVariant);
-	testSuite.AddTest("Vector",					TestVector);
+	// testSuite.AddTest("Vector",					TestVector);
 	// testSuite.AddTest("VectorMap",				TestVectorMap);
 	// testSuite.AddTest("VectorSet",				TestVectorSet);
 
