@@ -242,7 +242,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 2);
+		EATEST_VERIFY(hashSet.bucket_count() == 1);
 
 		for(int i = 0; i < 100; ++i)
 			hashSet.insert(i);
@@ -252,7 +252,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 2);
+		EATEST_VERIFY(hashSet.bucket_count() == 1);
 
 		for(int i = 0; i < 100; ++i)
 			hashSet.insert(i);
@@ -262,7 +262,7 @@ int TestHash()
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
 		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 2);
+		EATEST_VERIFY(hashSet.bucket_count() == 1);
 	}
 
 
@@ -407,7 +407,7 @@ int TestHash()
 
 		hashSet.clear(true);
 		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.bucket_count() == 2);
+		EATEST_VERIFY(hashSet.bucket_count() == 1);
 	}
 
 

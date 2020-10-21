@@ -165,40 +165,33 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 
 
 template<class T>
-void deallocate(soft_ptr_with_zero_offset_impl<T>& p) {
-	deallocate_impl(p);
+soft_ptr_with_zero_offset_impl<T> soft_to_zero(const soft_ptr_impl<T>& p) {
+	return { make_zero_offset_t(), p.t.getTypedPtr() };
 }
 
 template<class T>
-void deallocate(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
-	deallocate_array_impl(p);
+soft_ptr_with_zero_offset_no_checks<T> soft_to_zero(const soft_ptr_no_checks<T>& p) {
+	return { make_zero_offset_t(), p.t };
 }
 
 template<class T>
-void deallocate(soft_ptr_with_zero_offset_no_checks<T>& p) {
-	deallocate_no_checks(p);
+soft_ptr_impl<T> zero_to_soft(const soft_ptr_with_zero_offset_impl<T>& p) {
+	T* ptr = p.ptr;
+	if(ptr != nullptr && ptr != reinterpret_cast<T*>((uintptr_t)~0) ) {
+		//TODO also check for gpEmptyBucketArray
+		FirstControlBlock* cb = getControlBlock_( ptr );
+		return { cb, ptr };
+	}
+	else
+		return {};
 }
+
 
 template<class T>
-void deallocate(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
-	deallocate_array_no_checks(p);
+soft_ptr_no_checks<T> zero_to_soft(const soft_ptr_with_zero_offset_no_checks<T>& p) {
+	return { fbc_ptr_t(), p.ptr };
 }
 
-
-template<class T, memory_safety S>
-T* to_raw(const soft_ptr_with_zero_offset<T, S>& p) {
-	return p.get_raw_ptr();
-}
-
-template<class T, memory_safety S>
-soft_ptr<T, S> to_soft(const soft_ptr_with_zero_offset<T, S>& p) {
-	return p.get_soft();
-}
-
-template<class T, memory_safety S>
-soft_ptr_with_zero_offset<T, S> to_zero(const soft_ptr<T, S>& p) {
-	return p.get_soft();
-}
 
 struct allocator_to_eastl_impl {
 
@@ -222,7 +215,7 @@ struct allocator_to_eastl_impl {
 
 	template<class T>
 	void deallocate_array(soft_ptr_with_zero_offset_impl<array_of<T>> p, std::size_t count) {
-		deallocate(p);
+		deallocate_array_impl(p);
 	}
 
 	template<class T>
@@ -232,7 +225,7 @@ struct allocator_to_eastl_impl {
 
 	template<class T>
 	void deallocate(soft_ptr_with_zero_offset_impl<T> p) {
-		deallocate(p);
+		deallocate_impl(p);
 	}
 
 	template<class T>
@@ -246,26 +239,27 @@ struct allocator_to_eastl_impl {
 	}
 
 	template<class T>
+	static T* to_raw(soft_ptr_with_zero_offset_impl<T> p) {
+		return p.get_raw_ptr();
+	}
+
+	template<class T>
 	static T* to_raw(soft_ptr_with_zero_offset_impl<array_of<T>> p) {
 		return p.get_raw_ptr();
 	}
 
 	template<class T>
-	static T* to_raw(soft_ptr_with_zero_offset_impl<T> p) {
-		return p.get_raw_ptr();
+	static soft_ptr_impl<T> to_soft(const soft_ptr_with_zero_offset_impl<T>& p) {
+		return zero_to_soft(p);
+	}
+
+	template<class T>
+	static soft_ptr_with_zero_offset_impl<T> to_zero(const soft_ptr_impl<T>& p) {
+		return soft_to_zero(p);
 	}
 
 	bool operator==(const allocator_to_eastl_impl&) const { return true; }
 	bool operator!=(const allocator_to_eastl_impl&) const { return false; }
-	// template<class T>
-	// static T* to_raw(const typename pointer_types<T>::array_iterator& it) {
-	// 	return it.get_raw_ptr();
-	// }
-
-	// template<class T>
-	// static T* to_raw(const typename pointer_types<T>::const_array_iterator& it) {
-	// 	return it.get_raw_ptr();
-	// }
 };
 
 struct allocator_to_eastl_no_checks {
@@ -285,7 +279,7 @@ struct allocator_to_eastl_no_checks {
 
 	template<class T>
 	void deallocate(soft_ptr_with_zero_offset_no_checks<T> p) {
-		deallocate(p);
+		deallocate_no_checks(p);
 	}
 
 	template<class T>
@@ -302,7 +296,7 @@ struct allocator_to_eastl_no_checks {
 
 	template<class T>
 	void deallocate_array(soft_ptr_with_zero_offset_no_checks<array_of<T>> p, std::size_t count) {
-		deallocate(p);
+		deallocate_array_no_checks(p);
 	}
 
 	//used by hashtable to mark 'end()'
@@ -324,6 +318,16 @@ struct allocator_to_eastl_no_checks {
 	template<class T>
 	static T* to_raw(soft_ptr_with_zero_offset_no_checks<array_of<T>> p) {
 		return p.get_raw_ptr();
+	}
+
+	template<class T>
+	static soft_ptr_no_checks<T> to_soft(const soft_ptr_with_zero_offset_no_checks<T>& p) {
+		return zero_to_soft(p);
+	}
+
+	template<class T>
+	static soft_ptr_with_zero_offset_no_checks<T> to_zero(const soft_ptr_no_checks<T>& p) {
+		return soft_to_zero(p);
 	}
 
 	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }

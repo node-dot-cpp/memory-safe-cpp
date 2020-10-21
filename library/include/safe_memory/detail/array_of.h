@@ -217,9 +217,11 @@ public:
 	bool operator != (std::nullptr_t) const noexcept
 		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
 
-	array_of<T>& operator * () const noexcept { return *get_raw_ptr(); }
+	array_of<T>& operator * () const noexcept { return *reinterpret_cast<array_of<T>*>(ptr); }
 	array_of<T>* operator -> () const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+	
 	T* get_raw_ptr() const noexcept { return ptr ? reinterpret_cast<array_of<T>*>(ptr)->begin() : nullptr; }
+	
 	operator T*() const noexcept { return get_raw_ptr(); }
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_ptr() + n; }
 	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_ptr() - other; }
@@ -258,12 +260,12 @@ public:
 
 	using soft_ptr_with_zero_offset_base::swap;
 
-	soft_ptr_no_checks<array_of<T>> get() const
-	{
-//		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-//		FirstControlBlock* cb = getControlBlock_( ptr );
-		return soft_ptr_no_checks<array_of<T>>( fbc_ptr_t(), ptr );
-	}
+// 	soft_ptr_no_checks<array_of<T>> get() const
+// 	{
+// //		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
+// //		FirstControlBlock* cb = getControlBlock_( ptr );
+// 		return soft_ptr_no_checks<array_of<T>>( fbc_ptr_t(), ptr );
+// 	}
 
 	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
@@ -286,8 +288,9 @@ public:
 	bool operator != (std::nullptr_t) const noexcept
 		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
 
-	array_of<T>& operator * () const noexcept { return *get_raw_ptr(); }
-	array_of<T>* operator -> () const noexcept { return reinterpret_cast<array_of<T>*>(ptr);	}
+	array_of<T>& operator * () const noexcept { return *reinterpret_cast<array_of<T>*>(ptr); }
+	array_of<T>* operator -> () const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+
 	T* get_raw_ptr() const noexcept { return ptr ? reinterpret_cast<array_of<T>*>(ptr)->begin() : nullptr; }
 	operator T*() const noexcept { return get_raw_ptr(); }
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_ptr() + n; }

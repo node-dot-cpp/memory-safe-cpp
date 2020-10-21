@@ -78,22 +78,28 @@ public:
 };
 
 template<class T>
-class soft_ptr_with_zero_offset_impl
+class soft_ptr_with_zero_offset_impl : public soft_ptr_with_zero_offset_base
 {
 	// friend class owning_ptr_impl<T>;
 
-	friend struct ::nodecpp::safememory::FirstControlBlock;
+	// friend struct ::nodecpp::safememory::FirstControlBlock;
 
 	// template<class TT>
 	// friend class soft_ptr_with_zero_offset_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_with_zero_offset_impl;
 
+	template<class TT>
+	friend void deallocate_impl(soft_ptr_with_zero_offset_impl<T>&);
 
-	T* ptr= nullptr;
+	template<class TT>
+	friend soft_ptr_impl<TT> zero_to_soft(const soft_ptr_with_zero_offset_impl<T>&);
 
-	FirstControlBlock* getControlBlock() const { return getControlBlock_( ptr ); }
-	static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
+
+	// T* ptr= nullptr;
+
+	// FirstControlBlock* getControlBlock() const { return getControlBlock_( ptr ); }
+	// static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 public:
 
@@ -101,10 +107,10 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw )
-	{
-		ptr = raw;
-	}
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+	// {
+	// 	ptr = raw;
+	// }
 
 	// soft_ptr_with_zero_offset_impl( const owning_ptr_impl<T>& owner )
 	// {
@@ -136,67 +142,71 @@ public:
 	// 	return *this;
 	// }
 
-	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<T>& other )
-	{
-		ptr = other.ptr;
-	}
-	soft_ptr_with_zero_offset_impl<T>& operator = ( const soft_ptr_with_zero_offset_impl<T>& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
+	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<T>& ) = default;
+	// {
+	// 	ptr = other.ptr;
+	// }
+	soft_ptr_with_zero_offset_impl<T>& operator = ( const soft_ptr_with_zero_offset_impl<T>& ) = default;
+	// {
+	// 	ptr = other.ptr;
+	// 	return *this;
+	// }
 
 
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl<T>&& other )
-	{
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		if ( this == &other ) return;
-		ptr = other.ptr;
-	}
+	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl<T>&& ) = default;
+	// {
+	// 	// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
+	// 	if ( this == &other ) return;
+	// 	ptr = other.ptr;
+	// }
 
-	soft_ptr_with_zero_offset_impl<T>& operator = ( soft_ptr_with_zero_offset_impl<T>&& other )
-	{
-		// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
-		if ( this == &other ) return *this;
-		ptr = other.ptr;
-		return *this;
-	}
+	soft_ptr_with_zero_offset_impl<T>& operator = ( soft_ptr_with_zero_offset_impl<T>&& ) = default;
+	// {
+	// 	// Note: we do not null the 'other': behaves as an ordinary (raw) pointer
+	// 	if ( this == &other ) return *this;
+	// 	ptr = other.ptr;
+	// 	return *this;
+	// }
 
-	soft_ptr_with_zero_offset_impl( std::nullptr_t nulp ) {}
-	soft_ptr_with_zero_offset_impl& operator = ( std::nullptr_t nulp )
-	{
-		reset();
-		return *this;
-	}
+	soft_ptr_with_zero_offset_impl( std::nullptr_t ) {}
+	soft_ptr_with_zero_offset_impl& operator = ( std::nullptr_t )
+		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
+	// {
+	// 	reset();
+	// 	return *this;
+	// }
 
-	void swap( soft_ptr_with_zero_offset_impl<T>& other )
-	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void swap( soft_ptr_with_zero_offset_impl<T>& other )
+	// {
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
+	using soft_ptr_with_zero_offset_base::swap;
 
-	soft_ptr_impl<T> get_soft() const
-	{
-		if(NODECPP_UNLIKELY(ptr == reinterpret_cast<T*>((uintptr_t)~0))) {
-			//mb: ~0 is special value used by eastl hashtable to mean end()
-			// we may want to return a nullptr or a zombie ptr
-			return soft_ptr_impl<T>();
-		}
-		else if(NODECPP_LIKELY(ptr != nullptr)) {
-			FirstControlBlock* cb = getControlBlock_( ptr );
-			return soft_ptr_impl<T>( cb, ptr );
-		}
-		else
-			return soft_ptr_impl<T>();
-	}
+	// soft_ptr_impl<T> get_soft() const
+	// {
+	// 	if(NODECPP_UNLIKELY(ptr == reinterpret_cast<T*>((uintptr_t)~0))) {
+	// 		//mb: ~0 is special value used by eastl hashtable to mean end()
+	// 		// we may want to return a nullptr or a zombie ptr
+	// 		return soft_ptr_impl<T>();
+	// 	}
+	// 	else if(NODECPP_LIKELY(ptr != nullptr)) {
+	// 		FirstControlBlock* cb = getControlBlock_( ptr );
+	// 		return soft_ptr_impl<T>( cb, ptr );
+	// 	}
+	// 	else
+	// 		return soft_ptr_impl<T>();
+	// }
 
-	explicit operator bool() const noexcept
-	{
-		return ptr != nullptr;
-	}
+	// explicit operator bool() const noexcept
+	// {
+	// 	return ptr != nullptr;
+	// }
 
-	void reset() { ptr = nullptr; }
+	// void reset() { ptr = nullptr; }
+	using soft_ptr_with_zero_offset_base::operator bool;
+	using soft_ptr_with_zero_offset_base::reset;
 
 	// bool operator == (const owning_ptr_impl<T>& other ) const { return ptr == other.t.getTypedPtr(); }
 	// template<class T1> 
@@ -206,9 +216,16 @@ public:
 	// template<class T1> 
 	// bool operator == (const soft_ptr_impl<T1>& other ) const { return ptr == other.getDereferencablePtr(); }
 
-	bool operator == (const soft_ptr_with_zero_offset_impl<T>& other ) const { return ptr == other.ptr; }
+	bool operator == (const soft_ptr_with_zero_offset_impl<T>& other ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator==(other); }
+	bool operator != (const soft_ptr_with_zero_offset_impl<T>& other ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
 	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_impl<T1>& other ) const { return ptr == other.ptr; }
+	bool operator == (const soft_ptr_with_zero_offset_impl<T1>& other ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator==(other); }
+	template<class T1>
+	bool operator != (const soft_ptr_with_zero_offset_impl<T1>& other ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
 
 	// bool operator != (const owning_ptr_impl<T>& other ) const { return ptr != other.t.getTypedPtr(); }
 	// template<class T1> 
@@ -218,24 +235,16 @@ public:
 	// template<class T1> 
 	// bool operator != (const soft_ptr_impl<T1>& other ) const { return ptr != other.getDereferencablePtr(); }
 
-	bool operator != (const soft_ptr_with_zero_offset_impl<T>& other ) const { return ptr != other.ptr; }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_impl<T1>& other ) const { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t ) const { return ptr == nullptr; }
-	bool operator != (std::nullptr_t ) const { return ptr != nullptr; }
 
-	T& operator * () const
-	{
-		return *get_raw_ptr();
-	}
+	bool operator == (std::nullptr_t ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator==(nullptr); }
+	bool operator != (std::nullptr_t ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
 
-	T* operator -> () const 
-	{
-		return get_raw_ptr();
-	}
-
-	T* get_raw_ptr() const { return this->ptr; }
+	T& operator * () const noexcept { return *get_raw_ptr(); }
+	T* operator -> () const noexcept { return get_raw_ptr(); }
+	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }
 
 	~soft_ptr_with_zero_offset_impl()
 	{
@@ -246,14 +255,20 @@ public:
 
 
 template<class T>
-class soft_ptr_with_zero_offset_no_checks
+class soft_ptr_with_zero_offset_no_checks : public soft_ptr_with_zero_offset_base
 {
 	// template<class TT>
 	// friend class soft_ptr_with_zero_offset_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_with_zero_offset_no_checks;
 
-	T* ptr = nullptr;
+	template<class TT>
+	friend void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>&);
+
+	template<class TT>
+	friend soft_ptr_no_checks<TT> zero_to_soft(const soft_ptr_with_zero_offset_no_checks<T>&);
+
+	// T* ptr = nullptr;
 
 public:
 
@@ -261,10 +276,10 @@ public:
  
 	soft_ptr_with_zero_offset_no_checks() { }
 
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw )
-	{
-		ptr = raw;
-	}
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+	// {
+	// 	ptr = raw;
+	// }
 
 	// soft_ptr_with_zero_offset_no_checks( const owning_ptr_no_checks<T>& owner ) :ptr(owner.t) {	}
 	// soft_ptr_with_zero_offset_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner )
@@ -288,48 +303,52 @@ public:
 	// 	return *this;
 	// }
 
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& other ) :ptr(other.ptr) { }
-	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<T>& ) = default;
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( const soft_ptr_with_zero_offset_no_checks<T>& ) = default;
+	// {
+	// 	ptr = other.ptr;
+	// 	return *this;
+	// }
 
 
-	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& other ) :ptr(other.ptr) { }
-	soft_ptr_with_zero_offset_no_checks<T>& operator = ( soft_ptr_with_zero_offset_no_checks<T>&& other )
-	{
-		ptr = other.ptr;
-		return *this;
-	}
+	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<T>&& ) = default;
+	soft_ptr_with_zero_offset_no_checks<T>& operator = ( soft_ptr_with_zero_offset_no_checks<T>&& ) = default;
+	// {
+	// 	ptr = other.ptr;
+	// 	return *this;
+	// }
 
-	soft_ptr_with_zero_offset_no_checks( std::nullptr_t nulp ) {}
-	soft_ptr_with_zero_offset_no_checks& operator = ( std::nullptr_t nulp )
-	{
-		reset();
-		return *this;
-	}
+	soft_ptr_with_zero_offset_no_checks( std::nullptr_t ) {}
+	soft_ptr_with_zero_offset_no_checks& operator = ( std::nullptr_t )
+		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
+	// {
+	// 	reset();
+	// 	return *this;
+	// }
 
-	void swap( soft_ptr_with_zero_offset_no_checks<T>& other )
-	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void swap( soft_ptr_with_zero_offset_no_checks<T>& other )
+	// {
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
+	using soft_ptr_with_zero_offset_base::swap;
 
-	soft_ptr_no_checks<T> get_soft() const
-	{
-//		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-//		FirstControlBlock* cb = getControlBlock_( ptr );
-		return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
-	}
+// 	soft_ptr_no_checks<T> get_soft() const
+// 	{
+// //		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
+// //		FirstControlBlock* cb = getControlBlock_( ptr );
+// 		return soft_ptr_no_checks<T>( fbc_ptr_t(), ptr );
+// 	}
 
-	explicit operator bool() const noexcept
-	{
-		return ptr != nullptr;
-	}
+	// explicit operator bool() const noexcept
+	// {
+	// 	return ptr != nullptr;
+	// }
 
-	void reset() { ptr = nullptr; }
+	// void reset() { ptr = nullptr; }
+	using soft_ptr_with_zero_offset_base::operator bool;
+	using soft_ptr_with_zero_offset_base::reset;
 
 	// bool operator == (const owning_ptr_no_checks<T>& other ) const { return ptr == other.t; }
 	// template<class T1> 
@@ -339,9 +358,17 @@ public:
 	// template<class T1> 
 	// bool operator == (const soft_ptr_no_checks<T1>& other ) const { return ptr == other.getDereferencablePtr(); }
 
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<T>& other ) const { return ptr == other.ptr; }
+	bool operator == (const soft_ptr_with_zero_offset_no_checks<T>& other ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator==(other); }
+	bool operator != (const soft_ptr_with_zero_offset_no_checks<T>& other ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
+
 	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const { return ptr == other.ptr; }
+	bool operator == (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator==(other); }
+	template<class T1>
+	bool operator != (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
 
 	// bool operator != (const owning_ptr_no_checks<T>& other ) const { return ptr != other.t; }
 	// template<class T1> 
@@ -351,24 +378,15 @@ public:
 	// template<class T1> 
 	// bool operator != (const soft_ptr_no_checks<T1>& other ) const { return ptr != other.getDereferencablePtr(); }
 
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<T>& other ) const { return ptr != other.ptr; }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<T1>& other ) const { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t ) const { return ptr == nullptr; }
-	bool operator != (std::nullptr_t ) const { return ptr != nullptr; }
+	bool operator == (std::nullptr_t ) const noexcept
+		{ return soft_ptr_with_zero_offset_base::operator==(nullptr); }
+	bool operator != (std::nullptr_t ) const noexcept 
+		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
 
-	T& operator * () const
-	{
-		return *get_raw_ptr();
-	}
-
-	T* operator -> () const 
-	{
-		return get_raw_ptr();
-	}
-
-	T* get_raw_ptr() const { return this->ptr; }
+	T& operator * () const noexcept { return *get_raw_ptr(); }
+	T* operator -> () const noexcept { return get_raw_ptr(); }
+	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }
 
 	~soft_ptr_with_zero_offset_no_checks()
 	{

@@ -182,22 +182,22 @@ namespace safe_memory
 
 		template <class M>
         eastl::pair<iterator, bool> insert_or_assign(const key_type& k, M&& obj) {
-            return makeSafeIt(base_type::insert_or_assign(k, std::move(obj)));
+            return makeSafeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
         }
 
 		template <class M>
         eastl::pair<iterator, bool> insert_or_assign(key_type&& k, M&& obj) {
-            return makeSafeIt(base_type::insert_or_assign(std::move(k), std::move(obj)));
+            return makeSafeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator insert_or_assign(const_cit_ref hint, const key_type& k, M&& obj) {
-            return makeSafeIt(base_type::insert_or_assign(toBaseIt(hint), k, std::move(obj)));
+            return makeSafeIt(base_type::insert_or_assign(toBaseIt(hint), k, std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator insert_or_assign(const_cit_ref hint, key_type&& k, M&& obj) {
-            return makeSafeIt(base_type::insert_or_assign(toBaseIt(hint), std::move(k), std::move(obj)));
+            return makeSafeIt(base_type::insert_or_assign(toBaseIt(hint), std::move(k), std::forward<M>(obj)));
         }
 
 		iterator erase(const_cit_ref position) {

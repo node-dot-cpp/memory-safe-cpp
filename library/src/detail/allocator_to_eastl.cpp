@@ -33,3 +33,15 @@ fixed_array_of<2, soft_ptr_with_zero_offset_base> gpEmptyBucketArray = { soft_pt
 
 
 }
+
+// required by eastl, see allocator.h line 173, or EASTL/doc/FAQ.md
+
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line) {
+    return operator new [] (size);
+}
+
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line) {
+    return operator new [] (size, std::align_val_t(alignment));
+}
+
+
