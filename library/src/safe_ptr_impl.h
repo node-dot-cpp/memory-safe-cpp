@@ -35,6 +35,8 @@
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
+namespace safe_memory::detail { class allocator_to_eastl_impl; } // forward declaration
+
 namespace nodecpp::safememory
 {
 
@@ -172,7 +174,6 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class nullable_ptr_base_impl; // forward declaration
 template<class T> class nullable_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
-namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; } // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -505,10 +506,6 @@ class owning_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
-
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
@@ -783,10 +780,6 @@ class owning_ptr_impl : public owning_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
-
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
@@ -889,9 +882,7 @@ class soft_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
+	friend class safe_memory::detail::allocator_to_eastl_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1472,9 +1463,7 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_base_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
+	friend class safe_memory::detail::allocator_to_eastl_impl;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
