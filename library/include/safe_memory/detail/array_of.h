@@ -363,7 +363,7 @@ public:
 		return *this;
 	}
 
-	const_pointer get_raw_ptr() const {
+	pointer get_raw_ptr() const {
 		// this is unsafe function, always called after ix was validated
 		return arr ? arr->get_raw_ptr(ix) : nullptr;
 	}
@@ -550,7 +550,7 @@ public:
 		return *this;
 	}
 	
-	const_pointer get_raw_ptr() const {
+	pointer get_raw_ptr() const {
 		return mIterator;
 	}
 

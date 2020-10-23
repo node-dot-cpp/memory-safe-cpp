@@ -46,6 +46,7 @@ using nodecpp::safememory::getAllocatedBlock_;
 using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
+using nodecpp::safememory::fbc_ptr_t;
 
 extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpEmptyBucketArray;
 
@@ -164,39 +165,14 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 }
 
 
-template<class T>
-soft_ptr_with_zero_offset_impl<T> soft_to_zero(const soft_ptr_impl<T>& p) {
-	return { make_zero_offset_t(), p.t.getTypedPtr() };
-}
 
-template<class T>
-soft_ptr_with_zero_offset_no_checks<T> soft_to_zero(const soft_ptr_no_checks<T>& p) {
-	return { make_zero_offset_t(), p.t };
-}
-
-template<class T>
-soft_ptr_impl<T> zero_to_soft(const soft_ptr_with_zero_offset_impl<T>& p) {
-	T* ptr = p.ptr;
-	if(ptr != nullptr && ptr != reinterpret_cast<T*>((uintptr_t)~0) ) {
-		//TODO also check for gpEmptyBucketArray
-		FirstControlBlock* cb = getControlBlock_( ptr );
-		return { cb, ptr };
-	}
-	else
-		return {};
-}
-
-
-template<class T>
-soft_ptr_no_checks<T> zero_to_soft(const soft_ptr_with_zero_offset_no_checks<T>& p) {
-	return { fbc_ptr_t(), p.ptr };
-}
-
-
-struct allocator_to_eastl_impl {
-
+class allocator_to_eastl_impl {
+public:
+	static constexpr memory_safety is_safe = memory_safety::safe; 
+	
 	template<class T>
-	struct pointer_types {
+	class pointer_types {
+	public:
 		typedef soft_ptr_with_zero_offset_impl<T> pointer;
 		typedef soft_ptr_with_zero_offset_impl<array_of<T>> array;
 		typedef array_of_iterator_impl<T, false, soft_ptr_impl> array_iterator;
@@ -250,22 +226,32 @@ struct allocator_to_eastl_impl {
 
 	template<class T>
 	static soft_ptr_impl<T> to_soft(const soft_ptr_with_zero_offset_impl<T>& p) {
-		return zero_to_soft(p);
+		void* ptr = p.ptr;
+		if(ptr != nullptr && ptr != reinterpret_cast<void*>((uintptr_t)~0) ) {
+			//TODO also check for gpEmptyBucketArray
+			FirstControlBlock* cb = getControlBlock_( ptr );
+			return { cb, reinterpret_cast<T*>(ptr) };
+		}
+		else
+			return {};
 	}
 
 	template<class T>
 	static soft_ptr_with_zero_offset_impl<T> to_zero(const soft_ptr_impl<T>& p) {
-		return soft_to_zero(p);
+		return { make_zero_offset_t(), p.getDereferencablePtr() };
 	}
 
 	bool operator==(const allocator_to_eastl_impl&) const { return true; }
 	bool operator!=(const allocator_to_eastl_impl&) const { return false; }
 };
 
-struct allocator_to_eastl_no_checks {
+class allocator_to_eastl_no_checks {
+public:
+	static constexpr memory_safety is_safe = memory_safety::none; 
 
 	template<class T>
-	struct pointer_types {
+	class pointer_types {
+	public:
 		typedef soft_ptr_with_zero_offset_no_checks<T> pointer;
 		typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array;
 		typedef array_of_iterator_no_checks<T, false> array_iterator;
@@ -322,12 +308,12 @@ struct allocator_to_eastl_no_checks {
 
 	template<class T>
 	static soft_ptr_no_checks<T> to_soft(const soft_ptr_with_zero_offset_no_checks<T>& p) {
-		return zero_to_soft(p);
+		return { fbc_ptr_t(), reinterpret_cast<T*>(p.ptr) };
 	}
 
 	template<class T>
 	static soft_ptr_with_zero_offset_no_checks<T> to_zero(const soft_ptr_no_checks<T>& p) {
-		return soft_to_zero(p);
+		return { make_zero_offset_t(), p.t };
 	}
 
 	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }

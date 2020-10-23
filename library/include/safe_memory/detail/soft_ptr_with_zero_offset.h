@@ -42,6 +42,9 @@ struct make_zero_offset_t {};
 
 class soft_ptr_with_zero_offset_base
 {
+	friend class allocator_to_eastl_impl;
+	friend class allocator_to_eastl_no_checks;
+	
 protected:
 	void* ptr = nullptr;
 
@@ -90,10 +93,10 @@ class soft_ptr_with_zero_offset_impl : public soft_ptr_with_zero_offset_base
 	friend class soft_ptr_with_zero_offset_impl;
 
 	template<class TT>
-	friend void deallocate_impl(soft_ptr_with_zero_offset_impl<T>&);
+	friend void deallocate_impl(soft_ptr_with_zero_offset_impl<TT>&);
 
 	template<class TT>
-	friend soft_ptr_impl<TT> zero_to_soft(const soft_ptr_with_zero_offset_impl<T>&);
+	friend soft_ptr_impl<TT> zero_to_soft(const soft_ptr_with_zero_offset_impl<TT>&);
 
 
 	// T* ptr= nullptr;
@@ -263,10 +266,10 @@ class soft_ptr_with_zero_offset_no_checks : public soft_ptr_with_zero_offset_bas
 	friend class soft_ptr_with_zero_offset_no_checks;
 
 	template<class TT>
-	friend void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>&);
+	friend void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<TT>&);
 
 	template<class TT>
-	friend soft_ptr_no_checks<TT> zero_to_soft(const soft_ptr_with_zero_offset_no_checks<T>&);
+	friend soft_ptr_no_checks<TT> zero_to_soft(const soft_ptr_with_zero_offset_no_checks<TT>&);
 
 	// T* ptr = nullptr;
 

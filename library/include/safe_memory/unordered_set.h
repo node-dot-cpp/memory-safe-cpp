@@ -59,7 +59,7 @@ namespace safe_memory
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 
 		// typedef typename detail::hashtable_heap_safe_iterator<base_iterator, base_iterator, Safety>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, Safety>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
 		// typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, Safety>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, Safety>  const_stack_only_iterator;
 

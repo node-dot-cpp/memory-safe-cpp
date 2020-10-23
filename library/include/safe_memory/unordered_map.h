@@ -59,12 +59,12 @@ namespace safe_memory
 		typedef typename base_type::local_iterator                                local_iterator;
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 
-		typedef typename detail::hashtable_heap_safe_iterator<base_iterator, base_iterator, Safety>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, Safety>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<base_iterator, base_iterator, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, Safety>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, Safety>  const_stack_only_iterator;
 
-		static constexpr bool default_iterator_is_heap_safe = false;
+		static constexpr bool default_iterator_is_heap_safe = true;
 		typedef eastl::type_select_t<default_iterator_is_heap_safe,
 			heap_safe_iterator, stack_only_iterator>                              iterator;
 		typedef eastl::type_select_t<default_iterator_is_heap_safe,
@@ -266,19 +266,19 @@ namespace safe_memory
         }
 
         const_base_iterator toBaseIt(const const_heap_safe_iterator& it) {
-            return const_base_iterator(allocator_type::to_zero(it.mpNode), it.mpBucket.get_raw_ptr());
+            return const_base_iterator(allocator_type::to_zero(it.getNodePtr()), it.getBucketIt().get_raw_ptr());
         }
 
         iterator makeSafeIt(base_iterator it) const {
 			if constexpr(default_iterator_is_heap_safe)
-	            return iterator::makeIt(it.mpNode, GetHeapPtr(), it.mpBucket);
+	            return iterator::makeIt(it.get_node(), GetHeapPtr(), it.get_bucket());
 			else
 				return iterator::fromBase(it);
         }
 
         const_iterator makeSafeIt(const_base_iterator it) const {
 			if constexpr(default_iterator_is_heap_safe)
-	            return const_iterator::makeIt(it.mpNode, GetHeapPtr(), it.mpBucket);
+	            return const_iterator::makeIt(it.get_node(), GetHeapPtr(), it.get_bucket());
 			else
 				return const_iterator::fromBase(it);
         }

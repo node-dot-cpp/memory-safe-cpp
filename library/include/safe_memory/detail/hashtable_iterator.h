@@ -32,13 +32,14 @@
 
 namespace safe_memory::detail {
 
-	template <typename BaseIt, typename BaseNonConstIt, memory_safety Safety>
+	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_heap_safe_iterator
 	{
 	public:
 		typedef BaseIt                                                   base_type;
-		typedef hashtable_heap_safe_iterator<BaseIt, BaseNonConstIt, Safety>     this_type;
-		typedef hashtable_heap_safe_iterator<BaseNonConstIt, BaseNonConstIt, Safety>      this_type_non_const;
+		typedef Allocator                                                allocator_type;
+		typedef hashtable_heap_safe_iterator<BaseIt, BaseNonConstIt, Allocator>     this_type;
+		typedef hashtable_heap_safe_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>      this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
 		typedef typename base_type::pointer                              pointer;
@@ -46,42 +47,50 @@ namespace safe_memory::detail {
 		typedef typename base_type::difference_type                      difference_type;
 		typedef typename base_type::iterator_category                    iterator_category;
 
-	    static constexpr memory_safety is_safe = Safety;
+	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 
     private:
-		template <typename, typename, typename, typename, memory_safety>
-		friend class unordered_map;
+		// template <typename, typename, typename, typename, memory_safety>
+		// friend class unordered_map;
 
         typedef soft_ptr<node_type, is_safe>                                   node_ptr;
+		typedef typename Allocator::template pointer_types<node_type>::pointer   node_pointer;
+
+
 		typedef eastl::type_select_t<is_safe == memory_safety::safe, 
-			detail::array_of_iterator_impl<node_type, false, soft_ptr_impl>,
-			detail::array_of_iterator_no_checks<node_type, false>>             bucket_iterator;
+			detail::array_of_iterator_impl<node_pointer, false, soft_ptr_impl>,
+			detail::array_of_iterator_no_checks<node_pointer, false>>             bucket_iterator;
 
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.
 
 		void increment()
 		{
-			mpNode = mpNode->mpNext;
+			mpNode = allocator_type::to_soft(mpNode->mpNext);
 
-			while(mpNode == nullptr)
-				mpNode = *++mpBucket;
+			// mb: *mpBucket will be != nullptr at 'end()' sentinel
+			// 		but 'to_soft' will convert it to a nullptr
+			if(mpNode == nullptr) {
+				do { ++mpBucket; } while(*mpBucket == nullptr);
+			} 
+				
+			mpNode = allocator_type::to_soft(*mpBucket);
 		}
 
 		hashtable_heap_safe_iterator(node_ptr node, bucket_iterator bucket)
-			: mpNode(pNode), mpBucket(pBucket) { }
-
-        template<class HeapPtr, class NodePtr, class SoftNode>
-        static this_type makeIt(SoftNode node, const HeapPtr& heap_ptr, NodePtr* curr_bucket) {
-			return this_type(node, bucket_iterator::makePtr(heap_ptr, curr_bucket));
-        }
+			: mpNode(node), mpBucket(bucket) { }
 
     public:
+        template<class HeapPtr, class NodePtr, class SoftNode>
+        static this_type makeIt(SoftNode node, const HeapPtr& heap_ptr, NodePtr* curr_bucket) {
+			return this_type(allocator_type::to_soft(node), bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), curr_bucket));
+        }
+
 		hashtable_heap_safe_iterator()
 			: mpNode(), mpBucket() { }
 
 		hashtable_heap_safe_iterator(const this_type_non_const& x)
-			: mpNode(x.pNode), mpBucket(x.pBucket) { }
+			: mpNode(x.getNodePtr()), mpBucket(x.getBucketIt()) { }
 
 		reference operator*() const
 			{ return mpNode->mValue; }
@@ -101,6 +110,8 @@ namespace safe_memory::detail {
         bool operator!=(const this_type other) const
 		    { return mpNode != other.mpNode; }
 
+		const node_ptr& getNodePtr() const noexcept { return mpNode; }
+		const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
 	}; // hashtable_heap_safe_iterator
 
 	template <typename BaseIt, typename BaseNonConstIt, memory_safety Safety>
