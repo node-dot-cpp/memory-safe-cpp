@@ -138,7 +138,7 @@ namespace safe_memory::detail {
 
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 
-		template <typename, typename, memory_safety>
+		template <typename, typename, typename>
 		friend class hashtable_stack_only_iterator;
 		typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
 
@@ -153,12 +153,12 @@ namespace safe_memory::detail {
 
 		this_type& operator++() { return static_cast<this_type&>(base_type::operator++()); }
 		this_type operator++(int) { return base_type::operator++(0); }
-
+ 
 
 		bool operator==(const this_type& other) const 
-			{ return eastl::operator==(this->asBase(), other.asBase()); }
+			{ return eastl::operator==(this->toBase(), other.toBase()); }
 		bool operator!=(const this_type& other) const 
-			{ return eastl::operator!=(this->asBase(), other.asBase()); }
+			{ return eastl::operator!=(this->toBase(), other.toBase()); }
 
 
 		const node_pointer& getNodePtr() const noexcept { return base_type::mpNode; }

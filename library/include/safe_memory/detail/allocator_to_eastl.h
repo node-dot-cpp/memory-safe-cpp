@@ -31,9 +31,16 @@
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/soft_ptr_with_zero_offset.h>
 #include <safe_memory/detail/array_of.h>
+#include <EASTL/allocator.h>
 
+
+namespace eastl {
+extern void* gpEmptyBucketArray[2];
+}
 
 namespace safe_memory::detail {
+
+extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray;
 
 using nodecpp::safememory::memory_safety;
 using nodecpp::safememory::FirstControlBlock;
@@ -48,7 +55,7 @@ using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
 using nodecpp::safememory::fbc_ptr_t;
 
-extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray;
+
 
 template<class T, bool bConst, memory_safety Safety>
 using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::safe, 
@@ -328,6 +335,74 @@ using allocator_to_eastl = std::conditional_t<Safety == memory_safety::safe,
 			allocator_to_eastl_impl,
 			allocator_to_eastl_no_checks>;
 
+
+
+class allocator_to_eastl_wrapper : public eastl::allocator {
+public:
+	static constexpr memory_safety is_safe = memory_safety::none; 
+		void* allocate(size_t n, int flags = 0);
+		void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0);
+		void  deallocate(void* p, size_t n);
+	template<class T>
+	class pointer_types {
+	public:
+		typedef T* pointer;
+		typedef T* array;
+		typedef T* array_iterator;
+		typedef T* const_array_iterator;
+	};
+
+	template<class T>
+	typename pointer_types<T>::pointer allocate() {
+		return eastl::allocator::allocate(sizeof(T));
+	}
+
+	template<class T>
+	void deallocate(T* p) {
+		eastl::allocator::deallocate(p, sizeof(T));
+	}
+
+	template<class T>
+	typename pointer_types<T>::array allocate_array(std::size_t count, int flags = 0) {
+		return eastl::allocator::allocate(count * sizeof(T), flags);
+	}
+
+	template<class T>
+	typename pointer_types<T>::array allocate_array_zeroed(std::size_t count, int flags = 0) {
+		auto arr = allocate_array<T>(count);
+		memset(arr->begin(), 0, count * sizeof(T));
+		return arr;
+	}
+
+	template<class T>
+	void deallocate_array(soft_ptr_with_zero_offset_no_checks<array_of<T>> p, std::size_t count) {
+		eastl::allocator::deallocate(p, count * sizeof(T));
+	}
+
+	//used by hashtable to mark 'end()'
+	template<class T>
+	typename pointer_types<T>::pointer get_hashtable_sentinel() const {
+		return reinterpret_cast<T*>((uintptr_t)~0);
+	}
+
+	template<class T>
+	typename pointer_types<T>::array get_empty_hashtable() const {
+		return reinterpret_cast<T*>(&eastl::gpEmptyBucketArray);
+	}
+
+	template<class T>
+	static T* to_raw(T* p) {
+		return p;
+	}
+
+	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }
+	bool operator!=(const allocator_to_eastl_no_checks&) const { return false; }
+};
+
+class ptr_converter {
+public:
+
+};
 
 } // namespace safe_memory::detail
 

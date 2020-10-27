@@ -63,7 +63,7 @@ namespace safe_memory
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, allocator_type>  const_stack_only_iterator;
 
-		static constexpr bool default_iterator_is_heap_safe = true;
+		static constexpr bool default_iterator_is_heap_safe = false;
 		typedef eastl::type_select_t<default_iterator_is_heap_safe,
 			heap_safe_iterator, stack_only_iterator>                              iterator;
 		typedef eastl::type_select_t<default_iterator_is_heap_safe,
@@ -246,11 +246,11 @@ namespace safe_memory
 
 
 		heap_safe_iterator make_heap_safe(const stack_only_iterator& it) const {
-			return heap_safe_iterator::makeIt(allocator_type::to_soft(it.getNodePtr()), GetHeapPtr(), it.getBucketIt());
+			return heap_safe_iterator::makeIt(it.getNodePtr(), GetHeapPtr(), it.getBucketIt());
 		}
 
 		const_heap_safe_iterator make_heap_safe(const const_stack_only_iterator& it) const {
-			return const_heap_safe_iterator::makeIt(allocator_type::to_soft(it.getNodePtr()), GetHeapPtr(), it.getBucketIt());
+			return const_heap_safe_iterator::makeIt(it.getNodePtr(), GetHeapPtr(), it.getBucketIt());
 		}
 
 		const heap_safe_iterator& make_heap_safe(const heap_safe_iterator& it) const {
