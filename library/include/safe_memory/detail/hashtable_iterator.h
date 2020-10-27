@@ -72,9 +72,8 @@ namespace safe_memory::detail {
 			// 		but 'to_soft' will convert it to a nullptr
 			if(mpNode == nullptr) {
 				do { ++mpBucket; } while(*mpBucket == nullptr);
+				mpNode = allocator_type::to_soft(*mpBucket);
 			} 
-				
-			mpNode = allocator_type::to_soft(*mpBucket);
 		}
 
 		hashtable_heap_safe_iterator(node_ptr node, bucket_iterator bucket)
@@ -83,7 +82,11 @@ namespace safe_memory::detail {
     public:
         template<class HeapPtr, class NodePtr, class SoftNode>
         static this_type makeIt(SoftNode node, const HeapPtr& heap_ptr, NodePtr* curr_bucket) {
-			return this_type(allocator_type::to_soft(node), bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), curr_bucket));
+			auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
+			if(soft_heap_ptr)
+				return this_type(allocator_type::to_soft(node), bucket_iterator::makePtr(soft_heap_ptr, curr_bucket));
+			else
+				return this_type();//empty hashtable
         }
 
 		hashtable_heap_safe_iterator()
@@ -112,15 +115,20 @@ namespace safe_memory::detail {
 
 		const node_ptr& getNodePtr() const noexcept { return mpNode; }
 		const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
+
+		BaseIt toBase() const noexcept {
+			return BaseIt(allocator_type::to_zero(mpNode), mpBucket.get_raw_ptr());
+		}
 	}; // hashtable_heap_safe_iterator
 
-	template <typename BaseIt, typename BaseNonConstIt, memory_safety Safety>
+	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_stack_only_iterator : private BaseIt
 	{
 	public:
 		typedef BaseIt                                                   base_type;
-		typedef hashtable_stack_only_iterator<BaseIt, BaseNonConstIt, Safety>    this_type;
-		typedef hashtable_stack_only_iterator<BaseNonConstIt, BaseNonConstIt, Safety>     this_type_non_const;
+		typedef Allocator                                                allocator_type;
+		typedef hashtable_stack_only_iterator<BaseIt, BaseNonConstIt, Allocator>    this_type;
+		typedef hashtable_stack_only_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>     this_type_non_const;
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
 		typedef typename base_type::pointer                              pointer;
@@ -128,10 +136,11 @@ namespace safe_memory::detail {
 		typedef typename base_type::difference_type                      difference_type;
 		typedef typename base_type::iterator_category                    iterator_category;
 
-	    static constexpr memory_safety is_safe = Safety;
+	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 
 		template <typename, typename, memory_safety>
 		friend class hashtable_stack_only_iterator;
+		typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
 
     public:
 		hashtable_stack_only_iterator() :base_type() { }
@@ -151,10 +160,15 @@ namespace safe_memory::detail {
 		bool operator!=(const this_type& other) const 
 			{ return eastl::operator!=(this->asBase(), other.asBase()); }
 
-		const base_type& asBase() const { return *this; }
+
+		const node_pointer& getNodePtr() const noexcept { return base_type::mpNode; }
+		node_pointer* getBucketIt() const noexcept { return base_type::mpBucket; }
+
+		const base_type& toBase() const noexcept { return *this; }
+
 		static this_type& fromBase(base_type& b) {
 			return static_cast<this_type&>(b);
-		} 
+		}
 	}; // hashtable_stack_only_iterator
 
 

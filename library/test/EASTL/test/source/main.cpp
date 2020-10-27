@@ -142,7 +142,7 @@ int EAMain(int argc, char* argv[])
 	// testSuite.AddTest("TypeTraits",				TestTypeTraits);
 	// testSuite.AddTest("Utility",				TestUtility);
 	// testSuite.AddTest("Variant",				TestVariant);
-	// testSuite.AddTest("Vector",					TestVector);
+	testSuite.AddTest("Vector",					TestVector);
 	// testSuite.AddTest("VectorMap",				TestVectorMap);
 	// testSuite.AddTest("VectorSet",				TestVectorSet);
 

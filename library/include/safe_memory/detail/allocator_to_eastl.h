@@ -48,7 +48,7 @@ using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
 using nodecpp::safememory::fbc_ptr_t;
 
-extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpEmptyBucketArray;
+extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray;
 
 template<class T, bool bConst, memory_safety Safety>
 using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::safe, 
@@ -211,7 +211,7 @@ public:
 
 	template<class T>
 	typename pointer_types<T>::array get_empty_hashtable() const {
-		return soft_ptr_with_zero_offset_impl<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpEmptyBucketArray));
+		return soft_ptr_with_zero_offset_impl<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray));
 	}
 
 	template<class T>
@@ -227,13 +227,16 @@ public:
 	template<class T>
 	static soft_ptr_impl<T> to_soft(const soft_ptr_with_zero_offset_impl<T>& p) {
 		void* ptr = p.ptr;
-		if(ptr != nullptr && ptr != reinterpret_cast<void*>((uintptr_t)~0) ) {
-			//TODO also check for gpEmptyBucketArray
+		if(ptr == nullptr) 
+			return {};
+		else if(ptr == reinterpret_cast<void*>((uintptr_t)~0))
+			return {};
+		else if(ptr == &gpSafeMemoryEmptyBucketArray)
+			return {};
+		else {
 			FirstControlBlock* cb = getControlBlock_( ptr );
 			return { cb, reinterpret_cast<T*>(ptr) };
 		}
-		else
-			return {};
 	}
 
 	template<class T>
@@ -293,7 +296,7 @@ public:
 
 	template<class T>
 	typename pointer_types<T>::array get_empty_hashtable() const {
-		return soft_ptr_with_zero_offset_no_checks<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpEmptyBucketArray));
+		return soft_ptr_with_zero_offset_no_checks<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray));
 	}
 
 	template<class T>
