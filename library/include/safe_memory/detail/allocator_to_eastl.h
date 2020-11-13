@@ -337,92 +337,68 @@ using allocator_to_eastl = std::conditional_t<Safety == memory_safety::safe,
 
 
 
-class allocator_to_eastl_wrapper : public eastl::allocator {
+template<class T>
+class allocator_to_eastl_string_impl {
+public:
+	static constexpr memory_safety is_safe = memory_safety::safe; 
+	
+	typedef soft_ptr_with_zero_offset_impl<array_of<T>> array_pointer;
+	
+	array_pointer allocate_array(std::size_t count, int flags = 0) {
+		return allocate_array_impl<T>(count);
+	}
+
+	array_pointer allocate_array_zeroed(std::size_t count, int flags = 0) {
+		return allocate_array_impl<T, true>(count);
+	}
+
+	void deallocate_array(array_pointer p, std::size_t count) {
+		deallocate_array_impl(p);
+	}
+
+	static T* to_raw(array_pointer p) {
+		return p.get_raw_ptr();
+	}
+
+	bool operator==(const allocator_to_eastl_string_impl&) const { return true; }
+	bool operator!=(const allocator_to_eastl_string_impl&) const { return false; }
+};
+
+template<class T>
+class allocator_to_eastl_string_no_checks {
 public:
 	static constexpr memory_safety is_safe = memory_safety::none; 
-		void* allocate(size_t n, int flags = 0);
-		void* allocate(size_t n, size_t alignment, size_t offset, int flags = 0);
-		void  deallocate(void* p, size_t n);
-	template<class T>
-	class pointer_types {
-	public:
-		typedef T* pointer;
-		typedef T* array;
-		typedef T* array_iterator;
-		typedef T* const_array_iterator;
-	};
 
-	template<class T>
-	typename pointer_types<T>::pointer allocate() {
-		return eastl::allocator::allocate(sizeof(T));
+	typedef T* array_pointer;
+
+	T* allocate_array(std::size_t count, int flags = 0) {
+		return reinterpret_cast<T*>(allocate(sizeof(T) * count)); 
 	}
 
-	template<class T>
-	void deallocate(T* p) {
-		eastl::allocator::deallocate(p, sizeof(T));
+	T* allocate_array_zeroed(std::size_t count, int flags = 0) {
+		void* arr = allocate(count * sizeof(T));
+		memset(arr, 0, count * sizeof(T));
+		return reinterpret_cast<T*>(arr);
 	}
 
-	template<class T>
-	typename pointer_types<T>::array allocate_array(std::size_t count, int flags = 0) {
-		return eastl::allocator::allocate(count * sizeof(T), flags);
+	void deallocate_array(T* p, std::size_t count) {
+		deallocate(p);
 	}
 
-	template<class T>
-	typename pointer_types<T>::array allocate_array_zeroed(std::size_t count, int flags = 0) {
-		auto arr = allocate_array<T>(count);
-		memset(arr->begin(), 0, count * sizeof(T));
-		return arr;
-	}
+	static
+	T* to_raw(T* p) { return p; }
 
-	template<class T>
-	void deallocate_array(soft_ptr_with_zero_offset_no_checks<array_of<T>> p, std::size_t count) {
-		eastl::allocator::deallocate(p, count * sizeof(T));
-	}
-
-	//used by hashtable to mark 'end()'
-	template<class T>
-	typename pointer_types<T>::pointer get_hashtable_sentinel() const {
-		return reinterpret_cast<T*>((uintptr_t)~0);
-	}
-
-	template<class T>
-	typename pointer_types<T>::array get_empty_hashtable() const {
-		return reinterpret_cast<T*>(&eastl::gpEmptyBucketArray);
-	}
-
-	template<class T>
-	static T* to_raw(T* p) {
-		return p;
-	}
-
-	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }
-	bool operator!=(const allocator_to_eastl_no_checks&) const { return false; }
+	bool operator==(const allocator_to_eastl_string_no_checks&) const { return true; }
+	bool operator!=(const allocator_to_eastl_string_no_checks&) const { return false; }
 };
 
-class ptr_converter {
-public:
+template<typename T, memory_safety Safety>
+using allocator_to_eastl_string = std::conditional_t<Safety == memory_safety::safe,
+			allocator_to_eastl_string_impl<T>,
+			allocator_to_eastl_string_no_checks<T>>;
 
-};
+
 
 } // namespace safe_memory::detail
-
-
-
-
-namespace eastl {
-
-	// template <typename T>
-	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_no_checks<T>::soft_array_type& first, T* last)
-	// {
-	// 	eastl::destruct(first.get_raw_ptr(), last);
-	// }
-
-	// template <typename T>
-	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_impl<T>::soft_array_type& first, T* last)
-	// {
-	// 	eastl::destruct(first.get_raw_ptr(), last);
-	// }
-
-}
 
 #endif // SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H

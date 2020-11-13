@@ -67,7 +67,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 1)
 	// 		{
 	// 			// we can fit 23 characters on 64bit system with 1 byte chars
-	// 			const auto* pLiteral = LITERAL("aaaaaaaaaaaaaaaaaaaaaaa");
+	// 			const auto pLiteral = LITERAL("aaaaaaaaaaaaaaaaaaaaaaa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 23);
@@ -79,7 +79,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 2)
 	// 		{
 	// 			// we can fit 11 characters on 64 bit system with 2 byte chars
-	// 			const auto* pLiteral = LITERAL("aaaaaaaaaaa");
+	// 			const auto pLiteral = LITERAL("aaaaaaaaaaa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 11);
@@ -91,7 +91,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 4)
 	// 		{
 	// 			// we can fit 5 characters on 64 bit system with 4 byte chars
-	// 			const auto* pLiteral = LITERAL("aaaaa");
+	// 			const auto pLiteral = LITERAL("aaaaa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 5);
@@ -107,7 +107,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 1)
 	// 		{
 	// 			// we can fit 11 characters on 32bit system with 1 byte chars
-	// 			const auto* pLiteral = LITERAL("aaaaaaaaaaa");
+	// 			const auto pLiteral = LITERAL("aaaaaaaaaaa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 11);
@@ -119,7 +119,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 2)
 	// 		{
 	// 			// we can fit 5 characters on 32 bit system with 2 byte chars
-	// 			const auto* pLiteral = LITERAL("aaaaa");
+	// 			const auto pLiteral = LITERAL("aaaaa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 5);
@@ -131,7 +131,7 @@ int TEST_STRING_NAME()
 	// 		EA_CONSTEXPR_IF(sizeof(typename StringType::value_type) == 4)
 	// 		{
 	// 			// we can fit 2 characters on 32 bit system with 4 byte chars
-	// 			const auto* pLiteral = LITERAL("aa");
+	// 			const auto pLiteral = LITERAL("aa");
 	// 			SSOFailocatorString str(pLiteral);
 
 	// 			VERIFY(EA::StdC::Strlen(pLiteral) == 2);
@@ -161,7 +161,7 @@ int TEST_STRING_NAME()
 	{
 		// {
 		// 	StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"), 26);
-		// 	VERIFY(str[5] == LITERAL('f'));
+		// 	VERIFY(str[5] == LITERAL_CHAR('f'));
 		// 	VERIFY(!str.empty());
 		// 	VERIFY(str.length() == 26);
 		// 	VERIFY(validate(str));
@@ -169,7 +169,7 @@ int TEST_STRING_NAME()
 
 		{
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			VERIFY(str[5] == LITERAL('f'));
+			VERIFY(str[5] == LITERAL_CHAR('f'));
 			VERIFY(!str.empty());
 			VERIFY(str.length() == 26);
 			VERIFY(validate(str));
@@ -199,14 +199,14 @@ int TEST_STRING_NAME()
 
 	// EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 	{
-		auto* pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
+		auto pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
 		StringType str(pLiteral);
 		VERIFY(str == pLiteral);
 	}
 
 	// basic_string(size_type n, value_type c, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 	{
-		StringType str(32, LITERAL('a'));
+		StringType str(32, LITERAL_CHAR('a'));
 		VERIFY(!str.empty());
 		VERIFY(str.size() == 32);
 		VERIFY(str.length() == 32);
@@ -231,25 +231,25 @@ int TEST_STRING_NAME()
 	}
 
 	// basic_string(csafe_it_arg pBegin, csafe_it_arg pEnd);
-	{
-		StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// {
+	// 	StringType str1(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto pStart = str1.begin() + 5;
-		auto pEnd = str1.begin() + 20;
+	// 	auto pStart = str1.begin() + 5;
+	// 	auto pEnd = str1.begin() + 20;
 
-		StringType str(pStart, pEnd);
-		VERIFY(str == LITERAL("fghijklmnopqrst"));
-		VERIFY(!str.empty());
-		VERIFY(str.size() == 15);
-	}
+	// 	StringType str(pStart, pEnd);
+	// 	VERIFY(str == LITERAL("fghijklmnopqrst"));
+	// 	VERIFY(!str.empty());
+	// 	VERIFY(str.size() == 15);
+	// }
 
 	// basic_string(CtorReserve, size_type n);
-	{
-		StringType str(typename StringType::CtorReserve(), 42);
-		VERIFY(str.size() == 0);
-		VERIFY(str.length() == 0);
-		VERIFY(str.capacity() == 42);
-	}
+	// {
+	// 	StringType str(typename StringType::CtorReserve(), 42);
+	// 	VERIFY(str.size() == 0);
+	// 	VERIFY(str.length() == 0);
+	// 	VERIFY(str.capacity() == 42);
+	// }
 
 	// basic_string(CtorSprintf, const value_type* pFormat, ...);
 	{
@@ -472,7 +472,7 @@ int TEST_STRING_NAME()
 		StringType str;
 		str = LITERAL("abcdefghijklmnopqrstuvwxyz");
 
-		VERIFY(str[5] == LITERAL('f'));
+		VERIFY(str[5] == LITERAL_CHAR('f'));
 		VERIFY(str == LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		VERIFY(!str.empty());
 		VERIFY(str.length() == 26);
@@ -482,7 +482,7 @@ int TEST_STRING_NAME()
 	// this_type& operator=(value_type c);
 	{
 		StringType str;
-		str = LITERAL('a');
+		str = LITERAL_CHAR('a');
 
 		VERIFY(str == LITERAL("a"));
 		VERIFY(!str.empty());
@@ -687,18 +687,18 @@ int TEST_STRING_NAME()
 	}
 
 	// this_type& assign_unsafe(const value_type* p, size_type n);
-	{
-		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.assign_unsafe(LITERAL("123456789"), 5);
+	// {
+	// 	StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
+	// 	str.assign_unsafe(LITERAL("123456789"), 5);
 
-		VERIFY(str == LITERAL("12345"));
-		VERIFY(validate(str));
-	}
+	// 	VERIFY(str == LITERAL("12345"));
+	// 	VERIFY(validate(str));
+	// }
 
 	// this_type& assign_unsafe(const value_type* p);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.assign_unsafe(LITERAL("123"));
+		str.assign(LITERAL("123"));
 
 		VERIFY(str == LITERAL("123"));
 		VERIFY(validate(str));
@@ -707,7 +707,7 @@ int TEST_STRING_NAME()
 	// this_type& assign(size_type n, value_type c);
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		str.assign(32, LITERAL('c'));
+		str.assign(32, LITERAL_CHAR('c'));
 
 		VERIFY(str == LITERAL("cccccccccccccccccccccccccccccccc"));
 		VERIFY(validate(str));
@@ -717,9 +717,9 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		auto* pLiteral = LITERAL("0123456789");
-		auto* pBegin = pLiteral + 4;
-		auto* pEnd = pLiteral + 7;
+		auto pLiteral = LITERAL("0123456789");
+		auto pBegin = pLiteral.c_str() + 4;
+		auto pEnd = pLiteral.c_str() + 7;
 
 		str.assign_unsafe(pBegin, pEnd);
 
@@ -840,7 +840,7 @@ int TEST_STRING_NAME()
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 			safe_memory::string str2(EA_CHAR8("123456789"));
 
-			str.assign_convert(str2);
+			str.assign_convert_unsafe(str2);
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -850,7 +850,7 @@ int TEST_STRING_NAME()
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 			safe_memory::basic_string<char16_t> str2(EA_CHAR16("123456789"));
 
-			str.assign_convert(str2);
+			str.assign_convert_unsafe(str2);
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -860,7 +860,7 @@ int TEST_STRING_NAME()
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 			safe_memory::basic_string<char32_t> str2(EA_CHAR32("123456789"));
 
-			str.assign_convert(str2);
+			str.assign_convert_unsafe(str2);
 			VERIFY(str == LITERAL("123456789"));
 			VERIFY(validate(str));
 		#endif
@@ -870,7 +870,7 @@ int TEST_STRING_NAME()
 		    StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 		    safe_memory::basic_string<wchar_t> str2(EA_WCHAR("123456789"));
 
-		    str.assign_convert(str2);
+		    str.assign_convert_unsafe(str2);
 		    VERIFY(str == LITERAL("123456789"));
 		    VERIFY(validate(str));
 		#endif
@@ -885,13 +885,13 @@ int TEST_STRING_NAME()
 
 		auto iBegin = str.begin();
 
-		VERIFY(*iBegin++ == LITERAL('a'));
-		VERIFY(*iBegin++ == LITERAL('b'));
-		VERIFY(*iBegin++ == LITERAL('c'));
-		VERIFY(*iBegin++ == LITERAL('d'));
-		VERIFY(*iBegin++ == LITERAL('e'));
-		VERIFY(*iBegin++ == LITERAL('f'));
-		VERIFY(*(str.begin() + 25) == LITERAL('z'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('a'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('b'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('c'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('d'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('e'));
+		VERIFY(*iBegin++ == LITERAL_CHAR('f'));
+		VERIFY(*(str.begin() + 25) == LITERAL_CHAR('z'));
 
 	}
 
@@ -903,13 +903,13 @@ int TEST_STRING_NAME()
 
 		auto iEnd = str.end()-1;
 
-		VERIFY(*iEnd-- == LITERAL('z'));
-		VERIFY(*iEnd-- == LITERAL('y'));
-		VERIFY(*iEnd-- == LITERAL('x'));
-		VERIFY(*iEnd-- == LITERAL('w'));
-		VERIFY(*iEnd-- == LITERAL('v'));
-		VERIFY(*iEnd-- == LITERAL('u'));
-		VERIFY(*(str.end() - 26) == LITERAL('a'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('z'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('y'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('x'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('w'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('v'));
+		VERIFY(*iEnd-- == LITERAL_CHAR('u'));
+		VERIFY(*(str.end() - 26) == LITERAL_CHAR('a'));
 	}
 
 	// reverse_iterator       rbegin() EA_NOEXCEPT;
@@ -920,13 +920,13 @@ int TEST_STRING_NAME()
 
 		auto iRBegin = str.rbegin();
 
-		VERIFY(*iRBegin++ == LITERAL('z'));
-		VERIFY(*iRBegin++ == LITERAL('y'));
-		VERIFY(*iRBegin++ == LITERAL('x'));
-		VERIFY(*iRBegin++ == LITERAL('w'));
-		VERIFY(*iRBegin++ == LITERAL('v'));
-		VERIFY(*iRBegin++ == LITERAL('u'));
-		VERIFY(*(str.rbegin() + 25) == LITERAL('a'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('z'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('y'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('x'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('w'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('v'));
+		VERIFY(*iRBegin++ == LITERAL_CHAR('u'));
+		VERIFY(*(str.rbegin() + 25) == LITERAL_CHAR('a'));
 	}
 
 	// reverse_iterator       rend() EA_NOEXCEPT;
@@ -937,13 +937,13 @@ int TEST_STRING_NAME()
 
 		auto iREnd = str.rend() - 1;
 
-		VERIFY(*iREnd-- == LITERAL('a'));
-		VERIFY(*iREnd-- == LITERAL('b'));
-		VERIFY(*iREnd-- == LITERAL('c'));
-		VERIFY(*iREnd-- == LITERAL('d'));
-		VERIFY(*iREnd-- == LITERAL('e'));
-		VERIFY(*iREnd-- == LITERAL('f'));
-		VERIFY(*(str.rend() - 26) == LITERAL('z'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('a'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('b'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('c'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('d'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('e'));
+		VERIFY(*iREnd-- == LITERAL_CHAR('f'));
+		VERIFY(*(str.rend() - 26) == LITERAL_CHAR('z'));
 	}
 
 	// bool empty() const EA_NOEXCEPT;
@@ -975,7 +975,7 @@ int TEST_STRING_NAME()
 		// str.set_capacity(0);
 		// VERIFY(str.capacity() == 0); // frees existing capacity, but has a minimun of SSO capacity
 
-		str.resize(32, LITERAL('c'));
+		str.resize(32, LITERAL_CHAR('c'));
 		VERIFY(!str.empty());
 		VERIFY(str.size() == 32);
 		VERIFY(str.length() == 32);
@@ -1178,7 +1178,7 @@ int TEST_STRING_NAME()
 		typename StringType::value_type* pData = str.data();
 
 		VERIFY(pData != nullptr);
-		VERIFY(EA::StdC::Memcmp(pData, LITERAL("abcdefghijklmnopqrstuvwxyz"), str.size()) == 0);
+		VERIFY(EA::StdC::Memcmp(pData, LITERAL("abcdefghijklmnopqrstuvwxyz").c_str(), str.size()) == 0);
 	}
 
 	// reference       operator[](size_type n);
@@ -1186,9 +1186,9 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		VERIFY(str[0]  == LITERAL('a'));
-		VERIFY(str[14] == LITERAL('o'));
-		VERIFY(str[25] == LITERAL('z'));
+		VERIFY(str[0]  == LITERAL_CHAR('a'));
+		VERIFY(str[14] == LITERAL_CHAR('o'));
+		VERIFY(str[25] == LITERAL_CHAR('z'));
 	}
 
 	// reference       at(size_type n);
@@ -1196,23 +1196,23 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		VERIFY(str.at(0)  == LITERAL('a'));
-		VERIFY(str.at(14) == LITERAL('o'));
-		VERIFY(str.at(25) == LITERAL('z'));
+		VERIFY(str.at(0)  == LITERAL_CHAR('a'));
+		VERIFY(str.at(14) == LITERAL_CHAR('o'));
+		VERIFY(str.at(25) == LITERAL_CHAR('z'));
 	}
 
 	// reference       front();
 	// const_reference front() const;
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		VERIFY(str.front()  == LITERAL('a'));
+		VERIFY(str.front()  == LITERAL_CHAR('a'));
 	}
 
 	// reference       back();
 	// const_reference back() const;
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-		VERIFY(str.back()  == LITERAL('z'));
+		VERIFY(str.back()  == LITERAL_CHAR('z'));
 	}
 
 	// this_type& operator+=(const this_type& x);
@@ -1223,7 +1223,7 @@ int TEST_STRING_NAME()
 		StringType str2(LITERAL("123"));
 		str1 += str2;
 		str1 += LITERAL("456");
-		str1 += LITERAL('7');
+		str1 += LITERAL_CHAR('7');
 
 		VERIFY(str1 == LITERAL("abcdefghijklmnopqrstuvwxyz1234567"));
 	}
@@ -1242,8 +1242,8 @@ int TEST_STRING_NAME()
 		str.append(src, 4, 4); 		   					// "abcdefgh"
 		// str.append(src.begin() + 8, 4); 					// "abcdefghijkl"
 		str.append(LITERAL("ijklmnop"));   					// "abcdefghijklmnop"
-		str.append(1, LITERAL('q'));   					// "abcdefghijklmnopq"
-		str.append(src.begin() + 17, src.begin() + 26);   // "abcdefghijklmnopqrstuvwxyz"
+		str.append(1, LITERAL_CHAR('q'));   					// "abcdefghijklmnopq"
+		str.append_unsafe(src.begin_unsafe() + 17, src.begin_unsafe() + 26);   // "abcdefghijklmnopqrstuvwxyz"
 
 		VERIFY(str == src);
 	}
@@ -1336,40 +1336,40 @@ int TEST_STRING_NAME()
 
 	// template <typename OtherStringType>
 	// this_type& append_convert(const OtherStringType& x);
-	{
-		{
-		#if defined(EA_CHAR8)
-			StringType str; 
-			str.append_convert(safe_memory::string(EA_CHAR8("123456789")));
-			VERIFY(str == LITERAL("123456789"));
-			VERIFY(validate(str));
-		#endif
-		}
-		{
-		#if defined(EA_CHAR16)
-			StringType str; 
-			str.append_convert(safe_memory::string16(EA_CHAR16("123456789")));
-			VERIFY(str == LITERAL("123456789"));
-			VERIFY(validate(str));
-		#endif
-		}
-		{
-		#if defined(EA_CHAR32)
-			StringType str; 
-			str.append_convert(safe_memory::string32(EA_CHAR32("123456789")));
-			VERIFY(str == LITERAL("123456789"));
-			VERIFY(validate(str));
-		#endif
-		}
-		{
-		#if defined(EA_WCHAR)
-		    StringType str;
-		    str.append_convert_unsafe(EA_WCHAR("123456789"));
-		    VERIFY(str == LITERAL("123456789"));
-		    VERIFY(validate(str));
-		#endif
-		}
-	}
+	// {
+	// 	{
+	// 	#if defined(EA_CHAR8)
+	// 		StringType str; 
+	// 		str.append_convert(safe_memory::string(EA_CHAR8("123456789")));
+	// 		VERIFY(str == LITERAL("123456789"));
+	// 		VERIFY(validate(str));
+	// 	#endif
+	// 	}
+	// 	{
+	// 	#if defined(EA_CHAR16)
+	// 		StringType str; 
+	// 		str.append_convert(safe_memory::string16(EA_CHAR16("123456789")));
+	// 		VERIFY(str == LITERAL("123456789"));
+	// 		VERIFY(validate(str));
+	// 	#endif
+	// 	}
+	// 	{
+	// 	#if defined(EA_CHAR32)
+	// 		StringType str; 
+	// 		str.append_convert(safe_memory::string32(EA_CHAR32("123456789")));
+	// 		VERIFY(str == LITERAL("123456789"));
+	// 		VERIFY(validate(str));
+	// 	#endif
+	// 	}
+	// 	{
+	// 	#if defined(EA_WCHAR)
+	// 	    StringType str;
+	// 	    str.append_convert(EA_WCHAR("123456789"));
+	// 	    VERIFY(str == LITERAL("123456789"));
+	// 	    VERIFY(validate(str));
+	// 	#endif
+	// 	}
+	// }
 
 	// void push_back(value_type c);
 	{
@@ -1412,7 +1412,7 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
-		str.insert((typename StringType::size_type)0, (typename StringType::size_type)1, LITERAL('1'));   // todo: elminiate the cast to disambiguate
+		str.insert((typename StringType::size_type)0, (typename StringType::size_type)1, LITERAL_CHAR('1'));   // todo: elminiate the cast to disambiguate
 		VERIFY(str == LITERAL("1abcdefghijklmnopqrstuvwxyz"));
 
 		str.insert(2, LITERAL("234"));
@@ -1428,9 +1428,9 @@ int TEST_STRING_NAME()
 		// 	StringType strSSO;
 		// 	auto nSSOCap = strSSO.capacity();
 		// 	StringType strCheck;
-		// 	strCheck.append(nSSOCap, LITERAL('a'));
+		// 	strCheck.append(nSSOCap, LITERAL_CHAR('a'));
 
-		// 	strSSO.append(nSSOCap - 1, LITERAL('a'));
+		// 	strSSO.append(nSSOCap - 1, LITERAL_CHAR('a'));
 
 		// 	strSSO.insert(strSSO.size() - 1, LITERAL("a"));
 		// 	VERIFY(validate(strSSO));
@@ -1445,9 +1445,9 @@ int TEST_STRING_NAME()
 		// 	if (nSSOCap - 2 > 0)
 		// 	{
 		// 		StringType strCheck;
-		// 		strCheck.append(nSSOCap, LITERAL('a'));
+		// 		strCheck.append(nSSOCap, LITERAL_CHAR('a'));
 
-		// 		strSSO.append(nSSOCap - 2, LITERAL('a'));
+		// 		strSSO.append(nSSOCap - 2, LITERAL_CHAR('a'));
 
 		// 		strSSO.insert(strSSO.size() - 1, LITERAL("aa"));
 		// 		VERIFY(validate(strSSO));
@@ -1473,13 +1473,13 @@ int TEST_STRING_NAME()
 	{
 		StringType str(LITERAL("aaa"));
 		auto it = str.insert(str.cend(), 'b');
-		VERIFY(*it == LITERAL('b'));
+		VERIFY(*it == LITERAL_CHAR('b'));
 		VERIFY(str == LITERAL("aaab"));
 		it = str.insert(str.cbegin(), 'c');
-		VERIFY(*it == LITERAL('c'));
+		VERIFY(*it == LITERAL_CHAR('c'));
 		VERIFY(str == LITERAL("caaab"));
 		it = str.insert(str.cbegin() + 2, 'd');
-		VERIFY(*it == LITERAL('d'));
+		VERIFY(*it == LITERAL_CHAR('d'));
 		VERIFY(str == LITERAL("cadaab"));
 	}
 
@@ -1497,10 +1497,10 @@ int TEST_STRING_NAME()
 		str.erase(5,10);
 		VERIFY(str == LITERAL("fghijuvwxyz"));
 
-		str.erase(str.find(LITERAL('v')));
+		str.erase(str.find(LITERAL_CHAR('v')));
 		VERIFY(str == LITERAL("fghiju"));
 
-		str.erase(str.find(LITERAL('g')), str.find(LITERAL('i')));
+		str.erase(str.find(LITERAL_CHAR('g')), str.find(LITERAL_CHAR('i')));
 		VERIFY(str == LITERAL("fju"));
 
 		auto it = str.cbegin() + 1; // 'j'
@@ -1524,11 +1524,11 @@ int TEST_STRING_NAME()
 	// {
 	// 	{
 	// 		// Heap
-	// 		auto* pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
+	// 		auto pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
 	// 		StringType str(pLiteral);
 	// 		const auto sz = str.size() + 1;  // +1 for null-terminator
 
-	// 		auto* pDetach = str.detach();
+	// 		auto pDetach = str.detach();
 
 	// 		VERIFY(pDetach != nullptr);
 	// 		VERIFY(EA::StdC::Strcmp(pDetach, pLiteral) == 0);
@@ -1541,11 +1541,11 @@ int TEST_STRING_NAME()
 
 	// 	{
 	// 		// SSO
-	// 		auto* pLiteral = LITERAL("a");
+	// 		auto pLiteral = LITERAL("a");
 	// 		StringType str(pLiteral);
 	// 		const auto sz = str.size() + 1;  // +1 for null-terminator
 
-	// 		auto* pDetach = str.detach();
+	// 		auto pDetach = str.detach();
 
 	// 		VERIFY(pDetach != nullptr);
 	// 		VERIFY(EA::StdC::Strcmp(pDetach, pLiteral) == 0);
@@ -1558,11 +1558,11 @@ int TEST_STRING_NAME()
 
 	// 	{
 	// 		// SSO, empty string
-	// 		auto* pLiteral = LITERAL("");
+	// 		auto pLiteral = LITERAL("");
 	// 		StringType str(pLiteral);
 	// 		const auto sz = str.size() + 1;  // +1 for null-terminator
 
-	// 		auto* pDetach = str.detach();
+	// 		auto pDetach = str.detach();
 
 	// 		VERIFY(pDetach != nullptr);
 	// 		VERIFY(EA::StdC::Strcmp(pDetach, pLiteral) == 0);
@@ -1578,7 +1578,7 @@ int TEST_STRING_NAME()
 	// 		StringType str;
 	// 		const auto sz = str.size() + 1;  // +1 for null-terminator
 
-	// 		auto* pDetach = str.detach();
+	// 		auto pDetach = str.detach();
 
 	// 		VERIFY(pDetach != nullptr);
 	// 		VERIFY(pDetach[0] == 0);
@@ -1611,7 +1611,7 @@ int TEST_STRING_NAME()
 		str.replace(24, 1, LITERAL("0123456789"));
 		VERIFY(str == LITERAL("abcde123pqrst456789vwxyz0123456789"));
 
-		str.replace(16, 4, 4, LITERAL('@'));
+		str.replace(16, 4, 4, LITERAL_CHAR('@'));
 		VERIFY(str == LITERAL("abcde123pqrst456@@@@wxyz0123456789"));
 	}
 
@@ -1644,9 +1644,9 @@ int TEST_STRING_NAME()
 		VERIFY(str.find(LITERAL("tuv"), 2)  != StringType::npos);
 		VERIFY(str.find(LITERAL("123r"), 2) == StringType::npos);
 
-		VERIFY(str.find(LITERAL('d'), 0) != StringType::npos);
-		VERIFY(str.find(LITERAL('t'), 2) != StringType::npos);
-		VERIFY(str.find(LITERAL('1'), 2) == StringType::npos);
+		VERIFY(str.find(LITERAL_CHAR('d'), 0) != StringType::npos);
+		VERIFY(str.find(LITERAL_CHAR('t'), 2) != StringType::npos);
+		VERIFY(str.find(LITERAL_CHAR('1'), 2) == StringType::npos);
 	}
 
 	// size_type rfind(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
@@ -1668,9 +1668,9 @@ int TEST_STRING_NAME()
 		VERIFY(str.rfind(LITERAL("tuv"), 20)  != StringType::npos);
 		VERIFY(str.rfind(LITERAL("123r"), 20) == StringType::npos);
 
-		VERIFY(str.rfind(LITERAL('d'), 20) != StringType::npos);
-		VERIFY(str.rfind(LITERAL('t'), 20) != StringType::npos);
-		VERIFY(str.rfind(LITERAL('1'), 20) == StringType::npos);
+		VERIFY(str.rfind(LITERAL_CHAR('d'), 20) != StringType::npos);
+		VERIFY(str.rfind(LITERAL_CHAR('t'), 20) != StringType::npos);
+		VERIFY(str.rfind(LITERAL_CHAR('1'), 20) == StringType::npos);
 	}
 
 	// size_type find_first_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
@@ -1686,8 +1686,8 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_first_of(LITERAL("ceg")) == 10);
 		// VERIFY(str.find_first_of(LITERAL("eeef"), 1, 2) == 18);
 		// VERIFY(str.find_first_of(LITERAL("eeef"), 1, 4) == 18);
-		VERIFY(str.find_first_of(LITERAL('g')) == 26);
-		VERIFY(str.find_first_of(LITERAL('$')) == StringType::npos);
+		VERIFY(str.find_first_of(LITERAL_CHAR('g')) == 26);
+		VERIFY(str.find_first_of(LITERAL_CHAR('$')) == StringType::npos);
 	}
 
 	// size_type find_last_of(const this_type& x, size_type position = npos) const EA_NOEXCEPT;
@@ -1703,8 +1703,8 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_last_of(LITERAL("ceg")) == 27);
 		// VERIFY(str.find_last_of(LITERAL("eeef"), 1, 2) == StringType::npos);  // todo: FIX ME
 		// VERIFY(str.find_last_of(LITERAL("eeef"), 1, 4) == StringType::npos);  // todo: FIX ME
-		VERIFY(str.find_last_of(LITERAL('g')) == 27);
-		VERIFY(str.find_last_of(LITERAL('$')) == StringType::npos);
+		VERIFY(str.find_last_of(LITERAL_CHAR('g')) == 27);
+		VERIFY(str.find_last_of(LITERAL_CHAR('$')) == StringType::npos);
 	}
 
 	// size_type find_first_not_of(const this_type& x, size_type position = 0) const EA_NOEXCEPT;
@@ -1718,7 +1718,7 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_first_not_of(LITERAL("abcdfg")) == 18);
 		// VERIFY(str.find_first_not_of(LITERAL("abcdfg"), 2, 2) == 0);   // todo:  FIX ME
 		// VERIFY(str.find_first_not_of(LITERAL("abcdfg"), 0, 2) == 10);  // todo:  FIX ME
-		VERIFY(str.find_first_not_of(LITERAL('a')) == 5);
+		VERIFY(str.find_first_not_of(LITERAL_CHAR('a')) == 5);
 	}
 
 	// size_type find_last_not_of(const this_type& x,  size_type position = npos) const EA_NOEXCEPT;
@@ -1734,7 +1734,7 @@ int TEST_STRING_NAME()
 		VERIFY(str.find_last_not_of(LITERAL("abcdfgh")) == 22);
 		// VERIFY(str.find_last_not_of(LITERAL("abcdfg"), 2, 2) == 0);   // todo:  FIX ME
 		// VERIFY(str.find_last_not_of(LITERAL("abcdfg"), 0, 2) == 10);  // todo:  FIX ME
-		VERIFY(str.find_last_not_of(LITERAL('a')) == 28);
+		VERIFY(str.find_last_not_of(LITERAL_CHAR('a')) == 28);
 	}
 
 	// this_type substr(size_type position = 0, size_type n = npos) const;
@@ -1855,7 +1855,7 @@ int TEST_STRING_NAME()
 	// 		VERIFY(str == lrstr);
 	// 	}
 	// 	{
-	// 		auto* pLiteral = LITERAL("abcdefghijklmn          opqrstuvwxyz");
+	// 		auto pLiteral = LITERAL("abcdefghijklmn          opqrstuvwxyz");
 	// 		StringType mstr(pLiteral);
 	// 		mstr.trim();
 	// 		VERIFY(mstr == pLiteral);
@@ -2025,4 +2025,5 @@ int TEST_STRING_NAME()
 // Required to prevent manual undef of macros when 'TestString.inl' preprocessed at the top of the unit test cpp file.
 #undef TEST_STRING_NAME
 #undef LITERAL
+#undef LITERAL_CHAR
 

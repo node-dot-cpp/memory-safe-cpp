@@ -10,6 +10,7 @@
 #include <algorithm>
 //#include <EASTL/allocator_malloc.h>
 #include <safe_memory/string.h>
+#include <safe_memory/string_literal.h>
 
 // namespace safe_memory {
 // 	template<class T, class Alloc>
@@ -30,19 +31,24 @@ bool validate(const StringType& str) {
 
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
-#define LITERAL(x) x
+#define LITERAL_CHAR(x) x
+#define LITERAL(x) safe_memory::string_literal(x)
+
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicStringW
-#define LITERAL(x) EA_WCHAR(x) 
+#define LITERAL_CHAR(x) EA_WCHAR(x) 
+#define LITERAL(x) safe_memory::wstring_literal(EA_WCHAR(x))
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString16
-#define LITERAL(x) EA_CHAR16(x) 
+#define LITERAL_CHAR(x) EA_CHAR16(x) 
+#define LITERAL(x) safe_memory::string16_literal(EA_CHAR16(x))
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString32
-#define LITERAL(x) EA_CHAR32(x) 
+#define LITERAL_CHAR(x) EA_CHAR32(x) 
+#define LITERAL(x) safe_memory::string32_literal(EA_CHAR32(x))
 #include "TestString.inl"
 
 int TestString()

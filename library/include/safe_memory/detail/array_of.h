@@ -227,7 +227,8 @@ public:
 	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_ptr() - other; }
 	T& operator[](std::size_t n) const noexcept { return *(get_raw_ptr() + n); }
 
-	~soft_ptr_with_zero_offset_impl() {	NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR(); }
+	// mb: destructor should be trivial to allow use in unions
+	// ~soft_ptr_with_zero_offset_impl();
 };
 
 
@@ -296,7 +297,8 @@ public:
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_ptr() + n; }
 	T& operator[](std::size_t n) const noexcept { return *(get_raw_ptr() + n); }
 
-	~soft_ptr_with_zero_offset_no_checks() { NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR(); }
+	// mb: destructor should be trivial to allow use in unions
+	// ~soft_ptr_with_zero_offset_no_checks();
 };
 
 template <typename T, bool bConst, template<typename> typename ArrayPtr>
@@ -651,22 +653,219 @@ typename array_of_iterator_no_checks<T, C>::difference_type distance(const array
 }
 
 
-} // namespace safe_memory::detail 
+// this iterator is used for string, we should be able to construct it
+// from a heap pointer or from stack pointer (when SSO)
+template <typename T, bool bConst>
+class array_of_raw_iterator_impl
+{
+protected:
+	typedef array_of_raw_iterator_impl<T, bConst>       this_type;
+public:
+	typedef std::random_access_iterator_tag  			iterator_category;
+	typedef std::conditional_t<bConst, const T, T>		value_type;
+	typedef int32_t			                      		difference_type;
+	typedef value_type*								 	pointer;
+	typedef value_type&								 	reference;
+	typedef const T*									const_pointer;
 
-namespace eastl {
+	static constexpr memory_safety is_safe = memory_safety::safe;
 
-	// template <typename T>
-	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_no_checks<T>::soft_array_type& first, T* last)
-	// {
-	// 	eastl::destruct(first.get_raw_ptr(), last);
-	// }
+	// for non-const to const conversion
+	template<typename, bool>
+	friend class array_of_raw_iterator_impl;
 
-	// template <typename T>
-	// inline void destruct(const typename safe_memory::detail::allocator_to_eastl_impl<T>::soft_array_type& first, T* last)
-	// {
-	// 	eastl::destruct(first.get_raw_ptr(), last);
-	// }
+private:
+	pointer  arr = nullptr;
+	uint32_t ix = 0;
+	uint32_t sz = 0;
 
+
+public:
+
+	array_of_raw_iterator_impl() {}
+
+private:
+	array_of_raw_iterator_impl(pointer arr, uint32_t ix, uint32_t sz)
+		: arr(arr), ix(ix), sz(sz) {}
+
+public:
+	static this_type makeIx(pointer arr, uint32_t ix, uint32_t sz) {
+		return this_type(arr, ix, sz);
+	}
+
+	static this_type makePtr(pointer arr, pointer to, pointer end) {
+		return this_type(arr, static_cast<uint32_t>(to - arr), static_cast<uint32_t>(end - arr));
+	}
+
+	array_of_raw_iterator_impl(const array_of_raw_iterator_impl& ri) = default;
+	array_of_raw_iterator_impl& operator=(const array_of_raw_iterator_impl& ri) = default;
+
+	array_of_raw_iterator_impl(array_of_raw_iterator_impl&& ri) = default; 
+	array_of_raw_iterator_impl& operator=(array_of_raw_iterator_impl&& ri) = default;
+
+
+	// allow non-const to const convertion
+	template<bool B, typename X = std::enable_if_t<bConst && !B>>
+	array_of_raw_iterator_impl(const array_of_raw_iterator_impl<T, B>& ri)
+		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
+
+	// allow non-const to const convertion
+	template<bool B, typename X = std::enable_if_t<bConst && !B>>
+	array_of_raw_iterator_impl& operator=(const array_of_raw_iterator_impl<T, B>& ri) {
+		this->arr = ri.arr;
+		this->ix = ri.ix;
+		this->sz = ri.sz;
+		return *this;
+	}
+
+	pointer get_raw_ptr() const {
+		// this is unsafe function, always called after ix was validated
+		return arr + ix;
+	}
+
+	reference operator*() const {
+		if(arr)
+			return *(arr + ix);
+		else
+			return *arr; //TODO throw
+	}
+
+	pointer operator->() const {
+		if(arr)
+			return arr + ix;
+		else
+			return arr; //TODO throw
+	}
+
+	this_type& operator++() noexcept {
+		if(ix < sz)
+			++ix;
+		return *this;
+	}
+
+	this_type operator++(int) noexcept {
+		this_type ri(*this);
+		operator++();
+		return ri;
+	}
+
+	this_type& operator--() noexcept {
+		if(0 < ix)
+			--ix;
+		return *this;
+	}
+
+	this_type operator--(int) noexcept {
+		this_type ri(*this);
+		operator--();
+		return ri;
+	}
+
+	this_type operator+(difference_type n) const noexcept {
+		return this_type(arr, std::min(ix + n, sz), sz);
+	}
+
+	this_type& operator+=(difference_type n) noexcept {
+		ix = std::min(ix + n, sz);
+		return *this;
+	}
+
+	this_type operator-(difference_type n) const noexcept {
+		return this_type(arr, std::min(ix - n, sz), sz);
+	}
+
+	this_type& operator-=(difference_type n) noexcept {
+		ix = std::min(ix - n, sz);
+		return *this;
+	}
+
+	difference_type operator-(const this_type& ri) const noexcept {
+		if(arr == ri.arr)
+			return ix - ri.ix;
+		else
+			return 0;//TODO throw
+	}
+
+
+	reference operator[](difference_type n) const {
+		if(arr && ix + n < sz) 
+			return arr[ix + n];
+		else
+			return arr[0]; //TODO throw
+		}
+
+	bool operator==(const this_type& ri) const noexcept {
+		if(!arr && !ri.arr)
+			return true;
+		else if(!arr || !ri.arr)
+			return false;
+		else if(arr == ri.arr)
+			return ix == ri.ix;
+		else
+			return false; //TODO throw??
+	}
+
+	bool operator!=(const this_type& ri) const noexcept {
+		return !operator==(ri);
+	}
+
+	bool operator<(const this_type& ri) const noexcept {
+		if(!ri.arr && !arr) // superfluous
+			return false;
+		else if(!ri.arr)
+			return false;
+		else if(!arr)
+			return true;
+		else if(arr == ri.arr)
+			return ix < ri.ix;
+		else
+			return false; //TODO throw
+	}
+
+	bool operator>(const this_type& ri) const noexcept {
+		if(!arr && !ri.arr)
+			return false;
+		else if(!arr)
+			return false;
+		else if(!ri.arr)
+			return true;
+		else if(arr == ri.arr)
+			return ix > ri.ix;
+		else
+			return false; //TODO throw
+	}
+
+	bool operator<=(const this_type& ri) const noexcept {
+		return !operator>(ri);
+	}
+
+	bool operator>=(const this_type& ri) const noexcept {
+		return !operator<(ri);
+	}
+
+	const T* toRaw(const T* begin) const {
+		if (arr && arr == begin)
+			return get_raw_ptr();
+		else
+			return nullptr; //TODO throw
+	}
+
+	std::pair<const T*, const T*> toRaw(const T* begin, const this_type& ri) const {
+		if (arr && arr == begin && arr == ri.arr && ix <= ri.ix)
+			return { get_raw_ptr(), ri.get_raw_ptr() };
+		else
+			return nullptr; //TODO throw
+	}
+
+};
+
+template <typename T, bool b>
+typename array_of_raw_iterator_impl<T, b>::difference_type distance(const array_of_raw_iterator_impl<T, b>& l, const array_of_raw_iterator_impl<T, b>& r) {
+	return r - l;
 }
+
+
+
+} // namespace safe_memory::detail 
 
 #endif // SAFE_MEMORY_DETAIL_ARRAY_OF

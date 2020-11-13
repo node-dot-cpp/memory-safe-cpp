@@ -132,7 +132,7 @@ int EAMain(int argc, char* argv[])
 	// testSuite.AddTest("Sort",					TestSort);
 	// testSuite.AddTest("Span",				    TestSpan);
 	// testSuite.AddTest("SparseMatrix",			TestSparseMatrix);
-	// testSuite.AddTest("String",					TestString);
+	testSuite.AddTest("String",					TestString);
 	// testSuite.AddTest("StringHashMap",			TestStringHashMap);
 	// testSuite.AddTest("StringMap",				TestStringMap);
 	// testSuite.AddTest("StringView",			    TestStringView);

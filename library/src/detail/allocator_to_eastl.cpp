@@ -31,7 +31,6 @@ namespace safe_memory::detail {
 
 fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray = { soft_ptr_with_zero_offset_base(), soft_ptr_with_zero_offset_base(reinterpret_cast<void*>((uintptr_t)~0))};
 
-
 }
 
 // required by eastl, see allocator.h line 173, or EASTL/doc/FAQ.md

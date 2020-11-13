@@ -147,7 +147,7 @@ int EAMain(int argc, char* argv[])
 
 	// BenchmarkAlgorithm();
 	// BenchmarkList();
-	// BenchmarkString();
+	BenchmarkString();
 	BenchmarkVector();
 	// BenchmarkDeque();
 	// BenchmarkSet();

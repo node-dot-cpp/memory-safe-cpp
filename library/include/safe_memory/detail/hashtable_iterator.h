@@ -69,7 +69,7 @@ namespace safe_memory::detail {
 			mpNode = allocator_type::to_soft(mpNode->mpNext);
 
 			// mb: *mpBucket will be != nullptr at 'end()' sentinel
-			// 		but 'to_soft' will convert it to a nullptr
+			// 		but 'to_soft' will convert it to a null
 			if(mpNode == nullptr) {
 				do { ++mpBucket; } while(*mpBucket == nullptr);
 				mpNode = allocator_type::to_soft(*mpBucket);
@@ -82,6 +82,8 @@ namespace safe_memory::detail {
     public:
         template<class HeapPtr, class NodePtr, class SoftNode>
         static this_type makeIt(SoftNode node, const HeapPtr& heap_ptr, NodePtr* curr_bucket) {
+			//mb: on empty hashtable, heap_ptr will be != nullptr
+			//    but 'to_soft' will convert it to a null
 			auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
 			if(soft_heap_ptr)
 				return this_type(allocator_type::to_soft(node), bucket_iterator::makePtr(soft_heap_ptr, curr_bucket));
@@ -117,7 +119,7 @@ namespace safe_memory::detail {
 		const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(allocator_type::to_zero(mpNode), mpBucket.get_raw_ptr());
+			return BaseIt::make_unsafe(allocator_type::to_zero(mpNode), mpBucket.get_raw_ptr());
 		}
 	}; // hashtable_heap_safe_iterator
 

@@ -249,11 +249,8 @@ public:
 	T* operator -> () const noexcept { return get_raw_ptr(); }
 	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }
 
-	~soft_ptr_with_zero_offset_impl()
-	{
-		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
-//		ptr = nullptr;
-	}
+	// mb: destructor should be trivial to allow use in unions
+	// ~soft_ptr_with_zero_offset_impl();
 };
 
 
@@ -391,10 +388,8 @@ public:
 	T* operator -> () const noexcept { return get_raw_ptr(); }
 	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }
 
-	~soft_ptr_with_zero_offset_no_checks()
-	{
-		NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR();
-	}
+	// mb: destructor should be trivial to allow use in unions
+	// ~soft_ptr_with_zero_offset_no_checks();
 };
 
 template<class T, memory_safety S>

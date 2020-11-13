@@ -483,8 +483,8 @@ void BenchmarkString()
 	typedef std::basic_string<char8_t> Std8;
 	typedef	std::basic_string<char16_t> Std16;
 
-	typedef eastl::basic_string<char8_t> Ea8;
-	typedef eastl::basic_string<char16_t> Ea16;
+	// typedef eastl::basic_string<char8_t> Ea8;
+	// typedef eastl::basic_string<char16_t> Ea16;
 
 	typedef safe_memory::basic_string<char8_t, safe_memory::memory_safety::safe> Safe8;
 	typedef safe_memory::basic_string<char16_t, safe_memory::memory_safety::safe> Safe16;
@@ -492,7 +492,7 @@ void BenchmarkString()
 	typedef safe_memory::basic_string<char8_t, safe_memory::memory_safety::none> Unsafe8;
 	typedef safe_memory::basic_string<char16_t, safe_memory::memory_safety::none> Unsafe16;
 
-	BenchmarkStringTempl<1, Ea8, Ea16>();
+	BenchmarkStringTempl<1, Std8, Std16>();
 	BenchmarkStringTempl<2, Std8, Std16>();
 	BenchmarkStringTempl<3, Safe8, Safe16>();
 	BenchmarkStringTempl<4, Unsafe8, Unsafe16>();
