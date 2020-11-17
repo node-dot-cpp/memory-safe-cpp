@@ -17,8 +17,6 @@ add_subdirectory(src/iibmalloc)
 # Library definition
 #-------------------------------------------------------------------------------------------
 add_library(safe_memory STATIC
-  src/EASTL/string.cpp
-  src/EASTL/hashtable.cpp
   src/safe_ptr.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
