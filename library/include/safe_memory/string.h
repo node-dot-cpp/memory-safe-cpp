@@ -54,10 +54,10 @@ namespace safe_memory
 		typedef typename base_type::const_iterator              const_iterator_base;
 		typedef std::conditional_t<Safety == memory_safety::none,
 			iterator_base,
-			detail::array_of_raw_iterator_impl<T, false>>               iterator;
+			detail::array_of_iterator_stack<T>>               iterator;
 		typedef std::conditional_t<Safety == memory_safety::none,
 			const_iterator_base,
-			detail::array_of_raw_iterator_impl<T, true>>               const_iterator;
+			detail::const_array_of_iterator_stack<T>>               const_iterator;
 
 		// typedef typename allocator_type::array_iterator          iterator;
 		// typedef typename allocator_type::const_array_iterator    const_iterator;
@@ -288,7 +288,7 @@ namespace safe_memory
 		void pop_back() {
 			if constexpr (Safety == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(empty())) {
-					base_type::ThrowRangeException();
+					ThrowRangeException("basic_string::pop_back -- empty string");
 				}
 			}
 			base_type::pop_back();
@@ -511,21 +511,22 @@ namespace safe_memory
 		bool operator>=(const literal_type& l) { return eastl::operator>=(this->toBase(), l.c_str()); }
 
     protected:
-        const base_type& toBase() const noexcept {
-            return *this;
-        }
+		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+
+        const base_type& toBase() const noexcept { return *this; }
 
 		// Safety == none
-		const_iterator_base toBase(const_iterator_base it) const { return it;	}
+		const_iterator_base toBase(const_iterator_base it) const { return it; }
 		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
 		
 		// Safety == safe
-		const_iterator_base toBase(detail::array_of_raw_iterator_impl<T, true>  it) const {
-			return it.toRaw(base_type::internalLayout().BeginPtr());
+		const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
+			return it.toRaw(base_type::begin());
 		}
 
-		std::pair<const_iterator_base, const_iterator_base> toBase(detail::array_of_raw_iterator_impl<T, true> it, detail::array_of_raw_iterator_impl<T, true> it2) const {
-			return it.toRaw(base_type::internalLayout().BeginPtr(), it2);
+		std::pair<const_iterator_base, const_iterator_base> toBase(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+			return it.toRaw(base_type::begin(), it2);
 		}
 
         size_type checkPos(size_type position) const {
@@ -535,26 +536,24 @@ namespace safe_memory
             #if !EASTL_STRING_OPT_RANGE_ERRORS
                 if constexpr (Safety == memory_safety::safe) {
                     if(NODECPP_UNLIKELY(position > size())) {
-                        base_type::ThrowRangeException();
+                        ThrowInvalidArgumentException("vector -- invalid argument");
                     }
                 }
             #endif
             return position;
         }
 
-		iterator makeIt(T* it) {
+		iterator makeIt(iterator_base it) {
 			if constexpr (Safety == memory_safety::none)
 				return it;
 			else
-				return iterator::makePtr(base_type::internalLayout().BeginPtr(),
-				it, base_type::internalLayout().CapacityPtr());
+				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
 		}
-		const_iterator makeIt(const T* it) const {
+		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (Safety == memory_safety::none)
 				return it;
 			else
-				return const_iterator::makePtr(base_type::internalLayout().BeginPtr(),
-				it, base_type::internalLayout().CapacityPtr());
+				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
 		}
 
 		reverse_iterator makeIt(const typename base_type::reverse_iterator& it) {

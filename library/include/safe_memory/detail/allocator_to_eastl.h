@@ -173,7 +173,7 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 
 
 
-class allocator_to_eastl_impl {
+class allocator_to_eastl_hashtable_impl {
 public:
 	static constexpr memory_safety is_safe = memory_safety::safe; 
 	
@@ -251,11 +251,11 @@ public:
 		return { make_zero_offset_t(), p.getDereferencablePtr() };
 	}
 
-	bool operator==(const allocator_to_eastl_impl&) const { return true; }
-	bool operator!=(const allocator_to_eastl_impl&) const { return false; }
+	bool operator==(const allocator_to_eastl_hashtable_impl&) const { return true; }
+	bool operator!=(const allocator_to_eastl_hashtable_impl&) const { return false; }
 };
 
-class allocator_to_eastl_no_checks {
+class allocator_to_eastl_hashtable_no_checks {
 public:
 	static constexpr memory_safety is_safe = memory_safety::none; 
 
@@ -326,19 +326,19 @@ public:
 		return { make_zero_offset_t(), p.t };
 	}
 
-	bool operator==(const allocator_to_eastl_no_checks&) const { return true; }
-	bool operator!=(const allocator_to_eastl_no_checks&) const { return false; }
+	bool operator==(const allocator_to_eastl_hashtable_no_checks&) const { return true; }
+	bool operator!=(const allocator_to_eastl_hashtable_no_checks&) const { return false; }
 };
 
 template<memory_safety Safety>
-using allocator_to_eastl = std::conditional_t<Safety == memory_safety::safe,
-			allocator_to_eastl_impl,
-			allocator_to_eastl_no_checks>;
+using allocator_to_eastl_hashtable = std::conditional_t<Safety == memory_safety::safe,
+			allocator_to_eastl_hashtable_impl,
+			allocator_to_eastl_hashtable_no_checks>;
 
 
 
 template<class T>
-class allocator_to_eastl_string_impl {
+class allocator_to_eastl_vector_impl {
 public:
 	static constexpr memory_safety is_safe = memory_safety::safe; 
 	
@@ -352,51 +352,82 @@ public:
 		return allocate_array_impl<T, true>(count);
 	}
 
-	void deallocate_array(array_pointer p, std::size_t count) {
+	void deallocate_array(array_pointer& p, std::size_t count) {
 		deallocate_array_impl(p);
 	}
 
-	static T* to_raw(array_pointer p) {
-		return p.get_raw_ptr();
+	static T* to_raw(const array_pointer& p) {
+		return p ? p->begin() : nullptr;
 	}
 
-	bool operator==(const allocator_to_eastl_string_impl&) const { return true; }
-	bool operator!=(const allocator_to_eastl_string_impl&) const { return false; }
+	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer& p) {
+		if(p)
+			return { getControlBlock_( p.get_raw_ptr() ), p.get_raw_ptr() };
+		else
+			return {};
+	}
+
+
+	bool operator==(const allocator_to_eastl_vector_impl&) const { return true; }
+	bool operator!=(const allocator_to_eastl_vector_impl&) const { return false; }
 };
 
 template<class T>
-class allocator_to_eastl_string_no_checks {
+class allocator_to_eastl_vector_no_checks {
 public:
 	static constexpr memory_safety is_safe = memory_safety::none; 
 
-	typedef T* array_pointer;
+	typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array_pointer;
 
-	T* allocate_array(std::size_t count, int flags = 0) {
-		return reinterpret_cast<T*>(allocate(sizeof(T) * count)); 
+	array_pointer allocate_array(std::size_t count, int flags = 0) {
+		return allocate_array_no_checks<T>(count);
 	}
 
-	T* allocate_array_zeroed(std::size_t count, int flags = 0) {
-		void* arr = allocate(count * sizeof(T));
-		memset(arr, 0, count * sizeof(T));
-		return reinterpret_cast<T*>(arr);
+	array_pointer allocate_array_zeroed(std::size_t count, int flags = 0) {
+		auto arr = allocate_array<T>(count);
+		memset(arr->begin(), 0, count * sizeof(T));
+		return arr;
 	}
 
-	void deallocate_array(T* p, std::size_t count) {
-		deallocate(p);
+	void deallocate_array(array_pointer& p, std::size_t count) {
+		deallocate_array_no_checks(p);
 	}
 
-	static
-	T* to_raw(T* p) { return p; }
-
-	bool operator==(const allocator_to_eastl_string_no_checks&) const { return true; }
-	bool operator!=(const allocator_to_eastl_string_no_checks&) const { return false; }
+	static T* to_raw(const array_pointer& p) { return p ? p->begin() : nullptr; }
+//	static T* to_raw(const T* p) { return const_cast<T*>(p); }
+	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer& p) {
+		if(p)
+			return { fbc_ptr_t(), p.get_raw_ptr() };
+		else
+			return {};
+	}
+	
+	bool operator==(const allocator_to_eastl_vector_no_checks&) const { return true; }
+	bool operator!=(const allocator_to_eastl_vector_no_checks&) const { return false; }
 };
 
 template<typename T, memory_safety Safety>
 using allocator_to_eastl_string = std::conditional_t<Safety == memory_safety::safe,
-			allocator_to_eastl_string_impl<T>,
-			allocator_to_eastl_string_no_checks<T>>;
+			allocator_to_eastl_vector_impl<T>,
+			allocator_to_eastl_vector_no_checks<T>>;
 
+template<typename T, memory_safety Safety>
+using allocator_to_eastl_vector = std::conditional_t<Safety == memory_safety::safe,
+			allocator_to_eastl_vector_impl<T>,
+			allocator_to_eastl_vector_no_checks<T>>;
+
+
+template<typename T, memory_safety Safety>
+using array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
+			array_of_raw_iterator_impl<T, false, soft_ptr_impl<array_of<T>>>,
+			array_of_raw_iterator_impl<T, false, soft_ptr_no_checks<array_of<T>>>
+			>;
+
+template<typename T, memory_safety Safety>
+using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
+			array_of_raw_iterator_impl<T, true, soft_ptr_impl<array_of<T>>>,
+			array_of_raw_iterator_impl<T, true, soft_ptr_no_checks<array_of<T>>>
+			>;
 
 
 } // namespace safe_memory::detail

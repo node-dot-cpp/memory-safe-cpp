@@ -38,10 +38,10 @@
 namespace safe_memory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : private eastl::vector<T, detail::allocator_to_eastl<Safety>>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<T, Safety>>
 	{
 		typedef vector<T, Safety> 										this_type;
-		typedef eastl::vector<T, detail::allocator_to_eastl<Safety>>    base_type;
+		typedef eastl::vector<T, detail::allocator_to_eastl_vector<T, Safety>>    base_type;
 
 		template <typename T, memory_safety Safety>
 		friend bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b);
@@ -68,27 +68,36 @@ namespace safe_memory
 		using typename base_type::reference;
 		using typename base_type::const_reference;
 
-		typedef typename base_type::reverse_iterator 				reverse_iterator_unsafe;
-		typedef typename base_type::const_reverse_iterator 			const_reverse_iterator_unsafe;
+		typedef typename base_type::iterator 						iterator_base;
+		typedef typename base_type::const_iterator 					const_iterator_base;
+		typedef typename base_type::reverse_iterator 				reverse_iterator_base;
+		typedef typename base_type::const_reverse_iterator 			const_reverse_iterator_base;
 		using typename base_type::size_type;
 		using typename base_type::difference_type;
 
 		using typename base_type::allocator_type;
 		using typename base_type::array_type;
 
-		typedef detail::safe_array_iterator2<T, false, Safety>		iterator_safe;
-		typedef detail::safe_array_iterator2<T, true, Safety>		const_iterator_safe;
+		typedef std::conditional_t<Safety == memory_safety::none,
+			iterator_base,
+			detail::array_of_iterator_stack<T>>           iterator;
+		typedef std::conditional_t<Safety == memory_safety::none,
+			const_iterator_base,
+			detail::const_array_of_iterator_stack<T>>            	const_iterator;
+		typedef std::reverse_iterator<iterator>                		reverse_iterator;
+		typedef std::reverse_iterator<const_iterator>          		const_reverse_iterator;
+
+		typedef detail::array_of_iterator_heap<T, Safety>           iterator_safe;
+		typedef detail::const_array_of_iterator_heap<T, Safety>     const_iterator_safe;
 		typedef std::reverse_iterator<iterator_safe>                reverse_iterator_safe;
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
-		typedef const const_iterator_safe&							csafe_it_arg;
-		typedef const const_reverse_iterator_safe&					crsafe_it_arg;
-		
-		typedef std::pair<const_pointer, const_pointer>		const_pointer_pair;
 
-		typedef iterator_safe                                       iterator;
-		typedef const_iterator_safe                                 const_iterator;
-		typedef reverse_iterator_safe             					reverse_iterator;
-		typedef const_reverse_iterator_safe							const_reverse_iterator;    
+
+		typedef const const_iterator&								csafe_it_arg;
+		typedef const const_reverse_iterator&						crsafe_it_arg;
+		
+		typedef std::pair<const_iterator_base, const_iterator_base>				const_iterator_base_pair;
+
 
 		using base_type::npos;
 		static constexpr memory_safety is_safe = Safety;
@@ -127,29 +136,29 @@ namespace safe_memory
 		const_pointer end_unsafe() const noexcept { return base_type::end(); }
 		const_pointer cend_unsafe() const noexcept { return base_type::cend(); }
 
-		reverse_iterator_unsafe       rbegin_unsafe() noexcept { return base_type::rbegin(); }
-		const_reverse_iterator_unsafe rbegin_unsafe() const noexcept { return base_type::rbegin(); }
-		const_reverse_iterator_unsafe crbegin_unsafe() const noexcept { return base_type::crbegin(); }
+		reverse_iterator_base       rbegin_unsafe() noexcept { return base_type::rbegin(); }
+		const_reverse_iterator_base rbegin_unsafe() const noexcept { return base_type::rbegin(); }
+		const_reverse_iterator_base crbegin_unsafe() const noexcept { return base_type::crbegin(); }
 
-		reverse_iterator_unsafe       rend_unsafe() noexcept { return base_type::rend(); }
-		const_reverse_iterator_unsafe rend_unsafe() const noexcept { return base_type::rend(); }
-		const_reverse_iterator_unsafe crend_unsafe() const noexcept { return base_type::crend(); }
+		reverse_iterator_base       rend_unsafe() noexcept { return base_type::rend(); }
+		const_reverse_iterator_base rend_unsafe() const noexcept { return base_type::rend(); }
+		const_reverse_iterator_base crend_unsafe() const noexcept { return base_type::crend(); }
 
-		iterator_safe       begin() noexcept { return iterator_safe::makeIx(GetHeapPtr(), 0); }
-		const_iterator_safe begin() const noexcept { return iterator_safe::makeIx(GetHeapPtr(), 0); }
-		const_iterator_safe cbegin() const noexcept { return iterator_safe::makeIx(GetHeapPtr(), 0); }
+		iterator       begin() noexcept { return makeIt(base_type::begin()); }
+		const_iterator begin() const noexcept { return makeIt(base_type::begin()); }
+		const_iterator cbegin() const noexcept { return makeIt(base_type::cbegin()); }
 
-		iterator_safe       end() noexcept { return iterator_safe::makeIx(GetHeapPtr(), size()); }
-		const_iterator_safe end() const noexcept { return iterator_safe::makeIx(GetHeapPtr(), size()); }
-		const_iterator_safe cend() const noexcept { return iterator_safe::makeIx(GetHeapPtr(), size()); }
+		iterator       end() noexcept { return makeIt(base_type::end()); }
+		const_iterator end() const noexcept { return makeIt(base_type::end()); }
+		const_iterator cend() const noexcept { return makeIt(base_type::cend()); }
 
-		reverse_iterator_safe       rbegin() noexcept { return reverse_iterator_safe(end()); }
-		const_reverse_iterator_safe rbegin() const noexcept { return const_reverse_iterator_safe(end()); }
-		const_reverse_iterator_safe crbegin() const noexcept { return const_reverse_iterator_safe(end()); }
+		reverse_iterator       rbegin() noexcept { return makeIt(base_type::rbegin()); }
+		const_reverse_iterator rbegin() const noexcept { return makeIt(base_type::rbegin()); }
+		const_reverse_iterator crbegin() const noexcept { return makeIt(base_type::crbegin()); }
 
-		reverse_iterator_safe       rend() noexcept { return reverse_iterator_safe(begin()); }
-		const_reverse_iterator_safe rend() const noexcept { return const_reverse_iterator_safe(begin()); }
-		const_reverse_iterator_safe crend() const noexcept { return const_reverse_iterator_safe(begin()); }
+		reverse_iterator       rend() noexcept { return makeIt(base_type::rend()); }
+		const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend()); }
+		const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend()); }
 
 		using base_type::empty;
 		using base_type::size;
@@ -188,7 +197,7 @@ namespace safe_memory
 		template<class... Args>
 		pointer emplace_unsafe(const_pointer position, Args&&... args) { return base_type::emplace(position, std::forward<Args>(args)...); }
 		template<class... Args>
-		iterator_safe emplace(csafe_it_arg position, Args&&... args);
+		iterator emplace(csafe_it_arg position, Args&&... args);
 
 		using base_type::emplace_back;
 
@@ -200,13 +209,13 @@ namespace safe_memory
 		template <typename InputIterator>
 		pointer insert_unsafe(const_pointer position, InputIterator first, InputIterator last) { return base_type::insert(position, first, last); }
 
-		iterator_safe insert(csafe_it_arg position, const value_type& value);
-		iterator_safe insert(csafe_it_arg position, size_type n, const value_type& value);
-		iterator_safe insert(csafe_it_arg position, value_type&& value);
-		iterator_safe insert(csafe_it_arg position, std::initializer_list<value_type> ilist);
+		iterator insert(csafe_it_arg position, const value_type& value);
+		iterator insert(csafe_it_arg position, size_type n, const value_type& value);
+		iterator insert(csafe_it_arg position, value_type&& value);
+		iterator insert(csafe_it_arg position, std::initializer_list<value_type> ilist);
 
 		// template <typename InputIterator>
-		iterator_safe insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last);
+		iterator insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last);
 
 		// iterator erase_first(const T& value);
 		// iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
@@ -216,13 +225,13 @@ namespace safe_memory
 
 		pointer erase_unsafe(const_pointer position) { return base_type::erase(position); }
 		pointer erase_unsafe(const_pointer first, const_pointer last) { return base_type::erase(first, last); }
-		iterator_safe erase(csafe_it_arg position);
-		iterator_safe erase(csafe_it_arg first, csafe_it_arg last);
+		iterator erase(csafe_it_arg position);
+		iterator erase(csafe_it_arg first, csafe_it_arg last);
 		pointer erase_unsorted_unsafe(const_pointer position) { return base_type::erase_unsorted(position); }
 
-		reverse_iterator_unsafe erase_unsafe(const_reverse_iterator_unsafe position) { return base_type::erase(position); }
-		reverse_iterator_unsafe erase_unsafe(const_reverse_iterator_unsafe first, const_reverse_iterator_unsafe last) { return base_type::erase(first, last); }
-		reverse_iterator_unsafe erase_unsorted_unsafe(const_reverse_iterator_unsafe position) { return base_type::erase_unsorted(position); }
+		reverse_iterator_base erase_unsafe(const_reverse_iterator_base position) { return base_type::erase(position); }
+		reverse_iterator_base erase_unsafe(const_reverse_iterator_base first, const_reverse_iterator_base last) { return base_type::erase(first, last); }
+		reverse_iterator_base erase_unsorted_unsafe(const_reverse_iterator_base position) { return base_type::erase_unsorted(position); }
 
 		using base_type::clear;
 		//not allowed
@@ -231,22 +240,86 @@ namespace safe_memory
 		using base_type::validate;
 		using base_type::validate_iterator;
 
-		detail::iterator_validity  validate_iterator2(const_pointer i) const noexcept;
 		detail::iterator_validity  validate_iterator2(csafe_it_arg i) const noexcept;
 
-	private:
+	protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
 		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 		[[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw std::out_of_range(msg); }
 
-		static
-		const_pointer_pair CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd);
-		
-		const_pointer CheckMineAndGet(csafe_it_arg it) const;
-		const_pointer_pair CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const;
 
-		const base_type& AsBaseType() const noexcept { return *this; }
-		const array_type& GetHeapPtr() const { return base_type::mpBegin; }
+        const base_type& toBase() const noexcept { return *this; }
+
+		// Safety == none
+		const_iterator_base toBase(const_iterator_base it) const { return it; }
+		const_iterator_base_pair toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		const_iterator_base_pair toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		
+		// Safety == safe
+		const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
+			return it.toRaw(base_type::mpBegin);
+		}
+
+		const_iterator_base_pair toBase(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+			return it.toRaw(base_type::mpBegin, it2);
+		}
+
+		const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+			return it.toRawOther(it2);
+		}
+
+		const_iterator_base toBase(const detail::const_array_of_iterator_heap<T, Safety>& it) const {
+			return it.toRaw(base_type::mpBegin);
+		}
+
+		const_iterator_base_pair toBase(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
+			return it.toRaw(base_type::mpBegin, it2);
+		}
+
+		const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
+			return it.toRawOther(it2);
+		}
+
+
+		iterator makeIt(iterator_base it) {
+			if constexpr (Safety == memory_safety::none)
+				return it;
+			else
+				return iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+		}
+		const_iterator makeIt(const_iterator_base it) const {
+			if constexpr (Safety == memory_safety::none)
+				return it;
+			else
+				return const_iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+		}
+
+		reverse_iterator makeIt(const typename base_type::reverse_iterator& it) {
+			return reverse_iterator(makeIt(it.base()));
+		}
+		const_reverse_iterator makeIt(const typename base_type::const_reverse_iterator& it) const {
+			return const_reverse_iterator(makeIt(it.base()));
+		}
+
+
+
+
+
+		iterator_safe makeSafeIt(iterator_base it) {
+			return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+		}
+		
+		const_iterator_safe makeSafeIt(const_iterator_base it) const {
+			return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+		}
+
+		reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
+			return reverse_iterator_safe(makeSafeIt(it.base()));
+		}
+		const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
+			return const_reverse_iterator_safe(makeSafeIt(it.base()));
+		}
+
 	}; // class vector
 
 
@@ -266,7 +339,7 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	inline void vector<T, Safety>::assign(csafe_it_arg first, csafe_it_arg last)
 	{
-		const_pointer_pair p = CheckAndGet(first, last);
+		auto p = toBaseOther(first, last);
 		base_type::assign(p.first, p.second);
 	}
 
@@ -393,149 +466,95 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	template<class... Args>
-	inline typename vector<T, Safety>::iterator_safe 
+	inline typename vector<T, Safety>::iterator 
 	vector<T, Safety>::emplace(csafe_it_arg position, Args&&... args)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = base_type::emplace(p, std::forward<Args>(args)...);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
 	}
 
 	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::insert(csafe_it_arg position, const value_type& value)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = insert_unsafe(p, value);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::insert(toBase(position), value));
 	}
 
 
 	template <typename T, memory_safety Safety>       
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::insert(csafe_it_arg position, value_type&& value)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = insert_unsafe(p, std::move(value));
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::insert(toBase(position), std::move(value)));
 	}
 
 
 	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::insert(csafe_it_arg position, size_type n, const value_type& value)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = insert_unsafe(p, n, value);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::insert(toBase(position), n, value));
 	}
 
 
 	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		const_pointer_pair other = CheckAndGet(first, last);
-		pointer r = insert_unsafe(p, other.first, other.second);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		auto other = toBaseOther(first, last);
+		return makeIt(base_type::insert(toBase(position), other.first, other.second));
 	}
 
 
 	template <typename T, memory_safety Safety>       
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::insert(csafe_it_arg position, std::initializer_list<value_type> ilist)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = insert_unsafe(p, ilist);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::insert(toBase(position), ilist));
 	}
 
 
 	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::erase(csafe_it_arg position)
 	{
-		const_pointer p = CheckMineAndGet(position);
-		pointer r = base_type::erase(p);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		return makeIt(base_type::erase(toBase(position)));
 	}
 
 
 	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator_safe
+	inline typename vector<T, Safety>::iterator
 	vector<T, Safety>::erase(csafe_it_arg first, csafe_it_arg last)
 	{
-		const_pointer_pair p = CheckMineAndGet(first, last);
-		pointer r = base_type::erase(p.first, p.second);
-		return iterator_safe::makePtr(GetHeapPtr(), r);
+		auto p = toBase(first, last);
+		return makeIt(base_type::erase(p.first, p.second));
 	}
 
-
-	/* static */
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::const_pointer_pair
-	vector<T, Safety>::CheckAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd)
-	{
-		if(NODECPP_LIKELY(itBegin.is_safe_range(itEnd))) {
-			const_pointer b = itBegin.get_raw_ptr();
-			const_pointer e = itEnd.get_raw_ptr();
-
-			return const_pointer_pair(b, e);
-		}
-
-		ThrowInvalidArgumentException("vector -- invalid argument");
-	}
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::const_pointer vector<T, Safety>::CheckMineAndGet(csafe_it_arg it) const
-	{
-		if(NODECPP_LIKELY(it.is_safe_range(GetHeapPtr(), size()))) {
-			return it.get_raw_ptr();
-		}
-
-		ThrowInvalidArgumentException("vector -- invalid argument");
-	}
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::const_pointer_pair
-	vector<T, Safety>::CheckMineAndGet(csafe_it_arg itBegin, csafe_it_arg itEnd) const
-	{
-		if(NODECPP_LIKELY(itBegin.is_safe_range(itEnd) && itEnd.is_safe_range(GetHeapPtr(), size()))) {
-			const_pointer b = itBegin.get_raw_ptr();
-			const_pointer e = itEnd.get_raw_ptr();
-
-			return const_pointer_pair(b, e);
-		}
-
-		ThrowInvalidArgumentException("vector -- invalid argument");
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(const_pointer i) const noexcept
-	{
-		if(i == nullptr)
-		 	return detail::iterator_validity::Null;
-		else if(i >= begin_unsafe())
-		{
-			if(i < end_unsafe())
-				return detail::iterator_validity::ValidCanDeref;
-
-			else if(i == end_unsafe())
-				return detail::iterator_validity::ValidEnd;
-
-			else if(i < begin_unsafe() + capacity())
-				return detail::iterator_validity::InvalidZoombie;
-		}
-
-		return detail::iterator_validity::xxx_Broken_xxx;
-	}
 
 	template <typename T, memory_safety Safety>
 	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(csafe_it_arg i) const noexcept
 	{
-		return i.validate_iterator(cbegin(), cend());
+		if constexpr (Safety == memory_safety::none) {
+			if(i == nullptr)
+				return detail::iterator_validity::Null;
+			else if(i >= begin_unsafe())
+			{
+				if(i < end_unsafe())
+					return detail::iterator_validity::ValidCanDeref;
+
+				else if(i == end_unsafe())
+					return detail::iterator_validity::ValidEnd;
+
+				else if(i < begin_unsafe() + capacity())
+					return detail::iterator_validity::InvalidZoombie;
+			}
+
+			return detail::iterator_validity::xxx_Broken_xxx;
+		}
+		else {
+			//TODO 
+			return detail::iterator_validity::ValidCanDeref;
+			// i.validate_iterator(cbegin(), cend());
+		}
 	}
 
 
@@ -546,42 +565,42 @@ namespace safe_memory
 	template <typename T, memory_safety Safety>
 	inline bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator==(a.AsBaseType(), b.AsBaseType());
+		return operator==(a.toBase(), b.toBase());
 	}
 
 
 	template <typename T, memory_safety Safety>
 	inline bool operator!=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator!=(a.AsBaseType(), b.AsBaseType());
+		return operator!=(a.toBase(), b.toBase());
 	}
 
 
 	template <typename T, memory_safety Safety>
 	inline bool operator<(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator<(a.AsBaseType(), b.AsBaseType());
+		return operator<(a.toBase(), b.toBase());
 	}
 
 
 	template <typename T, memory_safety Safety>
 	inline bool operator>(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator>(a.AsBaseType(), b.AsBaseType());
+		return operator>(a.toBase(), b.toBase());
 	}
 
 
 	template <typename T, memory_safety Safety>
 	inline bool operator<=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator<=(a.AsBaseType(), b.AsBaseType());
+		return operator<=(a.toBase(), b.toBase());
 	}
 
 
 	template <typename T, memory_safety Safety>
 	inline bool operator>=(const vector<T, Safety>& a, const vector<T, Safety>& b)
 	{
-		return operator>=(a.AsBaseType(), b.AsBaseType());
+		return operator>=(a.toBase(), b.toBase());
 	}
 
 

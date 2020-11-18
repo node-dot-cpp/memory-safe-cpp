@@ -42,8 +42,8 @@ struct make_zero_offset_t {};
 
 class soft_ptr_with_zero_offset_base
 {
-	friend class allocator_to_eastl_impl;
-	friend class allocator_to_eastl_no_checks;
+	friend class allocator_to_eastl_hashtable_impl;
+	friend class allocator_to_eastl_hashtable_no_checks;
 	
 protected:
 	void* ptr = nullptr;

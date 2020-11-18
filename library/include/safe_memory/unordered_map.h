@@ -41,10 +41,10 @@ namespace safe_memory
 	template <typename Key, typename T, typename Hash = eastl::hash<Key>, typename Predicate = eastl::equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_map
-		: private eastl::unordered_map<Key, T, Hash, Predicate, detail::allocator_to_eastl<Safety>>
+		: private eastl::unordered_map<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:
-		typedef eastl::unordered_map<Key, T, Hash, Predicate, detail::allocator_to_eastl<Safety>> base_type;
+		typedef eastl::unordered_map<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>> base_type;
 		typedef unordered_map<Key, T, Hash, Predicate, Safety>                    this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::key_type                                      key_type;
@@ -531,10 +531,10 @@ namespace safe_memory
 	template <typename Key, typename T, typename Hash = eastl::hash<Key>, typename Predicate = eastl::equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_multimap
-		: private eastl::unordered_multimap<Key, T, Hash, Predicate, detail::allocator_to_eastl<Safety>>
+		: private eastl::unordered_multimap<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:
-		typedef eastl::unordered_multimap<Key, T, Hash, Predicate, detail::allocator_to_eastl<Safety>> base_type;
+		typedef eastl::unordered_multimap<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>> base_type;
 		typedef unordered_multimap<Key, T, Hash, Predicate, Safety>                    this_type;
 		typedef typename base_type::size_type                                     size_type;
 		typedef typename base_type::key_type                                      key_type;
