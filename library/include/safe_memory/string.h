@@ -59,8 +59,6 @@ namespace safe_memory
 			const_iterator_base,
 			detail::const_array_of_iterator_stack<T>>               const_iterator;
 
-		// typedef typename allocator_type::array_iterator          iterator;
-		// typedef typename allocator_type::const_array_iterator    const_iterator;
 		typedef eastl::reverse_iterator<iterator>               reverse_iterator;
 		typedef eastl::reverse_iterator<const_iterator>         const_reverse_iterator;
 		typedef typename base_type::size_type                   size_type;

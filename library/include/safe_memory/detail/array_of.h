@@ -56,11 +56,6 @@ struct array_of
 	size_t _capacity = 0;
 	alignas(T) char _begin;
 
-	[[noreturn]] static
-	void throwPointerOutOfRange(const char* msg) {
-		throw std::out_of_range(msg);
-	}
-
 public:
 	array_of(size_t capacity) :_capacity(capacity) {}
 
@@ -70,35 +65,7 @@ public:
 	array_of& operator=(const array_of&) = delete;
 	array_of& operator=(array_of&&) = delete;
 
-	~array_of() {}
-
-	template<memory_safety Safety>
-	T& at(size_t ix) {
-		if constexpr ( Safety == memory_safety::safe ) {
-			if(ix >= _capacity)
-				throwPointerOutOfRange("array_of::at(): ix >= _capacity");
-		}
-
-		return *(begin() + ix);
-	}
-
-	template<memory_safety Safety>
-	const T& at(size_t ix) const {
-		if constexpr ( Safety == memory_safety::safe ) {
-			if(ix >= _capacity)
-				throwPointerOutOfRange("array_of::at(): ix >= _capacity");
-		}
-
-		return *(begin() + ix);
-	}
-
-	// T& at_unsafe(size_t ix) {
-	// 	return at<memory_safety::none>(ix);
-	// }
-	
-	// const T& at_unsafe(size_t ix) const {
-	// 	return at<memory_safety::none>(ix);
-	// }
+	// ~array_of() {}
 
 	//unsafe function, allow returning a non-derefenceable pointer as end()
 	T* get_raw_ptr(size_t ix) {
@@ -188,15 +155,15 @@ public:
 
 	using soft_ptr_with_zero_offset_base::swap;
 
-	soft_ptr_impl<array_of<T>> get() const
-	{
-		if(NODECPP_LIKELY(ptr != nullptr)) {
-			FirstControlBlock* cb = getControlBlock_( ptr );
-			return soft_ptr_impl<array_of<T>>( cb, ptr );
-		}
-		else
-			return soft_ptr_impl<array_of<T>>();
-	}
+	// soft_ptr_impl<array_of<T>> get() const
+	// {
+	// 	if(NODECPP_LIKELY(ptr != nullptr)) {
+	// 		FirstControlBlock* cb = getControlBlock_( ptr );
+	// 		return soft_ptr_impl<array_of<T>>( cb, ptr );
+	// 	}
+	// 	else
+	// 		return soft_ptr_impl<array_of<T>>();
+	// }
 
 	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
@@ -304,365 +271,14 @@ public:
 	// ~soft_ptr_with_zero_offset_no_checks();
 };
 
-template <typename T, bool bConst, template<typename> typename ArrayPtr>
-class array_of_iterator_impl
-{
-public:
-	typedef std::random_access_iterator_tag  			iterator_category;
-	typedef std::conditional_t<bConst, const T, T>		value_type;
-	typedef std::ptrdiff_t                      		difference_type;
-	typedef value_type*								 	pointer;
-	typedef value_type&								 	reference;
-	typedef const T*									const_pointer;
-	typedef ArrayPtr<array_of<T>>						soft_array_of_prt;
-
-	static constexpr memory_safety is_safe = memory_safety::safe;
-
-	// for non-const to const conversion
-	template<typename, bool, template<typename> typename>
-	friend class array_of_iterator_impl;
-
-private:
-	soft_array_of_prt arr;
-	size_t ix = 0;
-
-
-public:
-
-	array_of_iterator_impl() {}
-
-private:
-	template<class PTR>
-	array_of_iterator_impl(const PTR& arr, size_t ix)
-		: arr(arr), ix(ix) {}
-
-public:
-	template<class PTR>
-	static array_of_iterator_impl makeIx(const PTR& arr, size_t ix = 0) {
-		return array_of_iterator_impl(arr, ix);
-	}
-
-	template<class PTR>
-	static array_of_iterator_impl makePtr(const PTR& arr, pointer to) {
-		return array_of_iterator_impl(arr, arr->get_index(to));
-	}
-
-	// GCC and clang fail to generate defaultd copy ctor/assign
-	array_of_iterator_impl(const array_of_iterator_impl& ri) = default;
-	array_of_iterator_impl& operator=(const array_of_iterator_impl& ri) = default;
-
-	array_of_iterator_impl(array_of_iterator_impl&& ri) = default; 
-	array_of_iterator_impl& operator=(array_of_iterator_impl&& ri) = default;
-
-
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator_impl(const array_of_iterator_impl<T, B, ArrayPtr>& ri)
-		: arr(ri.arr), ix(ri.ix) {}
-
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator_impl& operator=(const array_of_iterator_impl<T, B, ArrayPtr>& ri) {
-		this->arr = ri.arr;
-		this->ix = ri.ix;
-		return *this;
-	}
-
-	pointer get_raw_ptr() const {
-		// this is unsafe function, always called after ix was validated
-		return arr ? arr->get_raw_ptr(ix) : nullptr;
-	}
-
-	reference operator*() const
-	{
-		return arr->template at<is_safe>(ix);
-	}
-
-	pointer operator->() const
-		{ return &(arr->template at<is_safe>(ix)); }
-
-	array_of_iterator_impl& operator++() noexcept
-		{ ++ix; return *this; }
-
-	array_of_iterator_impl operator++(int) noexcept
-	{
-		array_of_iterator_impl ri(*this);
-		++ix;
-		return ri;
-	}
-
-	array_of_iterator_impl& operator--() noexcept
-		{ --ix; return *this; }
-
-	array_of_iterator_impl operator--(int) noexcept
-	{
-		array_of_iterator_impl ri(*this);
-		--ix;
-		return ri;
-	}
-
-	array_of_iterator_impl operator+(difference_type n) const noexcept
-		{ return array_of_iterator_impl(arr, ix + n); }
-
-	array_of_iterator_impl& operator+=(difference_type n) noexcept
-		{ ix += n; return *this; }
-
-	array_of_iterator_impl operator-(difference_type n) const noexcept
-		{ return array_of_iterator_impl(arr, ix - n); }
-
-	difference_type operator-(const array_of_iterator_impl& other) const noexcept {
-		if(arr == other.arr)
-			return ix - other.ix;
-		else
-			return 0;
-	}
-
-	array_of_iterator_impl& operator-=(difference_type n) noexcept
-		{ ix -= n; return *this; }
-
-	reference operator[](difference_type n) const
-		{ return arr->template at<is_safe>(ix + n); }
-
-	bool operator==(const array_of_iterator_impl& ri) const noexcept {
-		return arr == ri.arr && ix == ri.ix;
-	}
-
-	bool operator!=(const array_of_iterator_impl& ri) const noexcept {
-		return !operator==(ri);
-	}
-
-	bool operator<(const array_of_iterator_impl& ri) const noexcept {
-		return arr == ri.arr && ix < ri.ix;
-	}
-
-	bool operator>(const array_of_iterator_impl& ri) const noexcept {
-		return arr == ri.arr && ix > ri.ix;
-	}
-
-	bool operator<=(const array_of_iterator_impl& ri) const noexcept {
-		return !operator>(ri);
-	}
-
-	bool operator>=(const array_of_iterator_impl& ri) const noexcept {
-		return !operator<(ri);
-	}
-
-	constexpr bool is_safe_range(const array_of_iterator_impl& ri) const {
-		if constexpr (is_safe == memory_safety::none)
-			return true;
-		else {			
-			if (arr == ri.arr)
-				return ix <= ri.ix && ri.ix <= (arr ? arr->capacity() : 0);
-			else
-				return false;
-		}
-	}
-
-	template<typename PTR>
-	constexpr bool is_safe_range(const PTR& otherArr, size_t otherIx) const {
-		if constexpr (is_safe == memory_safety::none)
-			return true;
-		else {
-			if (arr == otherArr)
-				return ix <= otherIx && otherIx <= (arr ? arr->capacity() : 0);
-			else
-				return false;
-		}
-	}
-
-	bool is_end() const {
-		return ix >= (arr ? arr->capacity() : 0);
-	}
-
-	iterator_validity validate_iterator(const array_of_iterator_impl&, const array_of_iterator_impl& end) const noexcept {
-		if(arr == nullptr)
-			return iterator_validity::Null;
-		else if(arr == end.arr) {
-
-			if(ix < end.ix)
-				return iterator_validity::ValidCanDeref;
-
-			else if(ix == end.ix)
-				return iterator_validity::ValidEnd;
-
-			else if(ix < arr->capacity())
-				return iterator_validity::InvalidZoombie;
-		}
-		return iterator_validity::InvalidZoombie;
-	}
-};
-
-template <typename T, bool b, template<typename> typename P>
-typename array_of_iterator_impl<T, b, P>::difference_type distance(const array_of_iterator_impl<T, b, P>& l, const array_of_iterator_impl<T, b, P>& r) {
-	return r - l;
-}
-
-
-template <typename T, bool bConst>
-class array_of_iterator_no_checks
-{
-public:
-	typedef std::random_access_iterator_tag  			iterator_category;
-	typedef std::conditional_t<bConst, const T, T>		value_type;
-	typedef std::ptrdiff_t                      		difference_type;
-	typedef value_type*								 	pointer;
-	typedef value_type&								 	reference;
-	typedef const T*									const_pointer;
-
-	static constexpr memory_safety is_safe = memory_safety::none;
-
-	// for non-const to const conversion
-	template<typename, bool>
-	friend class array_of_iterator_no_checks;
-
-private:
-	pointer mIterator = nullptr;
-
-public:
-
-	array_of_iterator_no_checks() {}
-
-private:
-	explicit array_of_iterator_no_checks(pointer ptr)
-		: mIterator(ptr) {}
-public:
-	template<class PTR>
-	static array_of_iterator_no_checks makeIx(const PTR& arr, size_t ix = 0) {
-		// non safe function, we know ix is in range
-		return array_of_iterator_no_checks(arr->get_raw_ptr(ix));
-	}
-	
-	template<class PTR>
-	static array_of_iterator_no_checks makePtr(const PTR&, pointer ptr) {
-		return array_of_iterator_no_checks(ptr);
-	}
-
-	array_of_iterator_no_checks(const array_of_iterator_no_checks& ri) = default;
-	array_of_iterator_no_checks& operator=(const array_of_iterator_no_checks& ri) = default;
-
-	array_of_iterator_no_checks(array_of_iterator_no_checks&& ri) = default;
-	array_of_iterator_no_checks& operator=(array_of_iterator_no_checks&& ri) = default;
-
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator_no_checks(const array_of_iterator_no_checks<T, B>& ri)
-		: mIterator(ri.mIterator) {}
-
-	// allow non-const to const convertion
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator_no_checks& operator=(const array_of_iterator_no_checks<T, B>& ri) {
-		mIterator = ri.mIterator;
-		return *this;
-	}
-	
-	pointer get_raw_ptr() const {
-		return mIterator;
-	}
-
-	reference operator*() const
-	{
-		return *mIterator;
-	}
-
-	pointer operator->() const
-		{ return mIterator; }
-
-	array_of_iterator_no_checks& operator++() noexcept
-		{ ++mIterator; return *this; }
-
-	array_of_iterator_no_checks operator++(int) noexcept
-	{
-		array_of_iterator_no_checks ri(*this);
-		++mIterator;
-		return ri;
-	}
-
-	array_of_iterator_no_checks& operator--() noexcept
-		{ --mIterator; return *this; }
-
-	array_of_iterator_no_checks operator--(int) noexcept
-	{
-		array_of_iterator_no_checks ri(*this);
-		--mIterator;
-		return ri;
-	}
-
-	array_of_iterator_no_checks operator+(difference_type n) const noexcept
-		{ return array_of_iterator_no_checks(mIterator + n); }
-
-	array_of_iterator_no_checks& operator+=(difference_type n) noexcept
-		{ mIterator += n; return *this; }
-
-	array_of_iterator_no_checks operator-(difference_type n) const noexcept
-		{ return array_of_iterator_no_checks(mIterator - n); }
-
-	difference_type operator-(const array_of_iterator_no_checks& other) const noexcept
-		{ return mIterator - other.mIterator; }
-
-	array_of_iterator_no_checks& operator-=(difference_type n) noexcept
-		{ mIterator -= n; return *this; }
-
-	reference operator[](difference_type n) const noexcept
-		{ return mIterator[n]; }
-
-	bool operator==(const array_of_iterator_no_checks& ri) const noexcept
-		{ return mIterator == ri.mIterator; }
-
-	bool operator!=(const array_of_iterator_no_checks& ri) const noexcept
-		{ return !operator==(ri); }
-
-	bool operator<(const array_of_iterator_no_checks& ri) const noexcept {
-		return mIterator < ri.mIterator;
-	}
-
-	bool operator>(const array_of_iterator_no_checks& ri) const noexcept {
-		return mIterator > ri.mIterator;
-	}
-
-	bool operator<=(const array_of_iterator_no_checks& ri) const noexcept {
-		return !operator>(ri);
-	}
-
-	bool operator>=(const array_of_iterator_no_checks& ri) const noexcept {
-		return !operator<(ri);
-	}
-
-	constexpr bool is_safe_range(const array_of_iterator_no_checks& ri) const noexcept {
-		return true;
-	}
-
-	template<typename PTR>
-	constexpr bool is_safe_range(const PTR& otherArr, size_t otherIx) const noexcept {
-		return true;
-	}
-
-
-	iterator_validity validate_iterator(const array_of_iterator_no_checks& b, const array_of_iterator_no_checks& end) const noexcept {
-		if(mIterator == nullptr)
-			return iterator_validity::Null;
-		else if(mIterator >= b.mIterator) {
-			if(mIterator < end.mIterator)
-				return detail::iterator_validity::ValidCanDeref;
-			else if(mIterator == end.mIterator)
-				return detail::iterator_validity::ValidEnd;
-		}
-		return iterator_validity::xxx_Broken_xxx;
-	}
-};
-
-template <typename T, bool C>
-typename array_of_iterator_no_checks<T, C>::difference_type distance(const array_of_iterator_no_checks<T, C>& l, const array_of_iterator_no_checks<T, C>& r) {
-		return r - l;
-}
-
 
 // this iterator is used for string, we should be able to construct it
 // from a heap pointer or from stack pointer (when SSO)
 template <typename T, bool bConst, typename ArrPtr>
-class array_of_raw_iterator_impl
+class array_of_iterator
 {
 protected:
-	typedef array_of_raw_iterator_impl<T, bConst, ArrPtr>	this_type;
+	typedef array_of_iterator<T, bConst, ArrPtr>	this_type;
 public:
 	typedef std::random_access_iterator_tag  					iterator_category;
 	typedef std::conditional_t<bConst, const T, T>				value_type;
@@ -676,7 +292,7 @@ public:
 
 	// for non-const to const conversion
 	template<typename, bool, typename>
-	friend class array_of_raw_iterator_impl;
+	friend class array_of_iterator;
 
 private:
 
@@ -688,11 +304,11 @@ private:
 
 public:
 
-	array_of_raw_iterator_impl() {}
+	array_of_iterator() {}
 
 private:
 	// this ctor is private because of unsafety
-	array_of_raw_iterator_impl(array_pointer arr, uint32_t ix, uint32_t sz)
+	array_of_iterator(array_pointer arr, uint32_t ix, uint32_t sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -715,20 +331,20 @@ public:
 		}
 	}
 
-	array_of_raw_iterator_impl(const array_of_raw_iterator_impl& ri) = default;
-	array_of_raw_iterator_impl& operator=(const array_of_raw_iterator_impl& ri) = default;
+	array_of_iterator(const array_of_iterator& ri) = default;
+	array_of_iterator& operator=(const array_of_iterator& ri) = default;
 
-	array_of_raw_iterator_impl(array_of_raw_iterator_impl&& ri) = default; 
-	array_of_raw_iterator_impl& operator=(array_of_raw_iterator_impl&& ri) = default;
+	array_of_iterator(array_of_iterator&& ri) = default; 
+	array_of_iterator& operator=(array_of_iterator&& ri) = default;
 
 	// allow non-const to const convertion
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_raw_iterator_impl(const array_of_raw_iterator_impl<T, B, ArrPtr>& ri)
+	array_of_iterator(const array_of_iterator<T, B, ArrPtr>& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
 	// allow non-const to const convertion
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_raw_iterator_impl& operator=(const array_of_raw_iterator_impl<T, B, ArrPtr>& ri) {
+	array_of_iterator& operator=(const array_of_iterator<T, B, ArrPtr>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
@@ -743,7 +359,7 @@ public:
 				return *(arr->get_raw_ptr(ix));
 		}
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator*");
+			throwRangeException("array_of_iterator::operator*");
 	}
 
 	pointer operator->() const {
@@ -754,7 +370,7 @@ public:
 				return arr->get_raw_ptr(ix);
 		}
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator->");
+			throwRangeException("array_of_iterator::operator->");
 	}
 
 	//mb: when we try to increment/decrement iterator outside its boundaries,
@@ -807,7 +423,7 @@ public:
 		if(NODECPP_LIKELY(arr == ri.arr))
 			return ix - ri.ix;
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator-");
+			throwRangeException("array_of_iterator::operator-");
 	}
 
 
@@ -820,7 +436,7 @@ public:
 				return *(arr->get_raw_ptr(tmp));
 		}
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator[]");
+			throwRangeException("array_of_iterator::operator[]");
 	}
 
 	bool operator==(const this_type& ri) const noexcept {
@@ -830,7 +446,7 @@ public:
 		else if(!arr || !ri.arr)
 			return false;
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator==");
+			throwRangeException("array_of_iterator::operator==");
 	}
 
 	bool operator!=(const this_type& ri) const noexcept {
@@ -842,7 +458,7 @@ public:
 		if(NODECPP_LIKELY(arr == ri.arr))
 			return ix < ri.ix;
 		else
-			throwRangeException("array_of_raw_iterator_impl::operator<");
+			throwRangeException("array_of_iterator::operator<");
 	}
 
 	bool operator>(const this_type& ri) const noexcept {
@@ -890,7 +506,7 @@ public:
 		if (getRawBegin() == begin)
 			return getRaw();
 		else
-			throwRangeException("array_of_raw_iterator_impl::toRaw");
+			throwRangeException("array_of_iterator::toRaw");
 	}
 
 	// convert a iterator pair to raw
@@ -898,7 +514,7 @@ public:
 		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			throwRangeException("array_of_raw_iterator_impl::toRaw");
+			throwRangeException("array_of_iterator::toRaw");
 	}
 
 	// convert an external iterator pair to raw
@@ -906,21 +522,21 @@ public:
 		if (arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			throwRangeException("array_of_raw_iterator_impl::toRaw");
+			throwRangeException("array_of_iterator::toRaw");
 	}
 };
 
 template <typename T, bool b, typename ArrPtr>
-typename array_of_raw_iterator_impl<T, b, ArrPtr>::difference_type distance(const array_of_raw_iterator_impl<T, b, ArrPtr>& l, const array_of_raw_iterator_impl<T, b, ArrPtr>& r) {
+typename array_of_iterator<T, b, ArrPtr>::difference_type distance(const array_of_iterator<T, b, ArrPtr>& l, const array_of_iterator<T, b, ArrPtr>& r) {
 	return r - l;
 }
 
 
 template <typename T>
-using array_of_iterator_stack = array_of_raw_iterator_impl<T, false, T*>;
+using array_of_iterator_stack = array_of_iterator<T, false, T*>;
 
 template <typename T>
-using const_array_of_iterator_stack = array_of_raw_iterator_impl<T, true, T*>;
+using const_array_of_iterator_stack = array_of_iterator<T, true, T*>;
 
 } // namespace safe_memory::detail 
 
