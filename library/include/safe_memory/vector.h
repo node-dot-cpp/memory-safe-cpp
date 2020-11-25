@@ -93,7 +93,9 @@ namespace safe_memory
 		typedef std::reverse_iterator<const_iterator_safe>          const_reverse_iterator_safe;
 
 
-		typedef const const_iterator&								csafe_it_arg;
+		typedef std::conditional_t<Safety == memory_safety::none,
+			const_iterator,
+			const const_iterator&> 									const_iterator_arg;
 		typedef const const_reverse_iterator&						crsafe_it_arg;
 		
 		typedef std::pair<const_iterator_base, const_iterator_base>				const_iterator_base_pair;
@@ -103,13 +105,13 @@ namespace safe_memory
 		static constexpr memory_safety is_safe = Safety;
 
 	public:
-		vector() /*EA_NOEXCEPT_IF(EA_NOEXCEPT_EXPR(EASTL_VECTOR_DEFAULT_ALLOCATOR))*/ : base_type(allocator_type()) {}
+		vector() : base_type(allocator_type()) {}
 		explicit vector(size_type n) : base_type(n, allocator_type()) {}
 		vector(size_type n, const value_type& value) : base_type(n, value, allocator_type()) {}
 		vector(const this_type& x) : base_type(x) {}
 		vector(this_type&& x) noexcept : base_type(std::move(x)) {}
 		vector(std::initializer_list<value_type> ilist) : base_type(ilist, allocator_type()) {}
-//		vector(csafe_it_arg first, csafe_it_arg last);
+//		vector(const_iterator_arg first, const_iterator_arg last);
 
 	   ~vector() {}
 
@@ -124,7 +126,7 @@ namespace safe_memory
 		template <typename InputIterator>
 		void assign_unsafe(InputIterator first, InputIterator last) { base_type::assign(first, last); }
 		
-		void assign(csafe_it_arg first, csafe_it_arg last);
+		void assign(const_iterator_arg first, const_iterator_arg last);
 
 		void assign(std::initializer_list<value_type> ilist) { base_type::assign(ilist); }
 
@@ -159,6 +161,14 @@ namespace safe_memory
 		reverse_iterator       rend() noexcept { return makeIt(base_type::rend()); }
 		const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend()); }
 		const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend()); }
+
+		iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
+		const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
+		const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
+
+		iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
+		const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
+		const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
 
 		using base_type::empty;
 		using base_type::size;
@@ -195,9 +205,20 @@ namespace safe_memory
 //		void*     push_back_uninitialized();
 
 		template<class... Args>
-		pointer emplace_unsafe(const_pointer position, Args&&... args) { return base_type::emplace(position, std::forward<Args>(args)...); }
+		pointer emplace_unsafe(const_pointer position, Args&&... args) {
+			return base_type::emplace(position, std::forward<Args>(args)...);
+		}
+		
 		template<class... Args>
-		iterator emplace(csafe_it_arg position, Args&&... args);
+		iterator emplace(const_iterator_arg position, Args&&... args) {
+		return makeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
+		}
+
+		template<class... Args>
+		iterator emplace_safe(const const_iterator_safe& position, Args&&... args) {
+			return makeSafeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
+		}
+
 
 		using base_type::emplace_back;
 
@@ -209,13 +230,53 @@ namespace safe_memory
 		template <typename InputIterator>
 		pointer insert_unsafe(const_pointer position, InputIterator first, InputIterator last) { return base_type::insert(position, first, last); }
 
-		iterator insert(csafe_it_arg position, const value_type& value);
-		iterator insert(csafe_it_arg position, size_type n, const value_type& value);
-		iterator insert(csafe_it_arg position, value_type&& value);
-		iterator insert(csafe_it_arg position, std::initializer_list<value_type> ilist);
+		iterator insert(const_iterator_arg position, const value_type& value) {
+			return makeIt(base_type::insert(toBase(position), value));
+		}
+
+		iterator insert(const_iterator_arg position, size_type n, const value_type& value) {
+			return makeIt(base_type::insert(toBase(position), n, value));
+		}
+
+		iterator insert(const_iterator_arg position, value_type&& value) {
+			return makeIt(base_type::insert(toBase(position), std::move(value)));
+		}
+
+		iterator insert(const_iterator_arg position, std::initializer_list<value_type> ilist) {
+			return makeIt(base_type::insert(toBase(position), ilist));
+		}
+
 
 		// template <typename InputIterator>
-		iterator insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last);
+		iterator insert(const_iterator_arg position, const_iterator_arg first, const_iterator_arg last) {
+			auto other = toBaseOther(first, last);
+			return makeIt(base_type::insert(toBase(position), other.first, other.second));
+		}
+
+
+		iterator_safe insert_safe(const const_iterator_safe& position, const value_type& value) {
+			return makeSafeIt(base_type::insert(toBase(position), value));
+		}
+
+		iterator_safe insert_safe(const const_iterator_safe& position, size_type n, const value_type& value)	{
+			return makeSafeIt(base_type::insert(toBase(position), n, value));
+		}
+
+		iterator_safe insert_safe(const const_iterator_safe& position, value_type&& value) {
+			return makeSafeIt(base_type::insert(toBase(position), std::move(value)));
+		}
+
+		iterator_safe insert_safe(const const_iterator_safe& position, std::initializer_list<value_type> ilist) {
+			return makeSafeIt(base_type::insert(toBase(position), ilist));
+		}
+
+
+		// template <typename InputIterator>
+		iterator_safe insert_safe(const const_iterator_safe& position, const const_iterator_safe& first, const const_iterator_safe& last) {
+			auto other = toBaseOther(first, last);
+			return makeSafeIt(base_type::insert(toBase(position), other.first, other.second));
+		}
+
 
 		// iterator erase_first(const T& value);
 		// iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
@@ -225,22 +286,55 @@ namespace safe_memory
 
 		pointer erase_unsafe(const_pointer position) { return base_type::erase(position); }
 		pointer erase_unsafe(const_pointer first, const_pointer last) { return base_type::erase(first, last); }
-		iterator erase(csafe_it_arg position);
-		iterator erase(csafe_it_arg first, csafe_it_arg last);
 		pointer erase_unsorted_unsafe(const_pointer position) { return base_type::erase_unsorted(position); }
 
 		reverse_iterator_base erase_unsafe(const_reverse_iterator_base position) { return base_type::erase(position); }
 		reverse_iterator_base erase_unsafe(const_reverse_iterator_base first, const_reverse_iterator_base last) { return base_type::erase(first, last); }
 		reverse_iterator_base erase_unsorted_unsafe(const_reverse_iterator_base position) { return base_type::erase_unsorted(position); }
 
+		iterator erase(const_iterator_arg position) 	{
+		return makeIt(base_type::erase(toBase(position)));
+	}
+
+		iterator erase(const_iterator_arg first, const_iterator_arg last) 	{
+		auto p = toBase(first, last);
+		return makeIt(base_type::erase(p.first, p.second));
+	}
+
+		iterator erase_unsorted(const_iterator_arg position) {
+			return makeIt(base_type::erase_unsorted(toBase(position)));
+		}
+
+		iterator_safe erase_safe(const const_iterator_safe& position) 	{
+			return makeSafeIt(base_type::erase(toBase(position)));
+		}
+
+		iterator_safe erase_safe(const const_iterator_safe& first, const const_iterator_safe& last) 	{
+			auto p = toBase(first, last);
+			return makeSafeIt(base_type::erase(p.first, p.second));
+		}
+
+		iterator_safe erase_unsorted_safe(const const_iterator_safe& position) {
+			return makeSafeIt(base_type::erase_unsorted(toBase(position)));
+		}
+
 		using base_type::clear;
 		//not allowed
 		// void reset_lose_memory() noexcept;
 
+		iterator_safe make_safe(const iterator& position) {
+			return makeSafeIt(toBase(position));
+		}
+
+		const_iterator_safe make_safe(const const_iterator_arg& position) const {
+			return makeSafeIt(toBase(position));
+		}
+
+
 		using base_type::validate;
 		using base_type::validate_iterator;
 
-		detail::iterator_validity  validate_iterator2(csafe_it_arg i) const noexcept;
+		detail::iterator_validity  validate_iterator2(const_iterator_arg i) const noexcept;
 
 	protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -251,11 +345,16 @@ namespace safe_memory
         const base_type& toBase() const noexcept { return *this; }
 
 		// Safety == none
+		iterator_base toBase(iterator_base it) const { return it; }
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
 		const_iterator_base_pair toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
 		const_iterator_base_pair toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
 		
 		// Safety == safe
+		iterator_base toBase(const detail::array_of_iterator_stack<T>& it) const {
+			return it.toRaw(base_type::mpBegin);
+		}
+
 		const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
 			return it.toRaw(base_type::mpBegin);
 		}
@@ -266,6 +365,10 @@ namespace safe_memory
 
 		const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
 			return it.toRawOther(it2);
+		}
+
+		iterator_base toBase(const detail::array_of_iterator_heap<T, Safety>& it) const {
+			return it.toRaw(base_type::mpBegin);
 		}
 
 		const_iterator_base toBase(const detail::const_array_of_iterator_heap<T, Safety>& it) const {
@@ -324,7 +427,7 @@ namespace safe_memory
 
 
 	// template <typename T, memory_safety Safety>
-	// inline vector<T, Safety>::vector(csafe_it_arg first, csafe_it_arg last)
+	// inline vector<T, Safety>::vector(const_iterator_arg first, const_iterator_arg last)
 	// 	: base_type()
 	// {
 	// 	const_pointer_pair p = CheckAndGet(first, last);
@@ -337,7 +440,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline void vector<T, Safety>::assign(csafe_it_arg first, csafe_it_arg last)
+	inline void vector<T, Safety>::assign(const_iterator_arg first, const_iterator_arg last)
 	{
 		auto p = toBaseOther(first, last);
 		base_type::assign(p.first, p.second);
@@ -465,73 +568,7 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	template<class... Args>
-	inline typename vector<T, Safety>::iterator 
-	vector<T, Safety>::emplace(csafe_it_arg position, Args&&... args)
-	{
-		return makeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
-	}
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::insert(csafe_it_arg position, const value_type& value)
-	{
-		return makeIt(base_type::insert(toBase(position), value));
-	}
-
-
-	template <typename T, memory_safety Safety>       
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::insert(csafe_it_arg position, value_type&& value)
-	{
-		return makeIt(base_type::insert(toBase(position), std::move(value)));
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::insert(csafe_it_arg position, size_type n, const value_type& value)
-	{
-		return makeIt(base_type::insert(toBase(position), n, value));
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::insert(csafe_it_arg position, csafe_it_arg first, csafe_it_arg last)
-	{
-		auto other = toBaseOther(first, last);
-		return makeIt(base_type::insert(toBase(position), other.first, other.second));
-	}
-
-
-	template <typename T, memory_safety Safety>       
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::insert(csafe_it_arg position, std::initializer_list<value_type> ilist)
-	{
-		return makeIt(base_type::insert(toBase(position), ilist));
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::erase(csafe_it_arg position)
-	{
-		return makeIt(base_type::erase(toBase(position)));
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline typename vector<T, Safety>::iterator
-	vector<T, Safety>::erase(csafe_it_arg first, csafe_it_arg last)
-	{
-		auto p = toBase(first, last);
-		return makeIt(base_type::erase(p.first, p.second));
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(csafe_it_arg i) const noexcept
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(const_iterator_arg i) const noexcept
 	{
 		if constexpr (Safety == memory_safety::none) {
 			if(i == nullptr)
@@ -609,6 +646,359 @@ namespace safe_memory
 	{
 		a.swap(b);
 	}
+
+
+
+	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector_safe : public vector<T, Safety>
+	{
+		typedef vector_safe<T, Safety> 										this_type;
+		typedef vector<T, Safety>                                           base_type;
+
+
+	public:
+		using typename base_type::value_type;
+		using typename base_type::pointer;
+		using typename base_type::const_pointer;
+		using typename base_type::reference;
+		using typename base_type::const_reference;
+
+		typedef typename base_type::iterator_safe 						  	iterator;
+		typedef typename base_type::const_iterator_safe                   	const_iterator;
+		typedef typename base_type::reverse_iterator_safe 					reverse_iterator;
+		typedef typename base_type::const_reverse_iterator_safe 			const_reverse_iterator;
+		using typename base_type::size_type;
+		using typename base_type::difference_type;
+
+		using typename base_type::allocator_type;
+		using typename base_type::array_type;
+
+		typedef const const_iterator&                                    	const_iterator_arg;
+		
+		// typedef std::pair<const_iterator_base, const_iterator_base>				const_iterator_base_pair;
+
+
+		using base_type::npos;
+		static constexpr memory_safety is_safe = Safety;
+
+	public:
+		vector_safe() : base_type() {}
+		explicit vector_safe(size_type n) : base_type(n) {}
+		vector_safe(size_type n, const value_type& value) : base_type(n, value) {}
+		vector_safe(const this_type& x) : base_type(x) {}
+		vector_safe(this_type&& x) noexcept : base_type(std::move(x)) {}
+		vector_safe(std::initializer_list<value_type> ilist) : base_type(ilist) {}
+//		vector(const_iterator_arg first, const_iterator_arg last);
+
+	   ~vector_safe() {}
+
+		this_type& operator=(const this_type& x) { base_type::operator=(x); return *this; }
+		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
+		this_type& operator=(this_type&& x) noexcept { base_type::operator=(std::move(x)); return *this; }
+
+		// void swap(this_type& x) noexcept { base_type::swap(x); }
+
+		// void assign(size_type n, const value_type& value) { base_type::assign(n, value); }
+
+		// template <typename InputIterator>
+		// void assign_unsafe(InputIterator first, InputIterator last) { base_type::assign(first, last); }
+		
+		// void assign(const_iterator_arg first, const_iterator_arg last);
+
+		// void assign(std::initializer_list<value_type> ilist) { base_type::assign(ilist); }
+
+		// pointer       begin_unsafe() noexcept { return base_type::begin(); }
+		// const_pointer begin_unsafe() const noexcept { return base_type::begin(); }
+		// const_pointer cbegin_unsafe() const noexcept { return base_type::cbegin(); }
+
+		// pointer       end_unsafe() noexcept { return base_type::end(); }
+		// const_pointer end_unsafe() const noexcept { return base_type::end(); }
+		// const_pointer cend_unsafe() const noexcept { return base_type::cend(); }
+
+		// reverse_iterator_base       rbegin_unsafe() noexcept { return base_type::rbegin(); }
+		// const_reverse_iterator_base rbegin_unsafe() const noexcept { return base_type::rbegin(); }
+		// const_reverse_iterator_base crbegin_unsafe() const noexcept { return base_type::crbegin(); }
+
+		// reverse_iterator_base       rend_unsafe() noexcept { return base_type::rend(); }
+		// const_reverse_iterator_base rend_unsafe() const noexcept { return base_type::rend(); }
+		// const_reverse_iterator_base crend_unsafe() const noexcept { return base_type::crend(); }
+
+		iterator       begin() noexcept { return base_type::begin_safe(); }
+		const_iterator begin() const noexcept { return base_type::begin_safe(); }
+		const_iterator cbegin() const noexcept { return base_type::cbegin_safe(); }
+
+		iterator       end() noexcept { return base_type::end_safe(); }
+		const_iterator end() const noexcept { return base_type::end_safe(); }
+		const_iterator cend() const noexcept { return base_type::cend_safe(); }
+
+		// reverse_iterator       rbegin() noexcept { return makeIt(base_type::rbegin_safe()); }
+		// const_reverse_iterator rbegin() const noexcept { return makeIt(base_type::rbegin_safe()); }
+		// const_reverse_iterator crbegin() const noexcept { return makeIt(base_type::crbegin_safe()); }
+
+		// reverse_iterator       rend() noexcept { return makeIt(base_type::rend_safe()); }
+		// const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend_safe()); }
+		// const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend_safe()); }
+
+		// iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
+		// const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
+		// const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
+
+		// iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
+		// const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
+		// const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
+
+		// using base_type::empty;
+		// using base_type::size;
+		// using base_type::capacity;
+
+		// //TODO: mb this is not really well checked at eastl::vector
+		// using base_type::max_size;
+
+		// using base_type::resize;
+		// using base_type::reserve;
+		// using base_type::set_capacity;
+		// using base_type::shrink_to_fit;
+
+		// pointer       data_unsafe() noexcept { return base_type::data(); }
+		// const_pointer data_unsafe() const noexcept { return base_type::data(); }
+
+		// reference       operator[](size_type n);
+		// const_reference operator[](size_type n) const;
+
+		// reference       at(size_type n);
+		// const_reference at(size_type n) const;
+
+		// reference       front();
+		// const_reference front() const;
+
+		// reference       back();
+		// const_reference back() const;
+
+		// using base_type::push_back;
+
+		// void pop_back();
+
+		//not allowed
+//		void*     push_back_uninitialized();
+
+		// template<class... Args>
+		// pointer emplace_unsafe(const_pointer position, Args&&... args) {
+		// 	return base_type::emplace(position, std::forward<Args>(args)...);
+		// }
+		
+		template<class... Args>
+		iterator emplace(const_iterator_arg position, Args&&... args) {
+			return base_type::emplace_safe(position, std::forward<Args>(args)...);
+		}
+
+		// template<class... Args>
+		// iterator emplace_safe(const const_iterator_safe& position, Args&&... args) {
+		// 	return makeSafeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
+		// }
+
+
+		// using base_type::emplace_back;
+
+		// pointer insert_unsafe(const_pointer position, const value_type& value) { return base_type::insert(position, value); }
+		// pointer insert_unsafe(const_pointer position, size_type n, const value_type& value) { return base_type::insert(position, n, value); }
+		// pointer insert_unsafe(const_pointer position, value_type&& value) { return base_type::insert(position, std::move(value)); }
+		// pointer insert_unsafe(const_pointer position, std::initializer_list<value_type> ilist) { return base_type::insert(position, ilist); }
+
+		// template <typename InputIterator>
+		// pointer insert_unsafe(const_pointer position, InputIterator first, InputIterator last) { return base_type::insert(position, first, last); }
+
+		iterator insert(const_iterator_arg position, const value_type& value) {
+			return base_type::insert_safe(position, value);
+		}
+
+		iterator insert(const_iterator_arg position, size_type n, const value_type& value) {
+			return base_type::insert_safe(position, n, value);
+		}
+
+		iterator insert(const_iterator_arg position, value_type&& value) {
+			return base_type::insert_safe(position, std::move(value));
+		}
+
+		iterator insert(const_iterator_arg position, std::initializer_list<value_type> ilist) {
+			return base_type::insert_safe(position, ilist);
+		}
+
+
+		// template <typename InputIterator>
+		iterator insert(const_iterator_arg position, const_iterator_arg first, const_iterator_arg last) {
+			return base_type::insert_safe(position, first, last);
+		}
+
+
+		// iterator_safe insert_safe(const const_iterator_safe& position, const value_type& value) {
+		// 	return makeSafeIt(base_type::insert(toBase(position), value));
+		// }
+
+		// iterator_safe insert_safe(const const_iterator_safe& position, size_type n, const value_type& value)	{
+		// 	return makeSafeIt(base_type::insert(toBase(position), n, value));
+		// }
+
+		// iterator_safe insert_safe(const const_iterator_safe& position, value_type&& value) {
+		// 	return makeSafeIt(base_type::insert(toBase(position), std::move(value)));
+		// }
+
+		// iterator_safe insert_safe(const const_iterator_safe& position, std::initializer_list<value_type> ilist) {
+		// 	return makeSafeIt(base_type::insert(toBase(position), ilist));
+		// }
+
+
+		// // template <typename InputIterator>
+		// iterator_safe insert_safe(const const_iterator_safe& position, const const_iterator_safe& first, const const_iterator_safe& last) {
+		// 	auto other = toBaseOther(first, last);
+		// 	return makeSafeIt(base_type::insert(toBase(position), other.first, other.second));
+		// }
+
+
+		// iterator erase_first(const T& value);
+		// iterator erase_first_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
+		// reverse_iterator erase_last(const T& value);
+		// reverse_iterator erase_last_unsorted(const T& value); // Same as erase, except it doesn't preserve order, but is faster because it simply copies the last item in the vector over the erased position.
+
+
+		// pointer erase_unsafe(const_pointer position) { return base_type::erase(position); }
+		// pointer erase_unsafe(const_pointer first, const_pointer last) { return base_type::erase(first, last); }
+		// pointer erase_unsorted_unsafe(const_pointer position) { return base_type::erase_unsorted(position); }
+
+		// reverse_iterator_base erase_unsafe(const_reverse_iterator_base position) { return base_type::erase(position); }
+		// reverse_iterator_base erase_unsafe(const_reverse_iterator_base first, const_reverse_iterator_base last) { return base_type::erase(first, last); }
+		// reverse_iterator_base erase_unsorted_unsafe(const_reverse_iterator_base position) { return base_type::erase_unsorted(position); }
+
+		iterator erase(const_iterator_arg position) 	{
+			return base_type::erase_safe(position);
+		}
+
+		iterator erase(const_iterator_arg first, const_iterator_arg last) 	{
+			return base_type::erase_safe(first, last);
+		}
+
+		iterator erase_unsorted(const_iterator_arg position) {
+			return base_type::erase_unsorted_safe(position);
+		}
+
+		// iterator_safe erase_safe(const const_iterator_safe& position) 	{
+		// 	return makeSafeIt(base_type::erase(toBase(position)));
+		// }
+
+		// iterator_safe erase_safe(const const_iterator_safe& first, const const_iterator_safe& last) 	{
+		// 	auto p = toBase(first, last);
+		// 	return makeSafeIt(base_type::erase(p.first, p.second));
+		// }
+
+		// iterator_safe erase_unsorted_safe(const const_iterator_safe& position) {
+		// 	return makeSafeIt(base_type::erase_unsorted(toBase(position)));
+		// }
+
+		// using base_type::clear;
+		//not allowed
+		// void reset_lose_memory() noexcept;
+
+		// iterator_safe make_safe(const iterator& position) {
+		// 	return makeSafeIt(toBase(position));
+		// }
+
+		// const_iterator_safe make_safe(const const_iterator_arg& position) const {
+		// 	return makeSafeIt(toBase(position));
+		// }
+
+
+		// using base_type::validate;
+		// using base_type::validate_iterator;
+
+		// detail::iterator_validity  validate_iterator2(const_iterator_arg i) const noexcept;
+
+	// protected:
+		// [[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+		// [[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+		// [[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw std::out_of_range(msg); }
+
+
+        // const base_type& toBase() const noexcept { return *this; }
+
+		// // Safety == none
+		// iterator_base toBase(iterator_base it) const { return it; }
+		// const_iterator_base toBase(const_iterator_base it) const { return it; }
+		// const_iterator_base_pair toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		// const_iterator_base_pair toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		
+		// // Safety == safe
+		// iterator_base toBase(const detail::array_of_iterator_stack<T>& it) const {
+		// 	return it.toRaw(base_type::mpBegin);
+		// }
+
+		// const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
+		// 	return it.toRaw(base_type::mpBegin);
+		// }
+
+		// const_iterator_base_pair toBase(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+		// 	return it.toRaw(base_type::mpBegin, it2);
+		// }
+
+		// const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+		// 	return it.toRawOther(it2);
+		// }
+
+		// iterator_base toBase(const detail::array_of_iterator_heap<T, Safety>& it) const {
+		// 	return it.toRaw(base_type::mpBegin);
+		// }
+
+		// const_iterator_base toBase(const detail::const_array_of_iterator_heap<T, Safety>& it) const {
+		// 	return it.toRaw(base_type::mpBegin);
+		// }
+
+		// const_iterator_base_pair toBase(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
+		// 	return it.toRaw(base_type::mpBegin, it2);
+		// }
+
+		// const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
+		// 	return it.toRawOther(it2);
+		// }
+
+
+		// iterator makeIt(iterator_base it) {
+		// 	if constexpr (Safety == memory_safety::none)
+		// 		return it;
+		// 	else
+		// 		return iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+		// }
+		// const_iterator makeIt(const_iterator_base it) const {
+		// 	if constexpr (Safety == memory_safety::none)
+		// 		return it;
+		// 	else
+		// 		return const_iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+		// }
+
+		// reverse_iterator makeIt(const typename base_type::reverse_iterator& it) {
+		// 	return reverse_iterator(makeIt(it.base()));
+		// }
+		// const_reverse_iterator makeIt(const typename base_type::const_reverse_iterator& it) const {
+		// 	return const_reverse_iterator(makeIt(it.base()));
+		// }
+
+
+
+
+
+		// iterator_safe makeSafeIt(iterator_base it) {
+		// 	return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+		// }
+		
+		// const_iterator_safe makeSafeIt(const_iterator_base it) const {
+		// 	return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+		// }
+
+		// reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
+		// 	return reverse_iterator_safe(makeSafeIt(it.base()));
+		// }
+		// const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
+		// 	return const_reverse_iterator_safe(makeSafeIt(it.base()));
+		// }
+
+	}; // class vector_safe
 
 
 } // namespace safe_memory

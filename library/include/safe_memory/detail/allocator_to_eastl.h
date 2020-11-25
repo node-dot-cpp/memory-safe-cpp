@@ -57,12 +57,6 @@ using nodecpp::safememory::fbc_ptr_t;
 
 
 
-template<class T, bool bConst, memory_safety Safety>
-using safe_array_iterator2 = std::conditional_t<Safety == memory_safety::safe, 
-			array_of_iterator_impl<T, bConst, soft_ptr_with_zero_offset_impl>,
-			array_of_iterator_no_checks<T, bConst>>;
-
-
 template<class T, bool zeroed = false>
 soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 
@@ -172,6 +166,17 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 }
 
 
+template<typename T, memory_safety Safety>
+using array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
+			array_of_raw_iterator_impl<T, false, soft_ptr_impl<array_of<T>>>,
+			array_of_raw_iterator_impl<T, false, soft_ptr_no_checks<array_of<T>>>
+			>;
+
+template<typename T, memory_safety Safety>
+using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
+			array_of_raw_iterator_impl<T, true, soft_ptr_impl<array_of<T>>>,
+			array_of_raw_iterator_impl<T, true, soft_ptr_no_checks<array_of<T>>>
+			>;
 
 class allocator_to_eastl_hashtable_impl {
 public:
@@ -184,6 +189,8 @@ public:
 		typedef soft_ptr_with_zero_offset_impl<array_of<T>> array;
 		typedef array_of_iterator_impl<T, false, soft_ptr_impl> array_iterator;
 		typedef array_of_iterator_impl<T, true, soft_ptr_impl> const_array_iterator;
+
+		typedef array_of_iterator_heap<pointer, is_safe> bucket_iterator;
 	};
 	
 	template<class T>
@@ -217,8 +224,20 @@ public:
 	}
 
 	template<class T>
+	static bool is_hashtable_sentinel(const soft_ptr_with_zero_offset_impl<T>& p) {
+
+		return p.get_raw_ptr() == reinterpret_cast<T*>((uintptr_t)~0);
+	}
+
+	template<class T>
 	typename pointer_types<T>::array get_empty_hashtable() const {
 		return soft_ptr_with_zero_offset_impl<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray));
+	}
+
+	template<class T>
+	static bool is_empty_hashtable(const soft_ptr_with_zero_offset_impl<array_of<T>>& a) {
+
+		return a.get_raw_ptr() == reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray);
 	}
 
 	template<class T>
@@ -228,7 +247,7 @@ public:
 
 	template<class T>
 	static T* to_raw(soft_ptr_with_zero_offset_impl<array_of<T>> p) {
-		return p.get_raw_ptr();
+		return p.get_raw_begin();
 	}
 
 	template<class T>
@@ -266,6 +285,8 @@ public:
 		typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array;
 		typedef array_of_iterator_no_checks<T, false> array_iterator;
 		typedef array_of_iterator_no_checks<T, true> const_array_iterator;
+
+		typedef array_of_iterator_heap<pointer, is_safe> bucket_iterator;
 	};
 
 	template<class T>
@@ -302,9 +323,23 @@ public:
 	}
 
 	template<class T>
+	static bool is_hashtable_sentinel(const soft_ptr_with_zero_offset_no_checks<T>& p) {
+
+		return p.get_raw_ptr() == reinterpret_cast<T*>((uintptr_t)~0);
+	}
+
+	template<class T>
 	typename pointer_types<T>::array get_empty_hashtable() const {
 		return soft_ptr_with_zero_offset_no_checks<array_of<T>>(make_zero_offset_t(), reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray));
 	}
+	
+	template<class T>
+	static bool is_empty_hashtable(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& a) {
+
+		return a.get_raw_ptr() == reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray);
+		
+	}
+
 
 	template<class T>
 	static T* to_raw(soft_ptr_with_zero_offset_no_checks<T> p) {
@@ -313,7 +348,7 @@ public:
 
 	template<class T>
 	static T* to_raw(soft_ptr_with_zero_offset_no_checks<array_of<T>> p) {
-		return p.get_raw_ptr();
+		return p.get_raw_begin();
 	}
 
 	template<class T>
@@ -401,7 +436,7 @@ public:
 		else
 			return {};
 	}
-	
+
 	bool operator==(const allocator_to_eastl_vector_no_checks&) const { return true; }
 	bool operator!=(const allocator_to_eastl_vector_no_checks&) const { return false; }
 };
@@ -417,17 +452,6 @@ using allocator_to_eastl_vector = std::conditional_t<Safety == memory_safety::sa
 			allocator_to_eastl_vector_no_checks<T>>;
 
 
-template<typename T, memory_safety Safety>
-using array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_raw_iterator_impl<T, false, soft_ptr_impl<array_of<T>>>,
-			array_of_raw_iterator_impl<T, false, soft_ptr_no_checks<array_of<T>>>
-			>;
-
-template<typename T, memory_safety Safety>
-using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_raw_iterator_impl<T, true, soft_ptr_impl<array_of<T>>>,
-			array_of_raw_iterator_impl<T, true, soft_ptr_no_checks<array_of<T>>>
-			>;
 
 
 } // namespace safe_memory::detail

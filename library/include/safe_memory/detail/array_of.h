@@ -102,13 +102,14 @@ public:
 
 	//unsafe function, allow returning a non-derefenceable pointer as end()
 	T* get_raw_ptr(size_t ix) {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::critical, ix <= _capacity );
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, ix <= _capacity);
 		return begin() + ix;
 	}
 
 	//unsafe function, ptr should have been validated
 	size_t get_index(const T* ptr) const {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::critical, static_cast<size_t>(ptr - begin()) <= _capacity );
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, begin() <= ptr);
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, static_cast<size_t>(ptr - begin()) <= capacity());
 		return static_cast<size_t>(ptr - begin());
 	}
 
@@ -225,7 +226,7 @@ public:
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_begin() - other; }
 	T& operator[](std::size_t n) const noexcept { return *(get_raw_begin() + n); }
-	T* get_raw_begin() const noexcept { return ptr ? reinterpret_cast<array_of<T>*>(ptr)->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_raw_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
@@ -297,7 +298,7 @@ public:
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_begin() - other; }
 	T& operator[](std::size_t n) const noexcept { return *(get_raw_begin() + n); }
-	T* get_raw_begin() const noexcept { return ptr ? reinterpret_cast<array_of<T>*>(ptr)->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_raw_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_no_checks();
@@ -708,8 +709,10 @@ public:
 	static this_type makePtr(array_pointer arr, pointer to, uint32_t sz) {
 		if constexpr (is_raw_pointer)
 			return this_type(arr, static_cast<uint32_t>(to - arr), sz);
-		else
-			return this_type(arr, arr ? static_cast<uint32_t>(to - arr->begin()) : 0, sz);
+		else {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, arr->capacity() == sz);
+			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
+		}
 	}
 
 	array_of_raw_iterator_impl(const array_of_raw_iterator_impl& ri) = default;
@@ -737,7 +740,7 @@ public:
 			if constexpr(is_raw_pointer)
 				return arr[ix];
 			else
-				return *(arr->begin() + ix);
+				return *(arr->get_raw_ptr(ix));
 		}
 		else
 			throwRangeException("array_of_raw_iterator_impl::operator*");
@@ -748,7 +751,7 @@ public:
 			if constexpr (is_raw_pointer)
 				return arr + ix;
 			else
-				return arr->begin() + ix;
+				return arr->get_raw_ptr(ix);
 		}
 		else
 			throwRangeException("array_of_raw_iterator_impl::operator->");
@@ -814,7 +817,7 @@ public:
 			if constexpr (is_raw_pointer)
 				return arr[tmp];
 			else
-				return *(arr->begin() + tmp);
+				return *(arr->get_raw_ptr(tmp));
 		}
 		else
 			throwRangeException("array_of_raw_iterator_impl::operator[]");
@@ -872,29 +875,34 @@ public:
 		if constexpr (is_raw_pointer)
 			return arr + ix;
 		else
-			return arr->begin() + ix;
+			return arr ? arr->get_raw_ptr(ix) : nullptr;
+	}
+
+	pointer getRawBegin() const {
+		if constexpr (is_raw_pointer)
+			return arr;
+		else
+			return arr ? arr->begin() : nullptr;
 	}
 
 	// convert a single iterator to raw
-	const T* toRaw(const T* begin) const {
-		//TODO when arr is soft_ptr_impl, we can't just ==
-		// if (arr == begin)
+	pointer toRaw(const T* begin) const {
+		if (getRawBegin() == begin)
 			return getRaw();
-		// else
-		// 	throwRangeException("array_of_raw_iterator_impl::toRaw");
+		else
+			throwRangeException("array_of_raw_iterator_impl::toRaw");
 	}
 
 	// convert a iterator pair to raw
-	std::pair<const T*, const T*> toRaw(const T* begin, const this_type& ri) const {
-		//TODO when arr is soft_ptr_impl, we can't just ==
-		// if (arr == begin && arr == ri.arr && ix <= ri.ix)
+	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
+		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
-		// else
-		// 	throwRangeException("array_of_raw_iterator_impl::toRaw");
+		else
+			throwRangeException("array_of_raw_iterator_impl::toRaw");
 	}
 
 	// convert an external iterator pair to raw
-	std::pair<const T*, const T*> toRawOther(const this_type& ri) const {
+	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
 		if (arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else

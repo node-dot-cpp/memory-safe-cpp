@@ -443,10 +443,10 @@ using StdMap2 = std::unordered_map<K, V, H>;
 // using EastlMap2 = eastl::unordered_map<K, V, H>;
 
 template<class K, class V>
-using ReallySafeMap1 = safe_memory::unordered_map_safe<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
+using UnsafeMap1 = safe_memory::unordered_map<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::none>;
 
 template<class K, class V, class H>
-using ReallySafeMap2 = safe_memory::unordered_map_safe<K, V, H, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
+using UnsafeMap2 = safe_memory::unordered_map<K, V, H, eastl::equal_to<K>, safe_memory::memory_safety::none>;
 
 template<class K, class V>
 using SafeMap1 = safe_memory::unordered_map<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
@@ -455,19 +455,19 @@ template<class K, class V, class H>
 using SafeMap2 = safe_memory::unordered_map<K, V, H, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V>
-using UnsafeMap1 = safe_memory::unordered_map<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::none>;
+using ReallySafeMap1 = safe_memory::unordered_map_safe<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
 
 template<class K, class V, class H>
-using UnsafeMap2 = safe_memory::unordered_map<K, V, H, eastl::equal_to<K>, safe_memory::memory_safety::none>;
+using ReallySafeMap2 = safe_memory::unordered_map_safe<K, V, H, eastl::equal_to<K>, safe_memory::memory_safety::safe>;
 
 void BenchmarkHash()
 {
 	EASTLTest_Printf("HashMap\n");
 
 	BenchmarkHashTempl<1, StdMap1, StdMap2>();
-	BenchmarkHashTempl<2, ReallySafeMap1, ReallySafeMap2>();
+	BenchmarkHashTempl<2, UnsafeMap1, UnsafeMap2>();
 	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
-	BenchmarkHashTempl<4, UnsafeMap1, UnsafeMap2>();
+	BenchmarkHashTempl<4, ReallySafeMap1, ReallySafeMap2>();
 }
 
 

@@ -50,81 +50,106 @@ namespace safe_memory::detail {
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 
     private:
+		template <typename, typename, typename>
+		friend class hashtable_heap_safe_iterator;
+
 		// template <typename, typename, typename, typename, memory_safety>
 		// friend class unordered_map;
+
+
 
         typedef soft_ptr<node_type, is_safe>                                   node_ptr;
 		typedef typename Allocator::template pointer_types<node_type>::pointer   node_pointer;
 
 
-		typedef eastl::type_select_t<is_safe == memory_safety::safe, 
-			detail::array_of_iterator_impl<node_pointer, false, soft_ptr_impl>,
-			detail::array_of_iterator_no_checks<node_pointer, false>>             bucket_iterator;
+		typedef typename Allocator::template pointer_types<node_type>::bucket_iterator   bucket_iterator;
+		// typedef eastl::type_select_t<is_safe == memory_safety::safe, 
+		// 	detail::array_of_iterator_impl<node_pointer, false, soft_ptr_impl>,
+		// 	detail::array_of_iterator_no_checks<node_pointer, false>>             bucket_iterator;
 
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.
 
 		void increment()
 		{
-			mpNode = allocator_type::to_soft(mpNode->mpNext);
-
 			// mb: *mpBucket will be != nullptr at 'end()' sentinel
 			// 		but 'to_soft' will convert it to a null
-			if(mpNode == nullptr) {
-				do { ++mpBucket; } while(*mpBucket == nullptr);
-				mpNode = allocator_type::to_soft(*mpBucket);
-			} 
+			auto mpTmp = mpNode->mpNext;
+
+			while(mpTmp == NULL)
+				mpTmp = *++mpBucket;
+
+			mpNode = allocator_type::to_soft(mpTmp);
 		}
+
 
 		hashtable_heap_safe_iterator(node_ptr node, bucket_iterator bucket)
 			: mpNode(node), mpBucket(bucket) { }
 
     public:
-        template<class HeapPtr, class NodePtr, class SoftNode>
-        static this_type makeIt(SoftNode node, const HeapPtr& heap_ptr, NodePtr* curr_bucket) {
+        template<class HeapPtr>
+        static this_type makeIt(const BaseIt& it, const HeapPtr& heap_ptr, uint32_t sz) {
 			//mb: on empty hashtable, heap_ptr will be != nullptr
 			//    but 'to_soft' will convert it to a null
-			auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
-			if(soft_heap_ptr)
-				return this_type(allocator_type::to_soft(node), bucket_iterator::makePtr(soft_heap_ptr, curr_bucket));
+			// auto node = it.get_node();
+			// auto curr_bucket = it.get_bucket();
+			// auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
+			if(!allocator_type::is_empty_hashtable(heap_ptr))
+				return this_type(allocator_type::to_soft(it.get_node()), 
+					bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz));
 			else
 				return this_type();//empty hashtable
         }
 
+
+
 		hashtable_heap_safe_iterator()
 			: mpNode(), mpBucket() { }
 
-		hashtable_heap_safe_iterator(const this_type_non_const& x)
-			: mpNode(x.getNodePtr()), mpBucket(x.getBucketIt()) { }
+		hashtable_heap_safe_iterator(const this_type&) = default;
+		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator&) = default;
 
-		reference operator*() const
-			{ return mpNode->mValue; }
+		hashtable_heap_safe_iterator(hashtable_heap_safe_iterator&&) = default; 
+		hashtable_heap_safe_iterator& operator=(hashtable_heap_safe_iterator&&) = default;
 
-		pointer operator->() const
-			{ return &(mpNode->mValue); }
+		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
+		hashtable_heap_safe_iterator(const hashtable_heap_safe_iterator<B2, B2, Allocator>& other)
+			: mpNode(other.mpNode), mpBucket(other.mpBucket) { }
 
-		this_type& operator++()
-			{ increment(); return *this; }
+		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
+		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator<B2, B2, Allocator>& other) {
+			this->mpNode = other.mpNode;
+			this->mpBucket = other.mpBucket;
+			return *this;
+		}
 
-		this_type operator++(int)
-			{ this_type temp(*this); increment(); return temp; }
+		reference operator*() const { return mpNode->mValue; }
+		pointer operator->() const { return &(mpNode->mValue); }
 
-        bool operator==(const this_type other) const
-		    { return mpNode == other.mpNode; }
+		this_type& operator++() {
+			increment();
+			return *this;
+		}
 
-        bool operator!=(const this_type other) const
-		    { return mpNode != other.mpNode; }
+		this_type operator++(int) {
+			this_type temp(*this);
+			increment();
+			return temp;
+		}
 
-		const node_ptr& getNodePtr() const noexcept { return mpNode; }
-		const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
+        bool operator==(const this_type other) const { return mpNode == other.mpNode; }
+        bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
+
+		// const node_ptr& getNodePtr() const noexcept { return mpNode; }
+		// const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt::make_unsafe(allocator_type::to_zero(mpNode), mpBucket.get_raw_ptr());
+			return BaseIt::make_unsafe(allocator_type::to_zero(mpNode), mpBucket.getRaw());
 		}
 	}; // hashtable_heap_safe_iterator
 
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
-	class hashtable_stack_only_iterator : private BaseIt
+	class hashtable_stack_only_iterator : protected BaseIt
 	{
 	public:
 		typedef BaseIt                                                   base_type;
@@ -142,20 +167,57 @@ namespace safe_memory::detail {
 
 		template <typename, typename, typename>
 		friend class hashtable_stack_only_iterator;
-		typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
+		// typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
+
+		[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
 
     public:
 		hashtable_stack_only_iterator() :base_type() { }
-		hashtable_stack_only_iterator(const base_type& x) :base_type(x) { }
 
-		hashtable_stack_only_iterator(const this_type_non_const& x) : base_type(x) { }
+		hashtable_stack_only_iterator(const this_type&) = default;
+		hashtable_stack_only_iterator& operator=(const hashtable_stack_only_iterator& ri) = default;
 
-		using base_type::operator*;
-		using base_type::operator->;
+		hashtable_stack_only_iterator(hashtable_stack_only_iterator&& ri) = default; 
+		hashtable_stack_only_iterator& operator=(hashtable_stack_only_iterator&& ri) = default;
 
-		this_type& operator++() { return static_cast<this_type&>(base_type::operator++()); }
-		this_type operator++(int) { return base_type::operator++(0); }
- 
+		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
+		hashtable_stack_only_iterator(const hashtable_stack_only_iterator<B2, B2, Allocator>& other)
+			: base_type(other) { }
+
+		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
+		hashtable_stack_only_iterator& operator=(const hashtable_stack_only_iterator<B2, B2, Allocator>& other) {
+			base_type::operator=(other.toBase());
+			return *this;
+		}
+
+		reference operator*() const {
+			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+				return base_type::operator*();
+			}
+			else
+				throwRangeException("hashtable_stack_only_iterator::operator*");
+		}
+
+		pointer operator->() const {
+			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+				return base_type::operator->();
+			}
+			else
+				throwRangeException("hashtable_stack_only_iterator::operator->");
+		}
+
+		this_type& operator++() {
+			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+				base_type::operator++();
+			}
+			return *this;
+		}
+
+		this_type operator++(int) { 
+			this_type temp(*this);
+			operator++();
+			return temp;
+		}
 
 		bool operator==(const this_type& other) const 
 			{ return eastl::operator==(this->toBase(), other.toBase()); }
@@ -163,14 +225,13 @@ namespace safe_memory::detail {
 			{ return eastl::operator!=(this->toBase(), other.toBase()); }
 
 
-		const node_pointer& getNodePtr() const noexcept { return base_type::mpNode; }
-		node_pointer* getBucketIt() const noexcept { return base_type::mpBucket; }
+		// const node_pointer& getNodePtr() const noexcept { return base_type::mpNode; }
+		// node_pointer* getBucketIt() const noexcept { return base_type::mpBucket; }
 
 		const base_type& toBase() const noexcept { return *this; }
 
-		static this_type& fromBase(base_type& b) {
-			return static_cast<this_type&>(b);
-		}
+		static this_type& fromBase(base_type& b) { return static_cast<this_type&>(b); }
+		static const this_type& fromBase(const base_type& b) { return static_cast<const this_type&>(b); }
 	}; // hashtable_stack_only_iterator
 
 
