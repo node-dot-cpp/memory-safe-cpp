@@ -58,10 +58,10 @@ namespace safe_memory
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 		typedef typename base_type::insert_return_type                            insert_return_type_base;
 
-		typedef typename detail::hashtable_heap_safe_iterator<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 
 		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter

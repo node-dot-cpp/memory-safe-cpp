@@ -495,7 +495,7 @@ void BenchmarkString()
 	BenchmarkStringTempl<1, Std8, Std16>();
 	BenchmarkStringTempl<2, Unsafe8, Unsafe16>();
 	BenchmarkStringTempl<3, Safe8, Safe16>();
-	BenchmarkStringTempl<4, Std8, Std16>();
+	BenchmarkStringTempl<4, Safe8, Safe16>();
 }
 
 

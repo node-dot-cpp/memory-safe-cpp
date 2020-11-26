@@ -52,15 +52,22 @@ namespace safe_memory
 		typedef typename base_type::const_reference             const_reference;
 		typedef typename base_type::iterator                    iterator_base;
 		typedef typename base_type::const_iterator              const_iterator_base;
-		typedef std::conditional_t<Safety == memory_safety::none,
-			iterator_base,
-			detail::array_of_iterator_stack<T>>               iterator;
-		typedef std::conditional_t<Safety == memory_safety::none,
-			const_iterator_base,
-			detail::const_array_of_iterator_stack<T>>               const_iterator;
 
-		typedef eastl::reverse_iterator<iterator>               reverse_iterator;
-		typedef eastl::reverse_iterator<const_iterator>         const_reverse_iterator;
+
+		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
+		typedef typename detail::const_array_of_iterator_stack<T>          const_stack_only_iterator;
+
+		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
+		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
+		// down the line 
+		static constexpr bool use_base_iterator = (Safety == memory_safety::none);
+		
+		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
+		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
+		// TODO properly handle 'use_base_iterator' for reverse iterators (if required)
+		typedef eastl::reverse_iterator<iterator>                		                                reverse_iterator;
+		typedef eastl::reverse_iterator<const_iterator>          		                                const_reverse_iterator;
+
 		typedef typename base_type::size_type                   size_type;
 		typedef typename base_type::difference_type             difference_type;
 
@@ -516,14 +523,16 @@ namespace safe_memory
 
 		// Safety == none
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
-		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const {
+			return { it, it2 };
+		}
 		
 		// Safety == safe
-		const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
+		const_iterator_base toBase(const const_stack_only_iterator& it) const {
 			return it.toRaw(base_type::begin());
 		}
 
-		std::pair<const_iterator_base, const_iterator_base> toBase(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRaw(base_type::begin(), it2);
 		}
 
@@ -542,13 +551,13 @@ namespace safe_memory
         }
 
 		iterator makeIt(iterator_base it) {
-			if constexpr (Safety == memory_safety::none)
+			if constexpr (use_base_iterator)
 				return it;
 			else
 				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
 		}
 		const_iterator makeIt(const_iterator_base it) const {
-			if constexpr (Safety == memory_safety::none)
+			if constexpr (use_base_iterator)
 				return it;
 			else
 				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
