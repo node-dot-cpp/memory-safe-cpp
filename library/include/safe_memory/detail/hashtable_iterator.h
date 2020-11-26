@@ -58,14 +58,8 @@ namespace safe_memory::detail {
 
 
 
-        typedef soft_ptr<node_type, is_safe>                                   node_ptr;
-		typedef typename Allocator::template pointer_types<node_type>::pointer   node_pointer;
-
-
-		typedef typename Allocator::template pointer_types<node_type>::bucket_iterator   bucket_iterator;
-		// typedef eastl::type_select_t<is_safe == memory_safety::safe, 
-		// 	detail::array_of_iterator_impl<node_pointer, false, soft_ptr_impl>,
-		// 	detail::array_of_iterator_no_checks<node_pointer, false>>             bucket_iterator;
+        typedef soft_ptr<node_type, is_safe>               node_ptr;
+		typedef typename allocator_type::bucket_iterator   bucket_iterator;
 
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.
@@ -83,12 +77,11 @@ namespace safe_memory::detail {
 		}
 
 
-		hashtable_heap_safe_iterator(node_ptr node, bucket_iterator bucket)
+		hashtable_heap_safe_iterator(const node_ptr& node, const bucket_iterator& bucket)
 			: mpNode(node), mpBucket(bucket) { }
 
     public:
-        template<class HeapPtr>
-        static this_type makeIt(const BaseIt& it, const HeapPtr& heap_ptr, uint32_t sz) {
+        static this_type makeIt(const BaseIt& it, const typename allocator_type::array& heap_ptr, uint32_t sz) {
 			//mb: on empty hashtable, heap_ptr will be != nullptr
 			//    but 'to_soft' will convert it to a null
 			// auto node = it.get_node();
@@ -139,9 +132,6 @@ namespace safe_memory::detail {
 
         bool operator==(const this_type other) const { return mpNode == other.mpNode; }
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
-
-		// const node_ptr& getNodePtr() const noexcept { return mpNode; }
-		// const bucket_iterator& getBucketIt() const noexcept { return mpBucket; }
 
 		BaseIt toBase() const noexcept {
 			return BaseIt::make_unsafe(allocator_type::to_zero(mpNode), mpBucket.getRaw());
@@ -224,9 +214,6 @@ namespace safe_memory::detail {
 		bool operator!=(const this_type& other) const 
 			{ return eastl::operator!=(this->toBase(), other.toBase()); }
 
-
-		// const node_pointer& getNodePtr() const noexcept { return base_type::mpNode; }
-		// node_pointer* getBucketIt() const noexcept { return base_type::mpBucket; }
 
 		const base_type& toBase() const noexcept { return *this; }
 

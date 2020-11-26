@@ -155,16 +155,6 @@ public:
 
 	using soft_ptr_with_zero_offset_base::swap;
 
-	// soft_ptr_impl<array_of<T>> get() const
-	// {
-	// 	if(NODECPP_LIKELY(ptr != nullptr)) {
-	// 		FirstControlBlock* cb = getControlBlock_( ptr );
-	// 		return soft_ptr_impl<array_of<T>>( cb, ptr );
-	// 	}
-	// 	else
-	// 		return soft_ptr_impl<array_of<T>>();
-	// }
-
 	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
 
@@ -228,13 +218,6 @@ public:
 		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
 
 	using soft_ptr_with_zero_offset_base::swap;
-
-// 	soft_ptr_no_checks<array_of<T>> get() const
-// 	{
-// //		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, ptr != nullptr );
-// //		FirstControlBlock* cb = getControlBlock_( ptr );
-// 		return soft_ptr_no_checks<array_of<T>>( fbc_ptr_t(), ptr );
-// 	}
 
 	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
