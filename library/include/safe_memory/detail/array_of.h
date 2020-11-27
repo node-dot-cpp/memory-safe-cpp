@@ -150,13 +150,13 @@ public:
 	using soft_ptr_with_zero_offset_base::operator==;
 	using soft_ptr_with_zero_offset_base::operator!=;
 
-	array_of<T>& operator*() const noexcept { return *get_raw_array_of_ptr(); }
-	array_of<T>* operator->() const noexcept { return get_raw_array_of_ptr(); }
-	array_of<T>* get_raw_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+	array_of<T>& operator*() const noexcept { return *get_array_of_ptr(); }
+	array_of<T>* operator->() const noexcept { return get_array_of_ptr(); }
+	array_of<T>* get_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_raw_array_of_ptr()->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
@@ -262,13 +262,13 @@ public:
 	using soft_ptr_with_zero_offset_base::operator==;
 	using soft_ptr_with_zero_offset_base::operator!=;
 
-	array_of<T>& operator*() const noexcept { return *get_raw_array_of_ptr(); }
-	array_of<T>* operator->() const noexcept { return get_raw_array_of_ptr(); }
-	array_of<T>* get_raw_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+	array_of<T>& operator*() const noexcept { return *get_array_of_ptr(); }
+	array_of<T>* operator->() const noexcept { return get_array_of_ptr(); }
+	array_of<T>* get_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
 	
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_raw_array_of_ptr()->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_no_checks();

@@ -104,7 +104,7 @@ template<class T>
 void deallocate_impl(soft_ptr_with_zero_offset_impl<T>& p) {
 
 	if (p) {
-		T* dataForObj = p.operator->();
+		T* dataForObj = p.get_raw_ptr();
 //		dataForObj->~T(); //we don't destruct here
 		auto cb = getControlBlock_(dataForObj);
 		cb->template updatePtrForListItemsWithInvalidPtr<T>();
@@ -117,7 +117,7 @@ template<class T>
 void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
 
 	if (p) {
-		array_of<T>* dataForObj = p.operator->();
+		array_of<T>* dataForObj = p.get_array_of_ptr();
 		dataForObj->~array_of<T>();
 		auto cb = getControlBlock_(dataForObj);
 		cb->template updatePtrForListItemsWithInvalidPtr<array_of<T>>();
@@ -125,6 +125,21 @@ void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
 		cb->clear();
 	}
 }
+
+
+template<class T>
+T* allocate_raw(std::size_t count) {
+
+	return reinterpret_cast<T*>(allocate(sizeof(T) * count));
+}
+
+template<class T>
+void deallocate_raw(T* p) {
+
+	if (p)
+		deallocate(p);
+}
+
 
 template<class T>
 soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
@@ -149,7 +164,7 @@ template<class T>
 void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
 
 	if (p) {
-		T* dataForObj = p.operator->();
+		T* dataForObj = p.get_raw_ptr();
 		//dataForObj->~T(); //don't destruct here
 		deallocate(dataForObj);
 	}
@@ -159,7 +174,7 @@ template<class T>
 void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
 
 	if (p) {
-		array_of<T>* dataForObj = p.operator->();
+		array_of<T>* dataForObj = p.get_array_of_ptr();
 		dataForObj->~array_of<T>();
 		deallocate(dataForObj);
 	}
@@ -191,13 +206,20 @@ constexpr array_of<T>* empty_hashtable() {
 	return reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray);
 }
 
+
+template<class T>
+constexpr T* empty_hashtable_raw() {
+	return reinterpret_cast<T*>(&eastl::gpEmptyBucketArray);
+}
+
 class allocator_to_eastl_hashtable_impl {
 public:
 	template<class T>
 	class bind_node {
 	public:
 
-		static constexpr memory_safety is_safe =  memory_safety::safe; 
+		static constexpr memory_safety is_safe = memory_safety::safe;
+		static constexpr bool use_base_iterator = false;
 
 		typedef soft_ptr_with_zero_offset_impl<T>                 pointer;
 		typedef soft_ptr_with_zero_offset_impl<array_of<pointer>> array;
@@ -245,7 +267,7 @@ public:
 		}
 
 		static bool is_empty_hashtable(const array& a) {
-			return a.get_raw_array_of_ptr() == empty_hashtable<pointer>();
+			return a.get_array_of_ptr() == empty_hashtable<pointer>();
 		}
 
 		static pointer to_zero(const soft_ptr_impl<T>& p) {
@@ -263,7 +285,7 @@ public:
 
 		static soft_ptr_impl<array_of<pointer>> to_soft(const array& p) {
 			if(p && !is_empty_hashtable(p)) {
-				auto ptr = p.get_raw_array_of_ptr();
+				auto ptr = p.get_array_of_ptr();
 				return { getControlBlock_( ptr ), ptr };
 			}
 			else
@@ -285,6 +307,7 @@ public:
 	public:
 
 		static constexpr memory_safety is_safe = memory_safety::none; 
+		static constexpr bool use_base_iterator = false;
 
 		typedef soft_ptr_with_zero_offset_no_checks<T>                 pointer;
 		typedef soft_ptr_with_zero_offset_no_checks<array_of<pointer>> array;
@@ -334,7 +357,7 @@ public:
 		}
 
 		static bool is_empty_hashtable(const array& a) {
-			return a.get_raw_array_of_ptr() == empty_hashtable<pointer>();
+			return a.get_array_of_ptr() == empty_hashtable<pointer>();
 		}
 
 		static pointer to_zero(const soft_ptr_no_checks<T>& p) {
@@ -353,7 +376,7 @@ public:
 
 		static soft_ptr_no_checks<array_of<pointer>> to_soft(const array& p) {
 			if(p && !is_empty_hashtable(p)) {
-				auto ptr = p.get_raw_array_of_ptr();
+				auto ptr = p.get_array_of_ptr();
 				return { fbc_ptr_t(), ptr };
 			}
 			else
@@ -370,6 +393,100 @@ public:
 
 };
 
+class allocator_to_eastl_hashtable_raw {
+public:
+	template<class T>
+	class bind_node {
+	public:
+
+		static constexpr memory_safety is_safe = memory_safety::none; 
+		static constexpr bool use_base_iterator = true;
+
+		typedef T*                  pointer;
+		typedef T** 				array;
+
+		typedef T**               bucket_iterator;//not used
+
+		array allocate_array(std::size_t count, int flags = 0) {
+			return allocate_raw<pointer>(count);
+		}
+
+		array allocate_array_zeroed(std::size_t count, int flags = 0) {
+			auto arr = allocate_raw<pointer>(count);
+			memset(arr, 0, count * sizeof(pointer));
+			return arr;
+		}
+
+		void deallocate_array(array& p, std::size_t count) {
+			deallocate_raw(p);
+		}
+
+		pointer allocate_node() {
+			return allocate_raw<T>(1);
+		}
+
+		void deallocate_node(pointer& p) {
+			deallocate_raw(p);
+		}
+
+		static pointer get_hashtable_sentinel() {
+			return hashtable_sentinel<T>();
+		}
+
+		static array get_empty_hashtable() {
+			return empty_hashtable_raw<pointer>();
+		}
+
+		static T* to_raw(const pointer& p) {
+			return p;
+		}
+
+		static pointer* to_raw(const array& p) {
+			return p;
+		}
+
+		static bool is_hashtable_sentinel(const pointer& p) {
+			return p == hashtable_sentinel<T>();
+		}
+
+		static bool is_empty_hashtable(const array& a) {
+			return a == empty_hashtable_raw<pointer>();
+		}
+
+		// static pointer to_zero(const soft_ptr_no_checks<T>& p) {
+		// 	return { make_zero_offset_t(), p.t };
+		// }
+
+
+		// static soft_ptr_no_checks<T> to_soft(const pointer& p) {
+		// 	if(p && !is_hashtable_sentinel(p)) {
+		// 		auto ptr =p.get_raw_ptr();
+		// 		return { fbc_ptr_t(), ptr };
+		// 	}
+		// 	else
+		// 		return {};
+		// }
+
+		// static soft_ptr_no_checks<array_of<pointer>> to_soft(const array& p) {
+		// 	if(p && !is_empty_hashtable(p)) {
+		// 		auto ptr = p.get_array_of_ptr();
+		// 		return { fbc_ptr_t(), ptr };
+		// 	}
+		// 	else
+		// 		return {};
+		// }
+
+
+		//stateless
+		bool operator==(const bind_node&) const { return true; }
+		bool operator!=(const bind_node&) const { return false; }
+
+	};
+
+
+};
+
+
 template<memory_safety Safety>
 using allocator_to_eastl_hashtable = std::conditional_t<Safety == memory_safety::safe,
 			allocator_to_eastl_hashtable_impl,
@@ -381,6 +498,7 @@ template<class T>
 class allocator_to_eastl_vector_impl {
 public:
 	static constexpr memory_safety is_safe = memory_safety::safe; 
+	static constexpr bool use_base_iterator = false;
 	
 	typedef soft_ptr_with_zero_offset_impl<array_of<T>> array_pointer;
 	
@@ -402,7 +520,7 @@ public:
 
 	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer& p) {
 		if(p) {
-			auto ptr = p.get_raw_array_of_ptr();
+			auto ptr = p.get_array_of_ptr();
 			return { getControlBlock_( ptr ), ptr };
 		}
 		else
@@ -418,6 +536,7 @@ template<class T>
 class allocator_to_eastl_vector_no_checks {
 public:
 	static constexpr memory_safety is_safe = memory_safety::none; 
+	static constexpr bool use_base_iterator = false;
 
 	typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array_pointer;
 
@@ -441,7 +560,7 @@ public:
 
 	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer& p) {
 		if(p) {
-			auto ptr = p.get_raw_array_of_ptr();
+			auto ptr = p.get_array_of_ptr();
 			return { fbc_ptr_t(), ptr };
 		}
 		else
@@ -450,6 +569,46 @@ public:
 
 	bool operator==(const allocator_to_eastl_vector_no_checks&) const { return true; }
 	bool operator!=(const allocator_to_eastl_vector_no_checks&) const { return false; }
+};
+
+
+template<class T>
+class allocator_to_eastl_vector_raw {
+public:
+	static constexpr memory_safety is_safe = memory_safety::none; 
+	static constexpr bool use_base_iterator = true;
+
+	typedef T* array_pointer;
+
+	array_pointer allocate_array(std::size_t count, int flags = 0) {
+		return allocate_raw<T>(count * sizeof(T));
+	}
+
+	array_pointer allocate_array_zeroed(std::size_t count, int flags = 0) {
+		auto arr = allocate_raw<T>(count * sizeof(T));
+		memset(arr, 0, count * sizeof(T));
+		return arr;
+	}
+
+	void deallocate_array(array_pointer& p, std::size_t count) {
+		deallocate_raw(p);
+	}
+
+	static T* to_raw(const array_pointer& p) {
+		return p;
+	}
+
+	// static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer& p) {
+	// 	if(p) {
+	// 		auto ptr = p.get_array_of_ptr();
+	// 		return { fbc_ptr_t(), ptr };
+	// 	}
+	// 	else
+	// 		return {};
+	// }
+
+	bool operator==(const allocator_to_eastl_vector_raw&) const { return true; }
+	bool operator!=(const allocator_to_eastl_vector_raw&) const { return false; }
 };
 
 template<typename T, memory_safety Safety>

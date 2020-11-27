@@ -29,7 +29,11 @@
 
 namespace safe_memory::detail {
 
+void* gpSafeMemoryHashTableSentinel = reinterpret_cast<void*>((uintptr_t)~0);
+
 fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray = { soft_ptr_with_zero_offset_base(), soft_ptr_with_zero_offset_base(reinterpret_cast<void*>((uintptr_t)~0))};
+
+void* gpSafeMemoryEmptyBucketArrayRaw[] = { nullptr, gpSafeMemoryHashTableSentinel};
 
 }
 

@@ -110,23 +110,6 @@ public:
 	using soft_ptr_with_zero_offset_base::operator==;
 	using soft_ptr_with_zero_offset_base::operator!=;
 
-
-	// bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept
-	// 	{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	// bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept
-	// 	{ return soft_ptr_with_zero_offset_base::operator!=(other); }
-	// template<class T1>
-	// bool operator == (const soft_ptr_with_zero_offset_impl<T1>& other ) const noexcept
-	// 	{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	// template<class T1>
-	// bool operator != (const soft_ptr_with_zero_offset_impl<T1>& other ) const noexcept
-	// 	{ return soft_ptr_with_zero_offset_base::operator!=(other); }
-
-	// bool operator == (std::nullptr_t ) const noexcept 
-	// 	{ return soft_ptr_with_zero_offset_base::operator==(nullptr); }
-	// bool operator != (std::nullptr_t ) const noexcept
-	// 	{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
-
 	T& operator*() const noexcept { return *get_raw_ptr(); }
 	T* operator->() const noexcept { return get_raw_ptr(); }
 	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }

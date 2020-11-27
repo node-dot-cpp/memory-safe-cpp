@@ -87,7 +87,7 @@ namespace safe_memory
 		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
 		// down the line 
-		static constexpr bool use_base_iterator = (Safety == memory_safety::none);
+		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
@@ -340,7 +340,16 @@ namespace safe_memory
 		using base_type::validate;
 		using base_type::validate_iterator;
 
-		detail::iterator_validity  validate_iterator2(const_iterator_arg i) const noexcept;
+		detail::iterator_validity validate_iterator2(const_iterator_base i) const noexcept;
+		detail::iterator_validity validate_iterator2(const const_stack_only_iterator& it) const noexcept {
+			//TODO 
+			return detail::iterator_validity::ValidCanDeref;
+		}
+
+		detail::iterator_validity validate_iterator2(const const_heap_safe_iterator& it) const noexcept {
+			//TODO 
+			return detail::iterator_validity::ValidCanDeref;
+		}
 
 	protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -578,30 +587,23 @@ namespace safe_memory
 
 
 	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(const_iterator_arg i) const noexcept
+	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(const_iterator_base i) const noexcept
 	{
-		if constexpr (Safety == memory_safety::none) {
-			if(i == nullptr)
-				return detail::iterator_validity::Null;
-			else if(i >= begin_unsafe())
-			{
-				if(i < end_unsafe())
-					return detail::iterator_validity::ValidCanDeref;
+		if(i == nullptr)
+			return detail::iterator_validity::Null;
+		else if(i >= base_type::begin())
+		{
+			if(i < base_type::end())
+				return detail::iterator_validity::ValidCanDeref;
 
-				else if(i == end_unsafe())
-					return detail::iterator_validity::ValidEnd;
+			else if(i == base_type::end())
+				return detail::iterator_validity::ValidEnd;
 
-				else if(i < begin_unsafe() + capacity())
-					return detail::iterator_validity::InvalidZoombie;
-			}
-
-			return detail::iterator_validity::xxx_Broken_xxx;
+			else if(i < base_type::begin() + base_type::capacity())
+				return detail::iterator_validity::InvalidZoombie;
 		}
-		else {
-			//TODO 
-			return detail::iterator_validity::ValidCanDeref;
-			// i.validate_iterator(cbegin(), cend());
-		}
+
+		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
 

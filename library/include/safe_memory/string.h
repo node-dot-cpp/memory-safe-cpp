@@ -60,7 +60,7 @@ namespace safe_memory
 		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
 		// down the line 
-		static constexpr bool use_base_iterator = (Safety == memory_safety::none);
+		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
