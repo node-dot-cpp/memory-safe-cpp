@@ -236,7 +236,7 @@ public:
 			return p.get_raw_ptr();
 		}
 
-		static T* to_raw(const array& p) {
+		static pointer* to_raw(const array& p) {
 			return p.get_raw_begin();
 		}
 
@@ -245,7 +245,7 @@ public:
 		}
 
 		static bool is_empty_hashtable(const array& a) {
-			return a.get_raw_ptr() == empty_hashtable<pointer>();
+			return a.get_raw_array_of_ptr() == empty_hashtable<pointer>();
 		}
 
 		static pointer to_zero(const soft_ptr_impl<T>& p) {
@@ -263,7 +263,7 @@ public:
 
 		static soft_ptr_impl<array_of<pointer>> to_soft(const array& p) {
 			if(p && !is_empty_hashtable(p)) {
-				auto ptr = p.get_raw_ptr();
+				auto ptr = p.get_raw_array_of_ptr();
 				return { getControlBlock_( ptr ), ptr };
 			}
 			else
@@ -325,7 +325,7 @@ public:
 			return p.get_raw_ptr();
 		}
 
-		static T* to_raw(const array& p) {
+		static pointer* to_raw(const array& p) {
 			return p.get_raw_begin();
 		}
 
@@ -334,7 +334,7 @@ public:
 		}
 
 		static bool is_empty_hashtable(const array& a) {
-			return a.get_raw_ptr() == empty_hashtable<pointer>();
+			return a.get_raw_array_of_ptr() == empty_hashtable<pointer>();
 		}
 
 		static pointer to_zero(const soft_ptr_no_checks<T>& p) {
@@ -353,7 +353,7 @@ public:
 
 		static soft_ptr_no_checks<array_of<pointer>> to_soft(const array& p) {
 			if(p && !is_empty_hashtable(p)) {
-				auto ptr = p.get_raw_ptr();
+				auto ptr = p.get_raw_array_of_ptr();
 				return { fbc_ptr_t(), ptr };
 			}
 			else
@@ -402,7 +402,7 @@ public:
 
 	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer& p) {
 		if(p) {
-			auto ptr = p.get_raw_ptr();
+			auto ptr = p.get_raw_array_of_ptr();
 			return { getControlBlock_( ptr ), ptr };
 		}
 		else
@@ -441,7 +441,7 @@ public:
 
 	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer& p) {
 		if(p) {
-			auto ptr = p.get_raw_ptr();
+			auto ptr = p.get_raw_array_of_ptr();
 			return { fbc_ptr_t(), ptr };
 		}
 		else

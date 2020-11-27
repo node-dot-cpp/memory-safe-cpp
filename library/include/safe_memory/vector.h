@@ -358,15 +358,15 @@ namespace safe_memory
 		
 		// Safety == safe
 		iterator_base toBase(const stack_only_iterator& it) const {
-			return it.toRaw(base_type::mpBegin);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
 		const_iterator_base toBase(const const_stack_only_iterator& it) const {
-			return it.toRaw(base_type::mpBegin);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
 		const_iterator_base_pair toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
-			return it.toRaw(base_type::mpBegin, it2);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
 		const_iterator_base_pair toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
@@ -374,15 +374,15 @@ namespace safe_memory
 		}
 
 		iterator_base toBase(const heap_safe_iterator& it) const {
-			return it.toRaw(base_type::mpBegin);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
 		const_iterator_base toBase(const const_heap_safe_iterator& it) const {
-			return it.toRaw(base_type::mpBegin);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
 		const_iterator_base_pair toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
-			return it.toRaw(base_type::mpBegin, it2);
+			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
 		const_iterator_base_pair toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {

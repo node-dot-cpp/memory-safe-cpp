@@ -69,14 +69,14 @@ public:
 
 	//unsafe function, allow returning a non-derefenceable pointer as end()
 	T* get_raw_ptr(size_t ix) {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, ix <= _capacity);
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= _capacity);
 		return begin() + ix;
 	}
 
 	//unsafe function, ptr should have been validated
 	size_t get_index(const T* ptr) const {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, begin() <= ptr);
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, static_cast<size_t>(ptr - begin()) <= capacity());
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, begin() <= ptr);
+		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, static_cast<size_t>(ptr - begin()) <= capacity());
 		return static_cast<size_t>(ptr - begin());
 	}
 
@@ -123,139 +123,231 @@ public:
 template<class T>
 class soft_ptr_with_zero_offset_impl<array_of<T>> : public soft_ptr_with_zero_offset_base
 {
-	// friend class owning_ptr_impl<array_of<T>>;
-	friend struct ::nodecpp::safememory::FirstControlBlock;
-
-
-	// template<class TT>
-	// friend class soft_ptr_with_zero_offset_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_with_zero_offset_no_checks;
-
-//	array_of<T>* ptr= nullptr;
-
-	// FirstControlBlock* getControlBlock() const { return getControlBlock_( ptr ); }
-	// static FirstControlBlock* getControlBlock(void* t) { return getControlBlock_(t); }
 
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::safe;
  
-	soft_ptr_with_zero_offset_impl() { }
+	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) { }
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) {}
 
-	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) = default;
-	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) = default;
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl<array_of<T>>&& other ) = default;
-	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl<array_of<T>>&& other ) = default;
+	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
+	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
+
+	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& other ) = default;
+	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl&& other ) = default;
 
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) { }
-	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ) { soft_ptr_with_zero_offset_base::reset(); return *this; }
+	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t )
+		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
 
-	using soft_ptr_with_zero_offset_base::swap;
-
-	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
+	using soft_ptr_with_zero_offset_base::swap;
+	using soft_ptr_with_zero_offset_base::operator bool;
+	using soft_ptr_with_zero_offset_base::operator==;
+	using soft_ptr_with_zero_offset_base::operator!=;
 
-	bool operator == (const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	bool operator != (const soft_ptr_with_zero_offset_impl<array_of<T>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
+	array_of<T>& operator*() const noexcept { return *get_raw_array_of_ptr(); }
+	array_of<T>* operator->() const noexcept { return get_raw_array_of_ptr(); }
+	array_of<T>* get_raw_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
 
-	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_impl<array_of<T1>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_impl<array_of<T1>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
-
-	bool operator == (std::nullptr_t) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(nullptr); }
-	bool operator != (std::nullptr_t) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
-
-	array_of<T>& operator * () const noexcept { return *get_raw_ptr(); }
-	array_of<T>* operator -> () const noexcept { return get_raw_ptr(); }
-	array_of<T>* get_raw_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
-
-	operator T*() const noexcept { return get_raw_begin(); }
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
-	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_begin() - other; }
-	T& operator[](std::size_t n) const noexcept { return *(get_raw_begin() + n); }
-	T* get_raw_begin() const noexcept { return ptr ? get_raw_ptr()->begin() : nullptr; }
+	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
+	T* get_raw_begin() const noexcept { return ptr ? get_raw_array_of_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
 };
 
+template<class T>
+std::ptrdiff_t operator-(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left - right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator-(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() - right;
+}
+
+template<class T>
+std::ptrdiff_t operator==(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left == right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator==(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() == right;
+}
+
+template<class T>
+std::ptrdiff_t operator!=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left != right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator!=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() != right;
+}
+
+template<class T>
+std::ptrdiff_t operator<(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left < right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator<(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() < right;
+}
+
+template<class T>
+std::ptrdiff_t operator<=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left <= right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator<=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() <= right;
+}
+
+template<class T>
+std::ptrdiff_t operator>(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left > right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator>(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() > right;
+}
+
+template<class T>
+std::ptrdiff_t operator>=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
+	return left >= right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() >= right;
+}
+
 
 template<class T>
 class soft_ptr_with_zero_offset_no_checks<array_of<T>> : public soft_ptr_with_zero_offset_base
 {
-	// template<class TT>
-	// friend class soft_ptr_with_zero_offset_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_with_zero_offset_no_checks;
-
-	// array_of<T>* ptr = nullptr;
 
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
  
-	soft_ptr_with_zero_offset_no_checks() { }
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) { }
+	soft_ptr_with_zero_offset_no_checks() {}
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) {}
 
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) = default;
-	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) = default;
+	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& other ) = default;
+	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& other ) = default;
 
-	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks<array_of<T>>&& other ) = default;
-	soft_ptr_with_zero_offset_no_checks& operator=( soft_ptr_with_zero_offset_no_checks<array_of<T>>&& other ) = default;
+	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks&& other ) = default;
+	soft_ptr_with_zero_offset_no_checks& operator=( soft_ptr_with_zero_offset_no_checks&& other ) = default;
 
 	soft_ptr_with_zero_offset_no_checks( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_no_checks& operator=( std::nullptr_t )
 		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
 
-	using soft_ptr_with_zero_offset_base::swap;
-
-	using soft_ptr_with_zero_offset_base::operator bool;
 	using soft_ptr_with_zero_offset_base::reset;
+	using soft_ptr_with_zero_offset_base::swap;
+	using soft_ptr_with_zero_offset_base::operator bool;
+	using soft_ptr_with_zero_offset_base::operator==;
+	using soft_ptr_with_zero_offset_base::operator!=;
 
-
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<array_of<T>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
-
-	template<class T1>
-	bool operator == (const soft_ptr_with_zero_offset_no_checks<array_of<T1>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(other); }
-	template<class T1>
-	bool operator != (const soft_ptr_with_zero_offset_no_checks<array_of<T1>>& other ) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(other); }
-
-	bool operator == (std::nullptr_t) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator==(nullptr); }
-	bool operator != (std::nullptr_t) const noexcept
-		{ return soft_ptr_with_zero_offset_base::operator!=(nullptr); }
-
-	array_of<T>& operator * () const noexcept { return *get_raw_ptr(); }
-	array_of<T>* operator -> () const noexcept { return get_raw_ptr(); }
-	array_of<T>* get_raw_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+	array_of<T>& operator*() const noexcept { return *get_raw_array_of_ptr(); }
+	array_of<T>* operator->() const noexcept { return get_raw_array_of_ptr(); }
+	array_of<T>* get_raw_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
 	
-	operator T*() const noexcept { return get_raw_begin(); }
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
-	std::ptrdiff_t operator-(const T* other) const noexcept { return get_raw_begin() - other; }
-	T& operator[](std::size_t n) const noexcept { return *(get_raw_begin() + n); }
-	T* get_raw_begin() const noexcept { return ptr ? get_raw_ptr()->begin() : nullptr; }
+	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
+	T* get_raw_begin() const noexcept { return ptr ? get_raw_array_of_ptr()->begin() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_no_checks();
 };
 
 
-// this iterator is used for string, we should be able to construct it
+template<class T>
+std::ptrdiff_t operator-(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left - right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator-(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() - right;
+}
+
+template<class T>
+std::ptrdiff_t operator==(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left == right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator==(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() == right;
+}
+
+template<class T>
+std::ptrdiff_t operator!=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left != right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator!=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() != right;
+}
+
+template<class T>
+std::ptrdiff_t operator<(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left < right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator<(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() < right;
+}
+
+template<class T>
+std::ptrdiff_t operator<=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left <= right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator<=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() <= right;
+}
+
+template<class T>
+std::ptrdiff_t operator>(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left > right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator>(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() > right;
+}
+
+template<class T>
+std::ptrdiff_t operator>=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
+	return left >= right.get_raw_begin();
+}
+
+template<class T>
+std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
+	return left.get_raw_begin() >= right;
+}
+
+
+
+// when this iterator is used for string, we should be able to construct it
 // from a heap pointer or from stack pointer (when SSO)
 template <typename T, bool bConst, typename ArrPtr>
 class array_of_iterator
@@ -301,15 +393,11 @@ public:
 		return this_type(arr, ix, sz);
 	}
 
-	// static this_type makePtr(array_pointer arr, pointer to, array_pointer end) {
-	// 	return this_type(arr, static_cast<uint32_t>(to - arr), static_cast<uint32_t>(end - arr));
-	// }
-
 	static this_type makePtr(array_pointer arr, pointer to, uint32_t sz) {
 		if constexpr (is_raw_pointer)
 			return this_type(arr, static_cast<uint32_t>(to - arr), sz);
 		else {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::pedantic, arr->capacity() == sz);
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->capacity() == sz);
 			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
 		}
 	}

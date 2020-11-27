@@ -134,7 +134,7 @@ namespace safe_memory::detail {
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt::make_unsafe(allocator_type::to_zero(mpNode), mpBucket.getRaw());
+			return BaseIt(allocator_type::to_zero(mpNode), mpBucket.getRaw());
 		}
 	}; // hashtable_heap_safe_iterator
 
