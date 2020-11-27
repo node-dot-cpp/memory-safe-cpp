@@ -342,7 +342,7 @@ namespace safe_memory
 		iterator         erase(const_iterator p) { return makeIt(base_type::erase(toBase(p))); }
         iterator         erase(const_iterator pBegin, const_iterator pEnd) {
             auto p = toBase(pBegin, pEnd);
-            return makeIt(base_type::erase(p.first, p.second);
+            return makeIt(base_type::erase(p.first, p.second));
         }
 
 		// reverse_iterator erase(reverse_iterator position);

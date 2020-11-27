@@ -62,21 +62,21 @@ namespace safe_memory
 		friend bool operator>=(const vector<T, Safety>& a, const vector<T, Safety>& b);
 
 	public:
-		using typename base_type::value_type;
-		using typename base_type::pointer;
-		using typename base_type::const_pointer;
-		using typename base_type::reference;
-		using typename base_type::const_reference;
+		typedef typename base_type::value_type                             value_type;
+		typedef typename base_type::pointer                                pointer;
+		typedef typename base_type::const_pointer                          const_pointer;
+		typedef typename base_type::reference                              reference;
+		typedef typename base_type::const_reference                        const_reference;
 
-		typedef typename base_type::iterator 						iterator_base;
-		typedef typename base_type::const_iterator 					const_iterator_base;
-		typedef typename base_type::reverse_iterator 				reverse_iterator_base;
-		typedef typename base_type::const_reverse_iterator 			const_reverse_iterator_base;
-		using typename base_type::size_type;
-		using typename base_type::difference_type;
+		typedef typename base_type::iterator 						       iterator_base;
+		typedef typename base_type::const_iterator 					       const_iterator_base;
+		typedef typename base_type::reverse_iterator 				       reverse_iterator_base;
+		typedef typename base_type::const_reverse_iterator 			       const_reverse_iterator_base;
+		typedef typename base_type::size_type                              size_type;
+		typedef typename base_type::difference_type                        difference_type;
 
-		using typename base_type::allocator_type;
-		using typename base_type::array_type;
+		typedef typename base_type::allocator_type                         allocator_type;
+		typedef typename base_type::array_type                             array_type;
 
 
 		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
