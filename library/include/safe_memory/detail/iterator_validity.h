@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2019, OLogN Technologies AG
+* Copyright (c) 2020, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,23 +25,22 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-// -*- C++ -*-
-//===------------------------ __undef_macros ------------------------------===//
-//
-//                     The LLVM Compiler Infrastructure
-//
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
-//
-//===----------------------------------------------------------------------===//
+#ifndef SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H
+#define SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H
+
+namespace safe_memory::detail {
+
+enum class iterator_validity {
+	Null,                // default constructed iterator
+	ValidCanDeref,       // valid, pointing a current element in the container
+	ValidEnd,			 // valid, pointing to end()
+	InvalidZoombie,	     // invalid but not escaping safe_memory rules 
+	xxx_Broken_xxx       // invalid and escaping safety rules
+};
 
 
-#ifdef min
-#warning: macro min is incompatible with C++.  #undefing min
-#undef min
-#endif
+} // namespace safe_memory::detail
 
-#ifdef max
-#warning: macro max is incompatible with C++.  #undefing max
-#undef max
-#endif
+
+
+#endif // SAFE_MEMORY_DETAIL_ITERATOR_VALIDITY_H

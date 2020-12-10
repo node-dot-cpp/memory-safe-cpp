@@ -25,19 +25,26 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-#define SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-
-//mb: temporary hack, until we move all files to their definitive location
-// and rename namespaces acordingly
-
-#include "../../../src/safe_ptr_with_zero_offset.h"
+#include <safe_memory/detail/allocator_to_eastl.h>
 
 namespace safe_memory::detail {
 
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
+void* gpSafeMemoryHashTableSentinel = reinterpret_cast<void*>((uintptr_t)~0);
+
+fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray = { soft_ptr_with_zero_offset_base(), soft_ptr_with_zero_offset_base(reinterpret_cast<void*>((uintptr_t)~0))};
+
+void* gpSafeMemoryEmptyBucketArrayRaw[] = { nullptr, gpSafeMemoryHashTableSentinel};
 
 }
 
+// required by eastl, see allocator.h line 173, or EASTL/doc/FAQ.md
 
-#endif //SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+void* operator new[](size_t size, const char* pName, int flags, unsigned debugFlags, const char* file, int line) {
+    return operator new [] (size);
+}
+
+void* operator new[](size_t size, size_t alignment, size_t alignmentOffset, const char* pName, int flags, unsigned debugFlags, const char* file, int line) {
+    return operator new [] (size, std::align_val_t(alignment));
+}
+
+

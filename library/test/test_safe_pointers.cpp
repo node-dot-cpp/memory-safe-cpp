@@ -36,7 +36,6 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
-#include <safe_ptr_with_zero_offset.h>
 #include <safe_memory/dezombiefy.h>
 
 //template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -1292,28 +1291,28 @@ void temptest()
 	//NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, !s02 );
 }
 
-void testSoftPtrsWithZeroOffset()
-{
-	owning_ptr<int> op = make_owning<int>(17);
-	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
-	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
-	soft_ptr<int> sp1 = spz2.get();
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
-}
+// void testSoftPtrsWithZeroOffset()
+// {
+// 	owning_ptr<int> op = make_owning<int>(17);
+// 	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+// 	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+// 	soft_ptr<int> sp1 = spz2.get();
+// 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+// 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+// }
 
-void testOwningPtrWithManDel()
-{
-	lib_helpers::owning_ptr_with_manual_delete<int> op = lib_helpers::make_owning_with_manual_delete<int>(17);
-	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
-	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
-	soft_ptr<int> sp1 = spz2.get();
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
+// void testOwningPtrWithManDel()
+// {
+// 	lib_helpers::owning_ptr_with_manual_delete<int> op = lib_helpers::make_owning_with_manual_delete<int>(17);
+// 	lib_helpers::soft_ptr_with_zero_offset<int> spz1( op );
+// 	lib_helpers::soft_ptr_with_zero_offset<int> spz2( spz1 );
+// 	soft_ptr<int> sp1 = spz2.get();
+// 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp1 );
+// 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  sp1 == spz1 );
 
-	soft_ptr<int> sp2( op );
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp2 );
-}
+// 	soft_ptr<int> sp2( op );
+// 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical,  op == sp2 );
+// }
 
 void testStackInfoAndptrLifecycle()
 {
@@ -1338,8 +1337,8 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
-	testSoftPtrsWithZeroOffset();
-	testOwningPtrWithManDel();
+	// testSoftPtrsWithZeroOffset();
+	// testOwningPtrWithManDel();
 
 	{
 		owning_ptr<const int> opci = make_owning<const int>(3);

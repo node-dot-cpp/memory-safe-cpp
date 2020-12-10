@@ -30,6 +30,14 @@
 
 #include "safe_ptr_common.h"
 
+namespace safe_memory::detail
+{
+	// forward declaration
+	class allocator_to_eastl_hashtable_no_checks;
+	
+	template<class TT>
+	class allocator_to_eastl_vector_no_checks;
+}
 
 namespace nodecpp::safememory
 {
@@ -38,7 +46,6 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 template<class T> class soft_this_ptr_no_checks; // forward declaration
 template<class T> class nullable_ptr_no_checks; // forward declaration
-namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_no_checks; } // forward declaration
 
 struct fbc_ptr_t {};
 
@@ -54,10 +61,6 @@ class owning_ptr_base_no_checks
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
-
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
 
 	T* t;
 
@@ -179,10 +182,6 @@ class owning_ptr_no_checks : public owning_ptr_base_no_checks<T>
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
-
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
@@ -256,9 +255,10 @@ class soft_ptr_base_no_checks
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
+	friend class safe_memory::detail::allocator_to_eastl_hashtable_no_checks;
 	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
+	friend class safe_memory::detail::allocator_to_eastl_vector_no_checks;
+
 
 	T* t;
 
@@ -379,9 +379,9 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
+	friend class safe_memory::detail::allocator_to_eastl_hashtable_no_checks;
 	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
+	friend class safe_memory::detail::allocator_to_eastl_vector_no_checks;
 
 private:
 	friend class soft_this_ptr_no_checks<T>;

@@ -37,6 +37,8 @@ namespace safe_memory {
 
 using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;
+using ::nodecpp::safememory::soft_ptr_no_checks;
+using ::nodecpp::safememory::soft_ptr_impl;
 using ::nodecpp::safememory::soft_this_ptr;
 using ::nodecpp::safememory::nullable_ptr;
 
@@ -53,6 +55,9 @@ using ::nodecpp::safememory::make_owning_t;
 using ::nodecpp::safememory::memory_safety;
 using ::nodecpp::safememory::safeness_declarator;
 
+template<class T, bool Safety>
+using soft_ptr2 = std::conditional_t<Safety, 
+	::nodecpp::safememory::soft_ptr_impl<T>, ::nodecpp::safememory::soft_ptr_no_checks<T>>;
 }
 
 
