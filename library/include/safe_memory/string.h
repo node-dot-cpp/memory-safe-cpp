@@ -72,6 +72,7 @@ namespace safe_memory
 		typedef typename base_type::difference_type             difference_type;
 
         using base_type::npos;
+		static constexpr memory_safety is_safe = Safety;
 
 	public:
 		// CtorDoNotInitialize exists so that we can create a constructor that allocates but doesn't
@@ -551,13 +552,13 @@ namespace safe_memory
         }
 
 		iterator makeIt(iterator_base it) {
-			if constexpr (use_base_iterator)
+			if constexpr (std::is_same_v<iterator, iterator_base>)
 				return it;
 			else
 				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
 		}
 		const_iterator makeIt(const_iterator_base it) const {
-			if constexpr (use_base_iterator)
+			if constexpr (std::is_same_v<const_iterator, const_iterator_base>)
 				return it;
 			else
 				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
