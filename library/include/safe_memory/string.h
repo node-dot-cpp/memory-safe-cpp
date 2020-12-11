@@ -107,7 +107,7 @@ namespace safe_memory
 		basic_string(const this_type& x, size_type position, size_type n = npos) : base_type(x, x.checkPos(position), n) {}
 		// basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-		explicit basic_string(const literal_type& l) : base_type(l.c_str(), allocator_type()) {}
+		basic_string(const literal_type& l) : base_type(l.c_str(), allocator_type()) {}
 		basic_string(size_type n, value_type c) : base_type(n, c, allocator_type()) {}
 		basic_string(const this_type& x) = default;
 	    // basic_string(const this_type& x, const allocator_type& allocator);
