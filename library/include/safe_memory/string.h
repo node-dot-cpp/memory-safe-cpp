@@ -71,6 +71,9 @@ namespace safe_memory
 		typedef typename base_type::size_type                   size_type;
 		typedef typename base_type::difference_type             difference_type;
 
+		template<class X>
+		friend struct eastl::hash;
+
         using base_type::npos;
 		static constexpr memory_safety is_safe = Safety;
 
@@ -503,18 +506,18 @@ namespace safe_memory
 		// int  validate_iterator(const_iterator i) const noexcept;
 
 
-		bool operator==(const this_type& b)	{ return eastl::operator==(this->toBase(), b.toBase()); }
-		bool operator==(const literal_type& l) { return eastl::operator==(this->toBase(), l.c_str()); }
-		bool operator!=(const this_type& b) { return eastl::operator!=(this->toBase(), b.toBase()); }
-		bool operator!=(const literal_type& l) { return eastl::operator!=(this->toBase(), l.c_str()); }
-		bool operator<(const this_type& b) { return eastl::operator<(this->toBase(), b.toBase()); }
-		bool operator<(const literal_type& l) { return eastl::operator<(this->toBase(), l.c_str()); }
-		bool operator>(const this_type& b) { return eastl::operator>(this->toBase(), b.toBase()); }
-		bool operator>(const literal_type& l) { return eastl::operator>(this->toBase(), l.c_str()); }
-		bool operator<=(const this_type& b) { return eastl::operator<=(this->toBase(), b.toBase()); }
-		bool operator<=(const literal_type& l) { return eastl::operator<=(this->toBase(), l.c_str()); }
-		bool operator>=(const this_type& b) { return eastl::operator>=(this->toBase(), b.toBase()); }
-		bool operator>=(const literal_type& l) { return eastl::operator>=(this->toBase(), l.c_str()); }
+		bool operator==(const this_type& b)	const { return eastl::operator==(this->toBase(), b.toBase()); }
+		bool operator==(const literal_type& l) const { return eastl::operator==(this->toBase(), l.c_str()); }
+		bool operator!=(const this_type& b) const { return eastl::operator!=(this->toBase(), b.toBase()); }
+		bool operator!=(const literal_type& l) const { return eastl::operator!=(this->toBase(), l.c_str()); }
+		bool operator<(const this_type& b) const { return eastl::operator<(this->toBase(), b.toBase()); }
+		bool operator<(const literal_type& l) const { return eastl::operator<(this->toBase(), l.c_str()); }
+		bool operator>(const this_type& b) const { return eastl::operator>(this->toBase(), b.toBase()); }
+		bool operator>(const literal_type& l) const { return eastl::operator>(this->toBase(), l.c_str()); }
+		bool operator<=(const this_type& b) const { return eastl::operator<=(this->toBase(), b.toBase()); }
+		bool operator<=(const literal_type& l) const { return eastl::operator<=(this->toBase(), l.c_str()); }
+		bool operator>=(const this_type& b) const { return eastl::operator>=(this->toBase(), b.toBase()); }
+		bool operator>=(const literal_type& l) const { return eastl::operator>=(this->toBase(), l.c_str()); }
 
     protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -625,6 +628,17 @@ namespace safe_memory
 	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
+
+
+	template<typename T, safe_memory::memory_safety Safety>
+	struct eastl::hash<safe_memory::basic_string<T, Safety>> : eastl::hash<typename safe_memory::basic_string<T, Safety>::base_type>
+	{
+		typedef eastl::hash<typename safe_memory::basic_string<T, Safety>::base_type> base_type;
+		size_t operator()(const safe_memory::basic_string<T, Safety>& x) const
+		{
+			return base_type::operator()(x.toBase());
+		}
+	};
 
 } // namespace safe_memory
 
