@@ -402,6 +402,17 @@ public:
 		}
 	}
 
+	// mb: at basic_string, iterable size is one less that actual array capacity
+	// because of ending null '\0'
+	static this_type makePtrForString(array_pointer arr, pointer to, uint32_t sz) {
+		if constexpr (is_raw_pointer)
+			return this_type(arr, static_cast<uint32_t>(to - arr), sz);
+		else {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->capacity() == sz + 1);
+			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
+		}
+	}
+
 	array_of_iterator(const array_of_iterator& ri) = default;
 	array_of_iterator& operator=(const array_of_iterator& ri) = default;
 

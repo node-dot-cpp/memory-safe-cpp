@@ -624,14 +624,14 @@ namespace safe_memory
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
+				return iterator::makePtrForString(base_type::begin(), it, base_type::capacity());
 		}
 		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
+				return const_iterator::makePtrForString(const_cast<T*>(base_type::begin()), it, base_type::capacity());
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -647,22 +647,24 @@ namespace safe_memory
 				return const_reverse_iterator(makeIt(it.base()));
 		}
 
+		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		iterator_safe makeSafeIt(iterator_base it) {
 			if(base_type::internalLayout().IsSSO())
 				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
 			
-			//mb: here we must be on the heap
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return iterator_safe::makePtr(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::capacity());
+			//mb: now the buffer should be on the heap
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
 		}
 
+		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
 			if(base_type::internalLayout().IsSSO())
 				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
 
-			//mb: here we must be on the heap
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::capacity());
+			//mb: now the buffer should be on the heap
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return const_iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
 		}
 
 		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {

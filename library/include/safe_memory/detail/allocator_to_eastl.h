@@ -536,7 +536,7 @@ template<class T>
 class allocator_to_eastl_vector_no_checks {
 public:
 	static constexpr memory_safety is_safe = memory_safety::none; 
-	static constexpr bool use_base_iterator = false;
+	static constexpr bool use_base_iterator = true;
 
 	typedef soft_ptr_with_zero_offset_no_checks<array_of<T>> array_pointer;
 
