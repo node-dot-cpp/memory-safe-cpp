@@ -52,8 +52,8 @@ namespace safe_memory
 		typedef typename base_type::const_reference             const_reference;
 		typedef typename base_type::iterator                    iterator_base;
 		typedef typename base_type::const_iterator              const_iterator_base;
-		typedef typename base_type::reverse_iterator            reverse_base_iterator;
-		typedef typename base_type::const_reverse_iterator      const_reverse_base_iterator;
+		typedef typename base_type::reverse_iterator            reverse_iterator_base;
+		typedef typename base_type::const_reverse_iterator      const_reverse_iterator_base;
 
 
 		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
@@ -61,24 +61,24 @@ namespace safe_memory
 		typedef typename detail::array_of_iterator_heap<T, Safety>         heap_safe_iterator;
 		typedef typename detail::const_array_of_iterator_heap<T, Safety>   const_heap_safe_iterator;
 
-		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
+		// mb: for 'memory_safety::none' we boil down to use the base (eastl) iterator
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
 		// down the line 
 		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
-		typedef std::conditional_t<use_base_iterator, reverse_base_iterator,
+		typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
 									eastl::reverse_iterator<iterator>>                                  reverse_iterator;
-		typedef std::conditional_t<use_base_iterator, const_reverse_base_iterator,
+		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
 									eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
 
-		typedef std::conditional_t<use_base_iterator, iterator_base, heap_safe_iterator>                safe_iterator;
-		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_heap_safe_iterator>    const_safe_iterator;
-		typedef std::conditional_t<use_base_iterator, reverse_base_iterator,
-									eastl::reverse_iterator<safe_iterator>>                             reverse_safe_iterator;
-		typedef std::conditional_t<use_base_iterator, const_reverse_base_iterator,
-									eastl::reverse_iterator<const_safe_iterator>>                       const_reverse_safe_iterator;
+		// mb: for 'memory_safety::none' we use the same iterator as 'safe' but passing the
+		// 'memory_safety::none' parameter down the line 
+		typedef heap_safe_iterator                              iterator_safe;
+		typedef const_heap_safe_iterator                        const_iterator_safe;
+		typedef eastl::reverse_iterator<iterator_safe>          reverse_iterator_safe;
+		typedef eastl::reverse_iterator<const_iterator_safe>    const_reverse_iterator_safe;
 
 		typedef typename base_type::size_type                   size_type;
 		typedef typename base_type::difference_type             difference_type;
@@ -219,21 +219,21 @@ namespace safe_memory
 		const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend()); }
 		const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend()); }
 
-		safe_iterator       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
-		const_safe_iterator begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
-		const_safe_iterator cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
+		iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
+		const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
+		const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
 
-		safe_iterator       end_safe() noexcept { return makeSafeIt(base_type::end()); }
-		const_safe_iterator end_safe() const noexcept { return makeSafeIt(base_type::end()); }
-		const_safe_iterator cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
+		iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
+		const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
+		const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
 
-		reverse_safe_iterator       rbegin_safe() noexcept { return makeSafeIt(base_type::rbegin()); }
-		const_reverse_safe_iterator rbegin_safe() const noexcept { return makeSafeIt(base_type::rbegin()); }
-		const_reverse_safe_iterator crbegin_safe() const noexcept { return makeSafeIt(base_type::crbegin()); }
+		reverse_iterator_safe       rbegin_safe() noexcept { return makeSafeIt(base_type::rbegin()); }
+		const_reverse_iterator_safe rbegin_safe() const noexcept { return makeSafeIt(base_type::rbegin()); }
+		const_reverse_iterator_safe crbegin_safe() const noexcept { return makeSafeIt(base_type::crbegin()); }
 
-		reverse_safe_iterator       rend_safe() noexcept { return makeSafeIt(base_type::rend()); }
-		const_reverse_safe_iterator rend_safe() const noexcept { return makeSafeIt(base_type::rend()); }
-		const_reverse_safe_iterator crend_safe() const noexcept { return makeSafeIt(base_type::crend()); }
+		reverse_iterator_safe       rend_safe() noexcept { return makeSafeIt(base_type::rend()); }
+		const_reverse_iterator_safe rend_safe() const noexcept { return makeSafeIt(base_type::rend()); }
+		const_reverse_iterator_safe crend_safe() const noexcept { return makeSafeIt(base_type::crend()); }
 
 		// Size-related functionality
         using base_type::empty;
@@ -365,10 +365,10 @@ namespace safe_memory
 		iterator   insert(const_iterator p, std::initializer_list<value_type> init) { return makeIt(base_type::insert(toBase(p), init)); }
 
 
-		safe_iterator   insert_safe(const_safe_iterator p, value_type c) { return makeSafeIt(base_type::insert(toBase(p), c)); }
-		safe_iterator   insert_safe(const_safe_iterator p, size_type n, value_type c) { return makeSafeIt(base_type::insert(toBase(p), n, c)); }
+		iterator_safe   insert_safe(const_iterator_safe p, value_type c) { return makeSafeIt(base_type::insert(toBase(p), c)); }
+		iterator_safe   insert_safe(const_iterator_safe p, size_type n, value_type c) { return makeSafeIt(base_type::insert(toBase(p), n, c)); }
 		// iterator   insert(const_iterator p, const value_type* pBegin, const value_type* pEnd);
-		safe_iterator   insert_safe(const_safe_iterator p, std::initializer_list<value_type> init) { return makeSafeIt(base_type::insert(toBase(p), init)); }
+		iterator_safe   insert_safe(const_iterator_safe p, std::initializer_list<value_type> init) { return makeSafeIt(base_type::insert(toBase(p), init)); }
 
 		// Erase operations
 		this_type&       erase(size_type position = 0, size_type n = npos) {
@@ -383,8 +383,8 @@ namespace safe_memory
             return makeIt(base_type::erase(p.first, p.second));
         }
 
-		safe_iterator         erase_safe(const_safe_iterator p) { return makeSafeIt(base_type::erase(toBase(p))); }
-        safe_iterator         erase_safe(const_safe_iterator pBegin, const_iterator pEnd) {
+		iterator_safe         erase_safe(const_iterator_safe p) { return makeSafeIt(base_type::erase(toBase(p))); }
+        iterator_safe         erase_safe(const_iterator_safe pBegin, const_iterator pEnd) {
             auto p = toBase(pBegin, pEnd);
             return makeSafeIt(base_type::erase(p.first, p.second));
         }
@@ -444,19 +444,19 @@ namespace safe_memory
             return *this;
         }
 
-		this_type&  replace_safe(const_safe_iterator first, const_safe_iterator last, const this_type& x) {
+		this_type&  replace_safe(const_iterator_safe first, const_iterator_safe last, const this_type& x) {
             auto p = toBase(first, last);
             base_type::replace(p.first, p.second, x);
             return *this;
         }
 
-		this_type&  replace_safe(const_safe_iterator first, const_safe_iterator last, const literal_type& l) {
+		this_type&  replace_safe(const_iterator_safe first, const_iterator_safe last, const literal_type& l) {
             auto p = toBase(first, last);
             base_type::replace(p.first, p.second, l.c_str());
             return *this;
         }
 
-		this_type&  replace_safe(const_safe_iterator first, const_safe_iterator last, size_type n, value_type c) {
+		this_type&  replace_safe(const_iterator_safe first, const_iterator_safe last, size_type n, value_type c) {
             auto p = toBase(first, last);
             base_type::replace(p.first, p.second, n, c);
             return *this;
@@ -626,6 +626,7 @@ namespace safe_memory
 			else
 				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
 		}
+		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
@@ -633,52 +634,43 @@ namespace safe_memory
 				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
 		}
 
-		reverse_iterator makeIt(const reverse_base_iterator& it) {
+		reverse_iterator makeIt(const reverse_iterator_base& it) {
 			if constexpr (use_base_iterator)
 				return it;
 			else
 				return reverse_iterator(makeIt(it.base()));
 		}
-		const_reverse_iterator makeIt(const const_reverse_base_iterator& it) const {
+		const_reverse_iterator makeIt(const const_reverse_iterator_base& it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
 				return const_reverse_iterator(makeIt(it.base()));
 		}
 
-		safe_iterator makeSafeIt(iterator_base it) {
-			if constexpr (use_base_iterator)
-				return it;
-			else {
-				if(base_type::internalLayout().IsSSO())
-					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
-				return safe_iterator::makePtr(allocator_type::to_soft(base_type::begin()), it, base_type::capacity());
-			}
+		iterator_safe makeSafeIt(iterator_base it) {
+			if(base_type::internalLayout().IsSSO())
+				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+			
+			//mb: here we must be on the heap
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return iterator_safe::makePtr(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::capacity());
 		}
 
-		const_safe_iterator makeSafeIt(const_iterator_base it) const {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-			else {
-				if(base_type::internalLayout().IsSSO())
-					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
-				return const_safe_iterator::makePtr(allocator_type::to_soft(const_cast<T*>(base_type::begin())), it, base_type::capacity());
-			}
+		const_iterator_safe makeSafeIt(const_iterator_base it) const {
+			if(base_type::internalLayout().IsSSO())
+				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+
+			//mb: here we must be on the heap
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::capacity());
 		}
 
-		reverse_safe_iterator makeSafeIt(const reverse_base_iterator& it) {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return reverse_safe_iterator(makeSafeIt(it.base()));
+		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {
+			return reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
-		const_reverse_safe_iterator makeSafeIt(const const_reverse_base_iterator& it) const {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return const_reverse_safe_iterator(makeSafeIt(it.base()));
+		const_reverse_iterator_safe makeSafeIt(const const_reverse_iterator_base& it) const {
+			return const_reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 	}; // basic_string
@@ -806,6 +798,256 @@ namespace safe_memory
 			return base_type::operator()(x.toBase());
 		}
 	};
+
+
+
+	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS basic_string_safe : public basic_string<T, Safety>
+	{
+	public:
+		typedef basic_string_safe<T, Safety>                    this_type;
+		typedef basic_string<T, Safety>                         base_type;
+		typedef typename base_type::allocator_type              allocator_type;
+        typedef typename base_type::literal_type                literal_type;
+
+		typedef typename base_type::value_type                  value_type;
+		typedef typename base_type::pointer                     pointer;
+		typedef typename base_type::const_pointer               const_pointer;
+		typedef typename base_type::reference                   reference;
+		typedef typename base_type::const_reference             const_reference;
+
+		typedef typename base_type::iterator_safe               iterator;
+		typedef typename base_type::const_iterator_safe         const_iterator;
+		typedef typename base_type::reverse_iterator_safe       reverse_iterator;
+		typedef typename base_type::const_reverse_iterator_safe const_reverse_iterator;
+
+		typedef typename base_type::size_type                   size_type;
+		typedef typename base_type::difference_type             difference_type;
+
+        using base_type::npos;
+		static constexpr memory_safety is_safe = Safety;
+
+	public:
+		// Constructor, destructor
+		basic_string_safe() : base_type() {}
+		basic_string_safe(const this_type& x, size_type position, size_type n = npos) : base_type(x, position, n) {}
+		basic_string_safe(const literal_type& l) : base_type(l) {}
+		basic_string_safe(size_type n, value_type c) : base_type(n, c) {}
+		basic_string_safe(const this_type& x) = default;
+		basic_string_safe(std::initializer_list<value_type> init) : base_type(init) {}
+		basic_string_safe(this_type&& x) = default;
+
+	   ~basic_string_safe() {}
+
+		// Operator=
+		this_type& operator=(const this_type& x) = default;
+		this_type& operator=(const literal_type& l) { base_type::operator=(l); return *this; }
+		this_type& operator=(value_type c) { base_type::operator=(c); return *this; }
+		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
+		this_type& operator=(this_type&& x) = default;
+
+		// void swap(this_type& x) { base_type::swap(x); }
+
+		// Assignment operations
+		this_type& assign(const this_type& x) { base_type::assign(x); return *this; }
+		this_type& assign(const this_type& x, size_type position, size_type n = npos) {
+            // x.checkPos(position);
+			base_type::assign(x, position, n);
+            return *this;
+        }
+		this_type& assign(const literal_type& l) { base_type::assign(l); return *this; }
+		this_type& assign(size_type n, value_type c) { base_type::assign(n, c); return *this; }
+		this_type& assign(this_type&& x) { base_type::assign(std::move(x)); return *this; }
+		this_type& assign(std::initializer_list<value_type> init) { base_type::assign(init); return *this; }
+
+		// Iterators.
+		iterator       begin() noexcept { return base_type::begin_safe(); }
+		const_iterator begin() const noexcept { return base_type::begin_safe(); }
+		const_iterator cbegin() const noexcept { return base_type::cbegin_safe(); }
+
+		iterator       end() noexcept { return base_type::end_safe(); }
+		const_iterator end() const noexcept { return base_type::end_safe(); }
+		const_iterator cend() const noexcept { return base_type::cend_safe(); }
+
+		reverse_iterator       rbegin() noexcept { return base_type::rbegin_safe(); }
+		const_reverse_iterator rbegin() const noexcept { return base_type::rbegin_safe(); }
+		const_reverse_iterator crbegin() const noexcept { return base_type::crbegin_safe(); }
+
+		reverse_iterator       rend() noexcept { return base_type::rend_safe(); }
+		const_reverse_iterator rend() const noexcept { return base_type::rend_safe(); }
+		const_reverse_iterator crend() const noexcept { return base_type::crend_safe(); }
+
+		// Size-related functionality
+        // using base_type::empty;
+        // using base_type::size;
+        // using base_type::length;
+        // using base_type::max_size;
+        // using base_type::capacity;
+        // using base_type::resize;
+        // using base_type::reserve;
+        // using base_type::set_capacity;
+        // using base_type::force_size; //TODO: review
+        // using base_type::shrink_to_fit;
+
+		// Raw access
+        // using base_type::data;
+        // using base_type::c_str;
+
+		// Element access
+		// reference       operator[](size_type n) {  return at(n); }
+		// const_reference operator[](size_type n) const {  return at(n); }
+
+		// reference       at(size_type n) {
+        //     checkPos(n);
+        //     return base_type::at(n);
+        // }
+
+		// const_reference at(size_type n) const {
+        //     checkPos(n);
+        //     return base_type::at(n);
+        // }
+
+        // using base_type::front;
+        // using base_type::back;
+
+		// Append operations
+		this_type& operator+=(const this_type& x) { base_type::operator+=(x); return *this; }
+		this_type& operator+=(const literal_type& l) { base_type::operator+=(l); return *this; }
+		this_type& operator+=(value_type c) { base_type::operator+=(c); return *this; }
+
+		this_type& append(const this_type& x) { base_type::append(x); return *this; }
+		this_type& append(const this_type& x,  size_type position, size_type n = npos) {
+            // checkPos(position);
+            base_type::append(x, position, n);
+            return *this;
+        }
+		this_type& append(const literal_type& l) { base_type::append(l); return *this; }
+		this_type& append(size_type n, value_type c) { base_type::append(n, c); return *this; }
+
+        // using base_type::push_back;
+
+		// void pop_back() {
+		// 	if constexpr (Safety == memory_safety::safe) {
+		// 		if(NODECPP_UNLIKELY(empty())) {
+		// 			ThrowRangeException("basic_string::pop_back -- empty string");
+		// 		}
+		// 	}
+		// 	base_type::pop_back();
+		// }
+
+		// Insertion operations
+		this_type& insert(size_type position, const this_type& x) {
+            // checkPos(position);
+            base_type::insert(position, x);
+            return *this;
+        }
+
+		this_type& insert(size_type position, const this_type& x, size_type beg, size_type n) {
+            // checkPos(position);
+            // x.checkPos(beg);
+            base_type::insert(position, x, beg, n);
+            return *this;
+        }
+
+		this_type& insert(size_type position, const literal_type& l) {
+            // checkPos(position);
+            base_type::insert(position, l);
+            return *this;
+        }
+
+		this_type& insert(size_type position, size_type n, value_type c) {
+            // checkPos(position);
+            base_type::insert(position, n, c);
+            return *this;
+        }
+
+		// iterator   insert(const_iterator p, value_type c) { return makeIt(base_type::insert(toBase(p), c)); }
+		// iterator   insert(const_iterator p, size_type n, value_type c) { return makeIt(base_type::insert(toBase(p), n, c)); }
+		// iterator   insert(const_iterator p, std::initializer_list<value_type> init) { return makeIt(base_type::insert(toBase(p), init)); }
+
+
+		iterator   insert(const_iterator p, value_type c) { return base_type::insert_safe(p, c); }
+		iterator   insert(const_iterator p, size_type n, value_type c) { return base_type::insert_safe(p, n, c); }
+		iterator   insert(const_iterator p, std::initializer_list<value_type> init) { return base_type::insert_safe(p, init); }
+
+		// Erase operations
+		this_type&       erase(size_type position = 0, size_type n = npos) {
+            // checkPos(position);
+            base_type::erase(position, n);
+            return *this;
+        }
+
+		// iterator         erase(const_iterator p) { return makeIt(base_type::erase(toBase(p))); }
+        // iterator         erase(const_iterator pBegin, const_iterator pEnd) {
+        //     auto p = toBase(pBegin, pEnd);
+        //     return makeIt(base_type::erase(p.first, p.second));
+        // }
+
+		iterator         erase(const_iterator p) { return base_type::erase_safe(p); }
+        iterator         erase(const_iterator pBegin, const_iterator pEnd) { return base_type::erase_safe(pBegin, pEnd); }
+
+        // using base_type::clear;
+
+		// Replacement operations
+		this_type&  replace(size_type position, size_type n,  const this_type& x) {
+            // checkPos(position);
+            base_type::replace(position, n, x);
+            return *this;
+        }
+
+		this_type&  replace(size_type pos1,     size_type n1, const this_type& x,  size_type pos2, size_type n2 = npos) {
+            // checkPos(pos1);
+            // x.checkPos(pos2);
+            base_type::replace(pos1, n1, x, pos2, n2);
+            return *this;
+        }
+
+		this_type&  replace(size_type position, size_type n1, const literal_type& l) {
+            // checkPos(position);
+            base_type::replace(position, n1, l);
+            return *this;
+        }
+
+		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c) {
+            // checkPos(position);
+            base_type::replace(position, n1, n2, c);
+            return *this;
+        }
+
+		// this_type&  replace(const_iterator first, const_iterator last, const this_type& x) {
+        //     auto p = toBase(first, last);
+        //     base_type::replace(p.first, p.second, x);
+        //     return *this;
+        // }
+
+		// this_type&  replace(const_iterator first, const_iterator last, const literal_type& l) {
+        //     auto p = toBase(first, last);
+        //     base_type::replace(p.first, p.second, l.c_str());
+        //     return *this;
+        // }
+
+		// this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c) {
+        //     auto p = toBase(first, last);
+        //     base_type::replace(p.first, p.second, n, c);
+        //     return *this;
+        // }
+
+		this_type&  replace(const_iterator first, const_iterator last, const this_type& x) {
+            base_type::replace_safe(first, last, x);
+            return *this;
+        }
+
+		this_type&  replace(const_iterator first, const_iterator last, const literal_type& l) {
+            base_type::replace_safe(first, last, l);
+            return *this;
+        }
+
+		this_type&  replace(const_iterator first, const_iterator last, size_type n, value_type c) {
+            base_type::replace_safe(first, last, n, c);
+            return *this;
+        }
+
+	}; // basic_string_safe
 
 } // namespace safe_memory
 
