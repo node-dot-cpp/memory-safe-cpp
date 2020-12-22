@@ -39,9 +39,11 @@ namespace safe_memory::detail
 {
 	 // forward declaration
 	class allocator_to_eastl_hashtable_impl;
-
 	template<class TT>
 	class allocator_to_eastl_vector_impl;
+
+	class allocator_to_eastl_hashtable_impl2;
+	class allocator_to_eastl_vector_impl2;
 }
 
 namespace nodecpp::safememory
@@ -893,6 +895,9 @@ class soft_ptr_base_impl
 	template<class TT>
 	friend class safe_memory::detail::allocator_to_eastl_vector_impl;
 
+	friend class safe_memory::detail::allocator_to_eastl_hashtable_impl2;
+	friend class safe_memory::detail::allocator_to_eastl_vector_impl2;
+
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
@@ -1476,6 +1481,9 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	friend class safe_memory::detail::allocator_to_eastl_hashtable_impl;
 	template<class TT>
 	friend class safe_memory::detail::allocator_to_eastl_vector_impl;
+
+	friend class safe_memory::detail::allocator_to_eastl_hashtable_impl2;
+	friend class safe_memory::detail::allocator_to_eastl_vector_impl2;
 
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );

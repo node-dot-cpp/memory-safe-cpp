@@ -36,12 +36,11 @@ namespace safe_memory
 {
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS basic_string : protected eastl::basic_string<T, detail::allocator_to_eastl_string<T, Safety>>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS basic_string : protected eastl::basic_string<T, detail::allocator_to_eastl_string<Safety>>
 	{
 	public:
 		typedef basic_string<T, Safety>                         this_type;
-		typedef detail::allocator_to_eastl_string<T, Safety>    allocator_type;
-		typedef eastl::basic_string<T, allocator_type>          base_type;
+		typedef eastl::basic_string<T, detail::allocator_to_eastl_string<Safety>>  base_type;
         typedef basic_string_literal<T>                         literal_type;
 		typedef typename base_type::heap_array_type             heap_array_type;
 
@@ -54,6 +53,10 @@ namespace safe_memory
 		typedef typename base_type::const_iterator              const_iterator_base;
 		typedef typename base_type::reverse_iterator            reverse_iterator_base;
 		typedef typename base_type::const_reverse_iterator      const_reverse_iterator_base;
+
+		typedef typename base_type::size_type                   size_type;
+		typedef typename base_type::difference_type             difference_type;
+		typedef typename base_type::allocator_type              allocator_type;
 
 
 		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
@@ -73,15 +76,13 @@ namespace safe_memory
 		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
 									eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
 
-		// mb: for 'memory_safety::none' we use the same iterator as 'safe' but passing the
-		// 'memory_safety::none' parameter down the line 
-		typedef heap_safe_iterator                              iterator_safe;
-		typedef const_heap_safe_iterator                        const_iterator_safe;
-		typedef eastl::reverse_iterator<iterator_safe>          reverse_iterator_safe;
-		typedef eastl::reverse_iterator<const_iterator_safe>    const_reverse_iterator_safe;
+		typedef std::conditional_t<use_base_iterator, iterator_base, heap_safe_iterator>                iterator_safe;
+		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_heap_safe_iterator>    const_iterator_safe;
+		typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
+									eastl::reverse_iterator<iterator_safe>>                             reverse_iterator_safe;
+		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
+									eastl::reverse_iterator<const_iterator_safe>>                       const_reverse_iterator_safe;
 
-		typedef typename base_type::size_type                   size_type;
-		typedef typename base_type::difference_type             difference_type;
 
 		template<class X>
 		friend struct eastl::hash;
@@ -649,30 +650,44 @@ namespace safe_memory
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		iterator_safe makeSafeIt(iterator_base it) {
-			if(base_type::internalLayout().IsSSO())
-				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
-			
-			//mb: now the buffer should be on the heap
-			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+			if constexpr (use_base_iterator)
+				return it;
+			else {
+				if(base_type::internalLayout().IsSSO())
+					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+				
+				//mb: now the buffer should be on the heap
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+				return iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+			}
 		}
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
-			if(base_type::internalLayout().IsSSO())
-				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+			if constexpr (use_base_iterator)
+				return it;
+			else {
+				if(base_type::internalLayout().IsSSO())
+					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
 
-			//mb: now the buffer should be on the heap
-			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return const_iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+				//mb: now the buffer should be on the heap
+				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+				return const_iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+			}
 		}
 
 		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {
-			return reverse_iterator_safe(makeSafeIt(it.base()));
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 		const_reverse_iterator_safe makeSafeIt(const const_reverse_iterator_base& it) const {
-			return const_reverse_iterator_safe(makeSafeIt(it.base()));
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return const_reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 	}; // basic_string

@@ -38,10 +38,10 @@
 namespace safe_memory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<T, Safety>>
+	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
 	{
 		typedef vector<T, Safety> 										this_type;
-		typedef eastl::vector<T, detail::allocator_to_eastl_vector<T, Safety>>    base_type;
+		typedef eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>    base_type;
 
 		template <typename T, memory_safety Safety>
 		friend bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b);
@@ -96,10 +96,13 @@ namespace safe_memory
 		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
 									eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
 
-		typedef heap_safe_iterator                                         iterator_safe;
-		typedef const_heap_safe_iterator                                   const_iterator_safe;
-		typedef eastl::reverse_iterator<iterator_safe>                     reverse_iterator_safe;
-		typedef eastl::reverse_iterator<const_iterator_safe>               const_reverse_iterator_safe;
+
+		typedef std::conditional_t<use_base_iterator, iterator_base, heap_safe_iterator>               iterator_safe;
+		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_heap_safe_iterator>   const_iterator_safe;
+		typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
+									eastl::reverse_iterator<iterator_safe>>                            reverse_iterator_safe;
+		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
+									eastl::reverse_iterator<const_iterator_safe>>                      const_reverse_iterator_safe;
 
 		// TODO improve when pass by-ref and when by-value
 		typedef std::conditional_t<use_base_iterator, const_iterator, const const_iterator&>           const_iterator_arg;
@@ -429,18 +432,30 @@ namespace safe_memory
 
 
 		iterator_safe makeSafeIt(iterator_base it) {
-			return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
 		}
 		
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
-			return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
 		}
 
 		reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
-			return reverse_iterator_safe(makeSafeIt(it.base()));
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 		const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
-			return const_reverse_iterator_safe(makeSafeIt(it.base()));
+			if constexpr (use_base_iterator)
+				return it;
+			else
+				return const_reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 	}; // class vector

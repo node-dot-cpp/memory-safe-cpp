@@ -436,11 +436,11 @@ using StdMap1 = std::unordered_map<K, V>;
 template<class K, class V, class H>
 using StdMap2 = std::unordered_map<K, V, H>;
 
-// template<class K, class V>
-// using EastlMap1 = eastl::unordered_map<K, V>;
+template<class K, class V>
+using EaMap1 = eastl::unordered_map<K, V>;
 
-// template<class K, class V, class H>
-// using EastlMap2 = eastl::unordered_map<K, V, H>;
+template<class K, class V, class H>
+using EaMap2 = eastl::unordered_map<K, V, H>;
 
 template<class K, class V>
 using UnsafeMap1 = safe_memory::unordered_map<K, V, eastl::hash<K>, eastl::equal_to<K>, safe_memory::memory_safety::none>;
@@ -465,6 +465,7 @@ void BenchmarkHash()
 	EASTLTest_Printf("HashMap\n");
 
 	BenchmarkHashTempl<1, StdMap1, StdMap2>();
+	// BenchmarkHashTempl<1, EaMap1, EaMap2>();
 	BenchmarkHashTempl<2, UnsafeMap1, UnsafeMap2>();
 	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
 	BenchmarkHashTempl<4, ReallySafeMap1, ReallySafeMap2>();

@@ -59,7 +59,9 @@ namespace safe_memory::detail {
 
 
         typedef soft_ptr<node_type, is_safe>               node_ptr;
-		typedef typename allocator_type::bucket_iterator   bucket_iterator;
+
+		typedef typename allocator_type::template pointer<node_type> t1;
+		typedef typename allocator_type::template array_iterator<t1>   bucket_iterator;
 
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.
@@ -81,7 +83,8 @@ namespace safe_memory::detail {
 			: mpNode(node), mpBucket(bucket) { }
 
     public:
-        static this_type makeIt(const BaseIt& it, const typename allocator_type::array& heap_ptr, uint32_t sz) {
+		template<class Ptr>
+        static this_type makeIt(const BaseIt& it, const Ptr& heap_ptr, uint32_t sz) {
 			//mb: on empty hashtable, heap_ptr will be != nullptr
 			//    but 'to_soft' will convert it to a null
 			// auto node = it.get_node();
