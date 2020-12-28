@@ -81,8 +81,8 @@ namespace safe_memory
 
 		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
 		typedef typename detail::const_array_of_iterator_stack<T>          const_stack_only_iterator;
-		typedef typename detail::array_of_iterator_heap<T, Safety>         heap_safe_iterator;
-		typedef typename detail::const_array_of_iterator_heap<T, Safety>   const_heap_safe_iterator;
+		typedef typename allocator_type::template array_iterator_heap_safe<T>         heap_safe_iterator;
+		typedef typename allocator_type::template const_array_iterator_heap_safe<T>   const_heap_safe_iterator;
 
 		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
@@ -332,14 +332,6 @@ namespace safe_memory
 		//not allowed
 		// void reset_lose_memory() noexcept;
 
-		iterator_safe make_safe(const iterator& position) {
-			return makeSafeIt(toBase(position));
-		}
-
-		const_iterator_safe make_safe(const const_iterator_arg& position) const {
-			return makeSafeIt(toBase(position));
-		}
-
 
 		using base_type::validate;
 		using base_type::validate_iterator;
@@ -354,6 +346,9 @@ namespace safe_memory
 			//TODO 
 			return detail::iterator_validity::ValidCanDeref;
 		}
+
+		iterator_safe make_safe(const iterator& position) { return makeSafeIt(toBase(position)); }
+		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
 
 	protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -407,13 +402,13 @@ namespace safe_memory
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
 		}
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
+				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {

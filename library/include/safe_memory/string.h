@@ -61,8 +61,8 @@ namespace safe_memory
 
 		typedef typename detail::array_of_iterator_stack<T>                stack_only_iterator;
 		typedef typename detail::const_array_of_iterator_stack<T>          const_stack_only_iterator;
-		typedef typename detail::array_of_iterator_heap<T, Safety>         heap_safe_iterator;
-		typedef typename detail::const_array_of_iterator_heap<T, Safety>   const_heap_safe_iterator;
+		typedef typename allocator_type::template array_iterator_heap_safe<T>         heap_safe_iterator;
+		typedef typename allocator_type::template const_array_iterator_heap_safe<T>   const_heap_safe_iterator;
 
 		// mb: for 'memory_safety::none' we boil down to use the base (eastl) iterator
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
@@ -577,6 +577,10 @@ namespace safe_memory
 		bool operator<=(const literal_type& l) const { return eastl::operator<=(this->toBase(), l.c_str()); }
 		bool operator>=(const this_type& b) const { return eastl::operator>=(this->toBase(), b.toBase()); }
 		bool operator>=(const literal_type& l) const { return eastl::operator>=(this->toBase(), l.c_str()); }
+
+
+		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
+		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }

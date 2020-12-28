@@ -1,13 +1,22 @@
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
-index ad20e4d..b07bd40 100644
+index ad20e4d..fafd3fa 100644
 --- a/include/EASTL/allocator.h
 +++ b/include/EASTL/allocator.h
-@@ -64,6 +64,33 @@ namespace eastl
+@@ -64,6 +64,52 @@ namespace eastl
  		const char* get_name() const;
  		void        set_name(const char* pName);
  
 +		template<class T>
++		using pointer = T*;
++
++		template<class T>
 +		using array_pointer = T*;
++
++		template<typename T>
++		using array_iterator_heap_safe = T*;
++
++		template<typename T>
++		using const_array_iterator_heap_safe = const T*;
 +
 +		template<class T>
 +		T* allocate_array(std::size_t count, int flags = 0) {
@@ -29,6 +38,16 @@ index ad20e4d..b07bd40 100644
 +		}
 +
 +		template<class T>
++		T* allocate_node() {
++			return (T*)allocate(sizeof(T), 0);
++		}
++
++		template<class T>
++		void deallocate_node(T* p) {
++			deallocate(p, sizeof(T));
++		}
++
++		template<class T>
 +		static T* to_raw(T* p) {
 +			return p;
 +		}
@@ -36,7 +55,7 @@ index ad20e4d..b07bd40 100644
  	protected:
  		#if EASTL_NAME_ENABLED
  			const char* mpName; // Debug name, used to track memory.
-@@ -74,7 +101,6 @@ namespace eastl
+@@ -74,7 +120,6 @@ namespace eastl
  	bool operator!=(const allocator& a, const allocator& b);
  
  
@@ -45,7 +64,7 @@ index ad20e4d..b07bd40 100644
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
-index 21767f3..cb6deef 100644
+index 21767f3..d995103 100644
 --- a/include/EASTL/internal/hashtable.h
 +++ b/include/EASTL/internal/hashtable.h
 @@ -103,34 +103,34 @@ namespace eastl
@@ -370,7 +389,7 @@ index 21767f3..cb6deef 100644
 +		typedef hashtable_iterator<value_type, true,               bCacheHashCode, Allocator>       const_iterator;
 +		typedef hash_node<value_type, bCacheHashCode, Allocator>                                    node_type;
 +		typedef typename allocator_type::template pointer<node_type>                                node_pointer;
-+		typedef typename allocator_type::template array<node_pointer>                               bucket_array_type;
++		typedef typename allocator_type::template array_pointer<node_pointer>                               bucket_array_type;
  		typedef typename type_select<bUniqueKeys, eastl::pair<iterator, bool>, iterator>::type      insert_return_type;
  		typedef hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, 
  							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
