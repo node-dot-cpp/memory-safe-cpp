@@ -83,18 +83,20 @@ namespace safe_memory::detail {
 			: mpNode(node), mpBucket(bucket) { }
 
     public:
-		template<class Ptr>
-        static this_type makeIt(const BaseIt& it, const Ptr& heap_ptr, uint32_t sz) {
+		// template<class Ptr>
+        static this_type makeIt(const BaseIt& it, const t2& heap_ptr, uint32_t sz) {
 			//mb: on empty hashtable, heap_ptr will be != nullptr
 			//    but 'to_soft' will convert it to a null
 			// auto node = it.get_node();
 			// auto curr_bucket = it.get_bucket();
 			// auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
-			if(!allocator_type::is_empty_hashtable(heap_ptr))
-				return this_type(allocator_type::to_soft(it.get_node()), 
-					bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz));
-			else
+			if(allocator_type::is_empty_hashtable(heap_ptr))
 				return this_type();//empty hashtable
+
+
+			auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz); 
+			auto safe_node = allocator_type::to_soft(it.get_node()); 
+			return this_type(safe_node, safe_it);
         }
 
 

@@ -48,6 +48,11 @@ using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
 
+// helper class for arrays, while this class has the concept of an array,
+// it doesn't actually have the memory of the array.
+// it is assumed that the allocator will give enought memory after this class
+// to actually to put the array elements.
+// This class is tightly coupled with 'allocate_array' function
 template<class T>
 struct array_of
 {
@@ -91,6 +96,8 @@ public:
 	}
 };
 
+// implementation of a fixed size array_of that reserves enought
+// memory after array_of to actually place the elements.
 template<size_t SZ, class T>
 struct fixed_array_of : public array_of<T>
 {
@@ -354,61 +361,58 @@ class array_of_iterator
 {
 protected:
 	typedef array_of_iterator<T, bConst, ArrPtr>	this_type;
-public:
-	typedef std::random_access_iterator_tag  					iterator_category;
-	typedef std::conditional_t<bConst, const T, T>				value_type;
-	typedef int32_t			                      				difference_type;
-	typedef value_type*								 			pointer;
-	typedef value_type&								 			reference;
-	typedef ArrPtr												array_pointer;
-
-	static constexpr memory_safety is_safe = memory_safety::safe;
+	typedef ArrPtr									array_pointer;
 	static constexpr bool is_raw_pointer = std::is_pointer<array_pointer>::value;
 
 	// for non-const to const conversion
 	template<typename, bool, typename>
 	friend class array_of_iterator;
 
-private:
-
-
-	array_pointer  arr = nullptr;
-	uint32_t ix = 0;
-	uint32_t sz = 0;
-
-
 public:
+	typedef std::random_access_iterator_tag  			iterator_category;
+	typedef std::conditional_t<bConst, const T, T>		value_type;
+	typedef ptrdiff_t			                    	difference_type;
+	typedef value_type*									pointer;
+	typedef value_type&									reference;
 
-	array_of_iterator() {}
+	static constexpr memory_safety is_safe = memory_safety::none; // is_raw_pointer ? false : array_pointer::is_safe;
 
-private:
+protected:
+	array_pointer  arr = nullptr;
+	size_t ix = 0;
+	size_t sz = 0;
+
 	// this ctor is private because of unsafety
-	array_of_iterator(array_pointer arr, uint32_t ix, uint32_t sz)
+	array_of_iterator(array_pointer arr, size_t ix, size_t sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
 
 public:
-	static this_type makeIx(array_pointer arr, uint32_t ix, uint32_t sz) {
+	// default ctor must always be available for iterators
+	array_of_iterator() {}
+
+	// static factory methods are unsafe and flaged by static checker tool
+	static this_type makeIx(array_pointer arr, size_t ix, size_t sz) {
 		return this_type(arr, ix, sz);
 	}
 
-	static this_type makePtr(array_pointer arr, pointer to, uint32_t sz) {
+	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
 		if constexpr (is_raw_pointer)
-			return this_type(arr, static_cast<uint32_t>(to - arr), sz);
+			return this_type(arr, static_cast<size_t>(to - arr), sz);
 		else {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->capacity() == sz);
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
 			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
 		}
 	}
 
 	// mb: at basic_string, iterable size is one less that actual array capacity
 	// because of ending null '\0'
-	static this_type makePtrForString(array_pointer arr, pointer to, uint32_t sz) {
+	static this_type makePtrForString(array_pointer arr, pointer to, size_t sz) {
 		if constexpr (is_raw_pointer)
-			return this_type(arr, static_cast<uint32_t>(to - arr), sz);
+			return this_type(arr, static_cast<size_t>(to - arr), sz);
 		else {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->capacity() == sz + 1);
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz + 1 : true);
 			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
 		}
 	}
@@ -510,7 +514,7 @@ public:
 
 
 	reference operator[](difference_type n) const {
-		uint32_t tmp = ix + n;
+		size_t tmp = ix + n;
 		if(NODECPP_LIKELY(arr && tmp < sz)) {
 			if constexpr (is_raw_pointer)
 				return arr[tmp];
