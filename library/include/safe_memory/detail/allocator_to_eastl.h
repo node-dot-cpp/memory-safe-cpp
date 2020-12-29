@@ -225,12 +225,6 @@ public:
 	template<class T>
 	using array_pointer = soft_ptr_with_zero_offset_impl<array_of<T>>;
 
-	template<typename T>
-	using array_iterator_heap_safe = array_of_iterator<T, false, soft_ptr_impl<array_of<T>>>;
-
-	template<typename T>
-	using const_array_iterator_heap_safe = array_of_iterator<T, true, soft_ptr_impl<array_of<T>>>;
-
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
 		return allocate_array_impl<T>(count);
@@ -282,12 +276,6 @@ public:
 
 	template<class T>
 	using array_pointer = soft_ptr_with_zero_offset_no_checks<array_of<T>>;
-
-	template<typename T>
-	using array_iterator_heap_safe = array_of_iterator<T, false, soft_ptr_no_checks<array_of<T>>>;
-
-	template<typename T>
-	using const_array_iterator_heap_safe = array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>>;
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
@@ -342,12 +330,6 @@ public:
 
 	template<class T>
 	using array_pointer = T*;
-
-	template<typename T>
-	using array_iterator_heap_safe = array_of_iterator<T, false, soft_ptr_no_checks<array_of<T>>>;
-
-	template<typename T>
-	using const_array_iterator_heap_safe = array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>>;
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {

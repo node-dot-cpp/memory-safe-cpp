@@ -1,8 +1,8 @@
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
-index ad20e4d..fafd3fa 100644
+index ad20e4d..499938d 100644
 --- a/include/EASTL/allocator.h
 +++ b/include/EASTL/allocator.h
-@@ -64,6 +64,52 @@ namespace eastl
+@@ -64,6 +64,46 @@ namespace eastl
  		const char* get_name() const;
  		void        set_name(const char* pName);
  
@@ -11,12 +11,6 @@ index ad20e4d..fafd3fa 100644
 +
 +		template<class T>
 +		using array_pointer = T*;
-+
-+		template<typename T>
-+		using array_iterator_heap_safe = T*;
-+
-+		template<typename T>
-+		using const_array_iterator_heap_safe = const T*;
 +
 +		template<class T>
 +		T* allocate_array(std::size_t count, int flags = 0) {
@@ -55,7 +49,7 @@ index ad20e4d..fafd3fa 100644
  	protected:
  		#if EASTL_NAME_ENABLED
  			const char* mpName; // Debug name, used to track memory.
-@@ -74,7 +120,6 @@ namespace eastl
+@@ -74,7 +114,6 @@ namespace eastl
  	bool operator!=(const allocator& a, const allocator& b);
  
  
