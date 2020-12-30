@@ -32,23 +32,23 @@ bool validate(const StringType& str) {
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
 #define LITERAL_CHAR(x) x
-#define LITERAL(x) safe_memory::string_literal(x)
+#define LITERAL(x) StringType::literal_type(x)
 
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicStringW
 #define LITERAL_CHAR(x) EA_WCHAR(x) 
-#define LITERAL(x) safe_memory::wstring_literal(EA_WCHAR(x))
+#define LITERAL(x) StringType::literal_type(EA_WCHAR(x))
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString16
 #define LITERAL_CHAR(x) EA_CHAR16(x) 
-#define LITERAL(x) safe_memory::string16_literal(EA_CHAR16(x))
+#define LITERAL(x) StringType::literal_type(EA_CHAR16(x))
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString32
 #define LITERAL_CHAR(x) EA_CHAR32(x) 
-#define LITERAL(x) safe_memory::string32_literal(EA_CHAR32(x))
+#define LITERAL(x) StringType::literal_type(EA_CHAR32(x))
 #include "TestString.inl"
 
 int TestString()
