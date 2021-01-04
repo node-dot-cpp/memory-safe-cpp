@@ -86,8 +86,8 @@ namespace safe_memory
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
 		typedef eastl::pair<iterator, bool>                                                             insert_return_type;
 
-		typedef std::conditional_t<use_base_iterator, iterator_base, heap_safe_iterator>                iterator_safe;
-		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_heap_safe_iterator>    const_iterator_safe;
+		typedef heap_safe_iterator                iterator_safe;
+		typedef const_heap_safe_iterator    const_iterator_safe;
 		typedef eastl::pair<iterator_safe, bool>                                                        insert_return_type_safe;
 
 
@@ -349,25 +349,15 @@ namespace safe_memory
         }
 
         iterator_safe makeSafeIt(const iterator_base& it) {
-			//mb: use mnBucketCount + 1 because the end sentinel has to be reachable by iterator 
-			if constexpr(use_base_iterator)
-				return it;
-			else
-				return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
+			return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
         }
 
         const_iterator_safe makeSafeIt(const const_iterator_base& it) const {
-			if constexpr(use_base_iterator)
-				return it;
-			else
-	        	return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
+			return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
         }
 
         insert_return_type_safe makeSafeIt(const insert_return_type_base& r) {
-			if constexpr(use_base_iterator)
-				return r;
-			else
-	            return { makeSafeIt(r.first), r.second };
+			return { makeSafeIt(r.first), r.second };
         }
 	}; // unordered_map
 

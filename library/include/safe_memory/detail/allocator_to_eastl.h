@@ -265,60 +265,6 @@ public:
 	bool operator!=(const base_allocator_to_eastl_impl&) const { return false; }
 };
 
-class base_allocator_to_eastl_no_checks {
-public:
-
-	static constexpr memory_safety is_safe = memory_safety::none; 
-	static constexpr bool use_base_iterator = false;
-
-	template<class T>
-	using pointer = soft_ptr_with_zero_offset_no_checks<T>;
-
-	template<class T>
-	using array_pointer = soft_ptr_with_zero_offset_no_checks<array_of<T>>;
-
-	template<class T>
-	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
-		return allocate_array_no_checks<T>(count);
-	}
-
-	template<class T>
-	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
-		auto arr = allocate_array_no_checks<T>(count);
-		memset(arr->begin(), 0, count * sizeof(T));
-		return arr;
-	}
-
-	template<class T>
-	void deallocate_array(array_pointer<T>& p, std::size_t count) {
-		deallocate_array_no_checks(p);
-	}
-
-	template<class T>
-	pointer<T> allocate_node() {
-		return allocate_no_checks<T>();
-	}
-
-	template<class T>
-	void deallocate_node(pointer<T>& p) {
-		deallocate_no_checks(p);
-	}
-
-	template<class T>
-	static T* to_raw(const pointer<T>& p) {
-		return p.get_raw_ptr();
-	}
-
-	template<class T>
-	static T* to_raw(const array_pointer<T>& p) {
-		return p.get_raw_begin();
-	}
-
-	//stateless
-	bool operator==(const base_allocator_to_eastl_no_checks&) const { return true; }
-	bool operator!=(const base_allocator_to_eastl_no_checks&) const { return false; }
-};
-
 class base_allocator_to_eastl_raw {
 public:
 
@@ -383,22 +329,14 @@ public:
 	}
 };
 
-
-class allocator_to_eastl_vector_no_checks : public base_allocator_to_eastl_no_checks {
-public:
-	template<class T>
-	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
-		if(p) {
-			auto ptr = p.get_array_of_ptr();
-			return { fbc_ptr_t(), ptr };
-		}
-		else
-			return {};
-	}
-};
-
+// we use raw pointers for stack iterators, and allocation, and
+// soft_ptr_no_checks for user side pointers that go to the heap
 class allocator_to_eastl_vector_raw : public base_allocator_to_eastl_raw {
 public:
+	template<class T>
+	static soft_ptr_no_checks<array_of<T>> to_soft(T* p) {
+		return { fbc_ptr_t(), p };
+	}
 };
 
 template<memory_safety Safety>
@@ -432,9 +370,20 @@ public:
 		return a.get_array_of_ptr() == empty_hashtable<T>();
 	}
 
+	template<class T>
+	static bool is_hashtable_sentinel(const T* p) {
+		return p == hashtable_sentinel<T>();
+	}
+
+	template<class T>
+	static bool is_empty_hashtable(const T* a) {
+		return a == empty_hashtable<T>();
+	}
+
+
 	// 'to_zero' works for node and for array
 	template<class T>
-	static pointer<T> to_zero(const soft_ptr_impl<T>& p) {
+	static pointer<T> to_base(const soft_ptr_impl<T>& p) {
 			return { make_zero_offset_t(), p.getDereferencablePtr() };
 	}
 
@@ -459,54 +408,6 @@ public:
 	}
 };
 
-class allocator_to_eastl_hashtable_no_checks : public base_allocator_to_eastl_no_checks {
-public:
-	template<class T>
-	static pointer<T> get_hashtable_sentinel() {
-		return {make_zero_offset_t(), hashtable_sentinel<T>()};
-	}
-
-	template<class T>
-	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(), empty_hashtable<T>()};
-	}
-
-	template<class T>
-	static bool is_hashtable_sentinel(const pointer<T>& p) {
-		return p.get_raw_ptr() == hashtable_sentinel<T>();
-	}
-
-	template<class T>
-	static bool is_empty_hashtable(const array_pointer<T>& a) {
-		return a.get_array_of_ptr() == empty_hashtable<T>();
-	}
-
-	// 'to_zero' works for node and for array
-	template<class T>
-	static pointer<T> to_zero(const soft_ptr_no_checks<T>& p) {
-		return { make_zero_offset_t(), p.t };
-	}
-
-	template<class T>
-	static soft_ptr_no_checks<T> to_soft(const pointer<T>& p) {
-		if(p && !is_hashtable_sentinel(p)) {
-			auto ptr =p.get_raw_ptr();
-			return { fbc_ptr_t(), ptr };
-		}
-		else
-			return {};
-	}
-
-	template<class T>
-	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
-		if(p && !is_empty_hashtable(p)) {
-			auto ptr = p.get_array_of_ptr();
-			return { fbc_ptr_t(), ptr };
-		}
-		else
-			return {};
-	}
-};
 
 class allocator_to_eastl_hashtable_raw : public base_allocator_to_eastl_raw {
 public:
@@ -528,6 +429,20 @@ public:
 	template<class T>
 	static bool is_empty_hashtable(const array_pointer<T>& a) {
 		return a == empty_hashtable_raw<T>();
+	}
+
+	template<class T>
+	static soft_ptr_no_checks<T> to_soft(pointer<T> p) {
+		if(p && !is_hashtable_sentinel(p) && !is_empty_hashtable(p)) {
+			return { fbc_ptr_t(), p };
+		}
+		else
+			return {};
+	}
+
+	template<class T>
+	static pointer<T> to_base(const soft_ptr_no_checks<T>& p) {
+		return p.t;
 	}
 };
 

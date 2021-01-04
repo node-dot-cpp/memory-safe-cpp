@@ -78,12 +78,10 @@ namespace safe_memory
 		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
 									eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
 
-		typedef std::conditional_t<use_base_iterator, iterator_base, heap_safe_iterator>                iterator_safe;
-		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_heap_safe_iterator>    const_iterator_safe;
-		typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
-									eastl::reverse_iterator<iterator_safe>>                             reverse_iterator_safe;
-		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
-									eastl::reverse_iterator<const_iterator_safe>>                       const_reverse_iterator_safe;
+		typedef heap_safe_iterator                iterator_safe;
+		typedef const_heap_safe_iterator    const_iterator_safe;
+		typedef eastl::reverse_iterator<iterator_safe>                             reverse_iterator_safe;
+		typedef eastl::reverse_iterator<const_iterator_safe>                       const_reverse_iterator_safe;
 
 
 		template<class X>
@@ -680,54 +678,40 @@ namespace safe_memory
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		iterator_safe makeSafeIt(iterator_base it) {
-			if constexpr (use_base_iterator)
-				return it;
-			else {
-				// first calculate index of 'it', in case we move to heap
-				auto ix = static_cast<size_type>(it - base_type::begin());
+			// first calculate index of 'it', in case we move to heap
+			auto ix = static_cast<size_type>(it - base_type::begin());
 
-				if(base_type::internalLayout().IsSSO()) {
-					// its on the stack, move it to heap
-					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
-				}
-				
-				//mb: now the buffer should be on the heap
-				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-				return iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
+			if(base_type::internalLayout().IsSSO()) {
+				// its on the stack, move it to heap
+				base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
 			}
+			
+			//mb: now the buffer should be on the heap
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 		}
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
-			if constexpr (use_base_iterator)
-				return it;
-			else {
-				// first calculate index of 'it', in case we move to heap
-				auto ix = static_cast<size_type>(it - base_type::begin());
+			// first calculate index of 'it', in case we move to heap
+			auto ix = static_cast<size_type>(it - base_type::begin());
 
-				if(base_type::internalLayout().IsSSO()) {
-					// its on the stack, move it to heap
-					const_cast<this_type*>(this)->base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
-				}
-
-				//mb: now the buffer should be on the heap
-				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-				return const_iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
+			if(base_type::internalLayout().IsSSO()) {
+				// its on the stack, move it to heap
+				const_cast<this_type*>(this)->base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
 			}
+
+			//mb: now the buffer should be on the heap
+			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			return const_iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 		}
 
 		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return reverse_iterator_safe(makeSafeIt(it.base()));
+			return reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 		const_reverse_iterator_safe makeSafeIt(const const_reverse_iterator_base& it) const {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return const_reverse_iterator_safe(makeSafeIt(it.base()));
+			return const_reverse_iterator_safe(makeSafeIt(it.base()));
 		}
 
 	}; // basic_string
