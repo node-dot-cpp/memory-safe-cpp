@@ -694,12 +694,15 @@ int TestHash()
 
 
 	{
+
 		// C++11 emplace and related functionality
-		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
-		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map_safe<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp11<safe_memory::unordered_map_safe<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
 
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
-		nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
+		// nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
+		// nErrorCount += TestSetCpp11<safe_memory::unordered_set<TestObject, hash_TestObject>>();
 
 		// nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
 		// nErrorCount += TestMultimapCpp11<safe_memory::unordered_multimap<int, TestObject>>();
@@ -707,14 +710,18 @@ int TestHash()
 		// nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
 		// nErrorCount += TestMultisetCpp11<safe_memory::unordered_multiset<TestObject, hash_TestObject>>();
 
-		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
-		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map<int, NonCopyable, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map_safe<int, NonCopyable, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp11NonCopyable<safe_memory::unordered_map_safe<int, NonCopyable, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
 	}
 
 	{
 		// C++17 try_emplace and related functionality
-		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject>>();
-		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map_safe<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::safe>>();
+		nErrorCount += TestMapCpp17<safe_memory::unordered_map_safe<int, TestObject, safe_memory::hash<int>, safe_memory::equal_to<int>, safe_memory::memory_safety::none>>();
 	}
 
 
