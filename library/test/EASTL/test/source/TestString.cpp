@@ -55,18 +55,26 @@ int TestString()
 {
 	int nErrorCount = 0;
 
-	// nErrorCount += TestBasicString<eastl::basic_string<char, StompDetectAllocator>>();
-	nErrorCount += TestBasicString<safe_memory::string>();
+	nErrorCount += TestBasicString<safe_memory::basic_string<char, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string<char, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char, safe_memory::memory_safety::none>>();
 
-	// nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicStringW<safe_memory::wstring>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t, safe_memory::memory_safety::none>>();
 
-	// nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString16<safe_memory::u16string>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t, safe_memory::memory_safety::none>>();
 
 #if EA_CHAR32_NATIVE
-	// nErrorCount += TestBasicString32<eastl::basic_string<char32_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString32<safe_memory::u32string>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t, safe_memory::memory_safety::safe>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t, safe_memory::memory_safety::none>>();
 #endif
 
 	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.

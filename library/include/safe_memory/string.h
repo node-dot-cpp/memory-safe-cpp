@@ -604,6 +604,9 @@ namespace safe_memory
 
         const base_type& toBase() const noexcept { return *this; }
 
+		// all 'toBase' are called with iterators coming from user, and its validity is unknown
+		// so they must be checked
+
 		// Safety == none
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
 		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const {
@@ -641,18 +644,25 @@ namespace safe_memory
             return position;
         }
 
+		// all 'makeIt' and 'makeSafeIt' are called with iterators coming from eastl::string
+		// or iterators already validated, so we don't do any checks in here
+
 		iterator makeIt(iterator_base it) {
 			if constexpr (use_base_iterator)
 				return it;
-			else
-				return iterator::makePtrForString(base_type::begin(), it, base_type::capacity());
+			else {
+				auto ix = static_cast<size_type>(it - base_type::begin());
+				return iterator::makeIxForString(base_type::begin(), ix, base_type::capacity());
+			}
 		}
 		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
-			else
-				return const_iterator::makePtrForString(const_cast<T*>(base_type::begin()), it, base_type::capacity());
+			else {
+				auto ix = static_cast<size_type>(it - base_type::begin());
+				return const_iterator::makeIxForString(const_cast<T*>(base_type::begin()), ix, base_type::capacity());
+			}
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -673,12 +683,17 @@ namespace safe_memory
 			if constexpr (use_base_iterator)
 				return it;
 			else {
-				if(base_type::internalLayout().IsSSO())
+				// first calculate index of 'it', in case we move to heap
+				auto ix = static_cast<size_type>(it - base_type::begin());
+
+				if(base_type::internalLayout().IsSSO()) {
+					// its on the stack, move it to heap
 					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+				}
 				
 				//mb: now the buffer should be on the heap
 				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-				return iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+				return iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 			}
 		}
 
@@ -687,12 +702,17 @@ namespace safe_memory
 			if constexpr (use_base_iterator)
 				return it;
 			else {
-				if(base_type::internalLayout().IsSSO())
-					base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+				// first calculate index of 'it', in case we move to heap
+				auto ix = static_cast<size_type>(it - base_type::begin());
+
+				if(base_type::internalLayout().IsSSO()) {
+					// its on the stack, move it to heap
+					const_cast<this_type*>(this)->base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
+				}
 
 				//mb: now the buffer should be on the heap
 				NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-				return const_iterator_safe::makePtrForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), it, base_type::internalLayout().GetHeapCapacity());
+				return const_iterator_safe::makeIxForString(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 			}
 		}
 

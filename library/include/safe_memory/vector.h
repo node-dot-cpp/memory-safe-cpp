@@ -401,8 +401,9 @@ namespace safe_memory
 		iterator makeIt(iterator_base it) {
 			if constexpr (use_base_iterator)
 				return it;
-			else
+			else {
 				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
+			}
 		}
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)

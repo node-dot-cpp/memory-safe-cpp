@@ -397,24 +397,32 @@ public:
 		return this_type(arr, ix, sz);
 	}
 
-	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
-		if constexpr (is_raw_pointer)
-			return this_type(arr, static_cast<size_t>(to - arr), sz);
-		else {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
-			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
+	static size_t getIndex(array_pointer arr, pointer to) {
+		if constexpr (is_raw_pointer) {
+			return static_cast<size_t>(to - arr);
 		}
+		else {
+			return arr ? arr->get_index(to) : 0;
+		}
+	}
+
+	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
+		if constexpr (!is_raw_pointer) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
+		}
+
+		return this_type(arr, getIndex(arr, to), sz);
 	}
 
 	// mb: at basic_string, iterable size is one less that actual array capacity
 	// because of ending null '\0'
-	static this_type makePtrForString(array_pointer arr, pointer to, size_t sz) {
-		if constexpr (is_raw_pointer)
-			return this_type(arr, static_cast<size_t>(to - arr), sz);
-		else {
+	
+	static this_type makeIxForString(array_pointer arr, size_t ix, size_t sz) {
+		if constexpr (!is_raw_pointer) {
 			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz + 1 : true);
-			return this_type(arr, arr ? arr->get_index(to) : 0, sz);
 		}
+
+		return this_type(arr, ix, sz);
 	}
 
 	array_of_iterator(const array_of_iterator& ri) = default;
