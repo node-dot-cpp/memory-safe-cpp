@@ -37,6 +37,7 @@ namespace safe_memory::detail
 
 struct make_zero_offset_t {};
 
+// mb: soft_ptr_with_zero_offset_base is not actually used and may be outdated
 class soft_ptr_with_zero_offset_base
 {
 	friend class allocator_to_eastl_hashtable_impl;
@@ -78,13 +79,18 @@ public:
 };
 
 template<class T>
-class soft_ptr_with_zero_offset_impl : public soft_ptr_with_zero_offset_base
+class soft_ptr_with_zero_offset_impl
 {
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_impl;
+	// template<class TT>
+	// friend class soft_ptr_with_zero_offset_impl;
 
-	template<class TT>
-	friend void deallocate_impl(soft_ptr_with_zero_offset_impl<TT>&);
+	// template<class TT>
+	// friend void deallocate_impl(soft_ptr_with_zero_offset_impl<TT>&);
+
+	// friend class allocator_to_eastl_hashtable_impl;
+	// friend class allocator_to_eastl_hashtable_no_checks;
+
+	T* ptr = nullptr;
 
 public:
 
@@ -92,7 +98,7 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : ptr(raw) {}
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& ) = default;
@@ -101,24 +107,32 @@ public:
 	soft_ptr_with_zero_offset_impl<T>& operator=( soft_ptr_with_zero_offset_impl&& ) = default;
 
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) {}
-	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t )
-		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
+	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	using soft_ptr_with_zero_offset_base::reset;
-	using soft_ptr_with_zero_offset_base::swap;
-	using soft_ptr_with_zero_offset_base::operator bool;
-	using soft_ptr_with_zero_offset_base::operator==;
-	using soft_ptr_with_zero_offset_base::operator!=;
+	void reset() noexcept { ptr = nullptr; }
+	explicit operator bool() const noexcept { return ptr != nullptr; }
+	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept	{
+		T* tmp = ptr;
+		ptr = other.ptr;
+		other.ptr = tmp;
+	}
+
+	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
+	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
+
+	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
 	T& operator*() const noexcept { return *get_raw_ptr(); }
 	T* operator->() const noexcept { return get_raw_ptr(); }
-	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(ptr); }
+	T* get_raw_ptr() const noexcept { return ptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
 };
 
 
+// mb: soft_ptr_with_zero_offset_no_checks is not actually used and may be outdated
 template<class T>
 class soft_ptr_with_zero_offset_no_checks : public soft_ptr_with_zero_offset_base
 {

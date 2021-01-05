@@ -128,10 +128,9 @@ public:
 
 
 template<class T>
-class soft_ptr_with_zero_offset_impl<array_of<T>> : public soft_ptr_with_zero_offset_base
+class soft_ptr_with_zero_offset_impl<array_of<T>>
 {
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_no_checks;
+	array_of<T>* ptr = nullptr;
 
 public:
 
@@ -139,7 +138,7 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) {}
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw ) :ptr(raw) {}
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
@@ -148,18 +147,25 @@ public:
 	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl&& other ) = default;
 
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) { }
-	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t )
-		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
+	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ){ reset(); return *this; }
 
-	using soft_ptr_with_zero_offset_base::reset;
-	using soft_ptr_with_zero_offset_base::swap;
-	using soft_ptr_with_zero_offset_base::operator bool;
-	using soft_ptr_with_zero_offset_base::operator==;
-	using soft_ptr_with_zero_offset_base::operator!=;
+	void reset() noexcept { ptr = nullptr; }
+	explicit operator bool() const noexcept { return ptr != nullptr; }
+	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept {
+		array_of<T>* tmp = ptr;
+		ptr = other.ptr;
+		other.ptr = tmp;
+	}
+
+	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
+	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
+
+	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
 	array_of<T>& operator*() const noexcept { return *get_array_of_ptr(); }
 	array_of<T>* operator->() const noexcept { return get_array_of_ptr(); }
-	array_of<T>* get_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
+	array_of<T>* get_array_of_ptr() const noexcept { return ptr; }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
@@ -239,7 +245,7 @@ std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_impl<array_of<T>>& lef
 	return left.get_raw_begin() >= right;
 }
 
-
+// mb: soft_ptr_with_zero_offset_no_checks is not actually used and may be outdated
 template<class T>
 class soft_ptr_with_zero_offset_no_checks<array_of<T>> : public soft_ptr_with_zero_offset_base
 {
@@ -353,6 +359,16 @@ std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>
 }
 
 
+// small helper class to set safety to none when using raw pointers
+template <typename T>
+struct safety_helper {
+	static constexpr memory_safety is_safe = T::is_safe;
+};
+
+template<typename T>
+struct safety_helper<T*> {
+	static constexpr memory_safety is_safe = memory_safety::none;
+};
 
 // when this iterator is used for string, we should be able to construct it
 // from a heap pointer or from stack pointer (when SSO)
@@ -375,7 +391,7 @@ public:
 	typedef value_type*									pointer;
 	typedef value_type&									reference;
 
-	static constexpr memory_safety is_safe = memory_safety::none; // is_raw_pointer ? false : array_pointer::is_safe;
+	static constexpr memory_safety is_safe = safety_helper<array_pointer>::is_safe;
 
 protected:
 	array_pointer  arr = nullptr;

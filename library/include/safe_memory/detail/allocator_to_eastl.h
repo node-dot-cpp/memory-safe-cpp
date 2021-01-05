@@ -34,13 +34,10 @@
 #include <EASTL/allocator.h>
 
 
-namespace eastl {
-extern void* gpEmptyBucketArray[2];
-}
-
 namespace safe_memory::detail {
 
-extern fixed_array_of<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArray;
+extern fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl;
+extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
 using nodecpp::safememory::memory_safety;
 using nodecpp::safememory::FirstControlBlock;
@@ -141,44 +138,44 @@ void deallocate_raw(T* p) {
 }
 
 
-template<class T>
-soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
+// template<class T>
+// soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
 
-	std::size_t sz = sizeof(T);
-	T* dataForObj = reinterpret_cast<T*>(allocate(sz));
+// 	std::size_t sz = sizeof(T);
+// 	T* dataForObj = reinterpret_cast<T*>(allocate(sz));
 	
-	return {make_zero_offset_t(), dataForObj};
-}
+// 	return {make_zero_offset_t(), dataForObj};
+// }
 
-template<class T>
-soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::size_t count) {
-	// TODO here we should fine tune the sizes of array_of2<T> 
-	std::size_t sz = array_of<T>::calculateSize(count);
-	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(allocate(sz));
+// template<class T>
+// soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::size_t count) {
+// 	// TODO here we should fine tune the sizes of array_of2<T> 
+// 	std::size_t sz = array_of<T>::calculateSize(count);
+// 	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(allocate(sz));
 	
-	::new ( dataForObj ) array_of<T>(count);
-	return {make_zero_offset_t(), dataForObj};
-}
+// 	::new ( dataForObj ) array_of<T>(count);
+// 	return {make_zero_offset_t(), dataForObj};
+// }
 
-template<class T>
-void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
+// template<class T>
+// void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
 
-	if (p) {
-		T* dataForObj = p.get_raw_ptr();
-		//dataForObj->~T(); //don't destruct here
-		deallocate(dataForObj);
-	}
-}
+// 	if (p) {
+// 		T* dataForObj = p.get_raw_ptr();
+// 		//dataForObj->~T(); //don't destruct here
+// 		deallocate(dataForObj);
+// 	}
+// }
 
-template<class T>
-void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
+// template<class T>
+// void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
 
-	if (p) {
-		array_of<T>* dataForObj = p.get_array_of_ptr();
-		dataForObj->~array_of<T>();
-		deallocate(dataForObj);
-	}
-}
+// 	if (p) {
+// 		array_of<T>* dataForObj = p.get_array_of_ptr();
+// 		dataForObj->~array_of<T>();
+// 		deallocate(dataForObj);
+// 	}
+// }
 
 
 template<typename T, memory_safety Safety>
@@ -192,25 +189,6 @@ using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety:
 			array_of_iterator<T, true, soft_ptr_impl<array_of<T>>>,
 			array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>>
 			>;
-
-// two special values used inside eastl::hasttable
-// soft_ptr needs to have special behaviour around this values.
-
-template<class T>
-constexpr T* hashtable_sentinel() {
-	return reinterpret_cast<T*>((uintptr_t)~0);
-}
-
-template<class T>
-constexpr array_of<T>* empty_hashtable() {
-	return reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArray);
-}
-
-
-template<class T>
-constexpr T* empty_hashtable_raw() {
-	return reinterpret_cast<T*>(&eastl::gpEmptyBucketArray);
-}
 
 
 class base_allocator_to_eastl_impl {
@@ -334,7 +312,7 @@ public:
 class allocator_to_eastl_vector_raw : public base_allocator_to_eastl_raw {
 public:
 	template<class T>
-	static soft_ptr_no_checks<array_of<T>> to_soft(T* p) {
+	static soft_ptr_no_checks<T> to_soft(pointer<T> p) {
 		return { fbc_ptr_t(), p };
 	}
 };
@@ -348,6 +326,33 @@ using allocator_to_eastl_vector = std::conditional_t<Safety == memory_safety::sa
 			allocator_to_eastl_vector_impl, allocator_to_eastl_vector_raw>;
 
 
+
+// two special values used inside eastl::hashtable:
+// 1. the empty hashtable is a global constant value used to initialize all 
+// default constructed hashtables (emptys).
+// 2. the sentinel used as the last (end) value in the hashtable is a fake value
+// that is non-null
+//
+// both values can't be converted to soft_ptr, so convertion function will look for them
+// and return default constructed soft_ptr in such cases.
+
+template<class T>
+constexpr T* hashtable_sentinel() {
+	return reinterpret_cast<T*>((uintptr_t)~0);
+}
+
+template<class T>
+array_of<T>* empty_hashtable_impl() {
+	//mb: here T must be soft_ptr_with_zero_offset<T>
+	return reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArrayImpl);
+}
+
+template<class T>
+constexpr T* empty_hashtable_raw() {
+	return reinterpret_cast<T*>(&gpSafeMemoryEmptyBucketArrayRaw);
+}
+
+
 class allocator_to_eastl_hashtable_impl : public base_allocator_to_eastl_impl {
 public:
 	template<class T>
@@ -357,7 +362,7 @@ public:
 
 	template<class T>
 	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(), empty_hashtable<T>()};
+		return {make_zero_offset_t(), empty_hashtable_impl<T>()};
 	}
 
 	template<class T>
@@ -367,7 +372,7 @@ public:
 
 	template<class T>
 	static bool is_empty_hashtable(const array_pointer<T>& a) {
-		return a.get_array_of_ptr() == empty_hashtable<T>();
+		return a.get_array_of_ptr() == empty_hashtable_impl<T>();
 	}
 
 	template<class T>
@@ -377,18 +382,19 @@ public:
 
 	template<class T>
 	static bool is_empty_hashtable(const T* a) {
-		return a == empty_hashtable<T>();
+		return a == empty_hashtable_impl<T>();
 	}
 
 
-	// 'to_zero' works for node and for array
-	template<class T>
-	static pointer<T> to_base(const soft_ptr_impl<T>& p) {
-			return { make_zero_offset_t(), p.getDereferencablePtr() };
-	}
+	// // 'to_zero' works for node and for array
+	// template<class T>
+	// static pointer<T> to_base(const soft_ptr_impl<T>& p) {
+	// 		return { make_zero_offset_t(), p.getDereferencablePtr() };
+	// }
 
 	template<class T>
 	static soft_ptr_impl<T> to_soft(const pointer<T>& p) {
+		// hashtable has special values that are mapped to default costructed soft_ptr
 		if(p && !is_hashtable_sentinel(p)) {
 			auto ptr = p.get_raw_ptr();
 			return { getControlBlock_( ptr ), ptr };
@@ -399,6 +405,7 @@ public:
 
 	template<class T>
 	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer<T>& p) {
+		// hashtable has special values that are mapped to default costructed soft_ptr
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
 			return { getControlBlock_( ptr ), ptr };
@@ -433,6 +440,7 @@ public:
 
 	template<class T>
 	static soft_ptr_no_checks<T> to_soft(pointer<T> p) {
+		// hashtable has special values that are mapped to default costructed soft_ptr
 		if(p && !is_hashtable_sentinel(p) && !is_empty_hashtable(p)) {
 			return { fbc_ptr_t(), p };
 		}
@@ -440,10 +448,10 @@ public:
 			return {};
 	}
 
-	template<class T>
-	static pointer<T> to_base(const soft_ptr_no_checks<T>& p) {
-		return p.t;
-	}
+	// template<class T>
+	// static pointer<T> to_base(const soft_ptr_no_checks<T>& p) {
+	// 	return p.t;
+	// }
 };
 
 template<memory_safety Safety>
