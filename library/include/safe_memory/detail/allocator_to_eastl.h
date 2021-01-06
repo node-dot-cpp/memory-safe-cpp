@@ -31,8 +31,24 @@
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/soft_ptr_with_zero_offset.h>
 #include <safe_memory/detail/array_of.h>
-#include <EASTL/allocator.h>
+//#include <EASTL/allocator.h>
 
+
+/** \file
+ * \brief Allocators feed by \a safe_memory containers into \c eastl ones.
+ * 
+ * These allocators hide the tricks required to make a non safety aware library like \c eastl
+ * to work with safety features.
+ * 
+ * On \a safe_memory allocations hide an small piece of memory called \a ControlBlock in front
+ * of every heap allocated object, that is used to keep track of \c soft_ptr pointing such object.
+ * On normal user code, the \a ControlBlock is managed by the corresponding \c owning_ptr.
+ * 
+ * Here we have a set of allocation / deallocation functions, and functions to create \c soft_ptr
+ * from allocated pointer, without the need to introduce \c owning_ptr semantics.
+ * This is possible because \c eastl library is assumed to properly handle ownership of every
+ * allocated pointer, and correctly pair allocation/deallocation calls.
+ */ 
 
 namespace safe_memory::detail {
 
@@ -50,9 +66,15 @@ using nodecpp::safememory::getAllocatedBlock_;
 using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
+using nodecpp::safememory::soft_ptr;
 using nodecpp::safememory::fbc_ptr_t;
 
 
+template<typename T, memory_safety Safety>
+using array_of_iterator_heap = array_of_iterator<T, false, soft_ptr<array_of<T>, Safety>>;
+
+template<typename T, memory_safety Safety>
+using const_array_of_iterator_heap = array_of_iterator<T, true, soft_ptr<array_of<T>, Safety>>;
 
 template<class T, bool zeroed = false>
 soft_ptr_with_zero_offset_impl<T> allocate_impl() {
@@ -176,19 +198,6 @@ void deallocate_raw(T* p) {
 // 		deallocate(dataForObj);
 // 	}
 // }
-
-
-template<typename T, memory_safety Safety>
-using array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_iterator<T, false, soft_ptr_impl<array_of<T>>>,
-			array_of_iterator<T, false, soft_ptr_no_checks<array_of<T>>>
-			>;
-
-template<typename T, memory_safety Safety>
-using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_iterator<T, true, soft_ptr_impl<array_of<T>>>,
-			array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>>
-			>;
 
 
 class base_allocator_to_eastl_impl {

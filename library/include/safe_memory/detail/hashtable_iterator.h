@@ -58,10 +58,10 @@ namespace safe_memory::detail {
 
 
 
-        typedef soft_ptr<node_type, is_safe>               node_ptr;
+        typedef soft_ptr<node_type, is_safe>                         node_ptr;
 		typedef typename allocator_type::template pointer<node_type> t1;
-		typedef typename allocator_type::template array_pointer<t1> t2;
-		typedef typename detail::array_of_iterator<t1, false, soft_ptr<detail::array_of<t1>, is_safe>> bucket_iterator;
+		typedef typename allocator_type::template array_pointer<t1>  t2;
+		typedef typename detail::array_of_iterator_heap<t1, is_safe> bucket_iterator;
 
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.

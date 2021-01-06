@@ -29,7 +29,7 @@
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
 #include <safe_memory/detail/iterator_validity.h>
-#include <safe_memory/detail/soft_ptr_with_zero_offset.h>
+// #include <safe_memory/detail/soft_ptr_with_zero_offset.h>
 
 
 namespace safe_memory::detail {
@@ -46,13 +46,18 @@ using nodecpp::safememory::zombieDeallocate;
 using nodecpp::safememory::getAllocatedBlock_;
 using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
-using nodecpp::safememory::soft_ptr_impl;
+// using nodecpp::safememory::soft_ptr_impl;
 
-// helper class for arrays, while this class has the concept of an array,
-// it doesn't actually have the memory of the array.
-// it is assumed that the allocator will give enought memory after this class
-// to actually to put the array elements.
-// This class is tightly coupled with 'allocate_array' function
+/** 
+ * \brief Helper class for allocation of arrays.
+ * 
+ * While this class has the concept of an array or buffer,
+ * it doesn't actually have the memory of the array.
+ * Nor it will construct or destruct any of its elements.
+ * It is assumed that the allocator will give enought memory right after this class
+ * to actually to put the array elements.
+ * This class is coupled with \c allocate_array function.
+ */ 
 template<class T>
 struct array_of
 {
@@ -72,13 +77,13 @@ public:
 
 	// ~array_of() {}
 
-	//unsafe function, allow returning a non-derefenceable pointer as end()
+	///unsafe function, allow returning a non-derefenceable pointer as end()
 	T* get_raw_ptr(size_t ix) {
 		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= _capacity);
 		return begin() + ix;
 	}
 
-	//unsafe function, ptr should have been validated
+	///unsafe function, ptr should have been validated
 	size_t get_index(const T* ptr) const {
 		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, begin() <= ptr);
 		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, static_cast<size_t>(ptr - begin()) <= capacity());
@@ -96,12 +101,18 @@ public:
 	}
 };
 
-// implementation of a fixed size array_of that reserves enought
-// memory after array_of to actually place the elements.
+
+/**
+ * 
+ * Implementation of \c array_of that reserves enought
+ * memory after the array header to a actually place elements.
+ * Can be used on the stack or embedded in other ojects.
+ * It still won't construct or destruct any of their elements.
+ */
 template<size_t SZ, class T>
 struct fixed_array_of : public array_of<T>
 {
-	T buff[SZ];
+	char buff[sizeof(T) * SZ];
 
 public:
 	fixed_array_of(std::initializer_list<T> init) :array_of<T>(SZ) {
@@ -124,242 +135,9 @@ public:
 };
 
 
-//mb specializations for array<T>
 
 
-template<class T>
-class soft_ptr_with_zero_offset_impl<array_of<T>>
-{
-	array_of<T>* ptr = nullptr;
-
-public:
-
-	static constexpr memory_safety is_safe = memory_safety::safe;
- 
-	soft_ptr_with_zero_offset_impl() {}
-
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, array_of<T>* raw ) :ptr(raw) {}
-
-	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
-	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
-
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& other ) = default;
-	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl&& other ) = default;
-
-	soft_ptr_with_zero_offset_impl( std::nullptr_t ) { }
-	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ){ reset(); return *this; }
-
-	void reset() noexcept { ptr = nullptr; }
-	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept {
-		array_of<T>* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
-
-	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
-
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
-
-	array_of<T>& operator*() const noexcept { return *get_array_of_ptr(); }
-	array_of<T>* operator->() const noexcept { return get_array_of_ptr(); }
-	array_of<T>* get_array_of_ptr() const noexcept { return ptr; }
-
-	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
-	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
-
-	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_impl();
-};
-
-template<class T>
-std::ptrdiff_t operator-(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left - right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator-(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() - right;
-}
-
-template<class T>
-std::ptrdiff_t operator==(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left == right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator==(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() == right;
-}
-
-template<class T>
-std::ptrdiff_t operator!=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left != right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator!=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() != right;
-}
-
-template<class T>
-std::ptrdiff_t operator<(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left < right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator<(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() < right;
-}
-
-template<class T>
-std::ptrdiff_t operator<=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left <= right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator<=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() <= right;
-}
-
-template<class T>
-std::ptrdiff_t operator>(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left > right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator>(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() > right;
-}
-
-template<class T>
-std::ptrdiff_t operator>=(const T* left, const soft_ptr_with_zero_offset_impl<array_of<T>>& right) {
-	return left >= right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_impl<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() >= right;
-}
-
-// mb: soft_ptr_with_zero_offset_no_checks is not actually used and may be outdated
-template<class T>
-class soft_ptr_with_zero_offset_no_checks<array_of<T>> : public soft_ptr_with_zero_offset_base
-{
-	template<class TT>
-	friend class soft_ptr_with_zero_offset_no_checks;
-
-public:
-
-	static constexpr memory_safety is_safe = memory_safety::none;
- 
-	soft_ptr_with_zero_offset_no_checks() {}
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, array_of<T>* raw ) :soft_ptr_with_zero_offset_base(raw) {}
-
-	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& other ) = default;
-	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& other ) = default;
-
-	soft_ptr_with_zero_offset_no_checks( soft_ptr_with_zero_offset_no_checks&& other ) = default;
-	soft_ptr_with_zero_offset_no_checks& operator=( soft_ptr_with_zero_offset_no_checks&& other ) = default;
-
-	soft_ptr_with_zero_offset_no_checks( std::nullptr_t ) { }
-	soft_ptr_with_zero_offset_no_checks& operator=( std::nullptr_t )
-		{ soft_ptr_with_zero_offset_base::reset(); return *this; }
-
-	using soft_ptr_with_zero_offset_base::reset;
-	using soft_ptr_with_zero_offset_base::swap;
-	using soft_ptr_with_zero_offset_base::operator bool;
-	using soft_ptr_with_zero_offset_base::operator==;
-	using soft_ptr_with_zero_offset_base::operator!=;
-
-	array_of<T>& operator*() const noexcept { return *get_array_of_ptr(); }
-	array_of<T>* operator->() const noexcept { return get_array_of_ptr(); }
-	array_of<T>* get_array_of_ptr() const noexcept { return reinterpret_cast<array_of<T>*>(ptr); }
-	
-	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
-	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
-
-	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_no_checks();
-};
-
-
-template<class T>
-std::ptrdiff_t operator-(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left - right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator-(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() - right;
-}
-
-template<class T>
-std::ptrdiff_t operator==(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left == right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator==(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() == right;
-}
-
-template<class T>
-std::ptrdiff_t operator!=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left != right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator!=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() != right;
-}
-
-template<class T>
-std::ptrdiff_t operator<(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left < right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator<(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() < right;
-}
-
-template<class T>
-std::ptrdiff_t operator<=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left <= right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator<=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() <= right;
-}
-
-template<class T>
-std::ptrdiff_t operator>(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left > right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator>(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() > right;
-}
-
-template<class T>
-std::ptrdiff_t operator>=(const T* left, const soft_ptr_with_zero_offset_no_checks<array_of<T>>& right) {
-	return left >= right.get_raw_begin();
-}
-
-template<class T>
-std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& left, const T* right) {
-	return left.get_raw_begin() >= right;
-}
-
-
-// small helper class to set safety to none when using raw pointers
+/// small helper class to set safety to none when using raw pointers
 template <typename T>
 struct safety_helper {
 	static constexpr memory_safety is_safe = T::is_safe;
@@ -370,8 +148,41 @@ struct safety_helper<T*> {
 	static constexpr memory_safety is_safe = memory_safety::none;
 };
 
-// when this iterator is used for string, we should be able to construct it
-// from a heap pointer or from stack pointer (when SSO)
+/**
+ * \brief Safe and generic iterator for arrays.
+ * 
+ * This iterator is the safety replacement of \c T* for arrays.
+ * It knows the size of the array being iterated, and will check dereferences are
+ * always in bounds of the array.
+ * It will warranty no memory outside the array will be referenced.
+ * Heap memory safety is optional and depends on the \p ArrPtr parameter type.
+ * 
+ * Current implementation uses a \c begin pointer and two indexes, but implementation with
+ * Three pointers is also posible.
+ * 
+ * Also at current implementation, when we try to increment/decrement iterator
+ * outside its boundaries, it stays in a range [0, end] and doesn't throw.
+ * At dereference we throw if iterator is at end.
+ * 
+ * 
+ * This class is currently used in two different scenarios.
+ * When used as \a stack_only iterator, the \c ArrPtr parameter is usually a \c T*
+ * and static checker must enforce lifetime rules similar to those of raw pointers.
+ * When used as \a heap_safe iterator, the \c ArrPtr parameter is usually a \c soft_ptr
+ * and because of that this class is also safe to store at the heap.
+ * 
+ * On \c safe_memory::string because of SSO, we sometimes point to an array on the stack
+ * and other times at an array on the heap. For \a heap_safe iterators, implementation will
+ * always move the buffer to the heap before creating the iterator.
+ * The default constructed iterator is different from an iterator to an empty string,
+ * as the \c eastl::basic_string implementation has a buffer with a \c '\0' character when empty.
+ * Only a default contructed iterator will have \p ArrPtr as a \c nullptr .
+ * 
+ * On \c safe_memory::vector always point to heap array, and iterator to an empty container
+ * is the same that default constructed iterator. \p ArrPtr is \c nullptr in both cases.
+ * 
+ */
+
 template <typename T, bool bConst, typename ArrPtr>
 class array_of_iterator
 {
@@ -398,18 +209,31 @@ protected:
 	size_t ix = 0;
 	size_t sz = 0;
 
-	// this ctor is private because of unsafety
+	/// this ctor is private because it is unsafe and shouldn't be reached by user
 	array_of_iterator(array_pointer arr, size_t ix, size_t sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
 
 public:
-	// default ctor must always be available for iterators
+	/// default ctor must always be available for iterators
 	array_of_iterator() {}
 
-	// static factory methods are unsafe and flaged by static checker tool
+	/// static factory methods are unsafe but static checker tool will keep user hands away
 	static this_type makeIx(array_pointer arr, size_t ix, size_t sz) {
+		if constexpr (!is_raw_pointer) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
+		}
+
+		return this_type(arr, ix, sz);
+	}
+
+	/// At basic_string, iterable size is one less than array capacity because of ending null '\0'
+	static this_type makeIxForString(array_pointer arr, size_t ix, size_t sz) {
+		if constexpr (!is_raw_pointer) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz + 1 : true);
+		}
+
 		return this_type(arr, ix, sz);
 	}
 
@@ -423,22 +247,13 @@ public:
 	}
 
 	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
-		if constexpr (!is_raw_pointer) {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
-		}
 
-		return this_type(arr, getIndex(arr, to), sz);
+		return makeIx(arr, getIndex(arr, to), sz);
 	}
 
-	// mb: at basic_string, iterable size is one less that actual array capacity
-	// because of ending null '\0'
-	
-	static this_type makeIxForString(array_pointer arr, size_t ix, size_t sz) {
-		if constexpr (!is_raw_pointer) {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz + 1 : true);
-		}
+	static this_type makePtrForString(array_pointer arr, pointer to, size_t sz) {
 
-		return this_type(arr, ix, sz);
+		return makeIxForString(arr, getIndex(arr, to), sz);
 	}
 
 	array_of_iterator(const array_of_iterator& ri) = default;
@@ -447,12 +262,12 @@ public:
 	array_of_iterator(array_of_iterator&& ri) = default; 
 	array_of_iterator& operator=(array_of_iterator&& ri) = default;
 
-	// allow non-const to const convertion
+	/// allow non-const to const constructor
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
 	array_of_iterator(const array_of_iterator<T, B, ArrPtr>& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
-	// allow non-const to const convertion
+	/// allow non-const to const assignment
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
 	array_of_iterator& operator=(const array_of_iterator<T, B, ArrPtr>& ri) {
 		this->arr = ri.arr;
@@ -482,10 +297,6 @@ public:
 		else
 			throwRangeException("array_of_iterator::operator->");
 	}
-
-	//mb: when we try to increment/decrement iterator outside its boundaries,
-	// it stays in a range [0, end] and doesn't throw. At dereference
-	// we throw if iterator is at end
 
 	this_type& operator++() noexcept {
 		if(ix < sz)
@@ -583,20 +394,63 @@ public:
 		return !this->operator<(ri);
 	}
 
-	// mb: about toRaw: 
+	/**
+	 * \brief Convert this iterator to raw pointer.
+	 * 
+	 * This methods will check that this iterator references the same array pointed by \c begin
+	 * and will be called on all iterators comming from user side, before going into \c eastl
+	 * implementation side. Because of that this method has the responsibility of returning
+	 * a value that \c eastl will handle correctly and won't break things.
+	 * Even in cases where the user handles us with badly stuff. 
+	 * 
+	 * Notes:
+	 * On \c vector arr will be null for default constructed iterator (invalid)
+	 * and for end() iterator of empty vector (valid), and
+	 * \c eastl::vector will correctly handle a nullptr returning from 'toRaw'
+	 * 
+	 * On \c string arr is null only on default constructed iterator (invalid),
+	 * because even empty strings have a dereferenceable \c '\0' char on eastl.
+	 * so passing a nullptr to \c eastl::string may break things.
+	 * However \c begin argument won't be null in such case.
+	 */
+	pointer toRaw(const T* begin) const {
+		if (getRawBegin() == begin)
+			return getRaw();
+		else
+			throwRangeException("array_of_iterator::toRaw");
+	}
 
-	// on vector arr will be null for default constructed iterator (invalid)
-	// and for end() iterator of empty vector (valid)
-	// eastl::vector will correctly handle a nullptr returning from 'toRaw' 
+	/**
+	 * \brief convert a iterator pair to raw pointers.
+	 * 
+	 * Same as \c toRaw above, but for a pair of iterators.
+	 * 
+	 * We check that \c this and \p ri both point to the same array than \p begin
+	 * and that the order is correct
+	 */
+	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
+		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
+			return {getRaw(), ri.getRaw()};
+		else
+			throwRangeException("array_of_iterator::toRaw");
+	}
 
-	// on string arr is null only on default constructed iterator (invalid),
-	// because even empty strings have a dereferenceable '\0' char on eastl.
-	// so passing a nullptr to eastl::string will probably break things.
-	// however 'begin' argument will never be null in such case.
+	/**
+	 * \brief convert a external iterator pair to raw pointers.
+	 * 
+	 * Similar to \c toRaw above, but used when iterator pair if from another instance.
+	 * 
+	 * In this case we only need to check that both, \c this and \p ri are iterators
+	 * to the same array and that the order is correct.
+	 */
+	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
+		if (arr == ri.arr && ix <= ri.ix)
+			return {getRaw(), ri.getRaw()};
+		else
+			throwRangeException("array_of_iterator::toRaw");
+	}
 
-
-
-	// this is unsafe function, ix may be end, and not derefenceable
+private:
 	pointer getRaw() const {
 		if constexpr (is_raw_pointer)
 			return arr + ix;
@@ -611,29 +465,6 @@ public:
 			return arr ? arr->begin() : nullptr;
 	}
 
-	// convert a single iterator to raw
-	pointer toRaw(const T* begin) const {
-		if (getRawBegin() == begin)
-			return getRaw();
-		else
-			throwRangeException("array_of_iterator::toRaw");
-	}
-
-	// convert a iterator pair to raw
-	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
-		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
-			return {getRaw(), ri.getRaw()};
-		else
-			throwRangeException("array_of_iterator::toRaw");
-	}
-
-	// convert an external iterator pair to raw
-	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
-		if (arr == ri.arr && ix <= ri.ix)
-			return {getRaw(), ri.getRaw()};
-		else
-			throwRangeException("array_of_iterator::toRaw");
-	}
 };
 
 template <typename T, bool b, typename ArrPtr>
