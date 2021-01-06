@@ -28,25 +28,10 @@
 #ifndef SAFE_MEMORY_DETAIL_ARRAY_OF
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
-#include <safe_memory/detail/iterator_validity.h>
-// #include <safe_memory/detail/soft_ptr_with_zero_offset.h>
-
-
 namespace safe_memory::detail {
 
 using nodecpp::safememory::memory_safety;
-using nodecpp::safememory::FirstControlBlock;
 using nodecpp::safememory::module_id;
-// using nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_impl;
-// using nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset_no_checks;
-using nodecpp::safememory::getPrefixByteCount;
-using nodecpp::safememory::zombieAllocate;
-using nodecpp::safememory::getControlBlock_;
-using nodecpp::safememory::zombieDeallocate;
-using nodecpp::safememory::getAllocatedBlock_;
-using nodecpp::safememory::allocate;
-using nodecpp::safememory::deallocate;
-// using nodecpp::safememory::soft_ptr_impl;
 
 /** 
  * \brief Helper class for allocation of arrays.

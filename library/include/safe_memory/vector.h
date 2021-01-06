@@ -331,18 +331,10 @@ namespace safe_memory
 
 
 		using base_type::validate;
-		using base_type::validate_iterator;
-
-		detail::iterator_validity validate_iterator2(const_iterator_base i) const noexcept;
-		detail::iterator_validity validate_iterator2(const const_stack_only_iterator& it) const noexcept {
-			//TODO 
-			return detail::iterator_validity::ValidCanDeref;
-		}
-
-		detail::iterator_validity validate_iterator2(const const_heap_safe_iterator& it) const noexcept {
-			//TODO 
-			return detail::iterator_validity::ValidCanDeref;
-		}
+		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		//TODO: custom validation for safe iterators
+		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
+		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
 		iterator_safe make_safe(const iterator& position) { return makeSafeIt(toBase(position)); }
 		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
@@ -592,27 +584,6 @@ namespace safe_memory
 		}
 
 		return base_type::pop_back();
-	}
-
-
-	template <typename T, memory_safety Safety>
-	inline detail::iterator_validity vector<T, Safety>::validate_iterator2(const_iterator_base i) const noexcept
-	{
-		if(i == nullptr)
-			return detail::iterator_validity::Null;
-		else if(i >= base_type::begin())
-		{
-			if(i < base_type::end())
-				return detail::iterator_validity::ValidCanDeref;
-
-			else if(i == base_type::end())
-				return detail::iterator_validity::ValidEnd;
-
-			else if(i < base_type::begin() + base_type::capacity())
-				return detail::iterator_validity::InvalidZoombie;
-		}
-
-		return detail::iterator_validity::xxx_Broken_xxx;
 	}
 
 

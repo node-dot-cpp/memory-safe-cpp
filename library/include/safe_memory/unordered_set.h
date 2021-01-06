@@ -226,34 +226,21 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		using base_type::validate_iterator;
-
-		// bool validate() const;
-		// iterator_validity  validate_iterator(const_iterator i) const;
+		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		//TODO: custom validation for safe iterators
+		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
+		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
 		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
 		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
 
-
-		heap_safe_iterator make_heap_safe(const stack_only_iterator& it) const {
-			return heap_safe_iterator::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
-		}
-
-		// const_heap_safe_iterator make_heap_safe(const const_stack_only_iterator& it) const {
-		// 	return const_heap_safe_iterator::makeIt(allocator_type::to_soft(it.getNodePtr()), GetHeapPtr(), it.getBucketIt());
-		// }
-
-		const heap_safe_iterator& make_heap_safe(const heap_safe_iterator& it) const {
-			return it;
-		}
-
-		// const const_heap_safe_iterator& make_heap_safe(const const_heap_safe_iterator& it) const {
-		// 	return it;
-		// }
-
+		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
+		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     protected:
 		const base_type& toBase() const noexcept { return *this; }
+		const_iterator_base toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
 
         iterator makeIt(base_iterator it) const {
 			return iterator::fromBase(it);
@@ -261,10 +248,6 @@ namespace safe_memory
 
         eastl::pair<iterator, bool> makeIt(eastl::pair<base_iterator, bool> r) const {
             return eastl::pair<iterator, bool>(makeIt(r.first), r.second);
-        }
-
-        const typename base_type::bucket_array_type& GetHeapPtr() const {
-            return base_type::mpBucketArray;
         }
 	}; // unordered_set
 
@@ -452,48 +435,28 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		using base_type::validate_iterator;
+		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		//TODO: custom validation for safe iterators
+		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
+		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
-		// bool validate() const;
-		// iterator_validity  validate_iterator(const_iterator i) const;
+		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
+		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
 
-		bool operator==(const this_type& other) const {
-			return eastl::operator==(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
-		}
-
-		bool operator!=(const this_type& other) const {
-			return eastl::operator!=(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
-		}
-
-
-		heap_safe_iterator make_heap_safe(const stack_only_iterator& it) const {
-			return heap_safe_iterator::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
-		}
-
-		// const_heap_safe_iterator make_heap_safe(const const_stack_only_iterator& it) const {
-		// 	return const_heap_safe_iterator::makeIt(allocator_type::to_soft(it.getNodePtr()), GetHeapPtr(), it.getBucketIt());
-		// }
-
-		const heap_safe_iterator& make_heap_safe(const heap_safe_iterator& it) const {
-			return it;
-		}
-
-		// const const_heap_safe_iterator& make_heap_safe(const const_heap_safe_iterator& it) const {
-		// 	return it;
-		// }
-
+		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
+		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     private:
+		const base_type& toBase() const noexcept { return *this; }
+		const_iterator_base toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
+
         iterator makeIt(base_iterator it) const {
 			return iterator::fromBase(it);
         }
 
         eastl::pair<iterator, bool> makeIt(eastl::pair<base_iterator, bool> r) const {
             return eastl::pair<iterator, bool>(makeIt(r.first), r.second);
-        }
-
-        const typename base_type::bucket_array_type& GetHeapPtr() const {
-            return base_type::mpBucketArray;
         }
 	}; // unordered_multiset
 

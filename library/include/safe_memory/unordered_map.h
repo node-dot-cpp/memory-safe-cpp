@@ -308,14 +308,13 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		using base_type::validate_iterator;
-
-		// bool validate() const;
-		// iterator_validity  validate_iterator(const_iterator i) const;
+		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		//TODO: custom validation for safe iterators
+		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
+		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
 		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
 		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
-
 
 		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
 		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
@@ -723,18 +722,13 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		using base_type::validate_iterator;
+		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		//TODO: custom validation for safe iterators
+		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
+		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
-		// bool validate() const;
-		// iterator_validity  validate_iterator(const_iterator i) const;
-
-		bool operator==(const this_type& other) const {
-			return eastl::operator==(this->toBase(), other.toBase());
-		}
-
-		bool operator!=(const this_type& other) const {
-			return eastl::operator!=(this->toBase(), other.toBase());
-		}
+		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
+		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
 
 		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
 		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
