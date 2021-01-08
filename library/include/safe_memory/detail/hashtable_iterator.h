@@ -94,7 +94,7 @@ namespace safe_memory::detail {
 				return this_type();//empty hashtable
 
 
-			auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz); 
+			auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz);
 			auto safe_node = allocator_type::to_soft(it.get_node()); 
 			return this_type(safe_node, safe_it);
         }
@@ -139,7 +139,7 @@ namespace safe_memory::detail {
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(allocator_type::to_raw(mpNode), mpBucket.getRaw());
+			return BaseIt(allocator_type::to_zero(mpNode), mpBucket.getRaw());
 		}
 	}; // hashtable_heap_safe_iterator
 

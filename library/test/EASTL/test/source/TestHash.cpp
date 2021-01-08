@@ -29,7 +29,7 @@ using safe_memory::unordered_set;
 using safe_memory::unordered_multiset;
 //using safe_memory::unordered_set;
 //using safe_memory::unordered_multiset;
-using safe_memory::detail::iterator_validity;
+// using safe_memory::detail::iterator_validity;
 
 
 namespace std

@@ -86,9 +86,9 @@ namespace safe_memory
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
 		typedef eastl::pair<iterator, bool>                                                             insert_return_type;
 
-		typedef heap_safe_iterator                iterator_safe;
-		typedef const_heap_safe_iterator    const_iterator_safe;
-		typedef eastl::pair<iterator_safe, bool>                                                        insert_return_type_safe;
+		typedef heap_safe_iterator                                                    iterator_safe;
+		typedef const_heap_safe_iterator                                              const_iterator_safe;
+		typedef eastl::pair<iterator_safe, bool>                                      insert_return_type_safe;
 
 
 	public:
@@ -165,18 +165,23 @@ namespace safe_memory
         }
 
 		template <class... Args>
+		iterator_safe emplace_hint_safe(const const_iterator_safe& hint, Args&&... args) {
+            return makeSafeIt(base_type::emplace_hint(toBase(hint), std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
         insert_return_type try_emplace(const key_type& k, Args&&... args) {
             return makeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
-        insert_return_type try_emplace(key_type&& k, Args&&... args) {
-            return makeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
+        insert_return_type_safe try_emplace_safe(const key_type& k, Args&&... args) {
+            return makeSafeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
-        insert_return_type_safe try_emplace_safe(const key_type& k, Args&&... args) {
-            return makeSafeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
+        insert_return_type try_emplace(key_type&& k, Args&&... args) {
+            return makeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
@@ -189,21 +194,31 @@ namespace safe_memory
             return makeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
         }
 
+		template <class... Args> 
+        iterator_safe try_emplace_safe(const const_iterator_safe& hint, const key_type& k, Args&&... args) {
+            return makeSafeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
+        }
+
 		template <class... Args>
         iterator try_emplace(const const_iterator& hint, key_type&& k, Args&&... args) {
             return makeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
+        iterator_safe try_emplace_safe(const const_iterator_safe& hint, key_type&& k, Args&&... args) {
+            return makeSafeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
         }
 
 		insert_return_type insert(const value_type& value) {
             return makeIt(base_type::insert(value));
         }
 
-		insert_return_type insert(value_type&& value) {
-            return makeIt(base_type::insert(std::move(value)));
-        }
-
 		insert_return_type_safe insert_safe(const value_type& value) {
             return makeSafeIt(base_type::insert(value));
+        }
+
+		insert_return_type insert(value_type&& value) {
+            return makeIt(base_type::insert(std::move(value)));
         }
 
 		insert_return_type_safe insert_safe(value_type&& value) {
@@ -214,7 +229,15 @@ namespace safe_memory
             return makeIt(base_type::insert(toBase(hint), value));
         }
 
+		iterator_safe insert_safe(const const_iterator_safe& hint, const value_type& value) {
+            return makeSafeIt(base_type::insert(toBase(hint), value));
+        }
+
 		iterator insert(const const_iterator& hint, value_type&& value) {
+            return makeIt(base_type::insert(toBase(hint), std::move(value)));
+        }
+
+		iterator_safe insert_safe(const const_iterator_safe& hint, value_type&& value) {
             return makeIt(base_type::insert(toBase(hint), std::move(value)));
         }
 
@@ -233,13 +256,13 @@ namespace safe_memory
         }
 
 		template <class M>
-        insert_return_type insert_or_assign(key_type&& k, M&& obj) {
-            return makeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
+        insert_return_type_safe insert_or_assign_safe(const key_type& k, M&& obj) {
+            return makeSafeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
         }
 
 		template <class M>
-        insert_return_type_safe insert_or_assign_safe(const key_type& k, M&& obj) {
-            return makeSafeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
+        insert_return_type insert_or_assign(key_type&& k, M&& obj) {
+            return makeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
@@ -253,20 +276,30 @@ namespace safe_memory
         }
 
 		template <class M>
+        iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, const key_type& k, M&& obj) {
+            return makeSafeIt(base_type::insert_or_assign(toBase(hint), k, std::forward<M>(obj)));
+        }
+
+		template <class M>
         iterator insert_or_assign(const const_iterator& hint, key_type&& k, M&& obj) {
             return makeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
+        }
+
+		template <class M>
+        iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, key_type&& k, M&& obj) {
+            return makeSafeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
         }
 
 		iterator erase(const const_iterator& position) {
             return makeIt(base_type::erase(toBase(position)));
         }
 
-		iterator erase(const const_iterator& first, const const_iterator& last) {
-            return makeIt(base_type::erase(toBase(first), toBase(last)));
-        }
-
 		iterator_safe erase_safe(const const_iterator_safe& position) {
             return makeSafeIt(base_type::erase(toBase(position)));
+        }
+
+		iterator erase(const const_iterator& first, const const_iterator& last) {
+            return makeIt(base_type::erase(toBase(first), toBase(last)));
         }
 
 		iterator_safe erase_safe(const const_iterator_safe& first, const const_iterator_safe& last) {
@@ -280,9 +313,9 @@ namespace safe_memory
         using base_type::reserve;
 
 		iterator       find(const key_type& key) { return makeIt(base_type::find(key)); }
-		const_iterator find(const key_type& key) const { return makeIt(base_type::find(key)); }
-
 		iterator_safe       find_safe(const key_type& key) { return makeSafeIt(base_type::find(key)); }
+
+		const_iterator find(const key_type& key) const { return makeIt(base_type::find(key)); }
 		const_iterator_safe find_safe(const key_type& key) const { return makeSafeIt(base_type::find(key)); }
 
         using base_type::count;
@@ -292,14 +325,14 @@ namespace safe_memory
             return { makeIt(p.first), makeIt(p.second) };
         }
 
-		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
-            auto p = base_type::equal_range(k);
-            return { makeIt(p.first), makeIt(p.second) };
-        }
-
 		eastl::pair<iterator_safe, iterator_safe> equal_range_safe(const key_type& k) {
             auto p = base_type::equal_range(k);
             return { makeSafeIt(p.first), makeSafeIt(p.second) };
+        }
+
+		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
+            auto p = base_type::equal_range(k);
+            return { makeIt(p.first), makeIt(p.second) };
         }
 
 		eastl::pair<const_iterator_safe, const_iterator_safe> equal_range_safe(const key_type& k) const {
@@ -437,13 +470,13 @@ namespace safe_memory
 
 		template <class... Args>
 		insert_return_type emplace(Args&&... args) {
-            return base_type::emplace_safe(std::forward<Args>(args)...);
-        }
+			return base_type::emplace_safe(std::forward<Args>(args)...);
+		}
 
-		// template <class... Args>
-		// iterator emplace_hint(const_iterator hint, Args&&... args) {
-        //     return makeIt(base_type::emplace_hint(hint.toBase(), std::forward<Args>(args)...));
-        // }
+		template <class... Args>
+		iterator emplace_hint(const_iterator hint, Args&&... args) {
+            return base_type::emplace_hint_safe(hint, std::forward<Args>(args)...);
+        }
 
 		template <class... Args>
         insert_return_type try_emplace(const key_type& k, Args&&... args) {
@@ -455,15 +488,15 @@ namespace safe_memory
             return base_type::try_emplace_safe(std::move(k), std::forward<Args>(args)...);
         }
 
-		// template <class... Args> 
-        // iterator try_emplace(const_iterator hint, const key_type& k, Args&&... args) {
-        //     return makeIt(base_type::try_emplace(hint.toBase(), k, std::forward<Args>(args)...));
-        // }
+		template <class... Args> 
+        iterator try_emplace(const_iterator hint, const key_type& k, Args&&... args) {
+            return base_type::try_emplace_safe(hint, k, std::forward<Args>(args)...);
+        }
 
-		// template <class... Args>
-        // iterator try_emplace(const_iterator hint, key_type&& k, Args&&... args) {
-        //     return makeIt(base_type::try_emplace(hint.toBase(), std::move(k), std::forward<Args>(args)...));
-        // }
+		template <class... Args>
+        iterator try_emplace(const_iterator hint, key_type&& k, Args&&... args) {
+            return base_type::try_emplace_safe(hint, std::move(k), std::forward<Args>(args)...);
+        }
 
 		insert_return_type insert(const value_type& value) {
             return base_type::insert_safe(value);
@@ -473,13 +506,13 @@ namespace safe_memory
             return base_type::insert_safe(std::move(value));
         }
 
-		// iterator insert(const_iterator hint, const value_type& value) {
-        //     return makeIt(base_type::insert(hint.toBase(), value));
-        // }
+		iterator insert(const_iterator hint, const value_type& value) {
+            return base_type::insert_safe(hint, value);
+        }
 
-		// iterator insert(const_iterator hint, value_type&& value) {
-        //     return makeIt(base_type::insert(hint.toBase(), std::move(value)));
-        // }
+		iterator insert(const_iterator hint, value_type&& value) {
+            return base_type::insert_safe(hint, std::move(value));
+        }
 
 		void insert(std::initializer_list<value_type> ilist) { base_type::insert(ilist); }
 
@@ -498,15 +531,15 @@ namespace safe_memory
             return base_type::insert_or_assign_safe(std::move(k), std::forward<M>(obj));
         }
 
-		// template <class M>
-        // iterator insert_or_assign(const_iterator hint, const key_type& k, M&& obj) {
-        //     return makeIt(base_type::insert_or_assign(hint.toBase(), k, std::forward<M>(obj)));
-        // }
+		template <class M>
+        iterator insert_or_assign(const_iterator hint, const key_type& k, M&& obj) {
+            return base_type::insert_or_assign_safe(hint, k, std::forward<M>(obj));
+        }
 
-		// template <class M>
-        // iterator insert_or_assign(const_iterator hint, key_type&& k, M&& obj) {
-        //     return makeIt(base_type::insert_or_assign(hint.toBase(), std::move(k), std::forward<M>(obj)));
-        // }
+		template <class M>
+        iterator insert_or_assign(const_iterator hint, key_type&& k, M&& obj) {
+            return base_type::insert_or_assign_safe(hint, std::move(k), std::forward<M>(obj));
+        }
 
 		iterator erase(const_iterator position) { return base_type::erase_safe(position); }
 		iterator erase(const_iterator first, const_iterator last) { return base_type::erase_safe(first, last); }

@@ -718,8 +718,8 @@ int TEST_STRING_NAME()
 		StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
 
 		auto pLiteral = LITERAL("0123456789");
-		auto pBegin = StringType::toCstr(pLiteral) + 4;
-		auto pEnd = StringType::toCstr(pLiteral) + 7;
+		auto pBegin = pLiteral + 4;
+		auto pEnd = pLiteral + 7;
 
 		str.assign_unsafe(pBegin, pEnd);
 
@@ -1178,7 +1178,7 @@ int TEST_STRING_NAME()
 		typename StringType::value_type* pData = str.data();
 
 		VERIFY(pData != nullptr);
-		VERIFY(EA::StdC::Memcmp(pData, StringType::toCstr(LITERAL("abcdefghijklmnopqrstuvwxyz")), str.size()) == 0);
+		VERIFY(EA::StdC::Memcmp(pData, LITERAL("abcdefghijklmnopqrstuvwxyz"), str.size()) == 0);
 	}
 
 	// reference       operator[](size_type n);

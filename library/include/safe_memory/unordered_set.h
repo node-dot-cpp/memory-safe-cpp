@@ -67,9 +67,15 @@ namespace safe_memory
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, allocator_type>  const_stack_only_iterator;
 
-		typedef stack_only_iterator                              iterator;
-		typedef const_stack_only_iterator                  const_iterator;
+		// TODO: add 'use_base_iterator'
+
+		typedef stack_only_iterator                                               iterator;
+		typedef const_stack_only_iterator                                         const_iterator;
 		typedef eastl::pair<iterator, bool>                                       insert_return_type;
+
+		typedef heap_safe_iterator                                                iterator_safe;
+		typedef const_heap_safe_iterator                                          const_iterator_safe;
+		typedef eastl::pair<iterator_safe, bool>                                  insert_return_type_safe;
 
 	public:
 		explicit unordered_set(): base_type(allocator_type()) {}
@@ -226,7 +232,7 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		int validate_iterator(const_base_iterator it) const noexcept { return base_type::validate_iterator(it); }
 		//TODO: custom validation for safe iterators
 		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
@@ -234,13 +240,13 @@ namespace safe_memory
 		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
 		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
 
-		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
-		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
+		// iterator_safe make_safe(const iterator& it) {	return makeSafeIt(toBase(it)); }
+		// const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     protected:
 		const base_type& toBase() const noexcept { return *this; }
-		const_iterator_base toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
-		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
+		const_base_iterator toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		const_base_iterator toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
 
         iterator makeIt(base_iterator it) const {
 			return iterator::fromBase(it);
@@ -276,9 +282,15 @@ namespace safe_memory
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, allocator_type>  const_stack_only_iterator;
 
-		typedef stack_only_iterator                              iterator;
-		typedef const_stack_only_iterator                  const_iterator;
+		// TODO: add 'use_base_iterator'
+
+		typedef stack_only_iterator                                               iterator;
+		typedef const_stack_only_iterator                                         const_iterator;
 		typedef iterator                                                          insert_return_type;
+
+		typedef heap_safe_iterator                                                iterator_safe;
+		typedef const_heap_safe_iterator                                          const_iterator_safe;
+		typedef iterator_safe                                                     insert_return_type_safe;
 
 	public:
 		explicit unordered_multiset(): base_type(allocator_type()) {}
@@ -435,7 +447,7 @@ namespace safe_memory
         }
 
 		using base_type::validate;
-		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
+		int validate_iterator(const_base_iterator it) const noexcept { return base_type::validate_iterator(it); }
 		//TODO: custom validation for safe iterators
 		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
@@ -443,13 +455,13 @@ namespace safe_memory
 		bool operator==(const this_type& other) const { return eastl::operator==(this->toBase(), other.toBase()); }
 		bool operator!=(const this_type& other) const {	return eastl::operator!=(this->toBase(), other.toBase()); }
 
-		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
-		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
+		// iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
+		// const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     private:
 		const base_type& toBase() const noexcept { return *this; }
-		const_iterator_base toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
-		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
+		const_base_iterator toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		const_base_iterator toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
 
         iterator makeIt(base_iterator it) const {
 			return iterator::fromBase(it);

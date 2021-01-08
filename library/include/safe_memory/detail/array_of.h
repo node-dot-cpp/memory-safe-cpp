@@ -200,35 +200,50 @@ protected:
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
 
+	template<bool IsStr>
+	static void extraSanityCheck(array_pointer arr, size_t ix, size_t sz) {
+
+		if constexpr (true) {
+			// ix must be equal or lower than sz
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= sz);
+
+			if(!arr) {
+				// if arr is null, then ix and sz must be zero
+				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix == 0);
+				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, sz == 0);
+			}
+			else if constexpr (!is_raw_pointer) {
+				if constexpr (IsStr)
+					++sz; // string has one extra element to store '\0'
+
+				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->begin() + sz == arr->end());
+			}
+		}
+	}
+
 public:
 	/// default ctor must always be available for iterators
 	array_of_iterator() {}
 
 	/// static factory methods are unsafe but static checker tool will keep user hands away
 	static this_type makeIx(array_pointer arr, size_t ix, size_t sz) {
-		if constexpr (!is_raw_pointer) {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz : true);
-		}
 
+		extraSanityCheck<false>(arr, ix, sz);
 		return this_type(arr, ix, sz);
 	}
 
 	/// At basic_string, iterable size is one less than array capacity because of ending null '\0'
 	static this_type makeIxForString(array_pointer arr, size_t ix, size_t sz) {
-		if constexpr (!is_raw_pointer) {
-			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr ? arr->capacity() == sz + 1 : true);
-		}
 
+		extraSanityCheck<true>(arr, ix, sz);
 		return this_type(arr, ix, sz);
 	}
 
 	static size_t getIndex(array_pointer arr, pointer to) {
-		if constexpr (is_raw_pointer) {
+		if constexpr (is_raw_pointer)
 			return static_cast<size_t>(to - arr);
-		}
-		else {
-			return arr ? arr->get_index(to) : 0;
-		}
+		else 
+			return arr ? static_cast<size_t>(to - arr->begin()) : 0;
 	}
 
 	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
@@ -264,9 +279,9 @@ public:
 	reference operator*() const {
 		if(NODECPP_LIKELY(arr && ix < sz)) {
 			if constexpr(is_raw_pointer)
-				return arr[ix];
+				return *(arr + ix);
 			else
-				return *(arr->get_raw_ptr(ix));
+				return *(arr->begin() + ix);
 		}
 		else
 			throwRangeException("array_of_iterator::operator*");
@@ -277,7 +292,7 @@ public:
 			if constexpr (is_raw_pointer)
 				return arr + ix;
 			else
-				return arr->get_raw_ptr(ix);
+				return arr->begin() + ix;
 		}
 		else
 			throwRangeException("array_of_iterator::operator->");
@@ -337,9 +352,9 @@ public:
 		size_t tmp = ix + n;
 		if(NODECPP_LIKELY(arr && tmp < sz)) {
 			if constexpr (is_raw_pointer)
-				return arr[tmp];
+				return *(arr + tmp);
 			else
-				return *(arr->get_raw_ptr(tmp));
+				return *(arr->begin() + tmp);
 		}
 		else
 			throwRangeException("array_of_iterator::operator[]");
@@ -435,12 +450,11 @@ public:
 			throwRangeException("array_of_iterator::toRaw");
 	}
 
-private:
 	pointer getRaw() const {
 		if constexpr (is_raw_pointer)
 			return arr + ix;
 		else
-			return arr ? arr->get_raw_ptr(ix) : nullptr;
+			return arr ? arr->begin() + ix : nullptr;
 	}
 
 	pointer getRawBegin() const {
