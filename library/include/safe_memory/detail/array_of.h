@@ -28,10 +28,9 @@
 #ifndef SAFE_MEMORY_DETAIL_ARRAY_OF
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
-namespace safe_memory::detail {
+#include <safe_memory/safe_ptr_common.h>
 
-using nodecpp::safememory::memory_safety;
-using nodecpp::safememory::module_id;
+namespace safe_memory::detail {
 
 /** 
  * \brief Helper class for allocation of arrays.
@@ -168,16 +167,16 @@ struct safety_helper<T*> {
  * 
  */
 
-template <typename T, bool bConst, typename ArrPtr>
+template <typename T, bool bConst, typename ArrPtr, bool bSafe>
 class array_of_iterator
 {
 protected:
-	typedef array_of_iterator<T, bConst, ArrPtr>	this_type;
-	typedef ArrPtr									array_pointer;
+	typedef array_of_iterator<T, bConst, ArrPtr, bSafe>	this_type;
+	typedef ArrPtr									        array_pointer;
 	static constexpr bool is_raw_pointer = std::is_pointer<array_pointer>::value;
 
 	// for non-const to const conversion
-	template<typename, bool, typename>
+	template<typename, bool, typename, bool>
 	friend class array_of_iterator;
 
 public:
@@ -188,6 +187,7 @@ public:
 	typedef value_type&									reference;
 
 	static constexpr memory_safety is_safe = safety_helper<array_pointer>::is_safe;
+	static constexpr bool is_heap_safe = bSafe;
 
 protected:
 	array_pointer  arr = nullptr;
@@ -264,12 +264,12 @@ public:
 
 	/// allow non-const to const constructor
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator(const array_of_iterator<T, B, ArrPtr>& ri)
+	array_of_iterator(const array_of_iterator<T, B, ArrPtr, bSafe>& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
 	/// allow non-const to const assignment
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator& operator=(const array_of_iterator<T, B, ArrPtr>& ri) {
+	array_of_iterator& operator=(const array_of_iterator<T, B, ArrPtr, bSafe>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
@@ -466,17 +466,17 @@ public:
 
 };
 
-template <typename T, bool b, typename ArrPtr>
-typename array_of_iterator<T, b, ArrPtr>::difference_type distance(const array_of_iterator<T, b, ArrPtr>& l, const array_of_iterator<T, b, ArrPtr>& r) {
+template <typename T, bool bC, typename ArrPtr, bool bS>
+typename array_of_iterator<T, bC, ArrPtr, bS>::difference_type distance(const array_of_iterator<T, bC, ArrPtr, bS>& l, const array_of_iterator<T, bC, ArrPtr, bS>& r) {
 	return r - l;
 }
 
 
 template <typename T>
-using array_of_iterator_stack = array_of_iterator<T, false, T*>;
+using array_of_iterator_stack = array_of_iterator<T, false, T*, false>;
 
 template <typename T>
-using const_array_of_iterator_stack = array_of_iterator<T, true, T*>;
+using const_array_of_iterator_stack = array_of_iterator<T, true, T*, false>;
 
 } // namespace safe_memory::detail 
 

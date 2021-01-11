@@ -181,14 +181,14 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 
 template<typename T, memory_safety Safety>
 using array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_iterator<T, false, soft_ptr_impl<array_of<T>>>,
-			array_of_iterator<T, false, soft_ptr_no_checks<array_of<T>>>
+			array_of_iterator<T, false, soft_ptr_impl<array_of<T>>, true>,
+			array_of_iterator<T, false, soft_ptr_no_checks<array_of<T>>, true>
 			>;
 
 template<typename T, memory_safety Safety>
 using const_array_of_iterator_heap = std::conditional_t<Safety == memory_safety::safe,
-			array_of_iterator<T, true, soft_ptr_impl<array_of<T>>>,
-			array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>>
+			array_of_iterator<T, true, soft_ptr_impl<array_of<T>>, true>,
+			array_of_iterator<T, true, soft_ptr_no_checks<array_of<T>>, true>
 			>;
 
 // two special values used inside eastl::hashtable
