@@ -84,9 +84,6 @@ namespace safe_memory
 		typedef typename detail::array_of_iterator_heap<T, Safety>         heap_safe_iterator;
 		typedef typename detail::const_array_of_iterator_heap<T, Safety>   const_heap_safe_iterator;
 
-		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
-		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
-		// down the line 
 		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
@@ -104,9 +101,6 @@ namespace safe_memory
 		// TODO improve when pass by-ref and when by-value
 		typedef std::conditional_t<use_base_iterator, const_iterator, const const_iterator&>           const_iterator_arg;
 		
-		// TODO review if use std::pair or eastl::pair
-		typedef std::pair<const_iterator_base, const_iterator_base>                                    const_iterator_base_pair;
-
 
 		using base_type::npos;
 		static constexpr memory_safety is_safe = Safety;
@@ -350,8 +344,8 @@ namespace safe_memory
 		// Safety == none
 		iterator_base toBase(iterator_base it) const { return it; }
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
-		const_iterator_base_pair toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
-		const_iterator_base_pair toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		eastl::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
 		
 		// Safety == safe
 		iterator_base toBase(const stack_only_iterator& it) const {
@@ -362,11 +356,11 @@ namespace safe_memory
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
-		const_iterator_base_pair toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
+		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
-		const_iterator_base_pair toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
+		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRawOther(it2);
 		}
 
@@ -378,11 +372,11 @@ namespace safe_memory
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
-		const_iterator_base_pair toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
+		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
-		const_iterator_base_pair toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
+		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
 			return it.toRawOther(it2);
 		}
 
@@ -391,14 +385,14 @@ namespace safe_memory
 			if constexpr (use_base_iterator)
 				return it;
 			else {
-				return iterator::makePtr(base_type::begin(), it, base_type::capacity());
+				return iterator::makePtr(base_type::data(), it, base_type::capacity());
 			}
 		}
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<T*>(base_type::begin()), it, base_type::capacity());
+				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, base_type::capacity());
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -667,9 +661,6 @@ namespace safe_memory
 
 		typedef const const_iterator&                                    	const_iterator_arg;
 		
-		// typedef std::pair<const_iterator_base, const_iterator_base>				const_iterator_base_pair;
-
-
 		using base_type::npos;
 		static constexpr memory_safety is_safe = Safety;
 

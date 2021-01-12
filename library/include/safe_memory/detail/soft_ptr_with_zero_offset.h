@@ -234,7 +234,7 @@ public:
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->data() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
@@ -352,7 +352,7 @@ public:
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->begin() : nullptr; }
+	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->data() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();

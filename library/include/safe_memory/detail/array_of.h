@@ -28,6 +28,7 @@
 #ifndef SAFE_MEMORY_DETAIL_ARRAY_OF
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
+#include <EASTL/utility.h>
 #include <safe_memory/safe_ptr_common.h>
 
 namespace safe_memory::detail {
@@ -46,12 +47,13 @@ template<class T>
 struct array_of
 {
 	typedef array_of<T> this_type;
+	typedef size_t      size_type;
 
-	size_t _capacity = 0;
+	size_type _capacity = 0;
 	alignas(T) char _begin;
 
 public:
-	array_of(size_t capacity) :_capacity(capacity) {}
+	array_of(size_type capacity) :_capacity(capacity) {}
 
 	array_of(const array_of&) = delete;
 	array_of(array_of&&) = delete;
@@ -61,27 +63,16 @@ public:
 
 	// ~array_of() {}
 
-	///unsafe function, allow returning a non-derefenceable pointer as end()
-	T* get_raw_ptr(size_t ix) {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= _capacity);
-		return begin() + ix;
-	}
+	constexpr bool empty() const noexcept { return _capacity == 0; }
+	constexpr size_type size() const noexcept { return _capacity; }
+	constexpr size_type max_size() const noexcept { return _capacity; }
 
-	///unsafe function, ptr should have been validated
-	size_t get_index(const T* ptr) const {
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, begin() <= ptr);
-		NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, static_cast<size_t>(ptr - begin()) <= capacity());
-		return static_cast<size_t>(ptr - begin());
-	}
+	constexpr T* data() noexcept { return reinterpret_cast<T*>(&_begin); }
+	constexpr const T* data() const noexcept { return reinterpret_cast<const T*>(&_begin); }
 
-	size_t capacity() const { return _capacity; }
-	T* begin() const { return const_cast<T*>(reinterpret_cast<const T*>(&_begin)); }
-	T* end() const { return begin() + capacity(); }
-
-	static
-	size_t calculateSize(size_t size) {
+	static size_type calculateSize(size_type size) {
 		// TODO here we should fine tune the sizes of array_of<T> 
-		return sizeof(this_type) + (sizeof(T) * size);
+		return static_cast<size_type>(sizeof(this_type) + (sizeof(T) * size));
 	}
 };
 
@@ -96,11 +87,12 @@ public:
 template<size_t SZ, class T>
 struct fixed_array_of : public array_of<T>
 {
+	/// we never use this array, is only here to reserve enought memory
 	char buff[sizeof(T) * SZ];
 
 public:
 	fixed_array_of(std::initializer_list<T> init) :array_of<T>(SZ) {
-		auto jt = array_of<T>::begin();
+		auto jt = array_of<T>::data();
 		auto it = init.begin();
 		while(it != init.end()) {
 			*jt = *it;
@@ -144,9 +136,7 @@ struct safety_helper<T*> {
  * Current implementation uses a \c begin pointer and two indexes, but implementation with
  * Three pointers is also posible.
  * 
- * Also at current implementation, when we try to increment/decrement iterator
- * outside its boundaries, it stays in a range [0, end] and doesn't throw.
- * At dereference we throw if iterator is at end.
+ * Also at current implementation, we throw if iterator is at end or outside range.
  * 
  * 
  * This class is currently used in two different scenarios.
@@ -183,25 +173,28 @@ public:
 	typedef std::random_access_iterator_tag  			iterator_category;
 	typedef std::conditional_t<bConst, const T, T>		value_type;
 	typedef ptrdiff_t			                    	difference_type;
+	typedef size_t                                      size_type;
 	typedef value_type*									pointer;
 	typedef value_type&									reference;
 
-	static constexpr memory_safety is_safe = safety_helper<array_pointer>::is_safe;
+	// currently we always enforce checks, regardless of container safety switch
+	static constexpr memory_safety is_safe = memory_safety::safe;
 	static constexpr bool is_heap_safe = bSafe;
+	static constexpr bool is_stack_only = !bSafe;
 
 protected:
 	array_pointer  arr = nullptr;
-	size_t ix = 0;
-	size_t sz = 0;
+	size_type ix = 0;
+	size_type sz = 0;
 
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	array_of_iterator(array_pointer arr, size_t ix, size_t sz)
+	array_of_iterator(array_pointer arr, size_type ix, size_type sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
+	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
-	template<bool IsStr>
-	static void extraSanityCheck(array_pointer arr, size_t ix, size_t sz) {
+	static void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
 
 		if constexpr (true) {
 			// ix must be equal or lower than sz
@@ -213,10 +206,8 @@ protected:
 				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, sz == 0);
 			}
 			else if constexpr (!is_raw_pointer) {
-				if constexpr (IsStr)
-					++sz; // string has one extra element to store '\0'
-
-				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, arr->begin() + sz == arr->end());
+				// allow to create an iterator that reaches only part of the array
+				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, sz <= arr->size());
 			}
 		}
 	}
@@ -226,34 +217,22 @@ public:
 	array_of_iterator() {}
 
 	/// static factory methods are unsafe but static checker tool will keep user hands away
-	static this_type makeIx(array_pointer arr, size_t ix, size_t sz) {
+	static this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
 
-		extraSanityCheck<false>(arr, ix, sz);
+		extraSanityCheck(arr, ix, sz);
 		return this_type(arr, ix, sz);
 	}
 
-	/// At basic_string, iterable size is one less than array capacity because of ending null '\0'
-	static this_type makeIxForString(array_pointer arr, size_t ix, size_t sz) {
-
-		extraSanityCheck<true>(arr, ix, sz);
-		return this_type(arr, ix, sz);
-	}
-
-	static size_t getIndex(array_pointer arr, pointer to) {
+	static size_type getIndex(array_pointer arr, pointer to) {
 		if constexpr (is_raw_pointer)
-			return static_cast<size_t>(to - arr);
+			return static_cast<size_type>(to - arr);
 		else 
-			return arr ? static_cast<size_t>(to - arr->begin()) : 0;
+			return arr ? static_cast<size_type>(to - arr->data()) : 0;
 	}
 
-	static this_type makePtr(array_pointer arr, pointer to, size_t sz) {
+	static this_type makePtr(array_pointer arr, pointer to, size_type sz) {
 
 		return makeIx(arr, getIndex(arr, to), sz);
-	}
-
-	static this_type makePtrForString(array_pointer arr, pointer to, size_t sz) {
-
-		return makeIxForString(arr, getIndex(arr, to), sz);
 	}
 
 	array_of_iterator(const array_of_iterator& ri) = default;
@@ -277,97 +256,72 @@ public:
 	}
 
 	reference operator*() const {
-		if(NODECPP_LIKELY(arr && ix < sz)) {
-			if constexpr(is_raw_pointer)
-				return *(arr + ix);
-			else
-				return *(arr->begin() + ix);
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
+				throwRangeException("array_of_iterator::operator*");
 		}
+
+		if constexpr(is_raw_pointer)
+			return *(arr + ix);
 		else
-			throwRangeException("array_of_iterator::operator*");
+			return *(arr->data() + ix);
 	}
 
 	pointer operator->() const {
-		if(NODECPP_LIKELY(arr && ix < sz)) {
-			if constexpr (is_raw_pointer)
-				return arr + ix;
-			else
-				return arr->begin() + ix;
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
+				throwRangeException("array_of_iterator::operator->");
 		}
+
+		if constexpr (is_raw_pointer)
+			return arr + ix;
 		else
-			throwRangeException("array_of_iterator::operator->");
+			return arr->data() + ix;
 	}
 
-	this_type& operator++() noexcept {
-		if(ix < sz)
-			++ix;
-		return *this;
-	}
+	this_type& operator++() noexcept { ++ix; return *this; }
+	this_type& operator--() noexcept { --ix; return *this; }
 
-	this_type operator++(int) noexcept {
-		this_type ri(*this);
-		operator++();
-		return ri;
-	}
+	this_type operator++(int) noexcept { this_type ri(*this); ++ix; return ri; }
+	this_type operator--(int) noexcept { this_type ri(*this); --ix; return ri; }
 
-	this_type& operator--() noexcept {
-		if(0 < ix)
-			--ix;
-		return *this;
-	}
+	this_type operator+(difference_type n) const noexcept {	return this_type(arr, ix + n, sz);	}
+	this_type operator-(difference_type n) const noexcept {	return this_type(arr, ix - n, sz); }
 
-	this_type operator--(int) noexcept {
-		this_type ri(*this);
-		operator--();
-		return ri;
-	}
+	this_type& operator+=(difference_type n) noexcept {	ix += n; return *this; }
+	this_type& operator-=(difference_type n) noexcept { ix -= n; return *this; }
 
-	this_type operator+(difference_type n) const noexcept {
-		return this_type(arr, std::min(ix + n, sz), sz);
-	}
+	reference operator[](difference_type n) const {
+		
+		size_type tmp = ix + n;
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!arr || !(tmp < sz)))
+				throwRangeException("array_of_iterator::operator[]");
+		}
 
-	this_type& operator+=(difference_type n) noexcept {
-		ix = std::min(ix + n, sz);
-		return *this;
-	}
-
-	this_type operator-(difference_type n) const noexcept {
-		return this_type(arr, std::min(ix - n, sz), sz);
-	}
-
-	this_type& operator-=(difference_type n) noexcept {
-		ix = std::min(ix - n, sz);
-		return *this;
+		if constexpr (is_raw_pointer)
+			return *(arr + tmp);
+		else
+			return *(arr->data() + tmp);
 	}
 
 	difference_type operator-(const this_type& ri) const noexcept {
-		if(NODECPP_LIKELY(arr == ri.arr))
+
+		// it1 == it2 => it1 - it2 == 0, even for null iterators
+		if(arr == ri.arr)
 			return ix - ri.ix;
 		else
-			throwRangeException("array_of_iterator::operator-");
-	}
-
-
-	reference operator[](difference_type n) const {
-		size_t tmp = ix + n;
-		if(NODECPP_LIKELY(arr && tmp < sz)) {
-			if constexpr (is_raw_pointer)
-				return *(arr + tmp);
-			else
-				return *(arr->begin() + tmp);
-		}
-		else
-			throwRangeException("array_of_iterator::operator[]");
+			ThrowInvalidArgumentException("array_of_iterator::operator-");
 	}
 
 	bool operator==(const this_type& ri) const noexcept {
 
-		if(NODECPP_LIKELY(arr == ri.arr))
+		if(arr == ri.arr)
 			return ix == ri.ix;
 		else if(!arr || !ri.arr)
 			return false;
 		else
-			throwRangeException("array_of_iterator::operator==");
+			ThrowInvalidArgumentException("array_of_iterator::operator==");
 	}
 
 	bool operator!=(const this_type& ri) const noexcept {
@@ -376,10 +330,14 @@ public:
 
 	bool operator<(const this_type& ri) const noexcept {
 
-		if(NODECPP_LIKELY(arr == ri.arr))
+		if(arr == ri.arr)
 			return ix < ri.ix;
+		else if(!arr)
+			return true;
+		else if(!ri.arr)
+			return false;
 		else
-			throwRangeException("array_of_iterator::operator<");
+			ThrowInvalidArgumentException("array_of_iterator::operator<");
 	}
 
 	bool operator>(const this_type& ri) const noexcept {
@@ -417,7 +375,7 @@ public:
 		if (getRawBegin() == begin)
 			return getRaw();
 		else
-			throwRangeException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_of_iterator::toRaw");
 	}
 
 	/**
@@ -428,11 +386,11 @@ public:
 	 * We check that \c this and \p ri both point to the same array than \p begin
 	 * and that the order is correct
 	 */
-	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
+	eastl::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
 		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			throwRangeException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_of_iterator::toRaw");
 	}
 
 	/**
@@ -443,25 +401,25 @@ public:
 	 * In this case we only need to check that both, \c this and \p ri are iterators
 	 * to the same array and that the order is correct.
 	 */
-	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
+	eastl::pair<pointer, pointer> toRawOther(const this_type& ri) const {
 		if (arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			throwRangeException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_of_iterator::toRaw");
 	}
 
 	pointer getRaw() const {
 		if constexpr (is_raw_pointer)
-			return arr + ix;
+			return arr + ix; // arr may be null
 		else
-			return arr ? arr->begin() + ix : nullptr;
+			return arr ? arr->data() + ix : nullptr;
 	}
 
 	pointer getRawBegin() const {
 		if constexpr (is_raw_pointer)
-			return arr;
+			return arr; // arr may be null
 		else
-			return arr ? arr->begin() : nullptr;
+			return arr ? arr->data() : nullptr;
 	}
 
 };

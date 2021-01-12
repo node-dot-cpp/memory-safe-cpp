@@ -69,7 +69,7 @@ using nodecpp::safememory::fbc_ptr_t;
 
 
 
-template<class T, bool zeroed = false>
+template<class T>
 soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 
 	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
@@ -77,15 +77,12 @@ soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 	std::size_t total = head + sizeof(T);
 	void* data = zombieAllocate(total);
 
-	if constexpr (zeroed)
-		std::memset(data, 0, total);
-
 	T* dataForObj = reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(data) + head);
 	
 	auto cb = getControlBlock_(dataForObj);
 	cb->init();
 
-	return {make_zero_offset_t(), dataForObj};
+	return { make_zero_offset_t(), dataForObj };
 }
 
 template<class T, bool zeroed = !std::is_trivial<T>::value>
@@ -109,7 +106,7 @@ soft_ptr_with_zero_offset_impl<array_of<T>> allocate_array_impl(std::size_t coun
 
 	::new ( dataForObj ) array_of<T>(count);
 
-	return {make_zero_offset_t(), dataForObj};
+	return { make_zero_offset_t(), dataForObj };
 }
 
 template<class T>
@@ -130,7 +127,7 @@ void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
 
 	if (p) {
 		array_of<T>* dataForObj = p.get_array_of_ptr();
-		dataForObj->~array_of<T>();
+		dataForObj->~array_of<T>(); // only destruct array here, not elements
 		auto cb = getControlBlock_(dataForObj);
 		cb->template updatePtrForListItemsWithInvalidPtr<array_of<T>>();
 		zombieDeallocate( getAllocatedBlock_(dataForObj) );
@@ -142,20 +139,27 @@ void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
 template<class T>
 soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
 
-	std::size_t sz = sizeof(T);
-	T* dataForObj = reinterpret_cast<T*>(allocate(sz));
+	std::size_t total = sizeof(T);
+	void* data = allocate(total);
+
+	T* dataForObj = reinterpret_cast<T*>(data);
 	
-	return {make_zero_offset_t(), dataForObj};
+	return { make_zero_offset_t(), dataForObj };
 }
 
-template<class T>
+template<class T, bool zeroed>
 soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::size_t count) {
-	// TODO here we should fine tune the sizes of array_of2<T> 
-	std::size_t sz = array_of<T>::calculateSize(count);
-	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(allocate(sz));
+
+	std::size_t total = array_of<T>::calculateSize(count);
+	void* data = allocate(total);
+
+	if constexpr (zeroed)
+		std::memset(data, 0, total);
+
+	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(data);
 	
 	::new ( dataForObj ) array_of<T>(count);
-	return {make_zero_offset_t(), dataForObj};
+	return { make_zero_offset_t(), dataForObj };
 }
 
 template<class T>
@@ -173,7 +177,7 @@ void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>
 
 	if (p) {
 		array_of<T>* dataForObj = p.get_array_of_ptr();
-		dataForObj->~array_of<T>();
+		dataForObj->~array_of<T>(); // only destruct array here, not elements
 		deallocate(dataForObj);
 	}
 }
@@ -229,7 +233,8 @@ public:
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
-		return allocate_array_impl<T>(count);
+		// for non trivial types, always zero memory
+		return allocate_array_impl<T, !std::is_trivial<T>::value>(count);
 	}
 
 	template<class T>
@@ -287,14 +292,12 @@ public:
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
-		return allocate_array_no_checks<T>(count);
+		return allocate_array_no_checks<T, false>(count);
 	}
 
 	template<class T>
 	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
-		auto arr = allocate_array_no_checks<T>(count);
-		memset(arr->begin(), 0, count * sizeof(T));
-		return arr;
+		return allocate_array_no_checks<T, true>(count);
 	}
 
 	template<class T>
