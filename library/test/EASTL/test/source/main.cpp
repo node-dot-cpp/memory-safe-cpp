@@ -89,7 +89,7 @@ int EAMain(int argc, char* argv[])
 	// testSuite.AddTest("Algorithm",				TestAlgorithm);
 	// testSuite.AddTest("Allocator",				TestAllocator);
 	// testSuite.AddTest("Any",				    TestAny);
-	// testSuite.AddTest("Array",					TestArray);
+	testSuite.AddTest("Array",					TestArray);
 	// testSuite.AddTest("BitVector",				TestBitVector);
 	// testSuite.AddTest("Bitset",					TestBitset);
 	// testSuite.AddTest("CharTraits",			    TestCharTraits);

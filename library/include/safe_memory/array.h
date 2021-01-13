@@ -39,6 +39,7 @@
 
 #include <EASTL/internal/config.h>
 #include <EASTL/iterator.h>
+#include <EASTL/algorithm.h>
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/array_of.h>
 
@@ -151,7 +152,7 @@ namespace safe_memory
 
 		constexpr reference       operator[](size_type i) { return at(i); }
 		constexpr const_reference operator[](size_type i) const { return at(i); }
-
+ 
 		constexpr const_reference at(size_type i) const {
 			if constexpr(is_safe == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(i >= size()))
@@ -210,14 +211,15 @@ namespace safe_memory
 			if(i >= mValue)
 			{
 				if(i < (mValue + N))
-					return (isf_valid | isf_current | isf_can_dereference);
+					return (eastl::isf_valid | eastl::isf_current | eastl::isf_can_dereference);
 
 				if(i <= (mValue + N))
-					return (isf_valid | isf_current);
+					return (eastl::isf_valid | eastl::isf_current);
 			}
 
-			return isf_none;
+			return eastl::isf_none;
 		}
+
 		int  validate_iterator(const const_stack_only_iterator& i) const { return validate_iterator(toBase(i)); }
 		int  validate_iterator(const const_heap_safe_iterator& i) const { return validate_iterator(toBase(i)); }
 
@@ -228,6 +230,7 @@ namespace safe_memory
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
 		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
+
 		pointer toBase(pointer it) const { return it; }
 		const_pointer toBase(const_pointer it) const { return it; }
 
@@ -237,13 +240,13 @@ namespace safe_memory
 		pointer toBase(const heap_safe_iterator& it) const { return it.toRaw(begin_unsafe()); }
 		const_pointer toBase(const const_heap_safe_iterator& it) const { return it.toRaw(begin_unsafe()); }
 
-		iterator makeIt(pointer it) {
+		constexpr iterator makeIt(pointer it) {
 			if constexpr (use_base_iterator)
 				return it;
 			else
 				return iterator::makePtr(data(), it, N);
 		}
-		const_iterator makeIt(const_pointer it) const {
+		constexpr const_iterator makeIt(const_pointer it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
@@ -252,7 +255,7 @@ namespace safe_memory
 
 		iterator_safe makeSafeIt(const soft_ptr_this_type& ptr, pointer it) {
 			if constexpr(is_safe == memory_safety::safe) {
-				if(NODECPP_UNLIKELY(ptr != this))
+				if(NODECPP_UNLIKELY(ptr.operator->() != this))
 					ThrowInvalidArgumentException("array::make_safe -- wrong soft_ptr");
 			}
 
@@ -261,7 +264,7 @@ namespace safe_memory
 		
 		const_iterator_safe makeSafeIt(const soft_ptr_this_type& ptr, const_pointer it) const {
 			if constexpr(is_safe == memory_safety::safe) {
-				if(NODECPP_UNLIKELY(ptr != this))
+				if(NODECPP_UNLIKELY(ptr.operator->() != this))
 					ThrowInvalidArgumentException("array::make_safe -- wrong soft_ptr");
 			}
 
@@ -461,13 +464,13 @@ namespace safe_memory
 	namespace detail
 	{
 		template<memory_safety Safety, class T, size_t N, size_t... I>
-		constexpr auto to_array(T (&a)[N], index_sequence<I...>)
+		constexpr auto to_array(T (&a)[N], eastl::index_sequence<I...>)
 		{
 			return safe_memory::array<eastl::remove_cv_t<T>, N, Safety>{{a[I]...}};
 		}
 
 		template<memory_safety Safety, class T, size_t N, size_t... I>
-		constexpr auto to_array(T (&&a)[N], index_sequence<I...>)
+		constexpr auto to_array(T (&&a)[N], eastl::index_sequence<I...>)
 		{
 			return safe_memory::array<eastl::remove_cv_t<T>, N, Safety>{{std::move(a[I])...}};
 		}

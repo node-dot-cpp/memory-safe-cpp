@@ -188,15 +188,15 @@ protected:
 	size_type sz = 0;
 
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	array_of_iterator(array_pointer arr, size_type ix, size_type sz)
+	constexpr array_of_iterator(array_pointer arr, size_type ix, size_type sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
 	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
-	static void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
+	static constexpr void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
 
-		if constexpr (true) {
+		if constexpr (false) {
 			// ix must be equal or lower than sz
 			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= sz);
 
@@ -214,23 +214,23 @@ protected:
 
 public:
 	/// default ctor must always be available for iterators
-	array_of_iterator() {}
+	constexpr array_of_iterator() {}
 
 	/// static factory methods are unsafe but static checker tool will keep user hands away
-	static this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
 
 		extraSanityCheck(arr, ix, sz);
 		return this_type(arr, ix, sz);
 	}
 
-	static size_type getIndex(array_pointer arr, pointer to) {
+	static constexpr size_type getIndex(array_pointer arr, pointer to) {
 		if constexpr (is_raw_pointer)
 			return static_cast<size_type>(to - arr);
 		else 
 			return arr ? static_cast<size_type>(to - arr->data()) : 0;
 	}
 
-	static this_type makePtr(array_pointer arr, pointer to, size_type sz) {
+	static constexpr this_type makePtr(array_pointer arr, pointer to, size_type sz) {
 
 		return makeIx(arr, getIndex(arr, to), sz);
 	}
@@ -291,7 +291,7 @@ public:
 	this_type& operator+=(difference_type n) noexcept {	ix += n; return *this; }
 	this_type& operator-=(difference_type n) noexcept { ix -= n; return *this; }
 
-	reference operator[](difference_type n) const {
+	constexpr reference operator[](difference_type n) const {
 		
 		size_type tmp = ix + n;
 		if constexpr (is_safe == memory_safety::safe) {
