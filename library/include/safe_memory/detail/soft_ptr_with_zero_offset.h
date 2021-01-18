@@ -57,12 +57,7 @@ public:
 	soft_ptr_with_zero_offset_base( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_base& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	void swap( soft_ptr_with_zero_offset_base& other ) noexcept
-	{
-		void* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ eastl::swap(ptr, other.ptr); }
 
 	explicit operator bool() const noexcept { return ptr != nullptr; }
 
@@ -124,11 +119,7 @@ public:
 
 	void reset() noexcept { ptr = nullptr; }
 	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept	{ eastl::swap(ptr, other.ptr); }
 
 	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
 	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
@@ -170,11 +161,7 @@ public:
 
 	void reset() noexcept { ptr = nullptr; }
 	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept { eastl::swap(ptr, other.ptr); }
 
 	bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
 	bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }
@@ -216,11 +203,7 @@ public:
 
 	void reset() noexcept { ptr = nullptr; }
 	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept {
-		array_of<T>* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept { eastl::swap(ptr, other.ptr); }
 
 	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
 	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
@@ -334,11 +317,7 @@ public:
 
 	void reset() noexcept { ptr = nullptr; }
 	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept {
-		array_of<T>* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept { eastl::swap(ptr, other.ptr); }
 
 	bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
 	bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }

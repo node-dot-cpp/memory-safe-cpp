@@ -30,12 +30,11 @@
 
 #include "safe_ptr_common.h"
 
-namespace safe_memory::detail
-{
-	// forward declaration
-	class base_allocator_to_eastl_no_checks;
-	class allocator_to_eastl_vector_no_checks;
-	class allocator_to_eastl_hashtable_no_checks;
+// forward declaration
+namespace safe_memory {
+	namespace detail {
+		class soft_ptr_helper;
+	}
 }
 
 namespace nodecpp::safememory
@@ -254,9 +253,7 @@ class soft_ptr_base_no_checks
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class safe_memory::detail::base_allocator_to_eastl_no_checks;
-	friend class safe_memory::detail::allocator_to_eastl_vector_no_checks;
-	friend class safe_memory::detail::allocator_to_eastl_hashtable_no_checks;
+	friend class safe_memory::detail::soft_ptr_helper;
 
 	T* t;
 
@@ -377,9 +374,6 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class safe_memory::detail::base_allocator_to_eastl_no_checks;
-	friend class safe_memory::detail::allocator_to_eastl_vector_no_checks;
-	friend class safe_memory::detail::allocator_to_eastl_hashtable_no_checks;
 
 private:
 	friend class soft_this_ptr_no_checks<T>;
@@ -388,6 +382,9 @@ private:
 	template<class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
 	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
+
+	friend class safe_memory::detail::soft_ptr_helper;
+
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:

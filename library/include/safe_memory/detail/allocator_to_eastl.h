@@ -68,7 +68,6 @@ using nodecpp::safememory::soft_ptr_impl;
 using nodecpp::safememory::fbc_ptr_t;
 
 
-
 template<class T>
 soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 
@@ -218,6 +217,35 @@ constexpr T* empty_hashtable_raw() {
 	return reinterpret_cast<T*>(&gpSafeMemoryEmptyBucketArrayRaw);
 }
 
+/// helper class, friend of \c soft_ptr_impl and \c soft_ptr_no_checks to access private stuff
+class soft_ptr_helper {
+	public:
+
+	template<class T>
+	static T* to_raw(const soft_ptr_impl<T>& p) {
+		return p.getDereferencablePtr();
+	}
+
+	template<class T>
+	static T* to_raw(const soft_ptr_no_checks<T>& p) {
+		return p.t;
+	}
+
+	template<class T>
+	static soft_ptr_impl<T> make_soft_ptr_impl(FirstControlBlock* cb, T* t) {
+		return soft_ptr_impl<T>(cb, t);
+	}
+
+	template<class T>
+	static soft_ptr_no_checks<T> make_soft_ptr_no_checks(fbc_ptr_t cb, T* t) {
+		return soft_ptr_no_checks<T>(cb, t);
+	}
+};
+
+
+
+
+
 
 class base_allocator_to_eastl_impl {
 public:
@@ -270,7 +298,7 @@ public:
 	// 'to_zero' works for node and for array
 	template<class T>
 	static pointer<T> to_zero(const soft_ptr_impl<T>& p) {
-			return { make_zero_offset_t(), p.getDereferencablePtr() };
+			return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
 	}
 
 	//stateless
@@ -328,7 +356,7 @@ public:
 	// 'to_zero' works for node and for array
 	template<class T>
 	static pointer<T> to_zero(const soft_ptr_no_checks<T>& p) {
-		return { make_zero_offset_t(), p.t };
+		return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
 	}
 
 	//stateless
@@ -343,7 +371,8 @@ public:
 	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
-			return { getControlBlock_( ptr ), ptr };
+			auto cb = getControlBlock_(ptr);
+			return soft_ptr_helper::make_soft_ptr_impl(cb, ptr);
 		}
 		else
 			return {};
@@ -357,7 +386,7 @@ public:
 	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
-			return { fbc_ptr_t(), ptr };
+			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
 		}
 		else
 			return {};
@@ -399,7 +428,8 @@ public:
 	static soft_ptr_impl<T> to_soft(const pointer<T>& p) {
 		if(p && !is_hashtable_sentinel(p)) {
 			auto ptr = p.get_raw_ptr();
-			return { getControlBlock_( ptr ), ptr };
+			auto cb = getControlBlock_(ptr);
+			return soft_ptr_helper::make_soft_ptr_impl(cb , ptr);
 		}
 		else
 			return {};
@@ -409,7 +439,8 @@ public:
 	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
-			return { getControlBlock_( ptr ), ptr };
+			auto cb = getControlBlock_(ptr);
+			return soft_ptr_helper::make_soft_ptr_impl(cb , ptr);
 		}
 		else
 			return {};
@@ -443,7 +474,7 @@ public:
 	static soft_ptr_no_checks<T> to_soft(const pointer<T>& p) {
 		if(p && !is_hashtable_sentinel(p)) {
 			auto ptr =p.get_raw_ptr();
-			return { fbc_ptr_t(), ptr };
+			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
 		}
 		else
 			return {};
@@ -453,7 +484,7 @@ public:
 	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
-			return { fbc_ptr_t(), ptr };
+			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
 		}
 		else
 			return {};

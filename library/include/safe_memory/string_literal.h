@@ -70,11 +70,11 @@ namespace safe_memory
 		basic_string_literal(basic_string_literal&& other) = default;
 		basic_string_literal& operator=(basic_string_literal&& other) = default;
 
-		constexpr const_iterator_safe begin() const noexcept { return const_iterator_safe::makeIxForString(str, 0, size()); }
-		constexpr const_iterator_safe cbegin() const noexcept { return const_iterator_safe::makeIxForString(str, 0, size()); }
+		constexpr const_iterator_safe begin() const noexcept { return const_iterator_safe::makeIx(str, 0, size()); }
+		constexpr const_iterator_safe cbegin() const noexcept { return const_iterator_safe::makeIx(str, 0, size()); }
 
-		constexpr const_iterator_safe end() const noexcept { return const_iterator_safe::makeIxForString(str, size(), size()); }
-		constexpr const_iterator_safe cend() const noexcept { return const_iterator_safe::makeIxForString(str, size(), size()); }
+		constexpr const_iterator_safe end() const noexcept { return const_iterator_safe::makeIx(str, size(), size()); }
+		constexpr const_iterator_safe cend() const noexcept { return const_iterator_safe::makeIx(str, size(), size()); }
 
 		constexpr const_reverse_iterator_safe rbegin() const noexcept { return const_reverse_iterator_safe(cend()); }
 		constexpr const_reverse_iterator_safe crbegin() const noexcept { return const_reverse_iterator_safe(cend()); }

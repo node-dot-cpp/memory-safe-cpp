@@ -35,17 +35,16 @@
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
-namespace safe_memory::detail
-{
-	 // forward declaration
-	class base_allocator_to_eastl_impl;
-	class allocator_to_eastl_vector_impl;
-	class allocator_to_eastl_hashtable_impl;
+// forward declaration
+namespace safe_memory {
+	namespace detail {
+		class soft_ptr_helper;
+	}
 }
 
 namespace nodecpp::safememory
 {
-
+	
 extern thread_local void* thg_stackPtrForMakeOwningCall;
 
 template<class T>
@@ -888,10 +887,6 @@ class soft_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class safe_memory::detail::base_allocator_to_eastl_impl;
-	friend class safe_memory::detail::allocator_to_eastl_vector_impl;
-	friend class safe_memory::detail::allocator_to_eastl_hashtable_impl;
-
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
@@ -904,6 +899,8 @@ class soft_ptr_base_impl
 	friend class soft_ptr_no_checks;
 
 	friend struct FirstControlBlock;
+
+	friend class safe_memory::detail::soft_ptr_helper;
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
@@ -1471,10 +1468,6 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_base_impl;
 
-	friend class safe_memory::detail::base_allocator_to_eastl_impl;
-	friend class safe_memory::detail::allocator_to_eastl_vector_impl;
-	friend class safe_memory::detail::allocator_to_eastl_hashtable_impl;
-
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
@@ -1488,6 +1481,9 @@ private:
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl<>(T* ptr);
+
+	friend class safe_memory::detail::soft_ptr_helper;
+
 	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
