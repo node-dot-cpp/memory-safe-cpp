@@ -179,6 +179,7 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class nullable_ptr_base_impl; // forward declaration
 template<class T> class nullable_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
+template<class T> class soft_this_ptr2_impl; // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -1478,6 +1479,7 @@ private:
 	friend class soft_this_ptr_impl<T>;
 	template<class TT>
 	friend class soft_this_ptr_impl;
+	friend class soft_this_ptr2_impl<T>;
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl<>(T* ptr);
@@ -1927,6 +1929,47 @@ public:
 
 	~soft_this_ptr_impl()
 	{
+	}
+};
+
+template<class T>
+class soft_this_ptr2_impl
+{
+	FirstControlBlock* cbPtr = nullptr;
+
+	static FirstControlBlock* getCbPtr() noexcept {
+		return thg_stackPtrForMakeOwningCall ? getControlBlock_(thg_stackPtrForMakeOwningCall) : nullptr;
+	}
+
+public:
+
+	static constexpr memory_safety is_safe = memory_safety::safe;
+
+	soft_this_ptr2_impl() : cbPtr(getCbPtr()) {}
+	soft_this_ptr2_impl(const soft_this_ptr2_impl&) : cbPtr(getCbPtr()) {}
+	soft_this_ptr2_impl(soft_this_ptr2_impl&&) : cbPtr(getCbPtr()) {}
+
+	soft_this_ptr2_impl& operator=(const soft_this_ptr2_impl&) { return *this; }
+	soft_this_ptr2_impl& operator=(soft_this_ptr2_impl&&) { return *this; }
+
+	~soft_this_ptr2_impl() = default;
+
+	explicit operator bool() const noexcept {
+		return cbPtr != nullptr;
+	}
+
+	soft_ptr_impl<T> getSoftPtr() {
+		if(cbPtr)
+			return {cbPtr, this};
+		else
+			return {};
+	}
+
+	soft_ptr_impl<const T> getSoftPtr() const {
+		if(cbPtr)
+			return {cbPtr, this};
+		else
+			return {};
 	}
 };
 

@@ -42,10 +42,11 @@
 #include <EASTL/algorithm.h>
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/detail/array_of.h>
+#include <safe_memory/detail/allocator_to_eastl.h>
 
 namespace safe_memory
 {
-	template <typename T, eastl_size_t N = 1, memory_safety Safety = safeness_declarator<T>::is_safe>
+	template <typename T, size_t N = 1, memory_safety Safety = safeness_declarator<T>::is_safe>
 	struct array
 	{
 	public:
@@ -55,7 +56,7 @@ namespace safe_memory
 		typedef const value_type&                             const_reference;
 		typedef value_type*                                   pointer;
 		typedef const value_type*                             const_pointer;
-		typedef eastl_size_t                                  size_type;
+		typedef size_t                                  size_type;
 		typedef ptrdiff_t                                     difference_type;
 
 		static constexpr memory_safety is_safe = Safety;
@@ -78,12 +79,9 @@ namespace safe_memory
 		typedef eastl::reverse_iterator<iterator_safe>                     reverse_iterator_safe;
 		typedef eastl::reverse_iterator<const_iterator_safe>               const_reverse_iterator_safe;
 
-
+		static_assert(N != 0, "Empty safe_memory::array not supported");
 	public:
-		enum
-		{
-			count = N
-		};
+		static constexpr size_type count = N;
 
 		// Note that the member data is intentionally public.
 		// This allows for aggregate initialization of the
@@ -93,15 +91,12 @@ namespace safe_memory
 	public:
 		// We intentionally provide no constructor, destructor, or assignment operator.
 
-		void fill(const value_type& value) { 
-			eastl::fill_n(&mValue[0], N, value);
-		}
-
-		// Unlike the swap function for other containers, array::swap takes linear time,
-		// may exit via an exception, and does not cause iterators to become associated with the other container.
-		void swap(this_type& x) noexcept(eastl::is_nothrow_swappable<value_type>::value) {
-			eastl::swap_ranges(&mValue[0], &mValue[N], &x.mValue[0]);
-		}
+		constexpr T*       data() noexcept { return mValue; }
+		constexpr const T* data() const noexcept { return mValue; }
+\
+		constexpr bool empty() const noexcept { return N == 0; }
+		constexpr size_type size() const noexcept { return N; }
+		constexpr size_type max_size() const noexcept { return N; }
 
 		constexpr pointer       begin_unsafe() noexcept { return &mValue[0]; }
 		constexpr const_pointer begin_unsafe() const noexcept { return &mValue[0]; }
@@ -143,12 +138,16 @@ namespace safe_memory
 		constexpr const_reverse_iterator_safe rend_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(makeSafeIt(ptr, begin_unsafe())); }
 		constexpr const_reverse_iterator_safe crend_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(makeSafeIt(ptr, begin_unsafe())); }
 
-		constexpr bool empty() const noexcept { return N == 0; }
-		constexpr size_type size() const noexcept { return N; }
-		constexpr size_type max_size() const noexcept { return N; }
+		void fill(const value_type& value) { 
+			eastl::fill_n(begin_unsafe(), size(), value);
+		}
 
-		constexpr T*       data() noexcept { return mValue; }
-		constexpr const T* data() const noexcept { return mValue; }
+		// Unlike the swap function for other containers, array::swap takes linear time,
+		// may exit via an exception, and does not cause iterators to become associated with the other container.
+		void swap(this_type& x) noexcept(eastl::is_nothrow_swappable<value_type>::value) {
+			eastl::swap_ranges(begin_unsafe(), end_unsafe(), x.begin_unsafe());
+		}
+
 
 		constexpr reference       operator[](size_type i) { return at(i); }
 		constexpr const_reference operator[](size_type i) const { return at(i); }
@@ -159,7 +158,7 @@ namespace safe_memory
 					ThrowRangeException("array::at -- out of range");
 			}
 
-			return mValue[i];
+			return data()[i];
 		}
 
 		constexpr reference       at(size_type i) {
@@ -168,7 +167,7 @@ namespace safe_memory
 					ThrowRangeException("array::at -- out of range");
 			}
 
-			return mValue[i];
+			return data()[i];
 		}
 
 		constexpr reference       front() {
@@ -177,7 +176,7 @@ namespace safe_memory
 					ThrowRangeException("array::front -- empty array");
 			}
 
-			return mValue[0];
+			return data()[0];
 		}
 
 		constexpr const_reference front() const {
@@ -186,7 +185,7 @@ namespace safe_memory
 					ThrowRangeException("array::front -- empty array");
 			}
 
-			return mValue[0];
+			return data()[0];
 		}
 
 		constexpr reference       back() {
@@ -195,7 +194,7 @@ namespace safe_memory
 					ThrowRangeException("array::front -- empty array");
 			}
 
-			return mValue[N -1];
+			return data()[N -1];
 		}
 		constexpr const_reference back() const {
 			if constexpr(is_safe == memory_safety::safe) {
@@ -203,17 +202,17 @@ namespace safe_memory
 					ThrowRangeException("array::front -- empty array");
 			}
 
-			return mValue[N - 1];
+			return data()[N - 1];
 		}
 
 		bool validate() const { return true; }
 		int  validate_iterator(const_pointer i) const {
-			if(i >= mValue)
+			if(i >= begin_unsafe())
 			{
-				if(i < (mValue + N))
+				if(i < end_unsafe())
 					return (eastl::isf_valid | eastl::isf_current | eastl::isf_can_dereference);
 
-				if(i <= (mValue + N))
+				if(i <= end_unsafe())
 					return (eastl::isf_valid | eastl::isf_current);
 			}
 
@@ -255,7 +254,7 @@ namespace safe_memory
 
 		iterator_safe makeSafeIt(const soft_ptr_this_type& ptr, pointer it) {
 			if constexpr(is_safe == memory_safety::safe) {
-				if(NODECPP_UNLIKELY(ptr.operator->() != this))
+				if(NODECPP_UNLIKELY(detail::soft_ptr_helper::to_raw(ptr) != this))
 					ThrowInvalidArgumentException("array::make_safe -- wrong soft_ptr");
 			}
 
@@ -264,7 +263,7 @@ namespace safe_memory
 		
 		const_iterator_safe makeSafeIt(const soft_ptr_this_type& ptr, const_pointer it) const {
 			if constexpr(is_safe == memory_safety::safe) {
-				if(NODECPP_UNLIKELY(ptr.operator->() != this))
+				if(NODECPP_UNLIKELY(detail::soft_ptr_helper::to_raw(ptr) != this))
 					ThrowInvalidArgumentException("array::make_safe -- wrong soft_ptr");
 			}
 
@@ -273,18 +272,17 @@ namespace safe_memory
 
 	}; // class array
 
-
-	template <typename T, memory_safety Safety>
-	struct array<T, 0, Safety>
+	template <typename T, size_t N = 1, memory_safety Safety = safeness_declarator<T>::is_safe>
+	struct array_safe
 	{
 	public:
-		typedef array<T, 0, Safety>                           this_type;
+		typedef array_safe<T, N, Safety>                      this_type;
 		typedef T                                             value_type;
 		typedef value_type&                                   reference;
 		typedef const value_type&                             const_reference;
 		typedef value_type*                                   pointer;
 		typedef const value_type*                             const_pointer;
-		typedef eastl_size_t                                  size_type;
+		typedef size_t                                  size_type;
 		typedef ptrdiff_t                                     difference_type;
 
 		static constexpr memory_safety is_safe = Safety;
@@ -297,112 +295,218 @@ namespace safe_memory
 
 		static constexpr bool use_base_iterator = Safety == memory_safety::none;
 		
-		typedef std::conditional_t<use_base_iterator, pointer, stack_only_iterator>               iterator;
-		typedef std::conditional_t<use_base_iterator, const_pointer, const_stack_only_iterator>   const_iterator;
-		typedef eastl::reverse_iterator<iterator>                                  reverse_iterator;
-		typedef eastl::reverse_iterator<const_iterator>                            const_reverse_iterator;
 
 		typedef heap_safe_iterator                                         iterator_safe;
 		typedef const_heap_safe_iterator                                   const_iterator_safe;
 		typedef eastl::reverse_iterator<iterator_safe>                     reverse_iterator_safe;
 		typedef eastl::reverse_iterator<const_iterator_safe>               const_reverse_iterator_safe;
 
+		typedef iterator_safe                                              iterator;
+		typedef const_iterator_safe                                        const_iterator;
+		typedef const_iterator_safe                                        reverse_iterator;
+		typedef const_reverse_iterator_safe                                const_reverse_iterator;
+
+		static_assert(N != 0, "Empty safe_memory::array not supported");
 
 	public:
-		enum
-		{
-			count = 0
-		};
+		static constexpr size_type count = N;
 
-		// Note that the member data is intentionally public.
-		// This allows for aggregate initialization of the
-		// object (e.g. array<int, 5> a = { 0, 3, 2, 4 }; )
-//		value_type mValue[N];
+	private:
+		soft_this_ptr2<this_type, is_safe> this_ptr;
+		// use char array as we don't want default construct of elements
+		alignas(value_type) char mValue[sizeof(value_type) * N];
 
 	public:
-		// We intentionally provide no constructor, destructor, or assignment operator.
+		array_safe() {
+			eastl::uninitialized_default_fill(begin_unsafe(), end_unsafe());
+		}
+		
+		array_safe(std::initializer_list<value_type> init) {
+			
+			size_t sz = eastl::min_alt(N, init.size());
+			
+			auto it = init.begin();
+			auto r = eastl::uninitialized_copy_ptr(it, it + sz, begin_unsafe());
+			
+			// default construct any pending element (when initializer_list is shorter than N)
+			eastl::uninitialized_default_fill(r, end_unsafe());
+		}
 
-		void fill(const value_type& value) {
-			ThrowRangeException("array::fill -- out of range");
+		~array_safe() {
+			eastl::destruct(begin_unsafe(), end_unsafe());
+		}
+
+		constexpr bool empty() const noexcept { return N == 0; }
+		constexpr size_type size() const noexcept { return N; }
+		constexpr size_type max_size() const noexcept { return N; }
+
+		constexpr T* data() noexcept { return reinterpret_cast<T*>(&mValue); }
+		constexpr const T* data() const noexcept { return reinterpret_cast<const T*>(&mValue); }
+
+		constexpr pointer       begin_unsafe() noexcept { return data(); }
+		constexpr const_pointer begin_unsafe() const noexcept { return data(); }
+		constexpr const_pointer cbegin_unsafe() const noexcept { return data(); }
+
+		constexpr pointer       end_unsafe() noexcept { return data() + size(); }
+		constexpr const_pointer end_unsafe() const noexcept { return data() + size(); }
+		constexpr const_pointer cend_unsafe() const noexcept { return data() + size(); }
+
+		constexpr iterator       begin() noexcept { return begin_safe(); }
+		constexpr const_iterator begin() const noexcept { return begin_safe(); }
+		constexpr const_iterator cbegin() const noexcept { return cbegin_safe(); }
+
+		constexpr iterator       end() noexcept { return end_safe(); }
+		constexpr const_iterator end() const noexcept { return end_safe(); }
+		constexpr const_iterator cend() const noexcept { return cend_safe(); }
+
+		constexpr reverse_iterator       rbegin() noexcept { return rbegin_safe(); }
+		constexpr const_reverse_iterator rbegin() const noexcept { return rbegin_safe(); }
+		constexpr const_reverse_iterator crbegin() const noexcept { return crbegin_safe(); }
+
+		constexpr reverse_iterator       rend() noexcept { return rend_safe(); }
+		constexpr const_reverse_iterator rend() const noexcept { return rend_safe(); }
+		constexpr const_reverse_iterator crend() const noexcept { return crend_safe(); }
+
+		constexpr iterator_safe       begin_safe() noexcept { return makeSafeIt(begin_unsafe()); }
+		constexpr const_iterator_safe begin_safe() const noexcept { return makeSafeIt(begin_unsafe()); }
+		constexpr const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(begin_unsafe()); }
+
+		constexpr iterator_safe       end_safe() noexcept { return makeSafeIt(end_unsafe()); }
+		constexpr const_iterator_safe end_safe() const noexcept { return makeSafeIt(end_unsafe()); }
+		constexpr const_iterator_safe cend_safe() const noexcept { return makeSafeIt(end_unsafe()); }
+
+		constexpr reverse_iterator_safe       rbegin_safe() noexcept { return reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+		constexpr const_reverse_iterator_safe rbegin_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+		constexpr const_reverse_iterator_safe crbegin_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+
+		constexpr reverse_iterator_safe       rend_safe() noexcept { return reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
+		constexpr const_reverse_iterator_safe rend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
+		constexpr const_reverse_iterator_safe crend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
+
+		void fill(const value_type& value) { 
+			eastl::fill_n(begin_unsafe(), size(), value);
 		}
 
 		// Unlike the swap function for other containers, array::swap takes linear time,
 		// may exit via an exception, and does not cause iterators to become associated with the other container.
-		void swap(this_type& x) noexcept(eastl::is_nothrow_swappable<value_type>::value) { /* do nothing */ }
+		void swap(this_type& x) noexcept(eastl::is_nothrow_swappable<value_type>::value) {
+			eastl::swap_ranges(begin_unsafe(), end_unsafe(), x.begin_unsafe());
+		}
 
-		constexpr pointer       begin_unsafe() noexcept { nullptr; }
-		constexpr const_pointer begin_unsafe() const noexcept { return nullptr; }
-		constexpr const_pointer cbegin_unsafe() const noexcept { return nullptr; }
+		constexpr reference       operator[](size_type i) { return at(i); }
+		constexpr const_reference operator[](size_type i) const { return at(i); }
+ 
+		constexpr const_reference at(size_type i) const {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(i >= size()))
+					ThrowRangeException("array::at -- out of range");
+			}
 
-		constexpr pointer       end_unsafe() noexcept { return nullptr; }
-		constexpr const_pointer end_unsafe() const noexcept { return nullptr; }
-		constexpr const_pointer cend_unsafe() const noexcept { return nullptr; }
+			return data()[i];
+		}
 
-		constexpr iterator       begin() noexcept { return iterator(); }
-		constexpr const_iterator begin() const noexcept { return const_iterator(); }
-		constexpr const_iterator cbegin() const noexcept { return const_iterator(); }
+		constexpr reference       at(size_type i) {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(i >= size()))
+					ThrowRangeException("array::at -- out of range");
+			}
 
-		constexpr iterator       end() noexcept { return iterator(); }
-		constexpr const_iterator end() const noexcept { return const_iterator(); }
-		constexpr const_iterator cend() const noexcept { return const_iterator(); }
+			return data()[i];
+		}
 
-		constexpr reverse_iterator       rbegin() noexcept { return reverse_iterator(end()); }
-		constexpr const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(end()); }
-		constexpr const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(end()); }
+		constexpr reference       front() {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(empty()))
+					ThrowRangeException("array::front -- empty array");
+			}
 
-		constexpr reverse_iterator       rend() noexcept { return reverse_iterator(begin()); }
-		constexpr const_reverse_iterator rend() const noexcept { return const_reverse_iterator(begin()); }
-		constexpr const_reverse_iterator crend() const noexcept { return const_reverse_iterator(begin()); }
+			return data()[0];
+		}
 
-		constexpr iterator_safe       begin_safe(const soft_ptr_this_type& ptr) noexcept { return iterator_safe(); }
-		constexpr const_iterator_safe begin_safe(const soft_ptr_this_type& ptr) const noexcept { return const_iterator_safe(); }
-		constexpr const_iterator_safe cbegin_safe(const soft_ptr_this_type& ptr) const noexcept { return const_iterator_safe(); }
+		constexpr const_reference front() const {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(empty()))
+					ThrowRangeException("array::front -- empty array");
+			}
 
-		constexpr iterator_safe       end_safe(const soft_ptr_this_type& ptr) noexcept { return iterator_safe(); }
-		constexpr const_iterator_safe end_safe(const soft_ptr_this_type& ptr) const noexcept { return const_iterator_safe(); }
-		constexpr const_iterator_safe cend_safe(const soft_ptr_this_type& ptr) const noexcept { return const_iterator_safe(); }
+			return data()[0];
+		}
 
-		constexpr reverse_iterator_safe       rbegin_safe(const soft_ptr_this_type& ptr) noexcept { return reverse_iterator_safe(end_safe()); }
-		constexpr const_reverse_iterator_safe rbegin_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(end_safe()); }
-		constexpr const_reverse_iterator_safe crbegin_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(end_safe()); }
+		constexpr reference       back() {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(empty()))
+					ThrowRangeException("array::front -- empty array");
+			}
 
-		constexpr reverse_iterator_safe       rend_safe(const soft_ptr_this_type& ptr) noexcept { return reverse_iterator_safe(begin_safe()); }
-		constexpr const_reverse_iterator_safe rend_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(begin_safe()); }
-		constexpr const_reverse_iterator_safe crend_safe(const soft_ptr_this_type& ptr) const noexcept { return const_reverse_iterator_safe(begin_safe()); }
+			return data()[N -1];
+		}
 
-		constexpr bool empty() const noexcept { return true; }
-		constexpr size_type size() const noexcept { return 0; }
-		constexpr size_type max_size() const noexcept { return 0; }
+		constexpr const_reference back() const {
+			if constexpr(is_safe == memory_safety::safe) {
+				if(NODECPP_UNLIKELY(empty()))
+					ThrowRangeException("array::front -- empty array");
+			}
 
-		constexpr T*       data() noexcept { ThrowRangeException("array::data -- out of range"); }
-		constexpr const T* data() const noexcept { ThrowRangeException("array::data -- out of range"); }
-
-		constexpr reference       operator[](size_type i) { ThrowRangeException("array::operator[] -- out of range"); }
-		constexpr const_reference operator[](size_type i) const { ThrowRangeException("array::operator[] -- out of range"); }
-
-		constexpr const_reference at(size_type i) const { ThrowRangeException("array::at -- out of range"); }
-
-		constexpr reference       at(size_type i) { ThrowRangeException("array::at -- out of range"); }
-
-		constexpr reference       front() { ThrowRangeException("array::front -- out of range"); }
-
-		constexpr const_reference front() const { ThrowRangeException("array::front -- out of range"); }
-
-		constexpr reference       back() { ThrowRangeException("array::back -- out of range"); }
-		constexpr const_reference back() const { ThrowRangeException("array::back -- out of range"); }
+			return data()[N - 1];
+		}
 
 		bool validate() const { return true; }
-		int  validate_iterator(const_pointer i) const { return isf_none; }
-		int  validate_iterator(const const_stack_only_iterator& i) const { return isf_none; }
-		int  validate_iterator(const const_heap_safe_iterator& i) const { return isf_none; }
+		int  validate_iterator(const_pointer i) const {
+			if(i >= begin_unsafe())
+			{
+				if(i < end_unsafe())
+					return (eastl::isf_valid | eastl::isf_current | eastl::isf_can_dereference);
 
-		iterator_safe make_safe(const soft_ptr_this_type& ptr, const iterator& position) { return iterator_safe(); }
-		const_iterator_safe make_safe(const soft_ptr_this_type& ptr, const const_iterator& position) const { return const_iterator_safe(); }
+				if(i <= end_unsafe())
+					return (eastl::isf_valid | eastl::isf_current);
+			}
+
+			return eastl::isf_none;
+		}
+
+		int  validate_iterator(const const_stack_only_iterator& i) const { return validate_iterator(toBase(i)); }
+		int  validate_iterator(const const_heap_safe_iterator& i) const { return validate_iterator(toBase(i)); }
+
+		iterator_safe make_safe(const iterator& position) { return makeSafeIt(toBase(position)); }
+		const_iterator_safe make_safe(const const_iterator& position) const { return makeSafeIt(toBase(position)); }
 
 	protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
-	}; // class array
+
+		pointer toBase(pointer it) const { return it; }
+		const_pointer toBase(const_pointer it) const { return it; }
+
+		pointer toBase(const stack_only_iterator& it) const { return it.toRaw(begin_unsafe()); }
+		const_pointer toBase(const const_stack_only_iterator& it) const { return it.toRaw(begin_unsafe()); }
+
+		pointer toBase(const heap_safe_iterator& it) const { return it.toRaw(begin_unsafe()); }
+		const_pointer toBase(const const_heap_safe_iterator& it) const { return it.toRaw(begin_unsafe()); }
+
+		// constexpr iterator makeIt(pointer it) {
+		// 	if constexpr (use_base_iterator)
+		// 		return it;
+		// 	else
+		// 		return iterator::makePtr(data(), it, N);
+		// }
+		// constexpr const_iterator makeIt(const_pointer it) const {
+		// 	if constexpr (use_base_iterator)
+		// 		return it;
+		// 	else
+		// 		return const_iterator::makePtr(const_cast<T*>(data()), it, N);
+		// }
+
+		iterator_safe makeSafeIt(pointer it) {
+			return iterator_safe::makePtr(this_ptr.getSoftPtr(), it, N);
+		}
+		
+		const_iterator_safe makeSafeIt(const_pointer it) const {
+			return const_iterator_safe::makePtr(const_cast<this_type>(this)->this_ptr.getSoftPtr(), it, N);
+		}
+
+	}; // class array_safe
+
 
 	///////////////////////////////////////////////////////////////////////////
 	// template deduction guides

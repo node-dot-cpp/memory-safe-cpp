@@ -27,7 +27,7 @@ int TestArray()
 		safe_memory::array<int, 5> a = { { 0, 1, 2, 3, 4 } };
 		safe_memory::array<int, 5> b = { { 0, 1, 2, 3    } };
 		safe_memory::array<int, 5> c = { { 4, 3, 2, 1, 0 } };
-		safe_memory::array<int, 0> d;// = { { } };
+		// safe_memory::array<int, 0> d = { { } };
 
 		VERIFY(!a.empty());
 		VERIFY(a.size() == 5);
@@ -39,8 +39,8 @@ int TestArray()
 		VERIFY(b[0] == 0);
 		VERIFY(b[3] == 3);
 
-		VERIFY(d.empty());
-		VERIFY(d.size() == 0);
+		// VERIFY(d.empty());
+		// VERIFY(d.size() == 0);
 
 		// swap
 		a.swap(c);

@@ -41,6 +41,7 @@ using ::nodecpp::safememory::soft_ptr;
 using ::nodecpp::safememory::soft_ptr_no_checks;
 using ::nodecpp::safememory::soft_ptr_impl;
 using ::nodecpp::safememory::soft_this_ptr;
+using ::nodecpp::safememory::soft_this_ptr2;
 using ::nodecpp::safememory::nullable_ptr;
 
 using ::nodecpp::safememory::make_owning;

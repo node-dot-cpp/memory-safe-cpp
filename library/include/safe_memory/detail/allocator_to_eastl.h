@@ -66,6 +66,8 @@ using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
 using nodecpp::safememory::soft_ptr_impl;
 using nodecpp::safememory::fbc_ptr_t;
+using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
+
 
 
 template<class T>
@@ -242,10 +244,29 @@ class soft_ptr_helper {
 	}
 };
 
+class soft_this_ptr_raii_impl {
 
+	void* stackTmp;
+public:
+	soft_this_ptr_raii_impl(void* ptr) noexcept : stackTmp(thg_stackPtrForMakeOwningCall) {
+		thg_stackPtrForMakeOwningCall = ptr;
+	}
 
+	~soft_this_ptr_raii_impl() {
+		thg_stackPtrForMakeOwningCall = stackTmp;
+	}
+};
 
+class soft_this_ptr_raii_dummy {
+public:
+	soft_this_ptr_raii_dummy(void* ptr) {}
+};
 
+// we can safely use a dummy when the type is trivial.
+template<class T>
+using soft_this_ptr_raii = std::conditional_t<std::is_trivial<T>::value,
+			soft_this_ptr_raii_dummy,
+			soft_this_ptr_raii_impl>;
 
 class base_allocator_to_eastl_impl {
 public:
@@ -293,6 +314,14 @@ public:
 	template<class T>
 	static T* to_raw(const array_pointer<T>& p) {
 		return p.get_raw_begin();
+	}
+
+	// raii implementation doesn't depende on safe_memory parameter of the allocator,
+	// as it should depend on the safety parameter of the elements contained, and we
+	// can't know that.
+	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
+		return {p.get_array_of_ptr()};
 	}
 
 	// 'to_zero' works for node and for array
@@ -351,6 +380,14 @@ public:
 	template<class T>
 	static T* to_raw(const array_pointer<T>& p) {
 		return p.get_raw_begin();
+	}
+
+	// raii implementation doesn't depende on safe_memory parameter of the allocator,
+	// as it should depend on the safety parameter of the elements contained, and we
+	// can't know that.
+	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
+		return {p.get_array_of_ptr()};
 	}
 
 	// 'to_zero' works for node and for array
