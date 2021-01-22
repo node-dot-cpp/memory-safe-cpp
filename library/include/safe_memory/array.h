@@ -56,7 +56,7 @@ namespace safe_memory
 		typedef const value_type&                             const_reference;
 		typedef value_type*                                   pointer;
 		typedef const value_type*                             const_pointer;
-		typedef size_t                                  size_type;
+		typedef size_t                                        size_type;
 		typedef ptrdiff_t                                     difference_type;
 
 		static constexpr memory_safety is_safe = Safety;
@@ -282,7 +282,7 @@ namespace safe_memory
 		typedef const value_type&                             const_reference;
 		typedef value_type*                                   pointer;
 		typedef const value_type*                             const_pointer;
-		typedef size_t                                  size_type;
+		typedef size_t                                        size_type;
 		typedef ptrdiff_t                                     difference_type;
 
 		static constexpr memory_safety is_safe = Safety;

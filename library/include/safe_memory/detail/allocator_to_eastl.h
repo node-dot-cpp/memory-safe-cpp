@@ -320,6 +320,11 @@ public:
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
 	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
+		return {p.get_raw_ptr()};
+	}
+
+	template<class T>
 	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
 		return {p.get_array_of_ptr()};
 	}
@@ -385,6 +390,11 @@ public:
 	// raii implementation doesn't depende on safe_memory parameter of the allocator,
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
+	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
+		return {p.get_raw_ptr()};
+	}
+
 	template<class T>
 	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
 		return {p.get_array_of_ptr()};
