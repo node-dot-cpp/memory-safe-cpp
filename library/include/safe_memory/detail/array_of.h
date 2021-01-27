@@ -113,19 +113,6 @@ public:
 };
 
 
-
-
-/// small helper class to set safety to none when using raw pointers
-template <typename T>
-struct safety_helper {
-	static constexpr memory_safety is_safe = T::is_safe;
-};
-
-template<typename T>
-struct safety_helper<T*> {
-	static constexpr memory_safety is_safe = memory_safety::none;
-};
-
 /**
  * \brief Safe and generic iterator for arrays.
  * 
