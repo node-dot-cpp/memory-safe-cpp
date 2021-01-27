@@ -54,7 +54,6 @@ extern fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmpty
 extern fixed_array_of<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
 extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
-using nodecpp::safememory::memory_safety;
 using nodecpp::safememory::FirstControlBlock;
 using nodecpp::safememory::module_id;
 using nodecpp::safememory::getPrefixByteCount;
@@ -64,7 +63,6 @@ using nodecpp::safememory::zombieDeallocate;
 using nodecpp::safememory::getAllocatedBlock_;
 using nodecpp::safememory::allocate;
 using nodecpp::safememory::deallocate;
-using nodecpp::safememory::soft_ptr_impl;
 using nodecpp::safememory::fbc_ptr_t;
 using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
 

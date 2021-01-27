@@ -42,6 +42,8 @@ namespace safe_memory::detail {
  * It is assumed that the allocator will give enought memory right after this class
  * to actually to put the array elements.
  * This class is coupled with \c allocate_array function.
+ * 
+ * Very similar to a C 'flexible array member'
  */ 
 template<class T>
 struct array_of

@@ -53,7 +53,7 @@ using ::nodecpp::safememory::nullable_cast;
 
 using ::nodecpp::safememory::make_owning_t;
 
-
+using ::nodecpp::safememory::memory_safety;
 }
 
 #endif //SAFE_MEMORY_SAFE_PTR_H

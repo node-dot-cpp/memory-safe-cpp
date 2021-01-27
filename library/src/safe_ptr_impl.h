@@ -80,7 +80,7 @@ void checkNotNullAllSizes( T* ptr )
 		throw ::nodecpp::error::zero_pointer_access;
 }
 
-inline
+[[noreturn]] inline
 void throwPointerOutOfRange()
 {
 	// TODO: actual implementation
@@ -179,7 +179,7 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class nullable_ptr_base_impl; // forward declaration
 template<class T> class nullable_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
-template<class T> class soft_this_ptr2_impl; // forward declaration
+class soft_this_ptr2_impl; // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -1479,7 +1479,7 @@ private:
 	friend class soft_this_ptr_impl<T>;
 	template<class TT>
 	friend class soft_this_ptr_impl;
-	friend class soft_this_ptr2_impl<T>;
+	friend class soft_this_ptr2_impl;
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl<>(T* ptr);
@@ -1932,7 +1932,6 @@ public:
 	}
 };
 
-template<class T>
 class soft_this_ptr2_impl
 {
 	FirstControlBlock* cbPtr = nullptr;
@@ -1958,18 +1957,16 @@ public:
 		return cbPtr != nullptr;
 	}
 
-	soft_ptr_impl<T> getSoftPtr() {
-		if(cbPtr)
-			return {cbPtr, this};
-		else
-			return {};
-	}
+	template<class T>
+	soft_ptr_impl<T> getSoftPtr(T* ptr) const {
 
-	soft_ptr_impl<const T> getSoftPtr() const {
-		if(cbPtr)
-			return {cbPtr, this};
-		else
+		if(!cbPtr)
 			return {};
+		else if(static_cast<const void*>(cbPtr) <= static_cast<const void*>(ptr) &&
+			 static_cast<const void*>(this) <= static_cast<const void*>(ptr))
+			return {cbPtr, ptr};
+		else
+			throwPointerOutOfRange();
 	}
 };
 

@@ -44,7 +44,7 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 template<class T> class soft_this_ptr_no_checks; // forward declaration
 template<class T> class nullable_ptr_no_checks; // forward declaration
-template<class T> class soft_this_ptr2_no_checks; // forward declaration
+class soft_this_ptr2_no_checks; // forward declaration
 
 struct fbc_ptr_t {};
 
@@ -380,7 +380,7 @@ private:
 	friend class soft_this_ptr_no_checks<T>;
 	template<class TT>
 	friend class soft_this_ptr_no_checks;
-	friend class soft_this_ptr2_no_checks<T>;
+	friend class soft_this_ptr2_no_checks;
 	template<class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
 	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
@@ -652,7 +652,6 @@ public:
 	}
 };
 
-template<class T>
 class soft_this_ptr2_no_checks
 {
 public:
@@ -671,12 +670,9 @@ public:
 
 	explicit constexpr operator bool() const noexcept { return true; }
 
-	soft_ptr_no_checks<T> getSoftPtr() {
-		return soft_ptr_no_checks<TT>( fbc_ptr_t(), this );
-	}
-
-	soft_ptr_no_checks<const T> getSoftPtr() const {
-		return soft_ptr_no_checks<TT>( fbc_ptr_t(), this );
+	template<class T>
+	soft_ptr_no_checks<T> getSoftPtr(T* ptr) const {
+		return {fbc_ptr_t(), ptr};
 	}
 };
 
