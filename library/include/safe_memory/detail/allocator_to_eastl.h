@@ -109,7 +109,7 @@ soft_ptr_with_zero_offset_impl<array_of<T>> allocate_array_impl(std::size_t coun
 }
 
 template<class T>
-void deallocate_impl(soft_ptr_with_zero_offset_impl<T>& p) {
+void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
 
 	if (p) {
 		T* dataForObj = p.get_raw_ptr();
@@ -122,7 +122,7 @@ void deallocate_impl(soft_ptr_with_zero_offset_impl<T>& p) {
 }
 
 template<class T>
-void deallocate_array_impl(soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
+void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
 
 	if (p) {
 		array_of<T>* dataForObj = p.get_array_of_ptr();
@@ -162,7 +162,7 @@ soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::s
 }
 
 template<class T>
-void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
+void deallocate_no_checks(const soft_ptr_with_zero_offset_no_checks<T>& p) {
 
 	if (p) {
 		T* dataForObj = p.get_raw_ptr();
@@ -172,7 +172,7 @@ void deallocate_no_checks(soft_ptr_with_zero_offset_no_checks<T>& p) {
 }
 
 template<class T>
-void deallocate_array_no_checks(soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
+void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
 
 	if (p) {
 		array_of<T>* dataForObj = p.get_array_of_ptr();
@@ -290,7 +290,7 @@ public:
 	}
 
 	template<class T>
-	void deallocate_array(array_pointer<T>& p, std::size_t count) {
+	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
 		deallocate_array_impl(p);
 	}
 
@@ -300,7 +300,7 @@ public:
 	}
 
 	template<class T>
-	void deallocate_node(pointer<T>& p) {
+	void deallocate_node(const pointer<T>& p) {
 		deallocate_impl(p);
 	}
 
@@ -361,7 +361,7 @@ public:
 	}
 
 	template<class T>
-	void deallocate_array(array_pointer<T>& p, std::size_t count) {
+	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
 		deallocate_array_no_checks(p);
 	}
 
@@ -371,7 +371,7 @@ public:
 	}
 
 	template<class T>
-	void deallocate_node(pointer<T>& p) {
+	void deallocate_node(const pointer<T>& p) {
 		deallocate_no_checks(p);
 	}
 

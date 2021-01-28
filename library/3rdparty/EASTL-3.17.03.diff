@@ -1784,7 +1784,7 @@ index 14604ce..b8b39f1 100644
  				const wchar_t* p = x.c_str();
  				unsigned int c, result = 2166136261U;
 diff --git a/include/EASTL/vector.h b/include/EASTL/vector.h
-index c27a6a5..0506b3a 100644
+index c27a6a5..9690831 100644
 --- a/include/EASTL/vector.h
 +++ b/include/EASTL/vector.h
 @@ -127,6 +127,7 @@ namespace eastl
@@ -2271,7 +2271,8 @@ index c27a6a5..0506b3a 100644
 +				auto raii = allocator_type::make_raii(pNewData);
  
  				#if EASTL_EXCEPTIONS_ENABLED
- 					pointer pNewEnd = pNewData;
+-					pointer pNewEnd = pNewData;
++					pointer pNewEnd = allocator_type::to_raw(pNewData);
  					try
  					{
 -						pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
@@ -2322,7 +2323,8 @@ index c27a6a5..0506b3a 100644
 +			auto raii = allocator_type::make_raii(pNewData);
  
  			#if EASTL_EXCEPTIONS_ENABLED
- 				pointer pNewEnd = pNewData;
+-				pointer pNewEnd = pNewData;
++				pointer pNewEnd = allocator_type::to_raw(pNewData);
  				try
  				{
 -					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, destPosition, pNewData);
@@ -2374,7 +2376,8 @@ index c27a6a5..0506b3a 100644
 +			auto raii = allocator_type::make_raii(pNewData);
  
  			#if EASTL_EXCEPTIONS_ENABLED
- 				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
+-				pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
++				pointer pNewEnd = allocator_type::to_raw(pNewData); // Assign pNewEnd a value here in case the copy throws.
  				try
  				{
 -					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);
@@ -2417,8 +2420,9 @@ index c27a6a5..0506b3a 100644
 +			auto raii = allocator_type::make_raii(pNewData);
  
  			#if EASTL_EXCEPTIONS_ENABLED
- 				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
+-				pointer pNewEnd = pNewData;  // Assign pNewEnd a value here in case the copy throws.
 -				try { pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData); }
++				pointer pNewEnd = allocator_type::to_raw(pNewData);  // Assign pNewEnd a value here in case the copy throws.
 +				try { pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(allocator_type::to_raw(mpBegin), mpEnd, allocator_type::to_raw(pNewData)); }
  				catch (...)
  				{
@@ -2456,7 +2460,7 @@ index c27a6a5..0506b3a 100644
  			::new(static_cast<void*>(mpEnd)) value_type(eastl::move(*(mpEnd - 1)));      // mpEnd is uninitialized memory, so we must construct into it instead of move into it like we do with the other elements below.
  			eastl::move_backward(destPosition, mpEnd - 1, mpEnd);           // We need to go backward because of potential overlap issues.
  			eastl::destruct(destPosition);
-@@ -1870,7 +1907,8 @@ namespace eastl
+@@ -1870,34 +1907,35 @@ namespace eastl
  			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
  			const size_type nPrevSize = size_type(mpEnd - mpBegin);
  			const size_type nNewSize  = GetNewCapacity(nPrevSize);
@@ -2465,8 +2469,10 @@ index c27a6a5..0506b3a 100644
 +			auto raii = allocator_type::make_raii(pNewData);
  
  			#if EASTL_EXCEPTIONS_ENABLED
- 				pointer pNewEnd = pNewData;
-@@ -1879,25 +1917,25 @@ namespace eastl
+-				pointer pNewEnd = pNewData;
++				pointer pNewEnd = allocator_type::to_raw(pNewData);
+ 				try
+ 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
  					// call eastl::destruct on the entire range if only the first part of the range was costructed.
  					::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
  					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
@@ -2506,7 +2512,8 @@ index c27a6a5..0506b3a 100644
 +		auto raii = allocator_type::make_raii(pNewData);
  
  		#if EASTL_EXCEPTIONS_ENABLED
- 			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
+-			pointer pNewEnd = pNewData; // Assign pNewEnd a value here in case the copy throws.
++			pointer pNewEnd = allocator_type::to_raw(pNewData); // Assign pNewEnd a value here in case the copy throws.
  			try
  			{
 -				pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(mpBegin, mpEnd, pNewData);

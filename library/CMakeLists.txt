@@ -13,6 +13,8 @@ add_subdirectory(3rdparty/EABase)
 add_subdirectory(3rdparty/EASTL)
 add_subdirectory(src/iibmalloc)
 
+target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
@@ -27,8 +29,8 @@ target_include_directories(safe_memory
   PUBLIC src
   )
 
-
 target_link_libraries(safe_memory iibmalloc EASTL EABase)
+
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
   # remove default exceptions, because of warning
@@ -54,9 +56,9 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Tests and samples
 #-------------------------------------------------------------------------------------------
-set(SAFE_MEMORY_TEST OFF)
+
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(SAFE_MEMORY_TEST ON)
+  set(SAFE_MEMORY_TEST ON CACHE BOOL "Enable safe_memory tests")
 endif()
 
 if (SAFE_MEMORY_TEST)

@@ -184,23 +184,36 @@ public:
 		eastl::swap_ranges(begin_unsafe(), end_unsafe(), x.begin_unsafe());
 	}
 
-	constexpr reference       operator[](size_type i) { return at(i); }
-	constexpr const_reference operator[](size_type i) const { return at(i); }
-
-	constexpr const_reference at(size_type i) const {
+	constexpr reference       operator[](size_type i) {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(i >= size()))
-				ThrowRangeException("array::at -- out of range");
+				ThrowRangeException("array::operator[] -- out of range");
+		}
+
+		return data()[i];
+	}
+	
+	constexpr const_reference operator[](size_type i) const {
+		if constexpr(is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(i >= size()))
+				ThrowRangeException("array::operator[] -- out of range");
 		}
 
 		return data()[i];
 	}
 
+	constexpr const_reference at(size_type i) const {
+		// check regarless of safety
+		if(NODECPP_UNLIKELY(i >= size()))
+			ThrowRangeException("array::at -- out of range");
+
+		return data()[i];
+	}
+
 	constexpr reference       at(size_type i) {
-		if constexpr(is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(i >= size()))
-				ThrowRangeException("array::at -- out of range");
-		}
+		// check regarless of safety
+		if(NODECPP_UNLIKELY(i >= size()))
+			ThrowRangeException("array::at -- out of range");
 
 		return data()[i];
 	}
