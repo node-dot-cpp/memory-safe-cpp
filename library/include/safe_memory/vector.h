@@ -88,10 +88,13 @@ namespace safe_memory
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
-		typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
-									eastl::reverse_iterator<iterator>>                                  reverse_iterator;
-		typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
-									eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
+		typedef eastl::reverse_iterator<iterator>                                                 reverse_iterator;
+		typedef eastl::reverse_iterator<const_iterator>                                           const_reverse_iterator;
+	
+		// typedef std::conditional_t<use_base_iterator, reverse_iterator_base,
+		// 							eastl::reverse_iterator<iterator>>                                  reverse_iterator;
+		// typedef std::conditional_t<use_base_iterator, const_reverse_iterator_base,
+		// 							eastl::reverse_iterator<const_iterator>>                            const_reverse_iterator;
 
 		typedef heap_safe_iterator                                         iterator_safe;
 		typedef const_heap_safe_iterator                                   const_iterator_safe;
@@ -128,6 +131,7 @@ namespace safe_memory
 		void assign_unsafe(InputIterator first, InputIterator last) { base_type::assign(first, last); }
 		
 		void assign(const_iterator_arg first, const_iterator_arg last);
+		void assign_safe(const const_iterator_safe& first, const const_iterator_safe& last);
 
 		void assign(std::initializer_list<value_type> ilist) { base_type::assign(ilist); }
 
@@ -155,13 +159,13 @@ namespace safe_memory
 		const_iterator end() const noexcept { return makeIt(base_type::end()); }
 		const_iterator cend() const noexcept { return makeIt(base_type::cend()); }
 
-		reverse_iterator       rbegin() noexcept { return makeIt(base_type::rbegin()); }
-		const_reverse_iterator rbegin() const noexcept { return makeIt(base_type::rbegin()); }
-		const_reverse_iterator crbegin() const noexcept { return makeIt(base_type::crbegin()); }
+		reverse_iterator       rbegin() noexcept { return reverse_iterator(makeIt(end_unsafe())); }
+		const_reverse_iterator rbegin() const noexcept { return const_reverse_iterator(makeIt(end_unsafe())); }
+		const_reverse_iterator crbegin() const noexcept { return const_reverse_iterator(makeIt(end_unsafe())); }
 
-		reverse_iterator       rend() noexcept { return makeIt(base_type::rend()); }
-		const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend()); }
-		const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend()); }
+		reverse_iterator       rend() noexcept { return reverse_iterator(makeIt(begin_unsafe())); }
+		const_reverse_iterator rend() const noexcept { return const_reverse_iterator(makeIt(begin_unsafe())); }
+		const_reverse_iterator crend() const noexcept { return const_reverse_iterator(makeIt(begin_unsafe())); }
 
 		iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
 		const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
@@ -170,6 +174,14 @@ namespace safe_memory
 		iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
 		const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
 		const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
+
+		reverse_iterator_safe       rbegin_safe() noexcept { return reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+		const_reverse_iterator_safe rbegin_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+		const_reverse_iterator_safe crbegin_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(end_unsafe())); }
+
+		reverse_iterator_safe       rend_safe() noexcept { return reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
+		const_reverse_iterator_safe rend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
+		const_reverse_iterator_safe crend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
 
 		using base_type::empty;
 		using base_type::size;
@@ -216,7 +228,7 @@ namespace safe_memory
 		}
 
 		template<class... Args>
-		iterator emplace_safe(const const_iterator_safe& position, Args&&... args) {
+		iterator_safe emplace_safe(const const_iterator_safe& position, Args&&... args) {
 			return makeSafeIt(base_type::emplace(toBase(position), std::forward<Args>(args)...));
 		}
 
@@ -395,18 +407,18 @@ namespace safe_memory
 				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, base_type::capacity());
 		}
 
-		reverse_iterator makeIt(const reverse_iterator_base& it) {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return reverse_iterator(makeIt(it.base()));
-		}
-		const_reverse_iterator makeIt(const const_reverse_iterator_base& it) const {
-			if constexpr (use_base_iterator)
-				return it;
-			else
-				return const_reverse_iterator(makeIt(it.base()));
-		}
+		// reverse_iterator makeIt(const reverse_iterator_base& it) {
+		// 	if constexpr (use_base_iterator)
+		// 		return it;
+		// 	else
+		// 		return reverse_iterator(makeIt(it.base()));
+		// }
+		// const_reverse_iterator makeIt(const const_reverse_iterator_base& it) const {
+		// 	if constexpr (use_base_iterator)
+		// 		return it;
+		// 	else
+		// 		return const_reverse_iterator(makeIt(it.base()));
+		// }
 
 
 
@@ -424,18 +436,18 @@ namespace safe_memory
 				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
 		}
 
-		reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
-			// if constexpr (use_base_iterator)
-			// 	return it;
-			// else
-				return reverse_iterator_safe(makeSafeIt(it.base()));
-		}
-		const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
-			// if constexpr (use_base_iterator)
-			// 	return it;
-			// else
-				return const_reverse_iterator_safe(makeSafeIt(it.base()));
-		}
+		// reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
+		// 	// if constexpr (use_base_iterator)
+		// 	// 	return it;
+		// 	// else
+		// 		return reverse_iterator_safe(makeSafeIt(it.base()));
+		// }
+		// const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
+		// 	// if constexpr (use_base_iterator)
+		// 	// 	return it;
+		// 	// else
+		// 		return const_reverse_iterator_safe(makeSafeIt(it.base()));
+		// }
 
 	}; // class vector
 
@@ -455,6 +467,13 @@ namespace safe_memory
 
 	template <typename T, memory_safety Safety>
 	inline void vector<T, Safety>::assign(const_iterator_arg first, const_iterator_arg last)
+	{
+		auto p = toBaseOther(first, last);
+		base_type::assign(p.first, p.second);
+	}
+
+	template <typename T, memory_safety Safety>
+	inline void vector<T, Safety>::assign_safe(const const_iterator_safe& first, const const_iterator_safe& last)
 	{
 		auto p = toBaseOther(first, last);
 		base_type::assign(p.first, p.second);
@@ -653,6 +672,12 @@ namespace safe_memory
 		typedef typename base_type::const_iterator_safe                   	const_iterator;
 		typedef typename base_type::reverse_iterator_safe 					reverse_iterator;
 		typedef typename base_type::const_reverse_iterator_safe 			const_reverse_iterator;
+
+		using typename base_type::iterator_safe;
+		using typename base_type::const_iterator_safe;
+		using typename base_type::reverse_iterator_safe;
+		using typename base_type::const_reverse_iterator_safe;
+
 		using typename base_type::size_type;
 		using typename base_type::difference_type;
 
@@ -681,14 +706,13 @@ namespace safe_memory
 
 		// void swap(this_type& x) noexcept { base_type::swap(x); }
 
-		// void assign(size_type n, const value_type& value) { base_type::assign(n, value); }
+		 void assign(size_type n, const value_type& value) { base_type::assign(n, value); }
 
 		// template <typename InputIterator>
 		// void assign_unsafe(InputIterator first, InputIterator last) { base_type::assign(first, last); }
 		
-		// void assign(const_iterator_arg first, const_iterator_arg last);
-
-		// void assign(std::initializer_list<value_type> ilist) { base_type::assign(ilist); }
+		void assign(const_iterator_arg first, const_iterator_arg last) { base_type::assign_safe(first, last); }
+		void assign(std::initializer_list<value_type> ilist) { base_type::assign(ilist); }
 
 		// pointer       begin_unsafe() noexcept { return base_type::begin(); }
 		// const_pointer begin_unsafe() const noexcept { return base_type::begin(); }
@@ -714,21 +738,23 @@ namespace safe_memory
 		const_iterator end() const noexcept { return base_type::end_safe(); }
 		const_iterator cend() const noexcept { return base_type::cend_safe(); }
 
-		// reverse_iterator       rbegin() noexcept { return makeIt(base_type::rbegin_safe()); }
-		// const_reverse_iterator rbegin() const noexcept { return makeIt(base_type::rbegin_safe()); }
-		// const_reverse_iterator crbegin() const noexcept { return makeIt(base_type::crbegin_safe()); }
+		reverse_iterator       rbegin() noexcept { return base_type::rbegin_safe(); }
+		const_reverse_iterator rbegin() const noexcept { return base_type::rbegin_safe(); }
+		const_reverse_iterator crbegin() const noexcept { return base_type::crbegin_safe(); }
 
-		// reverse_iterator       rend() noexcept { return makeIt(base_type::rend_safe()); }
-		// const_reverse_iterator rend() const noexcept { return makeIt(base_type::rend_safe()); }
-		// const_reverse_iterator crend() const noexcept { return makeIt(base_type::crend_safe()); }
+		reverse_iterator       rend() noexcept { return base_type::rend_safe(); }
+		const_reverse_iterator rend() const noexcept { return base_type::rend_safe(); }
+		const_reverse_iterator crend() const noexcept { return base_type::crend_safe(); }
 
-		// iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
-		// const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
-		// const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
+		using base_type::begin_safe;
+		using base_type::cbegin_safe;
+		using base_type::end_safe;
+		using base_type::cend_safe;
+		using base_type::rbegin_safe;
+		using base_type::crbegin_safe;
+		using base_type::rend_safe;
+		using base_type::crend_safe;
 
-		// iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
-		// const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
-		// const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
 
 		// using base_type::empty;
 		// using base_type::size;
