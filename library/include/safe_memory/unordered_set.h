@@ -257,6 +257,7 @@ namespace safe_memory
         }
 	}; // unordered_set
 
+
 	template <typename Key, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_multiset
@@ -471,6 +472,24 @@ namespace safe_memory
             return eastl::pair<iterator, bool>(makeIt(r.first), r.second);
         }
 	}; // unordered_multiset
+
+	///////////////////////////////////////////////////////////////////////
+	// global operators
+	///////////////////////////////////////////////////////////////////////
+
+	template <typename K, typename H, typename P, memory_safety S>
+	inline void swap(const unordered_set<K, H, P, S>& a, 
+					 const unordered_set<K, H, P, S>& b)
+	{
+		a.swap(b);
+	}
+
+	template <typename K, typename H, typename P, memory_safety S>
+	inline void swap(const unordered_multiset<K, H, P, S>& a, 
+					 const unordered_multiset<K, H, P, S>& b)
+	{
+		a.swap(b);
+	}
 
 } // namespace safe_memory
 

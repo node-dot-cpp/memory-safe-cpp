@@ -780,6 +780,24 @@ namespace safe_memory
         }
 	}; // unordered_multimap
 
+	///////////////////////////////////////////////////////////////////////
+	// global operators
+	///////////////////////////////////////////////////////////////////////
+
+	template <typename K, typename T, typename H, typename P, memory_safety S>
+	inline void swap(const unordered_map<K, T, H, P, S>& a, 
+					 const unordered_map<K, T, H, P, S>& b)
+	{
+		a.swap(b);
+	}
+
+	template <typename K, typename T, typename H, typename P, memory_safety S>
+	inline void swap(const unordered_multimap<K, T, H, P, S>& a, 
+					 const unordered_multimap<K, T, H, P, S>& b)
+	{
+		a.swap(b);
+	}
+
 
 } // namespace safe_memory
 
