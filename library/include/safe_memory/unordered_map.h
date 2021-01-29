@@ -36,20 +36,9 @@
 #include <safe_memory/detail/allocator_to_eastl.h>
 #include <safe_memory/detail/hashtable_iterator.h>
 
-// mb: TODO move to a different file to be shared by unordered_map and unordered_set
-template<>
-struct eastl::hash<std::type_index> : std::hash<std::type_index> {
-	std::size_t operator()(const std::type_index& x) const {
-		return std::hash<std::type_index>::operator()(x);
-	}
-};
 
 namespace safe_memory
 {
-	// mb: TODO move to a different file to be shared by unordered_map and unordered_set
-	template <typename Key>
-	using hash = eastl::hash<Key>;
-
 	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_map

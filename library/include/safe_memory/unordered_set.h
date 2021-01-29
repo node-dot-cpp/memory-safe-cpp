@@ -37,9 +37,6 @@
 
 namespace safe_memory
 {
-	template <typename Key>
-	using hash = eastl::hash<Key>;
-
 	template <typename Key, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_set

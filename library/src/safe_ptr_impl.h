@@ -1963,7 +1963,7 @@ public:
 		if(!cbPtr)
 			return {};
 		else if(static_cast<const void*>(cbPtr) <= static_cast<const void*>(ptr) &&
-			 static_cast<const void*>(this) <= static_cast<const void*>(ptr))
+			 static_cast<const void*>(ptr) <= static_cast<const void*>(this))
 			return {cbPtr, ptr};
 		else
 			throwPointerOutOfRange();

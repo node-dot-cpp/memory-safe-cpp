@@ -31,6 +31,7 @@
 #include <EASTL/string.h>
 #include <safe_memory/detail/allocator_to_eastl.h>
 #include <safe_memory/string_literal.h>
+#include <safe_memory/functional.h> //for hash
 
 namespace safe_memory
 {
@@ -83,8 +84,8 @@ namespace safe_memory
 		typedef eastl::reverse_iterator<const_iterator_safe>                       const_reverse_iterator_safe;
 
 
-		template<class X>
-		friend struct eastl::hash;
+		template<typename>
+		friend struct hash;
 
         using base_type::npos;
 		static constexpr memory_safety is_safe = Safety;
@@ -816,16 +817,25 @@ namespace safe_memory
 	typedef basic_string<char32_t> u32string;
 
 
-	template<typename T, safe_memory::memory_safety Safety>
-	struct eastl::hash<safe_memory::basic_string<T, Safety>> : eastl::hash<typename safe_memory::basic_string<T, Safety>::base_type>
+	template<typename T>
+	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::none>::base_type>
 	{
-		typedef eastl::hash<typename safe_memory::basic_string<T, Safety>::base_type> base_type;
-		size_t operator()(const safe_memory::basic_string<T, Safety>& x) const
+		typedef eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::none>::base_type> base_type;
+		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
 		{
 			return base_type::operator()(x.toBase());
 		}
 	};
 
+	template<typename T>
+	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::safe>::base_type>
+	{
+		typedef eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::safe>::base_type> base_type;
+		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
+		{
+			return base_type::operator()(x.toBase());
+		}
+	};
 
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
