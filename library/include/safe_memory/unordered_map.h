@@ -32,6 +32,7 @@
 #include <typeindex>
 #include <EASTL/unordered_map.h>
 #include <EASTL/unordered_set.h>
+#include <safe_memory/functional.h>
 #include <safe_memory/detail/allocator_to_eastl.h>
 #include <safe_memory/detail/hashtable_iterator.h>
 
@@ -48,9 +49,6 @@ namespace safe_memory
 	// mb: TODO move to a different file to be shared by unordered_map and unordered_set
 	template <typename Key>
 	using hash = eastl::hash<Key>;
-
-	template <typename Key>
-	using equal_to = eastl::equal_to<Key>;
 
 	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
