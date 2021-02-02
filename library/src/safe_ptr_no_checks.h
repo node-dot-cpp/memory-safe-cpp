@@ -111,7 +111,7 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
-			deallocate( t );
+			deallocate( t, alignof(T) );
 		}
 	}
 	~owning_ptr_base_no_checks()
@@ -229,7 +229,7 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}
 	catch (...) {
-		deallocate( data );
+		deallocate( data, alignof(_Ty) );
 		throw;
 	}
 	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
