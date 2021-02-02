@@ -10,6 +10,7 @@
 #include <algorithm>
 //#include <EASTL/allocator_malloc.h>
 #include <safe_memory/string.h>
+#include <safe_memory/string_literal.h>
 
 // namespace safe_memory {
 // 	template<class T, class Alloc>
@@ -30,37 +31,42 @@ bool validate(const StringType& str) {
 
 // inject string literal string conversion macros into the unit tests
 #define TEST_STRING_NAME TestBasicString
+#define LITERAL_CHAR(x) x
 #define LITERAL(x) x
+
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicStringW
-#define LITERAL(x) EA_WCHAR(x) 
+#define LITERAL_CHAR(x) EA_WCHAR(x) 
+#define LITERAL(x) EA_WCHAR(x)
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString16
-#define LITERAL(x) EA_CHAR16(x) 
+#define LITERAL_CHAR(x) EA_CHAR16(x) 
+#define LITERAL(x) EA_CHAR16(x)
 #include "TestString.inl"
 
 #define TEST_STRING_NAME TestBasicString32
-#define LITERAL(x) EA_CHAR32(x) 
+#define LITERAL_CHAR(x) EA_CHAR32(x) 
+#define LITERAL(x) EA_CHAR32(x)
 #include "TestString.inl"
 
 int TestString()
 {
 	int nErrorCount = 0;
 
-	// nErrorCount += TestBasicString<eastl::basic_string<char, StompDetectAllocator>>();
-	nErrorCount += TestBasicString<safe_memory::string>();
+	nErrorCount += TestBasicString<safe_memory::basic_string<char>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char>>();
 
-	// nErrorCount += TestBasicStringW<eastl::basic_string<wchar_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicStringW<safe_memory::wstring>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t>>();
 
-	// nErrorCount += TestBasicString16<eastl::basic_string<char16_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString16<safe_memory::u16string>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t>>();
 
 #if EA_CHAR32_NATIVE
-	// nErrorCount += TestBasicString32<eastl::basic_string<char32_t, StompDetectAllocator>>();
-	nErrorCount += TestBasicString32<safe_memory::u32string>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t>>();
 #endif
 
 	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.

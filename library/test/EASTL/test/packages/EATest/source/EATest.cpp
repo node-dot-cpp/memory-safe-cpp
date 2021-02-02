@@ -887,17 +887,17 @@ int TestFunction::Run()
     {
 		uint64_t startTimeInMicroseconds = GetSystemTimeMicroseconds();
 
-        #ifdef _MSC_VER
-            __try {
-                nTestResult = (*mpFunction)();
-            }
-            __except(true) {
-                nTestResult = kTestResultError;
-                VerifyFormatted(false, "Unhandled exception in test %s.\n", msTestName.c_str());
-            }
-        #else
+        // #ifdef _MSC_VER
+        //     __try {
+        //         nTestResult = (*mpFunction)();
+        //     }
+        //     __except(true) {
+        //         nTestResult = kTestResultError;
+        //         VerifyFormatted(false, "Unhandled exception in test %s.\n", msTestName.c_str());
+        //     }
+        // #else
             nTestResult = (*mpFunction)();
-        #endif
+        // #endif
 
         if((nTestResult != kTestResultOK) && (nTestResult != kTestResultContinue))
             mnErrorCount++;
@@ -1110,9 +1110,9 @@ void TestSuite::Run(ResultInfo& resultInfo)
 {
     int nErrorCount = 0;
 
-    #ifdef _MSC_VER
-        __try
-    #endif
+    // #ifdef _MSC_VER
+    //     __try
+    // #endif
         {
             // If this is a new test (and not a continuation), initialize it.
             // Initialization failures are considered test failures.
@@ -1156,12 +1156,12 @@ void TestSuite::Run(ResultInfo& resultInfo)
                 }
             }
         }
-    #ifdef _MSC_VER
-        __except(true) {
-            resultInfo.mnResult = kTestResultError;
-            EATEST_VERIFY_F(false, "Unhandled exception in test %s.\n", resultInfo.mpTest->msTestName.c_str());
-        }
-    #endif
+    // #ifdef _MSC_VER
+    //     __except(true) {
+    //         resultInfo.mnResult = kTestResultError;
+    //         EATEST_VERIFY_F(false, "Unhandled exception in test %s.\n", resultInfo.mpTest->msTestName.c_str());
+    //     }
+    // #endif
 
     resultInfo.mpTest->mnErrorCount += nErrorCount;
 }

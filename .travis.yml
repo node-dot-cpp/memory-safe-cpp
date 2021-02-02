@@ -4,7 +4,10 @@ dist: bionic
 notifications:
   email:
     if: branch = master OR branch = develop
-script: ./library/src/iibmalloc/src/foundation/tools/travis-unix.sh
+script:
+  - cd library
+  - ./checkout-eastl.sh
+  - ./src/iibmalloc/src/foundation/tools/travis-unix.sh
 addons:
   apt:
     packages:
@@ -15,7 +18,10 @@ jobs:
       compiler: gcc
     - name: Windows MSVC
       os: windows
-      script: ./library/src/iibmalloc/src/foundation/tools/travis-windows-msvc.bat
+      script:
+        - cd library
+        - ./checkout-eastl.bat
+        - ./src/iibmalloc/src/foundation/tools/travis-windows-msvc.bat
     - name: macOS Clang
       os: osx        
       compiler: clang
@@ -24,7 +30,10 @@ jobs:
     - name: Windows Clang
       os: windows
       install: choco install ninja
-      script: ./library/src/iibmalloc/src/foundation/tools/travis-windows-clang.bat
+      script:
+        - cd library
+        - ./checkout-eastl.bat
+        - ./src/iibmalloc/src/foundation/tools/travis-windows-clang.bat
     - name: Linux GCC (checker)
       compiler: gcc
       cache: ccache

@@ -275,7 +275,7 @@ namespace Benchmark
 		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		EA::UnitTest::Report("\n");
 
-		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "eastl", "std", "safe_memory", "(no_checks)");
+		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "(no_checks)", "stack_only_it", "heap_safe_it");
 		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;

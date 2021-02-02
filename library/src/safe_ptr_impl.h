@@ -35,9 +35,16 @@
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
+// forward declaration
+namespace safe_memory {
+	namespace detail {
+		class soft_ptr_helper;
+	}
+}
+
 namespace nodecpp::safememory
 {
-
+	
 extern thread_local void* thg_stackPtrForMakeOwningCall;
 
 template<class T>
@@ -73,7 +80,7 @@ void checkNotNullAllSizes( T* ptr )
 		throw ::nodecpp::error::zero_pointer_access;
 }
 
-inline
+[[noreturn]] inline
 void throwPointerOutOfRange()
 {
 	// TODO: actual implementation
@@ -172,7 +179,7 @@ template<class T> class soft_ptr_impl; // forward declaration
 template<class T> class nullable_ptr_base_impl; // forward declaration
 template<class T> class nullable_ptr_impl; // forward declaration
 template<class T> class soft_this_ptr_impl; // forward declaration
-namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_impl; } // forward declaration
+class soft_this_ptr2_impl; // forward declaration
 
 struct FirstControlBlock // not reallocatable
 {
@@ -461,6 +468,20 @@ struct FirstControlBlock // not reallocatable
 		//dbgCheckValidity<void>();
 	}
 	bool isZombie() { return otherAllockedSlots.isZombie(); }
+
+	template<class T>
+	void updatePtrForListItemsWithInvalidPtr()
+	{
+		FirstControlBlock* cb = this;
+		for ( size_t i=0; i<FirstControlBlock::maxSlots; ++i )
+			if ( cb->slots[i].isUsed() )
+				reinterpret_cast<soft_ptr_impl<T>*>(cb->slots[i].getPtr())->invalidatePtr();
+		if ( cb->otherAllockedSlots.getPtr() )
+			for ( size_t i=0; i<cb->otherAllockedSlots.getPtr()->otherAllockedCnt; ++i )
+				if ( cb->otherAllockedSlots.getPtr()->slots[i].isUsed() )
+					reinterpret_cast<soft_ptr_impl<T>*>(cb->otherAllockedSlots.getPtr()->slots[i].getPtr())->invalidatePtr();
+	}
+
 };
 //static_assert( sizeof(FirstControlBlock) == 32 );
 
@@ -490,10 +511,6 @@ class owning_ptr_base_impl
 	friend class soft_ptr_base_impl;
 	template<class TT>
 	friend class soft_ptr_impl;
-
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
 
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
@@ -769,10 +786,6 @@ class owning_ptr_impl : public owning_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
-
 	template<class TT>
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
@@ -875,10 +888,6 @@ class soft_ptr_base_impl
 	template<class TT>
 	friend class soft_ptr_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
-
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
@@ -889,6 +898,10 @@ class soft_ptr_base_impl
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
+
+	friend struct FirstControlBlock;
+
+	friend class safe_memory::detail::soft_ptr_helper;
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 #ifdef NODECPP_X64
@@ -1456,10 +1469,6 @@ class soft_ptr_impl : public soft_ptr_base_impl<T>
 	template<class TT>
 	friend class soft_ptr_base_impl;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_impl;
-
 	template<class TT, class TT1>
 	friend soft_ptr_impl<TT> soft_ptr_static_cast_impl( soft_ptr_impl<TT1> );
 	template<class TT, class TT1>
@@ -1470,9 +1479,13 @@ private:
 	friend class soft_this_ptr_impl<T>;
 	template<class TT>
 	friend class soft_this_ptr_impl;
+	friend class soft_this_ptr2_impl;
 	template<class TT>
 	friend soft_ptr_impl<TT> soft_ptr_in_constructor_impl(TT* ptr);
 	friend soft_ptr_impl<T> soft_ptr_in_constructor_impl<>(T* ptr);
+
+	friend class safe_memory::detail::soft_ptr_helper;
+
 	soft_ptr_impl(FirstControlBlock* cb, T* t) : soft_ptr_base_impl<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -1916,6 +1929,44 @@ public:
 
 	~soft_this_ptr_impl()
 	{
+	}
+};
+
+class soft_this_ptr2_impl
+{
+	FirstControlBlock* cbPtr = nullptr;
+
+	static FirstControlBlock* getCbPtr() noexcept {
+		return thg_stackPtrForMakeOwningCall ? getControlBlock_(thg_stackPtrForMakeOwningCall) : nullptr;
+	}
+
+public:
+
+	static constexpr memory_safety is_safe = memory_safety::safe;
+
+	soft_this_ptr2_impl() : cbPtr(getCbPtr()) {}
+	soft_this_ptr2_impl(const soft_this_ptr2_impl&) : cbPtr(getCbPtr()) {}
+	soft_this_ptr2_impl(soft_this_ptr2_impl&&) : cbPtr(getCbPtr()) {}
+
+	soft_this_ptr2_impl& operator=(const soft_this_ptr2_impl&) { return *this; }
+	soft_this_ptr2_impl& operator=(soft_this_ptr2_impl&&) { return *this; }
+
+	~soft_this_ptr2_impl() = default;
+
+	explicit operator bool() const noexcept {
+		return cbPtr != nullptr;
+	}
+
+	template<class T>
+	soft_ptr_impl<T> getSoftPtr(T* ptr) const {
+
+		if(!cbPtr)
+			return {};
+		else if(static_cast<const void*>(cbPtr) <= static_cast<const void*>(ptr) &&
+			 static_cast<const void*>(ptr) <= static_cast<const void*>(this))
+			return {cbPtr, ptr};
+		else
+			throwPointerOutOfRange();
 	}
 };
 

@@ -31,13 +31,17 @@
 //mb: temporary hack, until we move all files to their definitive location
 // and rename namespaces acordingly
 
+#include <safe_memory/safe_ptr_common.h>
 #include "../../src/safe_ptr.h"
 
 namespace safe_memory {
 
 using ::nodecpp::safememory::owning_ptr;
 using ::nodecpp::safememory::soft_ptr;
+using ::nodecpp::safememory::soft_ptr_no_checks;
+using ::nodecpp::safememory::soft_ptr_impl;
 using ::nodecpp::safememory::soft_this_ptr;
+using ::nodecpp::safememory::soft_this_ptr2;
 using ::nodecpp::safememory::nullable_ptr;
 
 using ::nodecpp::safememory::make_owning;
@@ -49,11 +53,7 @@ using ::nodecpp::safememory::nullable_cast;
 
 using ::nodecpp::safememory::make_owning_t;
 
-
 using ::nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::safeness_declarator;
-
 }
-
 
 #endif //SAFE_MEMORY_SAFE_PTR_H

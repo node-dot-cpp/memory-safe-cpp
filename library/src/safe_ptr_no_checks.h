@@ -30,6 +30,12 @@
 
 #include "safe_ptr_common.h"
 
+// forward declaration
+namespace safe_memory {
+	namespace detail {
+		class soft_ptr_helper;
+	}
+}
 
 namespace nodecpp::safememory
 {
@@ -38,7 +44,7 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 template<class T> class soft_this_ptr_no_checks; // forward declaration
 template<class T> class nullable_ptr_no_checks; // forward declaration
-namespace lib_helpers { template<class T> class soft_ptr_with_zero_offset_no_checks; } // forward declaration
+class soft_this_ptr2_no_checks; // forward declaration
 
 struct fbc_ptr_t {};
 
@@ -54,10 +60,6 @@ class owning_ptr_base_no_checks
 	friend class soft_ptr_base_no_checks;
 	template<class TT>
 	friend class soft_ptr_no_checks;
-
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
 
 	T* t;
 
@@ -109,7 +111,7 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
-			deallocate( t );
+			deallocate( t, alignof(T) );
 		}
 	}
 	~owning_ptr_base_no_checks()
@@ -179,10 +181,6 @@ class owning_ptr_no_checks : public owning_ptr_base_no_checks<T>
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
-
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
@@ -231,7 +229,7 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}
 	catch (...) {
-		deallocate( data );
+		deallocate( data, alignof(_Ty) );
 		throw;
 	}
 	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
@@ -256,9 +254,7 @@ class soft_ptr_base_no_checks
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
+	friend class safe_memory::detail::soft_ptr_helper;
 
 	T* t;
 
@@ -379,17 +375,18 @@ class soft_ptr_no_checks : public soft_ptr_base_no_checks<T>
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks<T>;
-	template<class TT>
-	friend class lib_helpers::soft_ptr_with_zero_offset_no_checks;
 
 private:
 	friend class soft_this_ptr_no_checks<T>;
 	template<class TT>
 	friend class soft_this_ptr_no_checks;
+	friend class soft_this_ptr2_no_checks;
 	template<class TT>
 	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
 	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
+
+	friend class safe_memory::detail::soft_ptr_helper;
+
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
 public:
@@ -652,6 +649,30 @@ public:
 
 	~soft_this_ptr_no_checks()
 	{
+	}
+};
+
+class soft_this_ptr2_no_checks
+{
+public:
+
+	static constexpr memory_safety is_safe = memory_safety::none;
+
+	soft_this_ptr2_no_checks() = default;
+
+	soft_this_ptr2_no_checks(soft_this_ptr2_no_checks&) = default;
+	soft_this_ptr2_no_checks(soft_this_ptr2_no_checks&&) = default;
+
+	soft_this_ptr2_no_checks& operator=(soft_this_ptr2_no_checks&) = default;
+	soft_this_ptr2_no_checks& operator=(soft_this_ptr2_no_checks&&) = default;
+
+	~soft_this_ptr2_no_checks() = default;
+
+	explicit constexpr operator bool() const noexcept { return true; }
+
+	template<class T>
+	soft_ptr_no_checks<T> getSoftPtr(T* ptr) const {
+		return {fbc_ptr_t(), ptr};
 	}
 };
 

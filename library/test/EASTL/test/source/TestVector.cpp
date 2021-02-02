@@ -24,7 +24,6 @@ EA_DISABLE_ALL_VC_WARNINGS()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 using safe_memory::vector;
-using safe_memory::detail::iterator_validity;
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
@@ -165,8 +164,8 @@ struct TestMoveAssignToSelf
 	template <class> struct is_less_comparable : std::false_type { };
 #endif
 
-
-int TestVector()
+template<template<typename> typename VEC>
+int TestVectorImpl()
 {
 	int nErrorCount = 0;
 	std::size_t i;
@@ -184,9 +183,9 @@ int TestVector()
 		// using namespace eastl;
 
 		// explicit vector();
-		vector<int> intArray1;
-		vector<TestObject> toArray1;
-		// vector<std::list<TestObject> > toListArray1;
+		VEC<int> intArray1;
+		VEC<TestObject> toArray1;
+		// VEC<std::list<TestObject> > toListArray1;
 
 		EATEST_VERIFY(intArray1.validate());
 		EATEST_VERIFY(intArray1.empty());
@@ -198,18 +197,18 @@ int TestVector()
 		// explicit vector(const allocator_type& allocator);
 		// MallocAllocator::reset_all();
 		// MallocAllocator ma;
-		// vector<int, MallocAllocator> intArray6(ma);
-		// vector<TestObject, MallocAllocator> toArray6(ma);
-		// vector<list<TestObject>, MallocAllocator> toListArray6(ma);
+		// VEC<int, MallocAllocator> intArray6(ma);
+		// VEC<TestObject, MallocAllocator> toArray6(ma);
+		// VEC<list<TestObject>, MallocAllocator> toListArray6(ma);
 		// intArray6.resize(1);
 		// toArray6.resize(1);
 		// toListArray6.resize(1);
 		// EATEST_VERIFY(MallocAllocator::mAllocCountAll == 3);
 
 		// explicit vector(size_type n, const allocator_type& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR)
-		vector<int> intArray2(10);
-		vector<TestObject> toArray2(10);
-		// vector<std::list<TestObject> > toListArray2(10);
+		VEC<int> intArray2(10);
+		VEC<TestObject> toArray2(10);
+		// VEC<std::list<TestObject> > toListArray2(10);
 
 		EATEST_VERIFY(intArray2.validate());
 		EATEST_VERIFY(intArray2.size() == 10);
@@ -220,9 +219,9 @@ int TestVector()
 
 		// vector(size_type n, const value_type& value, const allocator_type& allocator =
 		// EASTL_VECTOR_DEFAULT_ALLOCATOR)
-		vector<int> intArray3(10, 7);
-		vector<TestObject> toArray3(10, TestObject(7));
-		// vector<std::list<TestObject> > toListArray3(10, std::list<TestObject>(7));
+		VEC<int> intArray3(10, 7);
+		VEC<TestObject> toArray3(10, TestObject(7));
+		// VEC<std::list<TestObject> > toListArray3(10, std::list<TestObject>(7));
 
 		EATEST_VERIFY(intArray3.validate());
 		EATEST_VERIFY(intArray3.size() == 10);
@@ -233,9 +232,9 @@ int TestVector()
 		// EATEST_VERIFY(toListArray3[5] == std::list<TestObject>(7));
 
 		// vector(const vector& x)
-		vector<int> intArray4(intArray2);
-		vector<TestObject> toArray4(toArray2);
-		// vector<std::list<TestObject> > toListArray4(toListArray2);
+		VEC<int> intArray4(intArray2);
+		VEC<TestObject> toArray4(toArray2);
+		// VEC<std::list<TestObject> > toListArray4(toListArray2);
 
 		EATEST_VERIFY(intArray4.validate());
 		EATEST_VERIFY(intArray4 == intArray2);
@@ -246,9 +245,9 @@ int TestVector()
 
 		// vector(const this_type& x, const allocator_type& allocator)
 		// MallocAllocator::reset_all();
-		// vector<int, MallocAllocator> intArray7(intArray6, ma);
-		// vector<TestObject, MallocAllocator> toArray7(toArray6, ma);
-		// vector<list<TestObject>, MallocAllocator> toListArray7(toListArray6, ma);
+		// VEC<int, MallocAllocator> intArray7(intArray6, ma);
+		// VEC<TestObject, MallocAllocator> toArray7(toArray6, ma);
+		// VEC<list<TestObject>, MallocAllocator> toListArray7(toListArray6, ma);
 		// EATEST_VERIFY(MallocAllocator::mAllocCountAll == 3);
 
 		// vector(InputIterator first, InputIterator last)
@@ -256,14 +255,14 @@ int TestVector()
 		// std::deque<TestObject> toDeque(3);
 		// std::deque<std::list<TestObject> > toListDeque(3);
 
-		// vector<int> intArray5(intDeque.begin(), intDeque.end());
-		// vector<TestObject> toArray5(toDeque.begin(), toDeque.end());
-		// vector<std::list<TestObject> > toListArray5(toListDeque.begin(), toListDeque.end());
+		// VEC<int> intArray5(intDeque.begin(), intDeque.end());
+		// VEC<TestObject> toArray5(toDeque.begin(), toDeque.end());
+		// VEC<std::list<TestObject> > toListArray5(toListDeque.begin(), toListDeque.end());
 
 		// vector(std::initializer_list<T> ilist, const Allocator& allocator = EASTL_VECTOR_DEFAULT_ALLOCATOR);
 		{
 #if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-			safe_memory::vector<float> floatVector{0, 1, 2, 3};
+			VEC<float> floatVector{0, 1, 2, 3};
 
 			EATEST_VERIFY(floatVector.size() == 4);
 			EATEST_VERIFY((floatVector[0] == 0) && (floatVector[3] == 3));
@@ -299,22 +298,22 @@ int TestVector()
 		// vector(this_type&& x, const Allocator& allocator)
 		// this_type& operator=(this_type&& x)
 
-		vector<TestObject> vector3TO33(3, TestObject(33));
-		vector<TestObject> toVectorA(std::move(vector3TO33));
+		VEC<TestObject> vector3TO33(3, TestObject(33));
+		VEC<TestObject> toVectorA(std::move(vector3TO33));
 		EATEST_VERIFY((toVectorA.size() == 3) && (toVectorA.front().mX == 33) && (vector3TO33.size() == 0));
 
 		// The following is not as strong a test of this ctor as it could be. A stronger test would be to use
 		// IntanceAllocator with different instances.
-		// vector<TestObject, MallocAllocator> vector4TO44(4, TestObject(44));
-		// vector<TestObject, MallocAllocator> toVectorB(std::move(vector4TO44), MallocAllocator());
+		// VEC<TestObject, MallocAllocator> vector4TO44(4, TestObject(44));
+		// VEC<TestObject, MallocAllocator> toVectorB(std::move(vector4TO44), MallocAllocator());
 		// EATEST_VERIFY((toVectorB.size() == 4) && (toVectorB.front().mX == 44) && (vector4TO44.size() == 0));
 
-		// vector<TestObject, MallocAllocator> vector5TO55(5, TestObject(55));
+		// VEC<TestObject, MallocAllocator> vector5TO55(5, TestObject(55));
 		// toVectorB = std::move(vector5TO55);
 		// EATEST_VERIFY((toVectorB.size() == 5) && (toVectorB.front().mX == 55) && (vector5TO55.size() == 0));
 
 		// Should be able to emplace_back an item with const members (non-copyable)
-		// safe_memory::vector<ItemWithConst> myVec2;
+		// VEC<ItemWithConst> myVec2;
 		// ItemWithConst& ref = myVec2.emplace_back(42);
 		// EATEST_VERIFY(myVec2.back().i == 42);
 		// EATEST_VERIFY(ref.i == 42);
@@ -323,27 +322,27 @@ int TestVector()
 	{
 		// using namespace eastl;
 
-		// pointer         data();
-		// const_pointer   data() const;
+		// pointer         data_unsafe();
+		// const_pointer   data_unsafe() const;
 		// reference       front();
 		// const_reference front() const;
 		// reference       back();
 		// const_reference back() const;
 
-		vector<int> intArray(10, 7);
+		VEC<int> intArray(10, 7);
 		intArray[0] = 10;
 		intArray[1] = 11;
 		intArray[2] = 12;
 
-		EATEST_VERIFY(intArray.data() == &intArray[0]);
-		EATEST_VERIFY(*intArray.data() == 10);
+		EATEST_VERIFY(intArray.data_unsafe() == &intArray[0]);
+		EATEST_VERIFY(*intArray.data_unsafe() == 10);
 		EATEST_VERIFY(intArray.front() == 10);
 		EATEST_VERIFY(intArray.back() == 7);
 
-		const vector<TestObject> toArrayC(10, TestObject(7));
+		const VEC<TestObject> toArrayC(10, TestObject(7));
 
-		EATEST_VERIFY(toArrayC.data() == &toArrayC[0]);
-		EATEST_VERIFY(*toArrayC.data() == TestObject(7));
+		EATEST_VERIFY(toArrayC.data_unsafe() == &toArrayC[0]);
+		EATEST_VERIFY(*toArrayC.data_unsafe() == TestObject(7));
 		EATEST_VERIFY(toArrayC.front() == TestObject(7));
 		EATEST_VERIFY(toArrayC.back() == TestObject(7));
 	}
@@ -360,16 +359,16 @@ int TestVector()
 		// reverse_iterator       rend();
 		// const_reverse_iterator rend() const;
 
-		// vector<int> intArray(20);
+		// VEC<int> intArray(20);
 		// for (i = 0; i < 20; i++)
 		// 	intArray[i] = (int)i;
 
 		// i = 0;
-		// for (vector<int>::iterator it = intArray.begin(); it != intArray.end(); ++it, ++i)
+		// for (VEC<int>::iterator it = intArray.begin(); it != intArray.end(); ++it, ++i)
 		// 	EATEST_VERIFY(*it == (int)i);
 
 		// i = intArray.size() - 1;
-		// for (vector<int>::reverse_iterator itr = intArray.rbegin(); itr != intArray.rend(); ++itr, --i)
+		// for (VEC<int>::reverse_iterator itr = intArray.rbegin(); itr != intArray.rend(); ++itr, --i)
 		// 	EATEST_VERIFY(*itr == (int)i);
 	}
 
@@ -389,13 +388,13 @@ int TestVector()
 		const size_t M = sizeof(B) / sizeof(int);
 
 		// assign from pointer range
-		vector<int> v3;
+		VEC<int> v3;
 		v3.assign_unsafe(A, A + N);
 		EATEST_VERIFY(std::equal(v3.begin(), v3.end(), A));
 		EATEST_VERIFY(v3.size() == N);
 
 		// assign from iterator range
-		vector<int> v4;
+		VEC<int> v4;
 		v4.assign(v3.begin(), v3.end());
 		EATEST_VERIFY(std::equal(v4.begin(), v4.end(), A));
 		EATEST_VERIFY(std::equal(A, A + N, v4.begin()));
@@ -425,16 +424,16 @@ int TestVector()
 		// reference       at(size_type n);
 		// const_reference at(size_type n) const;
 
-		vector<int> intArray(5);
+		VEC<int> intArray(5);
 		EATEST_VERIFY(intArray[3] == 0);
 		EATEST_VERIFY(intArray.at(3) == 0);
 
-		vector<TestObject> toArray(5);
+		VEC<TestObject> toArray(5);
 		EATEST_VERIFY(toArray[3] == TestObject(0));
 		EATEST_VERIFY(toArray.at(3) == TestObject(0));
 
-// #if EASTL_EXCEPTIONS_ENABLED
-		vector<TestObject> vec01(5);
+#if EASTL_EXCEPTIONS_ENABLED
+		VEC<TestObject> vec01(5);
 
 		try
 		{
@@ -443,7 +442,7 @@ int TestVector()
 		}
 		catch (std::out_of_range&) { EATEST_VERIFY(true); }
 		catch (...) { EATEST_VERIFY(false); }
-// #endif
+#endif
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
@@ -457,7 +456,7 @@ int TestVector()
 		// void pop_back();
 		// void push_back(T&& value);
 
-		vector<int> intArray(6);
+		VEC<int> intArray(6);
 		for (i = 0; i < 6; i++)
 			intArray[i] = (int)i;
 
@@ -496,21 +495,21 @@ int TestVector()
 
 		// void* push_back_uninitialized();
 
-		int64_t toCount0 = TestObject::sTOCount;
+		// int64_t toCount0 = TestObject::sTOCount;
 
-		vector<TestObject> vTO;
-		EATEST_VERIFY(TestObject::sTOCount == toCount0);
+		// vector<TestObject> vTO;
+		// EATEST_VERIFY(TestObject::sTOCount == toCount0);
 
-		for (i = 0; i < 25; i++)
-		{
-			void* pTO = vTO.push_back_uninitialized();
-			EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i)));
+		// for (i = 0; i < 25; i++)
+		// {
+		// 	void* pTO = vTO.push_back_uninitialized();
+		// 	EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i)));
 
-			new (pTO) TestObject((int)i);
-			EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i) + 1));
-			EATEST_VERIFY(vTO.back().mX == (int)i);
-			EATEST_VERIFY(vTO.validate());
-		}
+		// 	new (pTO) TestObject((int)i);
+		// 	EATEST_VERIFY(TestObject::sTOCount == (toCount0 + static_cast<int64_t>(i) + 1));
+		// 	EATEST_VERIFY(vTO.back().mX == (int)i);
+		// 	EATEST_VERIFY(vTO.validate());
+		// }
 	}
 
 	{
@@ -527,7 +526,7 @@ int TestVector()
 
 		TestObject::Reset();
 
-		vector<TestObject> toVectorA;
+		VEC<TestObject> toVectorA;
 		toVectorA.reserve(2);
 
 		TestObject& ref = toVectorA.emplace_back(2, 3, 4);
@@ -549,7 +548,7 @@ int TestVector()
 		// void push_back(T&& x);
 		// iterator insert(const_iterator position, T&& x);
 
-		vector<TestObject> toVectorC;
+		VEC<TestObject> toVectorC;
 
 		toVectorC.push_back(TestObject(2, 3, 4));
 		EATEST_VERIFY((toVectorC.size() == 1) && (toVectorC.back().mX == (2 + 3 + 4)) &&
@@ -579,7 +578,7 @@ int TestVector()
 		// iterator erase_last_unsorted(const T& pos);
 		// void     clear();
 
-		vector<int> intArray(20);
+		VEC<int> intArray(20);
 		for (i = 0; i < 20; i++)
 			intArray[i] = (int)i;
 
@@ -619,7 +618,7 @@ int TestVector()
 		EATEST_VERIFY(intArray.empty());
 		EATEST_VERIFY(intArray.size() == 0);
 
-		vector<TestObject> toArray(20);
+		VEC<TestObject> toArray(20);
 		for (i = 0; i < 20; i++)
 			toArray[i] = TestObject((int)i);
 
@@ -812,14 +811,14 @@ int TestVector()
 		// iterator erase(reverse_iterator first, reverse_iterator last);
 		// iterator erase_unsorted(reverse_iterator position);
 
-		// vector<int> intVector;
+		// VEC<int> intVector;
 
 		// for (i = 0; i < 20; i++)
 		// 	intVector.push_back((int)i);
 		// EATEST_VERIFY((intVector.size() == 20) && (intVector[0] == 0) && (intVector[19] == 19));
 
-		// vector<int>::reverse_iterator r2A = intVector.rbegin();
-		// vector<int>::reverse_iterator r2B = r2A + 3;
+		// VEC<int>::reverse_iterator r2A = intVector.rbegin();
+		// VEC<int>::reverse_iterator r2B = r2A + 3;
 		// intVector.erase(r2A, r2B);
 		// EATEST_VERIFY((intVector.size() == 17));
 		// EATEST_VERIFY((intVector[0] == 0));
@@ -883,7 +882,7 @@ int TestVector()
 		const int valueToRemove = 44;
 		int testValues[] = {42, 43, 44, 45, 46, 47};
 
-		safe_memory::vector<std::unique_ptr<int>> v; 
+		VEC<std::unique_ptr<int>> v; 
 		
 		for(auto& te : testValues)
 			v.push_back(std::make_unique<int>(te));
@@ -920,7 +919,7 @@ int TestVector()
 		// iterator insert(iterator position, InputIterator first, InputIterator last);
 		// iterator insert(const_iterator position, std::initializer_list<T> ilist);
 
-		vector<int> v(7, 13);
+		VEC<int> v(7, 13);
 		EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector", 13, 13, 13, 13, 13, 13, 13, -1));
 
 		// insert at end of size and capacity.
@@ -975,7 +974,7 @@ int TestVector()
 									 42, 13, 13, 17, 17, 17, 17, 17, 17, 49, 99, 999, -1));
 
 		// Single insert with reallocation
-		vector<int> v2;
+		VEC<int> v2;
 		v2.reserve(100);
 		v2.insert(v2.begin(), 100, 17);
 		EATEST_VERIFY(v2.size() == 100);
@@ -1000,8 +999,8 @@ int TestVector()
 
 // #if !defined(EASTL_STD_ITERATOR_CATEGORY_ENABLED) && !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
 // 		// std::vector / safe_memory::vector
-// 		std::vector<TestObject> stdV(10);
-// 		safe_memory::vector<TestObject> eastlV(10);
+// 		std::VEC<TestObject> stdV(10);
+// 		VEC<TestObject> eastlV(10);
 
 // 		eastlV.insert(eastlV.end(), stdV.begin(), stdV.end());
 // 		stdV.insert(stdV.end(), eastlV.begin(), eastlV.end());
@@ -1011,7 +1010,7 @@ int TestVector()
 
 // 		// std::string / safe_memory::vector
 // 		std::string stdString("blah");
-// 		safe_memory::vector<char8_t> eastlVString;
+// 		VEC<char8_t> eastlVString;
 
 // 		eastlVString.assign(stdString.begin(), stdString.end());
 // #endif
@@ -1019,7 +1018,7 @@ int TestVector()
 // iterator insert(const_iterator position, std::initializer_list<T> ilist);
 #if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
 		// iterator insert(const_iterator position, std::initializer_list<T> ilist);
-		safe_memory::vector<float> floatVector;
+		VEC<float> floatVector;
 
 		floatVector.insert(floatVector.end(), {0, 1, 2, 3});
 		EATEST_VERIFY(floatVector.size() == 4);
@@ -1032,25 +1031,25 @@ int TestVector()
 
 	{
 		// Test insert move objects
-		safe_memory::vector<TestObject> toVector1;
+		VEC<TestObject> toVector1;
 		toVector1.reserve(20);
 		for(int idx = 0; idx < 2; ++idx)
 			toVector1.push_back(TestObject(idx));
 
-		safe_memory::vector<TestObject> toVector2;
+		VEC<TestObject> toVector2;
 		for(int idx = 0; idx < 3; ++idx)
 			toVector2.push_back(TestObject(10 + idx));
 
 		// Insert more objects than the existing number using insert with iterator
 		TestObject::Reset();
-        // safe_memory::vector<TestObject>::iterator it;
+        // VEC<TestObject>::iterator it;
 		auto it = toVector1.insert(toVector1.begin(), toVector2.begin(), toVector2.end());
         EATEST_VERIFY(it == toVector1.begin());
 		EATEST_VERIFY(VerifySequence(toVector1.begin(), toVector1.end(), int(), "vector.insert", 10, 11, 12, 0, 1, -1));
 		EATEST_VERIFY(TestObject::sTOMoveCtorCount + TestObject::sTOMoveAssignCount == 2 &&
 					  TestObject::sTOCopyCtorCount + TestObject::sTOCopyAssignCount == 3); // Move 2 existing elements and copy the 3 inserted
 
-		safe_memory::vector<TestObject> toVector3;
+		VEC<TestObject> toVector3;
 		toVector3.push_back(TestObject(20));
 
 		// Insert less objects than the existing number using insert with iterator
@@ -1086,7 +1085,7 @@ int TestVector()
 		// using namespace eastl;
 
 		// reserve / resize / capacity / clear
-		vector<int> v(10, 17);
+		VEC<int> v(10, 17);
 		v.reserve(20);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v.size() == 10);
@@ -1101,7 +1100,7 @@ int TestVector()
 		EATEST_VERIFY(v.capacity() == 20);
 
 		v.resize(42);  // Grow with reallocation
-		vector<int>::size_type c = v.capacity();
+		typename VEC<int>::size_type c = v.capacity();
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v[41] == 0);
 		EATEST_VERIFY(c >= 42);
@@ -1117,13 +1116,13 @@ int TestVector()
 		EATEST_VERIFY(v.capacity() == c);
 
 		// How to shrink a vector's capacity to be equal to its size.
-		vector<int>(v).swap(v);
+		VEC<int>(v).swap(v);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v.empty());
 		// EATEST_VERIFY(v.capacity() == v.size());
 
 		// How to completely clear a vector (size = 0, capacity = 0, no allocation).
-		vector<int>().swap(v);
+		VEC<int>().swap(v);
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v.empty());
 		// EATEST_VERIFY(v.capacity() == 0);
@@ -1135,7 +1134,7 @@ int TestVector()
 	// 	const int intArray[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17};
 	// 	const size_t kIntArraySize = sizeof(intArray) / sizeof(int);
 
-	// 	vector<int> v(30);
+	// 	VEC<int> v(30);
 	// 	EATEST_VERIFY(v.capacity() >= 30);
 
 	// 	v.assign_unsafe(intArray, intArray + kIntArraySize);
@@ -1154,22 +1153,22 @@ int TestVector()
 	// 	// EATEST_VERIFY(v.capacity() == v.size());
 
 	// 	// Test set_capacity doing a realloc of non-scalar class types.
-	// 	safe_memory::vector<TestObject> toArray;
+	// 	VEC<TestObject> toArray;
 	// 	toArray.resize(16);
 	// 	toArray.set_capacity(64);
 	// 	EATEST_VERIFY(v.validate());
 
 	// 	// reset_lose_memory
 	// 	// int* const pData = v.data();
-	// 	// vector<int>::size_type n = v.size();
-	// 	// vector<int>::allocator_type& allocator = v.get_allocator();
+	// 	// VEC<int>::size_type n = v.size();
+	// 	// VEC<int>::allocator_type& allocator = v.get_allocator();
 	// 	// v.reset_lose_memory();
 	// 	// allocator.deallocate(pData, n);
 	// 	// EATEST_VERIFY(v.capacity() == 0);
 	// 	// EATEST_VERIFY(VerifySequence(v.begin(), v.end(), int(), "vector.reset", -1));
 
 	// 	// Test set_capacity make a move when reducing size
-	// 	vector<TestObject> toArray2(10, TestObject(7));
+	// 	VEC<TestObject> toArray2(10, TestObject(7));
 	// 	TestObject::Reset();
 	// 	toArray2.set_capacity(5);
 	// 	EATEST_VERIFY(TestObject::sTOMoveCtorCount == 5 &&
@@ -1186,7 +1185,7 @@ int TestVector()
 		{
 			// MallocAllocator::reset_all();
 
-			// safe_memory::vector<int, MallocAllocator> v;
+			// VEC<int, MallocAllocator> v;
 			// v.reserve(32);  // does allocation
 
 			// v.push_back(37);  // may reallocate if we do enough of these to exceed 32
@@ -1204,7 +1203,7 @@ int TestVector()
 		{
 			// MallocAllocator::reset_all();
 
-			// safe_memory::vector<int, MallocAllocator> v;
+			// VEC<int, MallocAllocator> v;
 			// v.reserve(32);  // does allocation
 
 			// for (int j = 0; j < 40; j++)
@@ -1228,19 +1227,19 @@ int TestVector()
 		// bool validate() const;
 		// bool validate_iterator(const_iterator i) const;
 
-		vector<int> intArray(20);
+		VEC<int> intArray(20);
 
 		EATEST_VERIFY(intArray.validate());
-		EATEST_VERIFY(intArray.validate_iterator(intArray.begin()) == iterator_validity::ValidCanDeref);
-		EATEST_VERIFY(intArray.validate_iterator(NULL) == iterator_validity::Null);
+		EATEST_VERIFY(intArray.validate_iterator(intArray.begin()) == (eastl::isf_valid | eastl::isf_current | eastl::isf_can_dereference));
+		EATEST_VERIFY(intArray.validate_iterator(NULL) == eastl::isf_none);
 	}
 
 	{
 		// using namespace eastl;
 
 		// global operators (==, !=, <, etc.)
-		vector<int> intArray1(10);
-		vector<int> intArray2(10);
+		VEC<int> intArray1(10);
+		VEC<int> intArray2(10);
 
 		for (i = 0; i < intArray1.size(); i++)
 		{
@@ -1269,11 +1268,11 @@ int TestVector()
 	{
 		// using namespace eastl;
 
-		// Test vector<Align64>
+		// Test VEC<Align64>
 
 		// Aligned objects should be CustomAllocator instead of the default, because the
 		// EASTL default might be unable to do aligned allocations, but CustomAllocator always can.
-		// vector<Align64, CustomAllocator> vA64(10);
+		// VEC<Align64, CustomAllocator> vA64(10);
 
 		// vA64.resize(2);
 		// EATEST_VERIFY(vA64.size() == 2);
@@ -1294,12 +1293,12 @@ int TestVector()
 	{
 		// Misc additional tests
 
-		safe_memory::vector<int> empty1;
+		VEC<int> empty1;
 		// EATEST_VERIFY(empty1.data() == NULL);
 		EATEST_VERIFY(empty1.size() == 0);
 		// EATEST_VERIFY(empty1.capacity() == 0);
 
-		safe_memory::vector<int> empty2 = empty1;
+		VEC<int> empty2 = empty1;
 		// EATEST_VERIFY(empty2.data() == NULL);
 		EATEST_VERIFY(empty2.size() == 0);
 		// EATEST_VERIFY(empty2.capacity() == 0);
@@ -1307,7 +1306,7 @@ int TestVector()
 
 	{  // Test whose purpose is to see if calling vector::size() in a const loop results in the compiler optimizing the
 		// size() call to outside the loop.
-		safe_memory::vector<TestObject> toArray;
+		VEC<TestObject> toArray;
 
 		toArray.resize(7);
 
@@ -1322,7 +1321,7 @@ int TestVector()
 
 	{  // Test assign from iterator type.
 		TestObject to;
-		safe_memory::vector<TestObject> toTest;
+		VEC<TestObject> toTest;
 
 		// InputIterator
 		demoted_iterator<TestObject*, std::forward_iterator_tag> toInput(&to);
@@ -1341,7 +1340,7 @@ int TestVector()
 		toTest.assign_unsafe(toDeque.begin(), toDeque.end());
 
 		// ContiguousIterator    (note: as of this writing, vector doesn't actually use contiguous_iterator_tag)
-		safe_memory::vector<TestObject> toArray;
+		VEC<TestObject> toArray;
 		toTest.assign_unsafe(toArray.begin(), toArray.end());
 	}
 
@@ -1349,53 +1348,53 @@ int TestVector()
 	TestObject::Reset();
 
 	{  // Test user report that they think they saw code like this leak memory.
-		safe_memory::vector<int> intTest;
+		VEC<int> intTest;
 
 		intTest.push_back(1);
-		intTest = safe_memory::vector<int>();
+		intTest = VEC<int>();
 
-		safe_memory::vector<TestObject> toTest;
+		VEC<TestObject> toTest;
 
 		toTest.push_back(TestObject(1));
-		toTest = safe_memory::vector<TestObject>();
+		toTest = VEC<TestObject>();
 	}
 
 	EATEST_VERIFY(TestObject::IsClear());
 	TestObject::Reset();
 
-	{  // Regression of user error report for the case of vector<const type>.
-		// safe_memory::vector<int> ctorValues;
+	{  // Regression of user error report for the case of VEC<const type>.
+		// VEC<int> ctorValues;
 
 		// for (int v = 0; v < 10; v++)
 		// 	ctorValues.push_back(v);
 
-//		safe_memory::vector<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
-//		safe_memory::vector<const int> testInt(ctorValues.begin(), ctorValues.end());
+//		VEC<const ConstType> testStruct(ctorValues.begin(), ctorValues.end());
+//		VEC<const int> testInt(ctorValues.begin(), ctorValues.end());
 	}
 
 	{  // Regression to verify that const vector works.
-		const safe_memory::vector<int> constIntVector1;
+		const VEC<int> constIntVector1;
 		EATEST_VERIFY(constIntVector1.empty());
 
 		// int intArray[3] = {37, 38, 39};
-		// const safe_memory::vector<int> constIntVector2(intArray, intArray + 3);
+		// const VEC<int> constIntVector2(intArray, intArray + 3);
 		// EATEST_VERIFY(constIntVector2.size() == 3);
 
-		const safe_memory::vector<int> constIntVector3(4, 37);
+		const VEC<int> constIntVector3(4, 37);
 		EATEST_VERIFY(constIntVector3.size() == 4);
 
-		const safe_memory::vector<int> constIntVector4;
-		const safe_memory::vector<int> constIntVector5 = constIntVector4;
+		const VEC<int> constIntVector4;
+		const VEC<int> constIntVector5 = constIntVector4;
 	}
 
 	{  // Regression to verify that a bug fix for a vector optimization works.
-		safe_memory::vector<int> intVector1;
+		VEC<int> intVector1;
 		intVector1.reserve(128);
 		intVector1.resize(128, 37);
 		intVector1.push_back(intVector1.front());
 		EATEST_VERIFY(intVector1.back() == 37);
 
-		safe_memory::vector<int> intVector2;
+		VEC<int> intVector2;
 		intVector2.reserve(1024);
 		intVector2.resize(1024, 37);
 		intVector2.resize(2048, intVector2.front());
@@ -1409,7 +1408,7 @@ int TestVector()
 	(defined(__GNUC__) && (EA_COMPILER_VERSION >= 4006) && defined(__GXX_EXPERIMENTAL_CXX0X__)) || \
 	(__cplusplus >= 201103L)
 
-		safe_memory::vector<float> floatVector;
+		VEC<float> floatVector;
 
 		floatVector.push_back(0.0);
 		floatVector.push_back(1.0);
@@ -1425,7 +1424,7 @@ int TestVector()
 // C++11 cbegin, cend, crbegin, crend
 #if !defined(EA_COMPILER_NO_AUTO)
 		// float vector
-		safe_memory::vector<float> floatVector;
+		VEC<float> floatVector;
 
 		auto cb = floatVector.cbegin();
 		auto ce = floatVector.cend();
@@ -1436,7 +1435,7 @@ int TestVector()
 		EATEST_VERIFY(std::distance(crb, cre) == 0);
 
 		// const float vector
-		const safe_memory::vector<float> cFloatVector;
+		const VEC<float> cFloatVector;
 
 		auto ccb = cFloatVector.cbegin();
 		auto cce = cFloatVector.cend();
@@ -1454,8 +1453,8 @@ int TestVector()
 		// using namespace eastl;
 
 		const std::string str0 = "TestString0";
-		vector<std::string> v(1, str0);
-		vector<std::string> v_copy;
+		VEC<std::string> v(1, str0);
+		VEC<std::string> v_copy;
 
 		// Test operator=
 		v_copy = v;
@@ -1488,8 +1487,8 @@ int TestVector()
 // 		InstanceAllocator ia0((uint8_t)0);
 // 		InstanceAllocator ia1((uint8_t)1);
 
-// 		safe_memory::vector<int, InstanceAllocator> v0((std::size_t)1, (int)0, ia0);
-// 		safe_memory::vector<int, InstanceAllocator> v1((std::size_t)1, (int)1, ia1);
+// 		VEC<int, InstanceAllocator> v0((std::size_t)1, (int)0, ia0);
+// 		VEC<int, InstanceAllocator> v1((std::size_t)1, (int)1, ia1);
 
 // 		EATEST_VERIFY((v0.front() == 0) && (v1.front() == 1));
 // #if EASTL_ALLOCATOR_COPY_ENABLED
@@ -1507,7 +1506,7 @@ int TestVector()
 
 	{
 		// Test shrink_to_fit
-		safe_memory::vector<int> v;
+		VEC<int> v;
 		// EATEST_VERIFY(v.capacity() == 0);
 		v.resize(100);
 		EATEST_VERIFY(v.capacity() == 100);
@@ -1521,23 +1520,23 @@ int TestVector()
 		// Regression for compilation errors found and fixed when integrating into Frostbite.
 		// int j = 7;
 
-		// safe_memory::vector<StructWithConstInt> v1;
+		// VEC<StructWithConstInt> v1;
 		// v1.push_back(StructWithConstInt(j));
 
-		// safe_memory::vector<StructWithConstRefToInt> v2;
+		// VEC<StructWithConstRefToInt> v2;
 		// v2.push_back(StructWithConstRefToInt(j));
 	}
 
 	{
 		// Regression for issue with vector containing non-copyable values reported by user
-		safe_memory::vector<testmovable> moveablevec;
+		VEC<testmovable> moveablevec;
 		testmovable moveable;
 		moveablevec.insert(moveablevec.end(), std::move(moveable));
 	}
 
 	{
 		// Calling erase of empty range should not call a move assignment to self
-		// safe_memory::vector<TestMoveAssignToSelf> v1;
+		// VEC<TestMoveAssignToSelf> v1;
 		// v1.push_back(TestMoveAssignToSelf());
 		// EATEST_VERIFY(!v1[0].mMovedToSelf);
 		// v1.erase(v1.begin(), v1.begin());
@@ -1547,7 +1546,7 @@ int TestVector()
 #if defined(EASTL_TEST_CONCEPT_IMPLS)
 	// {
 	// 	// vector default constructor should require no more than Destructible
-	// 	safe_memory::vector<Destructible> v1;
+	// 	VEC<Destructible> v1;
 	// 	EATEST_VERIFY(v1.empty());
 
 	// 	// some basic vector operations (data(), capacity(), size(), empty(), clear(), erase()) should impose no
@@ -1561,30 +1560,30 @@ int TestVector()
 
 	// {
 	// 	// vector default constructor should work with DefaultConstructible T
-	// 	safe_memory::vector<DefaultConstructible> v1;
+	// 	VEC<DefaultConstructible> v1;
 	// 	EATEST_VERIFY(v1.empty());
 	// }
 
 	// {
 	// 	// vector constructor that takes an initial size should only require DefaultConstructible T
-	// 	safe_memory::vector<DefaultConstructible> v2(2);
+	// 	VEC<DefaultConstructible> v2(2);
 	// 	EATEST_VERIFY(v2.size() == 2 && v2[0].value == v2[1].value &&
 	// 				  v2[0].value == DefaultConstructible::defaultValue);
 	// }
 
 	// {
 	// 	// vector constructor taking an initial size and a value should only require CopyConstructible
-	// 	safe_memory::vector<CopyConstructible> v3(2, CopyConstructible::Create());
+	// 	VEC<CopyConstructible> v3(2, CopyConstructible::Create());
 	// 	EATEST_VERIFY(v3.size() == 2 && v3[0].value == v3[1].value && v3[0].value == CopyConstructible::defaultValue);
 
 	// 	// vector constructor taking a pair of iterators should work for CopyConstructible
-	// 	safe_memory::vector<CopyConstructible> v4(cbegin(v3), cend(v3));
+	// 	VEC<CopyConstructible> v4(cbegin(v3), cend(v3));
 	// 	EATEST_VERIFY(v4.size() == 2 && v4[0].value == v4[1].value && v4[0].value == CopyConstructible::defaultValue);
 	// }
 
 	{
 		// vector::reserve() should only require MoveInsertible
-		// safe_memory::vector<MoveConstructible> v5;
+		// VEC<MoveConstructible> v5;
 		// v5.reserve(2);
 		// v5.push_back(MoveConstructible::Create());
 		// v5.push_back(MoveConstructible::Create());
@@ -1599,7 +1598,7 @@ int TestVector()
 	{
 		// vector constructor taking a pair of iterators should only require MoveConstructible
 		// MoveConstructible moveConstructibleArray[] = {MoveConstructible::Create()};
-		// safe_memory::vector<MoveConstructible> v7(
+		// VEC<MoveConstructible> v7(
 		// 	std::move_iterator<MoveConstructible*>(std::begin(moveConstructibleArray)),
 		// 	std::move_iterator<MoveConstructible*>(std::end(moveConstructibleArray)));
 		// EATEST_VERIFY(v7.size() == 1 && v7[0].value == MoveConstructible::defaultValue);
@@ -1609,25 +1608,25 @@ int TestVector()
 	// 	// vector::swap() should only require Destructible. We also test with DefaultConstructible as it gives us a
 	// 	// testable result.
 
-	// 	safe_memory::vector<Destructible> v4, v5;
+	// 	VEC<Destructible> v4, v5;
 	// 	std::swap(v4, v5);
 	// 	EATEST_VERIFY(v4.empty() && v5.empty());
 
-	// 	safe_memory::vector<DefaultConstructible> v6(1), v7(2);
+	// 	VEC<DefaultConstructible> v6(1), v7(2);
 	// 	std::swap(v6, v7);
 	// 	EATEST_VERIFY(v6.size() == 2 && v7.size() == 1);
 	// }
 
 	// {
 	// 	// vector::resize() should only require MoveInsertable and DefaultInsertable
-	// 	safe_memory::vector<MoveAndDefaultConstructible> v8;
+	// 	VEC<MoveAndDefaultConstructible> v8;
 	// 	v8.resize(2);
 	// 	EATEST_VERIFY(v8.size() == 2 && v8[0].value == v8[1].value && v8[0].value ==
 	// 	MoveAndDefaultConstructible::defaultValue);
 	// }
 
 	// {
-	// 	safe_memory::vector<MoveAssignable> v1;
+	// 	VEC<MoveAssignable> v1;
 	// 	// vector::insert(pos, rv) should only require MoveAssignable
 	// 	v1.insert(begin(v1), MoveAssignable::Create());
 	// 	EATEST_VERIFY(v1.size() == 1 && v1.front().value == MoveAssignable::defaultValue);
@@ -1664,12 +1663,12 @@ int TestVector()
 		// 	bool empty() const     { return false; }
 
 		// private:
-		// 	safe_memory::vector<container_value_type> m_vector;
+		// 	VEC<container_value_type> m_vector;
 		// };
 
 		// static_assert(!is_less_comparable<container_with_custom_iterator::iterator>::value, "type cannot support comparison by '<' for this test");
 		// container_with_custom_iterator ci;
-		// safe_memory::vector<container_value_type> v2(ci.begin(), ci.end()); 
+		// VEC<container_value_type> v2(ci.begin(), ci.end()); 
 	}
 
 	// If the legacy code path is enabled we cannot handle non-copyable types
@@ -1678,8 +1677,8 @@ int TestVector()
 		// {
 			// Simple move-assignment test to prevent regressions where safe_memory::vector utilizes operations on T that are not necessary.
 			// {
-				// safe_memory::vector<std::unique_ptr<int>> v1;
-				// safe_memory::vector<std::unique_ptr<int>> v2;
+				// VEC<std::unique_ptr<int>> v1;
+				// VEC<std::unique_ptr<int>> v2;
 				// v2 = std::move(v1);
 			// }
 
@@ -1693,8 +1692,8 @@ int TestVector()
 				// InstanceAllocator::reset_all();
 				// {
 				// 	InstanceAllocator a1(uint8_t(0)), a2(uint8_t(1));
-				// 	safe_memory::vector<std::unique_ptr<int>, InstanceAllocator> v1(a1);
-				// 	safe_memory::vector<std::unique_ptr<int>, InstanceAllocator> v2(a2);
+				// 	VEC<std::unique_ptr<int>, InstanceAllocator> v1(a1);
+				// 	VEC<std::unique_ptr<int>, InstanceAllocator> v2(a2);
 
 				// 	VERIFY(v1.get_allocator() != v2.get_allocator());
 
@@ -1717,9 +1716,26 @@ int TestVector()
 
 	// {
 		// CustomAllocator has no data members which reduces the size of an safe_memory::vector via the empty base class optimization.
-		// typedef safe_memory::vector<int, CustomAllocator> EboVector;
+		// typedef VEC<int, CustomAllocator> EboVector;
 		// static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
 	// }
+
+	return nErrorCount;
+}
+
+template<class T>
+using VEC = safe_memory::vector<T>;
+
+template<class T>
+using VEC_SAFE = safe_memory::vector_safe<T>;
+
+
+int TestVector()
+{
+	int nErrorCount = 0;
+	
+	nErrorCount += TestVectorImpl<VEC>();
+	nErrorCount += TestVectorImpl<VEC_SAFE>();
 
 	return nErrorCount;
 }

@@ -420,22 +420,26 @@ template<class T>
 using StdVec = std::vector<T>;
 
 template<class T>
-using EastlVec = eastl::vector<T>;
+using EaVec = eastl::vector<T>;
+
+template<class T>
+using UnsafeVec = safe_memory::vector<T, safe_memory::memory_safety::none>;
 
 template<class T>
 using SafeVec = safe_memory::vector<T, safe_memory::memory_safety::safe>;
 
 template<class T>
-using UnsafeVec = safe_memory::vector<T, safe_memory::memory_safety::none>;
+using VerySafeVec = safe_memory::vector_safe<T, safe_memory::memory_safety::safe>;
 
 
 void BenchmarkVector()
 {
 	EASTLTest_Printf("Vector\n");
 
-	BenchmarkVectorTempl<1, EastlVec>();
-	BenchmarkVectorTempl<2, StdVec>();
+	// BenchmarkVectorTempl<1, StdVec>();
+	BenchmarkVectorTempl<1, EaVec>();
+	BenchmarkVectorTempl<2, UnsafeVec>();
 	BenchmarkVectorTempl<3, SafeVec>();
-	BenchmarkVectorTempl<4, UnsafeVec>();
+	BenchmarkVectorTempl<4, VerySafeVec>();
 }
 

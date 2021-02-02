@@ -25,19 +25,21 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
-#define SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+#ifndef SAFE_MEMORY_SAFE_PTR_COMMON_H
+#define SAFE_MEMORY_SAFE_PTR_COMMON_H
 
 //mb: temporary hack, until we move all files to their definitive location
 // and rename namespaces acordingly
 
-#include "../../../src/safe_ptr_with_zero_offset.h"
+#include "../../src/safe_ptr_common.h"
 
-namespace safe_memory::detail {
+namespace safe_memory {
 
-using ::nodecpp::safememory::lib_helpers::soft_ptr_with_zero_offset;
+using nodecpp::safememory::memory_safety;
+using ::nodecpp::safememory::safeness_declarator;
+using nodecpp::safememory::module_id;
 
 }
 
 
-#endif //SAFE_MEMORY_DETAIL_SAFE_PTR_WITH_ZERO_OFFSET_H
+#endif //SAFE_MEMORY_SAFE_PTR_COMMON_H

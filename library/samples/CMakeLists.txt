@@ -7,5 +7,5 @@
 #-------------------------------------------------------------------------------------------
 add_subdirectory(basic_sample)
 add_subdirectory(hashmap)
-add_subdirectory(string)
-add_subdirectory(vector)
+#add_subdirectory(string)
+#add_subdirectory(vector)
