@@ -63,7 +63,7 @@ index ad20e4d..663783b 100644
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
-index 21767f3..3aa4321 100644
+index 21767f3..75179ff 100644
 --- a/include/EASTL/internal/hashtable.h
 +++ b/include/EASTL/internal/hashtable.h
 @@ -103,34 +103,34 @@ namespace eastl
@@ -233,7 +233,7 @@ index 21767f3..3aa4321 100644
  		typedef typename base_type::node_type                            node_type;
  		typedef Value                                                    value_type;
  		typedef typename type_select<bConst, const Value*, Value*>::type pointer;
-@@ -320,13 +323,15 @@ namespace eastl
+@@ -320,11 +323,13 @@ namespace eastl
  		typedef ptrdiff_t                                                difference_type;
  		typedef EASTL_ITC_NS::forward_iterator_tag                       iterator_category;
  
@@ -247,11 +247,8 @@ index 21767f3..3aa4321 100644
 -		hashtable_iterator(node_type** pBucket)
 +		hashtable_iterator(pointer_type* pBucket)
  			: base_type(*pBucket, pBucket) { }
--
-+		
- 		hashtable_iterator(const this_type_non_const& x)
- 			: base_type(x.mpNode, x.mpBucket) { }
  
+ 		hashtable_iterator(const this_type_non_const& x)
 @@ -342,9 +347,11 @@ namespace eastl
  		hashtable_iterator operator++(int)
  			{ hashtable_iterator temp(*this); base_type::increment(); return temp; }
@@ -779,7 +776,7 @@ index 21767f3..3aa4321 100644
 -		memset(pBucketArray, 0, n * sizeof(node_type*));
 -		pBucketArray[n] = reinterpret_cast<node_type*>((uintptr_t)~0);
 +		//memset(pBucketArray, 0, n * sizeof(node_pointer));
-+		pBucketArray[n] = allocator_type::get_hashtable_sentinel<node_type>();
++		pBucketArray[n] = allocator_type::template get_hashtable_sentinel<node_type>();
  		return pBucketArray;
  	}
  
@@ -926,7 +923,7 @@ index 21767f3..3aa4321 100644
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 -	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_type* 
 -	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(node_type* pNode, const key_type& k, hash_code_t c) const
-+	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_pointer 
++	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_pointer
 +	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNode(node_pointer pNode, const key_type& k, hash_code_t c) const
  	{
  		for(; pNode; pNode = pNode->mpNext)
@@ -942,7 +939,7 @@ index 21767f3..3aa4321 100644
  	template <typename U, typename BinaryPredicate>
 -	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_type* 
 -	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNodeT(node_type* pNode, const U& other, BinaryPredicate predicate) const
-+	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_pointer 
++	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::node_pointer
 +	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoFindNodeT(node_pointer pNode, const U& other, BinaryPredicate predicate) const
  	{
  		for(; pNode; pNode = pNode->mpNext)
@@ -1083,7 +1080,7 @@ index 21767f3..3aa4321 100644
  	template <typename BoolConstantT>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 -	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_type* pNodeNew, value_type&& value, 
-+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_pointer pNodeNew, value_type&& value, 
++	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_pointer pNodeNew, value_type&& value,
  			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
  	{
  		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
@@ -1154,7 +1151,7 @@ index 21767f3..3aa4321 100644
  	template<typename BoolConstantT>
  	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
 -	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_type* pNodeNew, const value_type& value, 
-+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_pointer pNodeNew, const value_type& value, 
++	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k, hash_code_t c, node_pointer pNodeNew, const value_type& value,
  			ENABLE_IF_TRUETYPE(BoolConstantT)) // true_type means bUniqueKeys is true.
  	{
  		// Adds the value to the hash table if not already present. 
@@ -1408,12 +1405,21 @@ index 21767f3..3aa4321 100644
  	{
  		// pNodeNew->mValue is expected to be uninitialized.
  		value_type value(eastl::forward<P>(otherValue)); // Need to use forward instead of move because P&& is a "universal reference" instead of an rvalue reference.
+@@ -2778,7 +2813,7 @@ namespace eastl
+ 	template <typename K, typename V, typename A, typename EK, typename Eq,
+ 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
+ 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
+-	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const value_type& value) 
++	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const value_type& value)
+ 	{
+ 		return DoInsertValue(has_unique_keys_type(), value);
+ 	}
 @@ -2787,7 +2822,7 @@ namespace eastl
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 -	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, node_type* pNodeNew, const value_type& value) 
-+	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, node_pointer pNodeNew, const value_type& value) 
++	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, node_pointer pNodeNew, const value_type& value)
  	{
  		// pNodeNew->mValue is expected to be uninitialized.
  		const key_type& k = mExtractKey(value);
@@ -1784,7 +1790,7 @@ index 14604ce..b8b39f1 100644
  				const wchar_t* p = x.c_str();
  				unsigned int c, result = 2166136261U;
 diff --git a/include/EASTL/vector.h b/include/EASTL/vector.h
-index c27a6a5..9690831 100644
+index c27a6a5..6166fcd 100644
 --- a/include/EASTL/vector.h
 +++ b/include/EASTL/vector.h
 @@ -127,6 +127,7 @@ namespace eastl
@@ -1841,7 +1847,7 @@ index c27a6a5..9690831 100644
  	template <typename T, typename Allocator>
  	inline VectorBase<T, Allocator>::VectorBase()
 -		: mpBegin(NULL), 
-+		: mpBegin(nullptr), 
++		: mpBegin(nullptr),
  		  mpEnd(NULL),
  		  mCapacityAllocator(NULL, allocator_type(EASTL_VECTOR_DEFAULT_NAME))
  	{
@@ -1850,7 +1856,7 @@ index c27a6a5..9690831 100644
  	template <typename T, typename Allocator>
  	inline VectorBase<T, Allocator>::VectorBase(const allocator_type& allocator)
 -		: mpBegin(NULL), 
-+		: mpBegin(nullptr), 
++		: mpBegin(nullptr),
  		  mpEnd(NULL),
  		  mCapacityAllocator(NULL, allocator)
  	{
@@ -1901,7 +1907,7 @@ index c27a6a5..9690831 100644
  	{
  		if(p)
 -			EASTLFree(internalAllocator(), p, n * sizeof(T)); 
-+			// EASTLFree(internalAllocator(), p, n * sizeof(T)); 
++			// EASTLFree(internalAllocator(), p, n * sizeof(T));
 +			internalAllocator().deallocate_array(p, n);
  	}
  
@@ -2147,7 +2153,7 @@ index c27a6a5..9690831 100644
  	{
 -		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
 -		eastl::uninitialized_copy_ptr(first, last, p); // copy-constructs p from [first,last).
-+		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
++		auto p = DoAllocate(n); // p is of type T* but is not constructed.
 +		auto raii = allocator_type::make_raii(p);
 +		eastl::uninitialized_copy_ptr(first, last, allocator_type::to_raw(p)); // copy-constructs p from [first,last).
  		return p;
@@ -2162,7 +2168,7 @@ index c27a6a5..9690831 100644
  	{
 -		T* const p = DoAllocate(n); // p is of type T* but is not constructed. 
 -		eastl::uninitialized_move_ptr_if_noexcept(first, last, p); // move-constructs p from [first,last).
-+		auto p = DoAllocate(n); // p is of type T* but is not constructed. 
++		auto p = DoAllocate(n); // p is of type T* but is not constructed.
 +		auto raii = allocator_type::make_raii(p);
 +		eastl::uninitialized_move_ptr_if_noexcept(first, last, allocator_type::to_raw(p)); // move-constructs p from [first,last).
  		return p;

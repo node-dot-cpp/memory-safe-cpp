@@ -55,26 +55,18 @@ int TestString()
 {
 	int nErrorCount = 0;
 
-	nErrorCount += TestBasicString<safe_memory::basic_string<char, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString<safe_memory::basic_string<char, safe_memory::memory_safety::none>>();
-	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string<char>>();
+	nErrorCount += TestBasicString<safe_memory::basic_string_safe<char>>();
 
-	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t, safe_memory::memory_safety::none>>();
-	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string<wchar_t>>();
+	nErrorCount += TestBasicStringW<safe_memory::basic_string_safe<wchar_t>>();
 
-	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t, safe_memory::memory_safety::none>>();
-	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string<char16_t>>();
+	nErrorCount += TestBasicString16<safe_memory::basic_string_safe<char16_t>>();
 
 #if EA_CHAR32_NATIVE
-	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t, safe_memory::memory_safety::none>>();
-	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t, safe_memory::memory_safety::safe>>();
-	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t, safe_memory::memory_safety::none>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string<char32_t>>();
+	nErrorCount += TestBasicString32<safe_memory::basic_string_safe<char32_t>>();
 #endif
 
 	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.

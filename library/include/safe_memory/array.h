@@ -318,13 +318,13 @@ struct array_safe : public array<T, N, Safety>
 public:
 	typedef array_safe<T, N, Safety>                      this_type;
 	typedef array<T, N, Safety>                           base_type;
-	using base_type::value_type;
-	using base_type::reference;
-	using base_type::const_reference;
-	using base_type::pointer;
-	using base_type::const_pointer;
-	using base_type::size_type;
-	using base_type::difference_type;
+	typedef typename base_type::value_type                value_type;
+	typedef typename base_type::reference                 reference;
+	typedef typename base_type::const_reference           const_reference;
+	typedef typename base_type::pointer                   pointer;
+	typedef typename base_type::const_pointer             const_pointer;
+	typedef typename base_type::size_type                 size_type;
+	typedef typename base_type::difference_type           difference_type;
 
 	// typedef soft_ptr<this_type, Safety>                                             soft_ptr_this_type;
 
@@ -335,15 +335,15 @@ public:
 
 	// static constexpr bool use_base_iterator = Safety == memory_safety::none;
 	
-	typedef base_type::iterator_safe                      iterator;
-	typedef base_type::const_iterator_safe                const_iterator;
-	typedef base_type::reverse_iterator_safe              reverse_iterator;
-	typedef base_type::const_reverse_iterator_safe        const_reverse_iterator;
+	typedef typename base_type::iterator_safe                      iterator;
+	typedef typename base_type::const_iterator_safe                const_iterator;
+	typedef typename base_type::reverse_iterator_safe              reverse_iterator;
+	typedef typename base_type::const_reverse_iterator_safe        const_reverse_iterator;
 
-	using base_type::iterator_safe;
-	using base_type::const_iterator_safe;
-	using base_type::reverse_iterator_safe;
-	using base_type::const_reverse_iterator_safe;
+	typedef typename base_type::iterator_safe                      iterator_safe;
+	typedef typename base_type::const_iterator_safe                const_iterator_safe;
+	typedef typename base_type::reverse_iterator_safe              reverse_iterator_safe;
+	typedef typename base_type::const_reverse_iterator_safe        const_reverse_iterator_safe;
 
 	// static_assert(N != 0, "Empty safe_memory::array not supported yet!");
 

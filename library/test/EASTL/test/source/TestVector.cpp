@@ -1100,7 +1100,7 @@ int TestVectorImpl()
 		EATEST_VERIFY(v.capacity() == 20);
 
 		v.resize(42);  // Grow with reallocation
-		VEC<int>::size_type c = v.capacity();
+		typename VEC<int>::size_type c = v.capacity();
 		EATEST_VERIFY(v.validate());
 		EATEST_VERIFY(v[41] == 0);
 		EATEST_VERIFY(c >= 42);
@@ -1724,25 +1724,18 @@ int TestVectorImpl()
 }
 
 template<class T>
-using VEC_N = safe_memory::vector<T, safe_memory::memory_safety::none>;
+using VEC = safe_memory::vector<T>;
 
 template<class T>
-using VEC_S = safe_memory::vector<T, safe_memory::memory_safety::safe>;
+using VEC_SAFE = safe_memory::vector_safe<T>;
 
-template<class T>
-using VEC_SAFE_N = safe_memory::vector_safe<T, safe_memory::memory_safety::none>;
-
-template<class T>
-using VEC_SAFE_S = safe_memory::vector_safe<T, safe_memory::memory_safety::safe>;
 
 int TestVector()
 {
 	int nErrorCount = 0;
 	
-	nErrorCount += TestVectorImpl<VEC_N>();
-	nErrorCount += TestVectorImpl<VEC_S>();
-	nErrorCount += TestVectorImpl<VEC_SAFE_N>();
-	nErrorCount += TestVectorImpl<VEC_SAFE_S>();
+	nErrorCount += TestVectorImpl<VEC>();
+	nErrorCount += TestVectorImpl<VEC_SAFE>();
 
 	return nErrorCount;
 }

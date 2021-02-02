@@ -258,7 +258,7 @@ int TestHashSet()
 		typedef SET<int> HashSetInt;
 
 		HashSetInt hashSet;
-		const HashSetInt::size_type kCount = 10000;
+		const typename HashSetInt::size_type kCount = 10000;
 
 		EATEST_VERIFY(hashSet.empty());
 		EATEST_VERIFY(hashSet.size() == 0);
@@ -271,7 +271,7 @@ int TestHashSet()
 		EATEST_VERIFY(hashSet.size() == kCount);
 		EATEST_VERIFY(hashSet.count(0) == 1);
 
-		for(HashSetInt::iterator it = hashSet.begin(); it != hashSet.end(); ++it)
+		for(typename HashSetInt::iterator it = hashSet.begin(); it != hashSet.end(); ++it)
 		{
 			int value = *it;
 			EATEST_VERIFY(value < (int)kCount);
@@ -279,7 +279,7 @@ int TestHashSet()
 
 		for(int i = 0; i < (int)kCount * 2; i++)
 		{
-			HashSetInt::iterator it = hashSet.find(i);
+			typename HashSetInt::iterator it = hashSet.find(i);
 
 			if(i < (int)kCount)
 				EATEST_VERIFY(it != hashSet.end());
@@ -288,8 +288,8 @@ int TestHashSet()
 		}
 
 		// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
-		// HashSetInt::node_type* pNode = hashSet.allocate_uninitialized_node();
-		// HashSetInt::insert_return_type r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
+		// typename HashSetInt::node_type* pNode = hashSet.allocate_uninitialized_node();
+		// typename HashSetInt::insert_return_type r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
 		// EATEST_VERIFY(r.second == true);
 		// pNode = hashSet.allocate_uninitialized_node();
 		// r = hashSet.insert(std::hash<int>()(999999), pNode, 999999);
@@ -307,7 +307,7 @@ int TestHashSet()
 		memset(pIntArray, 0, kCount * sizeof(int)); // We want to make sure each element is present only once.
 		int nCount = 0;
 
-		for(HashSetInt::iterator it = hashSet.begin(); it != hashSet.end(); ++it, ++nCount)
+		for(typename HashSetInt::iterator it = hashSet.begin(); it != hashSet.end(); ++it, ++nCount)
 		{
 			int i = *it;
 
@@ -342,13 +342,13 @@ int TestHashSet()
 		EATEST_VERIFY(fMaxLoadFactor == (65536.f * 512.f));
 
 		hashSet.rehash(20);
-		HashSetInt::size_type n = hashSet.bucket_count();
+		typename HashSetInt::size_type n = hashSet.bucket_count();
 		EATEST_VERIFY((n >= 20) && (n < 25));
 		
 		for(int i = 0; i < 100000; i++)
 			hashSet.insert(i); // This also tests for high loading.
 
-		HashSetInt::size_type n2 = hashSet.bucket_count();
+		typename HashSetInt::size_type n2 = hashSet.bucket_count();
 		EATEST_VERIFY(n2 == n); // Verify no rehashing has occured, due to our high load factor.
 
 		n = hashSet.bucket_size(0);
@@ -366,9 +366,9 @@ int TestHashSet()
 		// const_local_iterator begin(size_type n) const;
 		// const_local_iterator end(size_type n) const;
 
-		HashSetInt::size_type b = hashSet.bucket_count() - 1;
+		typename HashSetInt::size_type b = hashSet.bucket_count() - 1;
 		eastl::hash<int> IntHash;
-		for(HashSetInt::const_local_iterator cli = hashSet.begin(b); cli != hashSet.end(b); ++cli)
+		for(typename HashSetInt::const_local_iterator cli = hashSet.begin(b); cli != hashSet.end(b); ++cli)
 		{
 			int v = *cli;
 			EATEST_VERIFY((IntHash(v) % hashSet.bucket_count()) == b);
@@ -409,7 +409,7 @@ int TestHashSet()
 		for(int i = 0; i < kCount; i++)
 			hashSet.insert(i);
 
-		for(HashSetIntC::iterator it = hashSet.begin(); it != hashSet.end(); ++it)
+		for(typename HashSetIntC::iterator it = hashSet.begin(); it != hashSet.end(); ++it)
 		{
 			int value = *it;
 			EATEST_VERIFY(value < kCount);
@@ -417,7 +417,7 @@ int TestHashSet()
 
 		for(int i = 0; i < kCount * 2; i++)
 		{
-			HashSetIntC::iterator it = hashSet.find(i);
+			typename HashSetIntC::iterator it = hashSet.find(i);
 			if(i < kCount)
 				EATEST_VERIFY(it != hashSet.end());
 			else
@@ -792,7 +792,7 @@ int TestHashSet()
 
 			// Test the case of the containers being the same size but having a single different value, despite that it's key compare yields equal.
 			HashSet h2Saved(h2);
-			HashSet::iterator it = h2.find(value);
+			typename HashSet::iterator it = h2.find(value);
 			HashtableValue valueModified(value.mData, 1);
 			h2.erase(it);
 			h2.insert(valueModified);
@@ -832,7 +832,7 @@ int TestHashSet()
 		};
 
 		// using namespace std;
-		SET2<Movable, Movable::Hash, safe_memory::equal_to<Movable>> a, b;
+		SET2<Movable, typename Movable::Hash, safe_memory::equal_to<Movable>> a, b;
 		swap(a,b);
 	}
 	#endif
@@ -913,7 +913,7 @@ int TestHashMultiSet()
 
 			// Test the case of the containers being the same size but having a single different value, despite that it's key compare yields equal.
 			HashSet h2Saved(h2);
-			HashSet::iterator it = h2.find(value);
+			typename HashSet::iterator it = h2.find(value);
 			HashtableValue valueModified(value.mData, 1);
 			h2.erase(it);
 			h2.insert(valueModified);
@@ -1010,7 +1010,7 @@ int TestHashMap()
 
 		for(int i = 0; i < kCount; i++)
 		{
-			HashMapIntInt::value_type vt(i, i);
+			typename HashMapIntInt::value_type vt(i, i);
 			hashMap.insert(vt);
 		}
 
@@ -1037,7 +1037,7 @@ int TestHashMap()
 
 		for(int i = 0; i < kCount * 2; i++)
 		{
-			HashMapIntInt::iterator it = hashMap.find(i);
+			typename HashMapIntInt::iterator it = hashMap.find(i);
 
 			if(i < kCount)
 			{
@@ -1071,7 +1071,7 @@ int TestHashMap()
 				EASTL_ASSERT_MSG(false, msg.c_str());
 			}
 		#endif
-		// HashMapIntInt::insert_return_type result = hashMap.insert(88888);
+		// typename HashMapIntInt::insert_return_type result = hashMap.insert(88888);
 		// EATEST_VERIFY(result.second == true);
 		// result = hashMap.insert(88888);
 		// EATEST_VERIFY(result.second == false);
@@ -1080,23 +1080,23 @@ int TestHashMap()
 		// const_iterator erase(const_iterator);
 		size_t nExpectedSize = hashMap.size();
 
-		HashMapIntInt::iterator it50 = hashMap.find(50);
+		typename HashMapIntInt::iterator it50 = hashMap.find(50);
 		EATEST_VERIFY(it50 != hashMap.end());
 
-		HashMapIntInt::iterator itNext = hashMap.erase(it50);
+		typename HashMapIntInt::iterator itNext = hashMap.erase(it50);
 		nExpectedSize--;
 		EATEST_VERIFY(itNext != hashMap.end()); // Strictly speaking, this isn't guaranteed to be so. But statistically it is very likely. We'll fix this if it becomes a problem.
 		EATEST_VERIFY(hashMap.size() == nExpectedSize);
 
-		HashMapIntInt::size_type n = hashMap.erase(10);
+		typename HashMapIntInt::size_type n = hashMap.erase(10);
 		nExpectedSize--;
 		EATEST_VERIFY(n == 1);
 		EATEST_VERIFY(hashMap.size() == nExpectedSize);
 
-		HashMapIntInt::iterator it60 = hashMap.find(60);
+		typename HashMapIntInt::iterator it60 = hashMap.find(60);
 		EATEST_VERIFY(itNext != hashMap.end());
 
-		HashMapIntInt::iterator it60Incremented(it60);
+		typename HashMapIntInt::iterator it60Incremented(it60);
 		for(int i = 0; (i < 5) && (it60Incremented != hashMap.end()); ++i)
 		{
 			++it60Incremented;
@@ -1108,11 +1108,11 @@ int TestHashMap()
 
 
 		// insert_return_type insert(const value_type& value, hash_code_t c, node_type* pNodeNew = NULL);
-		// HashMapIntInt::node_type* pNode = hashMap.allocate_uninitialized_node();
-		// HashMapIntInt::insert_return_type r = hashMap.insert(std::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
+		// typename HashMapIntInt::node_type* pNode = hashMap.allocate_uninitialized_node();
+		// typename HashMapIntInt::insert_return_type r = hashMap.insert(std::hash<int>()(999999), pNode, typename HashMapIntInt::value_type(999999, 999999));
 		// EATEST_VERIFY(r.second == true);
 		// pNode = hashMap.allocate_uninitialized_node();
-		// r = hashMap.insert(std::hash<int>()(999999), pNode, HashMapIntInt::value_type(999999, 999999));
+		// r = hashMap.insert(std::hash<int>()(999999), pNode, typename HashMapIntInt::value_type(999999, 999999));
 		// EATEST_VERIFY(r.second == false);
 		// hashMap.free_uninitialized_node(pNode);
 		// hashMap.erase(999999);
@@ -1197,7 +1197,7 @@ int TestHashMap()
 			for(std::size_t i = 0; i < kIterationCount; i++)
 			{
 				value.mData = rng.RandLimit(kDataRange);
-				h1.insert(HashMap::value_type(value.mData, value));  // Leave value.mExtra as 0.
+				h1.insert(typename HashMap::value_type(value.mData, value));  // Leave value.mExtra as 0.
 			}
 
 			EATEST_VERIFY(h1 != h2);
@@ -1206,17 +1206,17 @@ int TestHashMap()
 
 			// Test the case of the containers being the same size but having a single different value, despite that it's key compare yields equal.
 			HashMap h2Saved(h2);
-			HashMap::iterator it = h2.find(value.mData); // We are using value.mData as the key as well, so we can do a find via it.
+			typename HashMap::iterator it = h2.find(value.mData); // We are using value.mData as the key as well, so we can do a find via it.
 			HashtableValue valueModified(value.mData, 1);
 			h2.erase(it);
-			h2.insert(HashMap::value_type(valueModified.mData, valueModified));
+			h2.insert(typename HashMap::value_type(valueModified.mData, valueModified));
 			EATEST_VERIFY(h1 != h2);
 			h2 = h2Saved;
 
 			// Test the case of the containers being the same size but having a single different key.
 			h2Saved = h2;
 			h2.erase(h2.find(value.mData));
-			h2.insert(HashMap::value_type(kDataRange, HashtableValue(kDataRange))); // Insert something that could not have been in h2.
+			h2.insert(typename HashMap::value_type(kDataRange, HashtableValue(kDataRange))); // Insert something that could not have been in h2.
 			EATEST_VERIFY(h1 != h2);
 			h2 = h2Saved;
 
@@ -1466,7 +1466,7 @@ int TestHashMultiMap()
 			for(std::size_t i = 0; i < kIterationCount; i++)
 			{
 				value.mData = rng.RandLimit(kDataRange);
-				h1.insert(HashMap::value_type(value.mData, value));  // Leave value.mExtra as 0.
+				h1.insert(typename HashMap::value_type(value.mData, value));  // Leave value.mExtra as 0.
 			}
 
 			EATEST_VERIFY(h1 != h2);
@@ -1475,17 +1475,17 @@ int TestHashMultiMap()
 
 			// Test the case of the containers being the same size but having a single different value, despite that it's key compare yields equal.
 			HashMap h2Saved(h2);
-			HashMap::iterator it = h2.find(value.mData); // We are using value.mData as the key as well, so we can do a find via it.
+			typename HashMap::iterator it = h2.find(value.mData); // We are using value.mData as the key as well, so we can do a find via it.
 			HashtableValue valueModified(value.mData, 1);
 			h2.erase(it);
-			h2.insert(HashMap::value_type(valueModified.mData, valueModified));
+			h2.insert(typename HashMap::value_type(valueModified.mData, valueModified));
 			EATEST_VERIFY(h1 != h2);
 			h2 = h2Saved;
 
 			// Test the case of the containers being the same size but having a single different key.
 			h2Saved = h2;
 			h2.erase(h2.find(value.mData));
-			h2.insert(HashMap::value_type(kDataRange, HashtableValue(kDataRange))); // Insert something that could not have been in h2.
+			h2.insert(typename HashMap::value_type(kDataRange, HashtableValue(kDataRange))); // Insert something that could not have been in h2.
 			EATEST_VERIFY(h1 != h2);
 			h2 = h2Saved;
 
@@ -1522,12 +1522,12 @@ int TestHashMultiMap()
 		HMM m_hash;
 
 		// Section 1
-		for (HMM::iterator it = m_hash.begin(); it != m_hash.end(); it++)
+		for (typename HMM::iterator it = m_hash.begin(); it != m_hash.end(); it++)
 			it->second.y = 1;
 
 		// Section 2
 		HashRegressionA* pA = NULL;
-		eastl::pair<HMM::iterator, HMM::iterator> pair = m_hash.equal_range(pA);
+		eastl::pair<typename HMM::iterator, typename HMM::iterator> pair = m_hash.equal_range(pA);
 		(void)pair;
 	}
 
@@ -1535,85 +1535,50 @@ int TestHashMultiMap()
 }
 
 template <typename Key>
-using SET_N = safe_memory::unordered_set<Key, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::none>;
+using SET = safe_memory::unordered_set<Key>;
 
 template <typename Key, typename Hash, typename Predicate>
-using SET2_N = safe_memory::unordered_set<Key, Hash, Predicate, safe_memory::memory_safety::none>;
+using SET3 = safe_memory::unordered_set<Key, Hash, Predicate>;
 
 template <typename Key>
-using SET_S = safe_memory::unordered_set<Key, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::safe>;
+using MSET = safe_memory::unordered_multiset<Key>;
 
 template <typename Key, typename Hash, typename Predicate>
-using SET2_S = safe_memory::unordered_set<Key, Hash, Predicate, safe_memory::memory_safety::safe>;
-
-template <typename Key>
-using MSET_N = safe_memory::unordered_multiset<Key, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::none>;
-
-template <typename Key, typename Hash, typename Predicate>
-using MSET2_N = safe_memory::unordered_multiset<Key, Hash, Predicate, safe_memory::memory_safety::none>;
-
-template <typename Key>
-using MSET_S = safe_memory::unordered_multiset<Key, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::safe>;
-
-template <typename Key, typename Hash, typename Predicate>
-using MSET2_S = safe_memory::unordered_multiset<Key, Hash, Predicate, safe_memory::memory_safety::safe>;
+using MSET3 = safe_memory::unordered_multiset<Key, Hash, Predicate>;
 
 
 template <typename Key, typename T>
-using MAP_N = safe_memory::unordered_map<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::none>;
+using MAP = safe_memory::unordered_map<Key, T>;
 
 template <typename Key, typename T, typename Hash, typename Predicate>
-using MAP2_N = safe_memory::unordered_map<Key, T, Hash, Predicate, safe_memory::memory_safety::none>;
+using MAP4 = safe_memory::unordered_map<Key, T, Hash, Predicate>;
 
 template <typename Key, typename T>
-using MAP_S = safe_memory::unordered_map<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::safe>;
+using MAP_SAFE = safe_memory::unordered_map_safe<Key, T>;
 
 template <typename Key, typename T, typename Hash, typename Predicate>
-using MAP2_S = safe_memory::unordered_map<Key, T, Hash, Predicate, safe_memory::memory_safety::safe>;
-
-template <typename Key, typename T>
-using MAP_SAFE_N = safe_memory::unordered_map_safe<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::none>;
-
-template <typename Key, typename T, typename Hash, typename Predicate>
-using MAP2_SAFE_N = safe_memory::unordered_map_safe<Key, T, Hash, Predicate, safe_memory::memory_safety::none>;
-
-template <typename Key, typename T>
-using MAP_SAFE_S = safe_memory::unordered_map_safe<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::safe>;
-
-template <typename Key, typename T, typename Hash, typename Predicate>
-using MAP2_SAFE_S = safe_memory::unordered_map_safe<Key, T, Hash, Predicate, safe_memory::memory_safety::safe>;
+using MAP_SAFE4 = safe_memory::unordered_map_safe<Key, T, Hash, Predicate>;
 
 
 template <typename Key, typename T>
-using MMAP_N = safe_memory::unordered_multimap<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::none>;
+using MMAP = safe_memory::unordered_multimap<Key, T>;
 
 template <typename Key, typename T, typename Hash, typename Predicate>
-using MMAP2_N = safe_memory::unordered_multimap<Key, T, Hash, Predicate, safe_memory::memory_safety::none>;
-
-template <typename Key, typename T>
-using MMAP_S = safe_memory::unordered_multimap<Key, T, safe_memory::hash<Key>, safe_memory::equal_to<Key>, safe_memory::memory_safety::safe>;
-
-template <typename Key, typename T, typename Hash, typename Predicate>
-using MMAP2_S = safe_memory::unordered_multimap<Key, T, Hash, Predicate, safe_memory::memory_safety::safe>;
+using MMAP4 = safe_memory::unordered_multimap<Key, T, Hash, Predicate>;
 
 
 int TestHash()
 {   
 	int nErrorCount = 0;
 
-	nErrorCount += TestHashSet<SET_N, SET2_N>();
-	nErrorCount += TestHashSet<SET_S, SET2_S>();
+	nErrorCount += TestHashSet<SET, SET3>();
 
-	nErrorCount += TestHashMultiSet<MSET_N, MSET2_N>();
-	nErrorCount += TestHashMultiSet<MSET_S, MSET2_S>();
+	nErrorCount += TestHashMultiSet<MSET, MSET3>();
 
-	nErrorCount += TestHashMap<MAP_N, MAP2_N>();
-	nErrorCount += TestHashMap<MAP_S, MAP2_S>();
-	nErrorCount += TestHashMap<MAP_SAFE_N, MAP2_SAFE_N>();
-	nErrorCount += TestHashMap<MAP_SAFE_S, MAP2_SAFE_S>();
+	nErrorCount += TestHashMap<MAP, MAP4>();
+	nErrorCount += TestHashMap<MAP_SAFE, MAP_SAFE4>();
 
-	nErrorCount += TestHashMultiMap<MMAP_N, MMAP2_N>();
-	nErrorCount += TestHashMultiMap<MMAP_S, MMAP2_S>();
+	nErrorCount += TestHashMultiMap<MMAP, MMAP4>();
 
 	return nErrorCount;
 }
