@@ -39,13 +39,15 @@ thread_local std::size_t nodecpp::safememory::CountSoftPtrBaseDtor = 0;
 
 thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
 
+namespace nodecpp::safememory {
 #if defined NODECPP_USE_NEW_DELETE_ALLOC
-thread_local void** nodecpp::safememory::zombieList_ = nullptr;
+thread_local void** zombieList_ = nullptr;
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> nodecpp::safememory::zombieMap;
-thread_local bool nodecpp::safememory::doZombieEarlyDetection_ = true;
+thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> zombieMap;
+thread_local bool doZombieEarlyDetection_ = true;
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-#endif // NODECPP_USE_xxx_ALLOC
+#endif // NODECPP_USE_NEW_DELETE_ALLOC
+} // namespace nodecpp::safememory
 
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 namespace nodecpp::safememory::impl {
