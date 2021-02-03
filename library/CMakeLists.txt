@@ -9,7 +9,7 @@ include(CTest)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
-if(EXISTS "3rdparty/EASTL")
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/EASTL)
   add_subdirectory(3rdparty/EABase)
   add_subdirectory(3rdparty/EASTL)
   target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
