@@ -356,8 +356,8 @@ namespace safe_memory
 		// Safety == none
 		iterator_base toBase(iterator_base it) const { return it; }
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
-		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
+		std::pair<const_iterator_base, const_iterator_base> toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
 		
 		// Safety == safe
 		iterator_base toBase(const stack_only_iterator& it) const {
@@ -368,11 +368,11 @@ namespace safe_memory
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRawOther(it2);
 		}
 
@@ -384,11 +384,11 @@ namespace safe_memory
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
 			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
 			return it.toRawOther(it2);
 		}
 

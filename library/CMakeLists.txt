@@ -9,11 +9,13 @@ include(CTest)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
-add_subdirectory(3rdparty/EABase)
-add_subdirectory(3rdparty/EASTL)
+if(EXISTS "3rdparty/EASTL")
+  add_subdirectory(3rdparty/EABase)
+  add_subdirectory(3rdparty/EASTL)
+  target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+endif()
 add_subdirectory(src/iibmalloc)
 
-target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
 
 #-------------------------------------------------------------------------------------------
 # Library definition
@@ -29,8 +31,10 @@ target_include_directories(safe_memory
   PUBLIC src
   )
 
-target_link_libraries(safe_memory iibmalloc EASTL EABase)
-
+target_link_libraries(safe_memory iibmalloc)
+if (TARGET EASTL)
+  target_link_libraries(safe_memory EASTL EABase)
+endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
   # remove default exceptions, because of warning
@@ -81,5 +85,9 @@ if (SAFE_MEMORY_TEST)
   add_test(Run_test_safe_memory test_safe_memory)
 
   add_subdirectory(samples)
-  add_subdirectory(test/EASTL)
+
+# When EASTL is present add container tests 
+  if (TARGET EASTL)
+    add_subdirectory(test/EASTL)
+  endif()
 endif()

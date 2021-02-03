@@ -628,7 +628,7 @@ namespace safe_memory
 
 		// Safety == none
 		const_iterator_base toBase(const_iterator_base it) const { return it; }
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const_iterator_base it, const_iterator_base it2) const {
 			return { it, it2 };
 		}
 		
@@ -637,7 +637,7 @@ namespace safe_memory
 			return it.toRaw(base_type::begin());
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
 			return it.toRaw(base_type::begin(), it2);
 		}
 
@@ -645,7 +645,7 @@ namespace safe_memory
 			return it.toRaw(base_type::begin());
 		}
 
-		eastl::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
+		std::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
 			return it.toRaw(base_type::begin(), it2);
 		}
 

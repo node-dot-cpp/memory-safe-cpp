@@ -6,6 +6,9 @@
 # Subdirectories 
 #-------------------------------------------------------------------------------------------
 add_subdirectory(basic_sample)
-add_subdirectory(hashmap)
-#add_subdirectory(string)
-#add_subdirectory(vector)
+
+if (TARGET EASTL)
+    add_subdirectory(hashmap)
+    #add_subdirectory(string)
+    #add_subdirectory(vector)
+endif()

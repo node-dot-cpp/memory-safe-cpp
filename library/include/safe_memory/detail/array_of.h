@@ -28,7 +28,7 @@
 #ifndef SAFE_MEMORY_DETAIL_ARRAY_OF
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
-#include <EASTL/utility.h>
+#include <utility> //for std::pair
 #include <safe_memory/safe_ptr_common.h>
 
 namespace safe_memory::detail {
@@ -375,7 +375,7 @@ public:
 	 * We check that \c this and \p ri both point to the same array than \p begin
 	 * and that the order is correct
 	 */
-	eastl::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
+	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
 		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
@@ -390,7 +390,7 @@ public:
 	 * In this case we only need to check that both, \c this and \p ri are iterators
 	 * to the same array and that the order is correct.
 	 */
-	eastl::pair<pointer, pointer> toRawOther(const this_type& ri) const {
+	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
 		if (arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else

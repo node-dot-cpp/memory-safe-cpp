@@ -28,6 +28,7 @@
 #ifndef SAFE_MEMORY_DETAIL_SOFT_PTR_WITH_ZERO_OFFSET_H
 #define SAFE_MEMORY_DETAIL_SOFT_PTR_WITH_ZERO_OFFSET_H
 
+#include <utility> //for std::swap
 #include <safe_memory/detail/array_of.h>
 
 namespace safe_memory::detail
@@ -57,7 +58,7 @@ public:
 	soft_ptr_with_zero_offset_base( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_base& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ eastl::swap(ptr, other.ptr); }
+	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ std::swap(ptr, other.ptr); }
 
 	explicit operator bool() const noexcept { return ptr != nullptr; }
 
