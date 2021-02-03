@@ -68,6 +68,8 @@ if (SAFE_MEMORY_TEST)
     test/test_safe_pointers.cpp
     )
 
+  target_compile_definitions(test_safe_memory PRIVATE NODECPP_MEMORY_SAFETY_EXCLUSIONS="${CMAKE_CURRENT_SOURCE_DIR}/test/safety_exclusions.h")
+
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
       target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
       target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
