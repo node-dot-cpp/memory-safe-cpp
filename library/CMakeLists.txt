@@ -60,9 +60,10 @@ endif()
 #-------------------------------------------------------------------------------------------
 # Tests and samples
 #-------------------------------------------------------------------------------------------
-
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   set(SAFE_MEMORY_TEST ON CACHE BOOL "Enable safe_memory tests")
+else()
+  set(SAFE_MEMORY_TEST OFF CACHE BOOL "Enable safe_memory tests")
 endif()
 
 if (SAFE_MEMORY_TEST)
