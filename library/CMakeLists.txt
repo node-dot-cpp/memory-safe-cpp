@@ -9,6 +9,7 @@ include(CTest)
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
+# TODO remove conditional use of EASTL as it now is embedded
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/EASTL)
   add_subdirectory(3rdparty/EABase)
   add_subdirectory(3rdparty/EASTL)
