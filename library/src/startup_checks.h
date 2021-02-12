@@ -33,7 +33,7 @@
 
 namespace safememory::testing {
 
-using namespace ::safememory;
+using namespace ::safememory::detail;
 
 // For various testing purposes we will need misc objects (classes, ...) doing nothing but representing certain constructions to be tested
 // Such objects are gathered in the namespace safememory::testing::dummy_objects

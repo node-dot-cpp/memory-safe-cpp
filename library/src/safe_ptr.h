@@ -28,7 +28,7 @@
 #ifndef SAFE_PTR_H
 #define SAFE_PTR_H
 
-#include "safe_ptr_common.h"
+#include "memory_safety.h"
 
 #include "safe_ptr_no_checks.h"
 #include "safe_ptr_impl.h"
@@ -187,6 +187,6 @@ nullable_ptr<T> nullable_cast( T* p ) {
 
 } // namespace safememory
 
-#include "startup_checks.h"
+//#include <safememory/detail/startup_checks.h>
 
-#endif
+#endif //SAFE_PTR_H

@@ -29,7 +29,7 @@
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
 #include <utility> //for std::pair
-#include <safememory/safe_ptr_common.h>
+#include <safememory/detail/safe_ptr_common.h>
 
 namespace safememory::detail {
 

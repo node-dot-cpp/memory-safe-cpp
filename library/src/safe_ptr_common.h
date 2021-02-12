@@ -36,16 +36,6 @@
 #include <safememory/checker_attributes.h>
 #include <allocator_template.h>
 
-namespace safememory
-{
-	constexpr uint64_t module_id = 2;
-} // namespace safememory
-
-namespace safememory
-{
-	constexpr const char* safememory_module_id = "safememory";
-}
-
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
@@ -70,14 +60,19 @@ enum class StdAllocEnforcer { enforce };
 #ifdef NODECPP_USE_IIBMALLOC
 
 #include <iibmalloc.h>
-using namespace nodecpp::iibmalloc;
+// using namespace nodecpp::iibmalloc;
 namespace safememory::detail
 {
+using nodecpp::iibmalloc::g_AllocManager;
+using nodecpp::iibmalloc::guaranteed_prefix_size;
+using nodecpp::iibmalloc::ALIGNMENT;
+
 NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_AllocManager.allocate( sz ); } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 template<size_t alignment>
 NODECPP_FORCEINLINE void* allocateAligned( size_t sz ) { return g_AllocManager.allocateAligned<alignment>( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 template<size_t sz, size_t alignment>
 NODECPP_FORCEINLINE void* zombieAllocateAligned() { return g_AllocManager.zombieableAllocateAligned<sz, alignment>(); }
@@ -105,7 +100,7 @@ struct IIBRawAllocator
 };
 
 template<class _Ty>
-using iiballocator = selective_allocator<IIBRawAllocator, _Ty>;
+using iiballocator = nodecpp::selective_allocator<IIBRawAllocator, _Ty>;
 template< class T1, class T2 >
 bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
 template< class T1, class T2 >
@@ -242,33 +237,5 @@ extern thread_local std::size_t CountSoftPtrBaseDtor;
 
 } // namespace safememory::detail
 
-namespace safememory {
-
-enum class memory_safety { none, safe };
-
-template<class T>
-struct safeness_declarator {
-#ifdef NODECPP_MEMORY_SAFETY
-#if NODECPP_MEMORY_SAFETY == 1
-	static constexpr memory_safety is_safe = memory_safety::safe;
-#elif NODECPP_MEMORY_SAFETY == 0
-	static constexpr memory_safety is_safe = memory_safety::none;
-#else
-#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are 1 or 0)
-#endif // NODECPP_MEMORY_SAFETY defined
-#else
-	static constexpr memory_safety is_safe = memory_safety::safe; // by default
-#endif
-};
-
-#ifdef NODECPP_MEMORY_SAFETY_EXCLUSIONS
-#include NODECPP_MEMORY_SAFETY_EXCLUSIONS
-#endif
-
-/* Sample of user-defined exclusion:
-template<> struct safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
-*/
-
-} // namespace safememory
 
 #endif // SAFE_PTR_COMMON_H

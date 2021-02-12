@@ -25,21 +25,13 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_SAFE_PTR_COMMON_H
-#define SAFE_MEMORY_SAFE_PTR_COMMON_H
+#ifndef SAFEMEMORY_MEMORY_SAFETY_H
+#define SAFEMEMORY_MEMORY_SAFETY_H
 
 //mb: temporary hack, until we move all files to their definitive location
 // and rename namespaces acordingly
 
-#include "../../src/safe_ptr_common.h"
-
-// namespace safememory {
-
-// using nodecpp::safememory::memory_safety;
-// using ::nodecpp::safememory::safeness_declarator;
-// using nodecpp::safememory::module_id;
-
-// }
+#include "../../src/memory_safety.h"
 
 
-#endif //SAFE_MEMORY_SAFE_PTR_COMMON_H
+#endif //SAFEMEMORY_MEMORY_SAFETY_H

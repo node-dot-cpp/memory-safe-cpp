@@ -25,35 +25,14 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_SAFE_PTR_H
-#define SAFE_MEMORY_SAFE_PTR_H
+#ifndef SAFEMEMORY_SAFE_PTR_H
+#define SAFEMEMORY_SAFE_PTR_H
 
 //mb: temporary hack, until we move all files to their definitive location
 // and rename namespaces acordingly
 
-#include <safememory/safe_ptr_common.h>
+#include "memory_safety.h"
 #include "../../src/safe_ptr.h"
 
-// namespace safememory {
 
-// using ::nodecpp::safememory::owning_ptr;
-// using ::nodecpp::safememory::soft_ptr;
-// using ::nodecpp::safememory::soft_ptr_no_checks;
-// using ::nodecpp::safememory::soft_ptr_impl;
-// using ::nodecpp::safememory::soft_this_ptr;
-// using ::nodecpp::safememory::soft_this_ptr2;
-// using ::nodecpp::safememory::nullable_ptr;
-
-// using ::nodecpp::safememory::make_owning;
-// using ::nodecpp::safememory::make_owning_2;
-// using ::nodecpp::safememory::soft_ptr_in_constructor;
-// using ::nodecpp::safememory::soft_ptr_static_cast;
-// using ::nodecpp::safememory::soft_ptr_reinterpret_cast;
-// using ::nodecpp::safememory::nullable_cast;
-
-// using ::nodecpp::safememory::make_owning_t;
-
-// using ::nodecpp::safememory::memory_safety;
-// }
-
-#endif //SAFE_MEMORY_SAFE_PTR_H
+#endif //SAFEMEMORY_SAFE_PTR_H

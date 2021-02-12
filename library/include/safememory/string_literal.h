@@ -28,7 +28,7 @@
 #ifndef SAFE_MEMORY_STRING_LITERAL_H
 #define SAFE_MEMORY_STRING_LITERAL_H
 
-#include <safememory/safe_ptr_common.h>
+#include <safememory/memory_safety.h>
 #include <safememory/checker_attributes.h>
 #include <safememory/detail/array_of.h>
 #include <EASTL/internal/char_traits.h>

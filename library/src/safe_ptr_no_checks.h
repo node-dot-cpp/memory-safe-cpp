@@ -29,6 +29,7 @@
 #define SAFE_PTR_NO_CHECKS_H
 
 #include "safe_ptr_common.h"
+#include "memory_safety.h"
 
 // forward declaration
 namespace safememory {
