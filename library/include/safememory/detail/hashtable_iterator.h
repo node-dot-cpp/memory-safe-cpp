@@ -28,9 +28,9 @@
 #ifndef SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR
 #define SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR
 
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
-namespace safe_memory::detail {
+namespace safememory::detail {
 
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_heap_safe_iterator
@@ -228,6 +228,6 @@ namespace safe_memory::detail {
 
 
 
-} // namespace safe_memory::detail 
+} // namespace safememory::detail 
 
 #endif // SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR

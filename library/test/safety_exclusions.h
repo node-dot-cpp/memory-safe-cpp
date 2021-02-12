@@ -29,8 +29,8 @@
 #define SAFETY_EXCLUSIONS_H
 
 // NOTE:
-//	this file (more precisely, a file path defined as NODECPP_MEMORY_SAFETY_EXCLUSIONS) is included within namespace nodecpp::safe_memory (see safe_ptr_common.h for details)
-//	Threrefore, nodecpp::safe_memory::... qualification is nor required (moreover, gcc will be against that :) )
+//	this file (more precisely, a file path defined as NODECPP_MEMORY_SAFETY_EXCLUSIONS) is included within namespace safememory (see safe_ptr_common.h for details)
+//	Threrefore, safememory::... qualification is nor required (moreover, gcc will be against that :) )
 
 /* Sample of user-defined exclusion:
 template<> struct safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };

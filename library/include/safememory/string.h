@@ -29,11 +29,11 @@
 #define SAFE_MEMORY_STRING_H
 
 #include <EASTL/string.h>
-#include <safe_memory/detail/allocator_to_eastl.h>
-#include <safe_memory/string_literal.h>
-#include <safe_memory/functional.h> //for hash
+#include <safememory/detail/allocator_to_eastl.h>
+#include <safememory/string_literal.h>
+#include <safememory/functional.h> //for hash
 
-namespace safe_memory
+namespace safememory
 {
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
@@ -704,7 +704,7 @@ namespace safe_memory
 			}
 			
 			//mb: now the buffer should be on the heap
-			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
 			return iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 		}
 
@@ -719,7 +719,7 @@ namespace safe_memory
 			}
 
 			//mb: now the buffer should be on the heap
-			NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
+			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
 			return const_iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, base_type::capacity());
 		}
 
@@ -818,9 +818,9 @@ namespace safe_memory
 
 
 	template<typename T>
-	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::none>::base_type>
+	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type>
 	{
-		typedef eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::none>::base_type> base_type;
+		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type> base_type;
 		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
 		{
 			return base_type::operator()(x.toBase());
@@ -828,9 +828,9 @@ namespace safe_memory
 	};
 
 	template<typename T>
-	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::safe>::base_type>
+	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type>
 	{
-		typedef eastl::hash<typename safe_memory::basic_string<T, safe_memory::memory_safety::safe>::base_type> base_type;
+		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type> base_type;
 		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
 		{
 			return base_type::operator()(x.toBase());
@@ -1001,7 +1001,7 @@ namespace safe_memory
 
 	}; // basic_string_safe
 
-} // namespace safe_memory
+} // namespace safememory
 
 
 #endif //SAFE_MEMORY_STRING_H

@@ -28,9 +28,9 @@
 
 #include <foundation.h>
 
-namespace nodecpp::safememory {
+namespace safememory::detail {
 
 NODECPP_NOINLINE
 void forcePreviousChangesToThisInDtor( void* p ) {}
 
-} // namespace nodecpp::safememory
+} // namespace safememory::detail

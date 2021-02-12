@@ -29,9 +29,9 @@
 #define SAFE_MEMORY_DETAIL_ARRAY_OF
 
 #include <utility> //for std::pair
-#include <safe_memory/safe_ptr_common.h>
+#include <safememory/safe_ptr_common.h>
 
-namespace safe_memory::detail {
+namespace safememory::detail {
 
 /** 
  * \brief Helper class for allocation of arrays.
@@ -134,14 +134,14 @@ public:
  * When used as \a heap_safe iterator, the \c ArrPtr parameter is usually a \c soft_ptr
  * and because of that this class is also safe to store at the heap.
  * 
- * On \c safe_memory::string because of SSO, we sometimes point to an array on the stack
+ * On \c safememory::string because of SSO, we sometimes point to an array on the stack
  * and other times at an array on the heap. For \a heap_safe iterators, implementation will
  * always move the buffer to the heap before creating the iterator.
  * The default constructed iterator is different from an iterator to an empty string,
  * as the \c eastl::basic_string implementation has a buffer with a \c '\0' character when empty.
  * Only a default contructed iterator will have \p ArrPtr as a \c nullptr .
  * 
- * On \c safe_memory::vector always point to heap array, and iterator to an empty container
+ * On \c safememory::vector always point to heap array, and iterator to an empty container
  * is the same that default constructed iterator. \p ArrPtr is \c nullptr in both cases.
  * 
  */
@@ -425,6 +425,6 @@ using array_of_iterator_stack = array_of_iterator<T, false, T*, false>;
 template <typename T>
 using const_array_of_iterator_stack = array_of_iterator<T, true, T*, false>;
 
-} // namespace safe_memory::detail 
+} // namespace safememory::detail 
 
 #endif // SAFE_MEMORY_DETAIL_ARRAY_OF

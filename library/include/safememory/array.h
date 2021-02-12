@@ -41,19 +41,19 @@
 #include <EASTL/iterator.h>
 #include <EASTL/algorithm.h>
 #include <EASTL/memory.h>
-#include <safe_memory/safe_ptr.h>
-#include <safe_memory/detail/array_of.h>
-#include <safe_memory/detail/allocator_to_eastl.h>
+#include <safememory/safe_ptr.h>
+#include <safememory/detail/array_of.h>
+#include <safememory/detail/allocator_to_eastl.h>
 
-namespace safe_memory
+namespace safememory
 {
 
 /** 
- * \brief A safe_memory array.
+ * \brief A SafeMemory array.
  * 
- * The implementation of \c array for \c safe_memory has a couple of interesting details.
+ * The implementation of \c array for \c safememory has a couple of interesting details.
  * 
- * For \c safe_memory we can't use aggregate initialization, and I wasn't able to make a constructor
+ * For \c safememory we can't use aggregate initialization, and I wasn't able to make a constructor
  * that can initialize the member array in the initializers (not the constructor body)
  * So current implementation uses std::initializer_list in the contructor body, the member array
  * is of char type, to avoid default construct of the elements before constructor body, and
@@ -94,7 +94,7 @@ public:
 	typedef eastl::reverse_iterator<const_iterator_safe>               const_reverse_iterator_safe;
 
 	//TODO: mb: add support for empty array
-	static_assert(N != 0, "Empty safe_memory::array not supported yet!");
+	static_assert(N != 0, "Empty safememory::array not supported yet!");
 
 public:
 	static constexpr memory_safety is_safe = Safety;
@@ -345,7 +345,7 @@ public:
 	typedef typename base_type::reverse_iterator_safe              reverse_iterator_safe;
 	typedef typename base_type::const_reverse_iterator_safe        const_reverse_iterator_safe;
 
-	// static_assert(N != 0, "Empty safe_memory::array not supported yet!");
+	// static_assert(N != 0, "Empty safememory::array not supported yet!");
 
 public:
 	using base_type::is_safe;
@@ -466,18 +466,18 @@ namespace detail
 	template<memory_safety Safety, class T, eastl_size_t N, eastl_size_t... I>
 	constexpr auto to_array(T (&a)[N], eastl::index_sequence<I...>)
 	{
-		return safe_memory::array<eastl::remove_cv_t<T>, N, Safety>{{a[I]...}};
+		return safememory::array<eastl::remove_cv_t<T>, N, Safety>{{a[I]...}};
 	}
 
 	template<memory_safety Safety, class T, eastl_size_t N, eastl_size_t... I>
 	constexpr auto to_array(T (&&a)[N], eastl::index_sequence<I...>)
 	{
-		return safe_memory::array<eastl::remove_cv_t<T>, N, Safety>{{std::move(a[I])...}};
+		return safememory::array<eastl::remove_cv_t<T>, N, Safety>{{std::move(a[I])...}};
 	}
 }
 
 template<class T, eastl_size_t N, memory_safety Safety>
-constexpr safe_memory::array<eastl::remove_cv_t<T>, N> to_array(T (&a)[N])
+constexpr safememory::array<eastl::remove_cv_t<T>, N> to_array(T (&a)[N])
 {
 	static_assert(eastl::is_constructible_v<T, T&>, "element type T must be copy-initializable");
 	static_assert(!eastl::is_array_v<T>, "passing multidimensional arrays to to_array is ill-formed");
@@ -485,7 +485,7 @@ constexpr safe_memory::array<eastl::remove_cv_t<T>, N> to_array(T (&a)[N])
 }
 
 template<class T, eastl_size_t N, memory_safety Safety>
-constexpr safe_memory::array<eastl::remove_cv_t<T>, N> to_array(T (&&a)[N])
+constexpr safememory::array<eastl::remove_cv_t<T>, N> to_array(T (&&a)[N])
 {
 	static_assert(eastl::is_move_constructible_v<T>, "element type T must be move-constructible");
 	static_assert(!eastl::is_array_v<T>, "passing multidimensional arrays to to_array is ill-formed");
@@ -493,7 +493,7 @@ constexpr safe_memory::array<eastl::remove_cv_t<T>, N> to_array(T (&&a)[N])
 }
 
 
-} // namespace safe_memory
+} // namespace safememory
 
 
 #endif // Header include guard

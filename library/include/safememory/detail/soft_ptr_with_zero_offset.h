@@ -29,9 +29,9 @@
 #define SAFE_MEMORY_DETAIL_SOFT_PTR_WITH_ZERO_OFFSET_H
 
 #include <utility> //for std::swap
-#include <safe_memory/detail/array_of.h>
+#include <safememory/detail/array_of.h>
 
-namespace safe_memory::detail
+namespace safememory::detail
 {
 
 struct make_zero_offset_t {};
@@ -73,11 +73,11 @@ public:
 };
 
 /** \file
- * \brief Pointer wrappers to be used in libraries adaptation to \a safe_memory
+ * \brief Pointer wrappers to be used in libraries adaptation to \a safememory
  * \c soft_ptr_with_zero_offset_impl is a pointer wrapper used as a bridge between our safety aware code
  * and \c eastl libraries that know nothing about \c soft_ptr_impl
  * 
- * On \a safe_memory allocations, an special chunk of memory called \a ControlBlock
+ * On \a safememory allocations, an special chunk of memory called \a ControlBlock
  * is allocated in front of every object on the heap.
  * Also allocations always return an \c owning_ptr_impl that is aware or such \a ControlBlock
  * and use it to keep track of \c soft_ptr created from him.
@@ -413,6 +413,6 @@ using soft_ptr_with_zero_offset = std::conditional_t<S == memory_safety::safe,
 			soft_ptr_with_zero_offset_impl<T>,
 			soft_ptr_with_zero_offset_no_checks<T>>; 
 
-} // namespace safe_memory::detail
+} // namespace safememory::detail
 
 #endif // SAFE_MEMORY_DETAIL_SOFT_PTR_WITH_ZERO_OFFSET_H

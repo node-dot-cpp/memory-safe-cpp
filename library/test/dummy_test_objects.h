@@ -2,8 +2,8 @@
 #define DUMMY_TEST_OBJECTS_H
 
 // For various testing purposes we will need misc objects (classes, ...) doing nothing but representing certain constructions to be tested
-// Such objects are gathered in the namespace nodecpp::safememory::testing::dummy_objects
-namespace nodecpp::safememory::testing::dummy_objects {
+// Such objects are gathered in the namespace safememory::testing::dummy_objects
+namespace safememory::testing::dummy_objects {
 
 // prereqs for testing soft_this_ptr
 class SomethingLarger; //forward declaration
@@ -67,7 +67,7 @@ struct StructWithSoftPtr
 };
 struct StructWithDtorRequiringValidSoftPtrsToItself
 {
-	nodecpp::safememory::soft_this_ptr<StructWithDtorRequiringValidSoftPtrsToItself> myThis;
+	safememory::soft_this_ptr<StructWithDtorRequiringValidSoftPtrsToItself> myThis;
 	int dummy = 0;
 	soft_ptr<StructWithSoftPtr> sp;
 	StructWithDtorRequiringValidSoftPtrsToItself( int val, soft_ptr<StructWithSoftPtr> sp_ ) : sp( sp_ ) { 
@@ -87,7 +87,7 @@ struct LargeObjectWithControllableAlignment
 	uint8_t dummyBytes[minSz];
 };
 
-} // namespace nodecpp::safememory::testing::dummy_objects
+} // namespace safememory::testing::dummy_objects
 
 
 #endif // DUMMY_TEST_OBJECTS_H

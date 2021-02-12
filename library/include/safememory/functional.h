@@ -28,10 +28,10 @@
 #ifndef SAFE_MEMORY_FUNCTIONAL_H
 #define SAFE_MEMORY_FUNCTIONAL_H
 
-#include <safe_memory/checker_attributes.h>
+#include <safememory/checker_attributes.h>
 #include <typeindex>
 
-namespace SAFE_MEMORY_CHECK_AS_USER_CODE safe_memory
+namespace SAFE_MEMORY_CHECK_AS_USER_CODE safememory
 {
 	template<class T = void>
 	struct SAFE_MEMORY_DEEP_CONST equal_to {
@@ -51,7 +51,7 @@ namespace SAFE_MEMORY_CHECK_AS_USER_CODE safe_memory
 	// 		}
 	// };
 
-namespace safe_memory
+namespace safememory
 {
 	
 	template <typename T> struct hash;
@@ -123,6 +123,6 @@ namespace safe_memory
 	template <> struct SAFE_MEMORY_DEEP_CONST hash<long double>
 		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(long double val) const { return static_cast<std::size_t>(val); } };
 
-} //namespace safe_memory
+} //namespace safememory
 
 #endif //SAFE_MEMORY_FUNCTIONAL_H

@@ -30,19 +30,19 @@
 
 #ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
 
-#define NODECPP_MAY_EXTEND_TO_THIS [[safe_memory::may_extend_to_this]]
-#define NODECPP_NO_AWAIT [[safe_memory::no_await]]
-#define NODECPP_NAKED_STRUCT [[safe_memory::naked_struct]]
-#define NODECPP_DEEP_CONST [[safe_memory::deep_const]]
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS [[safe_memory::may_extend_to_this]]
-#define SAFE_MEMORY_NO_AWAIT [[safe_memory::no_await]]
-#define SAFE_MEMORY_AWAITABLE [[safe_memory::awaitable]]
-#define SAFE_MEMORY_NAKED_STRUCT [[safe_memory::naked_struct]]
-#define SAFE_MEMORY_DEEP_CONST [[safe_memory::deep_const]]
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS [[safe_memory::deep_const_when_params]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT [[safe_memory::no_side_effect]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST [[safe_memory::no_side_effect_when_const]]
-#define SAFE_MEMORY_CHECK_AS_USER_CODE [[safe_memory::check_as_user_code]]
+#define NODECPP_MAY_EXTEND_TO_THIS [[safememory::may_extend_to_this]]
+#define NODECPP_NO_AWAIT [[safememory::no_await]]
+#define NODECPP_NAKED_STRUCT [[safememory::naked_struct]]
+#define NODECPP_DEEP_CONST [[safememory::deep_const]]
+#define SAFE_MEMORY_MAY_EXTEND_TO_THIS [[safememory::may_extend_to_this]]
+#define SAFE_MEMORY_NO_AWAIT [[safememory::no_await]]
+#define SAFE_MEMORY_AWAITABLE [[safememory::awaitable]]
+#define SAFE_MEMORY_NAKED_STRUCT [[safememory::naked_struct]]
+#define SAFE_MEMORY_DEEP_CONST [[safememory::deep_const]]
+#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS [[safememory::deep_const_when_params]]
+#define SAFE_MEMORY_NO_SIDE_EFFECT [[safememory::no_side_effect]]
+#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST [[safememory::no_side_effect_when_const]]
+#define SAFE_MEMORY_CHECK_AS_USER_CODE [[safememory::check_as_user_code]]
 
 #else
 

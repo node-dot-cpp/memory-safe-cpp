@@ -33,13 +33,13 @@
 
 #include "../../src/safe_ptr_common.h"
 
-namespace safe_memory {
+// namespace safememory {
 
-using nodecpp::safememory::memory_safety;
-using ::nodecpp::safememory::safeness_declarator;
-using nodecpp::safememory::module_id;
+// using nodecpp::safememory::memory_safety;
+// using ::nodecpp::safememory::safeness_declarator;
+// using nodecpp::safememory::module_id;
 
-}
+// }
 
 
 #endif //SAFE_MEMORY_SAFE_PTR_COMMON_H

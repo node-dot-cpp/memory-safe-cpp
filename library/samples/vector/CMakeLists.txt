@@ -4,5 +4,5 @@
 
 add_executable(VectorSample main.cpp)
 
-target_link_libraries(VectorSample safe_memory)
+target_link_libraries(VectorSample safememory)
 

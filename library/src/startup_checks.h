@@ -31,12 +31,12 @@
 #include <foundation.h>
 #include "safe_ptr.h"
 
-namespace nodecpp::safememory::testing {
+namespace safememory::testing {
 
-using namespace ::nodecpp::safememory;
+using namespace ::safememory;
 
 // For various testing purposes we will need misc objects (classes, ...) doing nothing but representing certain constructions to be tested
-// Such objects are gathered in the namespace nodecpp::safememory::testing::dummy_objects
+// Such objects are gathered in the namespace safememory::testing::dummy_objects
 namespace dummy_objects {
 
 	class PRNG
@@ -222,7 +222,7 @@ class StartupChecker
 		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
 		T* TPtr = new ( mem4T ) T;
 		TPtr->init(rngCheckVal);
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
 		memcpy( mem4TCopy, mem4T, sizeof(T) );
 
 		// collect actual addresses of changes in destructors
@@ -244,16 +244,16 @@ class StartupChecker
 		if( memcmp( mem4TCopy, mem4T, sizeof(T) ) != 0 )
 		{
 			// check explicitly that changes done in dtor actually happened as intended (fast detection)
-			NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr1 == 0 );
-			NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr2 == 0 );
-			NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr3 == 0 );
+			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr1 == 0 );
+			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr2 == 0 );
+			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr3 == 0 );
 
 			for ( size_t i=0; i<sizeof(T); ++i )
 				if ( mem4T[i] != mem4TCopy[i] ) 
-					NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, changeMap[i] != ChangeStatus::no );
+					NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, changeMap[i] != ChangeStatus::no );
 		}
 		else
-			NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
+			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
 
 		g_AllocManager.deallocate( mem4T );
 		g_AllocManager.deallocate( mem4TCopy );
@@ -285,7 +285,7 @@ class StartupChecker
 
 		// supposedly, the same state of memory
 		typename T::MyNonPointerMembers postDtorData = rawTPtr->getMyNonPointerMembers();
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, iniData == postDtorData );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, iniData == postDtorData );
 
 		// safe attempt to call a virtual member function
 		rawTPtr->doSmthSome();
@@ -295,24 +295,24 @@ class StartupChecker
 		// exception while trying to move a member owning pointer
 		owning_ptr<dummy_objects::JustDummyStruct> opTarget;
 		try { opTarget = std::move( rawTPtr->opDummy ); testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, opTarget == nullptr );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, opTarget == nullptr );
 
 		// exception while trying to move a member soft pointer
 		soft_ptr<dummy_objects::JustDummyStruct> spTarget;
 		try { spTarget = std::move( rawTPtr->spDummy ); testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, spTarget == nullptr );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, spTarget == nullptr );
 
 		// exception while trying to dereference a soft pointer
 		try { rawTPtr->opDummy->n1 = 17; testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
 		try { (*(rawTPtr->opDummy)).n1 = 17; testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
 		try { rawTPtr->spDummy->n1 = 17; testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
 		try { (*(rawTPtr->spDummy)).n1 = 17; testOK = false; } catch(...) {}
-		NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, testOK );
 	}
 
 public:
@@ -320,15 +320,15 @@ public:
 	{
 		checkBasicsT<dummy_objects::Small>();
 		checkBasicsT<dummy_objects::Large>();
-		killAllZombies();
+		detail::killAllZombies();
 	}
 	static void checkSafePointers()
 	{
 		checkSafePointers_();
-		killAllZombies();
+		detail::killAllZombies();
 	}
 };
 
-} // namespace nodecpp::safememory::testing
+} // namespace safememory::testing
 
 #endif // STARTUP_CHECKS_H

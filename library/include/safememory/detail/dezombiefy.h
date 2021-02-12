@@ -28,13 +28,13 @@
 #ifndef SAFE_MEMORY_DEZOMBIEFY_H
 #define SAFE_MEMORY_DEZOMBIEFY_H
 
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 #include <safe_memory_error.h>
 #include <utility>
 
-namespace safe_memory {
+namespace safememory::detail {
 
-using nodecpp::safememory::isPointerNotZombie;
+// using safememory::detail::isPointerNotZombie;
 using nodecpp::error::early_detected_zombie_pointer_access;
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -149,7 +149,7 @@ auto dz_or(T1&& t1, T2&& t2) {
 	return std::forward(t1) | std::forward(t2);
 }
 
-} // namespace safe_memory
+} // namespace safememory::detail
 
 
 #endif // SAFE_MEMORY_DEZOMBIEFY_H

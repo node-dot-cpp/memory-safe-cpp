@@ -28,18 +28,18 @@
 #include "safe_ptr.h"
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-thread_local size_t nodecpp::safememory::onStackSafePtrCreationCount = 0; 
-thread_local size_t nodecpp::safememory::onStackSafePtrDestructionCount = 0;
+thread_local size_t safememory::detail::onStackSafePtrCreationCount = 0; 
+thread_local size_t safememory::detail::onStackSafePtrDestructionCount = 0;
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 #ifdef NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
-thread_local std::size_t nodecpp::safememory::CountSoftPtrZeroOffsetDtor = 0;
-thread_local std::size_t nodecpp::safememory::CountSoftPtrBaseDtor = 0;
+thread_local std::size_t safememory::detail::CountSoftPtrZeroOffsetDtor = 0;
+thread_local std::size_t safememory::detail::CountSoftPtrBaseDtor = 0;
 #endif // NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 
-thread_local void* nodecpp::safememory::thg_stackPtrForMakeOwningCall = 0;
+thread_local void* safememory::detail::thg_stackPtrForMakeOwningCall = 0;
 
-namespace nodecpp::safememory {
+namespace safememory::detail {
 #if defined NODECPP_USE_NEW_DELETE_ALLOC
 thread_local void** zombieList_ = nullptr;
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -47,14 +47,14 @@ thread_local std::map<uint8_t*, size_t, std::greater<uint8_t*>> zombieMap;
 thread_local bool doZombieEarlyDetection_ = true;
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #endif // NODECPP_USE_NEW_DELETE_ALLOC
-} // namespace nodecpp::safememory
+} // namespace safememory::detail
 
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-namespace nodecpp::safememory::impl {
+namespace safememory::detail::impl {
 	NODECPP_NOINLINE void dbgThrowNullPtrAccess( const DbgCreationAndDestructionInfo& info )
 	{
 		nodecpp::error::string_ref extra( info.toStr().c_str() );
 		throw nodecpp::error::nodecpp_error(nodecpp::error::NODECPP_EXCEPTION::null_ptr_access, std::move( extra ) );
 	}
-} // namespace nodecpp::safememory::impl
+} // namespace safememory::detail::impl
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO

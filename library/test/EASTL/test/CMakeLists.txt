@@ -75,7 +75,7 @@ set(EASTLTest_Libraries
     EAStdC
     EATest
     EAThread
-    safe_memory
+    safememory
 )
 
 #target_link_libraries(EASTLTest EABase)
@@ -85,7 +85,7 @@ set(EASTLTest_Libraries
 #target_link_libraries(EASTLTest EAStdC)
 #target_link_libraries(EASTLTest EATest)
 #target_link_libraries(EASTLTest EAThread)
-#target_link_libraries(EASTLTest safe_memory)
+#target_link_libraries(EASTLTest safememory)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)

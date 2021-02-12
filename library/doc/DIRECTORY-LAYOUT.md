@@ -9,7 +9,7 @@ As a general rule we are following Separate Header Placement from the [PFL](http
 
 * When a component header has to be split into several files, suffix `_detail.h` may be used.
 
-* All types and functions intended to be used directly by the user should be under a single namespace `PROJECT_NAME`. All types and functions not intended to be used by the user should go a subnamespace `PROJECT_NAME::detail`. This helps _IDE_ auto complete a lot, minimizing the number of irrelevant options shown to the user. Each sub project may alias (`using`) into its own namespace types and functions from other sub projects as needed. (i.e. `nodecpp::owning_ptr` as an alias of `safe_memory::owning_ptr`).
+* All types and functions intended to be used directly by the user should be under a single namespace `PROJECT_NAME`. All types and functions not intended to be used by the user should go a subnamespace `PROJECT_NAME::detail`. This helps _IDE_ auto complete a lot, minimizing the number of irrelevant options shown to the user. Each sub project may alias (`using`) into its own namespace types and functions from other sub projects as needed. (i.e. `nodecpp::owning_ptr` as an alias of `safememory::owning_ptr`).
 
 * Non public api headers go to `src` folder like mentioned at __PFL__. Non public header files should  have `_private.h` name sufix, to avoid potential for very messy mistakes.
 
