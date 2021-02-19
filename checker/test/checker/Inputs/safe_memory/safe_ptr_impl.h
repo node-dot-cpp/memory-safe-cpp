@@ -31,7 +31,7 @@
 #include "safe_ptr_common.h"
 #include <utility>
 
-namespace safememory
+namespace safememory::detail
 {
 
 enum class MemorySafety {none, partial, full};
@@ -929,6 +929,6 @@ public:
 	}
 };
 
-} // namespace safememory
+} // namespace safememory::detail
 
 #endif // SAFE_PTR_IMPL_H

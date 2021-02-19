@@ -10,7 +10,7 @@ struct [[safememory::naked_struct]] NakedInner {
 
 
 struct [[safememory::naked_struct]] Naked {
-// CHECK: :[[@LINE-1]]:38: error: unsafe naked_struct declaration
+// CHECK: :[[@LINE-1]]:37: error: unsafe naked_struct declaration
     nullable_ptr<int> i; //ok
     int* bad1; //bad
 

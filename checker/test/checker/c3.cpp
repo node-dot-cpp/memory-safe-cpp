@@ -21,6 +21,6 @@ namespace name2 {
 }
 
 namespace  [[safememory::non_deterministic]] name2 {
-// CHECK: :[[@LINE-1]]:47: error: (C3)
+// CHECK: :[[@LINE-1]]:46: error: (C3)
 }
 

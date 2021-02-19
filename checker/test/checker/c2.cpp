@@ -3,14 +3,14 @@
 #include <functional>
 
 [[safememory::memory_unsafe]] void f();
-// CHECK: :[[@LINE-1]]:37: error: (C2)
+// CHECK: :[[@LINE-1]]:36: error: (C2)
 
 
 [[safememory::non_deterministic]] constexpr int i = 0;
-// CHECK: :[[@LINE-1]]:50: error: (C2)
+// CHECK: :[[@LINE-1]]:49: error: (C2)
 
 union [[safememory::naked_struct]] Wrong {
-// CHECK: :[[@LINE-1]]:37: error: (C2)
+// CHECK: :[[@LINE-1]]:36: error: (C2)
 	int i;
 	int j;
 };

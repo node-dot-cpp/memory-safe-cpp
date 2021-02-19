@@ -1,7 +1,7 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_memory/safe_ptr.h>
-#include <safe_memory/vector.h>
+#include <safememory/safe_ptr.h>
+#include <safememory/vector.h>
 
 
 using namespace safememory;
@@ -27,7 +27,7 @@ void safeVector() {
 }
 
 
-struct [[safe_memory::naked_struct]] NakedStr {
+struct [[safememory::naked_struct]] NakedStr {
 	nullable_ptr<int> ptr;
 
 	nullable_ptr<int> get() const;

@@ -118,20 +118,15 @@ void SerializeData(FILE* file, const MappingData& md) {
 
     fprintf(file, "[\n{\n");
 
-    fprintf(file, "  \"names\" : [\n");
-    for(auto it = md.allNames.begin(); it != md.allNames.end(); ++it) {
-        fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
-
     fprintf(file, "  \"types\" : [\n");
     for(auto it = md.allTypeNames.begin(); it != md.allTypeNames.end(); ++it) {
         fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
+    }
 
     fprintf(file, "  ],\n  \"functions\" : [\n");
     for(auto it = md.allFuncNames.begin(); it != md.allFuncNames.end(); ++it) {
         fprintf(file, "    \"%s\",\n", it->c_str());
-    }    
+    }
 
     fprintf(file, "  ]\n}\n]\n");
 }

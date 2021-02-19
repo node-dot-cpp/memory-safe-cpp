@@ -1,6 +1,6 @@
 // RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
 using namespace safememory;
 
@@ -86,9 +86,9 @@ void rule_S53() {
 struct X2 { nullable_ptr<int> y; };
 // CHECK: :[[@LINE-1]]:8: error: unsafe type declaration
 
-struct [[safe_memory::naked_struct]] NSTR { nullable_ptr<int> y; };
-struct [[safe_memory::naked_struct]] NSTR2 { soft_ptr<NSTR> y; };
-// CHECK: :[[@LINE-1]]:38: error: unsafe naked_struct declaration
+struct [[safememory::naked_struct]] NSTR { nullable_ptr<int> y; };
+struct [[safememory::naked_struct]] NSTR2 { soft_ptr<NSTR> y; };
+// CHECK: :[[@LINE-1]]:37: error: unsafe naked_struct declaration
 
 void rule_S54() {
 
@@ -100,7 +100,7 @@ void rule_S54() {
 
 struct X1 { soft_ptr<int> y; };
 
-struct [[safe_memory::naked_struct]] NSTR1 { nullable_ptr<int> y; };
+struct [[safememory::naked_struct]] NSTR1 { nullable_ptr<int> y; };
 
 
 //rule S5.5

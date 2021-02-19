@@ -13,6 +13,10 @@
 -isystem
 ../../../library/include
 -isystem
+../../../library/3rdparty/EASTL/include
+-isystem
+../../../library/3rdparty/EABase/include/Common
+-isystem
 ../../../library/src/iibmalloc/src
 -isystem
 ../../../library/src/iibmalloc/src/foundation/include
