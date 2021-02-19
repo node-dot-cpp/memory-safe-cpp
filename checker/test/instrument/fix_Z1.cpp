@@ -4,7 +4,7 @@
 #include <safe_memory/dezombiefy.h>
 #include <safe_types.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 int release() {	return 0; }
 
@@ -29,6 +29,6 @@ struct Bad {
 
 		//safeFunction may be eating a zombie
 		while(safeFunction(*StPtr) + release() != 0);
-// CHECK-FIXES: while(safe_memory::dz_ne(safe_memory::dz_add(safeFunction(*StPtr) , release()) , 0));
+// CHECK-FIXES: while(safememory::detail::dz_ne(safememory::detail::dz_add(safeFunction(*StPtr) , release()) , 0));
 	}
 };

@@ -30,7 +30,7 @@
 
 #include <utility>
 
-namespace safe_memory {
+namespace safememory {
 
 template<class T>
 T* dezombiefy(T* x) {
@@ -128,7 +128,7 @@ auto dz_or(T1&& t1, T2&& t2) {
 	return std::forward(t1) | std::forward(t2);
 }
 
-} // namespace safe_memory
+} // namespace safememory
 
 
 #endif // SAFEMEMORY_DEZOMBIEFY_H

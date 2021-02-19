@@ -38,7 +38,7 @@
 namespace safememory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
 	{
 		typedef vector<T, Safety> 										this_type;
 		typedef eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>    base_type;
@@ -655,7 +655,7 @@ namespace safememory
 
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector_safe : public vector<T, Safety>
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS vector_safe : public vector<T, Safety>
 	{
 		typedef vector_safe<T, Safety> 										this_type;
 		typedef vector<T, Safety>                                           base_type;

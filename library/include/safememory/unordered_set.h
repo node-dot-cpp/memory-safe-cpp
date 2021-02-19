@@ -39,7 +39,7 @@ namespace safememory
 {
 	template <typename Key, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_set
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS unordered_set
 		: private eastl::unordered_set<Key, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:
@@ -255,7 +255,7 @@ namespace safememory
 
 	template <typename Key, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_multiset
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS unordered_multiset
 		: private eastl::unordered_multiset<Key, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:

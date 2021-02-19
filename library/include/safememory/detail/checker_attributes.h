@@ -25,41 +25,33 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_CHECKER_ATTRIBUTES_H
-#define SAFE_MEMORY_CHECKER_ATTRIBUTES_H
+#ifndef SAFEMEMORY_DETAIL_CHECKER_ATTRIBUTES_H
+#define SAFEMEMORY_DETAIL_CHECKER_ATTRIBUTES_H
 
-#ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
+#ifdef SAFEMEMORY_CHECKER_EXTENSIONS
 
-#define NODECPP_MAY_EXTEND_TO_THIS [[safememory::may_extend_to_this]]
-#define NODECPP_NO_AWAIT [[safememory::no_await]]
-#define NODECPP_NAKED_STRUCT [[safememory::naked_struct]]
-#define NODECPP_DEEP_CONST [[safememory::deep_const]]
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS [[safememory::may_extend_to_this]]
-#define SAFE_MEMORY_NO_AWAIT [[safememory::no_await]]
-#define SAFE_MEMORY_AWAITABLE [[safememory::awaitable]]
-#define SAFE_MEMORY_NAKED_STRUCT [[safememory::naked_struct]]
-#define SAFE_MEMORY_DEEP_CONST [[safememory::deep_const]]
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS [[safememory::deep_const_when_params]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT [[safememory::no_side_effect]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST [[safememory::no_side_effect_when_const]]
-#define SAFE_MEMORY_CHECK_AS_USER_CODE [[safememory::check_as_user_code]]
+#define SAFEMEMORY_MAY_EXTEND_TO_THIS [[safememory::may_extend_to_this]]
+#define SAFEMEMORY_NO_AWAIT [[safememory::no_await]]
+#define SAFEMEMORY_AWAITABLE [[safememory::awaitable]]
+#define SAFEMEMORY_NAKED_STRUCT [[safememory::naked_struct]]
+#define SAFEMEMORY_DEEP_CONST [[safememory::deep_const]]
+#define SAFEMEMORY_DEEP_CONST_WHEN_PARAMS [[safememory::deep_const_when_params]]
+#define SAFEMEMORY_NO_SIDE_EFFECT [[safememory::no_side_effect]]
+#define SAFEMEMORY_NO_SIDE_EFFECT_WHEN_CONST [[safememory::no_side_effect_when_const]]
+#define SAFEMEMORY_CHECK_AS_USER_CODE [[safememory::check_as_user_code]]
 
-#else
+#else //SAFEMEMORY_CHECKER_EXTENSIONS
 
-#define NODECPP_MAY_EXTEND_TO_THIS
-#define NODECPP_NO_AWAIT
-#define NODECPP_NAKED_STRUCT
-#define NODECPP_DEEP_CONST
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS
-#define SAFE_MEMORY_NO_AWAIT
-#define SAFE_MEMORY_AWAITABLE
-#define SAFE_MEMORY_NAKED_STRUCT
-#define SAFE_MEMORY_DEEP_CONST
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS
-#define SAFE_MEMORY_NO_SIDE_EFFECT
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST
-#define SAFE_MEMORY_CHECK_AS_USER_CODE
+#define SAFEMEMORY_MAY_EXTEND_TO_THIS
+#define SAFEMEMORY_NO_AWAIT
+#define SAFEMEMORY_AWAITABLE
+#define SAFEMEMORY_NAKED_STRUCT
+#define SAFEMEMORY_DEEP_CONST
+#define SAFEMEMORY_DEEP_CONST_WHEN_PARAMS
+#define SAFEMEMORY_NO_SIDE_EFFECT
+#define SAFEMEMORY_NO_SIDE_EFFECT_WHEN_CONST
+#define SAFEMEMORY_CHECK_AS_USER_CODE
 
-#endif
+#endif //SAFEMEMORY_CHECKER_EXTENSIONS
 
-#endif // SAFE_MEMORY_CHECKER_ATTRIBUTES_H
+#endif // SAFEMEMORY_DETAIL_CHECKER_ATTRIBUTES_H

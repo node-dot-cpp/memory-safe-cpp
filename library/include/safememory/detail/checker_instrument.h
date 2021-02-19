@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DEZOMBIEFY_H
-#define SAFE_MEMORY_DEZOMBIEFY_H
+#ifndef SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H
+#define SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H
 
 #include <safememory/safe_ptr.h>
 #include <safe_memory_error.h>
@@ -46,13 +46,13 @@ T*& dezombiefy(T*& x) {
 		throw early_detected_zombie_pointer_access; 
 }
 
-template<class T>
-const T*& dezombiefy(const T*& x) {
-	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( x ) ) ) )
-		return x;
-	else
-		throw early_detected_zombie_pointer_access; 
-}
+// template<class T>
+// const T*& dezombiefy(const T*& x) {
+// 	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( x ) ) ) )
+// 		return x;
+// 	else
+// 		throw early_detected_zombie_pointer_access; 
+// }
 
 template<class T>
 T& dezombiefy(T& x) {
@@ -62,13 +62,13 @@ T& dezombiefy(T& x) {
 		throw early_detected_zombie_pointer_access; 
 }
 
-template<class T>
-const T& dezombiefy(const T& x) {
-	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( &x ) ) ) )
-		return x;
-	else
-		throw early_detected_zombie_pointer_access; 
-}
+// template<class T>
+// const T& dezombiefy(const T& x) {
+// 	if ( NODECPP_LIKELY( isPointerNotZombie( const_cast<T*>( &x ) ) ) )
+// 		return x;
+// 	else
+// 		throw early_detected_zombie_pointer_access; 
+// }
 #else
 #define dezombiefy( x ) (x)
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -152,4 +152,4 @@ auto dz_or(T1&& t1, T2&& t2) {
 } // namespace safememory::detail
 
 
-#endif // SAFE_MEMORY_DEZOMBIEFY_H
+#endif // SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H

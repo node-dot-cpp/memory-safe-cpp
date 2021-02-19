@@ -39,7 +39,7 @@ void func2() {
 
 Good ok; //ok, because is empty
 
-class [[safe_memory::deep_const]] DeepConst {
+class [[safememory::deep_const]] DeepConst {
 	int i = 0;
 };
 

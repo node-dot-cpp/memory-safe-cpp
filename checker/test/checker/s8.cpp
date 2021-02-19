@@ -4,7 +4,7 @@
 #include <safe_memory/safe_ptr.h>
 #include <server.h>
 
-namespace [[safe_memory::memory_unsafe]] name {
+namespace [[safememory::memory_unsafe]] name {
 	class UnsafeButOk {
 		int *P = nullptr;
 	};
@@ -20,8 +20,8 @@ void func() {
 	func(); // ok, defined in safe code
 
 	//ok, allowed at 's8.json'
-	safe_memory::owning_ptr<nodecpp::Socket> optr = safe_memory::make_owning<nodecpp::Socket>();
+	safememory::owning_ptr<nodecpp::Socket> optr = safememory::make_owning<nodecpp::Socket>();
 
-	name::UnsafeButOk Ok; // ok, unsafe but [[safe_memory::memory_unsafe]]
+	name::UnsafeButOk Ok; // ok, unsafe but [[safememory::memory_unsafe]]
 }
 

@@ -2,7 +2,7 @@
 
 #include <safe_memory/string_literal.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 void f(string_literal sl);
 

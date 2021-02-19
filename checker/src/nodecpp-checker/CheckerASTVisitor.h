@@ -67,13 +67,9 @@ public:
         FlagRiia R(CheckAsUserCode);
         return Super::TraverseDecl(D);
       }
-      else if (KIND == CheckerKind::Safety &&
-        (Ns->hasAttr<SafeMemoryMemoryUnsafeAttr>() ||
-        Ns->hasAttr<NodeCppMemoryUnsafeAttr>()))
+      else if (KIND == CheckerKind::Safety && Ns->hasAttr<SafeMemoryMemoryUnsafeAttr>())
         return true;
-      else if (KIND == CheckerKind::Determinism &&
-        (Ns->hasAttr<SafeMemoryNonDeterministicAttr>() ||
-        Ns->hasAttr<NodeCppNonDeterministicAttr>()))
+      else if (KIND == CheckerKind::Determinism && Ns->hasAttr<SafeMemoryNonDeterministicAttr>())
         return true;
       else //namespaces are traversed independant of location
         return Super::TraverseDecl(D);

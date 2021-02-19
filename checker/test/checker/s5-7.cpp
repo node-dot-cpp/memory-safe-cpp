@@ -3,7 +3,7 @@
 #include <safe_memory/safe_ptr.h>
 #include <server.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 void my_sort(std::function<void()>);
 

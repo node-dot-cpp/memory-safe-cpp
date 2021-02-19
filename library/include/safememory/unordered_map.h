@@ -41,7 +41,7 @@ namespace safememory
 {
 	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_map
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS unordered_map
 		: protected eastl::unordered_map<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:
@@ -386,7 +386,7 @@ namespace safememory
 	// this is useful for benchmarks and for tests
  	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_map_safe
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS unordered_map_safe
 		: public unordered_map<Key, T, Hash, Predicate, Safety>
 	{
 	public:
@@ -553,7 +553,7 @@ namespace safememory
 
 	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS unordered_multimap
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS unordered_multimap
 		: private eastl::unordered_multimap<Key, T, Hash, Predicate, detail::allocator_to_eastl_hashtable<Safety>>
 	{
 	public:

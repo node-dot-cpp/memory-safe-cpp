@@ -16,13 +16,13 @@ public:
         
         auto aMethod(U u) {
             return u;
-// CHECK-FIXES: return safe_memory::dezombiefy( u );            
+// CHECK-FIXES: return safememory::detail::dezombiefy( u );            
         }
 
         template<class V>
         auto templMethod(V v) {
             return v;
-// CHECK-FIXES: return safe_memory::dezombiefy( v );
+// CHECK-FIXES: return safememory::detail::dezombiefy( v );
         }
     };
 };

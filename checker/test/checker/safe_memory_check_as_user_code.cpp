@@ -21,12 +21,12 @@ public:
 
 void func() {
 
-	Container<MyClass, safe_memory::BadEqualTo<MyClass>> mc;
+	Container<MyClass, safememory::BadEqualTo<MyClass>> mc;
 	// we must trigger the actual instantiation of the method above
 	bool b = mc.isEq();
 
 
-	Container<MyClass, safe_memory::GoodEqualTo<MyClass>> mc2;
+	Container<MyClass, safememory::GoodEqualTo<MyClass>> mc2;
 	// we must trigger the actual instantiation of the method above
 	bool b2 = mc2.isEq();
 // in this case bad implementation wont report error. Good implementation will.

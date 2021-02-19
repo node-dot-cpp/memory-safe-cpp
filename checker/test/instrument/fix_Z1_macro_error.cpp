@@ -6,7 +6,7 @@
 
 #define MACRO_ADD(X, Y) ((X) + (Y))
 
-using namespace safe_memory;
+using namespace safememory;
 using namespace nodecpp;
 
 

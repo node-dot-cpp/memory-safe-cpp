@@ -3,7 +3,7 @@
 #include <utility>
 #include <awaitable.h>
 
-class [[safe_memory::awaitable]] UserAwaitable {
+class [[safememory::awaitable]] UserAwaitable {
 // CHECK: :[[@LINE-1]]:34: error: (C2)
 // CHECK: :[[@LINE-2]]:34: error: unsafe type
 

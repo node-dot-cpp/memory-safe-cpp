@@ -24,11 +24,6 @@ void MayExtendLambdaCheck::registerMatchers(MatchFinder *Finder) {
 
   Finder->addMatcher(
       cxxMemberCallExpr(callee(cxxMethodDecl(hasAnyParameter(hasAttr(
-                                           clang::attr::NodeCppMayExtend)))))
-                         .bind("call"),
-                     this);
-  Finder->addMatcher(
-      cxxMemberCallExpr(callee(cxxMethodDecl(hasAnyParameter(hasAttr(
                                            clang::attr::SafeMemoryMayExtend)))))
                          .bind("call"),
                      this);}
@@ -145,7 +140,7 @@ void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
 
   for (unsigned I = 0; I != Decl->param_size(); ++I) {
     auto P = Decl->getParamDecl(I);
-    if (P->hasAttr<NodeCppMayExtendAttr>() || P->hasAttr<SafeMemoryMayExtendAttr>()) {
+    if (P->hasAttr<SafeMemoryMayExtendAttr>()) {
 
       auto E = Call->getArg(I);
       if (isFunctionPtr(E)) {
@@ -155,7 +150,7 @@ void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
       }
       // e may be null?
       diag(E->getExprLoc(),
-            "(S5.7) argument not safe call declaration with attribute [[safe_memory::may_extend_to_this]]");
+            "(S5.7) argument not safe call declaration with attribute [[safememory::may_extend_to_this]]");
     }
   }
 }

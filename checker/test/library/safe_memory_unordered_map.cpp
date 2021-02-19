@@ -3,7 +3,7 @@
 #include <safe_memory/safe_ptr.h>
 #include <safe_memory/unordered_map.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 struct Safe1 {
 	int i = 0;

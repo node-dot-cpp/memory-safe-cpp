@@ -150,130 +150,71 @@ index 063d8217..aea85dd4 100644
  } // namespace clang
  
 diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index d39b16e6..e21f9c59 100644
+index d39b16e6..87146335 100644
 --- a/include/clang/Basic/Attr.td
 +++ b/include/clang/Basic/Attr.td
-@@ -3274,3 +3274,118 @@ def ObjCExternallyRetained : InheritableAttr {
+@@ -3274,3 +3274,59 @@ def ObjCExternallyRetained : InheritableAttr {
    let Subjects = SubjectList<[NonParmVar, Function, Block, ObjCMethod]>;
    let Documentation = [ObjCExternallyRetainedDocs];
  }
 +
-+def NodeCppNakedStruct : Attr {
-+  let Spellings = [CXX11<"nodecpp","naked_struct">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryNakedStructDocs];
-+}
-+
 +def SafeMemoryNakedStruct : Attr {
-+  let Spellings = [CXX11<"safe_memory","naked_struct">];
++  let Spellings = [CXX11<"safememory","naked_struct">];
 +  let Documentation = [SafeMemoryNakedStructDocs];
-+}
-+
-+def NodeCppMayExtend : Attr {
-+  let Spellings = [CXX11<"nodecpp","may_extend_to_this">];
-+  let Documentation = [SafeMemoryMayExtendDocs];
 +}
 +
 +def SafeMemoryMayExtend : Attr {
-+  let Spellings = [CXX11<"safe_memory","may_extend_to_this">];
++  let Spellings = [CXX11<"safememory","may_extend_to_this">];
 +  let Documentation = [SafeMemoryMayExtendDocs];
 +}
 +
-+def NodeCppNoAwait : Attr {
-+  let Spellings = [CXX11<"nodecpp","no_await">];
-+//  let Subjects = SubjectList<[ParmVar]>;
-+  let Documentation = [SafeMemoryNoAwaitDocs];
-+}
-+
 +def SafeMemoryNoAwait : Attr {
-+  let Spellings = [CXX11<"safe_memory","no_await">];
++  let Spellings = [CXX11<"safememory","no_await">];
 +  let Documentation = [SafeMemoryNoAwaitDocs];
-+}
-+
-+def NodeCppMemoryUnsafe : Attr {
-+  let Spellings = [CXX11<"nodecpp","memory_unsafe">];
-+//  let Subjects = SubjectList<[Namespace]>;
-+  let Documentation = [SafeMemoryMemoryUnsafeDocs];
 +}
 +
 +def SafeMemoryMemoryUnsafe : Attr {
-+  let Spellings = [CXX11<"safe_memory","memory_unsafe">];
++  let Spellings = [CXX11<"safememory","memory_unsafe">];
 +  let Documentation = [SafeMemoryMemoryUnsafeDocs];
 +}
 +
-+def NodeCppNonDeterministic : Attr {
-+  let Spellings = [CXX11<"nodecpp","non_deterministic">];
-+//  let Subjects = SubjectList<[Namespace]>;
-+  let Documentation = [SafeMemoryNonDeterministicDocs];
-+}
-+
 +def SafeMemoryNonDeterministic : Attr {
-+  let Spellings = [CXX11<"safe_memory","non_deterministic">];
++  let Spellings = [CXX11<"safememory","non_deterministic">];
 +  let Documentation = [SafeMemoryNonDeterministicDocs];
-+}
-+
-+def NodeCppNoSideEffect : Attr {
-+  let Spellings = [CXX11<"nodecpp","no_side_effect">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryNoSideEffectDocs];
 +}
 +
 +def SafeMemoryNoSideEffect : Attr {
-+  let Spellings = [CXX11<"safe_memory","no_side_effect">];
++  let Spellings = [CXX11<"safememory","no_side_effect">];
 +//  let Subjects = SubjectList<[CXXRecord]>;
 +  let Documentation = [SafeMemoryNoSideEffectDocs];
 +}
 +
-+def NodeCppNoSideEffectWhenConst : Attr {
-+  let Spellings = [CXX11<"nodecpp","no_side_effect_when_const">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryNoSideEffectWhenConstDocs];
-+}
-+
 +def SafeMemoryNoSideEffectWhenConst : Attr {
-+  let Spellings = [CXX11<"safe_memory","no_side_effect_when_const">];
++  let Spellings = [CXX11<"safememory","no_side_effect_when_const">];
 +  let Documentation = [SafeMemoryNoSideEffectWhenConstDocs];
-+}
-+
-+def NodeCppDeepConst : Attr {
-+  let Spellings = [CXX11<"nodecpp","deep_const">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryDeepConstDocs];
 +}
 +
 +def SafeMemoryDeepConst : Attr {
-+  let Spellings = [CXX11<"safe_memory","deep_const">];
++  let Spellings = [CXX11<"safememory","deep_const">];
 +  let Documentation = [SafeMemoryDeepConstDocs];
 +}
 +
-+def NodeCppDeepConstWhenParams : Attr {
-+  let Spellings = [CXX11<"nodecpp","deep_const_when_params">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryDeepConstWhenParamsDocs];
-+}
-+
 +def SafeMemoryDeepConstWhenParams : Attr {
-+  let Spellings = [CXX11<"safe_memory","deep_const_when_params">];
++  let Spellings = [CXX11<"safememory","deep_const_when_params">];
 +  let Documentation = [SafeMemoryDeepConstWhenParamsDocs];
-+}
-+
-+def NodeCppAwaitable : Attr {
-+  let Spellings = [CXX11<"nodecpp","awaitable">];
-+//  let Subjects = SubjectList<[CXXRecord]>;
-+  let Documentation = [SafeMemoryAwaitableDocs];
 +}
 +
 +def SafeMemoryAwaitable : Attr {
-+  let Spellings = [CXX11<"safe_memory","awaitable">];
++  let Spellings = [CXX11<"safememory","awaitable">];
 +  let Documentation = [SafeMemoryAwaitableDocs];
 +}
 +
 +def SafeMemoryCheckAsUserCode : Attr {
-+  let Spellings = [CXX11<"safe_memory","check_as_user_code">];
++  let Spellings = [CXX11<"safememory","check_as_user_code">];
 +  let Documentation = [SafeMemoryCheckAsUserCodeDocs];
 +}
 diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index fac61160..20bb299d 100644
+index fac61160..0fff3344 100644
 --- a/include/clang/Basic/AttrDocs.td
 +++ b/include/clang/Basic/AttrDocs.td
 @@ -4194,4 +4194,105 @@ be accessed on both device side and host side. It has external linkage and is
@@ -284,9 +225,9 @@ index fac61160..20bb299d 100644
 \ No newline at end of file
 +}
 +
-+def DocCatSafeMemory : DocumentationCategory<"safe_memory specifics"> {
++def DocCatSafeMemory : DocumentationCategory<"safememory specifics"> {
 +  let Content = [{
-+Attributes specifics to ``safe_memory`` checker tools and libraries.
++Attributes specifics to ``safememory`` checker tools and libraries.
 +  }];
 +}
 +
@@ -385,7 +326,7 @@ index fac61160..20bb299d 100644
 +}];
 +}
 diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
-index 275c4e43..c3bf66f0 100644
+index 275c4e43..b36ee900 100644
 --- a/include/clang/Basic/DiagnosticSemaKinds.td
 +++ b/include/clang/Basic/DiagnosticSemaKinds.td
 @@ -9759,4 +9759,7 @@ def err_bit_cast_non_trivially_copyable : Error<
@@ -393,7 +334,7 @@ index 275c4e43..c3bf66f0 100644
  def err_bit_cast_type_size_mismatch : Error<
    "__builtin_bit_cast source size does not equal destination size (%0 vs %1)">;
 +
-+def err_unknown_safe_memory_attribute : Error<
++def err_unknown_safememory_attribute : Error<
 +  "(C1) unknown attribute %0">;
  } // end of sema component.
 diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
@@ -417,7 +358,7 @@ index 6ef77b8a..50c47a3c 100644
    computeDependence(Ctx);
  }
 diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index f407e087..efa2793b 100644
+index f407e087..3f502fe9 100644
 --- a/lib/ASTMatchers/ASTMatchFinder.cpp
 +++ b/lib/ASTMatchers/ASTMatchFinder.cpp
 @@ -381,6 +381,7 @@ public:
@@ -434,8 +375,8 @@ index f407e087..efa2793b 100644
    }
 +
 +  //mb: we don't traverse decls in system-headers
-+  // nor namespaces with [[nodecpp::memory_unsafe]] attr
-+  if(DeclNode->hasAttr<NodeCppMemoryUnsafeAttr>() || DeclNode->hasAttr<SafeMemoryMemoryUnsafeAttr>()) {
++  // nor namespaces with [[safememory::memory_unsafe]] attr
++  if(DeclNode->hasAttr<SafeMemoryMemoryUnsafeAttr>()) {
 +    return true;
 +  }
 +  else if (!isa<TranslationUnitDecl>(DeclNode)) {
@@ -527,7 +468,7 @@ index e304fbbe..c961659d 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index ee06f8ae..af018221 100644
+index ee06f8ae..7341a854 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -6616,11 +6616,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -540,8 +481,8 @@ index ee06f8ae..af018221 100644
 -               : (unsigned)diag::warn_unknown_attribute_ignored)
 -        << AL;
 +
-+    if(AL.hasScope() && AL.getScopeName()->getName() == "safe_memory") {
-+      S.Diag(AL.getLoc(), diag::err_unknown_safe_memory_attribute) << AL.getName();
++    if(AL.hasScope() && AL.getScopeName()->getName() == "safememory") {
++      S.Diag(AL.getLoc(), diag::err_unknown_safememory_attribute) << AL.getName();
 +    }
 +    else {
 +	    S.Diag(AL.getLoc(),
@@ -648,7 +589,7 @@ index 2f9e4f96..7b02e48b 100644
  
    // Virtual overrides must have the same code_seg.
 diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
-index 223f1f74..12be23a2 100644
+index 223f1f74..6268c822 100644
 --- a/tools/CMakeLists.txt
 +++ b/tools/CMakeLists.txt
 @@ -39,3 +39,6 @@ add_llvm_external_project(clang-tools-extra extra)
@@ -656,5 +597,5 @@ index 223f1f74..12be23a2 100644
  # libclang may require clang-tidy in clang-tools-extra.
  add_clang_subdirectory(libclang)
 +
-+# Add nodecpp here, because using LLVM_EXTERNAL_PROJECTS don't seem to work
++# Add safememory here, because using LLVM_EXTERNAL_PROJECTS don't seem to work
 +add_llvm_external_project(checker)

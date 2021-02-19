@@ -25,17 +25,17 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_FUNCTIONAL_H
-#define SAFE_MEMORY_FUNCTIONAL_H
+#ifndef SAFEMEMORY_FUNCTIONAL_H
+#define SAFEMEMORY_FUNCTIONAL_H
 
-#include <safememory/checker_attributes.h>
+#include <safememory/detail/checker_attributes.h>
 #include <typeindex>
 
-namespace SAFE_MEMORY_CHECK_AS_USER_CODE safememory
+namespace SAFEMEMORY_CHECK_AS_USER_CODE safememory
 {
 	template<class T = void>
-	struct SAFE_MEMORY_DEEP_CONST equal_to {
-		SAFE_MEMORY_NO_SIDE_EFFECT constexpr bool operator()(const T &lhs, const T &rhs) const {
+	struct SAFEMEMORY_DEEP_CONST equal_to {
+		SAFEMEMORY_NO_SIDE_EFFECT constexpr bool operator()(const T &lhs, const T &rhs) const {
 			return lhs == rhs;
 		}
 	};
@@ -43,9 +43,9 @@ namespace SAFE_MEMORY_CHECK_AS_USER_CODE safememory
 
 	//mb: this has issues with [[no_side_effect]] analysis
 	// template<>
-	// class SAFE_MEMORY_DEEP_CONST equal_to<void> {
+	// class SAFEMEMORY_DEEP_CONST equal_to<void> {
 	// 	template< class T, class U>
-	// 	SAFE_MEMORY_NO_SIDE_EFFECT constexpr auto operator()( T&& lhs, U&& rhs ) const
+	// 	SAFEMEMORY_NO_SIDE_EFFECT constexpr auto operator()( T&& lhs, U&& rhs ) const
 	// 		-> decltype(std::forward<T>(lhs) == std::forward<U>(rhs)) {
 	// 			return lhs == rhs;
 	// 		}
@@ -57,72 +57,72 @@ namespace safememory
 	template <typename T> struct hash;
 
 	template <typename T>
-	struct SAFE_MEMORY_DEEP_CONST hash : std::enable_if_t<std::is_enum_v<T>> {
-		SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(T p) const { return std::size_t(p); }
+	struct SAFEMEMORY_DEEP_CONST hash : std::enable_if_t<std::is_enum_v<T>> {
+		SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(T p) const { return std::size_t(p); }
 	};
 
 	template <>
-	struct SAFE_MEMORY_DEEP_CONST hash<std::type_index> {
-		SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(const std::type_index& p) const { return p.hash_code(); }
+	struct SAFEMEMORY_DEEP_CONST hash<std::type_index> {
+		SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(const std::type_index& p) const { return p.hash_code(); }
 	};
 
-	template <typename T> struct SAFE_MEMORY_DEEP_CONST hash<T*> // Note that we use the pointer as-is and don't divide by sizeof(T*). This is because the table is of a prime size and this division doesn't benefit distribution.
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(T* p) const { return reinterpret_cast<std::size_t>(p); } };
+	template <typename T> struct SAFEMEMORY_DEEP_CONST hash<T*> // Note that we use the pointer as-is and don't divide by sizeof(T*). This is because the table is of a prime size and this division doesn't benefit distribution.
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(T* p) const { return reinterpret_cast<std::size_t>(p); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<bool>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(bool val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<bool>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(bool val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<char>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(char val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<char>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(char val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<signed char>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(signed char val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<signed char>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(signed char val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<unsigned char>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned char val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<unsigned char>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned char val) const { return static_cast<std::size_t>(val); } };
 
 	template <> struct hash<char16_t>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(char16_t val) const { return static_cast<std::size_t>(val); } };
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(char16_t val) const { return static_cast<std::size_t>(val); } };
 
 	template <> struct hash<char32_t>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(char32_t val) const { return static_cast<std::size_t>(val); } };
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(char32_t val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<wchar_t>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(wchar_t val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<wchar_t>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(wchar_t val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<signed short>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(signed short val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<signed short>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(signed short val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<unsigned short>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned short val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<unsigned short>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned short val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<signed int>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(signed int val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<signed int>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(signed int val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<unsigned int>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned int val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<unsigned int>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned int val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<signed long>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(signed long val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<signed long>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(signed long val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<unsigned long>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned long val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<unsigned long>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned long val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<signed long long>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(signed long long val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<signed long long>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(signed long long val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<unsigned long long>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned long long val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<unsigned long long>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(unsigned long long val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<float>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(float val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<float>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(float val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<double>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(double val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<double>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(double val) const { return static_cast<std::size_t>(val); } };
 
-	template <> struct SAFE_MEMORY_DEEP_CONST hash<long double>
-		{ SAFE_MEMORY_NO_SIDE_EFFECT std::size_t operator()(long double val) const { return static_cast<std::size_t>(val); } };
+	template <> struct SAFEMEMORY_DEEP_CONST hash<long double>
+		{ SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(long double val) const { return static_cast<std::size_t>(val); } };
 
 } //namespace safememory
 
-#endif //SAFE_MEMORY_FUNCTIONAL_H
+#endif //SAFEMEMORY_FUNCTIONAL_H

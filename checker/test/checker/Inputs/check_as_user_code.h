@@ -28,26 +28,26 @@
 #ifndef CHECK_AT_INSTANTIATION_H
 #define CHECK_AT_INSTANTIATION_H
 
-namespace safe_memory {
+namespace safememory {
 
 template<class T>
 class BadEqualTo {
 public:
     //in this case bad implementation won't report error, good implementation will.
-    [[safe_memory::no_side_effect]] bool operator()(const T& l, const T& r) const {
+    [[safememory::no_side_effect]] bool operator()(const T& l, const T& r) const {
         return l == r;
     }
 };
 
 }
 
-namespace [[safe_memory::check_as_user_code]] safe_memory {
+namespace [[safememory::check_as_user_code]] safe_memory {
 
 template<class T>
 class GoodEqualTo {
 public:
     //for this error we must trigger the actual instantiation of this method
-    [[safe_memory::no_side_effect]] bool operator()(const T& l, const T& r) const {
+    [[safememory::no_side_effect]] bool operator()(const T& l, const T& r) const {
         return l == r;
     }
 };

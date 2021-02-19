@@ -2,24 +2,24 @@
 
 #include <safe_memory/safe_ptr.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 void normalFunc();
 
-[[safe_memory::no_side_effect]]
+[[safememory::no_side_effect]]
 int func(int i, int j) {
     return i + j;   
 }
 
 int func2(int, int);
 
-[[safe_memory::no_side_effect]]
+[[safememory::no_side_effect]]
 int func2(int i, int j) {
 // CHECK: :[[@LINE-1]]:5: error: (C3)
     return i + j;   
 }
 
-[[safe_memory::no_side_effect]]
+[[safememory::no_side_effect]]
 int func3();
 
 int func3() {}
@@ -32,7 +32,7 @@ struct Other {
 };
 
 
-[[safe_memory::no_side_effect]]
+[[safememory::no_side_effect]]
 void badFunc() {
     func(1, 2);//ok
     normalFunc();//bad
@@ -44,7 +44,7 @@ void badFunc() {
 }
 
 class SomeClass {
-    [[safe_memory::no_side_effect]]
+    [[safememory::no_side_effect]]
     void badMethod() {
         func(1, 2);//ok
         normalFunc();//bad
@@ -66,7 +66,7 @@ template<class T>
 class EqualTo {
 public:
     //for this error we must trigger the actual instantiation of this method
-	[[safe_memory::no_side_effect]] bool operator()(const T& l, const T& r) const {
+	[[safememory::no_side_effect]] bool operator()(const T& l, const T& r) const {
 		return l == r;
 // CHECK: :[[@LINE-1]]:12: error: function with no_side_effect attribute can call only other no side effect functions
 	}

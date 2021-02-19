@@ -31,15 +31,11 @@ void NewExprCheck::registerMatchers(MatchFinder *Finder) {
       cxxDeleteExpr().bind("delete"), this);
 
   Finder->addMatcher(
-      callExpr(callee(functionDecl(hasName("nodecpp::safememory::make_owning"))))
+      callExpr(callee(functionDecl(hasName("safememory::make_owning"))))
           .bind("make"),
       this);
   Finder->addMatcher(
-      callExpr(callee(functionDecl(hasName("safe_memory::make_owning"))))
-          .bind("make"),
-      this);
-  Finder->addMatcher(
-      callExpr(callee(functionDecl(hasName("safe_memory::make_owning2"))))
+      callExpr(callee(functionDecl(hasName("safememory::make_owning_2"))))
           .bind("make"),
       this);
 }

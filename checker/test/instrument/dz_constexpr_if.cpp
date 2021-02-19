@@ -9,10 +9,10 @@ template <class T, int I>
 T& templConstexprIf(T& t1, T& t2) {
     if constexpr (I == 0)
        return t1;
-// CHECK-FIXES: return safe_memory::dezombiefy( t1 );
+// CHECK-FIXES: return safememory::detail::dezombiefy( t1 );
     else
        return t2;
-// CHECK-FIXES: return safe_memory::dezombiefy( t2 );
+// CHECK-FIXES: return safememory::detail::dezombiefy( t2 );
 }
 
 

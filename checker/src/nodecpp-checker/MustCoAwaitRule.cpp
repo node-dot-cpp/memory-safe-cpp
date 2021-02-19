@@ -246,10 +246,7 @@ public:
       // diag(E->getExprLoc(), "(S9) awaitable call"); 
       // E->dumpColor();
       Decl *D = E->getCalleeDecl();
-      if(D && D->hasAttr<NodeCppNoAwaitAttr>()) {
-        return Super::VisitCallExpr(E);
-      }
-      else if(D && D->hasAttr<SafeMemoryNoAwaitAttr>()) {
+      if(D && D->hasAttr<SafeMemoryNoAwaitAttr>()) {
         return Super::VisitCallExpr(E);
       }
       else if(!CallWhiteList.erase(E)) {

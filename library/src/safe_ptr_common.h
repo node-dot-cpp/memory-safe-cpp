@@ -33,7 +33,7 @@
 #include <log.h>
 #include <memory>
 #include <stdint.h>
-#include <safememory/checker_attributes.h>
+#include <safememory/detail/checker_attributes.h>
 #include <allocator_template.h>
 
 #if defined NODECPP_MSVC
@@ -79,10 +79,10 @@ NODECPP_FORCEINLINE void* zombieAllocateAligned() { return g_AllocManager.zombie
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { g_AllocManager.zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return g_AllocManager.isZombieablePointerInBlock( allocatedPtr, ptr ); }
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) { return g_AllocManager.isPointerNotZombie( ptr ); }
+NODECPP_FORCEINLINE bool isPointerNotZombie(const void* ptr ) { return g_AllocManager.isPointerNotZombie( const_cast<void*>(ptr) ); }
 inline bool doZombieEarlyDetection( bool doIt = true ) { return g_AllocManager.doZombieEarlyDetection( doIt ); }
 #else
-constexpr bool isPointerNotZombie(void* ptr ) { return true; }
+constexpr bool isPointerNotZombie(const void* ptr ) { return true; }
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
 inline void killAllZombies() { g_AllocManager.killAllZombies(); }
@@ -168,10 +168,10 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) {
 }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { return ptr >= allocatedPtr && reinterpret_cast<uint8_t*>(allocatedPtr) + *(reinterpret_cast<uint64_t*>(allocatedPtr) - 2) > reinterpret_cast<uint8_t*>(ptr); }
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) { 
-	auto iter = zombieMap.lower_bound( reinterpret_cast<uint8_t*>( ptr ) );
+NODECPP_FORCEINLINE bool isPointerNotZombie(const void* ptr ) { 
+	auto iter = zombieMap.lower_bound( reinterpret_cast<uint8_t*>( const_cast<void*>(ptr) ) );
 	if ( iter != zombieMap.end() )
-		return reinterpret_cast<uint8_t*>( ptr ) >= iter->first + iter->second;
+		return reinterpret_cast<uint8_t*>( const_cast<void*>(ptr) ) >= iter->first + iter->second;
 	else
 		return true;
 }
@@ -183,7 +183,7 @@ inline bool doZombieEarlyDetection( bool doIt = true )
 	return ret;
 }
 #else
-constexpr bool isPointerNotZombie(void* ptr ) { return true; }
+constexpr bool isPointerNotZombie(const void* ptr ) { return true; }
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }

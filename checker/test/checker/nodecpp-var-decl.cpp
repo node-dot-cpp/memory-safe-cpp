@@ -2,7 +2,7 @@
 
 #include <safe_memory/safe_ptr.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 
 struct Safe1 {
@@ -29,7 +29,7 @@ void safeFun() {
 }
 
 
-struct [[safe_memory::naked_struct]] NakedStr {
+struct [[safememory::naked_struct]] NakedStr {
 	nullable_ptr<int> ptr;
 
 	nullable_ptr<int> get() const;

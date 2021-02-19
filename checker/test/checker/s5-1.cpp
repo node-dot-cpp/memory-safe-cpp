@@ -2,13 +2,13 @@
 
 #include <safe_memory/safe_ptr.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 struct Safe {
 	int i = 0;
 };
 
-struct [[safe_memory::naked_struct]] NakedStr {
+struct [[safememory::naked_struct]] NakedStr {
 	nullable_ptr<Safe> s1;
 	nullable_ptr<Safe> s2;
 

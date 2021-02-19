@@ -37,7 +37,7 @@ namespace safememory
 {
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS basic_string : protected eastl::basic_string<T, detail::allocator_to_eastl_string<Safety>>
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS basic_string : protected eastl::basic_string<T, detail::allocator_to_eastl_string<Safety>>
 	{
 	public:
 		typedef basic_string<T, Safety>                         this_type;
@@ -818,20 +818,20 @@ namespace safememory
 
 
 	template<typename T>
-	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type>
+	struct SAFEMEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type>
 	{
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type> base_type;
-		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
+		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
 		{
 			return base_type::operator()(x.toBase());
 		}
 	};
 
 	template<typename T>
-	struct SAFE_MEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type>
+	struct SAFEMEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type>
 	{
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type> base_type;
-		SAFE_MEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
+		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
 		{
 			return base_type::operator()(x.toBase());
 		}
@@ -839,7 +839,7 @@ namespace safememory
 
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS basic_string_safe : public basic_string<T, Safety>
+	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS basic_string_safe : public basic_string<T, Safety>
 	{
 	public:
 		typedef basic_string_safe<T, Safety>                    this_type;

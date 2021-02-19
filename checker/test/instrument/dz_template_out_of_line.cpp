@@ -25,7 +25,7 @@ public:
 template<class T>
 T TemplateClass<T>::method(T t) {
     return t;
-// CHECK-FIXES: return safe_memory::dezombiefy( t );
+// CHECK-FIXES: return safememory::detail::dezombiefy( t );
 }
 
 int main() {

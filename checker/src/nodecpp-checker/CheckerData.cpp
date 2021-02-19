@@ -69,11 +69,6 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
     return true;
   }
 
-  if(D->hasAttr<NodeCppNoSideEffectAttr>()) {
-    NoSideEffectFuncs.insert(D);
-    return true;
-  }
-
   if(D->hasAttr<SafeMemoryNoSideEffectAttr>()) {
     NoSideEffectFuncs.insert(D);
     return true;
@@ -81,11 +76,6 @@ bool CheckerData::isNoSideEffect(const clang::FunctionDecl *D) {
 
   auto M = dyn_cast<CXXMethodDecl>(D);
   if(M) {
-    if(M->isConst() &&
-        M->getParent()->hasAttr<NodeCppNoSideEffectWhenConstAttr>()) {
-      NoSideEffectFuncs.insert(D);
-      return true;
-    }
     if(M->isConst() &&
         M->getParent()->hasAttr<SafeMemoryNoSideEffectWhenConstAttr>()) {
       NoSideEffectFuncs.insert(D);

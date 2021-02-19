@@ -2,7 +2,7 @@
 
 #include <safe_memory/safe_ptr.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 void soft_func(soft_ptr<int> sp) {
 

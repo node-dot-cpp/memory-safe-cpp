@@ -29,14 +29,14 @@
 #define SAFE_MEMORY_STRING_LITERAL_H
 
 #include <safememory/memory_safety.h>
-#include <safememory/checker_attributes.h>
+#include <safememory/detail/checker_attributes.h>
 #include <safememory/detail/array_of.h>
 #include <EASTL/internal/char_traits.h>
 
 namespace safememory
 {
 	template<typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
-	class SAFE_MEMORY_DEEP_CONST SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string_literal
+	class SAFEMEMORY_DEEP_CONST SAFEMEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string_literal
 	{
 	public:
 		typedef basic_string_literal<T, Safety>                           this_type;

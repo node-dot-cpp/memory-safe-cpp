@@ -34,10 +34,10 @@
 
 #define NODECPP_ASSERT(...)
 
-namespace safe_memory
+namespace safememory
 {
 	constexpr uint64_t module_id = 2;
-} // namespace safe_memory
+} // namespace safememory
 
 
 #if defined NODECPP_MSVC
@@ -50,7 +50,7 @@ namespace safe_memory
 
 
 
-namespace safe_memory
+namespace safememory
 {
 #ifdef NODECPP_GCC
 extern void forcePreviousChangesToThisInDtor( void* p );
@@ -88,6 +88,6 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 
 
-} // namespace safe_memory
+} // namespace safememory
 
 #endif // SAFE_PTR_COMMON_H

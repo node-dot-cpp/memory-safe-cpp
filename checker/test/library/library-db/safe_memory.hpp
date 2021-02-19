@@ -66,7 +66,7 @@ namespace nodecpp {
 	}
 }
 
-namespace safe_memory {
+namespace safememory {
 
 	struct fake { int i = 0;};
 	

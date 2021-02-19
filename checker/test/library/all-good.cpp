@@ -4,7 +4,7 @@
 
 /* This file should not generate any warning */
 
-using namespace safe_memory;
+using namespace safememory;
 
 class X { };
 

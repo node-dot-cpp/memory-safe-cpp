@@ -252,7 +252,7 @@ int main(int argc, const char **argv) {
 
     ClangTool Tool(optionsParser.getCompilations(), optionsParser.getSourcePathList());
 
-    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DSAFE_MEMORY_CHECKER_EXTENSIONS",
+    Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-DSAFEMEMORY_CHECKER_EXTENSIONS",
             ArgumentInsertPosition::BEGIN));
     Tool.appendArgumentsAdjuster(getInsertArgumentAdjuster("-fsyntax-only",
             ArgumentInsertPosition::BEGIN));

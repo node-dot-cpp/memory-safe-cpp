@@ -4,7 +4,7 @@
 #include <safe_memory/dezombiefy.h>
 #include <safe_types.h>
 
-using namespace safe_memory;
+using namespace safememory;
 
 struct UnsafeType {
 

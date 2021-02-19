@@ -25,41 +25,29 @@ DiagHelper NullDiagHelper;
 
 bool isOwningPtrName(const std::string &Name) {
   // mb: 'base' ones are needed for methods at isSystemSafeFunction
-  return Name == "nodecpp::safememory::owning_ptr" ||
-          Name == "nodecpp::safememory::owning_ptr_impl" ||
-          Name == "nodecpp::safememory::owning_ptr_no_checks" ||
-          Name == "nodecpp::safememory::owning_ptr_base_impl" ||
-          Name == "nodecpp::safememory::owning_ptr_base_no_checks" ||
-          Name == "safe_memory::owning_ptr" ||
-          Name == "safe_memory::owning_ptr_impl" ||
-          Name == "safe_memory::owning_ptr_no_checks" ||
-          Name == "safe_memory::owning_ptr_base_impl" ||
-          Name == "safe_memory::owning_ptr_base_no_checks";
+  return Name == "safememory::owning_ptr" ||
+          Name == "safememory::detail::owning_ptr_impl" ||
+          Name == "safememory::detail::owning_ptr_no_checks" ||
+          Name == "safememory::detail::owning_ptr_base_impl" ||
+          Name == "safememory::detail::owning_ptr_base_no_checks";
 }
 
 bool isSafePtrName(const std::string &Name) {
   // mb: 'base' ones are needed for methods at isSystemSafeFunction
   return isOwningPtrName(Name) ||
-    Name == "nodecpp::safememory::soft_ptr" ||
-    Name == "nodecpp::safememory::soft_ptr_impl" ||
-    Name == "nodecpp::safememory::soft_ptr_no_checks" ||
-    Name == "nodecpp::safememory::soft_ptr_base_impl" ||
-    Name == "nodecpp::safememory::soft_ptr_base_no_checks" ||
-    Name == "nodecpp::safememory::soft_this_ptr" ||
-    Name == "nodecpp::safememory::soft_this_ptr_impl" ||
-    Name == "nodecpp::safememory::soft_this_ptr_no_checks" ||
-    Name == "nodecpp::safememory::soft_this_ptr_base_impl" ||
-    Name == "nodecpp::safememory::soft_this_ptr_base_no_checks" ||
-    Name == "safe_memory::soft_ptr" ||
-    Name == "safe_memory::soft_ptr_impl" ||
-    Name == "safe_memory::soft_ptr_no_checks" ||
-    Name == "safe_memory::soft_ptr_base_impl" ||
-    Name == "safe_memory::soft_ptr_base_no_checks" ||
-    Name == "safe_memory::soft_this_ptr" ||
-    Name == "safe_memory::soft_this_ptr_impl" ||
-    Name == "safe_memory::soft_this_ptr_no_checks" ||
-    Name == "safe_memory::soft_this_ptr_base_impl" ||
-    Name == "safe_memory::soft_this_ptr_base_no_checks";
+    Name == "safememory::soft_ptr" ||
+    Name == "safememory::detail::soft_ptr_impl" ||
+    Name == "safememory::detail::soft_ptr_no_checks" ||
+    Name == "safememory::detail::soft_ptr_base_impl" ||
+    Name == "safememory::detail::soft_ptr_base_no_checks" ||
+    Name == "safememory::soft_this_ptr" ||
+    Name == "safememory::detail::soft_this_ptr_impl" ||
+    Name == "safememory::detail::soft_this_ptr_no_checks" ||
+    Name == "safememory::detail::soft_this_ptr_base_impl" ||
+    Name == "safememory::detail::soft_this_ptr_base_no_checks" ||
+    Name == "safememory::soft_this_ptr2" ||
+    Name == "safememory::detail::soft_this_ptr2_impl" ||
+    Name == "safememory::detail::soft_this_ptr2_no_checks";
 }
 
 bool isAwaitableName(const std::string &Name) {
@@ -70,25 +58,17 @@ bool isAwaitableName(const std::string &Name) {
 bool isNakedPtrName(const std::string &Name) {
   // mb: 'base' ones are needed for methods at isSystemSafeFunction
   // TODO remove naked_ptr
-  return Name == "nodecpp::safememory::naked_ptr_impl" ||
-         Name == "nodecpp::safememory::naked_ptr_no_checks" ||
-         Name == "nodecpp::safememory::nullable_ptr" ||
-         Name == "nodecpp::safememory::nullable_ptr_impl" ||
-         Name == "nodecpp::safememory::nullable_ptr_no_checks" ||
-         Name == "nodecpp::safememory::nullable_ptr_base_impl" ||
-         Name == "nodecpp::safememory::nullable_ptr_base_no_checks" ||
-         Name == "safe_memory::nullable_ptr" ||
-         Name == "safe_memory::nullable_ptr_impl" ||
-         Name == "safe_memory::nullable_ptr_no_checks" ||
-         Name == "safe_memory::nullable_ptr_base_impl" ||
-         Name == "safe_memory::nullable_ptr_base_no_checks";
+  return Name == "safememory::nullable_ptr" ||
+         Name == "safememory::detail::nullable_ptr_impl" ||
+         Name == "safememory::detail::nullable_ptr_no_checks" ||
+         Name == "safememory::detail::nullable_ptr_base_impl" ||
+         Name == "safememory::detail::nullable_ptr_base_no_checks";
 }
 
 bool isSoftPtrCastName(const std::string& Name) {
-  return Name == "nodecpp::safememory::soft_ptr_static_cast" ||
-          Name == "nodecpp::safememory::soft_ptr_reinterpret_cast" ||
-          Name == "safe_memory::soft_ptr_static_cast" ||
-          Name == "safe_memory::soft_ptr_reinterpret_cast";
+  return Name == "safememory::soft_ptr_static_cast" ||
+          Name == "safememory::soft_ptr_reinterpret_cast" ||
+          Name == "safememory::nullable_cast";
 }
 
 bool isWaitForAllName(const std::string& Name) {
@@ -257,7 +237,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
     return false;
 
   //we check explicit and implicit here
-  bool HasAttr = Dc->hasAttr<NodeCppNakedStructAttr>() || Dc->hasAttr<SafeMemoryNakedStructAttr>();
+  bool HasAttr = Dc->hasAttr<SafeMemoryNakedStructAttr>();
 
   // bool checkInits = false;
   // std::list<const FieldDecl*> missingInitializers;
@@ -354,8 +334,6 @@ KindCheck isNakedStructType(QualType Qt, const ClangTidyContext *Context,
   const CXXRecordDecl *Dc = Qt->getAsCXXRecordDecl();
 
   Dc = getRecordWithDefinition(Dc);
-  if (Dc && Dc->hasAttr<NodeCppNakedStructAttr>())
-    return KindCheck(true, checkNakedStructRecord(Dc, Context));
   if (Dc && Dc->hasAttr<SafeMemoryNakedStructAttr>())
     return KindCheck(true, checkNakedStructRecord(Dc, Context));
 
@@ -422,7 +400,7 @@ bool isStringLiteralType(QualType Qt) {
     return false;
 
   auto Name = getQnameForSystemSafeDb(R);
-  return Name == "nodecpp::string_literal" || Name == "safe_memory::basic_string_literal";
+  return Name == "nodecpp::string_literal" || Name == "safememory::basic_string_literal";
 }
 
 
@@ -639,7 +617,7 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safe_memory::vector") {
+  if (Name == "safememory::vector" || Name == "safememory::vector_safe") {
     return KindCheck(true, templateArgIsSafe(Qt, 0, Context, Dh));
   }
 
@@ -656,9 +634,8 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (Name == "safe_memory::detail::hash_map" 
-    || Name == "safe_memory::unordered_map"
-    || Name == "safe_memory::unordered_multimap") {
+  if (Name == "safememory::unordered_map" || Name == "safememory::unordered_map_safe" ||
+    Name == "safememory::unordered_multimap" || Name == "safememory::unordered_multimap_safe") {
     // mb: hashmap Key,Hash, and Equal must be deep_const
     // value only needs to be safe
 
@@ -750,7 +727,7 @@ bool isAwaitableType(QualType Qt) {
   if(isAwaitableName(Name))
     return true;
   else
-    return Dc->hasAttr<NodeCppAwaitableAttr>() || Dc->hasAttr<SafeMemoryAwaitableAttr>();
+    return Dc->hasAttr<SafeMemoryAwaitableAttr>();
 }
 
 bool isNodecppErrorType(QualType Qt) {
@@ -999,8 +976,8 @@ KindCheck TypeChecker::isDeepConstRecord(const CXXRecordDecl *Dc) {
   }
 
   SystemLocRiia riia(*this, sysLoc);
-  bool attr = Dc->hasAttr<NodeCppDeepConstAttr>() || Dc->hasAttr<SafeMemoryDeepConstAttr>();
-  bool attrWhenParams = Dc->hasAttr<NodeCppDeepConstWhenParamsAttr>() || Dc->hasAttr<SafeMemoryDeepConstWhenParamsAttr>();
+  bool attr = Dc->hasAttr<SafeMemoryDeepConstAttr>();
+  bool attrWhenParams = Dc->hasAttr<SafeMemoryDeepConstWhenParamsAttr>();
 
   if(isSystemLoc) {
     if(attr)
@@ -1539,14 +1516,14 @@ bool NakedPtrScopeChecker::checkDeclRefExpr(const DeclRefExpr *DeclRef) {
     case Param:
       return true;
     case This:
-      return ParamVar->hasAttr<NodeCppMayExtendAttr>() || ParamVar->hasAttr<SafeMemoryMayExtendAttr>();
+      return ParamVar->hasAttr<SafeMemoryMayExtendAttr>();
     default:
       assert(false);
     }
   } else if (auto Var = dyn_cast<VarDecl>(FromDecl)) {
     if (Var->hasGlobalStorage())
       return true;
-    else if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>()) {
+    else if (Var->hasAttr<SafeMemoryMayExtendAttr>()) {
       return true;
     } else {
       if (OutScope == Stack) {
@@ -1734,7 +1711,7 @@ NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
 
     if (auto ParmVar = dyn_cast<ParmVarDecl>(Dc)) {
 
-      if (ParmVar->hasAttr<NodeCppMayExtendAttr>() || ParmVar->hasAttr<SafeMemoryMayExtendAttr>())
+      if (ParmVar->hasAttr<SafeMemoryMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Param, nullptr);
@@ -1746,7 +1723,7 @@ NakedPtrScopeChecker::calculateScope(const Expr *Ex) {
     } else if (auto Var = dyn_cast<VarDecl>(Dc)) {
       if (Var->hasGlobalStorage()) // globals can't be changed
         return std::make_pair(Unknown, nullptr);
-      else if (Var->hasAttr<NodeCppMayExtendAttr>() || Var->hasAttr<SafeMemoryMayExtendAttr>())
+      else if (Var->hasAttr<SafeMemoryMayExtendAttr>())
         return std::make_pair(This, nullptr);
       else
         return std::make_pair(Stack, Dc);
