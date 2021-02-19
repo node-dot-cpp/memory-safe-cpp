@@ -468,7 +468,7 @@ index e304fbbe..c961659d 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index ee06f8ae..7341a854 100644
+index ee06f8ae..3bea8c10 100644
 --- a/lib/Sema/SemaDeclAttr.cpp
 +++ b/lib/Sema/SemaDeclAttr.cpp
 @@ -6616,11 +6616,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -494,68 +494,38 @@ index ee06f8ae..7341a854 100644
      return;
    }
  
-@@ -7340,6 +7346,70 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+@@ -7340,6 +7346,40 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
  
    case ParsedAttr::AT_MSAllocator:
      handleMSAllocatorAttr(S, D, AL);
 +	break;
 +
-+  case ParsedAttr::AT_NodeCppNakedStruct:
-+    handleSimpleAttribute<NodeCppNakedStructAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_SafeMemoryNakedStruct:
 +    handleSimpleAttribute<SafeMemoryNakedStructAttr>(S, D, AL);
-+    break;
-+  case ParsedAttr::AT_NodeCppMayExtend:
-+    handleSimpleAttribute<NodeCppMayExtendAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_SafeMemoryMayExtend:
 +    handleSimpleAttribute<SafeMemoryMayExtendAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppNoAwait:
-+    handleSimpleAttribute<NodeCppNoAwaitAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_SafeMemoryNoAwait:
 +    handleSimpleAttribute<SafeMemoryNoAwaitAttr>(S, D, AL);
-+    break;
-+  case ParsedAttr::AT_NodeCppMemoryUnsafe:
-+    handleSimpleAttribute<NodeCppMemoryUnsafeAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_SafeMemoryMemoryUnsafe:
 +    handleSimpleAttribute<SafeMemoryMemoryUnsafeAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppNonDeterministic:
-+    handleSimpleAttribute<NodeCppNonDeterministicAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_SafeMemoryNonDeterministic:
 +    handleSimpleAttribute<SafeMemoryNonDeterministicAttr>(S, D, AL);
-+    break;
-+  case ParsedAttr::AT_NodeCppNoSideEffect:
-+    handleSimpleAttribute<NodeCppNoSideEffectAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_SafeMemoryNoSideEffect:
 +    handleSimpleAttribute<SafeMemoryNoSideEffectAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppNoSideEffectWhenConst:
-+    handleSimpleAttribute<NodeCppNoSideEffectWhenConstAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_SafeMemoryNoSideEffectWhenConst:
 +    handleSimpleAttribute<SafeMemoryNoSideEffectWhenConstAttr>(S, D, AL);
-+    break;
-+  case ParsedAttr::AT_NodeCppDeepConst:
-+    handleSimpleAttribute<NodeCppDeepConstAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_SafeMemoryDeepConst:
 +    handleSimpleAttribute<SafeMemoryDeepConstAttr>(S, D, AL);
 +    break;
-+  case ParsedAttr::AT_NodeCppDeepConstWhenParams:
-+    handleSimpleAttribute<NodeCppDeepConstWhenParamsAttr>(S, D, AL);
-+    break;
 +  case ParsedAttr::AT_SafeMemoryDeepConstWhenParams:
 +    handleSimpleAttribute<SafeMemoryDeepConstWhenParamsAttr>(S, D, AL);
-+    break;
-+  case ParsedAttr::AT_NodeCppAwaitable:
-+    handleSimpleAttribute<NodeCppAwaitableAttr>(S, D, AL);
 +    break;
 +  case ParsedAttr::AT_SafeMemoryAwaitable:
 +    handleSimpleAttribute<SafeMemoryAwaitableAttr>(S, D, AL);
