@@ -37,7 +37,7 @@
 namespace safememory
 {
 	constexpr uint64_t module_id = 2;
-} // namespace safememory
+}
 
 
 #if defined NODECPP_MSVC
@@ -50,7 +50,7 @@ namespace safememory
 
 
 
-namespace safememory
+namespace safememory::detail
 {
 #ifdef NODECPP_GCC
 extern void forcePreviousChangesToThisInDtor( void* p );
@@ -65,27 +65,31 @@ void destruct( T* t )
 
 struct make_owning_t {};
 
+template<class T, bool isSafe> class owning_ptr_impl; // forward declaration
+template<class T, bool isSafe> class soft_ptr_base_impl; // forward declaration
+template<class T> class soft_ptr_base_no_checks; // forward declaration
+template<class T> class soft_ptr_no_checks; // forward declaration
+
+} //namespace safememory::detail
+
+namespace safememory {
+
 template<class T>
 struct safeness_declarator {
 	static constexpr bool is_safe = true; // by default
 };
 
 /* Sample of user-defined exclusion:
-template<> struct safe_memory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
 */
 
-// sample code (to be removed)
-template<> struct safe_memory::safeness_declarator<double> { static constexpr bool is_safe = false; };
-namespace testing::dummy_objects {
-struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
-}
-template<> struct safe_memory::safeness_declarator<safe_memory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
-// end of sample code (to be removed)
-
-template<class T, bool isSafe> class owning_ptr_impl; // forward declaration
-template<class T, bool isSafe> class soft_ptr_base_impl; // forward declaration
-template<class T> class soft_ptr_base_no_checks; // forward declaration
-template<class T> class soft_ptr_no_checks; // forward declaration
+// // sample code (to be removed)
+// template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+// namespace testing::dummy_objects {
+// struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
+// }
+// template<> struct safememory::safeness_declarator<safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
+// // end of sample code (to be removed)
 
 
 } // namespace safememory

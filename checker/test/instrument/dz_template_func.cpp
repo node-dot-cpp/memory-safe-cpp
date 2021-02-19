@@ -1,6 +1,6 @@
 // RUN: %check_nodecpp_instrument %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs
 
-#include <safememory/detail/dezombiefy.h>
+
 
 struct TestObj {};
 

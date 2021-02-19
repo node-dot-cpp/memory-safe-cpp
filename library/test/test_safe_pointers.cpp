@@ -36,7 +36,7 @@
 #include "../3rdparty/lest/include/lest/lest.hpp"
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
-#include <safememory/detail/dezombiefy.h>
+#include <safememory/detail/instrument.h>
 
 //template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct safememory::safeness_declarator<safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion

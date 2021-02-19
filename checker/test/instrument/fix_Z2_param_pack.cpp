@@ -2,7 +2,7 @@
 // XFAIL: *
 
 #include <utility>
-#include <safememory/detail/dezombiefy.h>
+
 
 
 struct TestObj {};
