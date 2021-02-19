@@ -25,8 +25,8 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H
-#define SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H
+#ifndef SAFE_MEMORY_DETAIL_DEZOMBIEFY_H
+#define SAFE_MEMORY_DETAIL_DEZOMBIEFY_H
 
 #include <safememory/safe_ptr.h>
 #include <safe_memory_error.h>
@@ -152,4 +152,4 @@ auto dz_or(T1&& t1, T2&& t2) {
 } // namespace safememory::detail
 
 
-#endif // SAFE_MEMORY_DETAIL_CHECKER_INSTRUMENT_H
+#endif // SAFE_MEMORY_DETAIL_DEZOMBIEFY_H

@@ -631,7 +631,7 @@ void RewriteUserIncludesInInput(Preprocessor &PP, raw_ostream *OS,
   Rewrite->Process(PP.getPredefinesFileID(), SrcMgr::C_User, nullptr);
 
   // always include <dezombiefy.h> here, just in case. TODO improve
-  (*OS) << "#include <safememory/detail/checker_instrument.h>\n";
+  (*OS) << "#include <safememory/detail/dezombiefy.h>\n";
 
   Rewrite->Process(SM.getMainFileID(), SrcMgr::C_User, nullptr);
   OS->flush();
