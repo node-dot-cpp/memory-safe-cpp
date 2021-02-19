@@ -85,20 +85,29 @@ namespace safememory {
 	class basic_string_literal
 	{
 	public:
-		basic_string_literal( const char* str_)  {}
-		basic_string_literal( const basic_string_literal& other ) = default;
-		basic_string_literal& operator = ( const basic_string_literal& other ) = default;
-		basic_string_literal( basic_string_literal&& other ) = default;
-		basic_string_literal& operator = ( basic_string_literal&& other ) = default;
+		typedef basic_string_literal this_type;
 
-		bool operator == ( const basic_string_literal& other ) const;
-		bool operator != ( const basic_string_literal& other ) const;
+		this_type& operator=(const this_type& other);
 
-//		bool operator == ( const char* other ) const { return strcmp( str, other.str ) == 0; }
-//		bool operator != ( const char* other ) const { return strcmp( str, other.str ) != 0; }
+		void begin();
+		void cbegin();
+		void end();
+		void cend();
+		void rbegin();
+		void crbegin();
+		void rend();
+		void crend();
 
-		const char* c_str() const;
+		void empty();
+		void size();
+		// void c_str();
+		// void data();
+		void operator[](int);
+		void at();
+		void front();
+		void back();
 	};
+
 
 	class basic_string {
 	public:
@@ -559,192 +568,71 @@ namespace safememory {
 
 
 
-namespace detail {
+	namespace detail {
 
-	struct node_const_iterator
-	{
-	public:
-		typedef node_const_iterator this_type;
-		typedef int* pointer;
-		typedef int& reference;
-		node_const_iterator() { }
+		class hashtable_heap_safe_iterator {
+		public:
+			typedef hashtable_heap_safe_iterator this_type;
 
-		node_const_iterator(const node_const_iterator&) = default;
-		node_const_iterator& operator=(const node_const_iterator&) = default;
-		node_const_iterator(node_const_iterator&&) = default;
-		node_const_iterator& operator=(node_const_iterator&&) = default;
+			this_type& operator=(const this_type&);
 
-		reference operator*() const;
-		pointer operator->() const;
-		node_const_iterator& operator++();
-		node_const_iterator operator++(int);
-		bool operator==(const node_const_iterator& other) const;
-		bool operator!=(const node_const_iterator& other) const;
-	};
+			int& operator*() const;
+			int* operator->() const;
 
-	struct node_iterator 
-	{
-	public:
-		typedef node_iterator  this_type;
-		typedef int* pointer;
-		typedef int& reference;
+			this_type& operator++();
 
-		reference operator*() const;
-		pointer operator->() const;
-		this_type& operator++();
-		bool operator==(const node_iterator&);
-		bool operator!=(const node_iterator&);
-	}; // node_iterator
+			bool operator==(const this_type& other) const;
+			bool operator!=(const this_type& other) const;
+		}; // hashtable_heap_safe_iterator
+
+		class hashtable_stack_only_iterator
+		{
+		public:
+			typedef hashtable_stack_only_iterator this_type;
+
+			this_type& operator=(const this_type& ri);
+
+			int& operator*() const;
+			int* operator->() const;
+
+			this_type& operator++();
+
+			bool operator==(const this_type& other) const;
+			bool operator!=(const this_type& other) const;
+		}; // hashtable_stack_only_iterator
 
 
-	struct hashtable_const_iterator
-	{
-		typedef hashtable_const_iterator  this_type;
-		typedef int* pointer;
-		typedef int& reference;
+		class array_of_iterator
+		{
+		public:
+			typedef array_of_iterator this_type;
+			this_type& operator=(const this_type& ri);
 
-		hashtable_const_iterator() { }
+			int& operator*() const;
+			int* operator->() const;
 
-		hashtable_const_iterator(const hashtable_const_iterator& x) = default;
-		hashtable_const_iterator& operator=(const hashtable_const_iterator& x) = default;
-		hashtable_const_iterator(hashtable_const_iterator&&) = default;
-		hashtable_const_iterator& operator=(hashtable_const_iterator&&) = default;
-	public:
-		reference operator*() const;
-		pointer operator->() const;
-		this_type& operator++();
-		this_type operator++(int);
-		bool operator==(const this_type& other) const;
-		bool operator!=(const this_type& other) const;
-		
-	}; // hashtable_const_iterator
+			this_type& operator++() noexcept;
+			this_type& operator--() noexcept;
 
+			this_type operator+(int) const noexcept;
+			this_type operator-(int) const noexcept;
 
-	struct hashtable_iterator
-	{
-	public:
-		typedef hashtable_iterator this_type;
-		typedef int* pointer;
-		typedef int& reference;
+			this_type& operator+=(int) noexcept;
+			this_type& operator-=(int) noexcept;
 
-	public:
-		hashtable_iterator& operator=(const hashtable_iterator& x);
-		reference operator*() const;
-		pointer operator->() const;
-		hashtable_iterator& operator++();
-		bool operator==(const hashtable_iterator&);
-		bool operator!=(const hashtable_iterator&);
-	}; // hashtable_iterator
+			constexpr int& operator[](int) const;
+			int operator-(const this_type& ri) const noexcept;
 
+			bool operator==(const this_type& ri) const noexcept;
+			bool operator!=(const this_type& ri) const noexcept;
+			bool operator<(const this_type& ri) const noexcept;
+			bool operator>(const this_type& ri) const noexcept;
+			bool operator<=(const this_type& ri) const noexcept;
+			bool operator>=(const this_type& ri) const noexcept;
+		};
 
-	class hash_map
-	{
-	public:
-		typedef hash_map this_type;
-		typedef int key_type;
-		typedef int& reference;
-		typedef int size_type;
-		typedef int local_iterator;
-		typedef int const_local_iterator;
-		typedef int iterator;
-		typedef int const_iterator;
-
-		this_type& operator=(const this_type& x);
-		void swap(this_type& x);
-
-		reference       operator[](size_type n);
-		reference       at(size_type n);
-
-		iterator begin() ;
-		const_iterator cbegin() const ;
-		iterator end() ;
-		const_iterator cend() const ;
-		local_iterator begin(size_type n) ;
-		const_local_iterator cbegin(size_type n) const ;
-		local_iterator end(size_type) ;
-		const_local_iterator cend(size_type) const ;
-		bool empty() const ;
-		size_type size() const ;
-		size_type bucket_count() const ;
-		size_type bucket_size(size_type n) const ;
-		float load_factor() const ;
-
-		void emplace();
-		void emplace_hint();
-		void try_emplace();
-		void insert();
-		void insert_or_assign();
-		iterator         erase(const_iterator position);
-		void clear();
-		void rehash(size_type nBucketCount);
-		void reserve(size_type nElementCount);
-
-		iterator       find(const key_type& key);
-		size_type count(const key_type& k) const ;
-
-		void equal_range();
-
-		// bool validate() const;
-	};
-
-
-
-	class safe_iterator_no_checks {
-public:
-	typedef int                 difference_type;
-	typedef int*   				pointer;
-	typedef int&	 				reference;
-
-	safe_iterator_no_checks& operator=(const safe_iterator_no_checks& ri);
-
-	reference operator*() const;
-
-	pointer operator->() const;
-	safe_iterator_no_checks& operator++();
-	safe_iterator_no_checks& operator--();
-	safe_iterator_no_checks operator+(difference_type n) const;
-	safe_iterator_no_checks& operator+=(difference_type n);
-	safe_iterator_no_checks operator-(difference_type n) const;
-	safe_iterator_no_checks& operator-=(difference_type n);
-	reference operator[](difference_type n) const;
-	bool operator==(const safe_iterator_no_checks& ri) const;
-	bool operator!=(const safe_iterator_no_checks& ri) const;
-	bool operator<(const safe_iterator_no_checks& ri) const;
-	bool operator>(const safe_iterator_no_checks& ri) const;
-	bool operator<=(const safe_iterator_no_checks& ri) const;
-	bool operator>=(const safe_iterator_no_checks& ri) const;
-
-	};
-
-	void distance(int, int);
-
-	class safe_iterator_impl {
-public:
-	typedef int                 difference_type;
-	typedef int*   				pointer;
-	typedef int&	 				reference;
-
-	safe_iterator_impl& operator=(const safe_iterator_impl& ri);
-
-	reference operator*() const;
-
-	pointer operator->() const;
-	safe_iterator_impl& operator++();
-	safe_iterator_impl& operator--();
-	safe_iterator_impl operator+(difference_type n) const;
-	safe_iterator_impl& operator+=(difference_type n);
-	safe_iterator_impl operator-(difference_type n) const;
-	safe_iterator_impl& operator-=(difference_type n);
-	reference operator[](difference_type n) const;
-	bool operator==(const safe_iterator_impl& ri) const;
-	bool operator!=(const safe_iterator_impl& ri) const;
-	bool operator<(const safe_iterator_impl& ri) const;
-	bool operator>(const safe_iterator_impl& ri) const;
-	bool operator<=(const safe_iterator_impl& ri) const;
-	bool operator>=(const safe_iterator_impl& ri) const;
-
-	};
-} //namespace detail
+		int distance(const array_of_iterator&, const array_of_iterator&);
+	} //namespace detail
 
 } //namespace safememory
 

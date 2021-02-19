@@ -16,8 +16,14 @@ namespace std {
 		void operator=(function&);
 	};
 
-	class fake {};
- 	void operator==(fake, fake);
+	struct fake { int i = 0;};
+	bool operator==(fake, fake);
+	bool operator!=(fake, fake);
+	bool operator<(fake, fake);
+	bool operator<=(fake, fake);
+	bool operator>(fake, fake);
+	bool operator>=(fake, fake);
+	void swap(fake, fake);
 
 	// apple gcc std lib uses namespace __1
 	namespace __1 {
@@ -27,22 +33,14 @@ namespace std {
 			void operator=(function&);
 		};
 
-        // containers below are not really safe, but we allow them until we
-        // we get our own safe containers library
-
-        class vector {
-            void size();
-            void operator[](int);
-        };
-
-        class basic_string {
-            void size();
-            void substr();
-
-        };
-
-        class fake {};
-        void operator==(fake, fake);
+		struct fake { int i = 0;};
+		bool operator==(fake, fake);
+		bool operator!=(fake, fake);
+		bool operator<(fake, fake);
+		bool operator<=(fake, fake);
+		bool operator>(fake, fake);
+		bool operator>=(fake, fake);
+		void swap(fake, fake);
 	}
 
 	namespace experimental {
@@ -62,19 +60,4 @@ namespace std {
 			void operator!=(void*, coroutine_handle);
 		}
 	}
-
-	// containers below are not really safe, but we allow them until we
-	// we get our own safe containers library
-
-	class vector {
-		void size();
-		void operator[](int);
-	};
-
-	class basic_string {
-		void size();
-		void substr();
-
-	};
-
 }
