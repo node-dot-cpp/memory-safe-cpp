@@ -15,7 +15,7 @@ struct DeepConst;
 
 
 struct [[safememory::deep_const]] BadDeepConst {
-// CHECK: :[[@LINE-1]]:36: error: unsafe deep_const attribute at declaration [deep-const]
+// CHECK: :[[@LINE-1]]:35: error: unsafe deep_const attribute at declaration [deep-const]
     owning_ptr<long> ptr;
 };
 
