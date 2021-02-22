@@ -3,13 +3,13 @@ set( LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_executable(safe-memory-odr
+add_clang_executable(safememory-odr
   SafeMemoryOdr.cpp
   raiistdiofile.h
   )
 
 
-target_link_libraries(safe-memory-odr
+target_link_libraries(safememory-odr
   PRIVATE
   clangAST
   clangBasic
@@ -18,5 +18,5 @@ target_link_libraries(safe-memory-odr
   clangTooling
   )
 
-install(TARGETS safe-memory-odr
+install(TARGETS safememory-odr
   RUNTIME DESTINATION bin)

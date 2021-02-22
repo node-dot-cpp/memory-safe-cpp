@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: safememory-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safememory/safe_ptr.h>
 

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-#===- check_nodecpp_instrument.py - Nodecpp Test Helper -----*- python -*--===#
+#===- check_safememory_instrument.py - Nodecpp Test Helper -----*- python -*--===#
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -13,14 +13,14 @@ r"""
 Nodecpp Test Helper
 =====================
 
-This script runs nodecpp-instrument and verify changes and messages.
+This script runs safememory-instrument and verify changes and messages.
 
 Usage:
-  check_nodecpp_instrument.py <source-file> <temp-file> \
-    -- [optional nodecpp-instrument arguments]
+  check_safememory_instrument.py <source-file> <temp-file> \
+    -- [optional safememory-instrument arguments]
 
 Example:
-  // RUN: %check_nodecpp_instrument %s %t -- -- -isystem %S/Inputs
+  // RUN: %check_safememory_instrument %s %t -- -- -isystem %S/Inputs
 """
 
 import argparse
@@ -75,7 +75,7 @@ def main():
 #  cleaned_file_name = temp_file_name + ".orig"
   write_file(cleaned_file_name, cleaned_test)
 
-  args = ['nodecpp-instrument', '-o', temp_file_name, cleaned_file_name] + \
+  args = ['safememory-instrument', '-o', temp_file_name, cleaned_file_name] + \
         extra_args
 
   print('Running ' + repr(args) + '...')
@@ -83,7 +83,7 @@ def main():
     clang_tidy_output = \
         subprocess.check_output(args, stderr=subprocess.STDOUT).decode()
   except subprocess.CalledProcessError as e:
-    print('nodecpp-instrument failed:\n' + e.output.decode())
+    print('safememory-instrument failed:\n' + e.output.decode())
     raise
 
   print('----------------------------- output -----------------------------\n' +

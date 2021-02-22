@@ -27,9 +27,10 @@ endif()
 
 
 set(NODECPP_TEST_DEPS
-  nodecpp-checker
-  nodecpp-instrument
-  nodecpp-safe-library
+  safememory-checker
+  safememory-instrument
+  safememory-library-db
+  safememory-odr
   FileCheck
   not
 )

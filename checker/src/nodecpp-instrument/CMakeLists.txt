@@ -3,7 +3,7 @@ set( LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_executable(nodecpp-instrument
+add_clang_executable(safememory-instrument
   CodeChange.cpp
   Dezombiefy.cpp
   InclusionRewriter.cpp
@@ -12,7 +12,7 @@ add_clang_executable(nodecpp-instrument
   )
 
 
-target_link_libraries(nodecpp-instrument
+target_link_libraries(safememory-instrument
   PRIVATE
   clangAST
   clangBasic
@@ -22,5 +22,5 @@ target_link_libraries(nodecpp-instrument
   clangRewriteFrontend
   )
 
-install(TARGETS nodecpp-instrument
+install(TARGETS safememory-instrument
   RUNTIME DESTINATION bin)

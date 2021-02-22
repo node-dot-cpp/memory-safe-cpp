@@ -1,4 +1,4 @@
-// RUN: nodecpp-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: safememory-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safe_memory/safe_ptr.h>
 #include <deep_const_type.h>

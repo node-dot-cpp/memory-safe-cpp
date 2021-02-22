@@ -3,13 +3,13 @@ set(LLVM_LINK_COMPONENTS
   Support
   )
 
-add_clang_tool(nodecpp-checker
+add_clang_tool(safememory-checker
   ClangTidyMain.cpp
   )
-add_dependencies(nodecpp-checker
+add_dependencies(safememory-checker
   clang-headers
   )
-target_link_libraries(nodecpp-checker
+target_link_libraries(safememory-checker
   PRIVATE
   clangAST
   clangASTMatchers
