@@ -1,4 +1,4 @@
-add_subdirectory(nodecpp-checker)
-add_subdirectory(nodecpp-instrument)
-add_subdirectory(nodecpp-safe-library-db)
-add_subdirectory(safe-memory-odr)
+add_subdirectory(safememory-checker)
+add_subdirectory(safememory-instrument)
+add_subdirectory(safememory-library-db)
+add_subdirectory(safememory-odr)
