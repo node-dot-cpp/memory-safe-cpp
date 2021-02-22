@@ -111,7 +111,8 @@ void badHashOrKeyEqual() {
 
 
 
-	//here the instantiation of GoodEq triggers the error at GoodEq::operator()
+	//here we ionstantiate unordered_map to trigger the error at GoodEq::operator()
 	unordered_map<KeyWithSideEffectEqual, int, GoodHash<KeyWithSideEffectEqual>, GoodEq<KeyWithSideEffectEqual>> bb14;
+	bb14[KeyWithSideEffectEqual{}] = 0;
 }
 

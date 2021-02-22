@@ -9,6 +9,6 @@
  */
 
 #include "library-db/std.hpp"
-#include "library-db/safe_memory.hpp"
+#include "library-db/safememory.hpp"
 #include "library-db/nodecpp.hpp"
 

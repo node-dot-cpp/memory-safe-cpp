@@ -436,7 +436,6 @@ namespace safememory {
 		void make_safe();
 	}; // class vector_safe
 
-
 	class unordered_map {
 	public:
 		typedef unordered_map this_type;
@@ -578,7 +577,6 @@ namespace safememory {
 
 			int& operator*() const;
 			int* operator->() const;
-
 			this_type& operator++();
 
 			bool operator==(const this_type& other) const;
@@ -594,7 +592,6 @@ namespace safememory {
 
 			int& operator*() const;
 			int* operator->() const;
-
 			this_type& operator++();
 
 			bool operator==(const this_type& other) const;
@@ -636,4 +633,118 @@ namespace safememory {
 
 } //namespace safememory
 
+
+
+namespace eastl {
+	// some methods are used directly from eastl base classes
+	// so we must white-list them here
+
+	struct fake { int i = 0;};
+	
+	// since we don't support overloads here, these operators are valids
+	// for any type defined in the eastl namespace                                                                                 
+	bool operator==(fake, fake);
+	bool operator!=(fake, fake);
+	bool operator<(fake, fake);
+	bool operator<=(fake, fake);
+	bool operator>(fake, fake);
+	bool operator>=(fake, fake);
+	void swap(fake, fake);
+
+	class basic_string {
+	public:
+		void empty();
+		void size();
+		void length();
+		void max_size();
+		void capacity();
+		void resize();
+		void reserve();
+		void force_size();
+		void shrink_to_fit();
+
+		void front();
+		void back();
+
+		void push_back();
+		void clear();
+
+		void make_lower();
+		void make_upper();
+
+		void validate();
+	}; // basic_string
+
+
+	class vector {
+	public:
+
+		void empty();
+		void size();
+		void capacity();
+		// void max_size();
+		void resize();
+		void reserve();
+		void set_capacity();
+		void shrink_to_fit();
+
+		void push_back();
+		void emplace_back();
+
+		void clear();
+
+		void validate();
+	}; // class vector
+
+
+	struct node_iterator
+	{
+	public:
+		typedef node_iterator this_type;
+
+		this_type& operator=(const this_type& ri);
+
+		int& operator*() const;
+		int* operator->() const;
+		this_type& operator++();
+	}; // node_iterator
+
+	struct hashtable_iterator
+	{
+	public:
+		typedef hashtable_iterator this_type;
+
+		this_type& operator=(const this_type& ri);
+
+		int& operator*() const;
+		int* operator->() const;
+		this_type& operator++();
+	}; // hashtable_iterator
+
+	class hashtable {
+	public:
+		void empty();
+		void size();
+		void bucket_count();
+		void bucket_size();
+
+		void load_factor();
+		void get_max_load_factor();
+		void set_max_load_factor();
+		void rehash_policy();
+
+		void clear();
+		void rehash();
+		void reserve();
+		void count();
+		void validate();
+	};
+
+	class hash_map {
+	public:
+		void at();
+		void operator[](int);
+	};
+
+}
 
