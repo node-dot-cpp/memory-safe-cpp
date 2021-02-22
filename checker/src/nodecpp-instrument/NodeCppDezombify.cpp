@@ -50,7 +50,7 @@ using namespace std;
 
 // Apply a custom category to all command-line options so that they are the
 // only ones displayed.
-static cl::OptionCategory NodecppInstrumentCategory("nodecpp-instrument options");
+static cl::OptionCategory NodecppInstrumentCategory("safememory-instrument options");
 
 // CommonOptionsParser declares HelpMessage with a description of the common
 // command-line options related to the compilation database and input files.

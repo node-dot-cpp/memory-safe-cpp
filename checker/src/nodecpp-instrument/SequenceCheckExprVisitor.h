@@ -92,7 +92,7 @@ public:
 
     unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, 
-      "(%0) Dezombiefication not fully realiable [nodecpp-dezombiefy]");
+      "(%0) Dezombiefication not fully realiable [safememory-dezombiefy]");
 
     if(Zs == ZombieSequence::Z1) {
       De.Report(E1->getExprLoc(), ID) << "Z1" << E2->getExprLoc();

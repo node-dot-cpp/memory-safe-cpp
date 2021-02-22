@@ -18,9 +18,9 @@ On Windows I use `build-env.bat` with the following:
 You will need to change paths to match your system, but using environment scripts helps a lot with having a consistent environment on Windows.
 Then you can use `cmake-ninja-debug.bat` to run cmake, and then build the tools:
 
-	ninja nodecpp-checker
-	ninja nodecpp-safe-library
-	ninja check-nodecpp-checker
+	ninja safememory-checker
+	ninja safememory-library-db
+	ninja check-safememory-checker
 
 
 For testing I use a separate `test-debug-env.bat` file to set up environmnet to run the tool and tests.
@@ -41,7 +41,7 @@ Then, to run manually run automated tests:
 To run our tool on a single test file and see the output,
 
 	cd test\library
-	nodecpp-checker rules.cpp 
+	safememory-checker rules.cpp 
 	
 
 Next

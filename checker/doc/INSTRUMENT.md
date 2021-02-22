@@ -5,12 +5,12 @@ Instrumentation tool
 
 Build, run and tests
 --------------------
-The `nodecpp-instrument` tool is built, run and tested in same way as `nodecpp-checker`. Please refer to [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md), to [CHECKER-RUN.md](CHECKER-RUN.md), and to [CHECKER-TESTS.md](CHECKER-TESTS.md) for details.
+The `safememory-instrument` tool is built, run and tested in same way as `safememory-checker`. Please refer to [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md), to [CHECKER-RUN.md](CHECKER-RUN.md), and to [CHECKER-TESTS.md](CHECKER-TESTS.md) for details.
 
 
 Silent mode
 -----------
-The `nodecpp-instrument` tool runs by default in __silent mode__, this is a best effort mode, where the tool tries to instrument as much as it can, but it will silently ignore any expression or statemnt that is too complex to analyze and/or instrument.
+The `safememory-instrument` tool runs by default in __silent mode__, this is a best effort mode, where the tool tries to instrument as much as it can, but it will silently ignore any expression or statemnt that is too complex to analyze and/or instrument.
 
 We can revert this behaviour with a command line option (`-no-silent-mode`) and the tool will issue error messages at each place it did give up in trying to instrument. 
 
@@ -20,7 +20,7 @@ Working internals
 -----------------
 
 
-The `nodecpp-instrument` tool does 3 steps to instrument the client code.
+The `safememory-instrument` tool does 3 steps to instrument the client code.
 
 1. Include expansion: First all user `#include` are expanded into a copy of the `.cpp` file.
 

@@ -64,7 +64,7 @@ Running samples
 Go to folder with test cases `test/library` and run:
 
 	cd test/library
-	nodecpp-checker rules.cpp
+	safememory-checker rules.cpp
 
 You can run the tool over any of the `.cpp` files. You can add files with your own sample code on the same folder and run them.
 
@@ -201,7 +201,7 @@ Tests under `library` tend to fail more easily, usually because of environment s
 Go to the library folder and run the tool
 
 	cd test/library
-	nodecpp-checker all-good.cpp
+	safememory-checker all-good.cpp
 
 Then you may get:
 

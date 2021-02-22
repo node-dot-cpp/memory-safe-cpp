@@ -79,7 +79,7 @@ class Op2CallFixExprVisitor
 
     unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, 
-      "Op2Call couldn't complete because of MACRO [nodecpp-dezombiefy]");
+      "Op2Call couldn't complete because of MACRO [safememory-dezombiefy]");
 
       De.Report(OpLoc, ID);
   }

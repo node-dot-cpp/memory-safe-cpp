@@ -35,10 +35,10 @@ set(NODECPP_TEST_DEPS
   not
 )
 
-add_lit_testsuite(check-nodecpp-tools "Running the node-dot-cpp tools regression tests"
+add_lit_testsuite(check-safememory-tools "Running the safememory tools regression tests"
   ${CMAKE_CURRENT_BINARY_DIR}
   DEPENDS ${NODECPP_TEST_DEPS}
   ARGS ${NODECPP_TEST_EXTRA_ARGS}
   )
 
-set_target_properties(check-nodecpp-tools PROPERTIES FOLDER "node-dot-cpp tools tests")
+set_target_properties(check-safememory-tools PROPERTIES FOLDER "safememory tools tests")

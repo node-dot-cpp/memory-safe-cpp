@@ -29,7 +29,7 @@ using namespace clang::driver;
 using namespace clang::tooling;
 using namespace llvm;
 
-static cl::OptionCategory NodecppCheckerCategory("nodecpp-checker options");
+static cl::OptionCategory NodecppCheckerCategory("safememory-checker options");
 
 static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 // static cl::extrahelp ClangTidyHelp(R"(
@@ -57,7 +57,7 @@ static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
 static cl::opt<std::string> SafeLibraryDb("safe-library-db", cl::desc(R"(
 Specifies a safe library dababase file
-When the value is empty, nodecpp-checker will
+When the value is empty, safememory-checker will
 attempt to find a file named safe_library.json
 in the source and its parent directories.
 )"),
@@ -67,7 +67,7 @@ in the source and its parent directories.
 // const char DefaultChecks[] = // Enable these checks by default:
 // //    "clang-diagnostic-*,"    //   * compiler diagnostics
 // //    "clang-analyzer-*,"      //   * Static Analyzer checks
-//     "nodecpp-*";			 //   * Node.Cpp checks
+//     "safememory-*";			 //   * Node.Cpp checks
 
 // static cl::opt<std::string> Checks("checks", cl::desc(R"(
 // Comma-separated list of globs with optional '-'

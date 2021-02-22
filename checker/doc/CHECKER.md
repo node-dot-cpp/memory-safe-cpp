@@ -5,7 +5,7 @@ Checker tool
 
 Build, run and tests
 --------------------
-To see how to build, run and test `nodecpp-checker`, please refer to [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md), to [CHECKER-RUN.md](CHECKER-RUN.md), and to [CHECKER-TESTS.md](CHECKER-TESTS.md) for details.
+To see how to build, run and test `safememory-checker`, please refer to [CHECKER-QUICK-START.md](CHECKER-QUICK-START.md), to [CHECKER-RUN.md](CHECKER-RUN.md), and to [CHECKER-TESTS.md](CHECKER-TESTS.md) for details.
 
 
 Known issues

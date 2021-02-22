@@ -258,7 +258,7 @@ void sequenceCheckAndFix(ASTContext &Ctx,  bool DebugReportMode, bool SilentMode
     return;
 
   auto &Reps = V1.finishReplacements();
-  overwriteChangedFiles(Ctx, Reps, "nodecpp-sequence-fix");
+  overwriteChangedFiles(Ctx, Reps, "safememory-sequence-fix");
 }
 
 

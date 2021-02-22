@@ -117,7 +117,7 @@ struct DeduplicateHelper {
 
       unsigned ID = DE.getDiagnosticIDs()->getCustomDiagID(
         clang::DiagnosticIDs::Error,
-        "Template funcion '%0' has inconsistent dezombiefy requirements [nodecpp-dezombiefy]");
+        "Template funcion '%0' has inconsistent dezombiefy requirements [safememory-dezombiefy]");
 
       DE.Report(D->getLocation(), ID) << D->getName();
 

@@ -14,7 +14,7 @@ call "C:\Program Files (x86)\Microsoft Visual Studio\2017\BuildTools\VC\Auxiliar
 cmake -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_CHECKER_SOURCE_DIR=%cd%\..\.. -G Ninja ..\..\3rdparty\llvm
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
-cmake --build . --target check-nodecpp-tools
+cmake --build . --target check-safememory-tools
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 cd ..\..

@@ -21,7 +21,7 @@ using namespace std;
 
 // Apply a custom category to all command-line options so that they are the
 // only ones displayed.
-static cl::OptionCategory myToolCategory("nodecpp-safe-library options");
+static cl::OptionCategory myToolCategory("safememory-library-db options");
 
 // CommonOptionsParser declares HelpMessage with a description of the common
 // command-line options related to the compilation database and input files.

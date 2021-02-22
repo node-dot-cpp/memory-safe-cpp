@@ -61,7 +61,7 @@ void dezombiefy(ASTContext &Ctx, bool SilentMode) {
   Visitor2.getStats().printStats();
 
   auto &Reps = Visitor2.finishReplacements();
-  overwriteChangedFiles(Ctx, Reps, "nodecpp-dezombiefy");
+  overwriteChangedFiles(Ctx, Reps, "safememory-dezombiefy");
 }
 
 

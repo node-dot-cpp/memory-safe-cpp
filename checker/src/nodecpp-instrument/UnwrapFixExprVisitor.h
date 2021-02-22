@@ -289,7 +289,7 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     unsigned ID =De.getDiagnosticIDs()->getCustomDiagID(
       DiagnosticIDs::Error, 
-      "Unwrap couldn't complete because of MACRO [nodecpp-dezombiefy]");
+      "Unwrap couldn't complete because of MACRO [safememory-dezombiefy]");
 
       De.Report(OpLoc, ID);
   }
