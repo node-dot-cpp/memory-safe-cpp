@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2018, OLogN Technologies AG
+* Copyright (c) 2020, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,12 +25,51 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
+#ifndef MEMORY_SAFETY_H
+#define MEMORY_SAFETY_H
 
-#include <foundation.h>
+#include <cstdint>
+//mb: temporary hack, until we move all files to their definitive location
+// and rename namespaces acordingly
 
-namespace safememory::detail {
+namespace safememory
+{
+	constexpr std::uint64_t module_id = 2;
+} // namespace safememory
 
-NODECPP_NOINLINE
-void forcePreviousChangesToThisInDtor( void* p ) {}
+namespace safememory
+{
+	constexpr const char* safememory_module_id = "safememory";
+}
 
-} // namespace safememory::detail
+namespace safememory {
+
+enum class memory_safety { none, safe };
+
+template<class T>
+struct safeness_declarator {
+#ifdef NODECPP_MEMORY_SAFETY
+#if NODECPP_MEMORY_SAFETY == 1
+	static constexpr memory_safety is_safe = memory_safety::safe;
+#elif NODECPP_MEMORY_SAFETY == 0
+	static constexpr memory_safety is_safe = memory_safety::none;
+#else
+#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are 1 or 0)
+#endif // NODECPP_MEMORY_SAFETY defined
+#else
+	static constexpr memory_safety is_safe = memory_safety::safe; // by default
+#endif
+};
+
+#ifdef NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#include NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#endif
+
+/* Sample of user-defined exclusion:
+template<> struct safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
+*/
+
+} // namespace safememory
+
+
+#endif //MEMORY_SAFETY_H

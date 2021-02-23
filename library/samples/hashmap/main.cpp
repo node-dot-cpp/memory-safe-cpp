@@ -1,6 +1,6 @@
 
 
-#include <safe_memory/unordered_map.h>
+#include <safememory/unordered_map.h>
 
 #include <vector>
 #include <random>
@@ -21,7 +21,7 @@ void checkMap(T& testMap) {
 
 void randomCheckMap(int sz, int ini) {
 
-    safe_memory::unordered_map<int, bool> testMap;
+    safememory::unordered_map<int, bool> testMap;
 
     std::vector<int> v;
     v.resize(sz);
@@ -59,7 +59,7 @@ void randomCheckMap(int sz, int ini) {
 void mainForMap() {
 
 
-    safe_memory::unordered_map<int, int> aMap;
+    safememory::unordered_map<int, int> aMap;
 
     aMap[1] = 1;
     aMap[2] = 2;

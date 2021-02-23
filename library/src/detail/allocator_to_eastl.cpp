@@ -25,9 +25,9 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#include <safe_memory/detail/allocator_to_eastl.h>
+#include <safememory/detail/allocator_to_eastl.h>
 
-namespace safe_memory::detail {
+namespace safememory::detail {
 
 fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl = 
     { soft_ptr_with_zero_offset_impl<char>(), 

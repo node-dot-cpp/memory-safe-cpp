@@ -29,15 +29,16 @@
 #define SAFE_PTR_NO_CHECKS_H
 
 #include "safe_ptr_common.h"
+#include "memory_safety.h"
 
 // forward declaration
-namespace safe_memory {
+namespace safememory {
 	namespace detail {
 		class soft_ptr_helper;
 	}
 }
 
-namespace nodecpp::safememory
+namespace safememory::detail
 {
 
 template<class T> class soft_ptr_base_no_checks; // forward declaration
@@ -159,8 +160,8 @@ public:
 	template<class T1>
 	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return t != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
 
 	// T* release() : prhibited by safity requirements
 
@@ -254,7 +255,7 @@ class soft_ptr_base_no_checks
 	template<class TT, class TT1>
 	friend soft_ptr_no_checks<TT> soft_ptr_reinterpret_cast_no_checks( soft_ptr_no_checks<TT1> );
 
-	friend class safe_memory::detail::soft_ptr_helper;
+	friend class safememory::detail::soft_ptr_helper;
 
 	T* t;
 
@@ -316,7 +317,7 @@ public:
 
 	nullable_ptr_no_checks<T> get() const
 	{
-		NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, t != nullptr );
+		NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, t != nullptr );
 		nullable_ptr_no_checks<T> ret;
 		ret.t = t;
 		return ret;
@@ -348,8 +349,8 @@ public:
 	template<class T1>
 	bool operator != (const soft_ptr_base_no_checks<T1>& other ) const { return t != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
 
 	~soft_ptr_base_no_checks() { NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR(); }
 };
@@ -385,7 +386,7 @@ private:
 	friend soft_ptr_no_checks<TT> soft_ptr_in_constructor_no_checks(TT*);
 	friend soft_ptr_no_checks<T> soft_ptr_in_constructor_no_checks<>(T*);
 
-	friend class safe_memory::detail::soft_ptr_helper;
+	friend class safememory::detail::soft_ptr_helper;
 
 	soft_ptr_no_checks(fbc_ptr_t cb, T* t) : soft_ptr_base_no_checks<T>(cb, t) {} // to be used for only types annotaded as [[nodecpp::owning_only]]
 
@@ -510,8 +511,8 @@ public:
 	template<class T1>
 	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
 };
 
 template<>
@@ -600,8 +601,8 @@ public:
 	template<class T1>
 	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(::nodecpp::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return this->t != nullptr; }
 
 	void reset()
 	{
@@ -954,7 +955,7 @@ nullable_ptr_no_checks<T> nullable_cast_no_checks( T* p ) {
 	return nullable_ptr_no_checks<T>( p );
 }
 
-} // namespace nodecpp::safememory
+} // namespace safememory::detail
 
 
 #endif // SAFE_PTR_NO_CHECKS_H

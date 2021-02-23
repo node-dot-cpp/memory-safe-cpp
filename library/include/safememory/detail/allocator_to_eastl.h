@@ -28,17 +28,17 @@
 #ifndef SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H
 #define SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H
 
-#include <safe_memory/safe_ptr.h>
-#include <safe_memory/detail/soft_ptr_with_zero_offset.h>
-#include <safe_memory/detail/array_of.h>
+#include <safememory/safe_ptr.h>
+#include <safememory/detail/soft_ptr_with_zero_offset.h>
+#include <safememory/detail/array_of.h>
 
 /** \file
- * \brief Allocators feed by \a safe_memory containers into \c eastl ones.
+ * \brief Allocators feed by \a safememory containers into \c eastl ones.
  * 
  * These allocators hide the tricks required to make a non safety aware library like \c eastl
  * to work with safety features.
  * 
- * On \a safe_memory allocations hide an small piece of memory called \a ControlBlock in front
+ * On \a safememory allocations hide an small piece of memory called \a ControlBlock in front
  * of every heap allocated object, that is used to keep track of \c soft_ptr pointing such object.
  * On normal user code, the \a ControlBlock is managed by the corresponding \c owning_ptr.
  * 
@@ -48,23 +48,23 @@
  * allocated pointer, and correctly pair allocation/deallocation calls.
  */ 
 
-namespace safe_memory::detail {
+namespace safememory::detail {
 
 extern fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl;
 extern fixed_array_of<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
 extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
-using nodecpp::safememory::FirstControlBlock;
-using nodecpp::safememory::module_id;
-using nodecpp::safememory::getPrefixByteCount;
-using nodecpp::safememory::zombieAllocate;
-using nodecpp::safememory::getControlBlock_;
-using nodecpp::safememory::zombieDeallocate;
-using nodecpp::safememory::getAllocatedBlock_;
-using nodecpp::safememory::allocate;
-using nodecpp::safememory::deallocate;
-using nodecpp::safememory::fbc_ptr_t;
-using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
+// using nodecpp::safememory::FirstControlBlock;
+// using nodecpp::safememory::module_id;
+// using nodecpp::safememory::getPrefixByteCount;
+// using nodecpp::safememory::zombieAllocate;
+// using nodecpp::safememory::getControlBlock_;
+// using nodecpp::safememory::zombieDeallocate;
+// using nodecpp::safememory::getAllocatedBlock_;
+// using nodecpp::safememory::allocate;
+// using nodecpp::safememory::deallocate;
+// using nodecpp::safememory::fbc_ptr_t;
+// using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
 
 
 
@@ -314,7 +314,7 @@ public:
 		return p.get_raw_begin();
 	}
 
-	// raii implementation doesn't depende on safe_memory parameter of the allocator,
+	// raii implementation doesn't depende on safememory parameter of the allocator,
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
 	template<class T>
@@ -385,7 +385,7 @@ public:
 		return p.get_raw_begin();
 	}
 
-	// raii implementation doesn't depende on safe_memory parameter of the allocator,
+	// raii implementation doesn't depende on safememory parameter of the allocator,
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
 	template<class T>
@@ -542,6 +542,6 @@ using allocator_to_eastl_hashtable = std::conditional_t<Safety == memory_safety:
 			allocator_to_eastl_hashtable_no_checks>;
 
 
-} // namespace safe_memory::detail
+} // namespace safememory::detail
 
 #endif // SAFE_MEMORY_DETAIL_ALLOCATOR_TO_EASTL_H

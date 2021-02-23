@@ -32,12 +32,12 @@
 #include <typeindex>
 #include <EASTL/unordered_map.h>
 #include <EASTL/unordered_set.h>
-#include <safe_memory/functional.h>
-#include <safe_memory/detail/allocator_to_eastl.h>
-#include <safe_memory/detail/hashtable_iterator.h>
+#include <safememory/functional.h>
+#include <safememory/detail/allocator_to_eastl.h>
+#include <safememory/detail/hashtable_iterator.h>
 
 
-namespace safe_memory
+namespace safememory
 {
 	template <typename Key, typename T, typename Hash = hash<Key>, typename Predicate = equal_to<Key>, 
 			  memory_safety Safety = safeness_declarator<Key>::is_safe>
@@ -786,7 +786,7 @@ namespace safe_memory
 	}
 
 
-} // namespace safe_memory
+} // namespace safememory
 
 
 #endif //SAFE_MEMORY_UNORDERED_MAP_H

@@ -37,7 +37,7 @@
 
 #include <cerrno>  // for error constants
 
-using namespace nodecpp::error;
+//using namespace nodecpp::error;
 
 namespace nodecpp::error {
 

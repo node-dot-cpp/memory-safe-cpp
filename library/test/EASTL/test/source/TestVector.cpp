@@ -3,7 +3,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "EASTLTest.h"
-#include <safe_memory/vector.h>
+#include <safememory/vector.h>
 #include <string>
 #include <deque>
 #include <list>
@@ -23,14 +23,14 @@ EA_DISABLE_ALL_VC_WARNINGS()
 #endif
 EA_RESTORE_ALL_VC_WARNINGS()
 
-using safe_memory::vector;
+using safememory::vector;
 
 // Template instantations.
 // These tell the compiler to compile all the functions for the given class.
-template class safe_memory::vector<bool>;
-template class safe_memory::vector<int>;
-template class safe_memory::vector<Align64>;
-template class safe_memory::vector<TestObject>;
+template class safememory::vector<bool>;
+template class safememory::vector<int>;
+template class safememory::vector<Align64>;
+template class safememory::vector<TestObject>;
 
 
 // This tests "uninitialized_fill" usage in vector when T has a user provided
@@ -53,14 +53,14 @@ struct HasAddressOfOperator
     AddressOfOperatorResult operator&() const { return {}; }
 	bool operator==(const HasAddressOfOperator&) const { return false; }
 };
-template class safe_memory::vector<HasAddressOfOperator>;  // force compile all functions of vector
+template class safememory::vector<HasAddressOfOperator>;  // force compile all functions of vector
 
 
 
 // Test compiler issue that appeared in VS2012 relating to kAlignment
 // struct StructWithContainerOfStructs
 // {
-// 	safe_memory::vector<StructWithContainerOfStructs> children;
+// 	safememory::vector<StructWithContainerOfStructs> children;
 // };
 
 		// This relatively complex test is to prevent a regression on VS2013.  The data types have what may appear to be
@@ -93,15 +93,15 @@ namespace
 // 		const std::string& Controller;
 // 	};
 // 	const std::string& ContextDatabase;  // note:  const class members prohibits move semantics
-// 	typedef safe_memory::vector<RowEntry> RowData;
+// 	typedef safememory::vector<RowEntry> RowData;
 // 	RowData Rows;
 // };
-// typedef safe_memory::vector<ScenarioRefEntry> ScenarRefData;
+// typedef safememory::vector<ScenarioRefEntry> ScenarRefData;
 // struct AntMetaDataRecord
 // {
 // 	ScenarRefData ScenarioRefs;
 // };
-// typedef safe_memory::vector<AntMetaDataRecord> MetadataRecords;
+// typedef safememory::vector<AntMetaDataRecord> MetadataRecords;
 
 struct StructWithConstInt
 {
@@ -998,7 +998,7 @@ int TestVectorImpl()
 									 -1));
 
 // #if !defined(EASTL_STD_ITERATOR_CATEGORY_ENABLED) && !defined(EA_COMPILER_NO_STANDARD_CPP_LIBRARY)
-// 		// std::vector / safe_memory::vector
+// 		// std::vector / safememory::vector
 // 		std::VEC<TestObject> stdV(10);
 // 		VEC<TestObject> eastlV(10);
 
@@ -1008,7 +1008,7 @@ int TestVectorImpl()
 // 		EATEST_VERIFY(eastlV.size() == 20);
 // 		EATEST_VERIFY(stdV.size() == 30);
 
-// 		// std::string / safe_memory::vector
+// 		// std::string / safememory::vector
 // 		std::string stdString("blah");
 // 		VEC<char8_t> eastlVString;
 
@@ -1675,7 +1675,7 @@ int TestVectorImpl()
 	// #ifndef EASTL_VECTOR_LEGACY_SWAP_BEHAVIOUR_REQUIRES_COPY_CTOR 
 		// unique_ptr tests
 		// {
-			// Simple move-assignment test to prevent regressions where safe_memory::vector utilizes operations on T that are not necessary.
+			// Simple move-assignment test to prevent regressions where safememory::vector utilizes operations on T that are not necessary.
 			// {
 				// VEC<std::unique_ptr<int>> v1;
 				// VEC<std::unique_ptr<int>> v2;
@@ -1683,7 +1683,7 @@ int TestVectorImpl()
 			// }
 
 			// {
-				// This test verifies that safe_memory::vector can handle the move-assignment case where its utilizes two
+				// This test verifies that safememory::vector can handle the move-assignment case where its utilizes two
 				// different allocator instances that do not compare equal.  An example of an allocator that compares equal
 				// but isn't the same object instance is an allocator that shares the same memory allocation mechanism (eg.
 				// malloc).  The memory allocated from one instance can be freed by another instance in the case where
@@ -1715,7 +1715,7 @@ int TestVectorImpl()
 	// #endif
 
 	// {
-		// CustomAllocator has no data members which reduces the size of an safe_memory::vector via the empty base class optimization.
+		// CustomAllocator has no data members which reduces the size of an safememory::vector via the empty base class optimization.
 		// typedef VEC<int, CustomAllocator> EboVector;
 		// static_assert(sizeof(EboVector) == 3 * sizeof(void*), "");
 	// }
@@ -1724,10 +1724,10 @@ int TestVectorImpl()
 }
 
 template<class T>
-using VEC = safe_memory::vector<T>;
+using VEC = safememory::vector<T>;
 
 template<class T>
-using VEC_SAFE = safe_memory::vector_safe<T>;
+using VEC_SAFE = safememory::vector_safe<T>;
 
 
 int TestVector()

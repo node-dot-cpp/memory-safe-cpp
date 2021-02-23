@@ -33,9 +33,9 @@
 #define SAFE_MEMORY_VECTOR_H
 
 #include <EASTL/vector.h>
-#include <safe_memory/detail/allocator_to_eastl.h>
+#include <safememory/detail/allocator_to_eastl.h>
 
-namespace safe_memory
+namespace safememory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
@@ -1010,6 +1010,6 @@ namespace safe_memory
 	}; // class vector_safe
 
 
-} // namespace safe_memory
+} // namespace safememory
 
 #endif // Header include guard

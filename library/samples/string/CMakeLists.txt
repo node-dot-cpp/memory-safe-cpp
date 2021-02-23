@@ -4,5 +4,5 @@
 
 add_executable(StringSample main.cpp)
 
-target_link_libraries(StringSample safe_memory)
+target_link_libraries(StringSample safememory)
 

@@ -1,11 +1,11 @@
 
-#include <safe_memory/vector.h>
+#include <safememory/vector.h>
 #include <fmt/printf.h>
 
 
 int main() {
 
-    safe_memory::vector<int> vi;
+    safememory::vector<int> vi;
 
     vi.push_back(3);
     vi.push_back(4);

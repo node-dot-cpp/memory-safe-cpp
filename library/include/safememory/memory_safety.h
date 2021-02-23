@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2018, OLogN Technologies AG
+* Copyright (c) 2020, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,41 +25,13 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_CHECKER_ATTRIBUTES_H
-#define SAFE_MEMORY_CHECKER_ATTRIBUTES_H
+#ifndef SAFEMEMORY_MEMORY_SAFETY_H
+#define SAFEMEMORY_MEMORY_SAFETY_H
 
-#ifdef SAFE_MEMORY_CHECKER_EXTENSIONS
+//mb: temporary hack, until we move all files to their definitive location
+// and rename namespaces acordingly
 
-#define NODECPP_MAY_EXTEND_TO_THIS [[safe_memory::may_extend_to_this]]
-#define NODECPP_NO_AWAIT [[safe_memory::no_await]]
-#define NODECPP_NAKED_STRUCT [[safe_memory::naked_struct]]
-#define NODECPP_DEEP_CONST [[safe_memory::deep_const]]
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS [[safe_memory::may_extend_to_this]]
-#define SAFE_MEMORY_NO_AWAIT [[safe_memory::no_await]]
-#define SAFE_MEMORY_AWAITABLE [[safe_memory::awaitable]]
-#define SAFE_MEMORY_NAKED_STRUCT [[safe_memory::naked_struct]]
-#define SAFE_MEMORY_DEEP_CONST [[safe_memory::deep_const]]
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS [[safe_memory::deep_const_when_params]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT [[safe_memory::no_side_effect]]
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST [[safe_memory::no_side_effect_when_const]]
-#define SAFE_MEMORY_CHECK_AS_USER_CODE [[safe_memory::check_as_user_code]]
+#include "../../src/memory_safety.h"
 
-#else
 
-#define NODECPP_MAY_EXTEND_TO_THIS
-#define NODECPP_NO_AWAIT
-#define NODECPP_NAKED_STRUCT
-#define NODECPP_DEEP_CONST
-#define SAFE_MEMORY_MAY_EXTEND_TO_THIS
-#define SAFE_MEMORY_NO_AWAIT
-#define SAFE_MEMORY_AWAITABLE
-#define SAFE_MEMORY_NAKED_STRUCT
-#define SAFE_MEMORY_DEEP_CONST
-#define SAFE_MEMORY_DEEP_CONST_WHEN_PARAMS
-#define SAFE_MEMORY_NO_SIDE_EFFECT
-#define SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST
-#define SAFE_MEMORY_CHECK_AS_USER_CODE
-
-#endif
-
-#endif // SAFE_MEMORY_CHECKER_ATTRIBUTES_H
+#endif //SAFEMEMORY_MEMORY_SAFETY_H

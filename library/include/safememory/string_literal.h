@@ -28,12 +28,12 @@
 #ifndef SAFE_MEMORY_STRING_LITERAL_H
 #define SAFE_MEMORY_STRING_LITERAL_H
 
-#include <safe_memory/safe_ptr_common.h>
-#include <safe_memory/checker_attributes.h>
-#include <safe_memory/detail/array_of.h>
+#include <safememory/memory_safety.h>
+#include <safememory/checker_attributes.h>
+#include <safememory/detail/array_of.h>
 #include <EASTL/internal/char_traits.h>
 
-namespace safe_memory
+namespace safememory
 {
 	template<typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 	class SAFE_MEMORY_DEEP_CONST SAFE_MEMORY_NO_SIDE_EFFECT_WHEN_CONST basic_string_literal
@@ -162,6 +162,6 @@ namespace safe_memory
 	}
 
 
-} //namespace safe_memory
+} //namespace safememory
 
 #endif //SAFE_MEMORY_STRING_LITERAL_H

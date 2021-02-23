@@ -21,20 +21,20 @@ add_subdirectory(src/iibmalloc)
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
-add_library(safe_memory STATIC
+add_library(safememory STATIC
   src/safe_ptr.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
   )
 
-target_include_directories(safe_memory
+target_include_directories(safememory
   PUBLIC include
   PUBLIC src
   )
 
-target_link_libraries(safe_memory iibmalloc)
+target_link_libraries(safememory iibmalloc)
 if (TARGET EASTL)
-  target_link_libraries(safe_memory EASTL EABase)
+  target_link_libraries(safememory EASTL EABase)
 endif()
 
 if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
@@ -54,7 +54,7 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 
   target_link_libraries(gcc_lto_workaround foundation)
-  target_link_libraries(safe_memory gcc_lto_workaround)
+  target_link_libraries(safememory gcc_lto_workaround)
 
 endif()
 
@@ -62,29 +62,29 @@ endif()
 # Tests and samples
 #-------------------------------------------------------------------------------------------
 if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(SAFE_MEMORY_TEST ON CACHE BOOL "Enable safe_memory tests")
+  set(SAFEMEMORY_TEST ON CACHE BOOL "Enable SafeMemory tests")
 else()
-  set(SAFE_MEMORY_TEST OFF CACHE BOOL "Enable safe_memory tests")
+  set(SAFEMEMORY_TEST OFF CACHE BOOL "Enable SafeMemory tests")
 endif()
 
-if (SAFE_MEMORY_TEST)
+if (SAFEMEMORY_TEST)
   # only when not a subproject
 
-  add_executable(test_safe_memory
+  add_executable(test_safememory
     test/test_safe_pointers.cpp
     )
 
-  target_compile_definitions(test_safe_memory PRIVATE NODECPP_MEMORY_SAFETY_EXCLUSIONS="${CMAKE_CURRENT_SOURCE_DIR}/test/safety_exclusions.h")
+  target_compile_definitions(test_safememory PRIVATE NODECPP_MEMORY_SAFETY_EXCLUSIONS="${CMAKE_CURRENT_SOURCE_DIR}/test/safety_exclusions.h")
 
   if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-      target_compile_options(test_safe_memory PRIVATE -Wno-missing-braces)
-      target_compile_options(test_safe_memory PRIVATE -Wno-reinterpret-base-class)
-      target_compile_options(test_safe_memory PRIVATE -Wno-deprecated-declarations)
+      target_compile_options(test_safememory PRIVATE -Wno-missing-braces)
+      target_compile_options(test_safememory PRIVATE -Wno-reinterpret-base-class)
+      target_compile_options(test_safememory PRIVATE -Wno-deprecated-declarations)
   endif()
 
-  target_link_libraries(test_safe_memory safe_memory)
+  target_link_libraries(test_safememory safememory)
 
-  add_test(Run_test_safe_memory test_safe_memory)
+  add_test(Run_test_safememory test_safememory)
 
   add_subdirectory(samples)
 

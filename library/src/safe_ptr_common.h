@@ -33,18 +33,8 @@
 #include <log.h>
 #include <memory>
 #include <stdint.h>
-#include <safe_memory/checker_attributes.h>
+#include <safememory/checker_attributes.h>
 #include <allocator_template.h>
-
-namespace nodecpp::safememory
-{
-	constexpr uint64_t module_id = 2;
-} // namespace nodecpp::safememory
-
-namespace nodecpp
-{
-	constexpr const char* safememory_module_id = "safememory";
-}
 
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
@@ -62,22 +52,27 @@ namespace nodecpp
 #endif
 
 
-namespace nodecpp::safememory {
+namespace safememory::detail {
 enum class StdAllocEnforcer { enforce };
-} // namespace nodecpp::safememory
+} // namespace safememory::detail
 
 
 #ifdef NODECPP_USE_IIBMALLOC
 
 #include <iibmalloc.h>
-using namespace nodecpp::iibmalloc;
-namespace nodecpp::safememory
+// using namespace nodecpp::iibmalloc;
+namespace safememory::detail
 {
+using nodecpp::iibmalloc::g_AllocManager;
+using nodecpp::iibmalloc::guaranteed_prefix_size;
+using nodecpp::iibmalloc::ALIGNMENT;
+
 NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { return g_AllocManager.allocate( sz ); } // TODO: proper implementation for alignment
 NODECPP_FORCEINLINE void* allocate( size_t sz ) { return g_AllocManager.allocate( sz ); }
 template<size_t alignment>
 NODECPP_FORCEINLINE void* allocateAligned( size_t sz ) { return g_AllocManager.allocateAligned<alignment>( sz ); }
 NODECPP_FORCEINLINE void deallocate( void* ptr ) { g_AllocManager.deallocate( ptr ); }
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { g_AllocManager.deallocate( ptr ); }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { return g_AllocManager.zombieableAllocate( sz ); }
 template<size_t sz, size_t alignment>
 NODECPP_FORCEINLINE void* zombieAllocateAligned() { return g_AllocManager.zombieableAllocateAligned<sz, alignment>(); }
@@ -98,27 +93,27 @@ struct IIBRawAllocator
 {
 	static constexpr size_t guaranteed_alignment = NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT;
 	template<size_t alignment = 0> 
-	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::nodecpp::safememory::allocateAligned<alignment>( allocSize ); }
-//	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::nodecpp::safememory::allocate( allocSize ); }
+	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::safememory::detail::allocateAligned<alignment>( allocSize ); }
+//	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::safememory::detail::allocate( allocSize ); }
 	template<size_t alignment = 0> 
-	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::nodecpp::safememory::deallocate( ptr ); }
+	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::safememory::detail::deallocate( ptr ); }
 };
 
 template<class _Ty>
-using iiballocator = selective_allocator<IIBRawAllocator, _Ty>;
+using iiballocator = nodecpp::selective_allocator<IIBRawAllocator, _Ty>;
 template< class T1, class T2 >
 bool operator==( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return true; }
 template< class T1, class T2 >
 bool operator!=( const iiballocator<T1>& lhs, const iiballocator<T2>& rhs ) noexcept { return false; }
 
-} // namespace nodecpp::safememory
+} // namespace safememory::detail
 
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 #include <map>
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-namespace nodecpp::safememory
+namespace safememory::detail
 {
 template<class T>
 using iiballocator =  std::allocator<T>;
@@ -139,7 +134,7 @@ inline void killAllZombies()
 		zombieList_ = next;
 	}
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection_ || ( !doZombieEarlyDetection_ && zombieMap.empty() ) );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection_ || ( !doZombieEarlyDetection_ && zombieMap.empty() ) );
 	zombieMap.clear();
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 }
@@ -155,7 +150,7 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) {
 	return ret + 4 * sizeof(uint64_t);
 }
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz, size_t alignment ) { 
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, alignment <= 4 * sizeof(uint64_t), "alignment = {}", alignment );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, alignment <= 4 * sizeof(uint64_t), "alignment = {}", alignment );
 	return zombieAllocate( sz );
 }
 template<size_t sz, size_t alignment>
@@ -182,7 +177,7 @@ NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) {
 }
 inline bool doZombieEarlyDetection( bool doIt = true )
 {
-	NODECPP_ASSERT(nodecpp::safememory::module_id, nodecpp::assert::AssertLevel::critical, zombieMap.empty(), "to (re)set doZombieEarlyDetection() zombieMap must be empty" );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, zombieMap.empty(), "to (re)set doZombieEarlyDetection() zombieMap must be empty" );
 	bool ret = doZombieEarlyDetection_;
 	doZombieEarlyDetection_ = doIt;
 	return ret;
@@ -193,14 +188,14 @@ constexpr bool isPointerNotZombie(void* ptr ) { return true; }
 NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { return sizeof(uint64_t); }
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 inline bool interceptNewDeleteOperators( bool doIntercept ) { return true;}
-} //namespace nodecpp::safememory
+} //namespace safememory::detail
 
 #else
 #error at least some specific allocation functionality must be selected
 #endif
 
 
-namespace nodecpp::safememory
+namespace safememory::detail
 {
 #ifdef NODECPP_GCC
 extern void forcePreviousChangesToThisInDtor( void* p );
@@ -229,43 +224,18 @@ template<class T> class soft_ptr_base_no_checks; // forward declaration
 template<class T> class soft_ptr_no_checks; // forward declaration
 
 
-enum class memory_safety { none, safe };
-
-template<class T>
-struct safeness_declarator {
-#ifdef NODECPP_MEMORY_SAFETY
-#if NODECPP_MEMORY_SAFETY == 1
-	static constexpr memory_safety is_safe = memory_safety::safe;
-#elif NODECPP_MEMORY_SAFETY == 0
-	static constexpr memory_safety is_safe = memory_safety::none;
-#else
-#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are 1 or 0)
-#endif // NODECPP_MEMORY_SAFETY defined
-#else
-	static constexpr memory_safety is_safe = memory_safety::safe; // by default
-#endif
-};
-
-#ifdef NODECPP_MEMORY_SAFETY_EXCLUSIONS
-#include NODECPP_MEMORY_SAFETY_EXCLUSIONS
-#endif
-
-/* Sample of user-defined exclusion:
-template<> struct nodecpp::safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
-*/
-
 //#define NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 #ifdef NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 extern thread_local std::size_t CountSoftPtrZeroOffsetDtor;
 extern thread_local std::size_t CountSoftPtrBaseDtor;
-#define NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR() { ::nodecpp::safememory::CountSoftPtrBaseDtor++; }
-#define NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR() { ::nodecpp::safememory::CountSoftPtrZeroOffsetDtor++; }
+#define NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR() { ::safememory::detail::CountSoftPtrBaseDtor++; }
+#define NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR() { ::safememory::detail::CountSoftPtrZeroOffsetDtor++; }
 #else
 #define NODECPP_DEBUG_COUNT_SOFT_PTR_BASE_DTOR() { }
 #define NODECPP_DEBUG_COUNT_SOFT_PTR_ZERO_OFFSET_DTOR() { }
 #endif
 
+} // namespace safememory::detail
 
-} // namespace nodecpp::safememory
 
 #endif // SAFE_PTR_COMMON_H

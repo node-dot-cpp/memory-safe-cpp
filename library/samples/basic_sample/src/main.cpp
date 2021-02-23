@@ -1,8 +1,8 @@
 
 #include <stdio.h>
-#include <safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
-using namespace nodecpp::safememory;
+using namespace safememory;
 
 void sampleTestCall()
 {
