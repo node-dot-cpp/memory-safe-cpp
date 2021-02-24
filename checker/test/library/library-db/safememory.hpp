@@ -26,53 +26,256 @@ namespace safememory {
 	void make_owning();
 	void make_owning_2();
 
+	//are any of this safe?
+	// void soft_ptr_in_constructor();
+	// void soft_ptr_static_cast();
+	// void soft_ptr_reinterpret_cast();
+	// void nullable_cast();
+
+
 	namespace detail {
+
+		class owning_ptr_base_impl {
+		public:
+			typedef owning_ptr_base_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
 		class owning_ptr_impl {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			owning_ptr_impl& operator=(const owning_ptr_impl&);
-			fake& get() const;
+		public:
+			typedef owning_ptr_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+		class owning_ptr_base_no_checks {
+		public:
+			typedef owning_ptr_base_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
 		};
 
 		class owning_ptr_no_checks {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			owning_ptr_no_checks& operator=(const owning_ptr_no_checks&);
-			fake& get() const;
+		public:
+			typedef owning_ptr_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+		class soft_ptr_base_impl {
+		public:
+			typedef soft_ptr_base_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
 		};
 
 		class soft_ptr_impl {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			soft_ptr_impl& operator=(const soft_ptr_impl&);
-			fake& get() const;
+		public:
+			typedef soft_ptr_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+		class soft_ptr_base_no_checks {
+		public:
+			typedef soft_ptr_base_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
 		};
 
 		class soft_ptr_no_checks {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			soft_ptr_no_checks& operator=(const soft_ptr_no_checks&);
-			fake& get() const;
+		public:
+			typedef soft_ptr_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+
+		class nullable_ptr_base_impl {
+		public:
+			typedef nullable_ptr_base_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			// void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
 		};
 
 		class nullable_ptr_impl {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			nullable_ptr_impl& operator=(const nullable_ptr_impl&);
-			fake& get() const;
+		public:
+			typedef nullable_ptr_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			// void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+		class nullable_ptr_base_no_checks {
+		public:
+			typedef nullable_ptr_base_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			// void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
 		};
 
 		class nullable_ptr_no_checks {
-			operator bool();
-			fake* operator->() const;
-			fake& operator*() const;
-			nullable_ptr_no_checks& operator=(const nullable_ptr_no_checks&);
-			fake& get() const;
+		public:
+			typedef nullable_ptr_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			void reset();
+			void swap( this_type& other );
+			// void get() const;
+			int& operator * () const;
+			int* operator -> () const;
+			bool operator == (const this_type& other ) const;
+			bool operator != (const this_type& other ) const;
+			
+			explicit operator bool() const noexcept;
+		};
+
+		class soft_this_ptr_impl {
+		public:
+			typedef soft_this_ptr_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			explicit operator bool() const noexcept;
+		};
+
+		class soft_this_ptr2_impl {
+		public:
+			typedef soft_this_ptr2_impl this_type;
+
+			this_type& operator=(const this_type& x);
+
+			explicit operator bool() const noexcept;
+			void getSoftPtr() const;
+		};
+
+		class soft_this_ptr_no_checks {
+		public:
+			typedef soft_this_ptr_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			explicit operator bool() const noexcept;
+		};
+
+		class soft_this_ptr2_no_checks {
+		public:
+			typedef soft_this_ptr2_no_checks this_type;
+
+			this_type& operator=(const this_type& x);
+
+			explicit operator bool() const noexcept;
+			void getSoftPtr() const;
 		};
 	} //namespace detail
 
