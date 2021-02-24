@@ -1,6 +1,6 @@
 // RUN: %check_safememory_instrument --fix-only %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers
 
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
 #include <safe_types.h>
 

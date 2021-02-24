@@ -1,5 +1,5 @@
 /* -------------------------------------------------------------------------------
-* Copyright (c) 2018, OLogN Technologies AG
+* Copyright (c) 2020, OLogN Technologies AG
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -25,73 +25,51 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_PTR_COMMON_H
-#define SAFE_PTR_COMMON_H
+#ifndef MEMORY_SAFETY_H
+#define MEMORY_SAFETY_H
 
 #include <cstdint>
-#include <cstddef>
-#include <utility>
-
-#define NODECPP_ASSERT(...)
+//mb: temporary hack, until we move all files to their definitive location
+// and rename namespaces acordingly
 
 namespace safememory
 {
-	constexpr uint64_t module_id = 2;
-}
+	constexpr int module_id = 2;
+} // namespace safememory
 
-
-#if defined NODECPP_MSVC
-#define NODISCARD _NODISCARD
-#elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
-#define NODISCARD [[nodiscard]]
-#else
-#define NODISCARD
-#endif
-
-
-
-namespace safememory::detail
+namespace safememory
 {
-#ifdef NODECPP_GCC
-extern void forcePreviousChangesToThisInDtor( void* p );
-#else
-#define forcePreviousChangesToThisInDtor(x)
-#endif
-
-template<class T>
-void destruct( T* t )
-{
+	constexpr const char* safememory_module_id = "safememory";
 }
-
-struct make_owning_t {};
-
-template<class T, bool isSafe> class owning_ptr_impl; // forward declaration
-template<class T, bool isSafe> class soft_ptr_base_impl; // forward declaration
-template<class T> class soft_ptr_base_no_checks; // forward declaration
-template<class T> class soft_ptr_no_checks; // forward declaration
-
-} //namespace safememory::detail
 
 namespace safememory {
 
+enum class memory_safety { none, safe };
+
 template<class T>
 struct safeness_declarator {
-	static constexpr bool is_safe = true; // by default
+#ifdef NODECPP_MEMORY_SAFETY
+#if NODECPP_MEMORY_SAFETY == 1
+	static constexpr memory_safety is_safe = memory_safety::safe;
+#elif NODECPP_MEMORY_SAFETY == 0
+	static constexpr memory_safety is_safe = memory_safety::none;
+#else
+#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are 1 or 0)
+#endif // NODECPP_MEMORY_SAFETY defined
+#else
+	static constexpr memory_safety is_safe = memory_safety::safe; // by default
+#endif
 };
 
+#ifdef NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#include NODECPP_MEMORY_SAFETY_EXCLUSIONS
+#endif
+
 /* Sample of user-defined exclusion:
-template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
+template<> struct safememory::safeness_declarator<double> { static constexpr memory_safety is_safe = memory_safety::none; };
 */
-
-// // sample code (to be removed)
-// template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; };
-// namespace testing::dummy_objects {
-// struct StructureWithSoftPtrDeclaredUnsafe; // forward declaration
-// }
-// template<> struct safememory::safeness_declarator<safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
-// // end of sample code (to be removed)
-
 
 } // namespace safememory
 
-#endif // SAFE_PTR_COMMON_H
+
+#endif //MEMORY_SAFETY_H

@@ -2,7 +2,7 @@
 
 #include <utility>
 #include <awaitable.h>
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
 using namespace safememory;
 
@@ -14,7 +14,7 @@ nodecpp::awaitable<void> func() {
 	{
 		int& ir = i;
 // CHECK: :[[@LINE-1]]:8: error: (S5.8)
-		nullable_ptr<int> np(i);
+		nullable_ptr<int> np(&i);
 // CHECK: :[[@LINE-1]]:21: error: (S5.8)
 		co_await af();
 	}
@@ -23,14 +23,14 @@ nodecpp::awaitable<void> func() {
 		//this is ok
 		co_await af();
 		int& ir = i;
-		nullable_ptr<int> np(i);
+		nullable_ptr<int> np(&i);
 	}
 
 	{
 		//this is ok
 		{
 			int& ir = i;
-			nullable_ptr<int> np(i);
+			nullable_ptr<int> np(&i);
 		}
 		co_await af();
 	}
@@ -42,7 +42,7 @@ nodecpp::awaitable<int> func2() {
 	{
 		int& ir = i;
 // CHECK: :[[@LINE-1]]:8: error: (S5.8)
-		nullable_ptr<int> np(i);
+		nullable_ptr<int> np(&i);
 // CHECK: :[[@LINE-1]]:21: error: (S5.8)
 		co_yield i;
 	}

@@ -28,7 +28,6 @@
 #ifndef NODECPP_ERROR_H
 #define NODECPP_ERROR_H
 
-#include "safe_memory/safe_ptr_common.h"
 #include <utility>
 
 namespace nodecpp

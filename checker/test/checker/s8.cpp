@@ -1,7 +1,7 @@
 // RUN: safememory-checker --safe-library-db=%p/s8.json %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <utility>
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 #include <server.h>
 
 namespace [[safememory::memory_unsafe]] name {

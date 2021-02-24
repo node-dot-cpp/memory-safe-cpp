@@ -1,6 +1,6 @@
 // RUN: safememory-checker --no-library-db %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
-#include <safe_memory/safe_ptr.h>
+#include <safememory/safe_ptr.h>
 
 using namespace safememory;
 
@@ -24,10 +24,10 @@ struct [[safememory::naked_struct]] NakedStr {
 void func99() {
 
 	Safe s1;
-	nullable_ptr<Safe> ptr1(s1);
+	nullable_ptr<Safe> ptr1(&s1);
 	{
 		Safe s2;
-		nullable_ptr<Safe> ptr2(s2);
+		nullable_ptr<Safe> ptr2(&s2);
 		ptr2 = ptr1; // ok
 		ptr1 = ptr2; // bad
 //CHECK: :[[@LINE-1]]:8: error: (S5.1)
@@ -81,13 +81,13 @@ void f1(nullable_ptr<int> arg) {
 	int i = 0;
 
 	func(p1); //ok
-	func(i); //ok
+	func(&i); //ok
 
 	nullable_ptr<int> p2 = func(p1); //ok
-	nullable_ptr<int> p3 = func(i); //ok
+	nullable_ptr<int> p3 = func(&i); //ok
 
 	p1 = func(p1); //ok
-	p1 = func(i); //ok
+	p1 = func(&i); //ok
 
 	{	
 		p1 = func(p2); //ok p1 and p2 have same life
@@ -107,21 +107,21 @@ void f1(nullable_ptr<int> arg) {
 
 	{
 		int iBad = 0;
-		p1 = func(iBad); //bad
+		p1 = func(&iBad); //bad
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 	}
 
-	p1 = func2(p1, i); // both args ok
+	p1 = func2(p1, &i); // both args ok
 
 	{	
 		int iBad = 0;
-		p1 = func2(p1, iBad); // bad
+		p1 = func2(p1, &iBad); // bad
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 	}
 
 	{	
 		int iBad = 0;
-		p1 = func2(iBad, p1); //bad 
+		p1 = func2(&iBad, p1); //bad 
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 	}
 	{
@@ -173,7 +173,7 @@ void f2(nullable_ptr<Some> arg) {
 	nullable_ptr<int> p1;
 	p1 = s.get(); //ok
 
-	nullable_ptr<Some> sp = s;
+	nullable_ptr<Some> sp = &s;
 	p1 = sp->get(); //ok
 
 	{
@@ -214,7 +214,7 @@ void f3() {
 		p1 = f(p1, l); //TODO lambda goes out of scope, but captures are empty
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 
-		p1 = f(i, l); // bad i goes out of scope
+		p1 = f(&i, l); // bad i goes out of scope
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 
 
@@ -222,12 +222,12 @@ void f3() {
 
 		p1 = (s >> p1); //ok function op
 
-		p1 = (s >> i); // bad function op
+		p1 = (s >> &i); // bad function op
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 
 		lp = s >> lp; // ok method op
 
-		lp = s >> l; // bad method op
+		lp = s >> &l; // bad method op
 // CHECK: :[[@LINE-1]]:6: error: (S5.1)
 
 	}
@@ -235,7 +235,7 @@ void f3() {
 
 nullable_ptr<int> f4() {
     int i = 0;
-    nullable_ptr<int> np(i);
+    nullable_ptr<int> np(&i);
     return np;
 // CHECK: :[[@LINE-1]]:12: error: (S5.1)
 }
