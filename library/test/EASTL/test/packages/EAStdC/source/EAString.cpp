@@ -562,23 +562,23 @@ EA_FORCE_INLINE bool EncodeCodePoint(uint32_t c, char*& pDestStart, char* pDestE
 	}
 }
 
-EA_FORCE_INLINE uint32_t DecodeCodePoint(const char16_t*& pSourceStart, const char16_t* /*pSourceEnd*/)
+EA_FORCE_INLINE uint32_t DecodeCodePoint(const char16_t*& pSourceStart, const char16_t* pSourceEnd)
 {
 	return (uint32_t)*(pSourceStart++);
 }
 
-EA_FORCE_INLINE bool EncodeCodePoint(uint32_t c, char16_t*& pDestStart, char16_t* /*pDestEnd*/)
+EA_FORCE_INLINE bool EncodeCodePoint(uint32_t c, char16_t*& pDestStart, char16_t* pDestEnd)
 {
 	*(pDestStart++) = static_cast<char16_t>(c);
 	return true;
 }
 
-EA_FORCE_INLINE uint32_t DecodeCodePoint(const char32_t*& pSourceStart, const char32_t* /*pSourceEnd*/)
+EA_FORCE_INLINE uint32_t DecodeCodePoint(const char32_t*& pSourceStart, const char32_t* pSourceEnd)
 {
 	return (uint32_t)*(pSourceStart++);
 }
 
-EA_FORCE_INLINE bool EncodeCodePoint(uint32_t c, char32_t*& pDestStart, char32_t* /*pDestEnd*/)
+EA_FORCE_INLINE bool EncodeCodePoint(uint32_t c, char32_t*& pDestStart, char32_t* pDestEnd)
 {
 	*(pDestStart++) = static_cast<char32_t>(c);
 	return true;
@@ -1601,47 +1601,47 @@ EASTDC_API size_t Strxfrm(char32_t* pDest, const char32_t* pSource, size_t n)
 
 
 
-// EASTDC_API char* Strdup(const char* pString)
-// {
-// 	if(pString)
-// 	{
-// 		const size_t nLength = Strlen(pString);
-// 		char* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char[nLength + 1]; // '+ 1' to include terminating zero.
+EASTDC_API char* Strdup(const char* pString)
+{
+	if(pString)
+	{
+		const size_t nLength = Strlen(pString);
+		char* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char[nLength + 1]; // '+ 1' to include terminating zero.
 
-// 		Strcpy(p, pString);
-// 		return p;
-// 	}
+		Strcpy(p, pString);
+		return p;
+	}
 
-// 	return NULL;
-// }
+	return NULL;
+}
 
-// EASTDC_API char16_t* Strdup(const char16_t* pString)
-// {
-// 	if(pString)
-// 	{
-// 		const size_t nLength = Strlen(pString);
-// 		char16_t* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char16_t[nLength + 1]; // '+ 1' to include terminating zero.
+EASTDC_API char16_t* Strdup(const char16_t* pString)
+{
+	if(pString)
+	{
+		const size_t nLength = Strlen(pString);
+		char16_t* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char16_t[nLength + 1]; // '+ 1' to include terminating zero.
 
-// 		Strcpy(p, pString);
-// 		return p;
-// 	}
+		Strcpy(p, pString);
+		return p;
+	}
 
-// 	return NULL;
-// }
+	return NULL;
+}
 
-// EASTDC_API char32_t* Strdup(const char32_t* pString)
-// {
-// 	if(pString)
-// 	{
-// 		const size_t nLength = Strlen(pString);
-// 		char32_t* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char32_t[nLength + 1]; // '+ 1' to include terminating zero.
+EASTDC_API char32_t* Strdup(const char32_t* pString)
+{
+	if(pString)
+	{
+		const size_t nLength = Strlen(pString);
+		char32_t* const p = EASTDC_NEW(EASTDC_ALLOC_PREFIX "Strdup") char32_t[nLength + 1]; // '+ 1' to include terminating zero.
 
-// 		Strcpy(p, pString);
-// 		return p;
-// 	}
+		Strcpy(p, pString);
+		return p;
+	}
 
-// 	return NULL;
-// }
+	return NULL;
+}
 
 
 

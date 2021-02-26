@@ -592,7 +592,7 @@ namespace EA
     {
         namespace Internal
         {
-            IChannel *CreateNetworkChannel(const char * /*server*/, int /*port*/)
+            IChannel *CreateNetworkChannel(const char *server, int port)
             {
                 return NULL;
             }

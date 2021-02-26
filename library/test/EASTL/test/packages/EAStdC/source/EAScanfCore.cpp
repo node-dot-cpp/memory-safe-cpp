@@ -618,7 +618,6 @@ public:
 
 					pReadFunction(kReadActionUnread, c, pContext);
 					// Fall through, as %[] processing is the same as %s except %[] specifies a filter for what characters to accept or ignore.
-					[[fallthrough]];
 				}
 
 				case '[':
