@@ -11,7 +11,9 @@ include(CommonCppFlags)
 
 add_subdirectory(3rdparty/EABase)
 add_subdirectory(3rdparty/EASTL)
-# target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+
+target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+target_compile_definitions(EASTL PUBLIC EASTL_STD_ITERATOR_CATEGORY_ENABLED)
 
 
 add_subdirectory(src/iibmalloc)

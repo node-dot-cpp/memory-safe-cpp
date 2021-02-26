@@ -1,14 +1,16 @@
 #-------------------------------------------------------------------------------------------
-# Compiler Flags
+# Compiler Flag Detection
 #-------------------------------------------------------------------------------------------
+include(CheckCXXCompilerFlag)
 
-# mb: we are using all this for testing only
-if (MSVC AND (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
-    # emulating clang-cl specifics
-    add_compile_options( -Wno-deprecated-declarations )
-    add_compile_options( -Wno-ignored-pragma-optimize )
-    add_compile_options( -Wno-return-type )
-    add_compile_options( -Wno-reorder )
-    add_compile_options( -Wno-microsoft-cast )
-    add_compile_options( -Wno-unused-function )    
+check_cxx_compiler_flag("-fchar8_t" EASTL_HAS_FCHAR8T_FLAG)
+check_cxx_compiler_flag("/Zc:char8_t" EASTL_HAS_ZCCHAR8T_FLAG)
+
+if(EASTL_HAS_FCHAR8T_FLAG)
+    set(EASTL_CHAR8T_FLAG "-fchar8_t")
+    set(EASTL_NO_CHAR8T_FLAG "-fno-char8_t")
+elseif(EASTL_HAS_ZCCHAR8T_FLAG)
+    set(EASTL_CHAR8T_FLAG "/Zc:char8_t")
+    set(EASTL_NO_CHAR8T_FLAG "/Zc:char8_t-")
 endif()
+
