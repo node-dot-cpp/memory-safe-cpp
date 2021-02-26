@@ -30,6 +30,7 @@
 
 #include <utility>
 #include <typeindex>
+#include <stdexcept> // before EASTL/unordered_map.h
 #include <EASTL/unordered_map.h>
 #include <EASTL/unordered_set.h>
 #include <safememory/functional.h>
@@ -542,7 +543,7 @@ namespace safememory
         // using base_type::count;
 
 		eastl::pair<iterator, iterator> equal_range(const key_type& k) { return base_type::equal_range_safe(k); }
-		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const { return = base_type::equal_range_safe(k); }
+		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const { return base_type::equal_range_safe(k); }
 
 		// using base_type::validate;
 		// using base_type::validate_iterator;

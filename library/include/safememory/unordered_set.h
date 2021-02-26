@@ -29,6 +29,7 @@
 #define SAFE_MEMORY_UNORDERED_SET_H
 
 #include <utility>
+#include <stdexcept> // before EASTL/unordered_map.h
 #include <EASTL/unordered_set.h>
 #include <safememory/functional.h>
 #include <safememory/detail/allocator_to_eastl.h>
