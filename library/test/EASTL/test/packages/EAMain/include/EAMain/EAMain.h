@@ -38,7 +38,7 @@ namespace EA
 {
     namespace EAMain
     {
-        typedef void (*ReportFunction)(const char8_t*);
+        typedef void (*ReportFunction)(const char*);
         EAMAIN_API void           SetReportFunction(ReportFunction pReportFunction);
         EAMAIN_API ReportFunction GetReportFunction();
         EAMAIN_API ReportFunction GetDefaultReportFunction();
@@ -60,7 +60,7 @@ namespace EA
         /// Example usage:
         ///     Report("Time passed: %d\n", timeDelta);
         ///
-        EAMAIN_API void Report(const char8_t* pFormat, ...);
+        EAMAIN_API void Report(const char* pFormat, ...);
 
         /// ReportVerbosity
         /// Same as Report, but is silent unless GetVerbosity() is >= the value specified as minVerbosity.
@@ -71,17 +71,17 @@ namespace EA
         /// Example usage:
         ///     ReportVerbosity(1, "Time passed: %d\n", timeDelta);
         ///
-        EAMAIN_API void ReportVerbosity(unsigned minVerbosity, const char8_t* pFormat, ...);
+        EAMAIN_API void ReportVerbosity(unsigned minVerbosity, const char* pFormat, ...);
 
         /// VReport
         /// Called by EATest Report Wrapper to preserve the optional variable arguments
         ///
-        EAMAIN_API void VReport(const char8_t* pFormat, va_list arguments);
+        EAMAIN_API void VReport(const char* pFormat, va_list arguments);
 
         /// VReportVerbosity
         /// Called by EATest ReportVerbosity Wrapper to preserve the optional variable arguments
         ///
-        EAMAIN_API void VReportVerbosity(unsigned minVerbosity, const char8_t* pFormat, va_list arguments);
+        EAMAIN_API void VReportVerbosity(unsigned minVerbosity, const char* pFormat, va_list arguments);
 
         ///////////////////////////////////////////////////////////////////////
         /// GetVerbosity / SetVerbosity

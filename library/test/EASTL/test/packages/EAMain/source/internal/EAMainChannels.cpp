@@ -23,7 +23,7 @@ namespace EAMain {
 //------------------------------------------------------------
 // Printf Channel
 //------------------------------------------------------------
-void PrintfChannel::Send(const char8_t* pData)
+void PrintfChannel::Send(const char* pData)
 {
     // Route to default print function
     EA::EAMain::GetDefaultReportFunction()(pData);
@@ -39,7 +39,7 @@ void FileChannel::Init()
 }
 
 //------------------------------------------------------------
-void FileChannel::Send(const char8_t* pData)
+void FileChannel::Send(const char* pData)
 {
     EA_ASSERT_MSG(mFileHandle, "invalid file handle");
     fputs(pData, mFileHandle);

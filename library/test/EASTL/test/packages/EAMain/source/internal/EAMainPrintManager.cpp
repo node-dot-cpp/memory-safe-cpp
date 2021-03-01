@@ -43,7 +43,7 @@ PrintManager::PrintManager()
 }
 
 //------------------------------------------------------------
-void PrintManager::Send(const char8_t* pData)
+void PrintManager::Send(const char* pData)
 {
     // Broadcast the message to all the registered channels.
     for(int i = 0; i < CHANNEL_MAX; i++)
@@ -100,7 +100,7 @@ void PrintManager::Remove(EAMainChannel channel, IChannel* instance)
 }
 
 //------------------------------------------------------------
-void PrintManager::Startup(const char8_t* printServerAddress)
+void PrintManager::Startup(const char* printServerAddress)
 {
     // Register PrintManager print function with the reporting module.
     //
@@ -116,11 +116,11 @@ void PrintManager::Startup(const char8_t* printServerAddress)
     {
         printServerAddress = MACRO_TO_STRING(EAMAIN_NETWORK_CHANNEL_IP);
     }
-    const char8_t* server = printServerAddress;
-    const char8_t* portStr = strchr(printServerAddress, ':');
+    const char* server = printServerAddress;
+    const char* portStr = strchr(printServerAddress, ':');
 
     int port = EAMAIN_NETWORK_CHANNEL_PORT;
-    char8_t serverBuff[64] = { 0 };
+    char serverBuff[64] = { 0 };
     if (portStr != NULL)
     {
         port = EA::StdC::AtoI32(portStr + 1);

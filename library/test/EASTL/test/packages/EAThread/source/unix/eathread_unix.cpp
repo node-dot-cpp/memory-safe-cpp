@@ -402,7 +402,7 @@
 		// This function is not currently used if the thread name can be set from any other thread
 		#if !EATHREAD_OTHER_THREAD_NAMING_SUPPORTED
 
-			void SetCurrentThreadName(const char8_t* pName)
+			void SetCurrentThreadName(const char* pName)
 			{
 				#if defined(EA_PLATFORM_LINUX)
 					// http://manpages.courier-mta.org/htmlman2/prctl.2.html
@@ -417,7 +417,7 @@
 					// (/proc/$PID/task/$TID/comm on newer kernels, /proc/$PID/task/$TID/stat's second field 
 					// on older kernels), and hence distinguish which thread might be responsible for the high 
 					// CPU load or similar problems.
-					char8_t nameBuf[16]; // Limited to 16 bytes, null terminated if < 16 bytes
+					char nameBuf[16]; // Limited to 16 bytes, null terminated if < 16 bytes
 					strncpy(nameBuf, pName, sizeof(nameBuf));
 					nameBuf[15] = 0;
 					prctl(PR_SET_NAME, (unsigned long)nameBuf, 0, 0, 0);
@@ -434,7 +434,7 @@
 					if(pthread_setname_np_ptr)
 					{
 						// Mac OS X does not expose the length limit of the name, so hardcode it.
-						char8_t nameBuf[63]; // It is not clear what the size limit actually is, though 63 is known to work because it was seen on the Internet.
+						char nameBuf[63]; // It is not clear what the size limit actually is, though 63 is known to work because it was seen on the Internet.
 						strncpy(nameBuf, pName, sizeof(nameBuf));
 						nameBuf[62] = 0;
 						pthread_setname_np_ptr(nameBuf);

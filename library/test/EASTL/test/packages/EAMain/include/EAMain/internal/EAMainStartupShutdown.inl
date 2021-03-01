@@ -21,7 +21,7 @@ namespace EA
 
             // Handle the internal EAMain main start-up
             //
-            inline void EAMainStartup(const char8_t* ServerIP = NULL)
+            inline void EAMainStartup(const char* ServerIP = NULL)
             {
                 static bool sEAMainShutdown_StartupHandled = false;
 

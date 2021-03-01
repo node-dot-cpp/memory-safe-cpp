@@ -115,7 +115,7 @@ namespace EA
 
                 virtual ~NetworkChannel();
                 virtual void Init();
-                virtual void Send(const char8_t *data);
+                virtual void Send(const char *data);
                 virtual void Shutdown();
 
                 void SetServerPort(const char *server, const char *port);
@@ -166,7 +166,7 @@ namespace EA
             {
             }
 
-            void NetworkChannel::Send(const char8_t *data)
+            void NetworkChannel::Send(const char *data)
             {
                 char *buffer = const_cast<char *>(data);
                 ssize_t bufferLength = static_cast<ssize_t>(strlen(buffer));
@@ -422,7 +422,7 @@ namespace EA
                 {
                 }
 
-                virtual void Send(const char8_t *data)
+                virtual void Send(const char *data)
                 {
                     fputs(data, stdout);
                     fflush(stdout);

@@ -31,10 +31,10 @@ namespace EAMain
         PrintManager();
         static PrintManager& Instance();
 
-        void Startup(const char8_t* ServerIP);
+        void Startup(const char* ServerIP);
         void Shutdown();
 
-        void Send(const char8_t* pData);
+        void Send(const char* pData);
         void Add(EAMainChannel channel, IChannel* instance);
         void Remove(EAMainChannel channel, IChannel* instance);
         void ClearChannel(EAMainChannel channel);

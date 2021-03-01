@@ -124,7 +124,7 @@ namespace EA
                 }
             }
 
-            static void AppendToReportBuffer(char8_t c)
+            static void AppendToReportBuffer(char c)
             {
                 char *ptr = gAndroidReportBufferWritePtr;
                 char *end = &gAndroidReportBuffer[ANDROID_REPORT_BUFFER_SIZE];
@@ -137,7 +137,7 @@ namespace EA
                 *gAndroidReportBufferWritePtr++ = c;
             }
 
-            static void AndroidReport(const char8_t *pMessage)
+            static void AndroidReport(const char *pMessage)
             {
                 using namespace EA::StdC;
                 using namespace EA::Thread;
@@ -147,7 +147,7 @@ namespace EA
                 size_t messageLength = Strlen(pMessage);
                 for (size_t i = 0; i < messageLength; ++i)
                 {
-                    char8_t c = pMessage[i];
+                    char c = pMessage[i];
 
                     switch (c)
                     {
@@ -162,7 +162,7 @@ namespace EA
             }
 #endif
 
-            static void ReportDefault(const char8_t* pMessage)
+            static void ReportDefault(const char* pMessage)
             {
                 if (!pMessage)
                 {
@@ -179,7 +179,7 @@ namespace EA
                 {
                     for(size_t i = 0, copiedLength = 0; i < length; i += copiedLength)
                     {
-                        char8_t buffer[kMaxLength + 1];
+                        char buffer[kMaxLength + 1];
                         size_t  c;
 
                         copiedLength = ((length - i) >= kMaxLength) ? kMaxLength : (length - i);
@@ -267,7 +267,7 @@ namespace EA
         ///////////////////////////////////////////////////////////////////////////////
         // ReportVaList
         //
-        static void ReportVaList(unsigned minVerbosity, ReportFunction pReportFunction, const char8_t* pFormat, va_list arguments)
+        static void ReportVaList(unsigned minVerbosity, ReportFunction pReportFunction, const char* pFormat, va_list arguments)
         {
             if(pFormat && (GetVerbosity() >= minVerbosity))
             {
@@ -327,7 +327,7 @@ namespace EA
         ///////////////////////////////////////////////////////////////////////////////
         // Report
         //
-        EAMAIN_API void Report(const char8_t* pFormat, ...)
+        EAMAIN_API void Report(const char* pFormat, ...)
         {
             va_list arguments;
             va_start(arguments, pFormat);
@@ -338,7 +338,7 @@ namespace EA
         ///////////////////////////////////////////////////////////////////////////////
         // ReportVerbosity
         //
-        EAMAIN_API void ReportVerbosity(unsigned minVerbosity, const char8_t* pFormat, ...)
+        EAMAIN_API void ReportVerbosity(unsigned minVerbosity, const char* pFormat, ...)
         {
             va_list arguments;
             va_start(arguments, pFormat);
@@ -349,7 +349,7 @@ namespace EA
         ///////////////////////////////////////////////////////////////////////////////
         // VReport
         //
-        EAMAIN_API void VReport(const char8_t* pFormat, va_list arguments)
+        EAMAIN_API void VReport(const char* pFormat, va_list arguments)
         {
             ReportVaList(0, gpReportFunction, pFormat, arguments);
         }
@@ -357,7 +357,7 @@ namespace EA
         ///////////////////////////////////////////////////////////////////////////////
         // VReportVerbosity
         //
-        EAMAIN_API void VReportVerbosity(unsigned minVerbosity, const char8_t* pFormat, va_list arguments)
+        EAMAIN_API void VReportVerbosity(unsigned minVerbosity, const char* pFormat, va_list arguments)
         {
             ReportVaList(minVerbosity, gpReportFunction, pFormat, arguments);
         }
@@ -492,7 +492,7 @@ namespace EA
         //Returns position switch is found at. Returns -1 if not found
         int CommandLine::FindSwitch(const char* pSwitch, bool bCaseSensitive, const char** pResult, int nStartingIndex, char delimeter) const
         {
-            const char8_t kSwitchIDs[]   = { '-', '/' };
+            const char kSwitchIDs[]   = { '-', '/' };
             const int     kSwitchIDCount = sizeof(kSwitchIDs)/sizeof(kSwitchIDs[0]);
             static const char sEmptyString[] = { 0 };
 
