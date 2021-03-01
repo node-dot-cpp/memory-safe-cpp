@@ -14,31 +14,15 @@ include(CTest)
 #-------------------------------------------------------------------------------------------
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 add_definitions(-D_SCL_SECURE_NO_WARNINGS)
-
-add_definitions(-DEASTL_STD_ITERATOR_CATEGORY_ENABLED)
-
-
-#-------------------------------------------------------------------------------------------
-# Compiler Flags
-#-------------------------------------------------------------------------------------------
-set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/../scripts/CMake")
-include(CommonCppFlags)
-
-#if (MSVC)
-#	SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
-#endif()
-
-
-if (CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    # Remove warnings from EA libraries (used for tests and benchmarks only)
-    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-pointer-bool-conversion -Wno-unknown-warning-option -Wno-deprecated-declarations -Wno-ignored-pragma-optimize -Wno-microsoft-cast")
-endif()
+add_definitions(-DEASTL_OPENSOURCE=1)
+add_definitions(-D_CHAR16T)
+add_definitions(-DEASTL_THREAD_SUPPORT_AVAILABLE=0)
 
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTLTEST_SOURCES "source/*.cpp" "source/*.inl" "source/*.h")
-
+set(SOURCES ${EASTLTEST_SOURCES})
 
 #-------------------------------------------------------------------------------------------
 # Executable definition
@@ -58,11 +42,9 @@ target_include_directories(EASTLTestNoCheck PUBLIC include)
 #-------------------------------------------------------------------------------------------
 # Dependencies 
 #-------------------------------------------------------------------------------------------
-#mb: EABase and EASTL are already found from 3rdparty
-#add_subdirectory(packages/EABase)
+# add_subdirectory(packages/EABase)
 add_subdirectory(packages/EAAssert)
 add_subdirectory(packages/EAStdC)
-#add_subdirectory(packages/EASTL)
 add_subdirectory(packages/EAMain)
 add_subdirectory(packages/EATest)
 add_subdirectory(packages/EAThread)
@@ -71,21 +53,11 @@ set(EASTLTest_Libraries
     EABase
     EAAssert
     EAMain
-    EASTL
-    EAStdC
-    EATest
     EAThread
-    safememory
-)
-
-#target_link_libraries(EASTLTest EABase)
-#target_link_libraries(EASTLTest EAAssert)
-#target_link_libraries(EASTLTest EAMain)
-#target_link_libraries(EASTLTest EASTL)
-#target_link_libraries(EASTLTest EAStdC)
-#target_link_libraries(EASTLTest EATest)
-#target_link_libraries(EASTLTest EAThread)
-#target_link_libraries(EASTLTest safememory)
+    EAStdC
+    EASTL
+    EATest
+    safememory)
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -103,6 +75,6 @@ endif()
 #-------------------------------------------------------------------------------------------
 add_test(EASTLTestRuns EASTLTest)
 add_test(EASTLTestNoCheckRuns EASTLTestNoCheck)
+
 set_tests_properties (EASTLTestRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
 set_tests_properties (EASTLTestNoCheckRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
-

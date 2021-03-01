@@ -64,9 +64,8 @@
 
 
 #include <EATest/internal/Config.h>
-//#include <EASTL/internal/config.h> // for size_t
-#include <string>
-#include <vector>
+#include <EASTL/string.h>
+#include <EASTL/vector.h>
 #include <stddef.h>
 #include <limits.h>
 #include "EAMain/EAMain.h"
@@ -642,7 +641,7 @@ namespace EA
             ///
             /// Returns the name of the Test as a string.
             ///
-            virtual void GetName(std::string& sName) const;
+            virtual void GetName(eastl::string& sName) const;
 
             /// GetParentSuite
             ///
@@ -715,7 +714,7 @@ namespace EA
         protected:
             friend class TestSuite;
 
-            std::string   msTestName;
+            eastl::string   msTestName;
             TestSuite*      mpParentSuite;
             size_t          mnSuccessCount;
             size_t          mnErrorCount;
@@ -1039,7 +1038,7 @@ namespace EA
                 Test* mpTest;        /// Pointer to test object itself.
                 bool  mbOwned;       /// If true, we delete mpTest on shutdown or test removal.
             };
-            typedef std::vector<TestInfo> TestArray;
+            typedef eastl::vector<TestInfo> TestArray;
 
             TestInfo* FindTestInfo(const char* pTestName, bool bRecursive);
 
@@ -1217,7 +1216,7 @@ namespace EA
                 Test* mpTest;       /// Pointer to test object itself.
                 int   mnResult;     /// Stores result of last Run of mpTest.
             };
-            typedef std::vector<ResultInfo> ResultArray;
+            typedef eastl::vector<ResultInfo> ResultArray;
 
             void Run(ResultInfo& resultInfo);
 
@@ -1491,7 +1490,7 @@ namespace EA
             /// Identical to RandLimit().
             /// Returns a pseudorandom value in range of [0, nLimit)
             ///
-            uint32_t operator()(size_t n)
+            uint32_t operator()(eastl_size_t n)
                 { return RandLimit((uint32_t)n); }
 
         protected:

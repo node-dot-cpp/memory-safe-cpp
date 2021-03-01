@@ -156,7 +156,7 @@ namespace EA
         return returnValue;
     }
 
-    int WINAPI wWinMainShared(HINSTANCE /*instance*/, HINSTANCE /*prevInstance*/, LPWSTR /*wCmdLine*/, int /*cmdShow*/)
+    int WINAPI wWinMainShared(HINSTANCE /*instance*/, HINSTANCE /*prevInstance*/, LPWSTR wCmdLine, int /*cmdShow*/)
     {
         int       returnValue = 1;
         int       argc  = 0;
@@ -166,14 +166,14 @@ namespace EA
 
         if(wargv)
         {
-            char8_t** argv = (char8_t**)_malloca(argc * sizeof(char8_t*));
+            char** argv = (char**)_malloca(argc * sizeof(char*));
             __analysis_assume(argv != NULL);
 
             for(int i = 0; i < argc; i++)
             {
                 argv[i] = NULL;
                 const int requiredStrlen = EA::StdC::Strlcpy(argv[i], wargv[i], 0);
-                argv[i] = (char8_t *)_malloca(sizeof(char8_t) * (requiredStrlen + 1));
+                argv[i] = (char *)_malloca(sizeof(char) * (requiredStrlen + 1));
                 EA::StdC::Strlcpy(argv[i], wargv[i], requiredStrlen + 1);
             }
 
@@ -220,13 +220,13 @@ namespace EA
             EA::EAMain::Internal::gEAMainFunction = ::EAMain;
 
             // Allocate and convert-copy wargv to argv.
-            char8_t** argv = (char8_t**)_malloca(argc * sizeof(char8_t*));
+            char** argv = (char**)_malloca(argc * sizeof(char*));
 
             for(int i = 0; i < argc; i++)
             {
                 argv[i] = NULL;
                 const int requiredStrlen = EA::StdC::Strlcpy(argv[i], wargv[i], 0);
-                argv[i] = (char8_t)_malloca(sizeof(char8_t) * (requiredStrlen + 1));
+                argv[i] = (char)_malloca(sizeof(char) * (requiredStrlen + 1));
                 EA::StdC::Strlcpy(argv[i], wargv[i], requiredStrlen + 1);
             }
 

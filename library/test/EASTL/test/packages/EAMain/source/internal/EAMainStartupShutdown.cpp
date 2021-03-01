@@ -54,17 +54,17 @@ namespace EA
                     EA::EAMain::Report("===============================================================================\n");
 
                     #if EAMAIN_MINIDUMP_SUPPORTED
-                        char8_t szPath[MAX_PATH];
-                        char8_t szFileName[MAX_PATH];
+                        char szPath[MAX_PATH];
+                        char szFileName[MAX_PATH];
                         HANDLE hDumpFile;
                         SYSTEMTIME stLocalTime;
                         MINIDUMP_EXCEPTION_INFORMATION ExpParam;
                         BOOL bMiniDumpSuccessful;
 
                         #if defined(EA_PLATFORM_CAPILANO)
-                            const char8_t* pszDrive = "G:\\";
+                            const char* pszDrive = "G:\\";
                         #else
-                            const char8_t* pszDrive = "C:\\";
+                            const char* pszDrive = "C:\\";
                         #endif
 
                         GetLocalTime( &stLocalTime );
@@ -102,7 +102,7 @@ namespace EA
                 }
             #endif
 
-            void EAMainStartup(const char8_t* printServerAddress)
+            void EAMainStartup(const char* printServerAddress)
             {
                 static bool sEAMainShutdown_StartupHandled = false;
                 if(!sEAMainShutdown_StartupHandled)

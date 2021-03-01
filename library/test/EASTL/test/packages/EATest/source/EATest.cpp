@@ -36,9 +36,9 @@
     #include <Windows.h>
     extern "C" WINBASEAPI BOOL WINAPI IsDebuggerPresent();
 
-    // #if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP) && !defined(EA_COMPILER_CLANG)
-    //     #pragma comment(lib, "Advapi32.lib"); // For CheckTokenMembership and friends.
-    // #endif
+    #if EA_WINAPI_FAMILY_PARTITION(EA_WINAPI_PARTITION_DESKTOP) && !defined(EA_COMPILER_CLANG)
+        #pragma comment(lib, "Advapi32.lib"); // For CheckTokenMembership and friends.
+    #endif
 
 #elif defined(__APPLE__)    // OS X, iPhone, iPad, etc.
     #include <stdbool.h>
@@ -797,7 +797,7 @@ EA::EAMain::ReportFunction Test::GetReportFunction() const
 }
 
 
-void Test::GetName(std::string& sName) const
+void Test::GetName(eastl::string& sName) const
 {
     sName.assign(msTestName.data(), msTestName.length());
 }
@@ -887,17 +887,17 @@ int TestFunction::Run()
     {
 		uint64_t startTimeInMicroseconds = GetSystemTimeMicroseconds();
 
-        // #ifdef _MSC_VER
-        //     __try {
-        //         nTestResult = (*mpFunction)();
-        //     }
-        //     __except(true) {
-        //         nTestResult = kTestResultError;
-        //         VerifyFormatted(false, "Unhandled exception in test %s.\n", msTestName.c_str());
-        //     }
-        // #else
+        #ifdef _MSC_VER
+            __try {
+                nTestResult = (*mpFunction)();
+            }
+            __except(true) {
+                nTestResult = kTestResultError;
+                VerifyFormatted(false, "Unhandled exception in test %s.\n", msTestName.c_str());
+            }
+        #else
             nTestResult = (*mpFunction)();
-        // #endif
+        #endif
 
         if((nTestResult != kTestResultOK) && (nTestResult != kTestResultContinue))
             mnErrorCount++;
@@ -960,14 +960,14 @@ void TestCollection::AddTest(const char* pTestName, TestFunction::FunctionPtr pF
 
 void TestCollection::AddTests(const TestCollection *pCollection)
 {
-    const size_t nTotalTests = (size_t)pCollection->EnumerateTests(NULL, 0);
+    const eastl_size_t nTotalTests = (eastl_size_t)pCollection->EnumerateTests(NULL, 0);
 
     if(nTotalTests)
     {
-        std::vector<Test*> tests(nTotalTests);
+        eastl::vector<Test*> tests(nTotalTests);
         pCollection->EnumerateTests(tests.data(), nTotalTests);
 
-        for(size_t i = 0; i < nTotalTests; ++i)
+        for(eastl_size_t i = 0; i < nTotalTests; ++i)
             AddTest(tests[i]);
     }
 }
@@ -995,7 +995,7 @@ bool TestCollection::RemoveTest(Test* pTest, bool bDeleteIfOwned)
 
 bool TestCollection::RemoveTest(const char* pTestName, bool bDeleteIfOwned)
 {
-    std::string sName;
+    eastl::string sName;
 
     for(TestArray::iterator it(mTests.begin()); it != mTests.end(); ++it)
     {
@@ -1019,7 +1019,7 @@ Test* TestCollection::FindTest(const char* pTestName)
 
 TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bool bRecursive)
 {
-    std::string sNameCurrent;
+    eastl::string sNameCurrent;
 
     // Check each of our child tests directly against pTestName.
     for(TestArray::iterator it(mTests.begin()); it != mTests.end(); ++it)
@@ -1027,8 +1027,7 @@ TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bo
         TestInfo& testInfo = *it;
         testInfo.mpTest->GetName(sNameCurrent);
 
-        // if(sNameCurrent.comparei(pTestName) == 0)
-        if(sNameCurrent == pTestName)
+        if(sNameCurrent.comparei(pTestName) == 0)
             return &testInfo;
     }
 
@@ -1045,7 +1044,7 @@ TestCollection::TestInfo* TestCollection::FindTestInfo(const char* pTestName, bo
             // In this case, pTestName was passed in as a name like "Math Suite/Vector Test"
             // and we may have a child test called "Math Suite" which itself is a suite
             // and has a child test called "Vector Test". So we recursively call ourself.
-            sNameCurrent.assign(pTestName, (size_t)(pSeparator - pTestName));
+            sNameCurrent.assign(pTestName, (eastl_size_t)(pSeparator - pTestName));
 
             TestInfo* const pTestInfo = FindTestInfo(sNameCurrent.c_str(), false); // Use 'false' here to try to match just "Math Suite", for example.
 
@@ -1075,7 +1074,7 @@ size_t TestCollection::EnumerateTests(Test* pTestArray[], size_t nTestArrayCapac
 
         memset(pTestArray, 0, nTestArrayCapacity * sizeof(Test*));
 
-        for(size_t i = 0; i < nTestArrayCapacity; ++i)
+        for(eastl_size_t i = 0; i < nTestArrayCapacity; ++i)
             pTestArray[i] = mTests[i].mpTest;
     }
 
@@ -1110,9 +1109,9 @@ void TestSuite::Run(ResultInfo& resultInfo)
 {
     int nErrorCount = 0;
 
-    // #ifdef _MSC_VER
-    //     __try
-    // #endif
+    #ifdef _MSC_VER
+        __try
+    #endif
         {
             // If this is a new test (and not a continuation), initialize it.
             // Initialization failures are considered test failures.
@@ -1156,12 +1155,12 @@ void TestSuite::Run(ResultInfo& resultInfo)
                 }
             }
         }
-    // #ifdef _MSC_VER
-    //     __except(true) {
-    //         resultInfo.mnResult = kTestResultError;
-    //         EATEST_VERIFY_F(false, "Unhandled exception in test %s.\n", resultInfo.mpTest->msTestName.c_str());
-    //     }
-    // #endif
+    #ifdef _MSC_VER
+        __except(true) {
+            resultInfo.mnResult = kTestResultError;
+            EATEST_VERIFY_F(false, "Unhandled exception in test %s.\n", resultInfo.mpTest->msTestName.c_str());
+        }
+    #endif
 
     resultInfo.mpTest->mnErrorCount += nErrorCount;
 }
@@ -1325,7 +1324,7 @@ void TestSuite::WriteReport()
 
             if(resultInfo.mnResult == kTestResultNone)
             {
-                std::string sName;
+                eastl::string sName;
                 pTest->GetName(sName);
                 EA::EAMain::Report("Test not run: %s\n", sName.c_str());
             }
@@ -1626,8 +1625,8 @@ Cleanup:
 
 void TestApplication::PrintUsage()
 {
-    std::string sTestName1("MyTest1"), sTestName2("MyTest2");
-    std::string sAppName("Tests.exe");
+    eastl::string sTestName1("MyTest1"), sTestName2("MyTest2");
+    eastl::string sAppName("Tests.exe");
 
     if(mTests.size() >= 1)
         mTests[0].mpTest->GetName(sTestName1); 
@@ -1662,7 +1661,7 @@ void TestApplication::PrintUsage()
 
 void TestApplication::PrintTestNames(bool /*bDetail*/)
 {
-    std::string sName;
+    eastl::string sName;
 
     // To do: We need top support the bDetailArgument. In doing so, 
     // we may want to have them print using our '/' notation to denote the 
@@ -1677,7 +1676,7 @@ void TestApplication::PrintTestNames(bool /*bDetail*/)
     //     Math Suite/Matrix Test
     //     Math Suite/Quaternion Test
 
-    for(size_t i = 0, iEnd = mTests.size(); i < iEnd; ++i)
+    for(eastl_size_t i = 0, iEnd = mTests.size(); i < iEnd; ++i)
     {
         Test* const pTest = mTests[i].mpTest;
 

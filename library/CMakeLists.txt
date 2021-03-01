@@ -1,22 +1,22 @@
 #-------------------------------------------------------------------------------------------
 # Copyright (c) 2020, OLogN Technologies AG
 #-------------------------------------------------------------------------------------------
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.12.4)
 project(SafeMemory CXX)
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 include(CTest)
 
 set (CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/src/iibmalloc/src/foundation/tools")
 include(CommonCppFlags)
 
-# TODO remove conditional use of EASTL as it now is embedded
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/3rdparty/EASTL)
-  add_subdirectory(3rdparty/EABase)
-  add_subdirectory(3rdparty/EASTL)
-  target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
-endif()
-add_subdirectory(src/iibmalloc)
+add_subdirectory(3rdparty/EABase)
+add_subdirectory(3rdparty/EASTL)
 
+target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+target_compile_definitions(EASTL PUBLIC EASTL_STD_ITERATOR_CATEGORY_ENABLED)
+
+
+add_subdirectory(src/iibmalloc)
 
 #-------------------------------------------------------------------------------------------
 # Library definition
@@ -27,20 +27,16 @@ add_library(safememory STATIC
   src/detail/allocator_to_eastl.cpp
   )
 
+# target_compile_definitions(safememory PUBLIC NODECPP_NOT_USING_IIBMALLOC)
+
+
 target_include_directories(safememory
   PUBLIC include
   PUBLIC src
   )
 
 target_link_libraries(safememory iibmalloc)
-if (TARGET EASTL)
-  target_link_libraries(safememory EASTL EABase)
-endif()
-
-if (CMAKE_SYSTEM_NAME STREQUAL "Windows")
-  # remove default exceptions, because of warning
-  string( REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" )
-endif()
+target_link_libraries(safememory EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
@@ -88,8 +84,5 @@ if (SAFEMEMORY_TEST)
 
   add_subdirectory(samples)
 
-# When EASTL is present add container tests 
-  if (TARGET EASTL)
-    add_subdirectory(test/EASTL)
-  endif()
+  add_subdirectory(test/EASTL)
 endif()

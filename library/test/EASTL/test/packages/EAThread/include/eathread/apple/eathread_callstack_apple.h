@@ -25,8 +25,8 @@ namespace Thread
 	///
 	struct ModuleInfoApple
 	{
-		char8_t  mPath[256];        /// File name or file path
-		char8_t  mName[256];        /// Module name. Usually the same as the file name without the extension.
+		char  mPath[256];        /// File name or file path
+		char  mName[256];        /// Module name. Usually the same as the file name without the extension.
 		uint64_t mBaseAddress;      /// Base address in memory.
 		uint64_t mSize;             /// Module size in memory.
 		char     mType[32];         /// The type field (e.g. __TEXT) from the vmmap output.

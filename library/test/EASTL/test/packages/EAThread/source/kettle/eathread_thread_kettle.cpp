@@ -105,7 +105,7 @@ namespace
 // This function is not currently used if the thread name can be set from any other thread
 #if !EATHREAD_OTHER_THREAD_NAMING_SUPPORTED
 
-	void SetCurrentThreadName(const char8_t* pName)
+	void SetCurrentThreadName(const char* pName)
 	{
 		EAT_COMPILETIME_ASSERT(EATHREAD_NAME_SIZE == 32);  // New name (up to 32 bytes including the NULL terminator), or NULL  
 		scePthreadRename(scePthreadSelf(), pName);

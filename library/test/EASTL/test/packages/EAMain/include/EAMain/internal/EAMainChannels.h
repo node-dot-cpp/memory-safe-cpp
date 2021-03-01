@@ -24,7 +24,7 @@ namespace EAMain
     public:
         virtual ~IChannel() {}
         virtual void Init() {}
-        virtual void Send(const char8_t* /*pData*/) {}
+        virtual void Send(const char* pData) {}
         virtual void Shutdown() {}
     };
 
@@ -35,7 +35,7 @@ namespace EAMain
     {
     public:
         virtual ~PrintfChannel() {}
-        virtual void Send(const char8_t* pData);
+        virtual void Send(const char* pData);
     };
 
     // -----------------------------------------------------------
@@ -46,7 +46,7 @@ namespace EAMain
     public:
         virtual ~FileChannel() {}
         virtual void Init();
-        virtual void Send(const char8_t* pData);
+        virtual void Send(const char* pData);
         virtual void Shutdown();
 
     private:

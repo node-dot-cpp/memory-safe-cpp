@@ -838,7 +838,7 @@ int TEST_STRING_NAME()
 		{
 		#if defined(EA_CHAR8)
 			StringType str(LITERAL("abcdefghijklmnopqrstuvwxyz"));
-			safememory::string str2(EA_CHAR8("123456789"));
+			safememory::basic_string<char8_t> str2(EA_CHAR8("123456789"));
 
 			str.assign_convert_unsafe(str2);
 			VERIFY(str == LITERAL("123456789"));
