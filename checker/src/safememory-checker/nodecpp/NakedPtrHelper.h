@@ -74,11 +74,11 @@ public:
 
 /// FIXME: Write a short description.
 ///
-bool isOsnPtrMethodName(const std::string& Name);
+//bool isOsnPtrMethodName(const std::string& Name);
 bool isOwningPtrName(const std::string& Name);
 bool isSafePtrName(const std::string& Name);
 bool isAwaitableName(const std::string &Name);
-bool isNakedPtrName(const std::string& Name);
+bool isNullablePtrName(const std::string& Name);
 
 bool isSoftPtrCastName(const std::string& Name);
 bool isWaitForAllName(const std::string& Name);
@@ -88,6 +88,7 @@ bool isStdMoveOrForward(const std::string &Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
+bool isSystemStackOnlyTypeName(const ClangTidyContext *Context, const std::string &Name);
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Context);
 
@@ -116,7 +117,7 @@ bool isCharPointerType(QualType Qt);
 QualType getPointeeType(QualType Qt);
 QualType getTemplateArgType(QualType Qt, size_t i);
 
-KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 // bool hasDeepConstAttr(const CXXRecordDecl* Decl);
 
@@ -140,6 +141,25 @@ class TypeChecker {
   std::set<const CXXRecordDecl *> alreadyChecking;
   bool isSystemLoc = false;
 
+  struct TypeRecursionRiia {
+    TypeChecker& Tc;
+    const CXXRecordDecl * current;
+    bool alreadyHere = false;
+
+    TypeRecursionRiia(TypeChecker& Tc, const CXXRecordDecl * current) :
+      Tc(Tc), current(current) {
+        alreadyHere = !Tc.alreadyChecking.insert(current).second;
+      }
+
+    ~TypeRecursionRiia() {
+      if(!alreadyHere)
+        Tc.alreadyChecking.erase(current);
+    }
+
+    bool wasAlreadyHere() const { return alreadyHere; }
+  };
+  friend struct TypeRecursionRiia;
+
   // std::set<const Type *> safeTypes;
   // std::set<const Type *> deterministicTypes;
   // std::set<const Type *> selfContainedTypes;
@@ -151,6 +171,9 @@ public:
 
   bool isSafeRecord(const CXXRecordDecl *Dc);
   bool isSafeType(const QualType& Qt);
+
+  bool isStackOnlyRecord(const CXXRecordDecl *Dc);
+  bool isStackOnlyQtype(const QualType& Qt);
 
   bool isDeterministicRecord(const CXXRecordDecl *Dc);
   bool isDeterministicType(const QualType& Qt);

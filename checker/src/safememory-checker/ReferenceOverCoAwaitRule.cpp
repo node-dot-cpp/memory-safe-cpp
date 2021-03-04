@@ -89,13 +89,7 @@ public:
 
   bool VisitVarDecl(clang::VarDecl *D) {
     auto Qt = D->getType().getCanonicalType();
-    if(getCheckHelper()->isNullablePtr(Qt)) {
-      St.add(D);
-    }
-    else if(Qt->isPointerType()) {
-      St.add(D);
-    }
-    else if(Qt->isReferenceType()) {
+    if(getCheckHelper()->isStackOnly(Qt)) {
       St.add(D);
     }
 

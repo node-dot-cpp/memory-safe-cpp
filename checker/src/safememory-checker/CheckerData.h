@@ -73,6 +73,9 @@ public:
   bool isHeapSafe(clang::QualType Qt);
   void reportNonSafeDetail(clang::QualType Qt);
 
+  /// \brief Returns \c true if type is 'stack only'.
+  bool isStackOnly(clang::QualType Qt);
+
   /// \brief Returns \c true if type is deterministic.
   bool isDeterministic(clang::QualType Qt);
   void reportDeterministicDetail(clang::QualType Qt);
@@ -112,11 +115,15 @@ private:
   };
 
   struct TypeData {
+    //implicit attribute
     TypeData2 isHeapSafe;
+    TypeData2 isStackOnly;
+    TypeData2 isDeterministic;
+
+    // explicit attributes
     TypeData2 isNullablePtr;
     TypeData2 isNakedStruct;
     TypeData2 isDeepConst;
-    TypeData2 isDeterministic;
   };
 
   std::map<const clang::Type*, TypeData> Data;

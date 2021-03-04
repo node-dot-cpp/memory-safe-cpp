@@ -137,6 +137,14 @@ void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
 // /  assert(!S);
 }
 
+
+bool CheckerData::isStackOnly(clang::QualType Qt) {
+
+  TypeChecker Tc(Context, NullDiagHelper);
+  return Tc.isStackOnlyQtype(Qt);
+}
+
+
 bool CheckerData::isDeterministic(clang::QualType Qt) {
 
   Qt = Qt.getCanonicalType();
@@ -189,7 +197,7 @@ KindCheck2 CheckerData::checkNullablePtr(clang::QualType Qt) {
   auto& V = Data[T];
 
   if(!V.isNullablePtr.wasTested) {
-    auto Ck = isNakedPointerType(Qt, Context);
+    auto Ck = isNullablePointerQtype(Qt, Context);
     V.isNullablePtr.wasTested = true;
     V.isNullablePtr.isPositive = static_cast<bool>(Ck);
     V.isNullablePtr.isOk = Ck.isOk();
@@ -213,7 +221,7 @@ void CheckerData::reportNullablePtrDetail(clang::QualType Qt) {
 
   DiagHelper Dh(Context);
 
-  auto Ck = isNakedPointerType(Qt, Context, Dh);
+  auto Ck = isNullablePointerQtype(Qt, Context, Dh);
 
   assert(static_cast<bool>(Ck));
   assert(!Ck.isOk());

@@ -22,7 +22,7 @@ union MayBeBad {
 void func2() { 
 
 	MayBeBad<long> good; //ok
-	MayBeBad<long*> bad;
+	MayBeBad<long*> bad; 
 // CHECK: :[[@LINE-1]]:18: error: unsafe union at variable declaration
 }
 

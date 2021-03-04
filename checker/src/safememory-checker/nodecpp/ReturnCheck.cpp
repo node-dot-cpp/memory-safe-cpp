@@ -43,8 +43,7 @@ void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   //   return;
   // }
    
-  if (isRawPointerType(Qt) || getCheckHelper()->isNullablePtr(Qt) ||
-    getCheckHelper()->isNakedStruct(Qt) || Qt->isLValueReferenceType()) {
+  if (getCheckHelper()->isStackOnly(Qt)) {
 
     auto Ch = NakedPtrScopeChecker::makeParamScopeChecker(this, getContext());
     if (!Ch.checkExpr(Ex))

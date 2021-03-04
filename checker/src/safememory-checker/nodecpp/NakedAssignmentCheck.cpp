@@ -32,21 +32,29 @@ void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (Ex->getNumArgs() == 2) {
     auto Left = Ex->getArg(0);
+    auto Right = Ex->getArg(1);
     QualType Lqt = Left->getType().getCanonicalType();
-    if (getCheckHelper()->isNullablePtr(Lqt)) {
+    if (getCheckHelper()->isStackOnly(Left->getType())) {
       auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
                                                        Result.Context, Left);
 
-      if (!Checker.checkExpr(Ex->getArg(1)))
+      if (!Checker.checkExpr(Right))
         diag(Ex->getExprLoc(),
-             "(S5.1) assignment of nullable_ptr may extend scope");
-    } else if (getCheckHelper()->isNakedStruct(Lqt)) {
-      auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
-                                                       Result.Context, Left);
+             "(S5.1) assignment may extend scope");
+    // } else if (getCheckHelper()->isNullablePtr(Lqt)) {
+    //   auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(),
+    //                                                    Result.Context, Left);
 
-      if (!Checker.checkExpr(Ex->getArg(1)))
-        diag(Ex->getExprLoc(),
-             "(S5.1) assignment of naked_struct may extend scope");
+    //   if (!Checker.checkExpr(Ex->getArg(1)))
+    //     diag(Ex->getExprLoc(),
+    //          "(S5.1) assignment of nullable_ptr may extend scope");
+    // } else if (getCheckHelper()->isNakedStruct(Lqt)) {
+    //   auto Checker = NakedPtrScopeChecker::makeChecker(this, getContext(), 
+    //                                                    Result.Context, Left);
+
+    //   if (!Checker.checkExpr(Ex->getArg(1)))
+    //     diag(Ex->getExprLoc(),
+    //          "(S5.1) assignment of naked_struct may extend scope");
     }
   }
 }

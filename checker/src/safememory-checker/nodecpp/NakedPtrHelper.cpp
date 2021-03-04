@@ -55,7 +55,7 @@ bool isAwaitableName(const std::string &Name) {
   return Name == "nodecpp::awaitable";
 }
 
-bool isNakedPtrName(const std::string &Name) {
+bool isNullablePtrName(const std::string &Name) {
   // mb: 'base' ones are needed for methods at isSystemSafeFunction
   // TODO remove naked_ptr
   return Name == "safememory::nullable_ptr" ||
@@ -106,7 +106,7 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
   //hardcode some names that are really important, and have special rules
-  if (isSafePtrName(Name) || isNakedPtrName(Name) || isAwaitableName(Name))
+  if (isSafePtrName(Name) || isNullablePtrName(Name) || isAwaitableName(Name))
     return false;
 
   if(Context->getCheckerData().isFromUnsafeNamespace(Name))
@@ -114,6 +114,17 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
 
   auto &Wl = Context->getGlobalOptions().SafeTypes;
   return (Wl.find(Name) != Wl.end());
+}
+
+
+bool isSystemStackOnlyTypeName(const ClangTidyContext *Context,
+                      const std::string &Name) {
+
+  //hardcode some names that are really important, and have special rules
+    return Name == "eastl::hashtable_iterator" ||
+      Name == "eastl::node_iterator" ||
+      Name == "safememory::detail::hashtable_stack_only_iterator" ||
+      Name == "safememory::detail::array_of_stack_only_iterator";
 }
 
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name) {
@@ -133,7 +144,7 @@ bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Cont
     const CXXRecordDecl* Cl = M->getParent();
     std::string ClassName = getQnameForSystemSafeDb(Cl);
     std::string MethodName = M->getNameAsString();
-    if(isSafePtrName(ClassName) || isNakedPtrName(ClassName)) {
+    if(isSafePtrName(ClassName) || isNullablePtrName(ClassName)) {
       if(MethodName == "operator*" || 
               MethodName == "operator->" ||
               MethodName == "operator=" ||
@@ -248,11 +259,11 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
     if (isSafeType(Qt, Context))
       continue;
 
-    if (auto Np = isNakedPointerType(Qt, Context)) {
+    if (auto Np = isNullablePointerQtype(Qt, Context)) {
       if (Np.isOk())
         continue;
 
-      isNakedPointerType(Qt, Context, Dh); // for report
+      isNullablePointerQtype(Qt, Context, Dh); // for report
       Dh.diag((*It)->getLocation(), "unsafe type at nullable_ptr declaration");
       return false;
     }
@@ -447,7 +458,7 @@ QualType getTemplateArgType(QualType Qt, size_t i) {
 
 
 
-KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
+KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext *Context,
                              DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
@@ -456,7 +467,7 @@ KindCheck isNakedPointerType(QualType Qt, const ClangTidyContext *Context,
   //   return KindCheck(false, false);
 
   std::string Name = getQnameForSystemSafeDb(Qt);
-  if (isNakedPtrName(Name)) {
+  if (isNullablePtrName(Name)) {
     QualType Pointee = getPointeeType(Qt);
     return KindCheck(true, isSafeType(Pointee, Context, Dh));
   }
@@ -772,7 +783,8 @@ bool TypeChecker::isSafeRecord(const CXXRecordDecl *Dc) {
   if (!Dc)
     return false;
 
-  if(!alreadyChecking.insert(Dc).second) {
+  TypeRecursionRiia recursionRiia{*this, Dc};
+  if(recursionRiia.wasAlreadyHere()) {
     //already checking this type (got recursive)
     return true;
   }
@@ -827,18 +839,20 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
 
   assert(Qt.isCanonical());
 
-  if (Qt->isReferenceType()) {
+  if (isStackOnlyQtype(Qt)) {
     return false;
-  } else if (Qt->isPointerType()) {
-    return false;
+  // } else if (Qt->isReferenceType()) {
+  //   return false;
+  // } else if (Qt->isPointerType()) {
+  //   return false;
   } else if (Qt->isBuiltinType()) {
     return true;
   } else if (Qt->isEnumeralType()) {
     return true;
   } else if (isAwaitableType(Qt)) { //explicit black-list
     return false;
-  } else if (isNakedPointerType(Qt, Context)) { //explicit black-list
-    return false;
+  // } else if (isNullablePointerQtype(Qt, Context)) { //explicit black-list
+  //   return false;
   } else if(auto Kc = isSafeVectorType(Qt, Context, Dh)) {
     return Kc.isOk();
   } else if(auto Kc = isSafeHashMapType(Qt, Context, Dh)) {
@@ -855,6 +869,39 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
     return false;
   }
 }
+
+
+bool TypeChecker::isStackOnlyRecord(const CXXRecordDecl *Dc) {
+
+  Dc = getRecordWithDefinition(Dc);
+  if (!Dc)
+    return false;
+
+  // if database says is a safe name, then is safe
+  std::string Name = getQnameForSystemSafeDb(Dc);
+  return isSystemStackOnlyTypeName(Context, Name);
+}
+
+bool TypeChecker::isStackOnlyQtype(const QualType& Qt2) {
+
+  auto Qt = Qt2.getCanonicalType();
+
+  if(isRawPointerType(Qt))
+    return true;
+  else if (isNullablePointerQtype(Qt, Context))
+    return true;
+  else if(Qt->isLValueReferenceType())
+    return true;
+  else if(isNakedStructType(Qt, Context))
+    return true;
+  else if(auto Rd = Qt->getAsCXXRecordDecl())
+    return isStackOnlyRecord(Rd);
+  else {
+    //t->dump();
+    return false;
+  }
+}
+
 
 bool TypeChecker::isDeterministicRecord(const CXXRecordDecl *Dc) {
 
@@ -941,7 +988,7 @@ bool TypeChecker::isDeterministicType(const QualType& Qt) {
     return true;
   } else if (isSafePtrType(Qt)) {
     return true;
-  } else if (isNakedPointerType(Qt, Context)) {
+  } else if (isNullablePointerQtype(Qt, Context)) {
     return true;
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isDeterministicRecord(Rd);
@@ -1084,7 +1131,7 @@ KindCheck TypeChecker::isDeepConstType(QualType Qt) {
     return {true, true};
   } else if (isSafePtrType(Qt)) {
     return {false, false};
-  } else if (isNakedPointerType(Qt, Context, Dh)) {
+  } else if (isNullablePointerQtype(Qt, Context, Dh)) {
     return {false, false};
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isDeepConstRecord(Rd);
@@ -1141,7 +1188,7 @@ bool isOsnPtrRecord(const CXXRecordDecl *Dc) {
 
   std::string Name = getQnameForSystemSafeDb(Dc);
 
-  return isSafePtrName(Name) || isNakedPtrName(Name);
+  return isSafePtrName(Name) || isNullablePtrName(Name);
 }
 
 const Expr *getBaseIfOsnPtrDerref(const Expr *Ex) {
@@ -1424,7 +1471,7 @@ bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
   if (TidyContext->getCheckerData().isHeapSafe(Arg))
     return false;
 
-  if (isNakedPointerType(Arg, TidyContext))
+  if (isNullablePointerQtype(Arg, TidyContext))
     return true;
 
   if (isNakedStructType(Arg, TidyContext))
