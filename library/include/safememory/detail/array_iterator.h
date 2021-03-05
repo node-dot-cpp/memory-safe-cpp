@@ -475,13 +475,13 @@ template <typename T>
 using const_array_of_iterator_raw = array_of_stack_only_iterator<T, true, T*>;
 
 
-template<class T> struct array_of; //fwd
+template<class T> struct flexible_array; //fwd
 
 template<typename T, memory_safety Safety>
-using array_of_iterator_soft_ptr = array_of_iterator<T, false, soft_ptr<array_of<T>, Safety>>;
+using array_of_iterator_soft_ptr = array_of_iterator<T, false, soft_ptr<flexible_array<T>, Safety>>;
 
 template<typename T, memory_safety Safety>
-using const_array_of_iterator_soft_ptr = array_of_iterator<T, true, soft_ptr<array_of<T>, Safety>>;
+using const_array_of_iterator_soft_ptr = array_of_iterator<T, true, soft_ptr<flexible_array<T>, Safety>>;
 
 } // namespace safememory::detail 
 

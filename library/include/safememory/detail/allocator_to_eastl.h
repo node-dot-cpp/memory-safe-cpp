@@ -30,7 +30,7 @@
 
 #include <safememory/safe_ptr.h>
 #include <safememory/detail/soft_ptr_with_zero_offset.h>
-#include <safememory/detail/array_of.h>
+#include <safememory/detail/flexible_array.h>
 
 /** \file
  * \brief Allocators feed by \a safememory containers into \c eastl ones.
@@ -50,8 +50,8 @@
 
 namespace safememory::detail {
 
-extern fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl;
-extern fixed_array_of<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
+extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl;
+extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
 extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
 // using nodecpp::safememory::FirstControlBlock;
@@ -85,12 +85,12 @@ soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 }
 
 template<class T, bool zeroed = !std::is_trivial<T>::value>
-soft_ptr_with_zero_offset_impl<array_of<T>> allocate_array_impl(std::size_t count) {
+soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count) {
 
 	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 
 	// TODO here we should fine tune the sizes of array_of2<T> 
-	std::size_t total = head + array_of<T>::calculateSize(count);
+	std::size_t total = head + flexible_array<T>::calculateSize(count);
 	void* data = zombieAllocate(total);
 
 	// non trivial types get zeroed memory, just in case we get to deref
@@ -98,12 +98,12 @@ soft_ptr_with_zero_offset_impl<array_of<T>> allocate_array_impl(std::size_t coun
 	if constexpr (zeroed)
 		std::memset(data, 0, total);
 
-	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(reinterpret_cast<uintptr_t>(data) + head);
+	flexible_array<T>* dataForObj = reinterpret_cast<flexible_array<T>*>(reinterpret_cast<uintptr_t>(data) + head);
 	
 	auto cb = getControlBlock_(dataForObj);
 	cb->init();
 
-	::new ( dataForObj ) array_of<T>(count);
+	::new ( dataForObj ) flexible_array<T>(count);
 
 	return { make_zero_offset_t(), dataForObj };
 }
@@ -122,13 +122,13 @@ void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
 }
 
 template<class T>
-void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<array_of<T>>& p) {
+void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<flexible_array<T>>& p) {
 
 	if (p) {
-		array_of<T>* dataForObj = p.get_array_of_ptr();
-		dataForObj->~array_of<T>(); // only destruct array here, not elements
+		flexible_array<T>* dataForObj = p.get_array_of_ptr();
+		dataForObj->~flexible_array<T>(); // only destruct array here, not elements
 		auto cb = getControlBlock_(dataForObj);
-		cb->template updatePtrForListItemsWithInvalidPtr<array_of<T>>();
+		cb->template updatePtrForListItemsWithInvalidPtr<flexible_array<T>>();
 		zombieDeallocate( getAllocatedBlock_(dataForObj) );
 		cb->clear();
 	}
@@ -147,17 +147,17 @@ soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
 }
 
 template<class T, bool zeroed>
-soft_ptr_with_zero_offset_no_checks<array_of<T>> allocate_array_no_checks(std::size_t count) {
+soft_ptr_with_zero_offset_no_checks<flexible_array<T>> allocate_array_no_checks(std::size_t count) {
 
-	std::size_t total = array_of<T>::calculateSize(count);
+	std::size_t total = flexible_array<T>::calculateSize(count);
 	void* data = allocate(total);
 
 	if constexpr (zeroed)
 		std::memset(data, 0, total);
 
-	array_of<T>* dataForObj = reinterpret_cast<array_of<T>*>(data);
+	flexible_array<T>* dataForObj = reinterpret_cast<flexible_array<T>*>(data);
 	
-	::new ( dataForObj ) array_of<T>(count);
+	::new ( dataForObj ) flexible_array<T>(count);
 	return { make_zero_offset_t(), dataForObj };
 }
 
@@ -172,11 +172,11 @@ void deallocate_no_checks(const soft_ptr_with_zero_offset_no_checks<T>& p) {
 }
 
 template<class T>
-void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<array_of<T>>& p) {
+void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexible_array<T>>& p) {
 
 	if (p) {
-		array_of<T>* dataForObj = p.get_array_of_ptr();
-		dataForObj->~array_of<T>(); // only destruct array here, not elements
+		flexible_array<T>* dataForObj = p.get_array_of_ptr();
+		dataForObj->~flexible_array<T>(); // only destruct array here, not elements
 		deallocate(dataForObj);
 	}
 }
@@ -190,13 +190,13 @@ constexpr T* hashtable_sentinel() {
 }
 
 template<class T>
-constexpr array_of<T>* empty_hashtable_impl() {
-	return reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArrayImpl);
+constexpr flexible_array<T>* empty_hashtable_impl() {
+	return reinterpret_cast<flexible_array<T>*>(&gpSafeMemoryEmptyBucketArrayImpl);
 }
 
 template<class T>
-constexpr array_of<T>* empty_hashtable_no_checks() {
-	return reinterpret_cast<array_of<T>*>(&gpSafeMemoryEmptyBucketArrayNoChecks);
+constexpr flexible_array<T>* empty_hashtable_no_checks() {
+	return reinterpret_cast<flexible_array<T>*>(&gpSafeMemoryEmptyBucketArrayNoChecks);
 }
 
 template<class T>
@@ -263,7 +263,7 @@ public:
 	using pointer = soft_ptr_with_zero_offset_impl<T>;
 
 	template<class T>
-	using array_pointer = soft_ptr_with_zero_offset_impl<array_of<T>>;
+	using array_pointer = soft_ptr_with_zero_offset_impl<flexible_array<T>>;
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
@@ -335,7 +335,7 @@ public:
 	using pointer = soft_ptr_with_zero_offset_no_checks<T>;
 
 	template<class T>
-	using array_pointer = soft_ptr_with_zero_offset_no_checks<array_of<T>>;
+	using array_pointer = soft_ptr_with_zero_offset_no_checks<flexible_array<T>>;
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
@@ -400,7 +400,7 @@ public:
 class allocator_to_eastl_vector_impl : public base_allocator_to_eastl_impl {
 public:
 	template<class T>
-	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer<T>& p) {
+	static soft_ptr_impl<flexible_array<T>> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
 			auto cb = getControlBlock_(ptr);
@@ -415,7 +415,7 @@ public:
 class allocator_to_eastl_vector_no_checks : public base_allocator_to_eastl_no_checks {
 public:
 	template<class T>
-	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
+	static soft_ptr_no_checks<flexible_array<T>> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
@@ -468,7 +468,7 @@ public:
 	}
 
 	template<class T>
-	static soft_ptr_impl<array_of<T>> to_soft(const array_pointer<T>& p) {
+	static soft_ptr_impl<flexible_array<T>> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
 			auto cb = getControlBlock_(ptr);
@@ -513,7 +513,7 @@ public:
 	}
 
 	template<class T>
-	static soft_ptr_no_checks<array_of<T>> to_soft(const array_pointer<T>& p) {
+	static soft_ptr_no_checks<flexible_array<T>> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);

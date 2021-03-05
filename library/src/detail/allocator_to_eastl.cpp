@@ -29,11 +29,11 @@
 
 namespace safememory::detail {
 
-fixed_array_of<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl = 
+flexible_array_with_memory<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl = 
     { soft_ptr_with_zero_offset_impl<char>(), 
         soft_ptr_with_zero_offset_impl<char>(make_zero_offset_t(), hashtable_sentinel<char>())};
 
-fixed_array_of<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks = 
+flexible_array_with_memory<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks = 
     { soft_ptr_with_zero_offset_no_checks<char>(), 
         soft_ptr_with_zero_offset_no_checks<char>(make_zero_offset_t(), hashtable_sentinel<char>())};
 

@@ -25,62 +25,55 @@
 * SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 * -------------------------------------------------------------------------------*/
 
-#ifndef SAFE_MEMORY_DETAIL_ARRAY_OF
-#define SAFE_MEMORY_DETAIL_ARRAY_OF
+#ifndef SAFE_MEMORY_DETAIL_FLEXIBLE_ARRAY_H
+#define SAFE_MEMORY_DETAIL_FLEXIBLE_ARRAY_H
 
-#include <utility> //for std::pair
-#include <safememory/memory_safety.h>
-
-// mb: TODO rename this file an everything inside it, as name is too similar to safememory::array
-
-// namespace safememory {
-// 	//fwd
-// 	template<typename, memory_safety> class soft_ptr;
-// }
+#include <initializer_list>
 
 namespace safememory::detail {
 
 /** 
- * \brief Helper class for allocation of arrays.
+ * \brief Flexible array class for allocation of arrays.
+ * 
+ * Very similar to a C 'flexible array member' https://en.wikipedia.org/wiki/Flexible_array_member
  * 
  * While this class has the concept of an array or buffer,
  * it doesn't actually have the memory of the array.
  * Nor it will construct or destruct any of its elements.
- * It is assumed that the allocator will give enought memory right after this class
+ * It is assumed that the allocator will reserve enought memory right after this class
  * to actually to put the array elements.
  * This class is coupled with \c allocate_array function.
  * 
- * Very similar to a C 'flexible array member'
  */ 
 template<class T>
-struct array_of
+struct flexible_array
 {
-	typedef array_of<T> this_type;
+	typedef flexible_array<T> this_type;
 	typedef size_t      size_type;
 
-	size_type _capacity = 0;
+	size_type sz = 0;
 	alignas(T) char _begin;
-
+	
 public:
-	array_of(size_type capacity) :_capacity(capacity) {}
+	flexible_array(size_type capacity) :sz(capacity) {}
 
-	array_of(const array_of&) = delete;
-	array_of(array_of&&) = delete;
+	flexible_array(const flexible_array&) = delete;
+	flexible_array(flexible_array&&) = delete;
 
-	array_of& operator=(const array_of&) = delete;
-	array_of& operator=(array_of&&) = delete;
+	flexible_array& operator=(const flexible_array&) = delete;
+	flexible_array& operator=(flexible_array&&) = delete;
 
-	// ~array_of() {}
+	// ~flexible_array() {}
 
-	constexpr bool empty() const noexcept { return _capacity == 0; }
-	constexpr size_type size() const noexcept { return _capacity; }
-	constexpr size_type max_size() const noexcept { return _capacity; }
+	constexpr bool empty() const noexcept { return sz == 0; }
+	constexpr size_type size() const noexcept { return sz; }
+	constexpr size_type max_size() const noexcept { return sz; }
 
 	constexpr T* data() noexcept { return reinterpret_cast<T*>(&_begin); }
 	constexpr const T* data() const noexcept { return reinterpret_cast<const T*>(&_begin); }
 
 	static size_type calculateSize(size_type size) {
-		// TODO here we should fine tune the sizes of array_of<T> 
+		// TODO here we should fine tune the sizes of flexible_array<T> 
 		return static_cast<size_type>(sizeof(this_type) + (sizeof(T) * size));
 	}
 };
@@ -88,20 +81,20 @@ public:
 
 /**
  * 
- * Implementation of \c array_of that reserves enought
+ * Implementation of \c flexible_array that reserves enought
  * memory after the array header to a actually place elements.
  * Can be used on the stack or embedded in other ojects.
  * It still won't construct or destruct any of their elements.
  */
 template<size_t SZ, class T>
-struct fixed_array_of : public array_of<T>
+struct flexible_array_with_memory : public flexible_array<T>
 {
 	/// we never use this array, is only here to reserve enought memory
 	char buff[sizeof(T) * SZ];
 
 public:
-	fixed_array_of(std::initializer_list<T> init) :array_of<T>(SZ) {
-		auto jt = array_of<T>::data();
+	flexible_array_with_memory(std::initializer_list<T> init) :flexible_array<T>(SZ) {
+		auto jt = flexible_array<T>::data();
 		auto it = init.begin();
 		while(it != init.end()) {
 			*jt = *it;
@@ -110,15 +103,15 @@ public:
 		}
 	}
 
-	fixed_array_of(const fixed_array_of&) = delete;
-	fixed_array_of(fixed_array_of&&) = delete;
+	flexible_array_with_memory(const flexible_array_with_memory&) = delete;
+	flexible_array_with_memory(flexible_array_with_memory&&) = delete;
 
-	fixed_array_of& operator=(const fixed_array_of&) = delete;
-	fixed_array_of& operator=(fixed_array_of&&) = delete;
+	flexible_array_with_memory& operator=(const flexible_array_with_memory&) = delete;
+	flexible_array_with_memory& operator=(flexible_array_with_memory&&) = delete;
 
-	~fixed_array_of() {}
+	// ~flexible_array_with_memory() {}
 };
 
 } // namespace safememory::detail 
 
-#endif // SAFE_MEMORY_DETAIL_ARRAY_OF
+#endif // SAFE_MEMORY_DETAIL_FLEXIBLE_ARRAY_H
