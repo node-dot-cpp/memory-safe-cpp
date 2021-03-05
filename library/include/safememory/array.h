@@ -42,7 +42,7 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/memory.h>
 #include <safememory/safe_ptr.h>
-#include <safememory/detail/array_of.h>
+#include <safememory/detail/array_iterator.h>
 #include <safememory/detail/allocator_to_eastl.h>
 
 namespace safememory

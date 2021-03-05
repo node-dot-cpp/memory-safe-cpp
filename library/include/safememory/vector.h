@@ -34,6 +34,8 @@
 
 #include <EASTL/vector.h>
 #include <safememory/detail/allocator_to_eastl.h>
+#include <safememory/detail/array_iterator.h>
+
 
 namespace safememory
 {

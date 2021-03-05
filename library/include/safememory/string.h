@@ -30,6 +30,7 @@
 
 #include <EASTL/string.h>
 #include <safememory/detail/allocator_to_eastl.h>
+#include <safememory/detail/array_iterator.h>
 #include <safememory/string_literal.h>
 #include <safememory/functional.h> //for hash
 

@@ -29,6 +29,7 @@
 #define SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR
 
 #include <safememory/safe_ptr.h>
+#include <safememory/detail/array_iterator.h>
 
 namespace safememory::detail {
 

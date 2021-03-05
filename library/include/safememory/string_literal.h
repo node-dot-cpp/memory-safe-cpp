@@ -30,7 +30,7 @@
 
 #include <safememory/memory_safety.h>
 #include <safememory/detail/checker_attributes.h>
-#include <safememory/detail/array_of.h>
+#include <safememory/detail/array_iterator.h>
 #include <EASTL/iterator.h>
 #include <EASTL/internal/char_traits.h>
 
