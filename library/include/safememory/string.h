@@ -61,10 +61,10 @@ namespace safememory
 		typedef typename base_type::allocator_type              allocator_type;
 
 
-		typedef typename detail::array_of_iterator_stack<T>               stack_only_iterator;
-		typedef typename detail::const_array_of_iterator_stack<T>         const_stack_only_iterator;
-		typedef typename detail::array_of_iterator_heap<T, Safety>        heap_safe_iterator;
-		typedef typename detail::const_array_of_iterator_heap<T, Safety>  const_heap_safe_iterator;
+		typedef typename detail::array_of_iterator_raw<T>               stack_only_iterator;
+		typedef typename detail::const_array_of_iterator_raw<T>         const_stack_only_iterator;
+		typedef typename detail::array_of_iterator_soft_ptr<T, Safety>        heap_safe_iterator;
+		typedef typename detail::const_array_of_iterator_soft_ptr<T, Safety>  const_heap_safe_iterator;
 
 		// mb: for 'memory_safety::none' we boil down to use the base (eastl) iterator
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter

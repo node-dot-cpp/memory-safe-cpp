@@ -44,7 +44,8 @@ namespace safememory
 		typedef T                                                         value_type;
 		typedef const T&                                                  const_reference;
 		typedef size_t                                                    size_type;
-		typedef detail::array_of_iterator<T, true, T*, true>              const_heap_safe_iterator;
+		// string literals have infinite lifetime, so raw pointer iterator is safe
+		typedef detail::array_of_iterator<T, true, T*>		              const_heap_safe_iterator;
 		typedef const_heap_safe_iterator                                  const_iterator_safe;
 		typedef eastl::reverse_iterator<const_iterator_safe>              const_reverse_iterator_safe;
 

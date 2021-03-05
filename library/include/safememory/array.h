@@ -76,10 +76,10 @@ public:
 
 	typedef soft_ptr<this_type, Safety>                                             soft_ptr_this_type;
 
-	typedef typename detail::array_of_iterator_stack<T>                             stack_only_iterator;
-	typedef typename detail::const_array_of_iterator_stack<T>                       const_stack_only_iterator;
-	typedef typename detail::array_of_iterator<T, false, soft_ptr_this_type, true>  heap_safe_iterator;
-	typedef typename detail::array_of_iterator<T, true, soft_ptr_this_type, true>   const_heap_safe_iterator;
+	typedef typename detail::array_of_iterator_raw<T>                             stack_only_iterator;
+	typedef typename detail::const_array_of_iterator_raw<T>                       const_stack_only_iterator;
+	typedef typename detail::array_of_iterator<T, false, soft_ptr_this_type>  		heap_safe_iterator;
+	typedef typename detail::array_of_iterator<T, true, soft_ptr_this_type>   		const_heap_safe_iterator;
 
 	static constexpr bool use_base_iterator = Safety == memory_safety::none;
 	
