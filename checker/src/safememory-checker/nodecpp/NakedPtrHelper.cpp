@@ -121,10 +121,9 @@ bool isSystemStackOnlyTypeName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
   //hardcode some names that are really important, and have special rules
-    return Name == "eastl::hashtable_iterator" ||
-      Name == "eastl::node_iterator" ||
+    return Name == "eastl::node_iterator" ||
       Name == "safememory::detail::hashtable_stack_only_iterator" ||
-      Name == "safememory::detail::array_of_stack_only_iterator";
+      Name == "safememory::detail::array_stack_only_iterator";
 }
 
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name) {

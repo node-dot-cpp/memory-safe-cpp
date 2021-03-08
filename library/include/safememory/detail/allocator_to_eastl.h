@@ -257,7 +257,6 @@ class base_allocator_to_eastl_impl {
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::safe;
-	static constexpr bool use_base_iterator = false;
 
 	template<class T>
 	using pointer = soft_ptr_with_zero_offset_impl<T>;
@@ -329,7 +328,6 @@ class base_allocator_to_eastl_no_checks {
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none; 
-	static constexpr bool use_base_iterator = true;
 
 	template<class T>
 	using pointer = soft_ptr_with_zero_offset_no_checks<T>;
@@ -399,8 +397,12 @@ public:
 
 class allocator_to_eastl_vector_impl : public base_allocator_to_eastl_impl {
 public:
+
 	template<class T>
-	static soft_ptr_impl<flexible_array<T>> to_soft(const array_pointer<T>& p) {
+	using soft_array_pointer = soft_ptr_impl<flexible_array<T>>;
+
+	template<class T>
+	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
 			auto cb = getControlBlock_(ptr);
@@ -414,8 +416,12 @@ public:
 
 class allocator_to_eastl_vector_no_checks : public base_allocator_to_eastl_no_checks {
 public:
+
 	template<class T>
-	static soft_ptr_no_checks<flexible_array<T>> to_soft(const array_pointer<T>& p) {
+	using soft_array_pointer = soft_ptr_no_checks<flexible_array<T>>;
+
+	template<class T>
+	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
@@ -436,6 +442,10 @@ using allocator_to_eastl_vector = std::conditional_t<Safety == memory_safety::sa
 
 class allocator_to_eastl_hashtable_impl : public base_allocator_to_eastl_impl {
 public:
+
+	template<class T>
+	using soft_array_pointer = soft_ptr_impl<flexible_array<T>>;
+
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
 		return {make_zero_offset_t(), hashtable_sentinel<T>()};
@@ -468,7 +478,7 @@ public:
 	}
 
 	template<class T>
-	static soft_ptr_impl<flexible_array<T>> to_soft(const array_pointer<T>& p) {
+	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
 			auto cb = getControlBlock_(ptr);
@@ -481,6 +491,10 @@ public:
 
 class allocator_to_eastl_hashtable_no_checks : public base_allocator_to_eastl_no_checks {
 public:
+
+	template<class T>
+	using soft_array_pointer = soft_ptr_no_checks<flexible_array<T>>;
+
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
 		return {make_zero_offset_t(), hashtable_sentinel<T>()};
@@ -513,7 +527,7 @@ public:
 	}
 
 	template<class T>
-	static soft_ptr_no_checks<flexible_array<T>> to_soft(const array_pointer<T>& p) {
+	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);

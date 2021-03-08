@@ -62,15 +62,16 @@ namespace safememory
 		typedef typename base_type::allocator_type              allocator_type;
 
 
-		typedef typename detail::array_of_iterator_raw<T>               stack_only_iterator;
-		typedef typename detail::const_array_of_iterator_raw<T>         const_stack_only_iterator;
-		typedef typename detail::array_of_iterator_soft_ptr<T, Safety>        heap_safe_iterator;
-		typedef typename detail::const_array_of_iterator_soft_ptr<T, Safety>  const_heap_safe_iterator;
+		typedef typename allocator_type::template soft_array_pointer<T>            soft_ptr_type;
+		typedef typename detail::array_stack_only_iterator<T, false, T*>           stack_only_iterator;
+		typedef typename detail::array_stack_only_iterator<T, true, T*>            const_stack_only_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, false, soft_ptr_type> heap_safe_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, true, soft_ptr_type>  const_heap_safe_iterator;
 
 		// mb: for 'memory_safety::none' we boil down to use the base (eastl) iterator
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
 		// down the line 
-		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
+		static constexpr bool use_base_iterator = Safety == memory_safety::none;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;

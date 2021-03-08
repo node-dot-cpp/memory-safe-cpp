@@ -49,7 +49,7 @@ template<class T>
 struct flexible_array
 {
 	typedef flexible_array<T> this_type;
-	typedef size_t      size_type;
+	typedef std::size_t       size_type;
 
 	size_type sz = 0;
 	alignas(T) char _begin;
@@ -86,7 +86,7 @@ public:
  * Can be used on the stack or embedded in other ojects.
  * It still won't construct or destruct any of their elements.
  */
-template<size_t SZ, class T>
+template<std::size_t SZ, class T>
 struct flexible_array_with_memory : public flexible_array<T>
 {
 	/// we never use this array, is only here to reserve enought memory

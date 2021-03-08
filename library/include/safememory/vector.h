@@ -80,13 +80,13 @@ namespace safememory
 		typedef typename base_type::allocator_type                         allocator_type;
 		typedef typename base_type::array_type                             array_type;
 
+		typedef typename allocator_type::template soft_array_pointer<T>            soft_ptr_type;
+		typedef typename detail::array_stack_only_iterator<T, false, T*>           stack_only_iterator;
+		typedef typename detail::array_stack_only_iterator<T, true, T*>            const_stack_only_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, false, soft_ptr_type> heap_safe_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, true, soft_ptr_type>  const_heap_safe_iterator;
 
-		typedef typename detail::array_of_iterator_raw<T>                stack_only_iterator;
-		typedef typename detail::const_array_of_iterator_raw<T>          const_stack_only_iterator;
-		typedef typename detail::array_of_iterator_soft_ptr<T, Safety>         heap_safe_iterator;
-		typedef typename detail::const_array_of_iterator_soft_ptr<T, Safety>   const_heap_safe_iterator;
-
-		static constexpr bool use_base_iterator = allocator_type::use_base_iterator;
+		static constexpr bool use_base_iterator = Safety == memory_safety::none;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
@@ -921,93 +921,6 @@ namespace safememory
 		// using base_type::validate_iterator;
 
 		// detail::iterator_validity  validate_iterator2(const_iterator_arg i) const noexcept;
-
-	// protected:
-		// [[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
-		// [[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
-		// [[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw std::out_of_range(msg); }
-
-
-        // const base_type& toBase() const noexcept { return *this; }
-
-		// // Safety == none
-		// iterator_base toBase(iterator_base it) const { return it; }
-		// const_iterator_base toBase(const_iterator_base it) const { return it; }
-		// const_iterator_base_pair toBase(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
-		// const_iterator_base_pair toBaseOther(const_iterator_base it, const_iterator_base it2) const { return { it, it2 }; }
-		
-		// // Safety == safe
-		// iterator_base toBase(const detail::array_of_iterator_stack<T>& it) const {
-		// 	return it.toRaw(base_type::mpBegin);
-		// }
-
-		// const_iterator_base toBase(const detail::const_array_of_iterator_stack<T>& it) const {
-		// 	return it.toRaw(base_type::mpBegin);
-		// }
-
-		// const_iterator_base_pair toBase(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
-		// 	return it.toRaw(base_type::mpBegin, it2);
-		// }
-
-		// const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_stack<T>& it, const detail::const_array_of_iterator_stack<T>& it2) const {
-		// 	return it.toRawOther(it2);
-		// }
-
-		// iterator_base toBase(const detail::array_of_iterator_heap<T, Safety>& it) const {
-		// 	return it.toRaw(base_type::mpBegin);
-		// }
-
-		// const_iterator_base toBase(const detail::const_array_of_iterator_heap<T, Safety>& it) const {
-		// 	return it.toRaw(base_type::mpBegin);
-		// }
-
-		// const_iterator_base_pair toBase(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
-		// 	return it.toRaw(base_type::mpBegin, it2);
-		// }
-
-		// const_iterator_base_pair toBaseOther(const detail::const_array_of_iterator_heap<T, Safety>& it, const detail::const_array_of_iterator_heap<T, Safety>& it2) const {
-		// 	return it.toRawOther(it2);
-		// }
-
-
-		// iterator makeIt(iterator_base it) {
-		// 	if constexpr (Safety == memory_safety::none)
-		// 		return it;
-		// 	else
-		// 		return iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
-		// }
-		// const_iterator makeIt(const_iterator_base it) const {
-		// 	if constexpr (Safety == memory_safety::none)
-		// 		return it;
-		// 	else
-		// 		return const_iterator::makePtr(allocator_type::to_raw(base_type::mpBegin), it, base_type::capacity());
-		// }
-
-		// reverse_iterator makeIt(const typename base_type::reverse_iterator& it) {
-		// 	return reverse_iterator(makeIt(it.base()));
-		// }
-		// const_reverse_iterator makeIt(const typename base_type::const_reverse_iterator& it) const {
-		// 	return const_reverse_iterator(makeIt(it.base()));
-		// }
-
-
-
-
-
-		// iterator_safe makeSafeIt(iterator_base it) {
-		// 	return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
-		// }
-		
-		// const_iterator_safe makeSafeIt(const_iterator_base it) const {
-		// 	return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
-		// }
-
-		// reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {
-		// 	return reverse_iterator_safe(makeSafeIt(it.base()));
-		// }
-		// const_reverse_iterator_safe makeSafeIt(const typename base_type::const_reverse_iterator& it) const {
-		// 	return const_reverse_iterator_safe(makeSafeIt(it.base()));
-		// }
 
 	}; // class vector_safe
 

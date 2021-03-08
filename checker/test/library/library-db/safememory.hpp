@@ -786,7 +786,7 @@ namespace safememory {
 			bool operator!=(const this_type& other) const;
 		}; // hashtable_heap_safe_iterator
 
-		class hashtable_stack_only_iterator
+		class hashtable_stack_only_iterator //stack_only
 		{
 		public:
 			typedef hashtable_stack_only_iterator this_type;
@@ -802,10 +802,10 @@ namespace safememory {
 		}; // hashtable_stack_only_iterator
 
 
-		class array_of_iterator
+		class array_stack_only_iterator //stack_only
 		{
 		public:
-			typedef array_of_iterator this_type;
+			typedef array_stack_only_iterator this_type;
 			this_type& operator=(const this_type& ri);
 
 			int& operator*() const;
@@ -831,7 +831,38 @@ namespace safememory {
 			bool operator>=(const this_type& ri) const noexcept;
 		};
 
-		int distance(const array_of_iterator&, const array_of_iterator&);
+		int distance(const array_stack_only_iterator&, const array_stack_only_iterator&);
+
+		class array_heap_safe_iterator
+		{
+		public:
+			typedef array_heap_safe_iterator this_type;
+			this_type& operator=(const this_type& ri);
+
+			int& operator*() const;
+			int* operator->() const;
+
+			this_type& operator++() noexcept;
+			this_type& operator--() noexcept;
+
+			this_type operator+(int) const noexcept;
+			this_type operator-(int) const noexcept;
+
+			this_type& operator+=(int) noexcept;
+			this_type& operator-=(int) noexcept;
+
+			constexpr int& operator[](int) const;
+			int operator-(const this_type& ri) const noexcept;
+
+			bool operator==(const this_type& ri) const noexcept;
+			bool operator!=(const this_type& ri) const noexcept;
+			bool operator<(const this_type& ri) const noexcept;
+			bool operator>(const this_type& ri) const noexcept;
+			bool operator<=(const this_type& ri) const noexcept;
+			bool operator>=(const this_type& ri) const noexcept;
+		};
+
+		int distance(const array_heap_safe_iterator&, const array_heap_safe_iterator&);
 	} //namespace detail
 
 } //namespace safememory
@@ -900,7 +931,7 @@ namespace eastl {
 	}; // class vector
 
 
-	struct node_iterator
+	struct node_iterator //stack_only
 	{
 	public:
 		typedef node_iterator this_type;
@@ -911,18 +942,6 @@ namespace eastl {
 		int* operator->() const;
 		this_type& operator++();
 	}; // node_iterator
-
-	struct hashtable_iterator
-	{
-	public:
-		typedef hashtable_iterator this_type;
-
-		this_type& operator=(const this_type& ri);
-
-		int& operator*() const;
-		int* operator->() const;
-		this_type& operator++();
-	}; // hashtable_iterator
 
 	class hashtable {
 	public:

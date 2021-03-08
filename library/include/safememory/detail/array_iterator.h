@@ -29,7 +29,10 @@
 #define SAFE_MEMORY_DETAIL_ARRAY_ITERATOR_H
 
 #include <utility> //for std::pair
+#include <iterator> //for std::random_access_iterator_tag
+#include <cstddef>
 #include <safememory/memory_safety.h>
+#include <nodecpp_assert.h>
 
 namespace safememory::detail {
 
@@ -47,7 +50,7 @@ namespace safememory::detail {
  * 
  * When used as \a stack_only iterator, it can point to array or buffer on the stack or
  * on the heap, static checker must enforce lifetime rules similar to those of raw pointers.
- * To make things easier for checker we provide a derived class \c array_of_stack_only_iterator
+ * To make things easier for checker we provide a derived class \c array_stack_only_iterator
  * with exactly the same behaviour as this.
  * 
  * When used as \a heap_safe iterator, it must point to an array on the heap and the class itself 
@@ -79,25 +82,26 @@ namespace safememory::detail {
  */
 
 template <typename T, bool bConst, typename ArrPtr>
-class array_of_iterator
+class array_heap_safe_iterator
 {
 protected:
-	typedef array_of_iterator<T, bConst, ArrPtr>			this_type;
+	typedef array_heap_safe_iterator<T, bConst, ArrPtr>			this_type;
 	typedef ArrPtr									        array_pointer;
 	static constexpr bool is_raw_pointer = std::is_pointer<array_pointer>::value;
 
 	// for non-const to const conversion
 	template<typename, bool, typename>
-	friend class array_of_iterator;
+	friend class array_heap_safe_iterator;
 
 	// default to 'safe', only on soft_ptr_no_checks we can relax to 'none'
 	template <typename T>
-	struct array_of_iterator_safety_helper {
+	struct array_heap_safe_iterator_safety_helper {
 		static constexpr memory_safety is_safe = memory_safety::safe;
 	};
 
+	template<typename T> class soft_ptr_no_checks; //fwd
 	template<typename T>
-	struct array_of_iterator_safety_helper<soft_ptr_no_checks<T>> {
+	struct array_heap_safe_iterator_safety_helper<soft_ptr_no_checks<T>> {
 		static constexpr memory_safety is_safe = memory_safety::none;
 	};
 
@@ -105,13 +109,12 @@ protected:
 public:
 	typedef std::random_access_iterator_tag  			iterator_category;
 	typedef std::conditional_t<bConst, const T, T>		value_type;
-	typedef ptrdiff_t			                    	difference_type;
-	typedef size_t                                      size_type;
+	typedef std::ptrdiff_t                              difference_type;
+	typedef std::size_t                                 size_type;
 	typedef value_type*									pointer;
 	typedef value_type&									reference;
 
-	// currently we always enforce checks, regardless of container safety switch
-	static constexpr memory_safety is_safe = array_of_iterator_safety_helper<array_pointer>::is_safe;
+	static constexpr memory_safety is_safe = array_heap_safe_iterator_safety_helper<array_pointer>::is_safe;
 
 protected:
 	array_pointer  arr = nullptr;
@@ -119,7 +122,7 @@ protected:
 	size_type sz = 0;
 
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	constexpr array_of_iterator(array_pointer arr, size_type ix, size_type sz)
+	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
 	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -145,7 +148,7 @@ protected:
 
 public:
 	/// default ctor must always be available for iterators
-	constexpr array_of_iterator() {}
+	constexpr array_heap_safe_iterator() {}
 
 	/// static factory methods are unsafe but static checker tool will keep user hands away
 	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
@@ -166,20 +169,20 @@ public:
 		return makeIx(arr, getIndex(arr, to), sz);
 	}
 
-	array_of_iterator(const array_of_iterator& ri) = default;
-	array_of_iterator& operator=(const array_of_iterator& ri) = default;
+	array_heap_safe_iterator(const array_heap_safe_iterator& ri) = default;
+	array_heap_safe_iterator& operator=(const array_heap_safe_iterator& ri) = default;
 
-	array_of_iterator(array_of_iterator&& ri) = default; 
-	array_of_iterator& operator=(array_of_iterator&& ri) = default;
+	array_heap_safe_iterator(array_heap_safe_iterator&& ri) = default; 
+	array_heap_safe_iterator& operator=(array_heap_safe_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator(const array_of_iterator<T, B, ArrPtr>& ri)
+	array_heap_safe_iterator(const array_heap_safe_iterator<T, B, ArrPtr>& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
 	/// allow non-const to const assignment
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_iterator& operator=(const array_of_iterator<T, B, ArrPtr>& ri) {
+	array_heap_safe_iterator& operator=(const array_heap_safe_iterator<T, B, ArrPtr>& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
@@ -189,7 +192,7 @@ public:
 	reference operator*() const {
 		if constexpr (is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
-				throwRangeException("array_of_iterator::operator*");
+				throwRangeException("array_heap_safe_iterator::operator*");
 		}
 
 		if constexpr(is_raw_pointer)
@@ -201,7 +204,7 @@ public:
 	pointer operator->() const {
 		if constexpr (is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
-				throwRangeException("array_of_iterator::operator->");
+				throwRangeException("array_heap_safe_iterator::operator->");
 		}
 
 		if constexpr (is_raw_pointer)
@@ -227,7 +230,7 @@ public:
 		size_type tmp = ix + n;
 		if constexpr (is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(!arr || !(tmp < sz)))
-				throwRangeException("array_of_iterator::operator[]");
+				throwRangeException("array_heap_safe_iterator::operator[]");
 		}
 
 		if constexpr (is_raw_pointer)
@@ -242,7 +245,7 @@ public:
 		if(arr == ri.arr)
 			return ix - ri.ix;
 		else
-			ThrowInvalidArgumentException("array_of_iterator::operator-");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::operator-");
 	}
 
 	bool operator==(const this_type& ri) const noexcept {
@@ -252,7 +255,7 @@ public:
 		else if(!arr || !ri.arr)
 			return false;
 		else
-			ThrowInvalidArgumentException("array_of_iterator::operator==");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::operator==");
 	}
 
 	bool operator!=(const this_type& ri) const noexcept {
@@ -268,7 +271,7 @@ public:
 		else if(!ri.arr)
 			return false;
 		else
-			ThrowInvalidArgumentException("array_of_iterator::operator<");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::operator<");
 	}
 
 	bool operator>(const this_type& ri) const noexcept {
@@ -306,7 +309,7 @@ public:
 		if (getRawBegin() == begin)
 			return getRaw();
 		else
-			ThrowInvalidArgumentException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
 	}
 
 	/**
@@ -321,7 +324,7 @@ public:
 		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			ThrowInvalidArgumentException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
 	}
 
 	/**
@@ -336,7 +339,7 @@ public:
 		if (arr == ri.arr && ix <= ri.ix)
 			return {getRaw(), ri.getRaw()};
 		else
-			ThrowInvalidArgumentException("array_of_iterator::toRaw");
+			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
 	}
 
 	pointer getRaw() const {
@@ -358,41 +361,44 @@ public:
 /**
  * \brief Safe and generic iterator for arrays.
  * 
- * This iterator is exactly identical to \c array_of_iterator but checker
+ * This iterator is exactly identical to \c array_heap_safe_iterator but checker
  * will enforce a different set of rules for it.
+ * 
+ * Library will use this iterator when scope rules must be enforced on iterator
+ * 
  */
 template <typename T, bool bConst, typename ArrPtr>
-class array_of_stack_only_iterator :protected array_of_iterator<T, bConst, ArrPtr>
+class array_stack_only_iterator :protected array_heap_safe_iterator<T, bConst, ArrPtr>
 {
 protected:
-	typedef array_of_stack_only_iterator<T, bConst, ArrPtr>	this_type;
-	typedef array_of_iterator<T, bConst, ArrPtr>      		base_type;
+	typedef array_stack_only_iterator<T, bConst, ArrPtr>	this_type;
+	typedef array_heap_safe_iterator<T, bConst, ArrPtr>      		base_type;
 	typedef ArrPtr									        array_pointer;
 
 	// for non-const to const conversion
 	template<typename, bool, typename>
-	friend class array_of_stack_only_iterator;
+	friend class array_stack_only_iterator;
 
 public:
-	using base_type::iterator_category;
-	using base_type::value_type;
-	using base_type::difference_type;
-	using base_type::size_type;
-	using base_type::pointer;
-	using base_type::reference;
+	typedef typename base_type::iterator_category  iterator_category;
+	typedef typename base_type::value_type         value_type;
+	typedef typename base_type::difference_type    difference_type;
+	typedef typename base_type::size_type          size_type;
+	typedef typename base_type::pointer            pointer;
+	typedef typename base_type::reference          reference;
 
 protected:
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	constexpr array_of_stack_only_iterator(array_pointer arr, size_type ix, size_type sz)
+	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, size_type sz)
 		: base_type(arr, ix, sz) {}
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	constexpr array_of_stack_only_iterator(const base_type& ri)
+	constexpr array_stack_only_iterator(const base_type& ri)
 		: base_type(ri) {}
-	constexpr array_of_stack_only_iterator(base_type&& ri)
+	constexpr array_stack_only_iterator(base_type&& ri)
 		: base_type(std::move(ri)) {}
 public:
 	/// default ctor must always be available for iterators
-	constexpr array_of_stack_only_iterator() :base_type() {}
+	constexpr array_stack_only_iterator() :base_type() {}
 
 	/// static factory methods are unsafe but static checker tool will keep user hands away
 	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
@@ -406,20 +412,20 @@ public:
 		return makeIx(arr, base_type::getIndex(arr, to), sz);
 	}
 
-	array_of_stack_only_iterator(const array_of_stack_only_iterator& ri) = default;
-	array_of_stack_only_iterator& operator=(const array_of_stack_only_iterator& ri) = default;
+	array_stack_only_iterator(const array_stack_only_iterator& ri) = default;
+	array_stack_only_iterator& operator=(const array_stack_only_iterator& ri) = default;
 
-	array_of_stack_only_iterator(array_of_stack_only_iterator&& ri) = default; 
-	array_of_stack_only_iterator& operator=(array_of_stack_only_iterator&& ri) = default;
+	array_stack_only_iterator(array_stack_only_iterator&& ri) = default; 
+	array_stack_only_iterator& operator=(array_stack_only_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_stack_only_iterator(const array_of_stack_only_iterator<T, B, ArrPtr>& ri)
+	array_stack_only_iterator(const array_stack_only_iterator<T, B, ArrPtr>& ri)
 		: base_type(ri) {}
 
 	/// allow non-const to const assignment
 	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_of_stack_only_iterator& operator=(const array_of_stack_only_iterator<T, B, ArrPtr>& ri) {
+	array_stack_only_iterator& operator=(const array_stack_only_iterator<T, B, ArrPtr>& ri) {
 		base_type::operator=(ri);
 		return *this;
 	}
@@ -456,32 +462,17 @@ public:
 
 
 template <typename T, bool bC, typename ArrPtr>
-typename array_of_iterator<T, bC, ArrPtr>::difference_type distance(
-	const array_of_iterator<T, bC, ArrPtr>& l, const array_of_iterator<T, bC, ArrPtr>& r) {
+typename array_heap_safe_iterator<T, bC, ArrPtr>::difference_type distance(
+	const array_heap_safe_iterator<T, bC, ArrPtr>& l, const array_heap_safe_iterator<T, bC, ArrPtr>& r) {
 	return r - l;
 }
 
 template <typename T, bool bC, typename ArrPtr>
-typename array_of_stack_only_iterator<T, bC, ArrPtr>::difference_type distance(
-	const array_of_stack_only_iterator<T, bC, ArrPtr>& l, const array_of_stack_only_iterator<T, bC, ArrPtr>& r) {
+typename array_stack_only_iterator<T, bC, ArrPtr>::difference_type distance(
+	const array_stack_only_iterator<T, bC, ArrPtr>& l, const array_stack_only_iterator<T, bC, ArrPtr>& r) {
 	return r - l;
 }
 
-
-template <typename T>
-using array_of_iterator_raw = array_of_stack_only_iterator<T, false, T*>;
-
-template <typename T>
-using const_array_of_iterator_raw = array_of_stack_only_iterator<T, true, T*>;
-
-
-template<class T> struct flexible_array; //fwd
-
-template<typename T, memory_safety Safety>
-using array_of_iterator_soft_ptr = array_of_iterator<T, false, soft_ptr<flexible_array<T>, Safety>>;
-
-template<typename T, memory_safety Safety>
-using const_array_of_iterator_soft_ptr = array_of_iterator<T, true, soft_ptr<flexible_array<T>, Safety>>;
 
 } // namespace safememory::detail 
 
