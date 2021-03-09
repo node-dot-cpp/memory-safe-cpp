@@ -88,7 +88,7 @@ bool isStdMoveOrForward(const std::string &Name);
 
 bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
-bool isSystemStackOnlyTypeName(const ClangTidyContext *Context, const std::string &Name);
+bool isStackOnlyIteratorName(const ClangTidyContext *Context, const std::string &Name);
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name);
 bool isSystemSafeFunction(const FunctionDecl* Decl, const ClangTidyContext* Context);
 
@@ -172,7 +172,8 @@ public:
   bool isSafeRecord(const CXXRecordDecl *Dc);
   bool isSafeType(const QualType& Qt);
 
-  bool isStackOnlyRecord(const CXXRecordDecl *Dc);
+  bool isStackOnlyIteratorRecord(const CXXRecordDecl *Dc);
+  bool isStackOnlyIterator(const QualType& Qt);
   bool isStackOnlyQtype(const QualType& Qt);
 
   bool isDeterministicRecord(const CXXRecordDecl *Dc);

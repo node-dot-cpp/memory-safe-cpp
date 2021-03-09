@@ -342,12 +342,15 @@ namespace safememory
 
     protected:
 		const base_type& toBase() const noexcept { return *this; }
+		const iterator_base& toBase(const iterator_base& it) const { return it; }
 		const const_iterator_base& toBase(const const_iterator_base& it) const { return it; }
-		const_iterator_base toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		const iterator_base& toBase(const stack_only_iterator& it) const { return it.toBase(); }
+		const const_iterator_base& toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		iterator_base toBase(const heap_safe_iterator& it) const { return it.toBase(); }
 		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
 
         
-		iterator makeIt(const iterator_base& it) {
+		iterator makeIt(const iterator_base& it) const {
 			if constexpr(use_base_iterator)
 				return it;
 			else
@@ -361,14 +364,14 @@ namespace safememory
 				return const_iterator::fromBase(it);
         }
 
-        insert_return_type makeIt(const insert_return_type_base& r) {
+        insert_return_type makeIt(const insert_return_type_base& r) const {
 			if constexpr(use_base_iterator)
 				return r;
 			else
 	            return { makeIt(r.first), r.second };
         }
 
-        iterator_safe makeSafeIt(const iterator_base& it) {
+        iterator_safe makeSafeIt(const iterator_base& it) const {
 			return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
         }
 
@@ -376,7 +379,7 @@ namespace safememory
 			return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
         }
 
-        insert_return_type_safe makeSafeIt(const insert_return_type_base& r) {
+        insert_return_type_safe makeSafeIt(const insert_return_type_base& r) const {
 			return { makeSafeIt(r.first), r.second };
         }
 	}; // unordered_map

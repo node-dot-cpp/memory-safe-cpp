@@ -138,6 +138,12 @@ void CheckerData::reportNonSafeDetail(clang::QualType Qt) {
 }
 
 
+bool CheckerData::isStackOnlyIterator(clang::QualType Qt) {
+
+  TypeChecker Tc(Context, NullDiagHelper);
+  return Tc.isStackOnlyIterator(Qt);
+}
+
 bool CheckerData::isStackOnly(clang::QualType Qt) {
 
   TypeChecker Tc(Context, NullDiagHelper);

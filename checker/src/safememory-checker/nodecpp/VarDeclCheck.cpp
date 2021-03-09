@@ -150,6 +150,10 @@ void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
     return;
   }
 
+  if (getCheckHelper()->isStackOnlyIterator(Qt)) {
+    return;
+  }
+
   if (isRawPointerType(Qt)) {
 
     bool NoRawPtr = getContext()->getGlobalOptions().DisableRawPointers;

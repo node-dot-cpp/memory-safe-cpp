@@ -117,7 +117,7 @@ bool isSystemSafeTypeName(const ClangTidyContext *Context,
 }
 
 
-bool isSystemStackOnlyTypeName(const ClangTidyContext *Context,
+bool isStackOnlyIteratorName(const ClangTidyContext *Context,
                       const std::string &Name) {
 
   //hardcode some names that are really important, and have special rules
@@ -870,7 +870,7 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
 }
 
 
-bool TypeChecker::isStackOnlyRecord(const CXXRecordDecl *Dc) {
+bool TypeChecker::isStackOnlyIteratorRecord(const CXXRecordDecl *Dc) {
 
   Dc = getRecordWithDefinition(Dc);
   if (!Dc)
@@ -878,7 +878,17 @@ bool TypeChecker::isStackOnlyRecord(const CXXRecordDecl *Dc) {
 
   // if database says is a safe name, then is safe
   std::string Name = getQnameForSystemSafeDb(Dc);
-  return isSystemStackOnlyTypeName(Context, Name);
+  return isStackOnlyIteratorName(Context, Name);
+}
+
+bool TypeChecker::isStackOnlyIterator(const QualType& Qt2) {
+
+  auto Qt = Qt2.getCanonicalType();
+  if(auto Dc = Qt->getAsCXXRecordDecl()) {
+    return isStackOnlyIteratorRecord(Dc);
+  }
+  else
+    return false;
 }
 
 bool TypeChecker::isStackOnlyQtype(const QualType& Qt2) {
@@ -894,7 +904,7 @@ bool TypeChecker::isStackOnlyQtype(const QualType& Qt2) {
   else if(isNakedStructType(Qt, Context))
     return true;
   else if(auto Rd = Qt->getAsCXXRecordDecl())
-    return isStackOnlyRecord(Rd);
+    return isStackOnlyIteratorRecord(Rd);
   else {
     //t->dump();
     return false;
@@ -1462,57 +1472,10 @@ bool isEmptyClass(QualType Qt) {
 bool NakedPtrScopeChecker::canArgumentGenerateOutput(QualType Out,
                                                      QualType Arg) {
 
-  //until properly updated for naked_ptr template
+  // mb: need to rethink this
   return true;
   // out.dump();
   // arg.dump();
-
-  if (TidyContext->getCheckerData().isHeapSafe(Arg))
-    return false;
-
-  if (isNullablePointerQtype(Arg, TidyContext))
-    return true;
-
-  if (isNakedStructType(Arg, TidyContext))
-    return true;
-
-  if (Arg->isReferenceType())
-    return true;
-
-  if (Arg->isPointerType())
-    return true;
-
-  return false;
-  //TODO fix type
-  // const Type *t = out.getTypePtrOrNull();
-  // if (!t || !t->isPointerType())
-  //   return false;
-
-  // auto qt2 = t->getPointeeType();
-  // const Type *t2 = qt2.getTypePtrOrNull();
-  // if (!t2)
-  //   return false;
-
-  // const Type *targ = arg.getTypePtrOrNull();
-  // if (!(targ && (targ->isPointerType() || t)))
-  //   return false;
-
-  // auto qt2arg = targ->getPointeeType();
-  // const Type *t2arg = qt2arg.getTypePtrOrNull();
-  // if (!t2arg)
-  //   return false;
-
-  // // assume non builtins, can generate any kind of naked pointers
-  // if (!t2arg->isBuiltinType())
-  //   return true;
-
-  // if (t2arg != t2)
-  //   return false;
-  // else {
-  //   // qt2.dump();
-  //   // qt2arg.dump();
-  //   return qt2.isAtLeastAsQualifiedAs(qt2arg);
-  // }
 }
 
 bool NakedPtrScopeChecker::checkStack2StackAssignment(const Decl *FromDecl) {

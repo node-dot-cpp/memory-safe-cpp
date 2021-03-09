@@ -58,7 +58,10 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
 
     if (isAwaitableType(Qt))
       return;
-      
+
+    if (getCheckHelper()->isStackOnlyIterator(Qt))
+      return;
+
     if (isRawPointerType(Qt))
       return;
 

@@ -73,7 +73,10 @@ public:
   bool isHeapSafe(clang::QualType Qt);
   void reportNonSafeDetail(clang::QualType Qt);
 
-  /// \brief Returns \c true if type is 'stack only'.
+  /// \brief Returns \c true if type is 'stack only' system type.
+  bool isStackOnlyIterator(clang::QualType Qt);
+
+  /// \brief Returns \c true if type any 'stack only' type.
   bool isStackOnly(clang::QualType Qt);
 
   /// \brief Returns \c true if type is deterministic.
