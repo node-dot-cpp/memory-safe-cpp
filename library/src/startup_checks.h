@@ -217,9 +217,9 @@ class StartupChecker
 		rngCheckVal = rng.rng();
 
 #ifdef NODECPP_USE_IIBMALLOC
-		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
-		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
-		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_AllocManager.allocate(sizeof(T)));
+		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
+		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
+		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
 		T* TPtr = new ( mem4T ) T;
 		TPtr->init(rngCheckVal);
 		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
@@ -255,9 +255,9 @@ class StartupChecker
 		else
 			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
 
-		g_AllocManager.deallocate( mem4T );
-		g_AllocManager.deallocate( mem4TCopy );
-		g_AllocManager.deallocate( changeMap );
+		g_CurrentAllocManager->deallocate( mem4T );
+		g_CurrentAllocManager->deallocate( mem4TCopy );
+		g_CurrentAllocManager->deallocate( changeMap );
 #else
 //#error not implemented (but implementation for any other allocator (or generalization) should not become a greate task anyway)
 #endif

@@ -44,26 +44,15 @@
 using namespace safememory;
 using namespace safememory::testing::dummy_objects;
 using safememory::detail::killAllZombies;
-using safememory::detail::interceptNewDeleteOperators;
 using safememory::detail::doZombieEarlyDetection;
+
+#ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+extern thread_local size_t safememory::detail::onStackSafePtrCreationCount; 
+extern thread_local size_t safememory::detail::onStackSafePtrDestructionCount;
+#endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 #ifdef NODECPP_USE_IIBMALLOC
 using namespace nodecpp::iibmalloc;
-class IIBMallocInitializer
-{
-public:
-	IIBMallocInitializer()
-	{
-		g_AllocManager.initialize();
-//		g_AllocManager.enable();
-	}
-	~IIBMallocInitializer()
-	{
-//	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
-	//NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
-	}
-};
-static IIBMallocInitializer iibmallocinitializer;
 #elif defined NODECPP_USE_NEW_DELETE_ALLOC
 #endif // NODECPP_USE_xxx_ALLOC
 
@@ -1334,7 +1323,9 @@ int main( int argc, char * argv[] )
 	log.add( stdout );
 	nodecpp::logging_impl::currentLog = &log;
 
-	interceptNewDeleteOperators( true );
+	ThreadLocalAllocatorT allocManager;
+	allocManager.initialize();
+	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
@@ -1374,8 +1365,8 @@ int main( int argc, char * argv[] )
 	test__allocated_ptr_and_ptr_and_data_and_flags(); //return 0;
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::default_log::error( "   ===>> onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
-	//NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>> safememory::detail:: onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", safememory::detail:: onStackSafePtrCreationCount, safememory::detail::onStackSafePtrDestructionCount );
+	//NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail:: onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 /*	for ( uint64_t n=0; n<8; ++n )
 	{
@@ -1391,16 +1382,16 @@ int main( int argc, char * argv[] )
 	killAllZombies();
 
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", safememory::detail:: onStackSafePtrCreationCount, safememory::detail::onStackSafePtrDestructionCount );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail:: onStackSafePtrCreationCount == safememory::detail::onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
     //return ret;
 	fnStart();
 	fnSoftEnd();
 	fnOwningEnd();
 #ifdef NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
-	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", onStackSafePtrCreationCount, onStackSafePtrDestructionCount );
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, onStackSafePtrCreationCount == onStackSafePtrDestructionCount );
+	nodecpp::log::default_log::error( "   ===>>onStackSafePtrCreationCount = {}, onStackSafePtrDestructionCount = {}", safememory::detail:: onStackSafePtrCreationCount, safememory::detail::onStackSafePtrDestructionCount );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail:: onStackSafePtrCreationCount == safememory::detail::onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
 	try { testStackInfoAndptrLifecycle(); }
@@ -1416,7 +1407,6 @@ int main( int argc, char * argv[] )
 	nodecpp::log::default_log::error( "about to exit main()..." );
 
 	killAllZombies();
-	interceptNewDeleteOperators( false );
 
 	nodecpp::log::default_log::fatal( "about to exit..." );
 
