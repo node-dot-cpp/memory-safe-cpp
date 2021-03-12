@@ -39,7 +39,7 @@ thread_local std::size_t safememory::detail::CountSoftPtrZeroOffsetDtor = 0;
 thread_local std::size_t safememory::detail::CountSoftPtrBaseDtor = 0;
 #endif // NODECPP_DEBUG_COUNT_SOFT_PTR_ENABLED
 
-thread_local void* safememory::detail::thg_stackPtrForMakeOwningCall = 0;
+thread_local void* safememory::detail::thg_stackPtrForMakeOwningCall = NODECPP_SECOND_NULLPTR;
 
 namespace safememory::detail {
 #if defined NODECPP_USE_NEW_DELETE_ALLOC
