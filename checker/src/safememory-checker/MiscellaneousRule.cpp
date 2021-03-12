@@ -94,7 +94,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeMiscellaneousRule(ClangTidyContext *Context) {
-  return llvm::make_unique<RuleM1ASTConsumer>(Context);
+  return std::make_unique<RuleM1ASTConsumer>(Context);
 }
 
 

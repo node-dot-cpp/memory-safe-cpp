@@ -235,21 +235,21 @@ Disable checks against safe library db, mostly used to simplify testing
 //                            cl::init(false),
 //                            cl::cat(NodecppCheckerCategory));
 
-static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
+// static std::unique_ptr<opt::OptTable> Options(createDriverOptTable());
 
 static cl::opt<bool>
-ASTDump("ast-dump", cl::desc(Options->getOptionHelpText(options::OPT_ast_dump)),
+ASTDump("ast-dump", cl::desc(getDriverOptTable().getOptionHelpText(options::OPT_ast_dump)),
         cl::cat(NodecppCheckerCategory));
 // static cl::opt<bool>
-// ASTList("ast-list", cl::desc(Options->getOptionHelpText(options::OPT_ast_list)),
+// ASTList("ast-list", cl::desc(getDriverOptTable().getOptionHelpText(options::OPT_ast_list)),
 //         cl::cat(NodecppCheckerCategory));
 // static cl::opt<bool>
 // ASTPrint("ast-print",
-//          cl::desc(Options->getOptionHelpText(options::OPT_ast_print)),
+//          cl::desc(getDriverOptTable().getOptionHelpText(options::OPT_ast_print)),
 //          cl::cat(NodecppCheckerCategory));
 static cl::opt<std::string> ASTDumpFilter(
     "ast-dump-filter",
-    cl::desc(Options->getOptionHelpText(options::OPT_ast_dump_filter)),
+    cl::desc(getDriverOptTable().getOptionHelpText(options::OPT_ast_dump_filter)),
     cl::cat(NodecppCheckerCategory));
 
 
@@ -391,14 +391,14 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
 
   ClangTidyOptions Options;
   llvm::ErrorOr<ClangTidyOptions> ParsedConfig(Options);
-  return llvm::make_unique<ConfigOptionsProvider>(
+  return std::make_unique<ConfigOptionsProvider>(
       GlobalOptions, ClangTidyOptions::getDefaults().mergeWith(DefaultOptions),
       *ParsedConfig, OverrideOptions);
 
   //if (!Config.empty()) {
   //  if (llvm::ErrorOr<ClangTidyOptions> ParsedConfig =
   //          parseConfiguration(Config)) {
-  //    return llvm::make_unique<ConfigOptionsProvider>(
+  //    return std::make_unique<ConfigOptionsProvider>(
   //        GlobalOptions,
   //        ClangTidyOptions::getDefaults().mergeWith(DefaultOptions),
   //        *ParsedConfig, OverrideOptions);
@@ -408,7 +408,7 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
   //    return nullptr;
   //  }
   //}
-  //return llvm::make_unique<FileOptionsProvider>(GlobalOptions, DefaultOptions,
+  //return std::make_unique<FileOptionsProvider>(GlobalOptions, DefaultOptions,
   //                                              OverrideOptions);
 }
 

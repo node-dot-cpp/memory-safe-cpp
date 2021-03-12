@@ -238,7 +238,7 @@ private:
     FILE* os;
 public:
     CheckNamedDeclActionFactory(FILE* os) :os(os) {}
-    FrontendAction *create() override { return new CheckNamedDeclAction(os); }
+    std::unique_ptr<FrontendAction> create() override { return std::unique_ptr<FrontendAction>(new CheckNamedDeclAction(os)); }
 };
 
 int main(int argc, const char **argv) {

@@ -91,7 +91,7 @@ namespace nodecpp {
 string rewriteFilename(StringRef Filename, const string& NewSuffix) {
   SmallString<128> Path(Filename);
   replace_extension(Path, NewSuffix + extension(Path));
-  return Path.str();
+  return Path.str().str();
 }
 
 bool executeAction(FrontendAction* Action, CompilerInstance &CI, const FrontendInputFile &Input) {
@@ -169,7 +169,7 @@ class DezombiefyAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::DezombifyConsumer>();
+    return std::make_unique<nodecpp::DezombifyConsumer>();
   }
 };
 
@@ -177,7 +177,7 @@ class SequenceAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::SequenceConsumer>();
+    return std::make_unique<nodecpp::SequenceConsumer>();
   }
 };
 
@@ -185,7 +185,7 @@ class DebugReportSequenceAction : public ASTFrontendAction {
 protected:
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                 StringRef InFile) override {
-    return llvm::make_unique<nodecpp::SequenceDebugReportConsumer>();
+    return std::make_unique<nodecpp::SequenceDebugReportConsumer>();
   }
 };
 
@@ -194,7 +194,7 @@ protected:
 // protected:
 //   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
 //                                                 StringRef InFile) override {
-//     return llvm::make_unique<nodecpp::UnwrapperConsumer>();
+//     return std::make_unique<nodecpp::UnwrapperConsumer>();
 //   }
 // };
 
@@ -219,7 +219,7 @@ protected:
 
     error_code EC;
     unique_ptr<raw_fd_ostream> OutputStream;
-    OutputStream.reset(new raw_fd_ostream(Filename, EC, sys::fs::F_None));
+    OutputStream.reset(new raw_fd_ostream(Filename, EC, sys::fs::CD_CreateAlways));
     if (EC) {
       CI.getDiagnostics().Report(
         diag::err_fe_unable_to_open_output) << Filename << EC.message();
@@ -256,16 +256,16 @@ protected:
 
 class DezombiefyActionFactory : public FrontendActionFactory {
 public:
-  FrontendAction *create() override {
-    return new ExpandRecompileAction(OutputFilename);
+   std::unique_ptr<FrontendAction> create() override {
+    return std::unique_ptr<FrontendAction>(new ExpandRecompileAction(OutputFilename));
   }
 };
 
 
 class DebugReportSequenceActionFactory : public FrontendActionFactory {
 public:
-  FrontendAction *create() override {
-    return new DebugReportSequenceAction();
+  std::unique_ptr<FrontendAction> create() override {
+    return std::unique_ptr<FrontendAction>(new DebugReportSequenceAction());
   }
 };
 

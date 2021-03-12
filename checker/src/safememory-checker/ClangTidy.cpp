@@ -245,7 +245,11 @@ private:
     if (FilePath.empty())
       return SourceLocation();
 
-    const FileEntry *File = SourceMgr.getFileManager().getFile(FilePath);
+    auto E = SourceMgr.getFileManager().getFile(FilePath);
+    if(!E)
+      return SourceLocation();
+
+    const FileEntry *File = E.get();
     FileID ID = SourceMgr.getOrCreateFileID(File, SrcMgr::C_User);
     return SourceMgr.getLocForStartOfFile(ID).getLocWithOffset(Offset);
   }
@@ -384,7 +388,7 @@ ClangTidyASTConsumerFactory::CreateASTConsumer(
   Consumers.push_back(makeMustCoAwaitRule(&Context));
   Consumers.push_back(makeNoSideEffectRule(&Context));
 
-  return llvm::make_unique<ClangTidyASTConsumer>(
+  return std::make_unique<ClangTidyASTConsumer>(
       std::move(Consumers), std::move(Finder), std::move(Checks));
 }
 
@@ -434,7 +438,7 @@ std::string OptionsView::get(StringRef LocalName, StringRef Default) const {
   const auto &Iter = CheckOptions.find(NamePrefix + LocalName.str());
   if (Iter != CheckOptions.end())
     return Iter->second;
-  return Default;
+  return Default.str();
 }
 
 std::string OptionsView::getLocalOrGlobal(StringRef LocalName,
@@ -446,12 +450,12 @@ std::string OptionsView::getLocalOrGlobal(StringRef LocalName,
   Iter = CheckOptions.find(LocalName.str());
   if (Iter != CheckOptions.end())
     return Iter->second;
-  return Default;
+  return Default.str();
 }
 
 void OptionsView::store(ClangTidyOptions::OptionMap &Options,
                         StringRef LocalName, StringRef Value) const {
-  Options[NamePrefix + LocalName.str()] = Value;
+  Options[NamePrefix + LocalName.str()] = Value.str();
 }
 
 void OptionsView::store(ClangTidyOptions::OptionMap &Options,
@@ -461,7 +465,7 @@ void OptionsView::store(ClangTidyOptions::OptionMap &Options,
 
 std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
   nodecpp::checker::ClangTidyContext Context(
-      llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
+      std::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
                                                 Options));
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckNames();
@@ -469,7 +473,7 @@ std::vector<std::string> getCheckNames(const ClangTidyOptions &Options) {
 
 ClangTidyOptions::OptionMap getCheckOptions(const ClangTidyOptions &Options) {
   nodecpp::checker::ClangTidyContext Context(
-      llvm::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
+      std::make_unique<DefaultOptionsProvider>(ClangTidyGlobalOptions(),
                                                 Options));
   ClangTidyASTConsumerFactory Factory(Context);
   return Factory.getCheckOptions();
@@ -532,7 +536,7 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
   class ActionFactory : public FrontendActionFactory {
   public:
     ActionFactory(ClangTidyContext &Context) : ConsumerFactory(Context) {}
-    FrontendAction *create() override { return new Action(&ConsumerFactory); }
+    std::unique_ptr<FrontendAction> create() override { return std::unique_ptr<FrontendAction>(new Action(&ConsumerFactory)); }
 
   private:
     class Action : public ASTFrontendAction {
@@ -560,6 +564,7 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
                                     /*DumpDecls=*/true,
                                     /*Deserialize=*/false,
                                     /*DumpLookups=*/false,
+                                    /*DumpDeclTypes=*/false,
                                     /*ASTDumpOutputFormat*/ADOF_Default);
     }
   };
@@ -572,7 +577,7 @@ void runClangTidy(nodecpp::checker::ClangTidyContext &Context,
   if (ASTDump) 
     FrontendFactory = newFrontendActionFactory(&DumpFactory);
   else
-    FrontendFactory = make_unique<ActionFactory>(Context);
+    FrontendFactory = std::make_unique<ActionFactory>(Context);
 
 
   Tool.run(FrontendFactory.get());

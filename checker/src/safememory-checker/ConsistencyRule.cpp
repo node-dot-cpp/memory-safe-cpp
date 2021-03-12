@@ -207,7 +207,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeConsistencyRule(ClangTidyContext *Context) {
-  return llvm::make_unique<RuleCASTConsumer>(Context);
+  return std::make_unique<RuleCASTConsumer>(Context);
 }
 
 

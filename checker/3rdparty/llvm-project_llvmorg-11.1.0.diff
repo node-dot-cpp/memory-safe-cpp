@@ -1,8 +1,8 @@
-diff --git a/include/clang/AST/Expr.h b/include/clang/AST/Expr.h
-index d44a815c..a4b72fd9 100644
---- a/include/clang/AST/Expr.h
-+++ b/include/clang/AST/Expr.h
-@@ -1348,6 +1348,38 @@ public:
+diff --git a/clang/include/clang/AST/Expr.h b/clang/include/clang/AST/Expr.h
+index c13b97119..c670712e5 100644
+--- a/clang/include/clang/AST/Expr.h
++++ b/clang/include/clang/AST/Expr.h
+@@ -1393,6 +1393,38 @@ public:
      return DeclRefExprBits.RefersToEnclosingVariableOrCapture;
    }
  
@@ -41,19 +41,19 @@ index d44a815c..a4b72fd9 100644
    static bool classof(const Stmt *T) {
      return T->getStmtClass() == DeclRefExprClass;
    }
-diff --git a/include/clang/AST/ExprCXX.h b/include/clang/AST/ExprCXX.h
-index faddbc6d..c8a47fb7 100644
---- a/include/clang/AST/ExprCXX.h
-+++ b/include/clang/AST/ExprCXX.h
-@@ -1013,6 +1013,7 @@ public:
-              Ty->isInstantiationDependentType(),
-              /*ContainsUnexpandedParameterPack=*/false) {
+diff --git a/clang/include/clang/AST/ExprCXX.h b/clang/include/clang/AST/ExprCXX.h
+index 6f0b68479..50eea4925 100644
+--- a/clang/include/clang/AST/ExprCXX.h
++++ b/clang/include/clang/AST/ExprCXX.h
+@@ -1110,6 +1110,7 @@ public:
+   CXXThisExpr(SourceLocation L, QualType Ty, bool IsImplicit)
+       : Expr(CXXThisExprClass, Ty, VK_RValue, OK_Ordinary) {
      CXXThisExprBits.IsImplicit = IsImplicit;
 +    CXXThisExprBits.DezombiefyFlags = 0;
      CXXThisExprBits.Loc = L;
+     setDependence(computeDependence(this));
    }
- 
-@@ -1027,6 +1028,38 @@ public:
+@@ -1125,6 +1126,38 @@ public:
    bool isImplicit() const { return CXXThisExprBits.IsImplicit; }
    void setImplicit(bool I) { CXXThisExprBits.IsImplicit = I; }
  
@@ -92,11 +92,11 @@ index faddbc6d..c8a47fb7 100644
    static bool classof(const Stmt *T) {
      return T->getStmtClass() == CXXThisExprClass;
    }
-diff --git a/include/clang/AST/Stmt.h b/include/clang/AST/Stmt.h
-index 403b88ac..083bd6ab 100644
---- a/include/clang/AST/Stmt.h
-+++ b/include/clang/AST/Stmt.h
-@@ -367,6 +367,13 @@ protected:
+diff --git a/clang/include/clang/AST/Stmt.h b/clang/include/clang/AST/Stmt.h
+index d3fad58fc..669a00359 100644
+--- a/clang/include/clang/AST/Stmt.h
++++ b/clang/include/clang/AST/Stmt.h
+@@ -363,6 +363,14 @@ protected:
      SourceLocation Loc;
    };
  
@@ -107,10 +107,11 @@ index 403b88ac..083bd6ab 100644
 +    DezombifyCandidateButRelaxed
 +  };
 +
++
    class DeclRefExprBitfields {
      friend class ASTStmtReader; // deserialization
      friend class DeclRefExpr;
-@@ -379,6 +386,7 @@ protected:
+@@ -375,6 +383,7 @@ protected:
      unsigned HadMultipleCandidates : 1;
      unsigned RefersToEnclosingVariableOrCapture : 1;
      unsigned NonOdrUseReason : 2;
@@ -118,23 +119,22 @@ index 403b88ac..083bd6ab 100644
  
      /// The location of the declaration name itself.
      SourceLocation Loc;
-@@ -632,6 +640,7 @@ protected:
+@@ -653,6 +662,7 @@ protected:
  
      /// Whether this is an implicit "this".
      unsigned IsImplicit : 1;
-+	unsigned DezombiefyFlags :2;
++    unsigned DezombiefyFlags :2;
  
      /// The location of the "this".
      SourceLocation Loc;
-diff --git a/include/clang/ASTMatchers/ASTMatchers.h b/include/clang/ASTMatchers/ASTMatchers.h
-index 063d8217..aea85dd4 100644
---- a/include/clang/ASTMatchers/ASTMatchers.h
-+++ b/include/clang/ASTMatchers/ASTMatchers.h
-@@ -6694,6 +6694,18 @@ AST_MATCHER_P(OMPExecutableDirective, isAllowedToContainClauseKind,
+diff --git a/clang/include/clang/ASTMatchers/ASTMatchers.h b/clang/include/clang/ASTMatchers/ASTMatchers.h
+index 643419743..5ddb64c35 100644
+--- a/clang/include/clang/ASTMatchers/ASTMatchers.h
++++ b/clang/include/clang/ASTMatchers/ASTMatchers.h
+@@ -7277,6 +7277,17 @@ AST_MATCHER_P(OMPExecutableDirective, isAllowedToContainClauseKind,
  // End OpenMP handling.
  //----------------------------------------------------------------------------//
  
-+
 +/// Matches coroutine body  statements.
 +extern const internal::VariadicDynCastAllOfMatcher<Stmt, CoroutineBodyStmt>
 +    coroutineBodyStmt;
@@ -149,14 +149,15 @@ index 063d8217..aea85dd4 100644
  } // namespace ast_matchers
  } // namespace clang
  
-diff --git a/include/clang/Basic/Attr.td b/include/clang/Basic/Attr.td
-index d39b16e6..87146335 100644
---- a/include/clang/Basic/Attr.td
-+++ b/include/clang/Basic/Attr.td
-@@ -3274,3 +3274,59 @@ def ObjCExternallyRetained : InheritableAttr {
-   let Subjects = SubjectList<[NonParmVar, Function, Block, ObjCMethod]>;
-   let Documentation = [ObjCExternallyRetainedDocs];
+diff --git a/clang/include/clang/Basic/Attr.td b/clang/include/clang/Basic/Attr.td
+index 60eaee783..f07999600 100644
+--- a/clang/include/clang/Basic/Attr.td
++++ b/clang/include/clang/Basic/Attr.td
+@@ -3452,3 +3452,60 @@ def Builtin : InheritableAttr {
+   let SemaHandler = 0;
+   let Documentation = [Undocumented];
  }
++
 +
 +def SafeMemoryNakedStruct : Attr {
 +  let Spellings = [CXX11<"safememory","naked_struct">];
@@ -213,24 +214,21 @@ index d39b16e6..87146335 100644
 +  let Spellings = [CXX11<"safememory","check_as_user_code">];
 +  let Documentation = [SafeMemoryCheckAsUserCodeDocs];
 +}
-diff --git a/include/clang/Basic/AttrDocs.td b/include/clang/Basic/AttrDocs.td
-index fac61160..0fff3344 100644
---- a/include/clang/Basic/AttrDocs.td
-+++ b/include/clang/Basic/AttrDocs.td
-@@ -4194,4 +4194,105 @@ be accessed on both device side and host side. It has external linkage and is
- not initialized on device side. It has internal linkage and is initialized by
- the initializer on host side.
+diff --git a/clang/include/clang/Basic/AttrDocs.td b/clang/include/clang/Basic/AttrDocs.td
+index 833127ed4..a3b852b0d 100644
+--- a/clang/include/clang/Basic/AttrDocs.td
++++ b/clang/include/clang/Basic/AttrDocs.td
+@@ -4947,3 +4947,104 @@ Requirements on Development Tools - Engineering Specification Documentation
+ <https://developer.arm.com/docs/ecm0359818/latest/>`_ for more information.
    }];
--}
-\ No newline at end of file
-+}
+ }
++
 +
 +def DocCatSafeMemory : DocumentationCategory<"safememory specifics"> {
 +  let Content = [{
 +Attributes specifics to ``safememory`` checker tools and libraries.
 +  }];
 +}
-+
 +
 +def SafeMemoryNakedStructDocs : Documentation {
 +  let Category = DocCatSafeMemory;
@@ -325,51 +323,52 @@ index fac61160..0fff3344 100644
 +template parameter instantiation.
 +}];
 +}
-diff --git a/include/clang/Basic/DiagnosticSemaKinds.td b/include/clang/Basic/DiagnosticSemaKinds.td
-index 275c4e43..b36ee900 100644
---- a/include/clang/Basic/DiagnosticSemaKinds.td
-+++ b/include/clang/Basic/DiagnosticSemaKinds.td
-@@ -9759,4 +9759,7 @@ def err_bit_cast_non_trivially_copyable : Error<
-   "__builtin_bit_cast %select{source|destination}0 type must be trivially copyable">;
- def err_bit_cast_type_size_mismatch : Error<
-   "__builtin_bit_cast source size does not equal destination size (%0 vs %1)">;
+diff --git a/clang/include/clang/Basic/DiagnosticSemaKinds.td b/clang/include/clang/Basic/DiagnosticSemaKinds.td
+index 941f2cafc..0939d7aba 100644
+--- a/clang/include/clang/Basic/DiagnosticSemaKinds.td
++++ b/clang/include/clang/Basic/DiagnosticSemaKinds.td
+@@ -10877,4 +10877,8 @@ def err_probability_not_constant_float : Error<
+ def err_probability_out_of_range : Error<
+    "probability argument to __builtin_expect_with_probability is outside the "
+    "range [0.0, 1.0]">;
 +
 +def err_unknown_safememory_attribute : Error<
 +  "(C1) unknown attribute %0">;
++
  } // end of sema component.
-diff --git a/lib/AST/Expr.cpp b/lib/AST/Expr.cpp
-index 6ef77b8a..50c47a3c 100644
---- a/lib/AST/Expr.cpp
-+++ b/lib/AST/Expr.cpp
-@@ -482,6 +482,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx, ValueDecl *D,
+diff --git a/clang/lib/AST/Expr.cpp b/clang/lib/AST/Expr.cpp
+index 399e7e13c..3e935e487 100644
+--- a/clang/lib/AST/Expr.cpp
++++ b/clang/lib/AST/Expr.cpp
+@@ -387,6 +387,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx, ValueDecl *D,
    DeclRefExprBits.RefersToEnclosingVariableOrCapture =
        RefersToEnclosingVariableOrCapture;
    DeclRefExprBits.NonOdrUseReason = NOUR;
 +  DeclRefExprBits.DezombifyFlags = 0;
    DeclRefExprBits.Loc = L;
-   computeDependence(Ctx);
+   setDependence(computeDependence(this, Ctx));
  }
-@@ -529,6 +530,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
+@@ -425,6 +426,7 @@ DeclRefExpr::DeclRefExpr(const ASTContext &Ctx,
          TemplateKWLoc);
    }
    DeclRefExprBits.HadMultipleCandidates = 0;
 +  DeclRefExprBits.DezombifyFlags = 0;
- 
-   computeDependence(Ctx);
+   setDependence(computeDependence(this, Ctx));
  }
-diff --git a/lib/ASTMatchers/ASTMatchFinder.cpp b/lib/ASTMatchers/ASTMatchFinder.cpp
-index f407e087..3f502fe9 100644
---- a/lib/ASTMatchers/ASTMatchFinder.cpp
-+++ b/lib/ASTMatchers/ASTMatchFinder.cpp
-@@ -381,6 +381,7 @@ public:
+ 
+diff --git a/clang/lib/ASTMatchers/ASTMatchFinder.cpp b/clang/lib/ASTMatchers/ASTMatchFinder.cpp
+index e88da16dd..3ca7a5f0b 100644
+--- a/clang/lib/ASTMatchers/ASTMatchFinder.cpp
++++ b/clang/lib/ASTMatchers/ASTMatchFinder.cpp
+@@ -447,6 +447,7 @@ public:
    bool TraverseNestedNameSpecifier(NestedNameSpecifier *NNS);
    bool TraverseNestedNameSpecifierLoc(NestedNameSpecifierLoc NNS);
    bool TraverseConstructorInitializer(CXXCtorInitializer *CtorInit);
 +  bool TraverseCoroutineBodyStmt(CoroutineBodyStmt *CoroBody);
  
    // Matches children or descendants of 'Node' with 'BaseMatcher'.
-   bool memoizedMatchesRecursively(const ast_type_traits::DynTypedNode &Node,
-@@ -852,6 +853,24 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
+   bool memoizedMatchesRecursively(const DynTypedNode &Node, ASTContext &Ctx,
+@@ -976,6 +977,24 @@ bool MatchASTVisitor::TraverseDecl(Decl *DeclNode) {
    if (!DeclNode) {
      return true;
    }
@@ -394,7 +393,7 @@ index f407e087..3f502fe9 100644
    match(*DeclNode);
    return RecursiveASTVisitor<MatchASTVisitor>::TraverseDecl(DeclNode);
  }
-@@ -911,6 +930,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
+@@ -1035,6 +1054,16 @@ bool MatchASTVisitor::TraverseConstructorInitializer(
        CtorInit);
  }
  
@@ -411,11 +410,11 @@ index f407e087..3f502fe9 100644
  class MatchASTConsumer : public ASTConsumer {
  public:
    MatchASTConsumer(MatchFinder *Finder,
-diff --git a/lib/ASTMatchers/ASTMatchersInternal.cpp b/lib/ASTMatchers/ASTMatchersInternal.cpp
-index 4ee32fbe..e88e287c 100644
---- a/lib/ASTMatchers/ASTMatchersInternal.cpp
-+++ b/lib/ASTMatchers/ASTMatchersInternal.cpp
-@@ -852,5 +852,7 @@ const internal::VariadicDynCastAllOfMatcher<OMPClause, OMPDefaultClause>
+diff --git a/clang/lib/ASTMatchers/ASTMatchersInternal.cpp b/clang/lib/ASTMatchers/ASTMatchersInternal.cpp
+index 4b9baf7a0..e749707e4 100644
+--- a/clang/lib/ASTMatchers/ASTMatchersInternal.cpp
++++ b/clang/lib/ASTMatchers/ASTMatchersInternal.cpp
+@@ -1020,5 +1020,7 @@ const internal::VariadicDynCastAllOfMatcher<OMPClause, OMPDefaultClause>
  const internal::VariadicDynCastAllOfMatcher<Decl, CXXDeductionGuideDecl>
      cxxDeductionGuideDecl;
  
@@ -423,11 +422,11 @@ index 4ee32fbe..e88e287c 100644
 +
  } // end namespace ast_matchers
  } // end namespace clang
-diff --git a/lib/ASTMatchers/Dynamic/Registry.cpp b/lib/ASTMatchers/Dynamic/Registry.cpp
-index 33058053..800db9b2 100644
---- a/lib/ASTMatchers/Dynamic/Registry.cpp
-+++ b/lib/ASTMatchers/Dynamic/Registry.cpp
-@@ -522,6 +522,9 @@ RegistryMaps::RegistryMaps() {
+diff --git a/clang/lib/ASTMatchers/Dynamic/Registry.cpp b/clang/lib/ASTMatchers/Dynamic/Registry.cpp
+index ec2215804..c264adae6 100644
+--- a/clang/lib/ASTMatchers/Dynamic/Registry.cpp
++++ b/clang/lib/ASTMatchers/Dynamic/Registry.cpp
+@@ -544,6 +544,9 @@ RegistryMaps::RegistryMaps() {
    REGISTER_MATCHER(voidType);
    REGISTER_MATCHER(whileStmt);
    REGISTER_MATCHER(withInitializer);
@@ -437,27 +436,27 @@ index 33058053..800db9b2 100644
  }
  
  RegistryMaps::~RegistryMaps() = default;
-diff --git a/lib/Frontend/InitHeaderSearch.cpp b/lib/Frontend/InitHeaderSearch.cpp
-index d65d1348..9d4fefe9 100644
---- a/lib/Frontend/InitHeaderSearch.cpp
-+++ b/lib/Frontend/InitHeaderSearch.cpp
-@@ -447,6 +447,12 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
-   if (Lang.CPlusPlus && !Lang.AsmPreprocessor &&
+diff --git a/clang/lib/Frontend/InitHeaderSearch.cpp b/clang/lib/Frontend/InitHeaderSearch.cpp
+index bc31445d6..58768feb6 100644
+--- a/clang/lib/Frontend/InitHeaderSearch.cpp
++++ b/clang/lib/Frontend/InitHeaderSearch.cpp
+@@ -456,6 +456,12 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
        HSOpts.UseStandardCXXIncludes && HSOpts.UseStandardSystemIncludes) {
      if (HSOpts.UseLibcxx) {
+       AddPath("/usr/include/c++/v1", CXXSystem, false);
 +      if (triple.isOSDarwin()) {
 +        if(!HasSysroot) {
 +            AddUnmappedPath("/Library/Developer/CommandLineTools/usr/include/c++/v1", CXXSystem, false);
 +            AddUnmappedPath("/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/usr/include", CXXSystem, false);
 +        }
 +      }
-       AddPath("/usr/include/c++/v1", CXXSystem, false);
      } else {
        AddDefaultCPlusPlusIncludePaths(Lang, triple, HSOpts);
-diff --git a/lib/Rewrite/HTMLRewrite.cpp b/lib/Rewrite/HTMLRewrite.cpp
-index e304fbbe..c961659d 100644
---- a/lib/Rewrite/HTMLRewrite.cpp
-+++ b/lib/Rewrite/HTMLRewrite.cpp
+     }
+diff --git a/clang/lib/Rewrite/HTMLRewrite.cpp b/clang/lib/Rewrite/HTMLRewrite.cpp
+index e304fbbed..c961659de 100644
+--- a/clang/lib/Rewrite/HTMLRewrite.cpp
++++ b/clang/lib/Rewrite/HTMLRewrite.cpp
 @@ -347,7 +347,7 @@ h1 { font-size:14pt }
  }
  .macro { color: DarkMagenta; }
@@ -467,11 +466,11 @@ index e304fbbe..c961659d 100644
    position: fixed;
    width: 50em;
    margin-left: -25em;
-diff --git a/lib/Sema/SemaDeclAttr.cpp b/lib/Sema/SemaDeclAttr.cpp
-index ee06f8ae..3bea8c10 100644
---- a/lib/Sema/SemaDeclAttr.cpp
-+++ b/lib/Sema/SemaDeclAttr.cpp
-@@ -6616,11 +6616,17 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+diff --git a/clang/lib/Sema/SemaDeclAttr.cpp b/clang/lib/Sema/SemaDeclAttr.cpp
+index a9a2a19b4..090a55925 100644
+--- a/clang/lib/Sema/SemaDeclAttr.cpp
++++ b/clang/lib/Sema/SemaDeclAttr.cpp
+@@ -6815,11 +6815,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
    // though they were unknown attributes.
    if (AL.getKind() == ParsedAttr::UnknownAttribute ||
        !AL.existsInTarget(S.Context.getTargetInfo())) {
@@ -480,7 +479,6 @@ index ee06f8ae..3bea8c10 100644
 -               ? (unsigned)diag::warn_unhandled_ms_attribute_ignored
 -               : (unsigned)diag::warn_unknown_attribute_ignored)
 -        << AL;
-+
 +    if(AL.hasScope() && AL.getScopeName()->getName() == "safememory") {
 +      S.Diag(AL.getLoc(), diag::err_unknown_safememory_attribute) << AL.getName();
 +    }
@@ -494,11 +492,10 @@ index ee06f8ae..3bea8c10 100644
      return;
    }
  
-@@ -7340,6 +7346,40 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
- 
-   case ParsedAttr::AT_MSAllocator:
-     handleMSAllocatorAttr(S, D, AL);
-+	break;
+@@ -7450,6 +7455,40 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
+   case ParsedAttr::AT_UseHandle:
+     handleHandleAttr<UseHandleAttr>(S, D, AL);
+     break;
 +
 +  case ParsedAttr::AT_SafeMemoryNakedStruct:
 +    handleSimpleAttribute<SafeMemoryNakedStructAttr>(S, D, AL);
@@ -532,16 +529,17 @@ index ee06f8ae..3bea8c10 100644
 +    break;
 +  case ParsedAttr::AT_SafeMemoryCheckAsUserCode:
 +    handleSimpleAttribute<SafeMemoryCheckAsUserCodeAttr>(S, D, AL);
-     break;
++    break;
    }
  }
-diff --git a/lib/Sema/SemaDeclCXX.cpp b/lib/Sema/SemaDeclCXX.cpp
-index 2f9e4f96..7b02e48b 100644
---- a/lib/Sema/SemaDeclCXX.cpp
-+++ b/lib/Sema/SemaDeclCXX.cpp
-@@ -14829,8 +14829,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
-   const auto *NewFT = New->getType()->getAs<FunctionProtoType>();
-   const auto *OldFT = Old->getType()->getAs<FunctionProtoType>();
+ 
+diff --git a/clang/lib/Sema/SemaDeclCXX.cpp b/clang/lib/Sema/SemaDeclCXX.cpp
+index 22bf35dbd..edbc2a247 100644
+--- a/clang/lib/Sema/SemaDeclCXX.cpp
++++ b/clang/lib/Sema/SemaDeclCXX.cpp
+@@ -16820,8 +16820,8 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+   const auto *NewFT = New->getType()->castAs<FunctionProtoType>();
+   const auto *OldFT = Old->getType()->castAs<FunctionProtoType>();
  
 -  if (OldFT->hasExtParameterInfos()) {
 -    for (unsigned I = 0, E = OldFT->getNumParams(); I != E; ++I)
@@ -550,7 +548,7 @@ index 2f9e4f96..7b02e48b 100644
        // A parameter of the overriding method should be annotated with noescape
        // if the corresponding parameter of the overridden method is annotated.
        if (OldFT->getExtParameterInfo(I).isNoEscape() &&
-@@ -14840,6 +14840,7 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
+@@ -16831,6 +16831,7 @@ bool Sema::CheckOverridingFunctionAttributes(const CXXMethodDecl *New,
          Diag(Old->getParamDecl(I)->getLocation(),
               diag::note_overridden_marked_noescape);
        }
@@ -558,14 +556,30 @@ index 2f9e4f96..7b02e48b 100644
    }
  
    // Virtual overrides must have the same code_seg.
-diff --git a/tools/CMakeLists.txt b/tools/CMakeLists.txt
-index 223f1f74..6268c822 100644
---- a/tools/CMakeLists.txt
-+++ b/tools/CMakeLists.txt
-@@ -39,3 +39,6 @@ add_llvm_external_project(clang-tools-extra extra)
+diff --git a/clang/tools/CMakeLists.txt b/clang/tools/CMakeLists.txt
+index e46c3669a..0c8b3170d 100644
+--- a/clang/tools/CMakeLists.txt
++++ b/clang/tools/CMakeLists.txt
+@@ -40,3 +40,7 @@ add_llvm_external_project(clang-tools-extra extra)
  
  # libclang may require clang-tidy in clang-tools-extra.
  add_clang_subdirectory(libclang)
 +
-+# Add safememory here, because using LLVM_EXTERNAL_PROJECTS don't seem to work
-+add_llvm_external_project(checker)
++# Add safememory here, because using LLVM_EXTERNAL_PROJECTS works for pure llvm
++# and we actually need a clang external project
++add_llvm_external_project(safememory)
+diff --git a/llvm/cmake/modules/HandleLLVMOptions.cmake b/llvm/cmake/modules/HandleLLVMOptions.cmake
+index 5ef22eb49..e91c4c8d6 100644
+--- a/llvm/cmake/modules/HandleLLVMOptions.cmake
++++ b/llvm/cmake/modules/HandleLLVMOptions.cmake
+@@ -478,6 +478,10 @@ if( MSVC )
+       endif()
+     endif()
+   endif()
++  # By default MSVC has a 2^16 limit on the number of sections in an object file,
++  # but in many objects files need more than that. This flag is to increase the
++  # number of sections.
++  append("/bigobj" CMAKE_CXX_FLAGS)
+ endif( MSVC )
+ 
+ # Warnings-as-errors handling for GCC-compatible compilers:

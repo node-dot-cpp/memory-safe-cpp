@@ -7,4 +7,4 @@
 -isystem
 ./Inputs
 -isystem
-../../3rdparty/clang/lib/Headers
+../../3rdparty/llvm-project/clang/lib/Headers

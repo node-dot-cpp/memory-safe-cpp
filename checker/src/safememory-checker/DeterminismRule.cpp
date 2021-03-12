@@ -139,7 +139,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeDeterminismRule(ClangTidyContext *Context) {
-  return llvm::make_unique<RuleDASTConsumer>(Context);
+  return std::make_unique<RuleDASTConsumer>(Context);
 }
 
 } // namespace checker

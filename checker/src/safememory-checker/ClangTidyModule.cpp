@@ -18,7 +18,7 @@ namespace checker {
 
 void ClangTidyCheckFactories::registerCheckFactory(StringRef Name,
                                                    CheckFactory Factory) {
-  Factories[Name] = std::move(Factory);
+  Factories[Name.str()] = std::move(Factory);
 }
 
 void ClangTidyCheckFactories::createChecks(

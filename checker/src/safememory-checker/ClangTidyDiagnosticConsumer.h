@@ -194,7 +194,7 @@ public:
 
   /// \brief Should be called when starting to process new translation unit.
   void setCurrentBuildDirectory(StringRef BuildDirectory) {
-    CurrentBuildDirectory = BuildDirectory;
+    CurrentBuildDirectory = BuildDirectory.str();
   }
 
   /// \brief Returns build directory of the current translation unit.

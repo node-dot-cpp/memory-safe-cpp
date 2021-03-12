@@ -132,7 +132,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeReferenceOverCoAwaitRule(ClangTidyContext *Context) {
-  return llvm::make_unique<CoroutineASTConsumer>(Context);
+  return std::make_unique<CoroutineASTConsumer>(Context);
 }
 
 

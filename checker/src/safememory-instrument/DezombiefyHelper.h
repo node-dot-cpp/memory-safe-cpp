@@ -30,6 +30,10 @@
 
 #include "clang/AST/AST.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ParentMap.h"
+#include "clang/AST/ParentMapContext.h"
+#include "clang/Basic/SourceManager.h"
+
 
 namespace nodecpp {
 
