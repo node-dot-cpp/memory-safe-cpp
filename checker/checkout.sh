@@ -6,11 +6,11 @@ cd 3rdparty
 rm -Rf llvm
 rm -Rf clang
 rm -Rf clang-tools-extra
+rm -Rf llvm-project
 
-git clone --depth 1 -b release_90 https://github.com/llvm-mirror/llvm.git
-git clone --depth 1 -b release_90 https://github.com/llvm-mirror/clang.git
+git clone --depth 1 --branch llvmorg-11.1.0 https://github.com/llvm/llvm-project.git
 
-cd clang
-git apply ../clang_release_90.diff
+cd llvm-project
+git apply ../llvm-project_llvmorg-11.1.0.diff
 
 cd ../..

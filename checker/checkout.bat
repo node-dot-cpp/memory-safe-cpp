@@ -4,15 +4,13 @@ cd 3rdparty
 rmdir /S /Q llvm
 rmdir /S /Q clang
 rmdir /S /Q clang-tools-extra
+rmdir /S /Q llvm-project
 
-git clone --depth 1 -b release_90 https://github.com/llvm-mirror/llvm.git
+git clone --depth 1 --branch llvmorg-11.1.0 https://github.com/llvm/llvm-project.git
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
-git clone --depth 1 -b release_90 https://github.com/llvm-mirror/clang.git
-@if ERRORLEVEL 1 exit /b %ERRORLEVEL%
-
-cd clang
-git apply ..\clang_release_90.diff
+cd llvm-project
+git apply ..\llvm-project_llvmorg-11.1.0.diff
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 
 cd ..\..
