@@ -93,7 +93,7 @@ index 6f0b68479..50eea4925 100644
      return T->getStmtClass() == CXXThisExprClass;
    }
 diff --git a/clang/include/clang/AST/Stmt.h b/clang/include/clang/AST/Stmt.h
-index d3fad58fc..560f72ca2 100644
+index d3fad58fc..669a00359 100644
 --- a/clang/include/clang/AST/Stmt.h
 +++ b/clang/include/clang/AST/Stmt.h
 @@ -363,6 +363,14 @@ protected:
@@ -123,7 +123,7 @@ index d3fad58fc..560f72ca2 100644
  
      /// Whether this is an implicit "this".
      unsigned IsImplicit : 1;
-+  	unsigned DezombiefyFlags :2;
++    unsigned DezombiefyFlags :2;
  
      /// The location of the "this".
      SourceLocation Loc;
@@ -423,7 +423,7 @@ index 4b9baf7a0..e749707e4 100644
  } // end namespace ast_matchers
  } // end namespace clang
 diff --git a/clang/lib/ASTMatchers/Dynamic/Registry.cpp b/clang/lib/ASTMatchers/Dynamic/Registry.cpp
-index ec2215804..fb3f8a14e 100644
+index ec2215804..c264adae6 100644
 --- a/clang/lib/ASTMatchers/Dynamic/Registry.cpp
 +++ b/clang/lib/ASTMatchers/Dynamic/Registry.cpp
 @@ -544,6 +544,9 @@ RegistryMaps::RegistryMaps() {
@@ -432,7 +432,7 @@ index ec2215804..fb3f8a14e 100644
    REGISTER_MATCHER(withInitializer);
 +
 +  REGISTER_MATCHER(coroutineBodyStmt);
-+  REGISTER_MATCHER(hasCoroutineBody);  
++  REGISTER_MATCHER(hasCoroutineBody);
  }
  
  RegistryMaps::~RegistryMaps() = default;

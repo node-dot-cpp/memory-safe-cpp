@@ -10,3 +10,4 @@
 /checker/build/
 /checker/3rdparty/llvm/
 /checker/3rdparty/clang/
+/checker/3rdparty/llvm-project/
