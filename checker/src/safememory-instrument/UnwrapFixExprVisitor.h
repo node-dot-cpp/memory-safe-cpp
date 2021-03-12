@@ -132,7 +132,7 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     E = E->IgnoreParenImpCasts();
     bool LValue = E->isLValue();
-    bool TrivialType = E->getType().getCanonicalType().isTrivialType(Context);
+    bool ScalarType = E->getType().getCanonicalType()->isScalarType();
 
     if(isa<DeclRefExpr>(E))
       return;
@@ -178,21 +178,21 @@ class UnwrapFixExprVisitor : public clang::EvaluatedExprVisitor<UnwrapFixExprVis
 
     string Name = generateName();
 
-    if(LValue) 
-      Buffer += "auto& ";
-    else if(TrivialType)
+    if(ScalarType || AddStar)
       Buffer += "auto ";
+    else if(LValue) 
+      Buffer += "auto& ";
     else
       Buffer += "auto&& ";
     
     Buffer += Name;
     Buffer += " = ";
     if(AddStar)
-      Buffer += "&*(";
+      Buffer += "std::addressof(*(";
 
     Buffer += subStmtWithReplaces(RangeInStmtText);
     if(AddStar)
-      Buffer += ")";
+      Buffer += "))";
 
     Buffer += "; ";
 
@@ -336,7 +336,6 @@ public:
       return false;
     }
 
-
     Visit(E);
     if(!Buffer.empty()) {
       makeFix();
@@ -346,18 +345,19 @@ public:
   }
 
   //special treatmeant for smart ptrs
-  bool isOverloadArrowOp(Expr *E) {
+  CXXOperatorCallExpr* isOverloadArrowOp(Expr *E) {
 
     E = E->IgnoreParenImpCasts();
     auto Op = dyn_cast_or_null<CXXOperatorCallExpr>(E);
-    return Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow;
+    return (Op && Op->getOperator() == OverloadedOperatorKind::OO_Arrow) ? Op : nullptr;
   }
 
   void VisitMemberExpr(MemberExpr *E) {
 
     //special treatmeant for smart ptrs
-    if(isOverloadArrowOp(E->getBase())) {
-      unwrapStar(E->getBase());
+    if(auto OpCall = isOverloadArrowOp(E->getBase())) {
+      llvm::errs() << "VisitMemberExpr isOverloadArrowOp\n";
+      unwrapStar(OpCall->getArg(0));
     }
     else {
       Base::VisitMemberExpr(E);

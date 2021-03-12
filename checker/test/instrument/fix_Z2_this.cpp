@@ -49,7 +49,7 @@ struct Bad {
 
 		// StPtr may be deleted, and 'this' will zombie
 		StPtr->call(release());
-// CHECK-FIXES: { auto nodecpp_1 = &*(StPtr); auto nodecpp_2 = release(); nodecpp_1->call(nodecpp_2); };
+// CHECK-FIXES: { auto nodecpp_1 = std::addressof(*(StPtr)); auto nodecpp_2 = release(); nodecpp_1->call(nodecpp_2); };
 		
 		// ref may be deleted, and 'this' will zombie
 		getSt().call(release());
