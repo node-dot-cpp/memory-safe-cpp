@@ -1,5 +1,6 @@
 -std=c++17
 -nostdinc
+-I.
 -isystem
 ./Inputs
 -isystem

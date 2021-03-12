@@ -1,10 +1,11 @@
-// RUN: %check_safememory_instrument --fix-only %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs -isystem %S/../../3rdparty/clang/lib/Headers
+// RUN: %check_safememory_instrument --fix-only %s %t
 
 #include <safememory/safe_ptr.h>
 
 #include <safe_types.h>
 
 using namespace safememory;
+using namespace nodecpp;
 
 struct UnsafeType {
 
@@ -42,11 +43,16 @@ struct Bad {
 
 		//only cases that need fix are here
 
-		StRef.call(release());//StRef may be deleted, and 'this' will zombie
+		//StRef may be deleted, and 'this' will zombie
+		StRef.call(release());
 // CHECK-FIXES: { auto nodecpp_0 = release(); StRef.call(nodecpp_0); };
-		StPtr->call(release());// StPtr may be deleted, and 'this' will zombie
+
+		// StPtr may be deleted, and 'this' will zombie
+		StPtr->call(release());
 // CHECK-FIXES: { auto nodecpp_1 = &*(StPtr); auto nodecpp_2 = release(); nodecpp_1->call(nodecpp_2); };
-		getSt().call(release());// ref may be deleted, and 'this' will zombie
+		
+		// ref may be deleted, and 'this' will zombie
+		getSt().call(release());
 // CHECK-FIXES: { auto& nodecpp_3 = getSt(); auto nodecpp_4 = release(); nodecpp_3.call(nodecpp_4); };
 
 	}
