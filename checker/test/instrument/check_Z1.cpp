@@ -1,4 +1,4 @@
-// RUN: %check_safememory_instrument --report-only %s %t
+// RUN: %check_safememory_instrument --report-only %s %t %p
 
 #include <safememory/safe_ptr.h>
 #include <safe_types.h>

@@ -1,4 +1,4 @@
-// RUN: %check_safememory_instrument --fix-only %s %t
+// RUN: %check_safememory_instrument --fix-only %s %t %p
 // XFAIL: *
 
 #include <utility>

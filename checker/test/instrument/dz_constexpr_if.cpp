@@ -1,4 +1,4 @@
-// RUN: %check_safememory_instrument %s %t -- -- -std=c++17 -nostdinc -I%S -isystem %S/Inputs
+// RUN: %check_safememory_instrument %s %t %p
 // XFAIL: *
 
 

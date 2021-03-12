@@ -16,7 +16,7 @@ Nodecpp Test Helper
 This script runs safememory-instrument and verify changes and messages.
 
 Usage:
-  check_safememory_instrument.py <source-file> <temp-file> \
+  check_safememory_instrument.py <source-file> <temp-file> <compile-path> \
     -- [optional safememory-instrument arguments]
 
 Example:
@@ -39,11 +39,13 @@ def main():
   parser = argparse.ArgumentParser()
   parser.add_argument('input_file_name')
   parser.add_argument('temp_file_name')
+  parser.add_argument('compile_path')
 
   args, extra_args = parser.parse_known_args()
 
   input_file_name = args.input_file_name
   temp_file_name = args.temp_file_name
+  compile_path = args.compile_path
 
   _, extension = os.path.splitext(input_file_name)
   if extension not in ['.c', '.hpp', '.m', '.mm']:
@@ -75,7 +77,7 @@ def main():
 #  cleaned_file_name = temp_file_name + ".orig"
   write_file(cleaned_file_name, cleaned_test)
 
-  args = ['safememory-instrument', '-o', temp_file_name, cleaned_file_name] + \
+  args = ['safememory-instrument', '-p', compile_path,'-o', temp_file_name, cleaned_file_name] + \
         extra_args
 
   print('Running ' + repr(args) + '...')
