@@ -28,6 +28,7 @@
 #include "CodeChange.h"
 
 #include "clang/Basic/SourceManager.h"
+#include "clang/Basic/FileManager.h"
 #include "clang/Rewrite/Core/Rewriter.h"
 #include "clang/Lex/Lexer.h"
 

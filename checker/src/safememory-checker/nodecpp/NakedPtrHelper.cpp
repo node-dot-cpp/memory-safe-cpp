@@ -1256,7 +1256,7 @@ const Expr *ignoreTemporaries(const Expr *Ex) {
   } else if (auto C = dyn_cast<CXXConstructExpr>(Ex)) {
     return ignoreTemporaries(C->getArg(0));
   } else if (auto T = dyn_cast<MaterializeTemporaryExpr>(Ex)) {
-    return ignoreTemporaries(T->GetTemporaryExpr());
+    return ignoreTemporaries(T->getSubExpr());
   } else if (auto I = dyn_cast<ImplicitCastExpr>(Ex)) {
     return ignoreTemporaries(I->getSubExpr());
   } else if (auto Cl = dyn_cast<ExprWithCleanups>(Ex)) {
@@ -1688,7 +1688,7 @@ bool NakedPtrScopeChecker::checkExpr(const Expr *From) {
   } else if (auto Cast = dyn_cast<CastExpr>(From)) {
     return checkExpr(Cast->getSubExpr());
   } else if (auto Tmp = dyn_cast<MaterializeTemporaryExpr>(From)) {
-    return checkExpr(Tmp->GetTemporaryExpr());
+    return checkExpr(Tmp->getSubExpr());
   } else if (auto Construct = dyn_cast<CXXConstructExpr>(From)) {
     return checkCXXConstructExpr(Construct);
   } else if (auto B = dyn_cast<CXXBindTemporaryExpr>(From)) {

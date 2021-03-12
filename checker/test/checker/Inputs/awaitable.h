@@ -65,13 +65,9 @@ namespace std {
 		};
 
 		struct suspend_never {
-			bool await_ready() noexcept { 
-				return false;
-			}
-			void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {
-			}
-			void await_resume() { 
-			}
+			bool await_ready() noexcept { return false;	}
+			void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
+			void await_resume() noexcept {}
 		};
 
 		
@@ -82,14 +78,9 @@ namespace nodecpp {
 
 struct promise_type_struct_base {
 
-    auto initial_suspend() {
-        return std::experimental::suspend_never{};
-    }
-	auto final_suspend() {
-		return std::experimental::suspend_never{};
-    }
-	void unhandled_exception() {
-    }
+    auto initial_suspend() noexcept {return std::experimental::suspend_never{}; }
+	auto final_suspend() noexcept { return std::experimental::suspend_never{}; }
+	void unhandled_exception() noexcept {}
 };
 
 template<typename T> struct awaitable; // forward declaration
@@ -103,12 +94,8 @@ struct promise_type_struct : public promise_type_struct_base {
 	~promise_type_struct() {}
 
     auto get_return_object();
-    auto return_value(T v) {
-        return std::experimental::suspend_never{};
-    }
-    auto yield_value(T v) {
-        return std::experimental::suspend_never{};
-    }
+    auto return_value(T v) { return std::experimental::suspend_never{}; }
+    auto yield_value(T v) { return std::experimental::suspend_never{}; }
 };
 
 template<>
@@ -120,15 +107,36 @@ struct promise_type_struct<void> : public promise_type_struct_base {
 	~promise_type_struct() {}
 
     auto get_return_object();
-	auto return_void(void) {
-        return std::experimental::suspend_never{};
-    }
+	auto return_void(void) { return std::experimental::suspend_never{}; }
 };
 
 
 template<typename T>
 struct awaitable  {
 	using promise_type = promise_type_struct<T>;
+	T result;
+
+	awaitable()  {}
+
+    awaitable(const awaitable &) = delete;
+	awaitable &operator = (const awaitable &) = delete;
+
+	awaitable(awaitable &&s) = default;
+	awaitable &operator = (awaitable &&s) = default;
+	
+	~awaitable() {}
+
+bool await_ready() noexcept { return false; }
+	void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
+	T await_resume() noexcept { return result; }
+
+	void return_value(T t) { result = t; }
+
+};
+
+template<>
+struct awaitable<void>  {
+	using promise_type = promise_type_struct<void>;
 	
 	awaitable()  {}
 
@@ -140,21 +148,15 @@ struct awaitable  {
 	
 	~awaitable() {}
 
-    T get() {
-        return T();
-    }
+    // T get() {
+    //     return T();
+    // }
 
-	bool await_ready() noexcept { 
-		return false;
-	}
-	void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {
-	}
-	T await_resume() { 
-		return T(); 
-	}
+	bool await_ready() noexcept { return false; }
+	void await_suspend(std::experimental::coroutine_handle<> h_) noexcept {}
+	void await_resume() noexcept { }
 
 	void return_void() {}
-
 };
 
 inline

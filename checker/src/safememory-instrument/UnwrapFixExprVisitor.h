@@ -326,7 +326,7 @@ public:
       return false;
     }
 
-    StmtText = R.second;
+    StmtText = R.second.str();
 
     if(StmtText.size() != StmtRange.getLength()) {
       //mb: this shouldn't happend

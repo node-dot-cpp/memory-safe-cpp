@@ -207,7 +207,7 @@ private:
     FILE* os;
 public:
     FindNamedClassActionFactory(FILE* os) :os(os) {}
-    FrontendAction *create() override { return new FindNamedClassAction(os); }
+    std::unique_ptr<FrontendAction> create() override { return std::unique_ptr<FrontendAction>(new FindNamedClassAction(os)); }
 };
 
 int main(int argc, const char **argv) {

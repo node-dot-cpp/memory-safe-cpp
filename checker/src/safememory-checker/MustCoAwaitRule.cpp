@@ -299,7 +299,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeMustCoAwaitRule(ClangTidyContext *Context) {
-  return llvm::make_unique<RuleS9ASTConsumer>(Context);
+  return std::make_unique<RuleS9ASTConsumer>(Context);
 }
 
 } // namespace checker

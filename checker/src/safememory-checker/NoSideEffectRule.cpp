@@ -193,7 +193,7 @@ public:
 };
 
 std::unique_ptr<clang::ASTConsumer> makeNoSideEffectRule(ClangTidyContext *Context) {
-  return llvm::make_unique<NoSideEffectASTConsumer>(Context);
+  return std::make_unique<NoSideEffectASTConsumer>(Context);
 }
 
 } // namespace checker

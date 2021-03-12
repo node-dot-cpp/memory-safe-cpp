@@ -362,7 +362,7 @@ public:
 
   bool TraverseLambdaExpr(clang::LambdaExpr *E) {
 
-    return Base::TraverseCompoundStmt(E->getBody());
+    return Base::TraverseStmt(E->getBody());
   }
 
 };

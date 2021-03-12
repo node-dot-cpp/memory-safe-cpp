@@ -193,8 +193,10 @@ DiagnosticBuilder ClangTidyContext::diag(
     StringRef CheckName, SourceLocation Loc, StringRef Description,
     DiagnosticIDs::Level Level /* = DiagnosticIDs::Warning*/) {
 //  assert(Loc.isValid());
+  // unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
+  //     Level, (Description + " [" + CheckName + "]").str());
   unsigned ID = DiagEngine->getDiagnosticIDs()->getCustomDiagID(
-      Level, (Description + " [" + CheckName + "]").str());
+      Level, Description);
   CheckNamesByDiagnosticID.try_emplace(ID, CheckName);
   return DiagEngine->Report(Loc, ID);
 }
@@ -243,11 +245,11 @@ void ClangTidyContext::setSourceManager(SourceManager *SourceMgr) {
 }
 
 void ClangTidyContext::setCurrentFile(StringRef File) {
-  CurrentFile = File;
+  CurrentFile = File.str();
   CurrentOptions = getOptionsForFile(CurrentFile);
-  CheckFilter = llvm::make_unique<CachedGlobList>(*getOptions().Checks);
+  CheckFilter = std::make_unique<CachedGlobList>(*getOptions().Checks);
   WarningAsErrorFilter =
-      llvm::make_unique<CachedGlobList>(*getOptions().WarningsAsErrors);
+      std::make_unique<CachedGlobList>(*getOptions().WarningsAsErrors);
 }
 
 void ClangTidyContext::setASTContext(ASTContext *Ctx) {
@@ -302,7 +304,7 @@ ClangTidyDiagnosticConsumer::ClangTidyDiagnosticConsumer(
       LastErrorRelatesToUserCode(false), LastErrorPassesLineFilter(false),
       LastErrorWasIgnored(false) {
   IntrusiveRefCntPtr<DiagnosticOptions> DiagOpts = new DiagnosticOptions();
-  Diags = llvm::make_unique<DiagnosticsEngine>(
+  Diags = std::make_unique<DiagnosticsEngine>(
       IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs), &*DiagOpts, this,
       /*ShouldOwnClient=*/false);
   Context.setDiagnosticsEngine(Diags.get());
@@ -554,7 +556,7 @@ void ClangTidyDiagnosticConsumer::checkFilters(SourceLocation Location) {
 llvm::Regex *ClangTidyDiagnosticConsumer::getHeaderFilter() {
   if (!HeaderFilter)
     HeaderFilter =
-        llvm::make_unique<llvm::Regex>(*Context.getOptions().HeaderFilterRegex);
+        std::make_unique<llvm::Regex>(*Context.getOptions().HeaderFilterRegex);
   return HeaderFilter.get();
 }
 
@@ -640,7 +642,7 @@ void ClangTidyDiagnosticConsumer::removeIncompatibleErrors(
       for (const auto &Replace : FileAndReplace.second) {
         unsigned Begin = Replace.getOffset();
         unsigned End = Begin + Replace.getLength();
-        const std::string &FilePath = Replace.getFilePath();
+        const std::string &FilePath = Replace.getFilePath().str();
         // FIXME: Handle empty intervals, such as those from insertions.
         if (Begin == End)
           continue;
