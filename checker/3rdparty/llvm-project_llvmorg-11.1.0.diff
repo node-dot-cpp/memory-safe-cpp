@@ -467,7 +467,7 @@ index e304fbbed..c961659de 100644
    width: 50em;
    margin-left: -25em;
 diff --git a/clang/lib/Sema/SemaDeclAttr.cpp b/clang/lib/Sema/SemaDeclAttr.cpp
-index a9a2a19b4..090a55925 100644
+index a9a2a19b4..61526327a 100644
 --- a/clang/lib/Sema/SemaDeclAttr.cpp
 +++ b/clang/lib/Sema/SemaDeclAttr.cpp
 @@ -6815,11 +6815,16 @@ static void ProcessDeclAttribute(Sema &S, Scope *scope, Decl *D,
@@ -480,7 +480,7 @@ index a9a2a19b4..090a55925 100644
 -               : (unsigned)diag::warn_unknown_attribute_ignored)
 -        << AL;
 +    if(AL.hasScope() && AL.getScopeName()->getName() == "safememory") {
-+      S.Diag(AL.getLoc(), diag::err_unknown_safememory_attribute) << AL.getName();
++      S.Diag(AL.getLoc(), diag::err_unknown_safememory_attribute) << AL.getNormalizedFullName();
 +    }
 +    else {
 +	    S.Diag(AL.getLoc(),
