@@ -13,12 +13,13 @@ cd build/release
 
 cmake -DLLVM_TARGETS_TO_BUILD="X86" -DCMAKE_BUILD_TYPE=Release -DLLVM_ENABLE_PROJECTS="clang" -DLLVM_EXTERNAL_SAFEMEMORY_SOURCE_DIR=${PWD}/../.. -G "Unix Makefiles" ../../3rdparty/llvm-project/llvm
 
-make --jobs=3 safememory-checker
-make --jobs=3 safememory-instrument
-make --jobs=3 safememory-library-db
-make --jobs=3 safememory-odr
+cmake --build . --target safememory-checker
+cmake --build . --target safememory-instrument
+cmake --build . --target safememory-library-db
+cmake --build . --target safememory-odr
 
-make --jobs=3 check-safememory-tools
+cmake --build . --target check-safememory-tools
+
 
 cd ../..
 

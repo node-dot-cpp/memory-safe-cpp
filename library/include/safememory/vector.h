@@ -45,23 +45,23 @@ namespace safememory
 		typedef vector<T, Safety> 										this_type;
 		typedef eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>    base_type;
 
-		template <typename T, memory_safety Safety>
-		friend bool operator==(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator==(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
-		template <typename T, memory_safety Safety>
-		friend bool operator!=(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator!=(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
-		template <typename T, memory_safety Safety>
-		friend bool operator<(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator<(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
-		template <typename T, memory_safety Safety>
-		friend bool operator>(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator>(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
-		template <typename T, memory_safety Safety>
-		friend bool operator<=(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator<=(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
-		template <typename T, memory_safety Safety>
-		friend bool operator>=(const vector<T, Safety>& a, const vector<T, Safety>& b);
+		template <typename TT, memory_safety SS>
+		friend bool operator>=(const vector<TT, SS>& a, const vector<TT, SS>& b);
 
 	public:
 		typedef typename base_type::value_type                             value_type;

@@ -586,8 +586,6 @@ namespace safememory
 
 		typedef heap_safe_iterator                                                iterator_safe;
 		typedef const_heap_safe_iterator                                          const_iterator_safe;
-
-		typedef iterator                                                          insert_return_type;
 		typedef iterator_safe                                                     insert_return_type_safe;
 
 

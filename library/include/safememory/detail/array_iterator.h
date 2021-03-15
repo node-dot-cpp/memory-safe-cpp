@@ -94,14 +94,14 @@ protected:
 	friend class array_heap_safe_iterator;
 
 	// default to 'safe', only on soft_ptr_no_checks we can relax to 'none'
-	template <typename T>
+	template <typename>
 	struct array_heap_safe_iterator_safety_helper {
 		static constexpr memory_safety is_safe = memory_safety::safe;
 	};
 
-	template<typename T> class soft_ptr_no_checks; //fwd
-	template<typename T>
-	struct array_heap_safe_iterator_safety_helper<soft_ptr_no_checks<T>> {
+	template<typename> class soft_ptr_no_checks; //fwd
+	template<typename TT>
+	struct array_heap_safe_iterator_safety_helper<soft_ptr_no_checks<TT>> {
 		static constexpr memory_safety is_safe = memory_safety::none;
 	};
 
