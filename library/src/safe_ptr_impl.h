@@ -543,9 +543,9 @@ class owning_ptr_base_impl
 	public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		void setPtr( const void* ptr_, uint16_t allocatorID ) { base_pointer_t::init(ptr_, allocatorID); }
-		void setTypedPtr( T* ptr_, uint16_t allocatorID ) { base_pointer_t::reset(); base_pointer_t::set_ptr(ptr_, allocatorID); }
-		void setAllocatorIdx( uint16_t idx ) { base_pointer_t::setdata(idx); }
-		uint16_t allocatorIdx() const { return base_pointer_t::getData(); }
+		void setTypedPtr( T* ptr_, uint16_t allocatorID ) { base_pointer_t::init(ptr_, allocatorID); }
+		void setAllocatorIdx( uint16_t idx ) { base_pointer_t::set_data(idx); }
+		uint16_t allocatorIdx() const { return base_pointer_t::get_data(); }
 #else
 		void setPtr( const void* ptr_ ) { base_pointer_t::init(ptr_); }
 		void setTypedPtr( T* ptr_ ) { base_pointer_t::init(ptr_); }
@@ -641,15 +641,15 @@ public:
 	{
 		if ( mo.allocatorID == 0 )
 		{
-			t.setPtr( t_ );
-			t.setAllocatorIdx(mo.allocatorID);
+			t.setPtr( t_, 0 );
 			return;
 		}
+		t.setPtr( t_, mo.allocatorID );
 #else
 	owning_ptr_base_impl( make_owning_t, T* t_ ) // make it private with a friend make_owning_impl()!
 	{
-#endif
 		t.setPtr( t_ );
+#endif
 		getControlBlock()->init();
 		dbgCheckValidity();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -670,7 +670,11 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-		t.setTypedPtr( other.t.getTypedPtr() );
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		t.setTypedPtr( other.t.getTypedPtr(), other.t.allocatorIdx() ); // implicit cast, if at all possible
+#else
+		t.setTypedPtr( other.t.getTypedPtr() ); // implicit cast, if at all possible
+#endif
 		other.t.reset();
 		other.dbgCheckValidity();
 		dbgCheckValidity();
@@ -726,7 +730,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-		t.setPtr( nullptr );
+		t.reset();
 	}
 	owning_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
@@ -910,7 +914,7 @@ public:
 };
 
 template<class T>
-void killUnderconsructedOP( owning_ptr_base_impl<T>& p ) { p.t.setPtr( nullptr ); }
+void killUnderconsructedOP( owning_ptr_base_impl<T>& p ) { p.t.reset(); }
 
 template<class _Ty,
 	class... _Types,
