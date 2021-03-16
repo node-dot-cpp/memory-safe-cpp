@@ -112,7 +112,7 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
-			deallocate( t, alignof(T) );
+			deallocate( const_cast<void*>((const void*)t), alignof(T) );
 		}
 	}
 	~owning_ptr_base_no_checks()
