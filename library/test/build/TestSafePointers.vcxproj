@@ -75,7 +75,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug_with_destruction_info|Win32'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug_with_destruction_info|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_with_heneric_ptr_structs|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug_with_heneric_ptr_structs|x64'">false</ExcludedFromBuild>
@@ -330,7 +330,7 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>

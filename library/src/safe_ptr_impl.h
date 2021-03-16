@@ -966,7 +966,9 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 //NODECPP_FORCEINLINE
 //bool is_guaranteed_on_stack(void* p) { return nodecpp::platform::is_guaranteed_on_stack( p ); }
 #define IF_IS_GUARANTEED_ON_STACK( ptr ) if ( nodecpp::platform::is_guaranteed_on_stack( (ptr) ) )
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 #define NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
+#endif
 #else
 //constexpr bool is_guaranteed_on_stack(void*) { return false; }
 #define IF_IS_GUARANTEED_ON_STACK( ptr ) if constexpr ( false )
