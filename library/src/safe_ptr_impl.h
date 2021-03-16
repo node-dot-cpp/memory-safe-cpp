@@ -638,7 +638,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 	owning_ptr_base_impl( make_owning_t mo, T* t_ ) // make it private with a friend make_owning_impl()!
 	{
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
+		if ( mo.allocatorID == 0 )
 		{
 			t.setPtr( t_ );
 			t.setAllocatorIdx(mo.allocatorID);
@@ -657,13 +657,6 @@ public:
 	}
 	owning_ptr_base_impl()
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			t.setPtr( nullptr );
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -673,14 +666,6 @@ public:
 	owning_ptr_base_impl& operator = ( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			t.setTypedPtr( other.t.getTypedPtr() );
-			other.t.init( nullptr );
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -692,15 +677,6 @@ public:
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
 		if ( this == &other ) return *this;
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			reset();
-			t.setTypedPtr( other.t.getTypedPtr() );
-			other.t.init( nullptr );
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -714,15 +690,6 @@ public:
 	template<class T1>
 	owning_ptr_base_impl( owning_ptr_base_impl<T1>&& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			reset();
-			t.setTypedPtr( other.t.getTypedPtr() );
-			other.t.init( nullptr );
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -735,15 +702,6 @@ public:
 	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
 	{
 		if ( this == &other ) return *this;
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			reset();
-			t = other.t; // implicit cast, if at all possible
-			other.t = nullptr;
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -756,13 +714,6 @@ public:
 	}
 	owning_ptr_base_impl( std::nullptr_t nulp )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			t.setPtr( nullptr );
-			return;
-		}
-#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -770,13 +721,6 @@ public:
 	}
 	owning_ptr_base_impl& operator = ( std::nullptr_t nulp )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			reset();
-			return;
-		}
-#endif
 		reset();
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::reset );
@@ -792,11 +736,12 @@ public:
 	void do_delete()
 	{
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
+		if ( isInCommonHeap() )
 		{
 			if ( NODECPP_LIKELY(t.getTypedPtr()) )
 			{
 				destruct( t.getTypedPtr() );
+				deallocate( getAllocatedBlock_(t.getTypedPtr()) );
 				t.setPtr( nullptr );
 			}
 			return;
@@ -821,11 +766,12 @@ public:
 	void reset()
 	{
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
+		if ( isInCommonHeap() )
 		{
 			if ( NODECPP_LIKELY(t.getTypedPtr()) )
 			{
 				destruct( t.getTypedPtr() );
+				deallocate( t.getTypedPtr() );
 				t.setPtr( nullptr );
 			}
 			return;
@@ -847,23 +793,18 @@ public:
 
 	void swap( owning_ptr_base_impl<T>& other )
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
-		{
-			if ( NODECPP_LIKELY(t.getTypedPtr()) )
-			{
-				T* tmp = t;
-				t = other.t;
-				other.t = tmp;
-			}
-			return;
-		}
-#endif
 		T* tmp = t;
 		t = other.t;
 		other.t = tmp;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		if ( !isInCommonHeap() )
+			dbgCheckValidity();
+		if ( !other.isInCommonHeap() )
+			other.dbgCheckValidity();
+#else
 		other.dbgCheckValidity();
 		dbgCheckValidity();
+#endif
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.swap( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -980,7 +921,7 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 				deallocate( data, alignof(_Ty) );
 				throw;
 			}
-			owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
+			owning_ptr_no_checks<_Ty> op( make_owning_t(0), (_Ty*)(data) );
 			return op;
 		}
 #endif
@@ -989,7 +930,11 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)dataForObj & (alignof(_Ty)-1)) == 0, "indeed, dataForObj = 0x{:x}, NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT = 0x{:x}", (uintptr_t)dataForObj, alignof(_Ty) );
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	owning_ptr_impl<_Ty> op(make_owning_t(1), (_Ty*)(uintptr_t)(dataForObj)); // TODO: set actual allocator ID
+#else
 	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
+#endif
 	try { 
 		new ( dataForObj ) _Ty(::std::forward<_Types>(_Args)...);
 		thg_stackPtrForMakeOwningCall = stackTmp;
@@ -1105,7 +1050,7 @@ class soft_ptr_base_impl
 
 	soft_ptr_base_impl(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND // TODO: revise
 		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
 		{
 			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
@@ -1399,9 +1344,6 @@ public:
 	{
 		// TODO+++: revise
 		if ( this == &other ) return *this;
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		// TODO: revise
-#endif
 		bool wasOnStack = isOnStack();
 		reset();
 		if ( wasOnStack )
@@ -1416,8 +1358,13 @@ public:
 			else
 			{
 				initOnStack( other.getDereferencablePtr(), other.getAllocatedPtr() ); // automatic type conversion (if at all possible)
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+				if ( other.getAllocatedPtr() != nullptr && other.getIdx_() != PointersT::max_data )
+					other.getControlBlock()->remove(other.getIdx_());
+#else
 				if ( other.getIdx_() != PointersT::max_data )
 					other.getControlBlock()->remove(other.getIdx_());
+#endif
 				other.init( PointersT::max_data );
 			}
 		}
@@ -1435,8 +1382,13 @@ public:
 			else
 			{
 				pointers.copy_from( other.pointers );
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+				if ( getAllocatedPtr() != nullptr && getIdx_() != PointersT::max_data )
+					getControlBlock()->resetPtr(getIdx_(), this);
+#else
 				if ( getIdx_() != PointersT::max_data )
 					getControlBlock()->resetPtr(getIdx_(), this);
+#endif
 				other.init( PointersT::max_data );
 			}
 		}
@@ -1646,7 +1598,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if( getAllocatedPtr() == nullptr )
 		{
-			init( nullptr, nullptr, soft_ptr_base_impl<T>::PointersT::max_data );
+			invalidatePtr();
 			return;
 		}
 #endif
@@ -1711,9 +1663,8 @@ public:
 template<class T>
 soft_ptr_impl<T> soft_ptr_in_constructor_impl(T* ptr) {
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-	// TODO: ...
-	// if ( thg_stackPtrForMakeOwningCall == nullptr )
-	//	return soft_ptr_impl<T>( nullptr, ptr );
+	if ( thg_stackPtrForMakeOwningCall == nullptr )
+		return soft_ptr_impl<T>( nullptr, ptr );
 #endif
 	FirstControlBlock* cbPtr = nullptr;
 	if ( thg_stackPtrForMakeOwningCall == NODECPP_SECOND_NULLPTR )
@@ -1757,9 +1708,6 @@ public:
 	soft_ptr_impl() : soft_ptr_base_impl<T>()
 	{
 		this->init( soft_ptr_base_impl<T>::PointersT::max_data );
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		return;
-#endif
 		IF_IS_GUARANTEED_ON_STACK( this )
 		{
 			this->setOnStack();
@@ -1832,16 +1780,18 @@ public:
 
 	soft_ptr_impl<T>& operator = ( const owning_ptr_base_impl<T>& owner )
 	{
+		bool iWasOnStack = this->isOnStack();
+		reset();
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( owner.isInCommonHeap() )
 		{
 			reset();
 			this->init( owner.t.getTypedPtr(), nullptr, soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+			if ( iWasOnStack )
+				this->setOnStack();
 			return *this;
 		}
 #endif
-		bool iWasOnStack = this->isOnStack();
-		reset();
 		if ( iWasOnStack )
 		{
 			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)
@@ -1856,16 +1806,17 @@ public:
 	}
 	soft_ptr_impl<T>& operator = ( const owning_ptr_impl<T>& owner )
 	{
+		bool iWasOnStack = this->isOnStack();
+		reset();
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( owner.isInCommonHeap() )
 		{
-			reset();
 			this->init( owner.t.getTypedPtr(), nullptr, soft_ptr_base_impl<T>::PointersT::max_data ); // automatic type conversion (if at all possible)
+			if ( iWasOnStack )
+				this->setOnStack();
 			return *this;
 		}
 #endif
-		bool iWasOnStack = this->isOnStack();
-		reset();
 		if ( iWasOnStack )
 		{
 			this->initOnStack( owner.t.getTypedPtr(), owner.t.getTypedPtr() ); // automatic type conversion (if at all possible)

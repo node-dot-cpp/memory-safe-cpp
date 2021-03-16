@@ -215,7 +215,11 @@ void destruct( T* t )
 		t->~T();
 }
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+struct make_owning_t {uint16_t allocatorID;};
+#else
 struct make_owning_t {};
+#endif
 template<class T> class owning_ptr_impl; // forward declaration
 template<class T> class soft_ptr_base_impl; // forward declaration
 template<class T> class soft_ptr_impl; // forward declaration
