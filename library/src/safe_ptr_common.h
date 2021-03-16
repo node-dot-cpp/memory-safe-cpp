@@ -215,8 +215,8 @@ void destruct( T* t )
 		t->~T();
 }
 
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-struct make_owning_t {uint16_t allocatorID;};
+#if NODECPP_MEMORY_SAFETY == 0
+struct make_owning_t {uint16_t allocatorID; make_owning_t( int id ) {allocatorID = id;} };
 #else
 struct make_owning_t {};
 #endif

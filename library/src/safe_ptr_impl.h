@@ -36,9 +36,7 @@
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
-#if NODECPP_MEMORY_SAFETY == -1
-#error unexpected
-#elif NODECPP_MEMORY_SAFETY == 0
+#if NODECPP_MEMORY_SAFETY == 0
 #define NODECPP_MEMORY_SAFETY_ON_DEMAND
 #endif
 
@@ -543,16 +541,19 @@ class owning_ptr_base_impl
 	template<class TT>
 	struct ObjectPointer : base_pointer_t {
 	public:
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		void setPtr( const void* ptr_, uint16_t allocatorID ) { base_pointer_t::init(ptr_, allocatorID); }
+		void setTypedPtr( T* ptr_, uint16_t allocatorID ) { base_pointer_t::reset(); base_pointer_t::set_ptr(ptr_, allocatorID); }
+		void setAllocatorIdx( uint16_t idx ) { base_pointer_t::setdata(idx); }
+		uint16_t allocatorIdx() const { return base_pointer_t::getData(); }
+#else
 		void setPtr( const void* ptr_ ) { base_pointer_t::init(ptr_); }
 		void setTypedPtr( T* ptr_ ) { base_pointer_t::init(ptr_); }
+#endif
 		void* getPtr() const { return base_pointer_t::get_ptr(); }
 		TT* getTypedPtr() const { return reinterpret_cast<TT*>( base_pointer_t::get_ptr() ); }
 		void setZombie() { base_pointer_t::set_zombie(); }
 		//bool isZombie() const { return base_pointer_t::is_sombie(); }
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		void setAllocatorIdx( uint16_t idx ) { base_pointer_t::setdata(idx); }
-		uint16_t allocatorIdx() { return base_pointer_t::getData(); }
-#endif
 	};
 	ObjectPointer<T> t; // the only data member!
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -582,7 +583,7 @@ class owning_ptr_base_impl
 	const FirstControlBlock* getControlBlock() const { return getControlBlock_(t.getPtr()); }
 	uint8_t* getAllocatedBlock() {return getAllocatedBlock_(t.getPtr()); }
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-	bool isInCommonHeap() { return t.allocatorIdx() == 0; } // TODO: right constant
+	bool isInCommonHeap() const { return t.allocatorIdx() == 0; } // TODO: right constant
 #endif
 
 	void updatePtrForListItemsWithInvalidPtr()
@@ -660,7 +661,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo.init( DbgCreationInfo::Origination::inizero );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
-		t.setPtr( nullptr );
+		t.reset();
 	}
 	owning_ptr_base_impl( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl& operator = ( const owning_ptr_base_impl<T>& other ) = delete;
@@ -670,7 +671,7 @@ public:
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		t.setTypedPtr( other.t.getTypedPtr() );
-		other.t.init( nullptr );
+		other.t.reset();
 		other.dbgCheckValidity();
 		dbgCheckValidity();
 	}
@@ -681,8 +682,12 @@ public:
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		reset();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		t.setTypedPtr( other.t.getTypedPtr(), other.t.allocatorIdx() );
+#else
 		t.setTypedPtr( other.t.getTypedPtr() );
-		other.t.init( nullptr );
+#endif
+		other.t.reset();
 		other.dbgCheckValidity();
 		dbgCheckValidity();
 		return *this;
@@ -693,8 +698,12 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		t.setTypedPtr( other.t.getTypedPtr(), other.t.allocatorIdx() ); // implicit cast, if at all possible
+#else
 		t.setTypedPtr( other.t.getTypedPtr() ); // implicit cast, if at all possible
-		other.t.init( nullptr );
+#endif
+		other.t.reset();
 		other.dbgCheckValidity();
 		dbgCheckValidity();
 	}
@@ -742,7 +751,7 @@ public:
 			{
 				destruct( t.getTypedPtr() );
 				deallocate( getAllocatedBlock_(t.getTypedPtr()) );
-				t.setPtr( nullptr );
+				t.reset();
 			}
 			return;
 		}
@@ -772,7 +781,7 @@ public:
 			{
 				destruct( t.getTypedPtr() );
 				deallocate( t.getTypedPtr() );
-				t.setPtr( nullptr );
+				t.reset();
 			}
 			return;
 		}
@@ -786,7 +795,7 @@ public:
 			updatePtrForListItemsWithInvalidPtr();
 			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
-			t.setPtr( nullptr );
+			t.reset();
 		}
 		dbgCheckValidity();
 	}
@@ -921,7 +930,7 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 				deallocate( data, alignof(_Ty) );
 				throw;
 			}
-			owning_ptr_no_checks<_Ty> op( make_owning_t(0), (_Ty*)(data) );
+			owning_ptr_impl<_Ty> op( make_owning_t(0), (_Ty*)(data) );
 			return op;
 		}
 #endif
@@ -1097,7 +1106,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( owner.isInCommonHeap()  )
 		{
-			init( owner.t.getTypedPtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( owner.t.getTypedPtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return;
 		}
 #endif
@@ -1120,7 +1129,7 @@ public:
 		if ( owner.isInCommonHeap()  )
 		{
 			reset();
-			init( owner.t.getTypedPtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( owner.t.getTypedPtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return *this;
 		}
 #endif
@@ -1145,7 +1154,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( owner.isInCommonHeap()  )
 		{
-			init( owner.t.getTypedPtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( owner.t.getTypedPtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return;
 		}
 #endif
@@ -1168,7 +1177,7 @@ public:
 		if ( owner.isInCommonHeap()  )
 		{
 			reset();
-			init( owner.t.getTypedPtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( owner.t.getTypedPtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return *this;
 		}
 #endif
@@ -1215,7 +1224,7 @@ public:
 		if ( other.getAllocatedPtr() == nullptr )
 		{
 			reset();
-			init( other.getDereferencablePtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( other.getDereferencablePtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return *this;
 		}
 #endif
@@ -1242,7 +1251,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( other.getAllocatedPtr() == nullptr )
 		{
-			init( other.getDereferencablePtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( other.getDereferencablePtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return;
 		}
 #endif
@@ -1269,7 +1278,7 @@ public:
 		if ( other.getAllocatedPtr() == nullptr )
 		{
 			reset();
-			init( other.getDereferencablePtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( other.getDereferencablePtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return *this;
 		}
 #endif
@@ -1299,7 +1308,7 @@ public:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( other.getAllocatedPtr() == nullptr )
 		{
-			init( other.getDereferencablePtr(), null, PointersT::max_data ); // automatic type conversion (if at all possible)
+			init( other.getDereferencablePtr(), nullptr, PointersT::max_data ); // automatic type conversion (if at all possible)
 			return;
 		}
 #endif

@@ -93,14 +93,12 @@
   <ItemGroup>
     <ClInclude Include="..\..\include\nodecpp_error\nodecpp_error.h" />
     <ClInclude Include="..\..\include\safememory\memory_safety.h" />
-    <ClInclude Include="..\..\src\iibmalloc\src\foundation\include\ptr_with_data_structs_impl.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc.h" />
     <ClInclude Include="..\..\src\iibmalloc\src\iibmalloc_common.h" />
     <ClInclude Include="..\..\src\safe_ptr.h" />
     <ClInclude Include="..\..\src\safe_ptr_common.h" />
     <ClInclude Include="..\..\src\safe_ptr_impl.h" />
     <ClInclude Include="..\..\src\safe_ptr_no_checks.h" />
-    <ClInclude Include="..\..\src\safe_ptr_with_zero_offset.h" />
     <ClInclude Include="..\..\src\startup_checks.h" />
     <ClInclude Include="..\dummy_test_objects.h" />
     <ClInclude Include="..\safety_exclusions.h" />
@@ -436,7 +434,7 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>

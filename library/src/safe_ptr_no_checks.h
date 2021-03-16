@@ -233,7 +233,11 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 		deallocate( data, alignof(_Ty) );
 		throw;
 	}
+#if NODECPP_MEMORY_SAFETY == 0
+	owning_ptr_no_checks<_Ty> op( make_owning_t(0), (_Ty*)(data) );
+#else
 	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
+#endif // NODECPP_MEMORY_SAFETY == 0
 	return op;
 }
 
