@@ -774,10 +774,11 @@ public:
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::dtoring );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			updatePtrForListItemsWithInvalidPtr();
-			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
 			getControlBlock()->clear( t.allocatorIdx() );
 #else
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 #endif
 			t.setZombie();
@@ -977,7 +978,11 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	catch( ... ) {
 		killUnderconsructedOP( op );
 		thg_stackPtrForMakeOwningCall = stackTmp;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		zombieDeallocate(data, allocatorID);
+#else
+		zombieDeallocate(data);
+#endif
 		throw;
 	}
 }

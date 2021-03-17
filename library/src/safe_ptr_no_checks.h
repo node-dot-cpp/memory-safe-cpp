@@ -234,7 +234,11 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}
 	catch (...) {
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		deallocate( data, alignof(_Ty), 0 );
+#else
+		deallocate( data, alignof(_Ty) );
+#endif
 		throw;
 	}
 #if NODECPP_MEMORY_SAFETY == 0
