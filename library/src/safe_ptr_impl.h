@@ -262,7 +262,7 @@ struct FirstControlBlock // not reallocatable
 				memcpy( ret->slots, present->slots, sizeof(PtrWishFlagsForSoftPtrList) * present->otherAllockedCnt );
 				//otherAllockedSlots.setPtr( newOtherAllockedSlots );
 				ret->addToFreeList( ret->slots + present->otherAllockedCnt, newSize - present->otherAllockedCnt );
-				deallocate( present );
+				deallocate( present, false );
 				ret->otherAllockedCnt = newSize;
 				//nodecpp::log::default_log::error( nodecpp::log::ModuleID(safememory::safememory_module_id), "after 2nd block relocation: ret = 0x{:x}, ret->otherAllockedCnt = {} (reallocation)", (size_t)ret, ret->otherAllockedCnt );
 				return ret;
@@ -278,10 +278,11 @@ struct FirstControlBlock // not reallocatable
 				return ret;
 			}
 		}
-		void dealloc()
-		{
-			deallocate( this );
-		}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		void dealloc( uint16_t AllocatorID ) { deallocate( this, AllocatorID ); }
+#else
+		void dealloc() { deallocate( this ); }
+#endif
 	};
 
 	struct PtrWithMaskAndFlag : protected nodecpp::platform::allocated_ptr_with_mask_and_flags<3,3,1>
@@ -394,9 +395,9 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckFreeList();
 		dbgCheckValidity<void>();
 	}
-	void enlargeSecondBlock() {
+/*	void enlargeSecondBlock() {
 		otherAllockedSlots.setPtr( SecondCBHeader::reallocate( otherAllockedSlots.getPtr() ) );
-	}
+	}*/
 	size_t insert( void* ptr ) {
 		dbgCheckValidity<void>();
 		uint32_t mask = otherAllockedSlots.getMask();
@@ -461,10 +462,19 @@ struct FirstControlBlock // not reallocatable
 		//dbgCheckFreeList();
 		dbgCheckValidity<void>();
 	}
-	void clear() {
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	void clear( uint16_t AllocatorID )
+#else
+	void clear()
+#endif
+	{
 		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(safememory::safememory_module_id), "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
 		if ( otherAllockedSlots.getPtr() != nullptr )
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			otherAllockedSlots.getPtr()->dealloc( AllocatorID );
+#else
 			otherAllockedSlots.getPtr()->dealloc();
+#endif
 		otherAllockedSlots.setZombie();
 		//dbgCheckValidity<void>();
 	}
@@ -750,7 +760,7 @@ public:
 			if ( NODECPP_LIKELY(t.getTypedPtr()) )
 			{
 				destruct( t.getTypedPtr() );
-				deallocate( t.getPtr(), alignof(T) );
+				deallocate( t.getPtr(), alignof(T), t.allocatorIdx() );
 				t.reset();
 			}
 			return;
@@ -764,8 +774,12 @@ public:
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::dtoring );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			updatePtrForListItemsWithInvalidPtr();
-			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			getControlBlock()->clear( t.allocatorIdx() );
+#else
 			getControlBlock()->clear();
+#endif
 			t.setZombie();
 			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 		}
@@ -780,7 +794,7 @@ public:
 			if ( NODECPP_LIKELY(t.getTypedPtr()) )
 			{
 				destruct( t.getTypedPtr() );
-				deallocate( t.getTypedPtr() );
+				deallocate( t.getTypedPtr(), t.allocatorIdx() );
 				t.reset();
 			}
 			return;
@@ -793,8 +807,12 @@ public:
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::resetting );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			updatePtrForListItemsWithInvalidPtr();
-			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			getControlBlock()->clear( t.allocatorIdx() );
+#else
 			getControlBlock()->clear();
+#endif
 			t.reset();
 		}
 		dbgCheckValidity();
@@ -930,7 +948,7 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 				thg_stackPtrForMakeOwningCall = stackTmp;
 			}
 			catch (...) {
-				deallocate( data, alignof(_Ty) );
+				deallocate( data, alignof(_Ty), 0 );
 				thg_stackPtrForMakeOwningCall = stackTmp;
 				throw;
 			}
@@ -959,7 +977,7 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 	catch( ... ) {
 		killUnderconsructedOP( op );
 		thg_stackPtrForMakeOwningCall = stackTmp;
-		zombieDeallocate(data);
+		zombieDeallocate(data, allocatorID);
 		throw;
 	}
 }

@@ -112,7 +112,11 @@ public:
 		if ( NODECPP_LIKELY(t) )
 		{
 			t->~T();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			deallocate_no_checked( const_cast<void*>((const void*)t), alignof(T) );
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
 			deallocate( const_cast<void*>((const void*)t), alignof(T) );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 		}
 	}
 	~owning_ptr_base_no_checks()
@@ -230,7 +234,7 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}
 	catch (...) {
-		deallocate( data, alignof(_Ty) );
+		deallocate( data, alignof(_Ty), 0 );
 		throw;
 	}
 #if NODECPP_MEMORY_SAFETY == 0

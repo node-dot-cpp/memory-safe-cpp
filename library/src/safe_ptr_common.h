@@ -128,25 +128,54 @@ NODECPP_FORCEINLINE void* allocateAligned( size_t sz )
 	return g_CurrentAllocManager->allocateAligned<alignment>( sz );
 }
 
-NODECPP_FORCEINLINE void deallocate( void* ptr )
+NODECPP_FORCEINLINE void deallocate( void* ptr, uint16_t allocatorID )
 {
-	if ( g_CurrentAllocManager == nullptr )
+	if ( allocatorID == 0 )
 	{
+		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
 		::operator delete [] (ptr);
+		::nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
+		return;
+	}
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager->allocatorID() == allocatorID, "{} vs. {}", g_CurrentAllocManager->allocatorID(), allocatorID ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void deallocate( void* ptr, bool isStdHeap )
+{
+	if ( isStdHeap )
+	{
+		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
+		::operator delete [] (ptr);
+		::nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
 		return;
 	}
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
 	g_CurrentAllocManager->deallocate( ptr );
 }
 
-NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment )
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment, uint16_t allocatorID )
+{
+	if ( allocatorID == 0 )
+	{
+		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
+		::operator delete [] (ptr, std::align_val_t(alignment));
+		::nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
+		return;
+	}
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager->allocatorID() == allocatorID, "{} vs. {}", g_CurrentAllocManager->allocatorID(), allocatorID ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void deallocate_no_checked( void* ptr, size_t alignment )
 {
 	if ( g_CurrentAllocManager == nullptr )
 	{
 		::operator delete [] (ptr, std::align_val_t(alignment));
 		return;
 	}
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
 	g_CurrentAllocManager->deallocate( ptr );
 }
 
@@ -167,14 +196,17 @@ NODECPP_FORCEINLINE void* zombieAllocateAligned()
 	return g_CurrentAllocManager->zombieableAllocateAligned<sz, alignment>();
 }
 
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr )
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr, uint16_t allocatorID )
 {
-	if ( g_CurrentAllocManager == nullptr )
+	if ( allocatorID == 0 )
 	{
+		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
 		::operator delete [] (ptr);
+		::nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
 		return;
 	}
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager->allocatorID() == allocatorID, "{} vs. {}", g_CurrentAllocManager->allocatorID(), allocatorID ); 
 	g_CurrentAllocManager->zombieableDeallocate( ptr );
 }
 
