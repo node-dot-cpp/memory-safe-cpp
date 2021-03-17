@@ -922,12 +922,16 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
 		{
 			uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty), alignof(_Ty) ) );
+			void* stackTmp = thg_stackPtrForMakeOwningCall;
+			thg_stackPtrForMakeOwningCall = nullptr;
 			NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)data & (alignof(_Ty)-1)) == 0, "indeed, alignof(_Ty) = {} and data = 0x{:x}", alignof(_Ty), (uintptr_t)data );
 			try {
 				_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
+				thg_stackPtrForMakeOwningCall = stackTmp;
 			}
 			catch (...) {
 				deallocate( data, alignof(_Ty) );
+				thg_stackPtrForMakeOwningCall = stackTmp;
 				throw;
 			}
 			owning_ptr_impl<_Ty> op( make_owning_t(0), (_Ty*)(data) );
@@ -1065,9 +1069,8 @@ class soft_ptr_base_impl
 	soft_ptr_base_impl(FirstControlBlock* cb, T* t) // to be used for only types annotaded as [[nodecpp::owning_only]]
 	{
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND // TODO: revise
-		if ( ::nodecpp::iibmalloc::g_CurrentAllocManager == nullptr )
+		if ( cb == nullptr )
 		{
-			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, cb != nullptr );
 			init( t, nullptr, 0 ); // automatic type conversion (if at all possible)
 			return;
 		}
