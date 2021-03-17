@@ -938,13 +938,16 @@ NODISCARD owning_ptr_impl<_Ty> make_owning_impl(_Types&&... _Args)
 			return op;
 		}
 #endif
+	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ::nodecpp::iibmalloc::g_CurrentAllocManager != nullptr );
 	uint8_t* data = reinterpret_cast<uint8_t*>( zombieAllocateAligned< sizeof(FirstControlBlock) - getPrefixByteCount() + sizeof(_Ty), alignof(_Ty) >() );
+	auto allocatorID = ::nodecpp::iibmalloc::g_CurrentAllocManager->allocatorID();
+	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, allocatorID != 0 );
 	uint8_t* dataForObj = data + sizeof(FirstControlBlock) - getPrefixByteCount();
 	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)dataForObj & (alignof(_Ty)-1)) == 0, "indeed, dataForObj = 0x{:x}, NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT = 0x{:x}", (uintptr_t)dataForObj, alignof(_Ty) );
 	void* stackTmp = thg_stackPtrForMakeOwningCall;
 	thg_stackPtrForMakeOwningCall = dataForObj;
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-	owning_ptr_impl<_Ty> op(make_owning_t(1), (_Ty*)(uintptr_t)(dataForObj)); // TODO: set actual allocator ID
+	owning_ptr_impl<_Ty> op(make_owning_t( allocatorID ), (_Ty*)(uintptr_t)(dataForObj));
 #else
 	owning_ptr_impl<_Ty> op(make_owning_t(), (_Ty*)(uintptr_t)(dataForObj));
 #endif
