@@ -272,6 +272,9 @@ class StartupChecker
 
 	static void checkSafePointers_()
 	{
+#if NODECPP_MEMORY_SAFETY < 0
+		return;
+#endif
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		if ( g_CurrentAllocManager == nullptr )
 			return;

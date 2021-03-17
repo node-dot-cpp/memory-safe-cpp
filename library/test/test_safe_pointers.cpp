@@ -249,7 +249,9 @@ int testWithLest( int argc, char * argv[] )
 					soft_ptr<double> y1(p5double, &(p5double->d));
 					soft_ptr<double, owning_ptr<StructureWithSoftDoublePtr>::is_safe> y2(p5double, &(p5double->d));
 					EXPECT( y1.is_safe == memory_safety::none );
+#if NODECPP_MEMORY_SAFETY >= 0
 					EXPECT( y2.is_safe == memory_safety::safe );
+#endif
 					p5double->sp = p4double;
 					EXPECT( p5double->sp );
 					p4double.reset();
@@ -275,7 +277,7 @@ int testWithLest( int argc, char * argv[] )
 					p15->sp = p14;
 					EXPECT( p15->sp );
 					p14.reset();
-#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if NODECPP_MEMORY_SAFETY > 0
 					EXPECT( !(p15->sp) );
 #endif
 					
@@ -354,11 +356,15 @@ int testWithLest( int argc, char * argv[] )
 				vnp2 = nullptr;
 				int* pint;
 //				pint = nullable_cast(vnp2);
+#if NODECPP_MEMORY_SAFETY >= 0
 				EXPECT_THROWS( pint = nullable_cast(vnp2) );
+#endif
 
 				testing::dummy_objects::LargeDerived* pl;
 				nullable_ptr<testing::dummy_objects::LargeDerived> npl;
+#if NODECPP_MEMORY_SAFETY >= 0
 				EXPECT_THROWS( pl = nullable_cast(npl) );
+#endif
 			}
 			killAllZombies();
 		},
@@ -416,12 +422,12 @@ int testWithLest( int argc, char * argv[] )
 				soft_ptr<SmallVirtualBase> spMultipleViaSmall = soft_ptr_reinterpret_cast<SmallVirtualBase>( spMultiple );
 				soft_ptr<int> pintMultiple( pMultiple, &(pMultiple->mm3) );
 
-#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if NODECPP_MEMORY_SAFETY > 0
 				EXPECT_THROWS( soft_ptr<int> pintError1( pMultiple, nullptr ) );
 #endif
 
 				int * anyN = new int;
-#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if NODECPP_MEMORY_SAFETY > 0
 				EXPECT_THROWS( soft_ptr<int> pintError2( pMultiple, anyN ) );
 #endif
 				delete anyN;
@@ -537,7 +543,7 @@ int testWithLest( int argc, char * argv[] )
 				auto ptr = &(opS->n);
 				EXPECT_NO_THROW( *(detail::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
-#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if NODECPP_MEMORY_SAFETY > 0
 				EXPECT_THROWS( *(detail::dezombiefy(ptr)) = 27 );
 #endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 			}
@@ -553,7 +559,7 @@ int testWithLest( int argc, char * argv[] )
 				for ( size_t i=0; i<maxPtrs; ++i )
 					sptrs[i] = op;
 				op = nullptr;
-#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if NODECPP_MEMORY_SAFETY > 0
 				for ( size_t i=0; i<maxPtrs; ++i )
 					EXPECT( sptrs[i] == nullptr );
 #endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
@@ -1338,6 +1344,7 @@ int main( int argc, char * argv[] )
 
 	ThreadLocalAllocatorT allocManager;
 	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
+//	ThreadLocalAllocatorT* formerAlloc = nullptr;
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
