@@ -275,7 +275,9 @@ int testWithLest( int argc, char * argv[] )
 					p15->sp = p14;
 					EXPECT( p15->sp );
 					p14.reset();
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 					EXPECT( !(p15->sp) );
+#endif
 					
 					owning_ptr<int> op1 = make_owning<int>();
 					owning_ptr<int> op2 = make_owning<int>();
@@ -414,10 +416,14 @@ int testWithLest( int argc, char * argv[] )
 				soft_ptr<SmallVirtualBase> spMultipleViaSmall = soft_ptr_reinterpret_cast<SmallVirtualBase>( spMultiple );
 				soft_ptr<int> pintMultiple( pMultiple, &(pMultiple->mm3) );
 
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 				EXPECT_THROWS( soft_ptr<int> pintError1( pMultiple, nullptr ) );
+#endif
 
 				int * anyN = new int;
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 				EXPECT_THROWS( soft_ptr<int> pintError2( pMultiple, anyN ) );
+#endif
 				delete anyN;
 			}
 			killAllZombies();
@@ -531,7 +537,9 @@ int testWithLest( int argc, char * argv[] )
 				auto ptr = &(opS->n);
 				EXPECT_NO_THROW( *(detail::dezombiefy(ptr)) = 17 );
 				opS = nullptr;
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 				EXPECT_THROWS( *(detail::dezombiefy(ptr)) = 27 );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 			}
 		},
 
@@ -545,8 +553,10 @@ int testWithLest( int argc, char * argv[] )
 				for ( size_t i=0; i<maxPtrs; ++i )
 					sptrs[i] = op;
 				op = nullptr;
+#ifndef NODECPP_MEMORY_SAFETY_ON_DEMAND
 				for ( size_t i=0; i<maxPtrs; ++i )
 					EXPECT( sptrs[i] == nullptr );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 				delete [] sptrs;
 			}
 		},
@@ -1308,6 +1318,9 @@ void temptest()
 
 void testStackInfoAndptrLifecycle()
 {
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	return;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 	soft_ptr<int>* psp = new soft_ptr<int>; // explicitly non-stack
 	{
 		owning_ptr<int> op = make_owning<int>( 3 );
@@ -1324,10 +1337,10 @@ int main( int argc, char * argv[] )
 	nodecpp::logging_impl::currentLog = &log;
 
 	ThreadLocalAllocatorT allocManager;
-	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
+//	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
+//	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
 	// testSoftPtrsWithZeroOffset();
