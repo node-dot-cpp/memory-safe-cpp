@@ -750,7 +750,7 @@ public:
 			if ( NODECPP_LIKELY(t.getTypedPtr()) )
 			{
 				destruct( t.getTypedPtr() );
-				deallocate( getAllocatedBlock_(t.getTypedPtr()) );
+				deallocate( t.getPtr(), alignof(T) );
 				t.reset();
 			}
 			return;
@@ -1387,7 +1387,16 @@ public:
 			if ( other.isOnStack() )
 			{
 				if ( other.getDereferencablePtr() )
+				{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+				if ( other.getAllocatedPtr() != nullptr )
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+				else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
+#else
+					init( other.getDereferencablePtr(), other.getAllocatedPtr(), getControlBlock(other.getAllocatedPtr())->insert(this) ); // automatic type conversion (if at all possible)
+#endif
+				}
 				else
 					init( other.getDereferencablePtr(), other.getAllocatedPtr(), PointersT::max_data ); // automatic type conversion (if at all possible)
 				other.init( PointersT::max_data );
