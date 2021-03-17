@@ -1337,10 +1337,10 @@ int main( int argc, char * argv[] )
 	nodecpp::logging_impl::currentLog = &log;
 
 	ThreadLocalAllocatorT allocManager;
-//	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
+	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-//	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
 	// testSoftPtrsWithZeroOffset();
@@ -1414,6 +1414,7 @@ int main( int argc, char * argv[] )
 	catch (...)
 	{
 		nodecpp::log::default_log::fatal("Unknown error happened. About to exit...");
+		setCurrneAllocator( formerAlloc );
 		return 0;
 	}
 	nodecpp::log::default_log::error( "about to exit main()..." );
@@ -1422,5 +1423,6 @@ int main( int argc, char * argv[] )
 
 	nodecpp::log::default_log::fatal( "about to exit..." );
 
+	setCurrneAllocator( formerAlloc );
 	return 0;
 }
