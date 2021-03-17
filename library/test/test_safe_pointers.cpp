@@ -1324,7 +1324,6 @@ int main( int argc, char * argv[] )
 	nodecpp::logging_impl::currentLog = &log;
 
 	ThreadLocalAllocatorT allocManager;
-	allocManager.initialize();
 	ThreadLocalAllocatorT* formerAlloc = setCurrneAllocator( &allocManager );
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION

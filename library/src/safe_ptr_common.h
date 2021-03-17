@@ -37,6 +37,10 @@
 #include <allocator_template.h>
 #include "memory_safety.h"
 
+#if NODECPP_MEMORY_SAFETY == 0
+#define NODECPP_MEMORY_SAFETY_ON_DEMAND
+#endif
+
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
@@ -68,25 +72,145 @@ using nodecpp::iibmalloc::g_CurrentAllocManager;
 using nodecpp::iibmalloc::guaranteed_prefix_size;
 using nodecpp::iibmalloc::ALIGNMENT;
 
-NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->allocate( sz ); } // TODO: proper implementation for alignment
-NODECPP_FORCEINLINE void* allocate( size_t sz ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->allocate( sz ); }
+NODECPP_FORCEINLINE void* allocate( size_t sz, size_t alignment )  // TODO: proper implementation for alignment
+{ 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+	{
+		void* ret = ::operator new [] (sz, std::align_val_t(alignment)); 
+		return ret;
+	}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->allocate( sz );
+
+}
+
+NODECPP_FORCEINLINE void* allocate( size_t sz )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+	{
+		void* ret = ::operator new [] (sz); 
+		return ret;
+	}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->allocate( sz );
+}
+
 template<size_t alignment>
-NODECPP_FORCEINLINE void* allocateAligned( size_t sz ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->allocateAligned<alignment>( sz ); }
-NODECPP_FORCEINLINE void deallocate( void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); g_CurrentAllocManager->deallocate( ptr ); }
-NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); g_CurrentAllocManager->deallocate( ptr ); }
-NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->zombieableAllocate( sz ); }
+NODECPP_FORCEINLINE void* allocateAligned( size_t sz )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return allocate( sz, alignment );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->allocateAligned<alignment>( sz );
+}
+
+NODECPP_FORCEINLINE void deallocate( void* ptr )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		::operator delete [] (ptr);
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		::operator delete [] (ptr, std::align_val_t(alignment));
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void* zombieAllocate( size_t sz )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return allocate( sz );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->zombieableAllocate( sz );
+}
+
 template<size_t sz, size_t alignment>
-NODECPP_FORCEINLINE void* zombieAllocateAligned() { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->zombieableAllocateAligned<sz, alignment>(); }
-NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); g_CurrentAllocManager->zombieableDeallocate( ptr ); }
-NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->isZombieablePointerInBlock( allocatedPtr, ptr ); }
+NODECPP_FORCEINLINE void* zombieAllocateAligned()
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return allocate( sz, alignment );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->zombieableAllocateAligned<sz, alignment>();
+}
+
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		::operator delete [] (ptr);
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->zombieableDeallocate( ptr );
+}
+
+NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return true;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->isZombieablePointerInBlock( allocatedPtr, ptr );
+}
+
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->isPointerNotZombie( ptr ); }
-inline bool doZombieEarlyDetection( bool doIt = true ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->doZombieEarlyDetection( doIt ); }
+NODECPP_FORCEINLINE bool isPointerNotZombie(void* ptr )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return true;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->isPointerNotZombie( ptr );
+}
+
+inline bool doZombieEarlyDetection( bool doIt = true )
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return false;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->doZombieEarlyDetection( doIt );
+}
 #else
 constexpr bool isPointerNotZombie(void* ptr ) { return true; }
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount() { static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); return guaranteed_prefix_size; }
-inline void killAllZombies() { g_CurrentAllocManager->killAllZombies(); }
+
+NODECPP_FORCEINLINE constexpr size_t getPrefixByteCount()
+{
+	static_assert(guaranteed_prefix_size <= 3*sizeof(void*)); 
+	return guaranteed_prefix_size;
+}
+
+inline void killAllZombies()
+{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	if ( g_CurrentAllocManager == nullptr )
+		return;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->killAllZombies();
+}
+
 NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 
 struct IIBRawAllocator

@@ -36,10 +36,6 @@
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 
-#if NODECPP_MEMORY_SAFETY == 0
-#define NODECPP_MEMORY_SAFETY_ON_DEMAND
-#endif
-
 // forward declaration
 namespace safememory {
 	namespace detail {
