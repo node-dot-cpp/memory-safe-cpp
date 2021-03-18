@@ -7,8 +7,6 @@
 #-------------------------------------------------------------------------------------------
 add_subdirectory(basic_sample)
 
-if (TARGET EASTL)
-    add_subdirectory(hashmap)
-    #add_subdirectory(string)
-    #add_subdirectory(vector)
-endif()
+add_subdirectory(hashmap)
+add_subdirectory(string)
+add_subdirectory(vector)
