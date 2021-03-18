@@ -24,7 +24,7 @@ int main() {
         s += *its;
     }
 
-    fmt::print("{}\n", sm::to_string(42)); //sm::string_literal
+//    fmt::print("{}\n", sm::to_string(42)); //sm::string_literal
     fmt::print("{}\n", lit); //sm::string_literal
     fmt::print("{}\n", s2); //sm::string
 
