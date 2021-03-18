@@ -44,6 +44,15 @@ namespace safememory
 
 namespace safememory {
 
+#ifndef NODECPP_MEMORY_SAFETY
+#define NODECPP_MEMORY_SAFETY 0
+#endif // NODECPP_MEMORY_SAFETY
+
+#if NODECPP_MEMORY_SAFETY == 0
+#define NODECPP_MEMORY_SAFETY_ON_DEMAND
+#endif
+
+
 enum class memory_safety { none, safe };
 
 template<class T>

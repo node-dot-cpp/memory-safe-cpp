@@ -37,10 +37,6 @@
 #include <allocator_template.h>
 #include "memory_safety.h"
 
-#if NODECPP_MEMORY_SAFETY == 0
-#define NODECPP_MEMORY_SAFETY_ON_DEMAND
-#endif
-
 #if defined NODECPP_MSVC
 #define NODISCARD _NODISCARD
 #elif (defined NODECPP_GCC) || (defined NODECPP_CLANG)
