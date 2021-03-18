@@ -217,47 +217,54 @@ class StartupChecker
 		rngCheckVal = rng.rng();
 
 #ifdef NODECPP_USE_IIBMALLOC
-		uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
-		uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
-		uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
-		T* TPtr = new ( mem4T ) T;
-		TPtr->init(rngCheckVal);
-		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
-		memcpy( mem4TCopy, mem4T, sizeof(T) );
-
-		// collect actual addresses of changes in destructors
-		uint64_t* addr1;
-		uint64_t* addr2;
-		uint64_t* addr3;
-		setAddressesOfChanges( TPtr, &addr1, &addr2, &addr3 );
-		auto vmtVal = nodecpp::platform::backup_vmt_pointer( TPtr );
-
-		memset( changeMap, ChangeStatus::no, sizeof(T) );
-		memset( changeMap + ( ((uint8_t*)addr1) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)addr2) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
-		memset( changeMap + ( ((uint8_t*)addr3) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
-		auto vmtPos = nodecpp::platform::get_vmt_pointer_size_pos();
-		memset( changeMap + vmtPos.first, ChangeStatus::yes, vmtPos.second );
-
-		destruct( TPtr );
-
-		if( memcmp( mem4TCopy, mem4T, sizeof(T) ) != 0 )
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		if ( g_CurrentAllocManager != nullptr )
+#else
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 		{
-			// check explicitly that changes done in dtor actually happened as intended (fast detection)
-			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr1 == 0 );
-			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr2 == 0 );
-			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr3 == 0 );
+			uint8_t* mem4T = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
+			uint8_t* mem4TCopy = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
+			uint8_t* changeMap = reinterpret_cast<uint8_t*>(g_CurrentAllocManager->allocate(sizeof(T)));
+			T* TPtr = new ( mem4T ) T;
+			TPtr->init(rngCheckVal);
+			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, TPtr->check(rngCheckVal));
+			memcpy( mem4TCopy, mem4T, sizeof(T) );
 
-			for ( size_t i=0; i<sizeof(T); ++i )
-				if ( mem4T[i] != mem4TCopy[i] ) 
-					NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, changeMap[i] != ChangeStatus::no );
+			// collect actual addresses of changes in destructors
+			uint64_t* addr1;
+			uint64_t* addr2;
+			uint64_t* addr3;
+			setAddressesOfChanges( TPtr, &addr1, &addr2, &addr3 );
+			auto vmtVal = nodecpp::platform::backup_vmt_pointer( TPtr );
+
+			memset( changeMap, ChangeStatus::no, sizeof(T) );
+			memset( changeMap + ( ((uint8_t*)addr1) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+			memset( changeMap + ( ((uint8_t*)addr2) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+			memset( changeMap + ( ((uint8_t*)addr3) - mem4T ), ChangeStatus::yes, sizeof( uint64_t) );
+			auto vmtPos = nodecpp::platform::get_vmt_pointer_size_pos();
+			memset( changeMap + vmtPos.first, ChangeStatus::yes, vmtPos.second );
+
+			destruct( TPtr );
+
+			if( memcmp( mem4TCopy, mem4T, sizeof(T) ) != 0 )
+			{
+				// check explicitly that changes done in dtor actually happened as intended (fast detection)
+				NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr1 == 0 );
+				NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr2 == 0 );
+				NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, *addr3 == 0 );
+
+				for ( size_t i=0; i<sizeof(T); ++i )
+					if ( mem4T[i] != mem4TCopy[i] ) 
+						NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, changeMap[i] != ChangeStatus::no );
+			}
+			else
+				NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
+
+			g_CurrentAllocManager->deallocate( mem4T );
+			g_CurrentAllocManager->deallocate( mem4TCopy );
+			g_CurrentAllocManager->deallocate( changeMap );
 		}
-		else
-			NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, false ); // our intention in dtor was to change memory state under the object
-
-		g_CurrentAllocManager->deallocate( mem4T );
-		g_CurrentAllocManager->deallocate( mem4TCopy );
-		g_CurrentAllocManager->deallocate( changeMap );
 #else
 //#error not implemented (but implementation for any other allocator (or generalization) should not become a greate task anyway)
 #endif
@@ -265,6 +272,16 @@ class StartupChecker
 
 	static void checkSafePointers_()
 	{
+#if NODECPP_MEMORY_SAFETY < 0
+		return;
+#endif
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		if ( g_CurrentAllocManager == nullptr )
+			return;
+#else
+		NODECPP_ASSERT(::safememory::module_id, ::nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+
 		using T = dummy_objects::SomeWithSafePointers;
 
 		size_t rngSeed = 155;

@@ -44,17 +44,26 @@ namespace safememory
 
 namespace safememory {
 
+#ifndef NODECPP_MEMORY_SAFETY
+#define NODECPP_MEMORY_SAFETY 0
+#endif // NODECPP_MEMORY_SAFETY
+
+#if NODECPP_MEMORY_SAFETY == 0
+#define NODECPP_MEMORY_SAFETY_ON_DEMAND
+#endif
+
+
 enum class memory_safety { none, safe };
 
 template<class T>
 struct safeness_declarator {
 #ifdef NODECPP_MEMORY_SAFETY
-#if NODECPP_MEMORY_SAFETY == 1
+#if (NODECPP_MEMORY_SAFETY == 1) || (NODECPP_MEMORY_SAFETY == 0)
 	static constexpr memory_safety is_safe = memory_safety::safe;
-#elif NODECPP_MEMORY_SAFETY == 0
+#elif NODECPP_MEMORY_SAFETY == -1
 	static constexpr memory_safety is_safe = memory_safety::none;
 #else
-#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are 1 or 0)
+#error Unexpected value of NODECPP_MEMORY_SAFETY (expected values are -1, 1 or 0)
 #endif // NODECPP_MEMORY_SAFETY defined
 #else
 	static constexpr memory_safety is_safe = memory_safety::safe; // by default

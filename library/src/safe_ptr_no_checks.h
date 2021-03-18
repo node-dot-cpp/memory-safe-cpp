@@ -62,44 +62,80 @@ class owning_ptr_base_no_checks
 	template<class TT>
 	friend class soft_ptr_no_checks;
 
-	T* t;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_allocptr_with_zombie_property_and_data_; 
+#else
+	using base_pointer_t = nodecpp::platform::allocptr_with_zombie_property_and_data; 
+#endif // SAFE_PTR_DEBUG_MODE
+	base_pointer_t t_;
+	void implFromOtherBasePtr( const base_pointer_t& other ) { t_.copy_from( other ); }
+	void implReset() { t_.init(nullptr, 0); }
+	void implSetPtr( T* ptr_, uint16_t allocatorID ) { t_.init(ptr_, allocatorID); }
+	T* implGetPtr() const { return reinterpret_cast<T*>( t_.get_ptr() ); }
+	void setAllocatorIdx( uint16_t idx ) { t_.set_data(idx); }
+	uint16_t allocatorIdx() const { return t_.get_data(); }
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	T* t_;
+	void implFromOtherBasePtr( T* other ) { t_ = other; }
+	void implReset() { t_ = nullptr; }
+	void implSetPtr( T* t ) { t_ = t; }
+	T* implGetPtr() const { return t_; }
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
 
-	owning_ptr_base_no_checks( make_owning_t, T* t_ ) // make it private with a friend make_owning()!
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	owning_ptr_base_no_checks( make_owning_t mo, T* t ) // make it private with a friend make_owning()!
 	{
-		t = t_;
+		implSetPtr( t, mo.allocatorID );
 	}
-	owning_ptr_base_no_checks() { t = nullptr; }
+#else
+	owning_ptr_base_no_checks( make_owning_t, T* t ) // make it private with a friend make_owning()!
+	{
+		implSetPtr( t );
+	}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+	owning_ptr_base_no_checks() { implReset(); }
 	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>& other ) = delete;
 	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>& other ) = delete;
-	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>&& other ) {t = other.t; other.t = nullptr; }
+	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>&& other ) {implFromOtherBasePtr(other.t_); other.implReset(); }
 	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>&& other )
 	{
 		if ( this == &other ) return *this;
-		t = other.t;
-		other.t = nullptr;
+		implFromOtherBasePtr( other.t_ );
+		other.implReset();
 		return *this;
 	}
 	template<class T1>
 	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T1>&& other )
 	{
-		t = other.t; // implicit cast, if at all possible
-		other.t = nullptr;
+		t_ = other.t_; // implicit cast, if at all possible
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		implSetPtr( other.implGetPtr(), other.allocatorIdx() );
+#else
+		implSetPtr( other.implGetPtr() );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+		other.implReset();
 	}
 	template<class T1>
 	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>&& other )
 	{
 		if ( this == &other ) return *this;
-		t = other.t; // implicit cast, if at all possible
-		other.t = nullptr;
+		t_ = other.t_; // implicit cast, if at all possible
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		implSetPtr( other.implGetPtr(), other.allocatorIdx() );
+#else
+		implSetPtr( other.implGetPtr() );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+		other.implReset();
 		return *this;
 	}
 	owning_ptr_base_no_checks( std::nullptr_t nulp )
 	{
-		t = nullptr;
+		implReset();
 	}
 	owning_ptr_base_no_checks& operator = ( std::nullptr_t nulp )
 	{
@@ -109,11 +145,16 @@ public:
 	void do_delete()
 	{
 		//dbgValidateList();
-		if ( NODECPP_LIKELY(t) )
+		if ( NODECPP_LIKELY(implGetPtr()) )
 		{
-			t->~T();
-			deallocate( t, alignof(T) );
+			implGetPtr()->~T();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			deallocate( const_cast<void*>((const void*)implGetPtr()), alignof(T), allocatorIdx() );
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+			deallocate( const_cast<void*>((const void*)implGetPtr()), alignof(T) );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 		}
+		implReset();
 	}
 	~owning_ptr_base_no_checks()
 	{
@@ -123,51 +164,58 @@ public:
 
 	void reset()
 	{
-		if ( NODECPP_LIKELY(t) )
-			t->~T();
-		t = nullptr;
+		if ( NODECPP_LIKELY(implGetPtr()) )
+		{
+			implGetPtr()->~T();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			deallocate( const_cast<void*>((const void*)implGetPtr()), alignof(T), allocatorIdx() );
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+			deallocate( const_cast<void*>((const void*)implGetPtr()), alignof(T) );
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+		}
+		implReset();
 	}
 
 	void swap( owning_ptr_base_no_checks<T>& other )
 	{
-		T* tmp = t;
-		t = other.t;
-		other.t = tmp;
+		auto tmp = t_;
+		t_ = other.t_;
+		other.t_ = tmp;
 	}
 
 	nullable_ptr_no_checks<T> get() const
 	{
 		nullable_ptr_no_checks<T> ret;
-		ret.t = t;
+		ret.t = implGetPtr();
 		return ret;
 	}
 
 	T& operator * () const
 	{
-		return *t;
+		return *(implGetPtr());
 	}
 
 	T* operator -> () const 
 	{
-		return t;
+		return implGetPtr();
 	}
 
-	bool operator == (const soft_ptr_no_checks<T>& other ) const { return t == other.t; }
+	bool operator == (const soft_ptr_no_checks<T>& other ) const { return implGetPtr() == other.t; }
 	template<class T1>
-	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return t == other.t; }
+	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return implGetPtr() == other.t; }
 
-	bool operator != (const soft_ptr_no_checks<T>& other ) const { return t != other.t; }
+	bool operator != (const soft_ptr_no_checks<T>& other ) const { return implGetPtr() != other.t; }
 	template<class T1>
-	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return t != other.t; }
+	bool operator != (const soft_ptr_no_checks<T1>& other ) const { return implGetPtr() != other.t; }
 
-	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t == nullptr; }
-	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return t != nullptr; }
+	bool operator == (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return implGetPtr() == nullptr; }
+	bool operator != (std::nullptr_t nullp ) const { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::pedantic, nullp == nullptr); return implGetPtr() != nullptr; }
 
 	// T* release() : prhibited by safity requirements
 
 	explicit operator bool() const noexcept
 	{
-		return t != nullptr;
+		return implGetPtr() != nullptr;
 	}
 };
 
@@ -226,14 +274,23 @@ NODISCARD owning_ptr_no_checks<_Ty> make_owning_no_checks(_Types&&... _Args)
 	static_assert( alignof(_Ty) <= NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT );
 	uint8_t* data = reinterpret_cast<uint8_t*>( allocate( sizeof(_Ty), alignof(_Ty) ) );
 	NODECPP_ASSERT( nodecpp::foundation::module_id, nodecpp::assert::AssertLevel::pedantic, ((uintptr_t)data & (alignof(_Ty)-1)) == 0, "indeed, alignof(_Ty) = {} and data = 0x{:x}", alignof(_Ty), (uintptr_t)data );
+	auto allocatorID = ::nodecpp::iibmalloc::g_CurrentAllocManager != nullptr ? ::nodecpp::iibmalloc::g_CurrentAllocManager->allocatorID() : 0;
 	try {
 		_Ty* objPtr = new (data) _Ty(::std::forward<_Types>(_Args)...);
 	}
 	catch (...) {
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		deallocate( data, alignof(_Ty), allocatorID );
+#else
 		deallocate( data, alignof(_Ty) );
+#endif
 		throw;
 	}
+#if NODECPP_MEMORY_SAFETY == 0
+	owning_ptr_no_checks<_Ty> op( make_owning_t( allocatorID ), (_Ty*)(data) );
+#else
 	owning_ptr_no_checks<_Ty> op( make_owning_t(), (_Ty*)(data) );
+#endif // NODECPP_MEMORY_SAFETY == 0
 	return op;
 }
 
@@ -268,9 +325,9 @@ public:
 	soft_ptr_base_no_checks() {}
 
 	template<class T1>
-	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner ) { t = owner.t; }
+	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner ) { t = owner.implGetPtr(); }
 	template<class T1>
-	soft_ptr_base_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { t = owner.t; return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { t = owner.implGetPtr(); return *this; }
 
 
 	template<class T1>
@@ -395,16 +452,16 @@ public:
 
 	template<class T1>
 	soft_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : soft_ptr_base_no_checks<T>(owner) {}
-	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; }
-	//soft_ptr_no_checks( const owning_ptr_impl<T>& owner ) { this->t = owner.t; }
+	soft_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) { this->t = owner.implGetPtr(); }
+	//soft_ptr_no_checks( const owning_ptr_impl<T>& owner ) { this->t = owner.implGetPtr(); }
 	template<class T1>
 	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner )
 	{
 		soft_ptr_base_no_checks<T>::operator = (owner);
 		return *this;
 	}
-	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { this->t = owner.t; return *this; }
-	//soft_ptr_no_checks<T>& operator = ( const owning_ptr_impl<T>& owner ) { this->t = owner.t; return *this; }
+	soft_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { this->t = owner.implGetPtr(); return *this; }
+	//soft_ptr_no_checks<T>& operator = ( const owning_ptr_impl<T>& owner ) { this->t = owner.implGetPtr(); return *this; }
 
 
 	template<class T1>
@@ -495,17 +552,17 @@ public:
 		soft_ptr_base_no_checks<T>::reset();
 	}
 
-	bool operator == (const owning_ptr_no_checks<T>& other ) const { return this->t == other.t; }
+	bool operator == (const owning_ptr_no_checks<T>& other ) const { return this->t == other.implGetPtr(); }
 	template<class T1> 
-	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
+	bool operator == (const owning_ptr_no_checks<T1>& other ) const { return this->t == other.implGetPtr(); }
 
 	bool operator == (const soft_ptr_no_checks<T>& other ) const { return this->t == other.t; }
 	template<class T1>
 	bool operator == (const soft_ptr_no_checks<T1>& other ) const { return this->t == other.t; }
 
-	bool operator != (const owning_ptr_no_checks<T>& other ) const { return this->t != other.t; }
+	bool operator != (const owning_ptr_no_checks<T>& other ) const { return this->t != other.implGetPtr(); }
 	template<class T1> 
-	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.t; }
+	bool operator != (const owning_ptr_no_checks<T1>& other ) const { return this->t != other.implGetPtr(); }
 
 	bool operator != (const soft_ptr_no_checks<T>& other ) const { return this->t != other.t; }
 	template<class T1>
