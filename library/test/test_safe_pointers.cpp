@@ -1324,7 +1324,7 @@ void temptest()
 
 void testStackInfoAndptrLifecycle()
 {
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#if (NODECPP_MEMORY_SAFETY <= 0)
 	return;
 #endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 	soft_ptr<int>* psp = new soft_ptr<int>; // explicitly non-stack
