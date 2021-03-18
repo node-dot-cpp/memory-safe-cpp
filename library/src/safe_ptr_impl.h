@@ -808,10 +808,11 @@ public:
 			dbgSetDestructionPointInfo( DbgDestructionInfo::Destruction::resetting );
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 			updatePtrForListItemsWithInvalidPtr();
-			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()), t.allocatorIdx() );
 			getControlBlock()->clear( t.allocatorIdx() );
 #else
+			zombieDeallocate( getAllocatedBlock_(t.getTypedPtr()) );
 			getControlBlock()->clear();
 #endif
 			t.reset();
