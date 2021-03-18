@@ -249,7 +249,11 @@ struct IIBRawAllocator
 	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::safememory::detail::allocateAligned<alignment>( allocSize ); }
 //	static NODECPP_FORCEINLINE void* allocate( size_t allocSize, size_t allignment ) { return ::safememory::detail::allocate( allocSize ); }
 	template<size_t alignment = 0> 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); g_CurrentAllocManager->deallocate( ptr ); } // TODO: revise!
+#else
 	static NODECPP_FORCEINLINE void deallocate( void* ptr ) { return ::safememory::detail::deallocate( ptr ); }
+#endif// NODECPP_MEMORY_SAFETY_ON_DEMAND
 };
 
 template<class _Ty>
