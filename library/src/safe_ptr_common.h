@@ -169,16 +169,6 @@ NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment, uint16_t alloc
 	g_CurrentAllocManager->deallocate( ptr );
 }
 
-NODECPP_FORCEINLINE void deallocate_no_checked( void* ptr, size_t alignment )
-{
-	if ( g_CurrentAllocManager == nullptr )
-	{
-		::operator delete [] (ptr, std::align_val_t(alignment));
-		return;
-	}
-	g_CurrentAllocManager->deallocate( ptr );
-}
-
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz )
 {
 	if ( g_CurrentAllocManager == nullptr )
