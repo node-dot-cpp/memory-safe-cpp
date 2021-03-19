@@ -279,6 +279,7 @@ struct FirstControlBlock // not reallocatable
 			}
 		}
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+		void dealloc() { deallocate( this ); }
 		void dealloc( uint16_t AllocatorID ) { deallocate( this, AllocatorID ); }
 #else
 		void dealloc() { deallocate( this ); }
@@ -463,6 +464,14 @@ struct FirstControlBlock // not reallocatable
 		dbgCheckValidity<void>();
 	}
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	void clear()
+	{
+		//nodecpp::log::default_log::error( nodecpp::log::ModuleID(safememory::safememory_module_id), "1CB 0x{:x}: clear(), otherAllockedSlots.getPtr() = 0x{:x}", (size_t)this, (size_t)(otherAllockedSlots.getPtr()) );
+		if ( otherAllockedSlots.getPtr() != nullptr )
+			otherAllockedSlots.getPtr()->dealloc();
+		otherAllockedSlots.setZombie();
+		//dbgCheckValidity<void>();
+	}
 	void clear( uint16_t AllocatorID )
 #else
 	void clear()
