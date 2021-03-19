@@ -165,6 +165,18 @@ NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment, uint16_t alloc
 	g_CurrentAllocManager->deallocate( ptr );
 }
 
+NODECPP_FORCEINLINE void deallocate( void* ptr )
+{
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment )
+{
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	g_CurrentAllocManager->deallocate( ptr );
+}
+
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz )
 {
 	if ( g_CurrentAllocManager == nullptr )
@@ -193,6 +205,12 @@ NODECPP_FORCEINLINE void zombieDeallocate( void* ptr, uint16_t allocatorID )
 	}
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager->allocatorID() == allocatorID, "{} vs. {}", g_CurrentAllocManager->allocatorID(), allocatorID ); 
+	g_CurrentAllocManager->zombieableDeallocate( ptr );
+}
+
+NODECPP_FORCEINLINE void zombieDeallocate( void* ptr )
+{
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
 	g_CurrentAllocManager->zombieableDeallocate( ptr );
 }
 
