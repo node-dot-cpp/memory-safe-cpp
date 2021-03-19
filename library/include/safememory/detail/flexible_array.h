@@ -63,7 +63,8 @@ public:
 	flexible_array& operator=(const flexible_array&) = delete;
 	flexible_array& operator=(flexible_array&&) = delete;
 
-	// ~flexible_array() {}
+	// make trivially destructible, as we don't use ownership semantics
+	~flexible_array() = default;
 
 	constexpr bool empty() const noexcept { return sz == 0; }
 	constexpr size_type size() const noexcept { return sz; }

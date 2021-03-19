@@ -81,12 +81,14 @@ namespace safememory::detail {
  * 
  */
 
-template <typename T, bool bConst, typename ArrPtr>
+template <typename T, bool is_const, typename ArrPtr>
 class array_heap_safe_iterator
 {
 protected:
-	typedef array_heap_safe_iterator<T, bConst, ArrPtr>			this_type;
-	typedef ArrPtr									        array_pointer;
+	typedef array_heap_safe_iterator<T, is_const, ArrPtr>			this_type;
+	typedef array_heap_safe_iterator<T, false, ArrPtr>			this_type_non_const;
+
+	typedef ArrPtr									            array_pointer;
 	static constexpr bool is_raw_pointer = std::is_pointer<array_pointer>::value;
 
 	// for non-const to const conversion
@@ -108,7 +110,7 @@ protected:
 
 public:
 	typedef std::random_access_iterator_tag  			iterator_category;
-	typedef std::conditional_t<bConst, const T, T>		value_type;
+	typedef std::conditional_t<is_const, const T, T>		value_type;
 	typedef std::ptrdiff_t                              difference_type;
 	typedef std::size_t                                 size_type;
 	typedef value_type*									pointer;
@@ -176,13 +178,13 @@ public:
 	array_heap_safe_iterator& operator=(array_heap_safe_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_heap_safe_iterator(const array_heap_safe_iterator<T, B, ArrPtr>& ri)
+	template<typename X = std::enable_if_t<is_const>>
+	array_heap_safe_iterator(const this_type_non_const& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
 	/// allow non-const to const assignment
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_heap_safe_iterator& operator=(const array_heap_safe_iterator<T, B, ArrPtr>& ri) {
+	template<typename X = std::enable_if_t<is_const>>
+	array_heap_safe_iterator& operator=(const this_type_non_const& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
@@ -367,13 +369,14 @@ public:
  * Library will use this iterator when scope rules must be enforced on iterator
  * 
  */
-template <typename T, bool bConst, typename ArrPtr>
-class array_stack_only_iterator :protected array_heap_safe_iterator<T, bConst, ArrPtr>
+template <typename T, bool is_const, typename ArrPtr>
+class array_stack_only_iterator :protected array_heap_safe_iterator<T, is_const, ArrPtr>
 {
 protected:
-	typedef array_stack_only_iterator<T, bConst, ArrPtr>	this_type;
-	typedef array_heap_safe_iterator<T, bConst, ArrPtr>      		base_type;
-	typedef ArrPtr									        array_pointer;
+	typedef array_stack_only_iterator<T, is_const, ArrPtr>	 this_type;
+	typedef array_stack_only_iterator<T, false, ArrPtr>	     this_type_non_const;
+	typedef array_heap_safe_iterator<T, is_const, ArrPtr>    base_type;
+	typedef ArrPtr									         array_pointer;
 
 	// for non-const to const conversion
 	template<typename, bool, typename>
@@ -419,13 +422,13 @@ public:
 	array_stack_only_iterator& operator=(array_stack_only_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_stack_only_iterator(const array_stack_only_iterator<T, B, ArrPtr>& ri)
+	template<typename X = std::enable_if_t<is_const>>
+	array_stack_only_iterator(const this_type_non_const& ri)
 		: base_type(ri) {}
 
 	/// allow non-const to const assignment
-	template<bool B, typename X = std::enable_if_t<bConst && !B>>
-	array_stack_only_iterator& operator=(const array_stack_only_iterator<T, B, ArrPtr>& ri) {
+	template<typename X = std::enable_if_t<is_const>>
+	array_stack_only_iterator& operator=(const this_type_non_const& ri) {
 		base_type::operator=(ri);
 		return *this;
 	}
@@ -461,15 +464,15 @@ public:
 };
 
 
-template <typename T, bool bC, typename ArrPtr>
-typename array_heap_safe_iterator<T, bC, ArrPtr>::difference_type distance(
-	const array_heap_safe_iterator<T, bC, ArrPtr>& l, const array_heap_safe_iterator<T, bC, ArrPtr>& r) {
+template <typename T, bool is_const, typename ArrPtr>
+typename array_heap_safe_iterator<T, is_const, ArrPtr>::difference_type distance(
+	const array_heap_safe_iterator<T, is_const, ArrPtr>& l, const array_heap_safe_iterator<T, is_const, ArrPtr>& r) {
 	return r - l;
 }
 
-template <typename T, bool bC, typename ArrPtr>
-typename array_stack_only_iterator<T, bC, ArrPtr>::difference_type distance(
-	const array_stack_only_iterator<T, bC, ArrPtr>& l, const array_stack_only_iterator<T, bC, ArrPtr>& r) {
+template <typename T, bool is_const, typename ArrPtr>
+typename array_stack_only_iterator<T, is_const, ArrPtr>::difference_type distance(
+	const array_stack_only_iterator<T, is_const, ArrPtr>& l, const array_stack_only_iterator<T, is_const, ArrPtr>& r) {
 	return r - l;
 }
 

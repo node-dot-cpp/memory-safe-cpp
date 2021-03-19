@@ -31,6 +31,7 @@
 #include <safememory/safe_ptr.h>
 #include <safememory/detail/soft_ptr_with_zero_offset.h>
 #include <safememory/detail/flexible_array.h>
+#include <type_traits>
 
 /** \file
  * \brief Allocators feed by \a safememory containers into \c eastl ones.
@@ -66,7 +67,141 @@ extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 // using nodecpp::safememory::fbc_ptr_t;
 // using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#define SAFEMEMORY_INVALID_ALLOCATOR UINT16_MAX
+#else
+#define SAFEMEMORY_INVALID_ALLOCATOR
+#endif
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+
+template<std::size_t alignment>
+std::pair<uint16_t, void*> allocateWithCb(std::size_t sz) {
+
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr );
+	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
+
+	std::size_t total = head + sz;
+	void* data =  zombieAllocateAligned<alignment>(total);
+	auto allocatorID = g_CurrentAllocManager->allocatorID();
+
+	void* dataForObj = reinterpret_cast<void*>(reinterpret_cast<uintptr_t>(data) + head);
+	
+	auto cb = getControlBlock_(dataForObj);
+	cb->init();
+
+	return { allocatorID, dataForObj };
+}
+
+template<std::size_t alignment>
+std::pair<uint16_t, void*> allocate_impl0(std::size_t sz) {
+
+	if ( g_CurrentAllocManager == nullptr ) {
+		void* ptr = allocateAligned<alignment>(sz);
+		return { 0, ptr };
+	}
+	else
+		return allocateWithCb<alignment>(sz);
+}
+
+template<class T>
+soft_ptr_with_zero_offset_impl<T> allocate_impl() {
+
+	auto mm = allocate_impl0<alignof(T)>(sizeof(T));
+
+	return { make_zero_offset_t(mm.first), reinterpret_cast<T*>(mm.second) };
+}
+
+template<class T, bool zeroed>
+soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count) {
+
+	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
+	
+	auto total = flexible_array<T>::calculateSize(count);
+	auto mm = allocate_impl0<alignof(flexible_array<T>)>(total);
+
+	if constexpr (zeroed)
+		std::memset(mm.second, 0, total);
+
+	auto dataForObj = reinterpret_cast<flexible_array<T>*>(mm.second);
+
+	::new ( dataForObj ) flexible_array<T>(count);
+
+	return { make_zero_offset_t(mm.first), dataForObj };
+}
+
+template<class T>
+void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
+
+	if (p) {
+		T* dataForObj = p.get_raw_ptr();
+		auto allocatorID = p.get_allocator_id();
+		//we don't destruct here dataForObj->~T();
+		auto cb = getControlBlock_(dataForObj);
+		cb->template updatePtrForListItemsWithInvalidPtr<T>();
+		zombieDeallocate( getAllocatedBlock_(dataForObj), allocatorID );
+		cb->clear(allocatorID);
+	}
+}
+
+template<class T>
+void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<flexible_array<T>>& p) {
+	deallocate_impl(p);
+}
+
+template<std::size_t alignment>
+std::pair<uint16_t, void*> allocate_no_checks0(std::size_t sz) {
+
+	void* ptr = allocateAligned<alignment>(sz); 
+	auto allocatorID = g_CurrentAllocManager != nullptr ? g_CurrentAllocManager->allocatorID() : 0;
+
+	return {allocatorID, ptr};
+}
+
+template<class T>
+soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
+
+	auto mm = allocate_no_checks0<alignof(T)>(sizeof(T));
+
+	return { make_zero_offset_t(mm.first), reinterpret_cast<T*>(mm.second) };
+}
+
+template<class T, bool zeroed>
+soft_ptr_with_zero_offset_no_checks<flexible_array<T>> allocate_array_no_checks(std::size_t count) {
+
+	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
+	std::size_t total = flexible_array<T>::calculateSize(count);
+
+	auto mm = allocate_no_checks0<alignof(flexible_array<T>)>(total);
+
+	if constexpr (zeroed)
+		std::memset(mm.second, 0, total);
+
+	auto dataForObj = reinterpret_cast<flexible_array<T>*>(mm.second);
+	
+	::new ( dataForObj ) flexible_array<T>(count);
+	return { make_zero_offset_t(mm.first), dataForObj };
+}
+
+template<class T>
+void deallocate_no_checks(const soft_ptr_with_zero_offset_no_checks<T>& p) {
+
+	if (p) {
+		T* dataForObj = p.get_raw_ptr();
+		//dataForObj->~T(); //don't destruct here
+		deallocate( dataForObj, alignof(T), p.get_allocator_id() );
+	}
+}
+
+template<class T>
+void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexible_array<T>>& p) {
+
+	deallocate_no_checks(p);
+}
+
+
+
+#else //NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 template<class T>
 soft_ptr_with_zero_offset_impl<T> allocate_impl() {
@@ -84,7 +219,7 @@ soft_ptr_with_zero_offset_impl<T> allocate_impl() {
 	return { make_zero_offset_t(), dataForObj };
 }
 
-template<class T, bool zeroed = !std::is_trivial<T>::value>
+template<class T, bool zeroed>
 soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count) {
 
 	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
@@ -181,11 +316,14 @@ void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexib
 	}
 }
 
+#endif //NODECPP_MEMORY_SAFETY_ON_DEMAND
+
 // two special values used inside eastl::hashtable
 // soft_ptr needs to have special behaviour around this values.
 
 template<class T>
 constexpr T* hashtable_sentinel() {
+	//TODO use NODECPP_SECOND_NULLPTR
 	return reinterpret_cast<T*>((uintptr_t)~0);
 }
 
@@ -314,10 +452,10 @@ public:
 	}
 
 	// 'to_zero' works for node and for array
-	template<class T>
-	static pointer<T> to_zero(const soft_ptr_impl<T>& p) {
-			return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
-	}
+	// template<class T>
+	// static pointer<T> to_zero(const soft_ptr_impl<T>& p) {
+	// 		return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
+	// }
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_impl&) const { return true; }
@@ -384,10 +522,10 @@ public:
 	}
 
 	// 'to_zero' works for node and for array
-	template<class T>
-	static pointer<T> to_zero(const soft_ptr_no_checks<T>& p) {
-		return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
-	}
+	// template<class T>
+	// static pointer<T> to_zero(const soft_ptr_no_checks<T>& p) {
+	// 	return { make_zero_offset_t(), soft_ptr_helper::to_raw(p) };
+	// }
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_no_checks&) const { return true; }
@@ -448,12 +586,12 @@ public:
 
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
-		return {make_zero_offset_t(), hashtable_sentinel<T>()};
+		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), hashtable_sentinel<T>()};
 	}
 
 	template<class T>
 	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(), empty_hashtable_impl<T>()};
+		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), empty_hashtable_impl<T>()};
 	}
 
 	template<class T>
@@ -497,12 +635,12 @@ public:
 
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
-		return {make_zero_offset_t(), hashtable_sentinel<T>()};
+		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), hashtable_sentinel<T>()};
 	}
 
 	template<class T>
 	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(), empty_hashtable_no_checks<T>()};
+		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), empty_hashtable_no_checks<T>()};
 	}
 
 	template<class T>

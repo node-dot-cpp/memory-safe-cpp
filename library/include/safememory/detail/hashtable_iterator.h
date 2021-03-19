@@ -49,6 +49,7 @@ namespace safememory::detail {
 		typedef typename base_type::iterator_category                    iterator_category;
 
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
+	    static constexpr bool is_const = !std::is_same_v<this_type, this_type_non_const>;
 
     private:
 		template <typename, typename, typename>
@@ -59,14 +60,15 @@ namespace safememory::detail {
 
 
 
-        typedef soft_ptr<node_type, is_safe>                                        node_ptr;
-		typedef typename allocator_type::template pointer<node_type>                t1;
-		typedef typename allocator_type::template array_pointer<t1>                 t2;
-		typedef typename allocator_type::template soft_array_pointer<t1>            soft_ptr_type;
-		typedef typename detail::array_heap_safe_iterator<t1, false, soft_ptr_type> bucket_iterator;
+        typedef soft_ptr<node_type, allocator_type::is_safe>                        node_ptr;
+		typedef typename allocator_type::template pointer<node_type>                base_node_ptr;
+		typedef typename allocator_type::template array_pointer<base_node_ptr>                 t2;
+		typedef typename allocator_type::template soft_array_pointer<base_node_ptr>            soft_ptr_type;
+		typedef typename detail::array_heap_safe_iterator<base_node_ptr, false, soft_ptr_type> bucket_iterator;
 
 		
 
+		base_node_ptr   mpNodeBase;
 		node_ptr    	mpNode;      // Current node within current bucket.
 		bucket_iterator mpBucket;    // Current bucket.
 
@@ -74,17 +76,17 @@ namespace safememory::detail {
 		{
 			// mb: *mpBucket will be != nullptr at 'end()' sentinel
 			// 		but 'to_soft' will convert it to a null
-			auto mpTmp = mpNode->mpNext;
+			mpNodeBase = mpNode->mpNext;
 
-			while(mpTmp == NULL)
-				mpTmp = *++mpBucket;
+			while(mpNodeBase == NULL)
+				mpNodeBase = *++mpBucket;
 
-			mpNode = allocator_type::to_soft(mpTmp);
+			mpNode = allocator_type::to_soft(mpNodeBase);
 		}
 
 
-		hashtable_heap_safe_iterator(const node_ptr& node, const bucket_iterator& bucket)
-			: mpNode(node), mpBucket(bucket) { }
+		hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, const node_ptr& node, const bucket_iterator& bucket)
+			: mpNodeBase(nodeBase), mpNode(node), mpBucket(bucket) { }
 
     public:
 		// template<class Ptr>
@@ -100,13 +102,12 @@ namespace safememory::detail {
 
 			auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz);
 			auto safe_node = allocator_type::to_soft(it.get_node()); 
-			return this_type(safe_node, safe_it);
+			return this_type(it.get_node(), safe_node, safe_it);
         }
 
 
 
-		hashtable_heap_safe_iterator()
-			: mpNode(), mpBucket() { }
+		hashtable_heap_safe_iterator() {}
 
 		hashtable_heap_safe_iterator(const this_type&) = default;
 		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator&) = default;
@@ -114,12 +115,13 @@ namespace safememory::detail {
 		hashtable_heap_safe_iterator(hashtable_heap_safe_iterator&&) = default; 
 		hashtable_heap_safe_iterator& operator=(hashtable_heap_safe_iterator&&) = default;
 
-		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
-		hashtable_heap_safe_iterator(const hashtable_heap_safe_iterator<B2, B2, Allocator>& other)
-			: mpNode(other.mpNode), mpBucket(other.mpBucket) { }
+		template<typename X = std::enable_if_t<is_const>>
+		hashtable_heap_safe_iterator(const this_type_non_const& other)
+			: mpNodeBase(other.mpNodeBase), mpNode(other.mpNode), mpBucket(other.mpBucket) {}
 
-		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
-		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator<B2, B2, Allocator>& other) {
+		template<typename X = std::enable_if_t<is_const>>
+		hashtable_heap_safe_iterator& operator=(const this_type_non_const& other) {
+			this->mpNodeBase = other.mpNodeBase;
 			this->mpNode = other.mpNode;
 			this->mpBucket = other.mpBucket;
 			return *this;
@@ -143,7 +145,7 @@ namespace safememory::detail {
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(allocator_type::to_zero(mpNode), mpBucket.getRaw());
+			return BaseIt(mpNodeBase, mpBucket.getRaw());
 		}
 	}; // hashtable_heap_safe_iterator
 

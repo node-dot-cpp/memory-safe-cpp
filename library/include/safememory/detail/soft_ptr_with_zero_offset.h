@@ -34,7 +34,16 @@
 namespace safememory::detail
 {
 
+
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+struct make_zero_offset_t {
+	uint16_t allocatorID; 
+	make_zero_offset_t( uint16_t id ) : allocatorID(id) {}
+};
+#else
 struct make_zero_offset_t {};
+#endif
+
 
 /// \brief \c soft_ptr_with_zero_offset_base is not actually used and may be outdated
 class soft_ptr_with_zero_offset_base
@@ -47,6 +56,13 @@ protected:
 
 public:
 	soft_ptr_with_zero_offset_base() { }
+
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t get_allocator_id() const noexcept { return allocatorID; }
+	soft_ptr_with_zero_offset_base( make_zero_offset_t id, void* raw ) : ptr(raw), allocatorID(id.allocatorID) {}
+#else
+	soft_ptr_with_zero_offset_base( make_zero_offset_t, void* raw ) : ptr(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_base( void* raw ) :ptr(raw) { }
 
@@ -100,6 +116,10 @@ template<class T>
 class soft_ptr_with_zero_offset_impl
 {
 	T* ptr = nullptr;
+	//TODO
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t allocatorID;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
@@ -107,7 +127,12 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t get_allocator_id() const noexcept { return allocatorID; }
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t id, T* raw ) : ptr(raw), allocatorID(id.allocatorID) {}
+#else
 	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : ptr(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& ) = default;
@@ -137,7 +162,7 @@ public:
 	T* get_raw_ptr() const noexcept { return ptr; }
 
 	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_impl();
+	~soft_ptr_with_zero_offset_impl() = default;
 };
 
 
@@ -146,6 +171,9 @@ template<class T>
 class soft_ptr_with_zero_offset_no_checks
 {
 	T* ptr = nullptr;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t allocatorID;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
@@ -153,7 +181,12 @@ public:
  
 	soft_ptr_with_zero_offset_no_checks() {}
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t get_allocator_id() const noexcept { return allocatorID; }
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t id, T* raw ) : ptr(raw), allocatorID(id.allocatorID) {}
+#else
 	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw ) : ptr(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& ) = default;
 	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& ) = default;
@@ -183,7 +216,7 @@ public:
 	T* get_raw_ptr() const noexcept { return ptr; }
 
 	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_impl();
+	~soft_ptr_with_zero_offset_no_checks() = default;
 };
 
 
@@ -192,6 +225,9 @@ template<class T>
 class soft_ptr_with_zero_offset_impl<flexible_array<T>>
 {
 	flexible_array<T>* ptr = nullptr;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t allocatorID;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
@@ -199,7 +235,12 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, flexible_array<T>* raw ) :ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t get_allocator_id() const noexcept { return allocatorID; }
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t id, flexible_array<T>* raw ) : ptr(raw), allocatorID(id.allocatorID) {}
+#else
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, flexible_array<T>* raw ) : ptr(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
@@ -227,6 +268,7 @@ public:
 	flexible_array<T>& operator*() const noexcept { return *get_array_of_ptr(); }
 	flexible_array<T>* operator->() const noexcept { return get_array_of_ptr(); }
 	flexible_array<T>* get_array_of_ptr() const noexcept { return ptr; }
+	flexible_array<T>* get_raw_ptr() const noexcept { return ptr; }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
@@ -310,6 +352,9 @@ template<class T>
 class soft_ptr_with_zero_offset_no_checks<flexible_array<T>>
 {
 	flexible_array<T>* ptr = nullptr;
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t allocatorID;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
@@ -317,7 +362,12 @@ public:
  
 	soft_ptr_with_zero_offset_no_checks() {}
 
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, flexible_array<T>* raw ) :ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	uint16_t get_allocator_id() const noexcept { return allocatorID; }
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t id, flexible_array<T>* raw ) : ptr(raw), allocatorID(id.allocatorID) {}
+#else
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, flexible_array<T>* raw ) : ptr(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& other ) = default;
 	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& other ) = default;
@@ -345,6 +395,7 @@ public:
 	flexible_array<T>& operator*() const noexcept { return *get_array_of_ptr(); }
 	flexible_array<T>* operator->() const noexcept { return get_array_of_ptr(); }
 	flexible_array<T>* get_array_of_ptr() const noexcept { return ptr; }
+	flexible_array<T>* get_raw_ptr() const noexcept { return ptr; }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
