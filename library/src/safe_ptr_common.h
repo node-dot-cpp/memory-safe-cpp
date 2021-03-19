@@ -57,6 +57,12 @@ namespace safememory::detail {
 enum class StdAllocEnforcer { enforce };
 } // namespace safememory::detail
 
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#define SAFEMEMORY_INVALID_ALLOCATOR UINT16_MAX
+#else
+#define SAFEMEMORY_INVALID_ALLOCATOR
+#endif
+
 
 #ifdef NODECPP_USE_IIBMALLOC
 
@@ -128,6 +134,7 @@ NODECPP_FORCEINLINE void* allocateAligned( size_t sz )
 
 NODECPP_FORCEINLINE void deallocate( void* ptr, uint16_t allocatorID )
 {
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, allocatorID != SAFEMEMORY_INVALID_ALLOCATOR ); 
 	if ( allocatorID == 0 )
 	{
 		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
@@ -155,6 +162,7 @@ NODECPP_FORCEINLINE void deallocate( void* ptr, bool isStdHeap )
 
 NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment, uint16_t allocatorID )
 {
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, allocatorID != SAFEMEMORY_INVALID_ALLOCATOR ); 
 	if ( allocatorID == 0 )
 	{
 		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );
@@ -195,6 +203,7 @@ NODECPP_FORCEINLINE void* zombieAllocateAligned(size_t sz)
 
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr, uint16_t allocatorID )
 {
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, allocatorID != SAFEMEMORY_INVALID_ALLOCATOR ); 
 	if ( allocatorID == 0 )
 	{
 		auto* formerAlloc = ::nodecpp::iibmalloc::setCurrneAllocator( nullptr );

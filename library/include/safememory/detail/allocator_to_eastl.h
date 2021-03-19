@@ -67,11 +67,6 @@ extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 // using nodecpp::safememory::fbc_ptr_t;
 // using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
 
-#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-#define SAFEMEMORY_INVALID_ALLOCATOR UINT16_MAX
-#else
-#define SAFEMEMORY_INVALID_ALLOCATOR
-#endif
 
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 
@@ -81,6 +76,7 @@ std::pair<uint16_t, void*> allocateWithCb(std::size_t sz) {
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr );
 	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 
+	// TODO here we should fine tune the sizes of array_of2<T> 
 	std::size_t total = head + sz;
 	void* data =  zombieAllocateAligned<alignment>(total);
 	auto allocatorID = g_CurrentAllocManager->allocatorID();
@@ -324,7 +320,7 @@ void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexib
 template<class T>
 constexpr T* hashtable_sentinel() {
 	//TODO use NODECPP_SECOND_NULLPTR
-	return reinterpret_cast<T*>((uintptr_t)~0);
+	return reinterpret_cast<T*>((uintptr_t)8);
 }
 
 template<class T>
@@ -441,16 +437,20 @@ public:
 	// raii implementation doesn't depende on safememory parameter of the allocator,
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
+		if(p.get_allocator_id() != 0)
+			return {p.get_raw_ptr()};
+		else
+			return {nullptr};
+	}
+#else
 	template<class T>
 	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
 		return {p.get_raw_ptr()};
 	}
-
-	template<class T>
-	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
-		return {p.get_array_of_ptr()};
-	}
-
+#endif
 	// 'to_zero' works for node and for array
 	// template<class T>
 	// static pointer<T> to_zero(const soft_ptr_impl<T>& p) {
@@ -511,16 +511,20 @@ public:
 	// raii implementation doesn't depende on safememory parameter of the allocator,
 	// as it should depend on the safety parameter of the elements contained, and we
 	// can't know that.
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	template<class T>
+	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
+		if(p.get_allocator_id() != 0)
+			return {p.get_raw_ptr()};
+		else
+			return {nullptr};
+	}
+#else
 	template<class T>
 	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p) {
 		return {p.get_raw_ptr()};
 	}
-
-	template<class T>
-	static soft_this_ptr_raii<T> make_raii(const array_pointer<T>& p) {
-		return {p.get_array_of_ptr()};
-	}
-
+#endif
 	// 'to_zero' works for node and for array
 	// template<class T>
 	// static pointer<T> to_zero(const soft_ptr_no_checks<T>& p) {

@@ -6,6 +6,7 @@
 #include "EASTLTest.h"
 #include <EAStdC/EASprintf.h>
 #include <EASTL/internal/config.h>
+#include <iibmalloc.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
@@ -83,6 +84,9 @@ int EAMain(int argc, char* argv[])
 			   gEASTL_TestLevel = kEASTL_TestLevelHigh;
 		}
 	}
+
+	nodecpp::iibmalloc::ThreadLocalAllocatorT allocManager;
+	auto formerAlloc = nodecpp::iibmalloc::setCurrneAllocator( &allocManager );
 
 	TestApplication testSuite("EASTL Unit Tests", argc, argv);
 
