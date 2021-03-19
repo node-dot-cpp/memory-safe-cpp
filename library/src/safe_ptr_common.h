@@ -244,6 +244,7 @@ NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return ALIGNMENT; }
 
 struct IIBRawAllocator
 {
+	static constexpr bool objectRequired = false;
 	static constexpr size_t guaranteed_alignment = NODECPP_GUARANTEED_IIBMALLOC_ALIGNMENT;
 	template<size_t alignment = 0> 
 	static NODECPP_FORCEINLINE void* allocate( size_t allocSize ) { return ::safememory::detail::allocateAligned<alignment>( allocSize ); }
