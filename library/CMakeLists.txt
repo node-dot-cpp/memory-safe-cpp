@@ -32,7 +32,7 @@ add_library(safememory STATIC
 # target_compile_definitions(safememory PUBLIC NODECPP_SAFEMEMORY_HEAVY_DEBUG)
 # target_compile_definitions(safememory PUBLIC NODECPP_NOT_USING_IIBMALLOC)
 # target_compile_definitions(foundation PUBLIC NODECPP_SAFE_PTR_DEBUG_MODE)
-target_compile_definitions(safememory PUBLIC NODECPP_MEMORY_SAFETY=0)
+# target_compile_definitions(safememory PUBLIC NODECPP_MEMORY_SAFETY=0)
 
 target_include_directories(safememory
   PUBLIC include
