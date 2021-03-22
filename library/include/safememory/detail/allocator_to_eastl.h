@@ -133,10 +133,15 @@ void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
 		T* dataForObj = p.get_raw_ptr();
 		auto allocatorID = p.get_allocator_id();
 		//we don't destruct here dataForObj->~T();
-		auto cb = getControlBlock_(dataForObj);
-		cb->template updatePtrForListItemsWithInvalidPtr<T>();
-		zombieDeallocate( getAllocatedBlock_(dataForObj), allocatorID );
-		cb->clear(allocatorID);
+		if(allocatorID == 0) {
+			deallocate( dataForObj, alignof(T), allocatorID );
+		}
+		else {
+			auto cb = getControlBlock_(dataForObj);
+			cb->template updatePtrForListItemsWithInvalidPtr<T>();
+			zombieDeallocate( getAllocatedBlock_(dataForObj), allocatorID );
+			cb->clear(allocatorID);
+		}
 	}
 }
 
@@ -547,7 +552,12 @@ public:
 	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p) {
 			auto ptr = p.get_array_of_ptr();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			auto allocatorID = p.get_allocator_id();
+			auto cb = p.get_allocator_id() != 0 ? getControlBlock_(ptr) : nullptr;
+#else
 			auto cb = getControlBlock_(ptr);
+#endif
 			return soft_ptr_helper::make_soft_ptr_impl(cb, ptr);
 		}
 		else
@@ -612,7 +622,12 @@ public:
 	static soft_ptr_impl<T> to_soft(const pointer<T>& p) {
 		if(p && !is_hashtable_sentinel(p)) {
 			auto ptr = p.get_raw_ptr();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			auto allocatorID = p.get_allocator_id();
+			auto cb = p.get_allocator_id() != 0 ? getControlBlock_(ptr) : nullptr;
+#else
 			auto cb = getControlBlock_(ptr);
+#endif
 			return soft_ptr_helper::make_soft_ptr_impl(cb , ptr);
 		}
 		else
@@ -623,7 +638,12 @@ public:
 	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
 		if(p && !is_empty_hashtable(p)) {
 			auto ptr = p.get_array_of_ptr();
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+			auto allocatorID = p.get_allocator_id();
+			auto cb = p.get_allocator_id() != 0 ? getControlBlock_(ptr) : nullptr;
+#else
 			auto cb = getControlBlock_(ptr);
+#endif
 			return soft_ptr_helper::make_soft_ptr_impl(cb , ptr);
 		}
 		else

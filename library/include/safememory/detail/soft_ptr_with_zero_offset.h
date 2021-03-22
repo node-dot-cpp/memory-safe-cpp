@@ -48,18 +48,20 @@ struct make_zero_offset_t {};
 /// \brief \c soft_ptr_with_zero_offset_base is not actually used and may be outdated
 class soft_ptr_with_zero_offset_base
 {
+public:
 	friend class allocator_to_eastl_hashtable_impl;
 	friend class allocator_to_eastl_hashtable_no_checks;
 	
-protected:
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
 	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_allocptr_with_zombie_property_and_data_; 
 #else
 	using base_pointer_t = nodecpp::platform::allocptr_with_zombie_property_and_data; 
 #endif // SAFE_PTR_DEBUG_MODE
+private:
 	base_pointer_t ptr;
 #else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+private:
 	void* ptr = nullptr;
 #endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
@@ -101,7 +103,9 @@ public:
 	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ ptr.swap(other.ptr); }
 
 #else
-	soft_ptr_with_zero_offset_base( make_zero_offset_t, void* raw ) : ptr(raw) {}
+	static constexpr make_zero_offset_t invalid_allocator = make_zero_offset_t();
+
+	soft_ptr_with_zero_offset_base( void* raw ) : ptr(raw) {}
 	soft_ptr_with_zero_offset_base( const soft_ptr_with_zero_offset_base& ) = default;
 	soft_ptr_with_zero_offset_base& operator=( const soft_ptr_with_zero_offset_base& ) = default;
 	soft_ptr_with_zero_offset_base( soft_ptr_with_zero_offset_base&& ) = default;
@@ -129,6 +133,13 @@ public:
 	// mb: destructor should be trivial to allow use in unions
 	~soft_ptr_with_zero_offset_base() = default;
 };
+
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#define SAFEMEMORY_INVALID_ALLOCATOR soft_ptr_with_zero_offset_base::base_pointer_t::max_data
+#else
+#define SAFEMEMORY_INVALID_ALLOCATOR
+#endif
+
 
 /** \file
  * \brief Pointer wrappers to be used in libraries adaptation to \a safememory
