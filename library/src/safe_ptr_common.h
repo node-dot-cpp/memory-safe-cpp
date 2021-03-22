@@ -79,6 +79,8 @@ NODECPP_FORCEINLINE void deallocate( void* ptr, size_t alignment ) { NODECPP_ASS
 NODECPP_FORCEINLINE void* zombieAllocate( size_t sz ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->zombieableAllocate( sz ); }
 template<size_t sz, size_t alignment>
 NODECPP_FORCEINLINE void* zombieAllocateAligned() { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->zombieableAllocateAligned<sz, alignment>(); }
+template<size_t alignment>
+NODECPP_FORCEINLINE void* zombieAllocateAligned(size_t sz) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->zombieableAllocateAligned<alignment>(sz); }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); g_CurrentAllocManager->zombieableDeallocate( ptr ); }
 NODECPP_FORCEINLINE bool isZombieablePointerInBlock(void* allocatedPtr, void* ptr ) { NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); return g_CurrentAllocManager->isZombieablePointerInBlock( allocatedPtr, ptr ); }
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
@@ -192,6 +194,15 @@ NODECPP_FORCEINLINE void* zombieAllocateAligned()
 		return allocate( sz, alignment );
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
 	return g_CurrentAllocManager->zombieableAllocateAligned<sz, alignment>();
+}
+
+template<size_t alignment>
+NODECPP_FORCEINLINE void* zombieAllocateAligned(size_t sz)
+{
+	if ( g_CurrentAllocManager == nullptr )
+		return allocate( sz, alignment );
+	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr ); 
+	return g_CurrentAllocManager->zombieableAllocateAligned<alignment>(sz);
 }
 
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr, uint16_t allocatorID )
@@ -331,6 +342,10 @@ NODECPP_FORCEINLINE void* zombieAllocate( size_t sz, size_t alignment ) {
 }
 template<size_t sz, size_t alignment>
 NODECPP_FORCEINLINE void* zombieAllocateAligned() {
+	return zombieAllocate(sz, alignment);
+}
+template<size_t alignment>
+NODECPP_FORCEINLINE void* zombieAllocateAligned(size_t sz) {
 	return zombieAllocate(sz, alignment);
 }
 NODECPP_FORCEINLINE void zombieDeallocate( void* ptr ) { 

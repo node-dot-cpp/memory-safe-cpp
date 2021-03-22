@@ -6,6 +6,7 @@
 #include "EASTLTest.h"
 #include <EAStdC/EASprintf.h>
 #include <EASTL/internal/config.h>
+#include <iibmalloc.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <string.h>
@@ -84,6 +85,10 @@ int EAMain(int argc, char* argv[])
 		}
 	}
 
+#ifndef SAFEMEMORY_TEST_DONT_INITIALIZE_IIBALLOC
+	nodecpp::iibmalloc::ThreadLocalAllocatorT allocManager;
+	auto formerAlloc = nodecpp::iibmalloc::setCurrneAllocator( &allocManager );
+#endif
 	TestApplication testSuite("EASTL Unit Tests", argc, argv);
 
 	// testSuite.AddTest("Algorithm",				TestAlgorithm);

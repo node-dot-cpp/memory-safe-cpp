@@ -29,7 +29,9 @@ using safememory::vector;
 // These tell the compiler to compile all the functions for the given class.
 template class safememory::vector<bool>;
 template class safememory::vector<int>;
-template class safememory::vector<Align64>;
+template class safememory::vector<Align32>;
+// iiballocator doesn't support 64 bytes alignment
+//template class safememory::vector<Align64>;
 template class safememory::vector<TestObject>;
 
 

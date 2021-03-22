@@ -34,43 +34,112 @@
 namespace safememory::detail
 {
 
+
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+struct make_zero_offset_t {
+	uint16_t allocatorID; 
+	make_zero_offset_t( uint16_t id ) : allocatorID(id) {}
+};
+#else
 struct make_zero_offset_t {};
+#endif
+
 
 /// \brief \c soft_ptr_with_zero_offset_base is not actually used and may be outdated
 class soft_ptr_with_zero_offset_base
 {
+public:
 	friend class allocator_to_eastl_hashtable_impl;
 	friend class allocator_to_eastl_hashtable_no_checks;
 	
-protected:
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#ifdef NODECPP_SAFE_PTR_DEBUG_MODE
+	using base_pointer_t = nodecpp::platform::ptrwithdatastructsdefs::generic_allocptr_with_zombie_property_and_data_; 
+#else
+	using base_pointer_t = nodecpp::platform::allocptr_with_zombie_property_and_data; 
+#endif // SAFE_PTR_DEBUG_MODE
+private:
+	base_pointer_t ptr;
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+private:
 	void* ptr = nullptr;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+
 
 public:
 	soft_ptr_with_zero_offset_base() { }
 
-	soft_ptr_with_zero_offset_base( void* raw ) :ptr(raw) { }
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	soft_ptr_with_zero_offset_base( make_zero_offset_t id, void* raw ) { ptr.init(raw, id.allocatorID); }
+	soft_ptr_with_zero_offset_base( const soft_ptr_with_zero_offset_base& other ) {
+		ptr.copy_from(other.ptr);
+	} 
+	
+	soft_ptr_with_zero_offset_base& operator=( const soft_ptr_with_zero_offset_base& other ) {
+		if(this == std::addressof(other))
+			return *this;
 
+		ptr.copy_from(other.ptr);
+		return *this;
+	}
+
+	soft_ptr_with_zero_offset_base( soft_ptr_with_zero_offset_base&& other ) {
+		// mb: copy is actually more light weight than move, and we don't need real move
+		ptr.copy_from(other.ptr);
+	}
+	
+	soft_ptr_with_zero_offset_base& operator=( soft_ptr_with_zero_offset_base&& other ) {
+		// mb: copy is actually more light weight than move, and we don't need real move
+		if(this == std::addressof(other))
+			return *this;
+	
+		ptr.copy_from(other.ptr);
+		return *this;
+	}
+
+	uint16_t get_allocator_id() const noexcept { return ptr.get_data(); }
+	void* get_raw() const noexcept { return ptr.get_ptr(); }
+	void reset() noexcept { ptr.init(nullptr, 0); }
+	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ ptr.swap(other.ptr); }
+
+#else
+	static constexpr make_zero_offset_t invalid_allocator = make_zero_offset_t();
+
+	soft_ptr_with_zero_offset_base( void* raw ) : ptr(raw) {}
 	soft_ptr_with_zero_offset_base( const soft_ptr_with_zero_offset_base& ) = default;
 	soft_ptr_with_zero_offset_base& operator=( const soft_ptr_with_zero_offset_base& ) = default;
 	soft_ptr_with_zero_offset_base( soft_ptr_with_zero_offset_base&& ) = default;
 	soft_ptr_with_zero_offset_base& operator=( soft_ptr_with_zero_offset_base&& ) = default;
 
+	void* get_raw() const noexcept { return ptr; }
+	void reset() noexcept { ptr = nullptr; }
+	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ std::swap(ptr, other.ptr); }
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
+
+//	soft_ptr_with_zero_offset_base( void* raw ) :ptr(raw) { }
+
 	soft_ptr_with_zero_offset_base( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_base& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	void swap( soft_ptr_with_zero_offset_base& other ) noexcept	{ std::swap(ptr, other.ptr); }
+	explicit operator bool() const noexcept { return get_raw() != nullptr; }
 
-	explicit operator bool() const noexcept { return ptr != nullptr; }
+	bool operator == (const soft_ptr_with_zero_offset_base& other ) const noexcept { return get_raw() == other.get_raw(); }
+	bool operator != (const soft_ptr_with_zero_offset_base& other ) const noexcept { return get_raw() != other.get_raw(); }
 
-	void reset() noexcept { ptr = nullptr; }
+	bool operator == (std::nullptr_t) const noexcept { return get_raw() == nullptr; }
+	bool operator != (std::nullptr_t) const noexcept { return get_raw() != nullptr; }
 
-	bool operator == (const soft_ptr_with_zero_offset_base& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_base& other ) const noexcept { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
-
+	// mb: destructor should be trivial to allow use in unions
+	~soft_ptr_with_zero_offset_base() = default;
 };
+
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+#define SAFEMEMORY_INVALID_ALLOCATOR soft_ptr_with_zero_offset_base::base_pointer_t::max_data
+#else
+#define SAFEMEMORY_INVALID_ALLOCATOR
+#endif
+
 
 /** \file
  * \brief Pointer wrappers to be used in libraries adaptation to \a safememory
@@ -97,17 +166,19 @@ public:
  * but we keep them as separate classes to detect unintended errors
  */
 template<class T>
-class soft_ptr_with_zero_offset_impl
+class soft_ptr_with_zero_offset_impl : public soft_ptr_with_zero_offset_base
 {
-	T* ptr = nullptr;
-
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::safe;
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t id, T* raw ) : soft_ptr_with_zero_offset_base(id, raw) {}
+#else
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, T* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& ) = default;
@@ -118,42 +189,44 @@ public:
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) {}
 	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	void reset() noexcept { ptr = nullptr; }
-	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept	{
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void reset() noexcept { ptr = nullptr; }
+	// explicit operator bool() const noexcept { return ptr != nullptr; }
+	// void swap( soft_ptr_with_zero_offset_impl& other ) noexcept	{
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
 
-	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
+	// bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
+	// bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
+	// bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	// bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
 	T& operator*() const noexcept { return *get_raw_ptr(); }
 	T* operator->() const noexcept { return get_raw_ptr(); }
-	T* get_raw_ptr() const noexcept { return ptr; }
+	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(get_raw()); }
 
 	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_impl();
+	~soft_ptr_with_zero_offset_impl() = default;
 };
 
 
 /// \brief \c soft_ptr_with_zero_offset_no_checks is not actually used and may be outdated
 template<class T>
-class soft_ptr_with_zero_offset_no_checks
+class soft_ptr_with_zero_offset_no_checks : public soft_ptr_with_zero_offset_base
 {
-	T* ptr = nullptr;
-
 public:
 
 	static constexpr memory_safety is_safe = memory_safety::none;
  
 	soft_ptr_with_zero_offset_no_checks() {}
 
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw ) : ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t id, T* raw ) : soft_ptr_with_zero_offset_base(id, raw) {}
+#else
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, T* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& ) = default;
 	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& ) = default;
@@ -164,34 +237,37 @@ public:
 	soft_ptr_with_zero_offset_no_checks( std::nullptr_t ) {}
 	soft_ptr_with_zero_offset_no_checks& operator=( std::nullptr_t ) { reset(); return *this; }
 
-	void reset() noexcept { ptr = nullptr; }
-	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept {
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void reset() noexcept { ptr = nullptr; }
+	// explicit operator bool() const noexcept { return ptr != nullptr; }
+	// void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept {
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
 
-	bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }
+	// bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
+	// bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
+	// bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	// bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
 	T& operator*() const noexcept { return *get_raw_ptr(); }
 	T* operator->() const noexcept { return get_raw_ptr(); }
-	T* get_raw_ptr() const noexcept { return ptr; }
+	T* get_raw_ptr() const noexcept { return reinterpret_cast<T*>(get_raw()); }
 
 	// mb: destructor should be trivial to allow use in unions
-	// ~soft_ptr_with_zero_offset_impl();
+	~soft_ptr_with_zero_offset_no_checks() = default;
 };
 
 
 /// Template specialization of \c soft_ptr_with_zero_offset_impl for \c flexible_array<T>
 template<class T>
-class soft_ptr_with_zero_offset_impl<flexible_array<T>>
+class soft_ptr_with_zero_offset_impl<flexible_array<T>> : public soft_ptr_with_zero_offset_base
 {
-	flexible_array<T>* ptr = nullptr;
+// 	flexible_array<T>* ptr = nullptr;
+// #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+// 	uint16_t allocatorID;
+// #endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 public:
 
@@ -199,7 +275,11 @@ public:
  
 	soft_ptr_with_zero_offset_impl() {}
 
-	soft_ptr_with_zero_offset_impl( make_zero_offset_t, flexible_array<T>* raw ) :ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t id, flexible_array<T>* raw ) : soft_ptr_with_zero_offset_base(id, raw) {}
+#else
+	soft_ptr_with_zero_offset_impl( make_zero_offset_t, flexible_array<T>* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
@@ -210,27 +290,28 @@ public:
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ){ reset(); return *this; }
 
-	void reset() noexcept { ptr = nullptr; }
-	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_impl& other ) noexcept {
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void reset() noexcept { ptr = nullptr; }
+	// explicit operator bool() const noexcept { return ptr != nullptr; }
+	// void swap( soft_ptr_with_zero_offset_impl& other ) noexcept {
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
 
-	bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
+	// bool operator == (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr == other.ptr; }
+	// bool operator != (const soft_ptr_with_zero_offset_impl& other ) const noexcept { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
+	// bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	// bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
-	flexible_array<T>& operator*() const noexcept { return *get_array_of_ptr(); }
-	flexible_array<T>* operator->() const noexcept { return get_array_of_ptr(); }
-	flexible_array<T>* get_array_of_ptr() const noexcept { return ptr; }
+	flexible_array<T>& operator*() const noexcept { return *get_raw_ptr(); }
+	flexible_array<T>* operator->() const noexcept { return get_raw_ptr(); }
+	flexible_array<T>* get_array_of_ptr() const noexcept { return get_raw_ptr(); }
+	flexible_array<T>* get_raw_ptr() const noexcept { return reinterpret_cast<flexible_array<T>*>(get_raw()); }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->data() : nullptr; }
+	T* get_raw_begin() const noexcept { return get_raw_ptr() ? get_raw_ptr()->data() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
@@ -307,17 +388,18 @@ std::ptrdiff_t operator>=(const soft_ptr_with_zero_offset_impl<flexible_array<T>
 }
 
 template<class T>
-class soft_ptr_with_zero_offset_no_checks<flexible_array<T>>
+class soft_ptr_with_zero_offset_no_checks<flexible_array<T>> : public soft_ptr_with_zero_offset_base
 {
-	flexible_array<T>* ptr = nullptr;
-
 public:
-
 	static constexpr memory_safety is_safe = memory_safety::none;
  
 	soft_ptr_with_zero_offset_no_checks() {}
 
-	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, flexible_array<T>* raw ) :ptr(raw) {}
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t id, flexible_array<T>* raw ) : soft_ptr_with_zero_offset_base(id, raw) {}
+#else
+	soft_ptr_with_zero_offset_no_checks( make_zero_offset_t, flexible_array<T>* raw ) : soft_ptr_with_zero_offset_base(raw) {}
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 	soft_ptr_with_zero_offset_no_checks( const soft_ptr_with_zero_offset_no_checks& other ) = default;
 	soft_ptr_with_zero_offset_no_checks& operator=( const soft_ptr_with_zero_offset_no_checks& other ) = default;
@@ -328,27 +410,28 @@ public:
 	soft_ptr_with_zero_offset_no_checks( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_no_checks& operator=( std::nullptr_t ){ reset(); return *this; }
 
-	void reset() noexcept { ptr = nullptr; }
-	explicit operator bool() const noexcept { return ptr != nullptr; }
-	void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept {
-		T* tmp = ptr;
-		ptr = other.ptr;
-		other.ptr = tmp;
-	}
+	// void reset() noexcept { ptr = nullptr; }
+	// explicit operator bool() const noexcept { return ptr != nullptr; }
+	// void swap( soft_ptr_with_zero_offset_no_checks& other ) noexcept {
+	// 	T* tmp = ptr;
+	// 	ptr = other.ptr;
+	// 	other.ptr = tmp;
+	// }
 
-	bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
-	bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }
+	// bool operator == (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr == other.ptr; }
+	// bool operator != (const soft_ptr_with_zero_offset_no_checks& other ) const noexcept { return ptr != other.ptr; }
 
-	bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
-	bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
+	// bool operator == (std::nullptr_t) const noexcept { return ptr == nullptr; }
+	// bool operator != (std::nullptr_t) const noexcept { return ptr != nullptr; }
 
-	flexible_array<T>& operator*() const noexcept { return *get_array_of_ptr(); }
-	flexible_array<T>* operator->() const noexcept { return get_array_of_ptr(); }
-	flexible_array<T>* get_array_of_ptr() const noexcept { return ptr; }
+	flexible_array<T>& operator*() const noexcept { return *get_raw_ptr(); }
+	flexible_array<T>* operator->() const noexcept { return get_raw_ptr(); }
+	flexible_array<T>* get_array_of_ptr() const noexcept { return get_raw_ptr(); }
+	flexible_array<T>* get_raw_ptr() const noexcept { return reinterpret_cast<flexible_array<T>*>(get_raw()); }
 
 	T* operator+(std::ptrdiff_t n) const noexcept { return get_raw_begin() + n; }
 	T& operator[](std::size_t n) const noexcept { return get_raw_begin()[n]; }
-	T* get_raw_begin() const noexcept { return ptr ? get_array_of_ptr()->data() : nullptr; }
+	T* get_raw_begin() const noexcept { return get_raw_ptr() ? get_raw_ptr()->data() : nullptr; }
 
 	// mb: destructor should be trivial to allow use in unions
 	// ~soft_ptr_with_zero_offset_impl();
