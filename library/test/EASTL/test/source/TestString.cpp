@@ -86,36 +86,36 @@ int TestString()
 // #endif
 
 	// to_string
-	// {
-	// 	VERIFY(eastl::to_string(42)    == "42");
-	// 	VERIFY(eastl::to_string(42l)   == "42");
-	// 	VERIFY(eastl::to_string(42ll)  == "42");
-	// 	VERIFY(eastl::to_string(42u)   == "42");
-	// 	VERIFY(eastl::to_string(42ul)  == "42");
-	// 	VERIFY(eastl::to_string(42ull) == "42");
-	// 	VERIFY(eastl::to_string(42.f)  == "42.000000");
-	// 	VERIFY(eastl::to_string(42.0)  == "42.000000");
-	// #ifndef EA_COMPILER_GNUC
-	// 	// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
-	// 	VERIFY(eastl::to_string(42.0l) == "42.000000");
-	// #endif
-	// }
+	{
+		VERIFY(safememory::to_string(42)    == "42");
+		VERIFY(safememory::to_string(42l)   == "42");
+		VERIFY(safememory::to_string(42ll)  == "42");
+		VERIFY(safememory::to_string(42u)   == "42");
+		VERIFY(safememory::to_string(42ul)  == "42");
+		VERIFY(safememory::to_string(42ull) == "42");
+		VERIFY(safememory::to_string(42.f)  == "42.000000");
+		VERIFY(safememory::to_string(42.0)  == "42.000000");
+	#ifndef EA_COMPILER_GNUC
+		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
+		VERIFY(safememory::to_string(42.0l) == "42.000000");
+	#endif
+	}
 
 	// to_wstring
-	// {
-	// 	VERIFY(eastl::to_wstring(42)    == L"42");
-	// 	VERIFY(eastl::to_wstring(42l)   == L"42");
-	// 	VERIFY(eastl::to_wstring(42ll)  == L"42");
-	// 	VERIFY(eastl::to_wstring(42u)   == L"42");
-	// 	VERIFY(eastl::to_wstring(42ul)  == L"42");
-	// 	VERIFY(eastl::to_wstring(42ull) == L"42");
-	// 	VERIFY(eastl::to_wstring(42.f)  == L"42.000000");
-	// 	VERIFY(eastl::to_wstring(42.0)  == L"42.000000");
-	// #ifndef EA_COMPILER_GNUC
-	// 	// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
-	// 	VERIFY(eastl::to_wstring(42.0l) == L"42.000000");
-	// #endif
-	// }
+	{
+		VERIFY(safememory::to_wstring(42)    == L"42");
+		VERIFY(safememory::to_wstring(42l)   == L"42");
+		VERIFY(safememory::to_wstring(42ll)  == L"42");
+		VERIFY(safememory::to_wstring(42u)   == L"42");
+		VERIFY(safememory::to_wstring(42ul)  == L"42");
+		VERIFY(safememory::to_wstring(42ull) == L"42");
+		VERIFY(safememory::to_wstring(42.f)  == L"42.000000");
+		VERIFY(safememory::to_wstring(42.0)  == L"42.000000");
+	#ifndef EA_COMPILER_GNUC
+		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
+		VERIFY(safememory::to_wstring(42.0l) == L"42.000000");
+	#endif
+	}
 
 	// #if EASTL_USER_LITERALS_ENABLED 
 	// {

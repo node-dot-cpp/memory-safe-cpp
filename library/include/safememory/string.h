@@ -115,6 +115,7 @@ namespace safememory
 		struct CtorBaseType{};
 		basic_string(CtorBaseType, const base_type& b) : base_type(b) {}
 		basic_string(CtorBaseType, base_type&& b) : base_type(std::move(b)) {}
+
 	public:
 		// Constructor, destructor
 		basic_string() : base_type(allocator_type()) {}
@@ -129,9 +130,7 @@ namespace safememory
 	    // basic_string(const this_type& x, const allocator_type& allocator);
 		// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-		// basic_string(CtorSprintf, const value_type* pFormat, ...);
 		basic_string(std::initializer_list<value_type> init) : base_type(init, allocator_type()) {}
-
 		basic_string(this_type&& x) = default;
 		// basic_string(this_type&& x, const allocator_type& allocator);
 
@@ -146,6 +145,14 @@ namespace safememory
 
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
+
+		// unsafe
+		template<class V>
+		static basic_string make_sprintf_unsafe(const value_type* pFormat, V value) {
+			basic_string str;
+			str.base_type::append_sprintf(pFormat, value);
+			return str;
+		}
 
 	   ~basic_string() {}
 
@@ -624,6 +631,10 @@ namespace safememory
 		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
         const base_type& toBase() const noexcept { return *this; }
+		const base_type& to_base_unsafe() const noexcept { return *this; }
+		eastl::basic_string_view<T> to_string_view_unsafe() const {
+			return eastl::basic_string_view<T>(data(), size());
+		}
 
 		// all 'toBase' are called with iterators coming from user, and its validity is unknown
 		// so they must be checked
@@ -739,63 +750,158 @@ namespace safememory
 	// to avoid having a lot of friends
 
 	template <typename T, memory_safety Safety>
-	inline bool operator==(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator==(lit);
+	inline bool operator==(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator==(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator==(ptr);
+	inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator==(ptr, b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator!=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator!=(lit);
+	inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator==(a.to_base_unsafe(), ptr);
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator!=(ptr);
+	inline bool operator==(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator==(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator>(lit);
+	inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator==(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator!=(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator>(ptr);
+	inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator!=(ptr, b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator>(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator<(lit);
+	inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator!=(a.to_base_unsafe(), ptr);
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator<(ptr);
+	inline bool operator!=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator!=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator>=(lit);
+	inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator!=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator<(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator>=(ptr);
+	inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator<(ptr, b.to_base_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator>=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator<=(lit);
+	inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator<(a.to_base_unsafe(), ptr);
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator<=(ptr);
+	inline bool operator<(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator<(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator<(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator<=(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator<=(ptr, b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator<=(a.to_base_unsafe(), ptr);
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator<=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator<=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator>(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator>(ptr, b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator>(a.to_base_unsafe(), ptr);
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator>(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator>(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator>=(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+        return eastl::operator>=(ptr, b.to_base_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+        return eastl::operator>=(a.to_base_unsafe(), ptr);
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator>=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator>=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
@@ -814,7 +920,7 @@ namespace safememory
 	typedef basic_string<char32_t> string32;
 
 	/// ISO mandated string types
-	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
+	// typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
 
@@ -838,6 +944,82 @@ namespace safememory
 			return base_type::operator()(x.toBase());
 		}
 	};
+
+
+	/// to_string
+	///
+	/// Converts integral types to an eastl::string with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings.
+	///
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_string
+	///
+	inline string to_string(int value)
+		{ return string::make_sprintf_unsafe("%d", value); }
+	inline string to_string(long value)
+		{ return string::make_sprintf_unsafe("%ld", value); }
+	inline string to_string(long long value)
+		{ return string::make_sprintf_unsafe("%lld", value); }
+	inline string to_string(unsigned value)
+		{ return string::make_sprintf_unsafe("%u", value); }
+	inline string to_string(unsigned long value)
+		{ return string::make_sprintf_unsafe("%lu", value); }
+	inline string to_string(unsigned long long value)
+		{ return string::make_sprintf_unsafe("%llu", value); }
+	inline string to_string(float value)
+		{ return string::make_sprintf_unsafe("%f", value); }
+	inline string to_string(double value)
+		{ return string::make_sprintf_unsafe("%f", value); }
+	inline string to_string(long double value)
+		{ return string::make_sprintf_unsafe("%Lf", value); }
+
+
+	/// to_wstring
+	///
+	/// Converts integral types to an eastl::wstring with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings.
+	///
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
+	///
+	inline wstring to_wstring(int value)
+		{ return wstring::make_sprintf_unsafe(L"%d", value); }
+	inline wstring to_wstring(long value)
+		{ return wstring::make_sprintf_unsafe(L"%ld", value); }
+	inline wstring to_wstring(long long value)
+		{ return wstring::make_sprintf_unsafe(L"%lld", value); }
+	inline wstring to_wstring(unsigned value)
+		{ return wstring::make_sprintf_unsafe(L"%u", value); }
+	inline wstring to_wstring(unsigned long value)
+		{ return wstring::make_sprintf_unsafe(L"%lu", value); }
+	inline wstring to_wstring(unsigned long long value)
+		{ return wstring::make_sprintf_unsafe(L"%llu", value); }
+	inline wstring to_wstring(float value)
+		{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(double value)
+		{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(long double value)
+		{ return wstring::make_sprintf_unsafe(L"%Lf", value); }
+
+
+	/// user defined literals
+	/// TODO
+
+
+	/// erase / erase_if
+	template <class CharT, safememory::memory_safety Safety, class U>
+	void erase(basic_string<CharT, Safety>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class CharT, safememory::memory_safety Safety, class Predicate>
+	void erase_if(basic_string<CharT, Safety>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
 
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
