@@ -37,6 +37,7 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 #include <safememory/detail/instrument.h>
+#include "containers.h"
 
 //template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct safememory::safeness_declarator<safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -1413,7 +1414,11 @@ int main( int argc, char * argv[] )
 	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail:: onStackSafePtrCreationCount == safememory::detail::onStackSafePtrDestructionCount );
 #endif // NODECPP_ENABLE_ONSTACK_SOFTPTR_COUNTING
 
-	try { testStackInfoAndptrLifecycle(); }
+	try {
+		testStackInfoAndptrLifecycle();
+		testString();
+		testVector();	
+	}
 	catch (nodecpp::error::error e)
 	{
 		e.log(log, nodecpp::log::LogLevel::fatal);
