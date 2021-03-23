@@ -37,7 +37,7 @@
 //#include "test_nullptr_access.h"
 #include "dummy_test_objects.h"
 #include <safememory/detail/instrument.h>
-#include "containers.h"
+#include "containers/EASTLTest.h"
 
 //template<> struct safememory::safeness_declarator<double> { static constexpr bool is_safe = false; }; // user-defined exclusion
 //template<> struct safememory::safeness_declarator<safememory::testing::dummy_objects::StructureWithSoftPtrDeclaredUnsafe> { static constexpr bool is_safe = false; }; // user-defined exclusion
@@ -1416,8 +1416,8 @@ int main( int argc, char * argv[] )
 
 	try {
 		testStackInfoAndptrLifecycle();
-		testString();
-		testVector();	
+		// testString();
+		TestVector();	
 	}
 	catch (nodecpp::error::error e)
 	{
