@@ -62,9 +62,9 @@ namespace safememory
 			return static_cast<size_type>(sz); }
 
 	public:
-	
+		
 		template<size_t N>
-		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N) {}
+		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) { static_assert(N >= 1); }
 		basic_string_literal(const value_type* ptr) : str(ptr), sz(GetSize(ptr)) {}
 
 		basic_string_literal(const basic_string_literal& other) = default;

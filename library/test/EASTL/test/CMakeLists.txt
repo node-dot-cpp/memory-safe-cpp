@@ -30,6 +30,7 @@ set(SOURCES ${EASTLTEST_SOURCES})
 # Safety use cases
 add_executable(EASTLTest ${EASTLTEST_SOURCES})
 
+add_executable(EASTLTestImpl ${EASTLTEST_SOURCES})
 add_executable(EASTLTestNoChecks ${EASTLTEST_SOURCES})
 add_executable(EASTLTestOnDemandStd ${EASTLTEST_SOURCES})
 
@@ -37,6 +38,8 @@ add_executable(EASTLTestOnDemandStd ${EASTLTEST_SOURCES})
 # Include directories
 #-------------------------------------------------------------------------------------------
 target_include_directories(EASTLTest PUBLIC include)
+
+target_include_directories(EASTLTestImpl PUBLIC include)
 target_include_directories(EASTLTestNoChecks PUBLIC include)
 target_include_directories(EASTLTestOnDemandStd PUBLIC include)
 
@@ -66,10 +69,12 @@ find_package(Threads REQUIRED)
 
 if((NOT APPLE) AND (NOT WIN32))
     target_link_libraries(EASTLTest safememory ${EASTLTest_Libraries} Threads::Threads rt)
+    target_link_libraries(EASTLTestImpl safememory_impl ${EASTLTest_Libraries} Threads::Threads rt)
     target_link_libraries(EASTLTestNoChecks safememory_no_checks ${EASTLTest_Libraries} Threads::Threads rt)
     target_link_libraries(EASTLTestOnDemandStd safememory ${EASTLTest_Libraries} Threads::Threads rt)
 else()
     target_link_libraries(EASTLTest safememory ${EASTLTest_Libraries} Threads::Threads)
+    target_link_libraries(EASTLTestImpl safememory_impl ${EASTLTest_Libraries} Threads::Threads)
     target_link_libraries(EASTLTestNoChecks safememory_no_checks ${EASTLTest_Libraries} Threads::Threads)
     target_link_libraries(EASTLTestOnDemandStd safememory ${EASTLTest_Libraries} Threads::Threads)
 endif()
@@ -78,9 +83,11 @@ endif()
 # Run Unit tests and verify the results.
 #-------------------------------------------------------------------------------------------
 add_test(EASTLTestRuns EASTLTest)
+add_test(EASTLTestImplRuns EASTLTestImpl)
 add_test(EASTLTestNoChecksRuns EASTLTestNoChecks)
 add_test(EASTLTestOnDemandStdRuns EASTLTestOnDemandStd)
 
 set_tests_properties (EASTLTestRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
+set_tests_properties (EASTLTestImplRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
 set_tests_properties (EASTLTestNoChecksRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
 set_tests_properties (EASTLTestOnDemandStdRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
