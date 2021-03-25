@@ -62,10 +62,10 @@ namespace safememory
 			return static_cast<size_type>(sz); }
 
 	public:
-	
+		
 		template<size_t N>
-		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N) {}
-		explicit basic_string_literal(const value_type* ptr) : str(ptr), sz(GetSize(ptr)) {}
+		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) { static_assert(N >= 1); }
+		basic_string_literal(const value_type* ptr) : str(ptr), sz(GetSize(ptr)) {}
 
 		basic_string_literal(const basic_string_literal& other) = default;
 		basic_string_literal& operator=(const basic_string_literal& other) = default;
@@ -122,6 +122,10 @@ namespace safememory
 
 			return str[size() - 1];
 		}
+
+		eastl::basic_string_view<T> to_string_view_unsafe() const {
+			return eastl::basic_string_view<T>(data(), size());
+		}
 	};
 
 	typedef basic_string_literal<char>    string_literal;
@@ -134,35 +138,93 @@ namespace safememory
 
 	template<class T, memory_safety S>
 	bool operator==( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
-		// copied from eastl::basic_string to be consistent
-		return ((a.size() == b.size()) && (memcmp(a.data(), b.data(), static_cast<size_t>(a.size()) * sizeof(typename basic_string_literal<T, S>::value_type)) == 0));
+		return eastl::operator==(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
-	template<class T, memory_safety S>
-	bool operator==( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-		return operator==(basic_string_literal<T, S>(ptr), b);
-	}
+	// template<class T, memory_safety S>
+	// bool operator==( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator==(ptr, b.to_string_view_unsafe());
+	// }
 
-	template<class T, memory_safety S>
-	bool operator==( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-		return operator==(a, basic_string_literal<T, S>(ptr));
-	}
+	// template<class T, memory_safety S>
+	// bool operator==( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator==(a.to_string_view_unsafe(), ptr);
+	// }
 
 	template<class T, memory_safety S>
 	bool operator!=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
-		return !operator==(a, b);
+		return eastl::operator!=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
+
+	// template<class T, memory_safety S>
+	// bool operator!=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator!=(ptr, b.to_string_view_unsafe());
+	// }
+
+	// template<class T, memory_safety S>
+	// bool operator!=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator!=(a.to_string_view_unsafe(), ptr);
+	// }
 
 	template<class T, memory_safety S>
-	bool operator!=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-		return !operator==(ptr, b);
+	bool operator<( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
+		return eastl::operator<(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
+
+	// template<class T, memory_safety S>
+	// bool operator<( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator<(ptr, b.to_string_view_unsafe());
+	// }
+
+	// template<class T, memory_safety S>
+	// bool operator<( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator<(a.to_string_view_unsafe(), ptr);
+	// }
 
 	template<class T, memory_safety S>
-	bool operator!=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-		return !operator==(a, ptr);
+	bool operator<=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
+		return eastl::operator<=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
+	// template<class T, memory_safety S>
+	// bool operator<=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator<=(ptr, b.to_string_view_unsafe());
+	// }
+
+	// template<class T, memory_safety S>
+	// bool operator<=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator<=(a.to_string_view_unsafe(), ptr);
+	// }
+
+	template<class T, memory_safety S>
+	bool operator>( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
+		return eastl::operator>(a.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	// template<class T, memory_safety S>
+	// bool operator>( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator>(ptr, b.to_string_view_unsafe());
+	// }
+
+	// template<class T, memory_safety S>
+	// bool operator>( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator>(a.to_string_view_unsafe(), ptr);
+	// }
+
+	template<class T, memory_safety S>
+	bool operator>=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
+		return eastl::operator>=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
+	}
+
+	// template<class T, memory_safety S>
+	// bool operator>=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
+	// 	return eastl::operator>=(ptr, b.to_string_view_unsafe());
+	// }
+
+	// template<class T, memory_safety S>
+	// bool operator>=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
+	// 	return eastl::operator>=(a.to_string_view_unsafe(), ptr);
+	// }
 
 } //namespace safememory
 

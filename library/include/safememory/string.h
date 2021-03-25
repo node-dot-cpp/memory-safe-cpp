@@ -115,6 +115,7 @@ namespace safememory
 		struct CtorBaseType{};
 		basic_string(CtorBaseType, const base_type& b) : base_type(b) {}
 		basic_string(CtorBaseType, base_type&& b) : base_type(std::move(b)) {}
+
 	public:
 		// Constructor, destructor
 		basic_string() : base_type(allocator_type()) {}
@@ -122,16 +123,14 @@ namespace safememory
 		basic_string(const this_type& x, size_type position, size_type n = npos) : base_type(x, x.checkPos(position), n) {}
 		// basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-		basic_string(const value_type* p) : base_type(p, allocator_type()) {}
+		// basic_string(const value_type* p) : base_type(p, allocator_type()) {}
 		basic_string(const literal_type& l) : base_type(l.c_str(), l.size(), allocator_type()) {}
 		basic_string(size_type n, value_type c) : base_type(n, c, allocator_type()) {}
 		basic_string(const this_type& x) = default;
 	    // basic_string(const this_type& x, const allocator_type& allocator);
 		// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-		// basic_string(CtorSprintf, const value_type* pFormat, ...);
 		basic_string(std::initializer_list<value_type> init) : base_type(init, allocator_type()) {}
-
 		basic_string(this_type&& x) = default;
 		// basic_string(this_type&& x, const allocator_type& allocator);
 
@@ -147,14 +146,22 @@ namespace safememory
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
 
-	   ~basic_string() {}
+		// unsafe
+		template<class V>
+		static basic_string make_sprintf_unsafe(const value_type* pFormat, V value) {
+			basic_string str;
+			str.base_type::append_sprintf(pFormat, value);
+			return str;
+		}
+
+	   ~basic_string() = default;
 
 		// Implicit conversion operator
 		// operator basic_string_view<T>() const EA_NOEXCEPT;
 
 		// Operator=
 		this_type& operator=(const this_type& x) = default;
-		this_type& operator=(const value_type* p) { base_type::operator=(p); return *this; }
+		// this_type& operator=(const value_type* p) { base_type::operator=(p); return *this; }
 		this_type& operator=(const literal_type& l) { base_type::assign(l.c_str(), l.size()); return *this; }
 		this_type& operator=(value_type c) { base_type::operator=(c); return *this; }
 		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
@@ -182,7 +189,6 @@ namespace safememory
         }
 		this_type& assign_unsafe(const value_type* p, size_type n) { base_type::assign(p, n); return *this; }
 		this_type& assign_unsafe(const value_type* p) { base_type::assign(p); return *this; }
-		this_type& assign(const value_type* p) { base_type::assign(p); return *this; }
 		this_type& assign(const literal_type& l) { base_type::assign(l.c_str(), l.size()); return *this; }
 		this_type& assign(size_type n, value_type c) { base_type::assign(n, c); return *this; }
 		this_type& assign_unsafe(const value_type* pBegin, const value_type* pEnd) { base_type::assign(pBegin, pEnd); return *this; }
@@ -275,7 +281,7 @@ namespace safememory
 
 		// Append operations
 		this_type& operator+=(const this_type& x) { base_type::operator+=(x); return *this; }
-		this_type& operator+=(const value_type* p) { base_type::operator+=(p); return *this; }
+		// this_type& operator+=(const value_type* p) { base_type::operator+=(p); return *this; }
 		this_type& operator+=(const literal_type& l) { base_type::append(l.c_str(), l.size()); return *this; }
 		this_type& operator+=(value_type c) { base_type::operator+=(c); return *this; }
 
@@ -285,14 +291,25 @@ namespace safememory
             base_type::append(x, position, n);
             return *this;
         }
-		// this_type& append(const value_type* p, size_type n);
-		this_type& append(const value_type* p) { base_type::append(p); return *this; }
+		this_type& append_unsafe(const value_type* p, size_type n) { base_type::append(p, n); return *this; }
+		this_type& append_unsafe(const value_type* p) { base_type::append(p); return *this; }
 		this_type& append(const literal_type& l) { base_type::append(l.c_str(), l.size()); return *this; }
 		this_type& append(size_type n, value_type c) { base_type::append(n, c); return *this; }
 		this_type& append_unsafe(const value_type* pBegin, const value_type* pEnd) { base_type::append(pBegin, pEnd); return *this; }
 
-		// this_type& append_sprintf_va_list(const value_type* pFormat, va_list arguments);
-		// this_type& append_sprintf(const value_type* pFormat, ...);
+		// this_type& append_sprintf_va_list_unsafe(const value_type* pFormat, va_list arguments) {
+		// 	base_type::append_sprintf_va_list(pFormat, arguments);
+		// 	return *this;
+		// }
+
+		this_type& append_sprintf_unsafe(const value_type* pFormat, ...) {
+			va_list arguments;
+			va_start(arguments, pFormat);
+			base_type::append_sprintf_va_list(pFormat, arguments);
+			va_end(arguments);
+
+			return *this;
+		}
  
 		template <typename OtherCharType>
 		this_type& append_convert_unsafe(const OtherCharType* p) {
@@ -351,7 +368,7 @@ namespace safememory
         }
 
 		// this_type& insert(size_type position, const value_type* p, size_type n);
-		this_type& insert(size_type position, const value_type* p) {
+		this_type& insert_unsafe(size_type position, const value_type* p) {
             checkPos(position);
             base_type::insert(position, p);
             return *this;
@@ -421,7 +438,7 @@ namespace safememory
         }
 
 		// this_type&  replace(size_type position, size_type n1, const value_type* p, size_type n2);
-		this_type&  replace(size_type position, size_type n1, const value_type* p) {
+		this_type&  replace_unsafe(size_type position, size_type n1, const value_type* p) {
             checkPos(position);
             base_type::replace(position, n1, p);
             return *this;
@@ -446,7 +463,7 @@ namespace safememory
         }
 
 		// this_type&  replace(const_iterator first, const_iterator last, const value_type* p, size_type n) {}
-		this_type&  replace(const_iterator first, const_iterator last, const value_type* p) {
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* p) {
             auto p = toBase(first, last);
             base_type::replace(p.first, p.second, p);
             return *this;
@@ -470,12 +487,6 @@ namespace safememory
             return *this;
         }
 
-		this_type&  replace_safe(const_iterator_safe first, const_iterator_safe last, const value_type* p) {
-            auto p = toBase(first, last);
-            base_type::replace(p.first, p.second, p);
-            return *this;
-        }
-
 		this_type&  replace_safe(const_iterator_safe first, const_iterator_safe last, const literal_type& l) {
             auto p = toBase(first, last);
             base_type::replace(p.first, p.second, l.c_str(), l.size());
@@ -493,45 +504,45 @@ namespace safememory
 
 		// Find operations
 		size_type find(const this_type& x,  size_type position = 0) const noexcept { return base_type::find(x.toBase(), position); }
-		size_type find(const value_type* p, size_type position = 0) const { return base_type::find(p, position); }
-		// size_type find(const value_type* p, size_type position, size_type n);
+		size_type find_unsafe(const value_type* p, size_type position = 0) const { return base_type::find(p, position); }
+		size_type find_unsafe(const value_type* p, size_type position, size_type n) { return base_type::find(p, position, n); }
 		size_type find(value_type c, size_type position = 0) const noexcept { return base_type::find(c, position); }
-		size_type find(const literal_type& l,  size_type position = 0) const noexcept { return base_type::find(l.c_str(), position, l.size()); }
+		size_type find(const literal_type& l, size_type position = 0) const noexcept { return base_type::find(l.c_str(), position, l.size()); }
 
 		// Reverse find operations
 		size_type rfind(const this_type& x,  size_type position = npos) const noexcept { return base_type::rfind(x.toBase(), position); }
-		size_type rfind(const value_type* p, size_type position = npos) const { return base_type::rfind(p, position); }
-		// size_type rfind(const value_type* p, size_type position, size_type n);
+		size_type rfind_unsafe(const value_type* p, size_type position = npos) const { return base_type::rfind(p, position); }
+		size_type rfind_unsafe(const value_type* p, size_type position, size_type n) { return base_type::rfind(p, position, n); }
 		size_type rfind(value_type c, size_type position = npos) const noexcept { return base_type::rfind(c, position); }
-		size_type rfind(const literal_type& l,  size_type position = 0) const noexcept { return base_type::rfind(l.c_str(), position, l.size()); }
+		size_type rfind(const literal_type& l, size_type position = npos) const noexcept { return base_type::rfind(l.c_str(), position, l.size()); }
 
 		// Find first-of operations
 		size_type find_first_of(const this_type& x, size_type position = 0) const noexcept { return base_type::find_first_of(x.toBase(), position); }
-		size_type find_first_of(const value_type* p, size_type position = 0) const { return base_type::find_first_of(p, position); }
-		// size_type find_first_of(const value_type* p, size_type position, size_type n);
+		size_type find_first_of_unsafe(const value_type* p, size_type position = 0) const { return base_type::find_first_of(p, position); }
+		size_type find_first_of_unsafe(const value_type* p, size_type position, size_type n) { return base_type::find_first_of(p, position, n); }
 		size_type find_first_of(value_type c, size_type position = 0) const noexcept { return base_type::find_first_of(c, position); }
-		size_type find_first_of(const literal_type& l,  size_type position = 0) const noexcept { return base_type::find_first_of(l.c_str(), position, l.size()); }
+		size_type find_first_of(const literal_type& l, size_type position = 0) const noexcept { return base_type::find_first_of(l.c_str(), position, l.size()); }
 
 		// Find last-of operations
 		size_type find_last_of(const this_type& x, size_type position = npos) const noexcept { return base_type::find_last_of(x.toBase(), position); }
-		size_type find_last_of(const value_type* p, size_type position = npos) const { return base_type::find_last_of(p, position); }
-		// size_type find_last_of(const value_type* p, size_type position, size_type n);
+		size_type find_last_of_unsafe(const value_type* p, size_type position = npos) const { return base_type::find_last_of(p, position); }
+		size_type find_last_of_unsafe(const value_type* p, size_type position, size_type n) { return base_type::find_last_of(p, position, n); }
 		size_type find_last_of(value_type c, size_type position = npos) const noexcept { return base_type::find_last_of(c, position); }
-		size_type find_last_of(const literal_type& l,  size_type position = 0) const noexcept { return base_type::find_last_of(l.c_str(), position, l.size()); }
+		size_type find_last_of(const literal_type& l, size_type position = npos) const noexcept { return base_type::find_last_of(l.c_str(), position, l.size()); }
 
 		// Find first not-of operations
 		size_type find_first_not_of(const this_type& x, size_type position = 0) const noexcept { return base_type::find_first_not_of(x.toBase(), position); }
-		size_type find_first_not_of(const value_type* p, size_type position = 0) const { return base_type::find_first_not_of(p, position); }
-		// size_type find_first_not_of(const value_type* p, size_type position, size_type n);
+		size_type find_first_not_of_unsafe(const value_type* p, size_type position = 0) const { return base_type::find_first_not_of(p, position); }
+		size_type find_first_not_of_unsafe(const value_type* p, size_type position, size_type n) { return base_type::find_first_not_of(p, position, n); }
 		size_type find_first_not_of(value_type c, size_type position = 0) const noexcept { return base_type::find_first_not_of(c, position); }
-		size_type find_first_not_of(const literal_type& l,  size_type position = 0) const noexcept { return base_type::find_first_not_of(l.c_str(), position, l.size()); }
+		size_type find_first_not_of(const literal_type& l, size_type position = 0) const noexcept { return base_type::find_first_not_of(l.c_str(), position, l.size()); }
 
 		// Find last not-of operations
 		size_type find_last_not_of(const this_type& x,  size_type position = npos) const noexcept { return base_type::find_last_not_of(x.toBase(), position); }
-		size_type find_last_not_of(const value_type* p, size_type position = npos) const { return base_type::find_last_not_of(p, position); }
-		// size_type find_last_not_of(const value_type* p, size_type position, size_type n);
+		size_type find_last_not_of_unsafe(const value_type* p, size_type position = npos) const { return base_type::find_last_not_of(p, position); }
+		size_type find_last_not_of_unsafe(const value_type* p, size_type position, size_type n) { return base_type::find_last_not_of(p, position, n); }
 		size_type find_last_not_of(value_type c, size_type position = npos) const noexcept { return base_type::find_last_not_of(c, position); }
-		size_type find_last_not_of(const literal_type& l,  size_type position = 0) const noexcept { return base_type::find_last_not_of(l.c_str(), position, l.size()); }
+		size_type find_last_not_of(const literal_type& l, size_type position = npos) const noexcept { return base_type::find_last_not_of(l.c_str(), position, l.size()); }
 
 		// Substring functionality
 		this_type substr(size_type position = 0, size_type n = npos) const {
@@ -553,11 +564,15 @@ namespace safememory
         }
 
 		// int        compare(size_type pos1, size_type n1, const value_type* p, size_type n2) const;
-		int        compare(const value_type* p) const { return base_type::compare(p); }
+		int        compare_unsafe(const value_type* p) const { return base_type::compare(p); }
 
-		int        compare(size_type pos1, size_type n1, const value_type* p) const {
+		int        compare_unsafe(size_type pos1, size_type n1, const value_type* p) const {
             checkPos(pos1);
             return base_type::compare(pos1, n1, p);
+        }
+
+		int        compare(const literal_type& l) const {
+            return base_type::compare(0, size(), l.c_str(), l.size());
         }
 
 		int        compare(size_type pos1, size_type n1, const literal_type& l) const {
@@ -569,7 +584,7 @@ namespace safememory
 
 		// Case-insensitive comparison functions. Not part of C++ this_type. Only ASCII-level locale functionality is supported. Thus this is not suitable for localization purposes.
 		int        comparei(const this_type& x) const noexcept { return base_type::comparei(x); }
-		int        comparei(const value_type* p) const { return base_type::comparei(p); }
+		int        comparei_unsafe(const value_type* p) const { return base_type::comparei(p); }
 		int        comparei(const literal_type& l) const { return base_type::comparei(l.c_str()); }
 		// static int comparei(const value_type* pBegin1, const value_type* pEnd1, const value_type* pBegin2, const value_type* pEnd2);
 
@@ -579,16 +594,27 @@ namespace safememory
 		void         ltrim() { base_type::ltrim(); }
 		void         rtrim() { base_type::rtrim(); }
 		void         trim() { base_type::trim(); }
-		void         ltrim(const value_type* p) { base_type::ltrim(p); }
-		void         rtrim(const value_type* p) { base_type::rtrim(p); }
-		void         trim(const value_type* p) { base_type::trim(p); }
+		void         ltrim_unsafe(const value_type* p) { base_type::ltrim(p); }
+		void         rtrim_unsafe(const value_type* p) { base_type::rtrim(p); }
+		void         trim_unsafe(const value_type* p) { base_type::trim(p); }
 		void         ltrim(const literal_type& l) { base_type::ltrim(l.c_str()); }
 		void         rtrim(const literal_type& l) { base_type::rtrim(l.c_str()); }
 		void         trim(const literal_type& l) { base_type::trim(l.c_str()); }
 		this_type    left(size_type n) const { return {CtorBaseType(), base_type::left(n)}; }
 		this_type    right(size_type n) const { return {CtorBaseType(), base_type::right(n)}; }
-		// this_type&   sprintf_va_list(const value_type* pFormat, va_list arguments);
-		// this_type&   sprintf(const value_type* pFormat, ...);
+
+		// this_type&   sprintf_va_list_unsafe(const value_type* pFormat, va_list arguments) {
+		// 	base_type::sprintf_va_list(pFormat, arguments);
+		// 	return *this;
+		// }
+
+		this_type&   sprintf_unsafe(const value_type* pFormat, ...) {
+			va_list arguments;
+			va_start(arguments, pFormat);
+			base_type::sprintf_va_list(pFormat, arguments);
+			va_end(arguments);
+
+		}
 
 		using base_type::validate;
 		int validate_iterator(const_iterator_base it) const noexcept { return base_type::validate_iterator(it); }
@@ -596,28 +622,13 @@ namespace safememory
 		int validate_iterator(const const_stack_only_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
-		bool operator==(const this_type& b)	const { return eastl::operator==(this->toBase(), b.toBase()); }
-		bool operator==(const literal_type& l) const { return eastl::operator==(this->toBase(), l.c_str()); }
-		bool operator==(const value_type* p) const { return eastl::operator==(this->toBase(), p); }
-		bool operator!=(const this_type& b) const { return eastl::operator!=(this->toBase(), b.toBase()); }
-		bool operator!=(const literal_type& l) const { return eastl::operator!=(this->toBase(), l.c_str()); }
-		bool operator!=(const value_type* p) const { return eastl::operator!=(this->toBase(), p); }
-		bool operator<(const this_type& b) const { return eastl::operator<(this->toBase(), b.toBase()); }
-		bool operator<(const literal_type& l) const { return eastl::operator<(this->toBase(), l.c_str()); }
-		bool operator<(const value_type* p) const { return eastl::operator<(this->toBase(), p); }
-		bool operator>(const this_type& b) const { return eastl::operator>(this->toBase(), b.toBase()); }
-		bool operator>(const literal_type& l) const { return eastl::operator>(this->toBase(), l.c_str()); }
-		bool operator>(const value_type* p) const { return eastl::operator>(this->toBase(), p); }
-		bool operator<=(const this_type& b) const { return eastl::operator<=(this->toBase(), b.toBase()); }
-		bool operator<=(const literal_type& l) const { return eastl::operator<=(this->toBase(), l.c_str()); }
-		bool operator<=(const value_type* p) const { return eastl::operator<=(this->toBase(), p); }
-		bool operator>=(const this_type& b) const { return eastl::operator>=(this->toBase(), b.toBase()); }
-		bool operator>=(const literal_type& l) const { return eastl::operator>=(this->toBase(), l.c_str()); }
-		bool operator>=(const value_type* p) const { return eastl::operator>=(this->toBase(), p); }
-
-
 		iterator_safe make_safe(const iterator& it) const {	return makeSafeIt(toBase(it)); }
 		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
+
+		const base_type& to_base_unsafe() const noexcept { return *this; }
+		eastl::basic_string_view<T> to_string_view_unsafe() const {
+			return eastl::basic_string_view<T>(data(), size());
+		}
 
     protected:
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -739,63 +750,158 @@ namespace safememory
 	// to avoid having a lot of friends
 
 	template <typename T, memory_safety Safety>
-	inline bool operator==(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator==(lit);
+	inline bool operator==(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator==(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator==(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator==(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator==(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator==(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator==(ptr);
+	inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator==(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator!=(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator!=(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator!=(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator!=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator!=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator!=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator!=(lit);
+	inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator!=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator<(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator<(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator<(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator<(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator!=(ptr);
+	inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator<(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator<=(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator<=(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator<=(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator<=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator<=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator>(lit);
+	inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator<=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator>(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator>(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator>(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator>(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator>(ptr);
+	inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator>(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
+	}
+
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {
+        return eastl::operator>=(a.to_base_unsafe(), b.to_base_unsafe());
+	}
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator>=(ptr, b.to_base_unsafe());
+	// }
+
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator>=(a.to_base_unsafe(), ptr);
+	// }
+
+	template <typename T, memory_safety Safety>
+	inline bool operator>=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
+        return eastl::operator>=(lit.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
-	inline bool operator>(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator<(lit);
-	}
-
-	template <typename T, memory_safety Safety>
-	inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator<(ptr);
-	}
-
-	template <typename T, memory_safety Safety>
-	inline bool operator<=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator>=(lit);
-	}
-
-	template <typename T, memory_safety Safety>
-	inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator>=(ptr);
-	}
-
-	template <typename T, memory_safety Safety>
-	inline bool operator>=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& str) {
-        return str.operator<=(lit);
-	}
-
-	template <typename T, memory_safety Safety>
-	inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& str) {
-        return str.operator<=(ptr);
+	inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::literal_type& lit) {
+        return eastl::operator>=(a.to_string_view_unsafe(), lit.to_string_view_unsafe());
 	}
 
 	template <typename T, memory_safety Safety>
@@ -814,7 +920,7 @@ namespace safememory
 	typedef basic_string<char32_t> string32;
 
 	/// ISO mandated string types
-	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
+	// typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
 
@@ -825,7 +931,7 @@ namespace safememory
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type> base_type;
 		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
 		{
-			return base_type::operator()(x.toBase());
+			return base_type::operator()(x.to_base_unsafe());
 		}
 	};
 
@@ -835,9 +941,85 @@ namespace safememory
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type> base_type;
 		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
 		{
-			return base_type::operator()(x.toBase());
+			return base_type::operator()(x.to_base_unsafe());
 		}
 	};
+
+
+	/// to_string
+	///
+	/// Converts integral types to an eastl::string with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings.
+	///
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_string
+	///
+	inline string to_string(int value)
+		{ return string::make_sprintf_unsafe("%d", value); }
+	inline string to_string(long value)
+		{ return string::make_sprintf_unsafe("%ld", value); }
+	inline string to_string(long long value)
+		{ return string::make_sprintf_unsafe("%lld", value); }
+	inline string to_string(unsigned value)
+		{ return string::make_sprintf_unsafe("%u", value); }
+	inline string to_string(unsigned long value)
+		{ return string::make_sprintf_unsafe("%lu", value); }
+	inline string to_string(unsigned long long value)
+		{ return string::make_sprintf_unsafe("%llu", value); }
+	inline string to_string(float value)
+		{ return string::make_sprintf_unsafe("%f", value); }
+	inline string to_string(double value)
+		{ return string::make_sprintf_unsafe("%f", value); }
+	inline string to_string(long double value)
+		{ return string::make_sprintf_unsafe("%Lf", value); }
+
+
+	/// to_wstring
+	///
+	/// Converts integral types to an eastl::wstring with the same content that sprintf produces.  The following
+	/// implementation provides a type safe conversion mechanism which avoids the common bugs associated with sprintf
+	/// style format strings.
+	///
+	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
+	///
+	inline wstring to_wstring(int value)
+		{ return wstring::make_sprintf_unsafe(L"%d", value); }
+	inline wstring to_wstring(long value)
+		{ return wstring::make_sprintf_unsafe(L"%ld", value); }
+	inline wstring to_wstring(long long value)
+		{ return wstring::make_sprintf_unsafe(L"%lld", value); }
+	inline wstring to_wstring(unsigned value)
+		{ return wstring::make_sprintf_unsafe(L"%u", value); }
+	inline wstring to_wstring(unsigned long value)
+		{ return wstring::make_sprintf_unsafe(L"%lu", value); }
+	inline wstring to_wstring(unsigned long long value)
+		{ return wstring::make_sprintf_unsafe(L"%llu", value); }
+	inline wstring to_wstring(float value)
+		{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(double value)
+		{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	inline wstring to_wstring(long double value)
+		{ return wstring::make_sprintf_unsafe(L"%Lf", value); }
+
+
+	/// user defined literals
+	/// TODO
+
+
+	/// erase / erase_if
+	template <class CharT, safememory::memory_safety Safety, class U>
+	void erase(basic_string<CharT, Safety>& c, const U& value)
+	{
+		// Erases all elements that compare equal to value from the container.
+		c.erase(eastl::remove(c.begin(), c.end(), value), c.end());
+	}
+
+	template <class CharT, safememory::memory_safety Safety, class Predicate>
+	void erase_if(basic_string<CharT, Safety>& c, Predicate predicate)
+	{
+		// Erases all elements that satisfy the predicate pred from the container.
+		c.erase(eastl::remove_if(c.begin(), c.end(), predicate), c.end());
+	}
 
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
@@ -870,7 +1052,7 @@ namespace safememory
 		// Constructor, destructor
 		basic_string_safe() : base_type() {}
 		basic_string_safe(const this_type& x, size_type position, size_type n = npos) : base_type(x, position, n) {}
-		basic_string_safe(const value_type* p) : base_type(p) {}
+		// basic_string_safe(const value_type* p) : base_type(p) {}
 		basic_string_safe(const literal_type& l) : base_type(l) {}
 		basic_string_safe(size_type n, value_type c) : base_type(n, c) {}
 		basic_string_safe(const this_type& x) = default;
@@ -881,7 +1063,7 @@ namespace safememory
 
 		// Operator=
 		this_type& operator=(const this_type& x) = default;
-		this_type& operator=(const value_type* p) { base_type::operator=(p); return *this; }
+		// this_type& operator=(const value_type* p) { base_type::operator=(p); return *this; }
 		this_type& operator=(const literal_type& l) { base_type::operator=(l); return *this; }
 		this_type& operator=(value_type c) { base_type::operator=(c); return *this; }
 		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
@@ -892,7 +1074,7 @@ namespace safememory
 		// Assignment operations
 		this_type& assign(const this_type& x) { base_type::assign(x); return *this; }
 		this_type& assign(const this_type& x, size_type position, size_type n = npos) { base_type::assign(x, position, n); return *this; }
-		this_type& assign(const value_type* p) { base_type::assign(p); return *this; }
+		// this_type& assign(const value_type* p) { base_type::assign(p); return *this; }
 		this_type& assign(const literal_type& l) { base_type::assign(l); return *this; }
 		this_type& assign(size_type n, value_type c) { base_type::assign(n, c); return *this; }
 		this_type& assign(this_type&& x) { base_type::assign(std::move(x)); return *this; }
@@ -950,13 +1132,13 @@ namespace safememory
 
 		// Append operations
 		this_type& operator+=(const this_type& x) { base_type::operator+=(x); return *this; }
-		this_type& operator+=(const value_type* p) { base_type::operator+=(p); return *this; }
+		// this_type& operator+=(const value_type* p) { base_type::operator+=(p); return *this; }
 		this_type& operator+=(const literal_type& l) { base_type::operator+=(l); return *this; }
 		this_type& operator+=(value_type c) { base_type::operator+=(c); return *this; }
 
 		this_type& append(const this_type& x) { base_type::append(x); return *this; }
 		this_type& append(const this_type& x,  size_type position, size_type n = npos) { base_type::append(x, position, n); return *this; }
-		this_type& append(const value_type* p) { base_type::append(p); return *this; }
+		// this_type& append(const value_type* p) { base_type::append(p); return *this; }
 		this_type& append(const literal_type& l) { base_type::append(l); return *this; }
 		this_type& append(size_type n, value_type c) { base_type::append(n, c); return *this; }
 
@@ -974,7 +1156,7 @@ namespace safememory
 		// Insertion operations
 		this_type& insert(size_type position, const this_type& x) { base_type::insert(position, x); return *this; }
 		this_type& insert(size_type position, const this_type& x, size_type beg, size_type n) { base_type::insert(position, x, beg, n); return *this; }
-		this_type& insert(size_type position, const value_type* p) { base_type::insert(position, p); return *this; }
+		// this_type& insert(size_type position, const value_type* p) { base_type::insert(position, p); return *this; }
 		this_type& insert(size_type position, const literal_type& l) { base_type::insert(position, l); return *this; }
 		this_type& insert(size_type position, size_type n, value_type c) { base_type::insert(position, n, c); return *this; }
 
@@ -993,7 +1175,7 @@ namespace safememory
 		// Replacement operations
 		this_type&  replace(size_type position, size_type n,  const this_type& x) { base_type::replace(position, n, x); return *this; }
 		this_type&  replace(size_type pos1,     size_type n1, const this_type& x,  size_type pos2, size_type n2 = npos) { base_type::replace(pos1, n1, x, pos2, n2); return *this; }
-		this_type&  replace(size_type position, size_type n1, const value_type* p) { base_type::replace(position, n1, p); return *this; }
+		// this_type&  replace(size_type position, size_type n1, const value_type* p) { base_type::replace(position, n1, p); return *this; }
 		this_type&  replace(size_type position, size_type n1, const literal_type& l) { base_type::replace(position, n1, l); return *this; }
 		this_type&  replace(size_type position, size_type n1, size_type n2, value_type c) { base_type::replace(position, n1, n2, c); return *this; }
 

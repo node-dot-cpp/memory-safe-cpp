@@ -43,8 +43,8 @@ namespace
 	}
 
 
-	template <typename Container, typename T> 
-	void TestInsert1(EA::StdC::Stopwatch& stopwatch, Container& c, T* p)
+	template <typename Container> 
+	void TestInsert1(EA::StdC::Stopwatch& stopwatch, Container& c, Container& p)
 	{
 		const typename Container::size_type s = c.size();
 		stopwatch.Restart();
@@ -229,13 +229,13 @@ void BenchmarkStringTempl()
 		// Test insert(size_type position, const value_type* p)
 		///////////////////////////////
 
-		const char8_t pInsert1_8[] = { 'a', 0 };
+		decltype(stds8) pInsert1_8 = { 'a', 0 };
 		TestInsert1(stopwatch1, stds8, pInsert1_8);
 
 		if(i == 1)
 			Benchmark::AddResult("string<char8_t>/insert/pos,p", IX, stopwatch1);
 
-		const char16_t pInsert1_16[] = { 'a', 0 };
+		decltype(stds16) pInsert1_16 = { 'a', 0 };
 		TestInsert1(stopwatch1, stds16, pInsert1_16);
 
 		if(i == 1)

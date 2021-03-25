@@ -3767,22 +3767,22 @@ namespace eastl
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator==(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		typedef typename basic_string<T, Allocator>::size_type size_type;
-		const size_type n = (size_type)CharStrlen(p);
-		return ((n == b.size()) && (memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator==(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	typedef typename basic_string<T, Allocator>::size_type size_type;
+	// 	const size_type n = (size_type)CharStrlen(p);
+	// 	return ((n == b.size()) && (memcmp(p, b.data(), (size_t)n * sizeof(*p)) == 0));
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator==(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		typedef typename basic_string<T, Allocator>::size_type size_type;
-		const size_type n = (size_type)CharStrlen(p);
-		return ((a.size() == n) && (memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator==(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	typedef typename basic_string<T, Allocator>::size_type size_type;
+	// 	const size_type n = (size_type)CharStrlen(p);
+	// 	return ((a.size() == n) && (memcmp(a.data(), p, (size_t)n * sizeof(*p)) == 0));
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3792,18 +3792,18 @@ namespace eastl
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator!=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		return !(p == b);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator!=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	return !(p == b);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator!=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		return !(a == p);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator!=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	return !(a == p);
+	// }
 
 
 	// Operator< (and also >, <=, and >=).
@@ -3813,22 +3813,22 @@ namespace eastl
 		return basic_string<T, Allocator>::compare(a.begin(), a.end(), b.begin(), b.end()) < 0; }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		typedef typename basic_string<T, Allocator>::size_type size_type;
-		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) < 0;
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator<(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	typedef typename basic_string<T, Allocator>::size_type size_type;
+	// 	const size_type n = (size_type)CharStrlen(p);
+	// 	return basic_string<T, Allocator>::compare(p, p + n, b.begin(), b.end()) < 0;
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		typedef typename basic_string<T, Allocator>::size_type size_type;
-		const size_type n = (size_type)CharStrlen(p);
-		return basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) < 0;
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator<(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	typedef typename basic_string<T, Allocator>::size_type size_type;
+	// 	const size_type n = (size_type)CharStrlen(p);
+	// 	return basic_string<T, Allocator>::compare(a.begin(), a.end(), p, p + n) < 0;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3838,18 +3838,18 @@ namespace eastl
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		return b < p;
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator>(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	return b < p;
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		return p < a;
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator>(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	return p < a;
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3859,18 +3859,18 @@ namespace eastl
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		return !(b < p);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator<=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	return !(b < p);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator<=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		return !(p < a);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator<=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	return !(p < a);
+	// }
 
 
 	template <typename T, typename Allocator>
@@ -3880,18 +3880,18 @@ namespace eastl
 	}
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
-	{
-		return !(p < b);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator>=(const typename basic_string<T, Allocator>::value_type* p, const basic_string<T, Allocator>& b)
+	// {
+	// 	return !(p < b);
+	// }
 
 
-	template <typename T, typename Allocator>
-	inline bool operator>=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
-	{
-		return !(a < p);
-	}
+	// template <typename T, typename Allocator>
+	// inline bool operator>=(const basic_string<T, Allocator>& a, const typename basic_string<T, Allocator>::value_type* p)
+	// {
+	// 	return !(a < p);
+	// }
 
 
 	template <typename T, typename Allocator>
