@@ -154,7 +154,7 @@ namespace safememory
 			return str;
 		}
 
-	   ~basic_string() {}
+	   ~basic_string() = default;
 
 		// Implicit conversion operator
 		// operator basic_string_view<T>() const EA_NOEXCEPT;
@@ -754,15 +754,15 @@ namespace safememory
         return eastl::operator==(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator==(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator==(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator==(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator==(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator==(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator==(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator==(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
@@ -780,15 +780,15 @@ namespace safememory
         return eastl::operator!=(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator!=(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator!=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator!=(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator!=(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator!=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator!=(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator!=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
@@ -806,15 +806,15 @@ namespace safememory
         return eastl::operator<(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator<(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator<(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator<(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator<(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator<(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
@@ -832,15 +832,15 @@ namespace safememory
         return eastl::operator<=(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator<=(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator<=(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator<=(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator<=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator<=(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator<=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
@@ -858,15 +858,15 @@ namespace safememory
         return eastl::operator>(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator>(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator>(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator>(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator>(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator>(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {
@@ -884,15 +884,15 @@ namespace safememory
         return eastl::operator>=(a.to_base_unsafe(), b.to_base_unsafe());
 	}
 
-	template <typename T, memory_safety Safety>
-	inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
-        return eastl::operator>=(ptr, b.to_base_unsafe());
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>=(const typename basic_string<T, Safety>::value_type* ptr, const basic_string<T, Safety>& b) {
+    //     return eastl::operator>=(ptr, b.to_base_unsafe());
+	// }
 
-	template <typename T, memory_safety Safety>
-	inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
-        return eastl::operator>=(a.to_base_unsafe(), ptr);
-	}
+	// template <typename T, memory_safety Safety>
+	// inline bool operator>=(const basic_string<T, Safety>& a, const typename basic_string<T, Safety>::value_type* ptr) {
+    //     return eastl::operator>=(a.to_base_unsafe(), ptr);
+	// }
 
 	template <typename T, memory_safety Safety>
 	inline bool operator>=(const typename basic_string<T, Safety>::literal_type& lit, const basic_string<T, Safety>& b) {

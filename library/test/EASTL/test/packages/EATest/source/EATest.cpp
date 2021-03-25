@@ -1002,7 +1002,7 @@ bool TestCollection::RemoveTest(const char* pTestName, bool bDeleteIfOwned)
         TestInfo& testInfo = *it;
 
         testInfo.mpTest->GetName(sName);
-        if(sName == pTestName)
+        if(sName == eastl::string(pTestName))
             return RemoveTest(testInfo.mpTest, bDeleteIfOwned); // Not extremely efficient, but it doesn't need to be.
     }
 
