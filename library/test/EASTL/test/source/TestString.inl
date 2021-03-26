@@ -199,7 +199,7 @@ int TEST_STRING_NAME()
 
 	// EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 	{
-		auto pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
+		typename StringType::literal_type pLiteral = LITERAL("abcdefghijklmnopqrstuvwxyz");
 		StringType str(pLiteral);
 		VERIFY(str == pLiteral);
 	}

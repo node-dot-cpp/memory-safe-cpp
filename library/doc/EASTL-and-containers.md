@@ -64,6 +64,62 @@ Tried again, this time using __custom__ allocation function that makes the same 
 We modified `eastl` containers to use `soft_ptr_with_zero_offset` to hold the allocated pointer, and allocate them throught our __custom__ allocation functions. Then we can create `soft_ptr` from them and __safe__ iterators became a reality.
 
 
+Container paricularities
+------------------------
+
+### safememory::vector
+This is the most straight forward of all containers. Only particularity is that has __experimental__ support for `soft_this_ptr` on the elements it contains.
+Vector allocates memory when the first element is pushed, so iterators to default constructed vector have `nullptr` inside.
+
+### safememory::string
+Underlying `eastl::basic_string` implements SSO (short string optimization), this means that when the string is short enought characters are stored inside the instance body and not on the heap. This is done using an `union` an putting there all data including the `soft_ptr_with_zero_offset`.
+For _regular_ iterators this works the same, but when a __safe__ iterator is required, data has to be moved to the heap.
+Also a particularity of `eastl::basic_string` is that even default constructed instances have one null `'\0'` character in the buffer, so iterators to default constructed string don't have `nullptr` inside.
+
+### safememory::unordered_map
+Here `eastl::hashtable` has a couple of tricks we must address.
+First on the table itself, the last pointer is asigned with a non-null but non dereferenceable value:
+
+		void increment_bucket()
+		{
+			++mpBucket;
+			while(*mpBucket == NULL) // We store an extra bucket with some non-NULL value at the end 
+				++mpBucket;          // of the bucket array so that finding the end of the bucket
+			mpNode = *mpBucket;      // array is quick and simple.
+		}
+
+So `soft_ptr_with_zero_offset` has to live with that, but such value can't propagate into `soft_ptr`.
+
+Second, to avoid allocate on default construct, all instances of `eastl::hashtable` share a common static constant representation of an empty hash table. Only when the first element is inserted, allocation takes place. This is another _special_ value that `soft_ptr_with_zero_offset` has to live with, but can't propagate into `soft_ptr`. And __safe__ iterators to empty hash tables are actually default constructed ones.
+
+
+### safememory::array
+Array does not use allocation, all elements are stored in the body of the array.
+If array is created on the stack, all elements are on the stack. If we allocate an array on the heap, we are doing the allocation. Array internally never allocates, doesn't have an allocator, or does anything with memory. 
+
+For _regular_ iterators this is not an issue, but for __safe__ iterators it is, as we can only create them when the array is on the heap. And to reach the `ControlBlock` we can only rely on constructors and some mechanims like `soft_this_ptr` does.
+
+Now `easlt::array` uses aggreagate initialization:
+
+		public:
+
+		// Note that the member data is intentionally public.
+		// This allows for aggregate initialization of the
+		// object (e.g. array<int, 5> a = { 0, 3, 2, 4 }; )
+		value_type mValue[N ? N : 1];
+
+
+But such has very narrow C++ rules requiring no user constructor and no members with user constructors. So we must either drop `eastl::array` or drop __safe__ iterators.
+The result is a fully custom implementation of `safememory::array` not depending on any underlying implementation, and using a constructor with `std::initializer_list<T>`.
+This implementation can't be used in `constexpr` context. And may have other issues I can't foresee at this time.
+
+
+### safememory::basic_string_literal
+String literal class don't exist on `std` or `eastl` so is fully implemented on `safememory`.
+The important part is that while we can't create `soft_ptr` because literal has no `ControlBlock`, a _regular_ iterator would be __safe__ because literal will live in memory forever. Only need to use some different iterator for _checker_ to understand this diference.
+
+
+
 Dependency order
 ----------------
 Since `safememory` library depends (or uses) `eastl` containers, that stablishes a dependency order.
@@ -163,7 +219,7 @@ Some importan points:
 * They can be used inside `union` (`eastl::string` needs that).
 * They can have _special_ values that point to static or invalid memory (`eastl::hashtable` needs that).
 * Allocator can create a `soft_ptr` from them, but first _special_ values are checked.
-* All 
+
 
 ### `safememory/detail/flexible_array.h`
 All array allocations return an instance of `soft_ptr_with_zero_offset<flexible_array<T>>`, and the main function is to be a marker of the existance of an array in the memory layout.

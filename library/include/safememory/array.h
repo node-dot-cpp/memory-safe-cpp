@@ -55,10 +55,10 @@ namespace safememory
  * 
  * For \c safememory we can't use aggregate initialization, and I wasn't able to make a constructor
  * that can initialize the member array in the initializers (not the constructor body)
- * So current implementation uses std::initializer_list in the contructor body, the member array
+ * So current implementation uses \c std::initializer_list<T> in the contructor body, the member array
  * is of char type, to avoid default construct of the elements before constructor body, and
- * default constructor and desctructor is handled manually.
- * But this implementation can't be used in \c constexpr constext.
+ * default constructor and destructor is handled manually.
+ * But this implementation can't be used in \c constexpr context.
   */ 
 
 template <typename T, eastl_size_t N = 1, memory_safety Safety = safeness_declarator<T>::is_safe>
@@ -115,6 +115,7 @@ public:
 		eastl_size_t sz = eastl::min_alt(N, init.size());
 		
 		auto it = init.begin();
+		// uninitialized_move_ptr ?
 		auto r = eastl::uninitialized_copy_ptr(it, it + sz, begin_unsafe());
 		
 		// default construct any pending element (when initializer_list is shorter than N)
