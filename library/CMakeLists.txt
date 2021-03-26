@@ -113,8 +113,6 @@ if (SAFEMEMORY_TEST)
 
   add_executable(test_safememory
     test/test_safe_pointers.cpp
-    test/containers/EASTLTest.cpp
-    test/containers/TestVector.cpp
     )
 
   target_compile_definitions(test_safememory PRIVATE NODECPP_MEMORY_SAFETY_EXCLUSIONS="${CMAKE_CURRENT_SOURCE_DIR}/test/safety_exclusions.h")
