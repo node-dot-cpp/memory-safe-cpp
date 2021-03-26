@@ -14,6 +14,8 @@ add_subdirectory(3rdparty/EASTL)
 
 target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
 target_compile_definitions(EASTL PUBLIC EASTL_STD_ITERATOR_CATEGORY_ENABLED)
+target_compile_definitions(EASTL PUBLIC EASTL_EASTDC_VSNPRINTF=0)
+
 
 
 add_subdirectory(src/iibmalloc)
@@ -23,6 +25,7 @@ add_subdirectory(src/iibmalloc)
 #-------------------------------------------------------------------------------------------
 add_library(safememory STATIC
   src/safe_ptr.cpp
+  src/string.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
   )
@@ -46,6 +49,7 @@ target_link_libraries(safememory EASTL EABase)
 
 add_library(safememory_impl STATIC
   src/safe_ptr.cpp
+  src/string.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
   )
@@ -64,6 +68,7 @@ target_link_libraries(safememory_impl EASTL EABase)
 
 add_library(safememory_no_checks STATIC
   src/safe_ptr.cpp
+  src/string.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
   )

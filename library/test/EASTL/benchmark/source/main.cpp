@@ -42,26 +42,6 @@ EA_DISABLE_VC_WARNING(4946)
 ///////////////////////////////////////////////////////////////////////////////
 // Required by EASTL.
 //
-#if !defined(EASTL_EASTDC_VSNPRINTF) || !EASTL_EASTDC_VSNPRINTF
-	int Vsnprintf8(char8_t* pDestination, size_t n, const char8_t*  pFormat, va_list arguments)
-	{
-		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-	}
-
-	int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments)
-	{
-		return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-	}
-
-	#if (EASTDC_VERSION_N >= 10600)
-		int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments)
-		{
-			return EA::StdC::Vsnprintf(pDestination, n, pFormat, arguments);
-		}
-	#endif
-#endif
-
-
 ///////////////////////////////////////////////////////////////////////////////
 // main
 //
