@@ -112,7 +112,8 @@ bool isRawPointerType(QualType Qt);
 bool isNullPtrValue(ASTContext *Context, const Expr *Ex);
 
 bool isStringLiteralType(QualType Qt);
-bool isCharPointerType(QualType Qt);
+bool isBasicStringType(QualType Qt);
+bool isCharPointerOrArrayType(QualType Qt);
 
 QualType getPointeeType(QualType Qt);
 QualType getTemplateArgType(QualType Qt, size_t i);

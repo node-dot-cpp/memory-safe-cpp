@@ -413,12 +413,23 @@ bool isStringLiteralType(QualType Qt) {
   return Name == "nodecpp::string_literal" || Name == "safememory::basic_string_literal";
 }
 
+bool isBasicStringType(QualType Qt) {
 
-bool isCharPointerType(QualType Qt) {
   assert(Qt.isCanonical());
 
-  if(Qt->isPointerType()) {
-    auto Qt2 = Qt->getPointeeType();
+  auto R = Qt->getAsCXXRecordDecl();
+  if(!R)
+    return false;
+
+  auto Name = getQnameForSystemSafeDb(R);
+  return Name == "safememory::basic_string" || Name == "safememory::basic_string_safe";
+}
+
+bool isCharPointerOrArrayType(QualType Qt) {
+  assert(Qt.isCanonical());
+
+  if(Qt->isPointerType() || Qt->isArrayType()) {
+    auto Qt2 = Qt->getPointeeOrArrayElementType();
     if(Qt2->isAnyCharacterType())
       return true;
   }

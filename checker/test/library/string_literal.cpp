@@ -1,17 +1,13 @@
 // RUN: safememory-checker %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <safememory/string_literal.h>
+#include <safememory/string.h>
 
 using namespace safememory;
 
 void f(string_literal sl);
 
 void func() {
-
-	// currently string_literal is not constructible from 'const char*'
-	// and 'const char[]' is not a safe type.
-	// So implicit convertion is not allowed by other rules.
-	// Only explicit convertion matches rule 10.1
 
 	const char* cp = "Hello world!";
 
@@ -24,16 +20,23 @@ void func() {
 // CHECK: :[[@LINE-1]]:17: error: no viable conversion
 
 	string_literal c = string_literal(cp);
+// CHECK: :[[@LINE-1]]:21: error: no matching conversion
+
+	string_literal d = string_literal(arr);
 // CHECK: :[[@LINE-1]]:21: error: (S10.1)
-
-	a = "Bye";
-
-	a = cp;
-// CHECK: :[[@LINE-1]]:4: error: no viable overloaded '='
 
 	f("Implicit");
 
 	f(cp);
 // CHECK: :[[@LINE-1]]:2: error: no matching function for call
+
+
+	string str0 = string("real literal");
+
+	string str1 = string(cp);
+// CHECK: :[[@LINE-1]]:16: error: (S10.1)
+
+	string str2 = string(arr);
+// CHECK: :[[@LINE-1]]:16: error: (S10.1)
 }
 

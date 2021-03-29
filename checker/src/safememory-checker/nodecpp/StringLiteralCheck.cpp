@@ -21,10 +21,12 @@ namespace nodecpp {
 namespace checker {
 
 void StringLiteralCheck::registerMatchers(MatchFinder *Finder) {
-  // FIXME: Add matchers.
-  Finder->addMatcher(
-      cxxOperatorCallExpr(hasOverloadedOperatorName("=")
-      ).bind("op="), this);
+
+  // currently string_literal doesn't have an operator assignment
+
+  // Finder->addMatcher(
+  //     cxxOperatorCallExpr(hasOverloadedOperatorName("=")
+  //     ).bind("op="), this);
 
   Finder->addMatcher(
       cxxConstructExpr().bind("ctor"), this);
@@ -32,27 +34,30 @@ void StringLiteralCheck::registerMatchers(MatchFinder *Finder) {
 
 void StringLiteralCheck::check(const MatchFinder::MatchResult &Result) {
 
-  if (auto OpAsgn = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op=")) {
-    if (OpAsgn->getNumArgs() >= 2) {
-      QualType Arg0 = OpAsgn->getArg(0)->getType().getCanonicalType();
-      QualType Arg1 = OpAsgn->getArg(1)->getType().getCanonicalType();
-      if(isStringLiteralType(Arg0) && isCharPointerType(Arg1)) {
-        const Expr *E = OpAsgn->getArg(1)->IgnoreParenImpCasts();
-        if(!isa<clang::StringLiteral>(E)) {
-          diag(OpAsgn->getExprLoc(), "(S10.1) string_literal assignment not allowed");
+  // if (auto OpAsgn = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("op=")) {
+  //   if (OpAsgn->getNumArgs() >= 2) {
+  //     QualType Arg0 = OpAsgn->getArg(0)->getType().getCanonicalType();
+  //     QualType Arg1 = OpAsgn->getArg(1)->getType().getCanonicalType();
+  //     if(isStringLiteralType(Arg0) && isCharPointerType(Arg1)) {
+  //       const Expr *E = OpAsgn->getArg(1)->IgnoreParenImpCasts();
+  //       if(!isa<clang::StringLiteral>(E)) {
+  //         diag(OpAsgn->getExprLoc(), "(S10.1) string_literal assignment not allowed");
 
-        }
-      }
-    }
-  } else if (auto Ctor = Result.Nodes.getNodeAs<CXXConstructExpr>("ctor")) {
+  //       }
+  //     }
+  //   }
+  // } else
+  if (auto Ctor = Result.Nodes.getNodeAs<CXXConstructExpr>("ctor")) {
     if (Ctor->getNumArgs() >= 1) {
       QualType Arg0 = Ctor->getType().getCanonicalType();
       QualType Arg1 = Ctor->getArg(0)->getType().getCanonicalType();
 
-      if(isStringLiteralType(Arg0) && isCharPointerType(Arg1)) {
-        const Expr *E = Ctor->getArg(0)->IgnoreParenImpCasts();
-        if(!isa<clang::StringLiteral>(E)) {
-          diag(Ctor->getExprLoc(), "(S10.1) string_literal constructor not allowed");
+      if(isStringLiteralType(Arg0) || isBasicStringType(Arg0)) {
+        if(isCharPointerOrArrayType(Arg1)) {
+          const Expr *E = Ctor->getArg(0)->IgnoreParenImpCasts();
+          if(!isa<clang::StringLiteral>(E)) {
+            diag(Ctor->getExprLoc(), "(S10.1) string literal constructor not allowed");
+          }
         }
       }
     }
