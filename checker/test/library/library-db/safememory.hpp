@@ -69,40 +69,6 @@ namespace safememory {
 			explicit operator bool() const noexcept;
 		};
 
-		class owning_ptr_base_no_checks {
-		public:
-			typedef owning_ptr_base_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
-		class owning_ptr_no_checks {
-		public:
-			typedef owning_ptr_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
 		class soft_ptr_base_impl {
 		public:
 			typedef soft_ptr_base_impl this_type;
@@ -136,41 +102,6 @@ namespace safememory {
 			
 			explicit operator bool() const noexcept;
 		};
-
-		class soft_ptr_base_no_checks {
-		public:
-			typedef soft_ptr_base_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
-		class soft_ptr_no_checks {
-		public:
-			typedef soft_ptr_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
 
 		class nullable_ptr_base_impl {
 		public:
@@ -206,40 +137,6 @@ namespace safememory {
 			explicit operator bool() const noexcept;
 		};
 
-		class nullable_ptr_base_no_checks {
-		public:
-			typedef nullable_ptr_base_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			// void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
-		class nullable_ptr_no_checks {
-		public:
-			typedef nullable_ptr_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			void reset();
-			void swap( this_type& other );
-			// void get() const;
-			int& operator * () const;
-			int* operator -> () const;
-			bool operator == (const this_type& other ) const;
-			bool operator != (const this_type& other ) const;
-			
-			explicit operator bool() const noexcept;
-		};
-
 		class soft_this_ptr_impl {
 		public:
 			typedef soft_this_ptr_impl this_type;
@@ -259,24 +156,6 @@ namespace safememory {
 			void getSoftPtr() const;
 		};
 
-		class soft_this_ptr_no_checks {
-		public:
-			typedef soft_this_ptr_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			explicit operator bool() const noexcept;
-		};
-
-		class soft_this_ptr2_no_checks {
-		public:
-			typedef soft_this_ptr2_no_checks this_type;
-
-			this_type& operator=(const this_type& x);
-
-			explicit operator bool() const noexcept;
-			void getSoftPtr() const;
-		};
 	} //namespace detail
 
 	struct hash

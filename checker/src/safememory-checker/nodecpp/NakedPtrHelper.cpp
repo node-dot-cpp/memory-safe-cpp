@@ -27,9 +27,7 @@ bool isOwningPtrName(const std::string &Name) {
   // mb: 'base' ones are needed for methods at isSystemSafeFunction
   return Name == "safememory::owning_ptr" ||
           Name == "safememory::detail::owning_ptr_impl" ||
-          Name == "safememory::detail::owning_ptr_no_checks" ||
-          Name == "safememory::detail::owning_ptr_base_impl" ||
-          Name == "safememory::detail::owning_ptr_base_no_checks";
+          Name == "safememory::detail::owning_ptr_base_impl";
 }
 
 bool isSafePtrName(const std::string &Name) {
@@ -37,17 +35,12 @@ bool isSafePtrName(const std::string &Name) {
   return isOwningPtrName(Name) ||
     Name == "safememory::soft_ptr" ||
     Name == "safememory::detail::soft_ptr_impl" ||
-    Name == "safememory::detail::soft_ptr_no_checks" ||
     Name == "safememory::detail::soft_ptr_base_impl" ||
-    Name == "safememory::detail::soft_ptr_base_no_checks" ||
     Name == "safememory::soft_this_ptr" ||
     Name == "safememory::detail::soft_this_ptr_impl" ||
-    Name == "safememory::detail::soft_this_ptr_no_checks" ||
     Name == "safememory::detail::soft_this_ptr_base_impl" ||
-    Name == "safememory::detail::soft_this_ptr_base_no_checks" ||
     Name == "safememory::soft_this_ptr2" ||
-    Name == "safememory::detail::soft_this_ptr2_impl" ||
-    Name == "safememory::detail::soft_this_ptr2_no_checks";
+    Name == "safememory::detail::soft_this_ptr2_impl";
 }
 
 bool isAwaitableName(const std::string &Name) {
@@ -60,9 +53,7 @@ bool isNullablePtrName(const std::string &Name) {
   // TODO remove naked_ptr
   return Name == "safememory::nullable_ptr" ||
          Name == "safememory::detail::nullable_ptr_impl" ||
-         Name == "safememory::detail::nullable_ptr_no_checks" ||
-         Name == "safememory::detail::nullable_ptr_base_impl" ||
-         Name == "safememory::detail::nullable_ptr_base_no_checks";
+         Name == "safememory::detail::nullable_ptr_base_impl";
 }
 
 bool isSoftPtrCastName(const std::string& Name) {
