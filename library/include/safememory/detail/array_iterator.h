@@ -95,6 +95,9 @@ protected:
 	template<typename, bool, typename>
 	friend class array_heap_safe_iterator;
 
+	template<typename TT>
+	static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
+
 	// default to 'safe', only on soft_ptr_no_checks we can relax to 'none'
 	template <typename>
 	struct array_heap_safe_iterator_safety_helper {
@@ -178,13 +181,13 @@ public:
 	array_heap_safe_iterator& operator=(array_heap_safe_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
-	template<typename X = std::enable_if_t<is_const>>
-	array_heap_safe_iterator(const this_type_non_const& ri)
+	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+	array_heap_safe_iterator(const Other& ri)
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 
 	/// allow non-const to const assignment
-	template<typename X = std::enable_if_t<is_const>>
-	array_heap_safe_iterator& operator=(const this_type_non_const& ri) {
+	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+	array_heap_safe_iterator& operator=(const Other& ri) {
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
@@ -382,6 +385,10 @@ protected:
 	template<typename, bool, typename>
 	friend class array_stack_only_iterator;
 
+	template<typename TT>
+	static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
+
+
 public:
 	typedef typename base_type::iterator_category  iterator_category;
 	typedef typename base_type::value_type         value_type;
@@ -422,14 +429,14 @@ public:
 	array_stack_only_iterator& operator=(array_stack_only_iterator&& ri) = default;
 
 	/// allow non-const to const constructor
-	template<typename X = std::enable_if_t<is_const>>
-	array_stack_only_iterator(const this_type_non_const& ri)
-		: base_type(ri) {}
+	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+	array_stack_only_iterator(const Other& ri)
+		: base_type(static_cast<const typename base_type::this_type_non_const&>(ri)) {}
 
 	/// allow non-const to const assignment
-	template<typename X = std::enable_if_t<is_const>>
-	array_stack_only_iterator& operator=(const this_type_non_const& ri) {
-		base_type::operator=(ri);
+	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+	array_stack_only_iterator& operator=(const Other& ri) {
+		base_type::operator=(static_cast<const typename base_type::this_type_non_const&>(ri));
 		return *this;
 	}
 

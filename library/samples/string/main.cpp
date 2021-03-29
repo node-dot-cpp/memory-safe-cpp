@@ -8,12 +8,19 @@
 
 namespace sm = safememory;
 
+void someFunc(const sm::string& str) {}
+
 int main() {
 
-    sm::string_literal lit = "hola mundo";
-    sm::string s = sm::string_literal("hola mundo");
-    sm::string s2("hola mundo");
-//    safememory::string s3 = "hola mundo"; //error
+    sm::string_literal lit = "hello!";
+    sm::string s = sm::string_literal("hello!");
+    sm::string s2("hello!");
+    safememory::string s3 = sm::string{"hello!"}; //error
+
+    s3 = "w3";
+
+    if(s3 == "world")
+        someFunc(sm::string{"hello!"});
 
     s.append("! - ");
 

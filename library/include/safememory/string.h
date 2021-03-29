@@ -121,9 +121,9 @@ namespace safememory
 		basic_string() : base_type(allocator_type()) {}
 		// explicit basic_string(const allocator_type& allocator) EA_NOEXCEPT;
 		basic_string(const this_type& x, size_type position, size_type n = npos) : base_type(x, x.checkPos(position), n) {}
-		// basic_string(const value_type* p, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// EASTL_STRING_EXPLICIT basic_string(const value_type* p, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
-		// basic_string(const value_type* p) : base_type(p, allocator_type()) {}
+		explicit basic_string(const value_type* p) : base_type(p, allocator_type()) {}
+		// basic_string(const value_type* p, size_type n) : base_type(p, n, allocator_type()) {}
 		basic_string(const literal_type& l) : base_type(l.c_str(), l.size(), allocator_type()) {}
 		basic_string(size_type n, value_type c) : base_type(n, c, allocator_type()) {}
 		basic_string(const this_type& x) = default;
@@ -914,13 +914,13 @@ namespace safememory
 	typedef basic_string<char>    string;
 	typedef basic_string<wchar_t> wstring;
 
-	/// custom string8 / string16 / string32
-	typedef basic_string<char>     string8;
-	typedef basic_string<char16_t> string16;
-	typedef basic_string<char32_t> string32;
+	// /// custom string8 / string16 / string32
+	// typedef basic_string<char>     string8;
+	// typedef basic_string<char16_t> string16;
+	// typedef basic_string<char32_t> string32;
 
 	/// ISO mandated string types
-	// typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
+	typedef basic_string<char8_t>  u8string;    // Actually not a C++11 type, but added for consistency.
 	typedef basic_string<char16_t> u16string;
 	typedef basic_string<char32_t> u32string;
 
@@ -1003,7 +1003,23 @@ namespace safememory
 
 
 	/// user defined literals
-	/// TODO
+// #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
+// 	inline namespace literals
+// 	{
+// 		inline namespace string_literals
+// 		{
+// 			inline string operator"" _str(const char* str, size_t len) EA_NOEXCEPT { return {str, string::size_type(len)}; }
+// 			inline u16string operator"" _str(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
+// 			inline u32string operator"" _str(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
+// 			inline wstring operator"" _str(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
+
+// 			// C++20 char8_t support.
+// 			#if EA_CHAR8_UNIQUE
+// 				inline u8string operator"" _str(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, u8string::size_type(len)}; }
+// 			#endif
+// 		}
+// 	}
+// #endif
 
 
 	/// erase / erase_if

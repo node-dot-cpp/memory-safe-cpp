@@ -32,7 +32,7 @@
 #include <safememory/detail/checker_attributes.h>
 #include <safememory/detail/array_iterator.h>
 #include <EASTL/iterator.h>
-#include <EASTL/internal/char_traits.h>
+#include <EASTL/string_view.h>
 
 namespace safememory
 {
@@ -56,16 +56,16 @@ namespace safememory
 		size_type sz = 0;
 
 		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
-		static size_type GetSize(const value_type* ptr) {
-			auto sz = eastl::CharStrlen(ptr);
-			// TODO add size check in case size_type is different of size_t
-			return static_cast<size_type>(sz); }
+		// static size_type GetSize(const value_type* ptr) {
+		// 	auto sz = eastl::CharStrlen(ptr);
+		// 	// TODO add size check in case size_type is different of size_t
+		// 	return static_cast<size_type>(sz); }
 
 	public:
 		
 		template<size_t N>
 		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) { static_assert(N >= 1); }
-//		basic_string_literal(const value_type* ptr) : str(ptr), sz(GetSize(ptr)) {}
+		// basic_string_literal(const value_type* ptr, size_type n) : str(ptr), sz(n) {}
 
 		basic_string_literal(const basic_string_literal& other) = default;
 		basic_string_literal& operator=(const basic_string_literal& other) = default;
@@ -132,9 +132,30 @@ namespace safememory
 	typedef basic_string_literal<wchar_t> wstring_literal;
 
 	/// string8 / string16 / string32
-	// typedef basic_string<char8_t>  string8;
-	typedef basic_string_literal<char16_t> string16_literal;
-	typedef basic_string_literal<char32_t> string32_literal;
+	typedef basic_string_literal<char8_t>  u8string_literal;
+	typedef basic_string_literal<char16_t> u16string_literal;
+	typedef basic_string_literal<char32_t> u32string_literal;
+
+
+	/// user defined literals
+// #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
+// 	inline namespace literals
+// 	{
+// 		inline namespace string_literals
+// 		{
+// 			inline string_literal operator"" _lit(const char* str, size_t len) EA_NOEXCEPT { return {str, string_literal::size_type(len)}; }
+// 			inline u16string_literal operator"" _lit(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string_literal::size_type(len)}; }
+// 			inline u32string_literal operator"" _lit(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string_literal::size_type(len)}; }
+// 			inline wstring_literal operator"" _lit(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring_literal::size_type(len)}; }
+
+// 			// C++20 char8_t support.
+// 			#if EA_CHAR8_UNIQUE
+// 				inline u8string_literal operator"" _lit(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, u8string_literal::size_type(len)}; }
+// 			#endif
+// 		}
+// 	}
+// #endif
+
 
 	template<class T, memory_safety S>
 	bool operator==( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {

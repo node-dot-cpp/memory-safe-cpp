@@ -55,6 +55,9 @@ namespace safememory::detail {
 		template <typename, typename, typename>
 		friend class hashtable_heap_safe_iterator;
 
+		template<typename TT>
+		static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
+
 		// template <typename, typename, typename, typename, memory_safety>
 		// friend class unordered_map;
 
@@ -115,12 +118,12 @@ namespace safememory::detail {
 		hashtable_heap_safe_iterator(hashtable_heap_safe_iterator&&) = default; 
 		hashtable_heap_safe_iterator& operator=(hashtable_heap_safe_iterator&&) = default;
 
-		template<typename X = std::enable_if_t<is_const>>
-		hashtable_heap_safe_iterator(const this_type_non_const& other)
+		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+		hashtable_heap_safe_iterator(const Other& other)
 			: mpNodeBase(other.mpNodeBase), mpNode(other.mpNode), mpBucket(other.mpBucket) {}
 
-		template<typename X = std::enable_if_t<is_const>>
-		hashtable_heap_safe_iterator& operator=(const this_type_non_const& other) {
+		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+		hashtable_heap_safe_iterator& operator=(const Other& other) {
 			this->mpNodeBase = other.mpNodeBase;
 			this->mpNode = other.mpNode;
 			this->mpBucket = other.mpBucket;
@@ -157,6 +160,7 @@ namespace safememory::detail {
 		typedef Allocator                                                allocator_type;
 		typedef hashtable_stack_only_iterator<BaseIt, BaseNonConstIt, Allocator>    this_type;
 		typedef hashtable_stack_only_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>     this_type_non_const;
+
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
 		typedef typename base_type::pointer                              pointer;
@@ -166,8 +170,14 @@ namespace safememory::detail {
 
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 
+	    static constexpr bool is_const = !std::is_same_v<this_type, this_type_non_const>;
+
 		template <typename, typename, typename>
 		friend class hashtable_stack_only_iterator;
+
+		template<typename TT>
+		static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
+
 		// typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
 
 		[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
@@ -181,12 +191,12 @@ namespace safememory::detail {
 		hashtable_stack_only_iterator(hashtable_stack_only_iterator&& ri) = default; 
 		hashtable_stack_only_iterator& operator=(hashtable_stack_only_iterator&& ri) = default;
 
-		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
-		hashtable_stack_only_iterator(const hashtable_stack_only_iterator<B2, B2, Allocator>& other)
+		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+		hashtable_stack_only_iterator(const Other& other)
 			: base_type(other) { }
 
-		template<typename B2, typename X = std::enable_if_t<std::is_same_v<B2, BaseNonConstIt> && !std::is_same_v<B2, BaseIt>>>
-		hashtable_stack_only_iterator& operator=(const hashtable_stack_only_iterator<B2, B2, Allocator>& other) {
+		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
+		hashtable_stack_only_iterator& operator=(const Other& other) {
 			base_type::operator=(other.toBase());
 			return *this;
 		}
