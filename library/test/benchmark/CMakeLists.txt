@@ -30,16 +30,8 @@ add_definitions(-D_CHAR16T)
 #-------------------------------------------------------------------------------------------
 # Source files
 #-------------------------------------------------------------------------------------------
-set(EASTLBenchmark_Sources
-    BenchmarkHash.cpp
-    BenchmarkString.cpp
-    BenchmarkVector.cpp
-    EASTLBenchMark.cpp
-    EASTLTest.cpp
-    EAStopwatch.cpp
-    main.cpp
-)
-
+file(GLOB EASTLBENCHMARK_SOURCES "*.cpp" "*.inl" "*.h")
+set(SOURCES ${EASTLBENCHMARK_SOURCES})
 
 #-------------------------------------------------------------------------------------------
 # Defines
@@ -61,7 +53,7 @@ add_definitions(-D_SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS)  # silence std::has
 #-------------------------------------------------------------------------------------------
 # Executable definition
 #-------------------------------------------------------------------------------------------
-add_executable(SafeMemoryBenchmarks ${EASTLBenchmark_Sources})
+add_executable(SafeMemoryBenchmarks ${EASTLBENCHMARK_SOURCES})
 
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
@@ -80,6 +72,5 @@ target_link_libraries(SafeMemoryBenchmarks ${EASTLBenchmark_Libraries} Threads::
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
 #-------------------------------------------------------------------------------------------
-add_test(SafeMemoryBenchmarkRuns SafeMemoryBenchmarks)
-set_tests_properties (SafeMemoryBenchmarkRuns PROPERTIES PASS_REGULAR_EXPRESSION "RETURNCODE=0")
+add_test(SafeMemoryBenchmarksRun SafeMemoryBenchmarks)
 

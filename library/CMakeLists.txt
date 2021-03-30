@@ -130,5 +130,6 @@ if (SAFEMEMORY_TEST)
   add_subdirectory(samples)
 
   add_subdirectory(test/benchmark)
+  add_subdirectory(test/container)
 #  add_subdirectory(test/EASTL)
 endif()
