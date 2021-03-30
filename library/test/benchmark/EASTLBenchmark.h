@@ -28,7 +28,7 @@
 #include <set>
 #include <map>
 #include <string>
-#include <EAStdC/EAStopwatch.h>
+#include "EAStopwatch.h"
 #include <stdlib.h>
 #include <string.h>
 

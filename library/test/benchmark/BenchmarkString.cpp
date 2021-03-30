@@ -5,7 +5,7 @@
 
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
-#include <EAStdC/EAStopwatch.h>
+#include "EAStopwatch.h"
 #include <algorithm>
 #include <string>
 #include <safememory/string.h>

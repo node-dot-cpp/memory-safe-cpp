@@ -8,14 +8,14 @@
 // #if !EASTL_OPENSOURCE
 //     #include <PPMalloc/EAGeneralAllocatorDebug.h>
 // #endif
-#include <EAStdC/EASprintf.h>
-#include <EAStdC/EAStopwatch.h>
-#include <EAStdC/EAString.h>
+//#include <EAStdC/EASprintf.h>
+#include "EAStopwatch.h"
+//#include <EAStdC/EAString.h>
 #include <EASTL/internal/config.h>
 #include <string.h>
 #include <stdio.h>
 EA_DISABLE_VC_WARNING(4946)
-#include "EAMain/EAEntryPointMain.inl"
+//#include "EAMain/EAEntryPointMain.inl"
 //#include "EASTLTestAllocator.h"
 
 
@@ -45,15 +45,15 @@ EA_DISABLE_VC_WARNING(4946)
 ///////////////////////////////////////////////////////////////////////////////
 // main
 //
-int EAMain(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	bool bWaitAtEnd   = false;
 	bool bPrintHelp   = false;
 	int  nOptionCount = 0;
 	int  nErrorCount  = 0;
 
-	EA::EAMain::PlatformStartup();
-	EA::EAMain::SetVerbosity(2);    // Default value.
+	// EA::EAMain::PlatformStartup();
+	// EA::EAMain::SetVerbosity(2);    // Default value.
 
 	// Set up debug parameters.
 	#ifdef EA_DEBUG
@@ -71,8 +71,8 @@ int EAMain(int argc, char* argv[])
 		}
 		else if(strstr(argv[i], "-v") == argv[i])
 		{
-			uint32_t verbosity = EA::StdC::AtoU32(argv[i] + 3);
-			EA::EAMain::SetVerbosity(verbosity);
+			// uint32_t verbosity = EA::StdC::AtoU32(argv[i] + 3);
+			// EA::EAMain::SetVerbosity(verbosity);
 			nOptionCount++;
 		}
 		else if(strstr(argv[i], "-l:") == argv[i])
@@ -86,8 +86,8 @@ int EAMain(int argc, char* argv[])
 		}
 		else if(strstr(argv[i], "-s:") == argv[i])
 		{
-			uint32_t seed = (size_t)atoi(argv[i] + 3);
-			EA::UnitTest::SetRandSeed(seed);
+			// uint32_t seed = (size_t)atoi(argv[i] + 3);
+			// EA::UnitTest::SetRandSeed(seed);
 			nOptionCount++;
 		}
 		else if((strstr(argv[i], "-?") == argv[i]) || (strstr(argv[i], "-h") == argv[i]))
@@ -119,9 +119,9 @@ int EAMain(int argc, char* argv[])
 
 
 	// Run tests
-	#ifndef EA_DEBUG
-		EA::UnitTest::SetHighThreadPriority();
-	#endif
+	// #ifndef EA_DEBUG
+	// 	EA::UnitTest::SetHighThreadPriority();
+	// #endif
 
 	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsNanoseconds, true);
 
@@ -140,9 +140,9 @@ int EAMain(int argc, char* argv[])
 
 	stopwatch.Stop();
 
-	#ifndef EA_DEBUG
-		EA::UnitTest::SetNormalThreadPriority();
-	#endif
+	// #ifndef EA_DEBUG
+	// 	EA::UnitTest::SetNormalThreadPriority();
+	// #endif
 
 	Benchmark::PrintResults();
 
@@ -158,7 +158,7 @@ int EAMain(int argc, char* argv[])
 		getchar(); // Wait for the user and shutdown
 	}
 
-	EA::EAMain::PlatformShutdown(nErrorCount);
+	// EA::EAMain::PlatformShutdown(nErrorCount);
 
 	return 0;
 }

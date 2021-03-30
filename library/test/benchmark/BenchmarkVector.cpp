@@ -5,7 +5,7 @@
 
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
-#include <EAStdC/EAStopwatch.h>
+#include "EAStopwatch.h"
 #include <algorithm>
 #include <safememory/vector.h>
 #include <EASTL/vector.h>
@@ -300,7 +300,7 @@ namespace
 template<int IX, template<typename> typename Vec> 
 void BenchmarkVectorTempl()
 {
-	EA::UnitTest::RandGenT<uint32_t> rng(EA::UnitTest::GetRandSeed());
+	RandGenT<uint32_t> rng(GetRandSeed());
 	Stopwatch              stopwatch1(Stopwatch::kUnitsCPUCycles);
 
 	std::vector<uint32_t> intVector(100000);

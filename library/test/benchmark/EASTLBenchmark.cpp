@@ -6,8 +6,9 @@
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
 #include <string>
-#include <EAMain/EAMain.h>
+//#include <EAMain/EAMain.h>
 #include <EASTL/internal/config.h>
+#include <fmt/printf.h>
 
 #ifdef _MSC_VER
 	#pragma warning(push, 0)
@@ -188,12 +189,12 @@ namespace Benchmark
 		int64_t Time1NS = ConvertStopwatchUnits((EA::StdC::Stopwatch::Units)result.mUnits, result.mTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
 		std::string sClockTime1 = WriteTime(Time1NS);  // This converts an integer in nanoseconds (e.g. 23400000) to a string (e.g. "23.4 ms")
 
-		// EA::UnitTest::Report("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
-		EA::UnitTest::Report("%-50s | %10" PRIu64 " %s | %6.2f%5s | %6.2f%5s | %6.2f%5s |", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), fRatioPrinted2, pDifference2, fRatioPrinted3, pDifference3, fRatioPrinted4, pDifference4);
+		// fmt::printf("%-43s | %13" PRIu64 " %s | %13" PRIu64 " %s | %10.2f%10s", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), result.mTime2, sClockTime2.c_str(), fRatioPrinted, pDifference);
+		fmt::printf("%-50s | %10" PRIu64 " %s | %6.2f%5s | %6.2f%5s | %6.2f%5s |", result.msName.c_str(), result.mTime1, sClockTime1.c_str(), fRatioPrinted2, pDifference2, fRatioPrinted3, pDifference3, fRatioPrinted4, pDifference4);
 
 		if(result.msNotes.length()) // If there are any notes...
-			EA::UnitTest::Report("   %s", result.msNotes.c_str());
-		EA::UnitTest::Report("\n");
+			fmt::printf("   %s", result.msNotes.c_str());
+		fmt::printf("\n");
 	}
 
 
@@ -256,27 +257,27 @@ namespace Benchmark
 		#endif
 
 		// Print the results
-		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("****************************************************************************************\n");
-		EA::UnitTest::Report("EASTL Benchmark test results\n");
-		EA::UnitTest::Report("****************************************************************************************\n");
-		EA::UnitTest::Report("\n");
-		// EA::UnitTest::Report("EASTL version: %s\n", EASTL_VERSION);
-		EA::UnitTest::Report("Platform: %s\n", gEnvironment.msPlatform.c_str());
-		EA::UnitTest::Report("Compiler: %s\n", EA_COMPILER_STRING);
-//		EA::UnitTest::Report("Allocator: Node.cpp - IibMalloc.\n");
+		fmt::printf("\n");
+		fmt::printf("****************************************************************************************\n");
+		fmt::printf("EASTL Benchmark test results\n");
+		fmt::printf("****************************************************************************************\n");
+		fmt::printf("\n");
+		// fmt::printf("EASTL version: %s\n", EASTL_VERSION);
+		fmt::printf("Platform: %s\n", gEnvironment.msPlatform.c_str());
+		fmt::printf("Compiler: %s\n", EA_COMPILER_STRING);
+//		fmt::printf("Allocator: Node.cpp - IibMalloc.\n");
 		#if defined(EA_DEBUG) || defined(_DEBUG)
-		EA::UnitTest::Report("Build: Debug.\n");
+		fmt::printf("Build: Debug.\n");
 		#else
-		EA::UnitTest::Report("Build: Full optimization.\n");
+		fmt::printf("Build: Full optimization.\n");
 		#endif
-		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("First column values are ticks and time to complete tests.\n");
-		EA::UnitTest::Report("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
-		EA::UnitTest::Report("\n");
+		fmt::printf("\n");
+		fmt::printf("First column values are ticks and time to complete tests.\n");
+		fmt::printf("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
+		fmt::printf("\n");
 
-		EA::UnitTest::Report("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "(no_checks)", "stack_only_it", "heap_safe_it");
-		EA::UnitTest::Report("---------------------------------------------------------------------------------------------------------------------\n");
+		fmt::printf("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "(no_checks)", "stack_only", "heap_safe");
+		fmt::printf("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;
 		std::string sTestTypeTemp;
@@ -293,7 +294,7 @@ namespace Benchmark
 			if(sTestTypeTemp != sTestTypeLast) // If it looks like we are changing to a new test type... add an empty line to help readability.
 			{
 				if(it != gResultSet.begin())
-					EA::UnitTest::Report("\n");
+					fmt::printf("\n");
 				sTestTypeLast = sTestTypeTemp;
 			}
 
@@ -318,12 +319,12 @@ namespace Benchmark
 		// We do this convert as a final step instead of the loop in order to avoid loss of precision.
 		// resultSum.mTime1NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime1, EA::StdC::Stopwatch::kUnitsNanoseconds);
 		// resultSum.mTime2NS = ConvertStopwatchUnits(EA::StdC::Stopwatch::kUnitsCPUCycles, resultSum.mTime2, EA::StdC::Stopwatch::kUnitsNanoseconds);
-		EA::UnitTest::Report("\n");
+		fmt::printf("\n");
 		PrintResultLine(resultSum);
 
-		EA::UnitTest::Report("\n");
-		EA::UnitTest::Report("****************************************************************************************\n");
-		EA::UnitTest::Report("\n");
+		fmt::printf("\n");
+		fmt::printf("****************************************************************************************\n");
+		fmt::printf("\n");
 
 		// Clear the results
 		gResultSet.clear();

@@ -5,7 +5,7 @@
 
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
-#include <EAStdC/EAStopwatch.h>
+#include "EAStopwatch.h"
 // #include <EASTL/vector.h>
 #include <safememory/unordered_map.h>
 #include <EASTL/unordered_map.h>
@@ -247,7 +247,7 @@ namespace
 template<int IX, template<typename, typename> typename Map1, template<typename, typename, typename> typename Map2>
 void BenchmarkHashTempl()
 {
-	EA::UnitTest::Rand  rng(EA::UnitTest::GetRandSeed());
+	EASTLTest_Rand  rng(GetRandSeed());
 	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
 	std::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
 	std::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
@@ -255,7 +255,7 @@ void BenchmarkHashTempl()
 	for(std::size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
 	{
 		const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
-		const uint32_t n2 = rng.RandValue();
+		const uint32_t n2 = rng.Rand();
 
 		stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
 
