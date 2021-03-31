@@ -55,26 +55,12 @@ extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_impl<char>> gpSaf
 extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
 extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
-// using nodecpp::safememory::FirstControlBlock;
-// using nodecpp::safememory::module_id;
-// using nodecpp::safememory::getPrefixByteCount;
-// using nodecpp::safememory::zombieAllocate;
-// using nodecpp::safememory::getControlBlock_;
-// using nodecpp::safememory::zombieDeallocate;
-// using nodecpp::safememory::getAllocatedBlock_;
-// using nodecpp::safememory::allocate;
-// using nodecpp::safememory::deallocate;
-// using nodecpp::safememory::fbc_ptr_t;
-// using nodecpp::safememory::thg_stackPtrForMakeOwningCall;
-
 
 template<std::size_t alignment>
-void* allocateWithCb(std::size_t sz) {
+void* zombie_allocate_helper(std::size_t sz) {
 
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, g_CurrentAllocManager != nullptr );
 	std::size_t head = sizeof(FirstControlBlock) - getPrefixByteCount();
 
-	// TODO here we should fine tune the sizes of array_of2<T> 
 	std::size_t total = head + sz;
 	void* data =  zombieAllocateAligned<alignment>(total);
 
@@ -86,59 +72,32 @@ void* allocateWithCb(std::size_t sz) {
 	return dataForObj;
 }
 
-
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 
-template<std::size_t alignment>
-std::pair<uint16_t, void*> allocate_impl0(std::size_t sz) {
+template<memory_safety is_safe, std::size_t alignment>
+std::pair<make_zero_offset_t, void*> allocate_helper(std::size_t sz) {
 
-	if ( g_CurrentAllocManager == nullptr ) {
+	if ( is_safe == memory_safety::none || g_CurrentAllocManager == nullptr ) {
 		void* ptr = allocateAligned<alignment>(sz);
-		return { 0, ptr };
+		typedef decltype(g_CurrentAllocManager->allocatorID()) id_type;
+		id_type allocatorID = g_CurrentAllocManager != nullptr ? g_CurrentAllocManager->allocatorID() : 0;
+		return { make_zero_offset_t{allocatorID}, ptr };
 	}
 	else {
-		void* ptr = allocateWithCb<alignment>(sz);
+		void* ptr = zombie_allocate_helper<alignment>(sz);
 		auto allocatorID = g_CurrentAllocManager->allocatorID();
-		return { allocatorID, ptr };
+		return { make_zero_offset_t{allocatorID}, ptr };
 	}
 }
 
-template<class T>
-soft_ptr_with_zero_offset_impl<T> allocate_impl() {
-
-	auto mm = allocate_impl0<alignof(T)>(sizeof(T));
-
-	auto dataForObj = reinterpret_cast<T*>(mm.second);
-
-	return { make_zero_offset_t(mm.first), dataForObj };
-}
-
-template<class T, bool zeroed>
-soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count) {
-
-	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
-	
-	auto total = flexible_array<T>::calculateSize(count);
-	auto mm = allocate_impl0<alignof(flexible_array<T>)>(total);
-
-	if constexpr (zeroed)
-		std::memset(mm.second, 0, total);
-
-	auto dataForObj = reinterpret_cast<flexible_array<T>*>(mm.second);
-
-	::new ( dataForObj ) flexible_array<T>(count);
-
-	return { mm.first, dataForObj };
-}
-
-template<class T>
-void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
+template<memory_safety is_safe, class T>
+void deallocate_helper(const soft_ptr_with_zero_offset<T, is_safe>& p) {
 
 	if (p) {
 		T* dataForObj = p.get_raw_ptr();
 		auto allocatorID = p.get_allocator_id();
 		//we don't destruct here dataForObj->~T();
-		if(allocatorID == 0) {
+		if(is_safe == memory_safety::none || allocatorID == 0) {
 			deallocate( dataForObj, alignof(T), allocatorID );
 		}
 		else {
@@ -150,158 +109,71 @@ void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
 	}
 }
 
-template<class T>
-void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<flexible_array<T>>& p) {
-	deallocate_impl(p);
+#else
+
+template<memory_safety is_safe, std::size_t alignment>
+std::pair<make_zero_offset_t, void*> allocate_helper(std::size_t sz) {
+
+	if ( is_safe == memory_safety::none ) {
+		void* ptr = allocateAligned<alignment>(sz);
+		return { make_zero_offset_t{}, ptr };
+	}
+	else {
+		void* ptr = zombie_allocate_helper<alignment>(sz);
+		return { make_zero_offset_t{}, ptr };
+	}
 }
 
-template<std::size_t alignment>
-std::pair<make_zero_offset_t, void*> allocate_no_checks0(std::size_t sz) {
+template<memory_safety is_safe, class T>
+void deallocate_helper(const soft_ptr_with_zero_offset<T, is_safe>& p) {
 
-	void* ptr = allocateAligned<alignment>(sz); 
-	auto allocatorID = g_CurrentAllocManager != nullptr ? g_CurrentAllocManager->allocatorID() : 0;
-
-	return {make_zero_offset_t(allocatorID), ptr};
+	if (p) {
+		T* dataForObj = p.get_raw_ptr();
+		//we don't destruct here dataForObj->~T();
+		if(is_safe == memory_safety::none) {
+			deallocate( dataForObj, alignof(T) );
+		}
+		else {
+			auto cb = getControlBlock_(dataForObj);
+			cb->template updatePtrForListItemsWithInvalidPtr<T>();
+			zombieDeallocate( getAllocatedBlock_(dataForObj) );
+			cb->clear();
+		}
+	}
 }
 
-template<class T>
-soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
 
-	auto mm = allocate_no_checks0<alignof(T)>(sizeof(T));
+#endif
 
-	return { mm.first, reinterpret_cast<T*>(mm.second) };
+template<memory_safety is_safe, class T>
+soft_ptr_with_zero_offset<T, is_safe> allocate_node_helper() {
+
+	auto mm = allocate_helper<is_safe, alignof(T)>(sizeof(T));
+
+	auto dataForObj = reinterpret_cast<T*>(mm.second);
+
+	return { mm.first, dataForObj };
 }
 
-template<class T, bool zeroed>
-soft_ptr_with_zero_offset_no_checks<flexible_array<T>> allocate_array_no_checks(std::size_t count) {
+template<memory_safety is_safe, typename T, bool zeroed>
+soft_ptr_with_zero_offset<flexible_array<T>, is_safe> allocate_flexible_array_helper(std::size_t count) {
 
 	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
-	std::size_t total = flexible_array<T>::calculateSize(count);
+	
+	auto total = flexible_array<T>::calculateSize(count);
 
-	auto mm = allocate_no_checks0<alignof(flexible_array<T>)>(total);
+	auto mm = allocate_helper<is_safe, alignof(flexible_array<T>)>(total);
 
 	if constexpr (zeroed)
 		std::memset(mm.second, 0, total);
 
+	::new ( mm.second ) flexible_array<T>(count);
+
 	auto dataForObj = reinterpret_cast<flexible_array<T>*>(mm.second);
-	
-	::new ( dataForObj ) flexible_array<T>(count);
+
 	return { mm.first, dataForObj };
 }
 
-template<class T>
-void deallocate_no_checks(const soft_ptr_with_zero_offset_no_checks<T>& p) {
-
-	if (p) {
-		T* dataForObj = p.get_raw_ptr();
-		//dataForObj->~T(); //don't destruct here
-		deallocate( dataForObj, alignof(T), p.get_allocator_id() );
-	}
-}
-
-template<class T>
-void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexible_array<T>>& p) {
-
-	deallocate_no_checks(p);
-}
-
-
-
-#else //NODECPP_MEMORY_SAFETY_ON_DEMAND
-
-
-template<class T>
-soft_ptr_with_zero_offset_impl<T> allocate_impl() {
-
-	void* data = allocateWithCb<alignof(T)>(sizeof(T));
-
-	auto dataForObj = reinterpret_cast<T*>(data);
-
-	return { make_zero_offset_t(), dataForObj };
-}
-
-template<class T, bool zeroed>
-soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count) {
-
-	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
-
-	std::size_t total = flexible_array<T>::calculateSize(count);
-	void* data = allocateWithCb<alignof(flexible_array<T>)>(total);
-
-	if constexpr (zeroed)
-		std::memset(data, 0, total);
-
-	auto dataForObj = reinterpret_cast<flexible_array<T>*>(data);
-
-	::new ( dataForObj ) flexible_array<T>(count);
-
-	return { make_zero_offset_t(), dataForObj };
-
-}
-
-template<class T>
-void deallocate_impl(const soft_ptr_with_zero_offset_impl<T>& p) {
-
-	if (p) {
-		T* dataForObj = p.get_raw_ptr();
-//		dataForObj->~T(); //we don't destruct here
-		auto cb = getControlBlock_(dataForObj);
-		cb->template updatePtrForListItemsWithInvalidPtr<T>();
-		zombieDeallocate( getAllocatedBlock_(dataForObj) );
-		cb->clear();
-	}
-}
-
-template<class T>
-void deallocate_array_impl(const soft_ptr_with_zero_offset_impl<flexible_array<T>>& p) {
-
-	deallocate_impl(p);
-}
-
-
-template<class T>
-soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks() {
-
-	std::size_t total = sizeof(T);
-	void* data = allocate(total);
-
-	T* dataForObj = reinterpret_cast<T*>(data);
-	
-	return { make_zero_offset_t(), dataForObj };
-}
-
-template<class T, bool zeroed>
-soft_ptr_with_zero_offset_no_checks<flexible_array<T>> allocate_array_no_checks(std::size_t count) {
-
-	std::size_t total = flexible_array<T>::calculateSize(count);
-	void* data = allocate(total);
-
-	if constexpr (zeroed)
-		std::memset(data, 0, total);
-
-	flexible_array<T>* dataForObj = reinterpret_cast<flexible_array<T>*>(data);
-	
-	::new ( dataForObj ) flexible_array<T>(count);
-	return { make_zero_offset_t(), dataForObj };
-}
-
-template<class T>
-void deallocate_no_checks(const soft_ptr_with_zero_offset_no_checks<T>& p) {
-
-	if (p) {
-		T* dataForObj = p.get_raw_ptr();
-		//dataForObj->~T(); //don't destruct here
-		deallocate(dataForObj);
-	}
-}
-
-template<class T>
-void deallocate_array_no_checks(const soft_ptr_with_zero_offset_no_checks<flexible_array<T>>& p) {
-
-	deallocate_no_checks(p);
-}
-
-#endif //NODECPP_MEMORY_SAFETY_ON_DEMAND
 
 // two special values used inside eastl::hashtable
 // soft_ptr needs to have special behaviour around this values.
@@ -390,27 +262,27 @@ public:
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
 		// for non trivial types, always zero memory
-		return allocate_array_impl<T, !std::is_trivial<T>::value>(count);
+		return allocate_flexible_array_helper<is_safe, T, !std::is_trivial<T>::value>(count);
 	}
 
 	template<class T>
 	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
-		return allocate_array_impl<T, true>(count);
+		return allocate_flexible_array_helper<is_safe, T, true>(count);
 	}
 
 	template<class T>
 	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
-		deallocate_array_impl(p);
+		deallocate_helper<is_safe, flexible_array<T>>(p);
 	}
 
 	template<class T>
 	pointer<T> allocate_node() {
-		return allocate_impl<T>();
+		return allocate_node_helper<is_safe, T>();
 	}
 
 	template<class T>
 	void deallocate_node(const pointer<T>& p) {
-		deallocate_impl(p);
+		deallocate_helper<is_safe, T>(p);
 	}
 
 	template<class T>
@@ -456,27 +328,27 @@ public:
 
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
-		return allocate_array_no_checks<T, false>(count);
+		return allocate_flexible_array_helper<is_safe, T, false>(count);
 	}
 
 	template<class T>
 	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
-		return allocate_array_no_checks<T, true>(count);
+		return allocate_flexible_array_helper<is_safe, T, true>(count);
 	}
 
 	template<class T>
 	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
-		deallocate_array_no_checks(p);
+		deallocate_helper<is_safe, flexible_array<T>>(p);
 	}
 
 	template<class T>
 	pointer<T> allocate_node() {
-		return allocate_no_checks<T>();
+		return allocate_node_helper<is_safe, T>();
 	}
 
 	template<class T>
 	void deallocate_node(const pointer<T>& p) {
-		deallocate_no_checks(p);
+		deallocate_helper<is_safe, T>(p);
 	}
 
 	template<class T>
@@ -559,12 +431,12 @@ public:
 
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
-		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), hashtable_sentinel<T>()};
+		return {make_zero_offset_t{SAFEMEMORY_INVALID_ALLOCATOR}, hashtable_sentinel<T>()};
 	}
 
 	template<class T>
 	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), empty_hashtable_impl<T>()};
+		return {make_zero_offset_t{SAFEMEMORY_INVALID_ALLOCATOR}, empty_hashtable_impl<T>()};
 	}
 
 	template<class T>
@@ -618,12 +490,12 @@ public:
 
 	template<class T>
 	static pointer<T> get_hashtable_sentinel() {
-		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), hashtable_sentinel<T>()};
+		return {make_zero_offset_t{SAFEMEMORY_INVALID_ALLOCATOR}, hashtable_sentinel<T>()};
 	}
 
 	template<class T>
 	static array_pointer<T> get_empty_hashtable() {
-		return {make_zero_offset_t(SAFEMEMORY_INVALID_ALLOCATOR), empty_hashtable_no_checks<T>()};
+		return {make_zero_offset_t{SAFEMEMORY_INVALID_ALLOCATOR}, empty_hashtable_no_checks<T>()};
 	}
 
 	template<class T>

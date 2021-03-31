@@ -4,11 +4,21 @@ EASTL and containers
 
 This document is a short guide on how `EASTL` containers where _adapted_ into __safe__ containers.
 
+Memory states glosary for this doc:
+* Allocated: memory asigned by the allocator to a pariticular object, may be Valid, Uninitialized, Zeroed or Zombie.
+	+ Valid: contains a valid contructed object.
+	+ Zeroed: self explained.
+	+ Uninitialized: may be zero or may have any kind of garbage.
+	+ Zombie: contains an object that has already been destructed. May or may not already been returned to the allocator, as long as the allocator has not already reasigned it.
+
 Safety on containers
 --------------------
-Safety on containers is mostly around iterators: __safe__ iterators and _regular_ iterators.
-Under `safememory` context, a _regular_ iterator is allowed to exist only on the stack, should be enforces lifetime checks, but it is not allowed to dereference any invalid memory. We can say that it has the same set of rules that a raw pointer.
-A __safe__ iterator on the other hand, has the same set of rules that a `soft_ptr`, can be stored on the heap, and has means to verify where the target memory is still valid or not.
+Safety on containers goes around validation of method arguments, and safety of iterators.
+For safety of iterators, we define two kind of iterators for each container: _regular_ iterator and __safe__ iterator.
+
+Under `safememory` context, a _regular_ iterator should be allowed to exist only on the stack and should be enforced lifetime checks, same as raw pointer. Dereference will always point to _allocated_ memory.
+
+A __safe__ iterator on the other hand, has the same set of rules that a `soft_ptr`, can be stored on the heap, and has means to verify where the target memory is still _allocated_ or not.
 
 Each container provides both iterators types, and two sets of methods to work with one or the other kind:
 
@@ -194,19 +204,22 @@ Important files
 ### `safememory/detail/allocator_to_eastl.h`
 
 Here is where all the magic is hidden (and most likely all the bugs).
-The most critical part are 4 allocation functions at the beginning of the file:
+The most critical part are allocation functions at the beginning of the file, the bottom 3 are the entry points, and the top 2 are called internally from the others:
 
-    template<class T>
-    soft_ptr_with_zero_offset_impl<T> allocate_impl();
+	template<std::size_t alignment>
+	void* zombie_allocate_helper(std::size_t sz);
 
-    template<class T, bool zeroed>
-    soft_ptr_with_zero_offset_impl<flexible_array<T>> allocate_array_impl(std::size_t count);
+	template<memory_safety is_safe, std::size_t alignment>
+	std::pair<make_zero_offset_t, void*> allocate_helper(std::size_t sz);
 
-    template<class T>
-    soft_ptr_with_zero_offset_no_checks<T> allocate_no_checks();
+	template<memory_safety is_safe, class T>
+	void deallocate_helper(const soft_ptr_with_zero_offset<T, is_safe>& p);
 
-    template<class T, bool zeroed>
-    soft_ptr_with_zero_offset_no_checks<flexible_array<T>> allocate_array_no_checks(std::size_t count);
+	template<memory_safety is_safe, class T>
+	soft_ptr_with_zero_offset<T, is_safe> allocate_node_helper();
+
+	template<memory_safety is_safe, typename T, bool zeroed>
+	soft_ptr_with_zero_offset<flexible_array<T>, is_safe> allocate_flexible_array_helper(std::size_t count);
 
 
 ### `safememory/detail/soft_ptr_with_zero_offset.h`
