@@ -226,14 +226,12 @@ using ARR_SAFE = safememory::array_safe<T, SZ>;
 
 int TestArray()
 {
-	const lest::test specification[] = {
-	    CASE( "TestArray" ) {
-			TestArrayStack<ARR>();
-			TestArrayHeap<ARR>();
-			TestArrayHeap<ARR_SAFE>();
-		}
-	};
+	int nErrorCount = 0;
 
-	return lest::run( specification /*, argc, argv, std::cout */  );
+	nErrorCount += TestArrayStack<ARR>();
+	nErrorCount += TestArrayHeap<ARR>();
+	nErrorCount += TestArrayHeap<ARR_SAFE>();
+
+	return nErrorCount;
 }
 

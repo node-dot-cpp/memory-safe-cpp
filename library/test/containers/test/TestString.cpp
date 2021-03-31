@@ -51,8 +51,9 @@ bool validate(const StringType& str) {
 #define LITERAL(x) EA_CHAR32(x)
 #include "TestString.inl"
 
-void TestToString() {
+int TestToString() {
 
+	int nErrorCount = 0;
 	// to_string
 	{
 		VERIFY(safememory::to_string(42)    == "42");
@@ -84,32 +85,31 @@ void TestToString() {
 		VERIFY(safememory::to_wstring(42.0l) == L"42.000000");
 #endif
 	}
+	return nErrorCount;
 }
 
 
 int TestString()
 {
-	const lest::test specification[] = {
-	    CASE( "TestString" ) {
-			TestBasicString<safememory::basic_string<char>>();
-			TestBasicString<safememory::basic_string_safe<char>>();
+	int nErrorCount = 0;
 
-			TestBasicStringW<safememory::basic_string<wchar_t>>();
-			TestBasicStringW<safememory::basic_string_safe<wchar_t>>();
+	nErrorCount += TestBasicString<safememory::basic_string<char>>();
+	nErrorCount += TestBasicString<safememory::basic_string_safe<char>>();
 
-			TestBasicString16<safememory::basic_string<char16_t>>();
-			TestBasicString16<safememory::basic_string_safe<char16_t>>();
+	nErrorCount += TestBasicStringW<safememory::basic_string<wchar_t>>();
+	nErrorCount += TestBasicStringW<safememory::basic_string_safe<wchar_t>>();
+
+	nErrorCount += TestBasicString16<safememory::basic_string<char16_t>>();
+	nErrorCount += TestBasicString16<safememory::basic_string_safe<char16_t>>();
 
 #if EA_CHAR32_NATIVE
-			TestBasicString32<safememory::basic_string<char32_t>>();
-			TestBasicString32<safememory::basic_string_safe<char32_t>>();
+	nErrorCount += TestBasicString32<safememory::basic_string<char32_t>>();
+	nErrorCount += TestBasicString32<safememory::basic_string_safe<char32_t>>();
 #endif
 
-			TestToString();
-		}
-	};
+	nErrorCount += TestToString();
 
-	return lest::run( specification /*, argc, argv, std::cout */  );
+	return nErrorCount;
 
 	// Check for memory leaks by using the 'CountingAllocator' to ensure no active allocation after tests have completed.
 // 	CountingAllocator::resetCount();

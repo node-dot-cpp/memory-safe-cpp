@@ -267,6 +267,28 @@ const char* GetStdSTLName()
 // 	::operator delete((char*)p);
 // }
 
+/// EATEST_VERIFY_IMP
+///
+/// This is a helper function for EATEST_VERIFY, which itself is a macro for doing one-off
+/// standalone unit testing, that is, testing without Test objects and TestSuite systems.
+///
+/// The user does not need nor want to put newline ('\n') characters at the 
+/// end of message strings as that will be done for you during the formatting 
+/// of the output. In particular, this function prints the output as per the 
+/// following format:
+///     printf("%s(%d): %s.\n", fileName, fileLine, userMessage);
+/// 
+
+int EATEST_VERIFY_IMP(bool bExpression, int& nErrorCount, const char* pFile, int nLine, const char* pMessage)
+{
+	if(!bExpression)
+	{
+		nErrorCount++;
+		EASTLTest_Printf("%s(%d): %s\n", pFile, nLine, pMessage);
+	}
+
+	return bExpression ? 0 : 1;
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 // Rand

@@ -1734,12 +1734,10 @@ using VEC_SAFE = safememory::vector_safe<T>;
 
 int TestVector()
 {
-	const lest::test specification[] = {
-	    CASE( "TestVector" ) {
-			TestVectorImpl<VEC>();
-			TestVectorImpl<VEC_SAFE>();
-		}
-	};
+	int nErrorCount = 0;
 
-	return lest::run( specification /*, argc, argv, std::cout */  );
+	nErrorCount += TestVectorImpl<VEC>();
+	nErrorCount += TestVectorImpl<VEC_SAFE>();
+
+	return nErrorCount;
 }

@@ -1568,21 +1568,19 @@ using MMAP4 = safememory::unordered_multimap<Key, T, Hash, Predicate>;
 
 
 int TestHash()
-{   
-	const lest::test specification[] = {
-	    CASE( "TestHash" ) {
-			TestHashSet<SET, SET3>();
+{
+	int nErrorCount = 0;
 
-			TestHashMultiSet<MSET, MSET3>();
+	nErrorCount += TestHashSet<SET, SET3>();
 
-			TestHashMap<MAP, MAP4>();
-			TestHashMap<MAP_SAFE, MAP_SAFE4>();
+	nErrorCount += TestHashMultiSet<MSET, MSET3>();
 
-			TestHashMultiMap<MMAP, MMAP4>();
-		}
-	};
+	nErrorCount += TestHashMap<MAP, MAP4>();
+	nErrorCount += TestHashMap<MAP_SAFE, MAP_SAFE4>();
 
-	return lest::run( specification /*, argc, argv, std::cout */  );
+	nErrorCount += TestHashMultiMap<MMAP, MMAP4>();
+
+	return nErrorCount;
 }
 
 
