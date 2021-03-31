@@ -63,10 +63,10 @@ void TestToString() {
 		VERIFY(safememory::to_string(42ull) == "42");
 		VERIFY(safememory::to_string(42.f)  == "42.000000");
 		VERIFY(safememory::to_string(42.0)  == "42.000000");
-	#ifndef EA_COMPILER_GNUC
+#ifndef EA_COMPILER_GNUC
 		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
 		VERIFY(safememory::to_string(42.0l) == "42.000000");
-	#endif
+#endif
 	}
 
 	// to_wstring
@@ -79,13 +79,11 @@ void TestToString() {
 		VERIFY(safememory::to_wstring(42ull) == L"42");
 		VERIFY(safememory::to_wstring(42.f)  == L"42.000000");
 		VERIFY(safememory::to_wstring(42.0)  == L"42.000000");
-	#ifndef EA_COMPILER_GNUC
+#ifndef EA_COMPILER_GNUC
 		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
 		VERIFY(safememory::to_wstring(42.0l) == L"42.000000");
-	#endif
+#endif
 	}
-
-
 }
 
 

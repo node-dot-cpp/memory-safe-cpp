@@ -12,7 +12,7 @@
 //#include <EASTL/allocator.h> // for eastl::allocator
 #include <EASTL/internal/config.h>
 #include <fmt/printf.h>
-#include "../../3rdparty/lest/include/lest/lest_basic.hpp"
+#include "../../../3rdparty/lest/include/lest/lest_basic.hpp"
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>

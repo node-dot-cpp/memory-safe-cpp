@@ -10,5 +10,10 @@ Both libraries, `3rdparty/EABase` and `3rdparty/EASTL` have been cloned _by-valu
 
 It is done with `clone-EABase-EASLT.sh` or `clone-EABase-EASTL.bat` scripts.
 
-Any future changes to files inside `EASTL` should preserve such procedure.
-For this, _diff_ file should be updated and clone script re-run.
+Any future changes to files inside `EASTL` should preserve this procedure.
+Recomemded procedure is:
+* clone the initial revision in a separate folder
+* apply patch and do changes there
+* when work is done, make diff `git diff > ../EASTL.diff`
+* re-run clone script to overwrite the _by-value_ copy
+
