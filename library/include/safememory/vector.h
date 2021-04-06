@@ -363,15 +363,15 @@ namespace safememory
 		
 		// Safety == safe
 		iterator_base toBase(const stack_only_iterator& it) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
+			return it.toRaw(begin_unsafe());
 		}
 
 		const_iterator_base toBase(const const_stack_only_iterator& it) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
+			return it.toRaw(begin_unsafe());
 		}
 
 		std::pair<const_iterator_base, const_iterator_base> toBase(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
+			return it.toRaw(begin_unsafe(), it2);
 		}
 
 		std::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_stack_only_iterator& it, const const_stack_only_iterator& it2) const {
@@ -379,15 +379,15 @@ namespace safememory
 		}
 
 		iterator_base toBase(const heap_safe_iterator& it) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
+			return it.toRaw(begin_unsafe());
 		}
 
 		const_iterator_base toBase(const const_heap_safe_iterator& it) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin));
+			return it.toRaw(begin_unsafe());
 		}
 
 		std::pair<const_iterator_base, const_iterator_base> toBase(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
-			return it.toRaw(allocator_type::to_raw(base_type::mpBegin), it2);
+			return it.toRaw(begin_unsafe(), it2);
 		}
 
 		std::pair<const_iterator_base, const_iterator_base> toBaseOther(const const_heap_safe_iterator& it, const const_heap_safe_iterator& it2) const {
@@ -399,14 +399,14 @@ namespace safememory
 			if constexpr (use_base_iterator)
 				return it;
 			else {
-				return iterator::makePtr(base_type::data(), it, base_type::capacity());
+				return iterator::makePtr(base_type::data(), it, capacity());
 			}
 		}
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, base_type::capacity());
+				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, capacity());
 		}
 
 		// reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -428,14 +428,14 @@ namespace safememory
 			// if constexpr (use_base_iterator)
 			// 	return it;
 			// else
-				return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+				return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, capacity(), static_cast<const base_type*>(this));
 		}
 		
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
 			// if constexpr (use_base_iterator)
 			// 	return it;
 			// else
-				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, base_type::capacity());
+				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, capacity(), static_cast<const base_type*>(this));
 		}
 
 		// reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {

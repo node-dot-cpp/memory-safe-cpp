@@ -36,6 +36,8 @@
 
 namespace safememory::detail {
 
+#define SAFEMEMORY_DEZOMBIEFY_ITERATORS
+
 /**
  * \brief Safe and generic iterator for arrays.
  * 
@@ -98,6 +100,10 @@ protected:
 	template<typename TT>
 	static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
 
+	// template<typename TT>
+	// using sfinae = typename std::enable_if<is_const && std::is_same_v<TT, this_type_non_const>, bool>::type;
+
+
 	// default to 'safe', only on soft_ptr_no_checks we can relax to 'none'
 	template <typename>
 	struct array_heap_safe_iterator_safety_helper {
@@ -126,11 +132,20 @@ protected:
 	size_type ix = 0;
 	size_type sz = 0;
 
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+	std::function<size_type()> actual_size;
+
+	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz, std::function<size_type()> actual_size)
+		: arr(arr), ix(ix), sz(sz), actual_size(actual_size) {}
+
+#endif
+
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
 	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
-	[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
+	[[noreturn]] static void throwRangeException() { throw std::out_of_range("iterator out of capacity range"); }
+	[[noreturn]] static void throwZombieException(const char* msg) { throw std::out_of_range("iterator out of current size range"); }
 	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
 
 	static constexpr void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
@@ -174,6 +189,27 @@ public:
 		return makeIx(arr, getIndex(arr, to), sz);
 	}
 
+	template <typename C>
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz, const C* container) {
+
+		extraSanityCheck(arr, ix, sz);
+
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+
+	    std::function<size_type()> actual_size = std::bind( &C::size, container );
+		return this_type(arr, ix, sz, actual_size);
+#else
+		return this_type(arr, ix, sz);
+#endif
+	}
+
+	template <typename C>
+	static constexpr this_type makePtr(array_pointer arr, pointer to, size_type sz, const C* container) {
+
+		return makeIx(arr, getIndex(arr, to), sz, container);
+	}
+
+
 	array_heap_safe_iterator(const array_heap_safe_iterator& ri) = default;
 	array_heap_safe_iterator& operator=(const array_heap_safe_iterator& ri) = default;
 
@@ -183,7 +219,11 @@ public:
 	/// allow non-const to const constructor
 	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
 	array_heap_safe_iterator(const Other& ri)
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+		: arr(ri.arr), ix(ri.ix), sz(ri.sz), actual_size(ri.actual_size) {}
+#else
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
+#endif
 
 	/// allow non-const to const assignment
 	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
@@ -191,32 +231,14 @@ public:
 		this->arr = ri.arr;
 		this->ix = ri.ix;
 		this->sz = ri.sz;
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+		this->actual_size = ri.actual_size;
+#endif
 		return *this;
 	}
 
-	reference operator*() const {
-		if constexpr (is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
-				throwRangeException("array_heap_safe_iterator::operator*");
-		}
-
-		if constexpr(is_raw_pointer)
-			return *(arr + ix);
-		else
-			return *(arr->data() + ix);
-	}
-
-	pointer operator->() const {
-		if constexpr (is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(!arr || !(ix < sz)))
-				throwRangeException("array_heap_safe_iterator::operator->");
-		}
-
-		if constexpr (is_raw_pointer)
-			return arr + ix;
-		else
-			return arr->data() + ix;
-	}
+	reference operator*() const { return *get_deref_ptr(ix); }
+	pointer operator->() const { return get_deref_ptr(ix); }
 
 	this_type& operator++() noexcept { ++ix; return *this; }
 	this_type& operator--() noexcept { --ix; return *this; }
@@ -230,25 +252,13 @@ public:
 	this_type& operator+=(difference_type n) noexcept {	ix += n; return *this; }
 	this_type& operator-=(difference_type n) noexcept { ix -= n; return *this; }
 
-	constexpr reference operator[](difference_type n) const {
-		
-		size_type tmp = ix + n;
-		if constexpr (is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(!arr || !(tmp < sz)))
-				throwRangeException("array_heap_safe_iterator::operator[]");
-		}
-
-		if constexpr (is_raw_pointer)
-			return *(arr + tmp);
-		else
-			return *(arr->data() + tmp);
-	}
+	constexpr reference operator[](difference_type n) const { return *get_deref_ptr(ix + n); }
 
 	difference_type operator-(const this_type& ri) const noexcept {
 
 		// it1 == it2 => it1 - it2 == 0, even for null iterators
 		if(arr == ri.arr)
-			return ix - ri.ix;
+			return static_cast<difference_type>(ix) - static_cast<difference_type>(ri.ix);
 		else
 			ThrowInvalidArgumentException("array_heap_safe_iterator::operator-");
 	}
@@ -311,10 +321,21 @@ public:
 	 * However \c begin argument won't be null in such case.
 	 */
 	pointer toRaw(const T* begin) const {
-		if (getRawBegin() == begin)
-			return getRaw();
-		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
+
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!check_begin(begin)))
+				throwRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(actual_size) {
+				if(NODECPP_UNLIKELY(!(ix <= actual_size())))
+					throwRangeException();
+			}
+#endif
+			else if(NODECPP_UNLIKELY(!(ix <= sz)))
+					throwRangeException();
+		}
+
+		return get_raw_unsafe();
 	}
 
 	/**
@@ -326,10 +347,13 @@ public:
 	 * and that the order is correct
 	 */
 	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
-		if (getRawBegin() == begin && arr == ri.arr && ix <= ri.ix)
-			return {getRaw(), ri.getRaw()};
-		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
+
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!check_begin(begin)))
+				throwRangeException();
+		}
+
+		return toRawOther(ri);
 	}
 
 	/**
@@ -341,26 +365,60 @@ public:
 	 * to the same array and that the order is correct.
 	 */
 	std::pair<pointer, pointer> toRawOther(const this_type& ri) const {
-		if (arr == ri.arr && ix <= ri.ix)
-			return {getRaw(), ri.getRaw()};
-		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::toRaw");
+
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(arr !=  ri.arr))
+				throwRangeException();
+			else if(NODECPP_UNLIKELY(!(ix <= ri.ix)))
+				throwRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(actual_size) {
+				if(NODECPP_UNLIKELY(!(ri.ix <= actual_size())))
+					throwRangeException();
+			}
+#endif
+			else if(NODECPP_UNLIKELY(!(ri.ix <= sz)))
+					throwRangeException();
+		}
+		return {get_raw_unsafe(), ri.get_raw_unsafe()};
 	}
 
-	pointer getRaw() const {
+	bool check_begin(const T* begin) const {
 		if constexpr (is_raw_pointer)
-			return arr + ix; // arr may be null
+			return begin == arr;
 		else
-			return arr ? arr->data() + ix : nullptr;
+			return begin == (arr ? arr->data() : nullptr);
 	}
 
-	pointer getRawBegin() const {
+	pointer get_raw_unsafe() const { return get_raw_unsafe(ix); }
+
+	pointer get_raw_unsafe(size_type tmp) const {
 		if constexpr (is_raw_pointer)
-			return arr; // arr may be null
+			return arr + tmp; // arr may be null
 		else
-			return arr ? arr->data() : nullptr;
+			return arr ? arr->data() + tmp : nullptr;
 	}
 
+	/**
+	 * \brief get a pointer to an index that is checked to be dereferenceable.
+ 	 */
+	pointer get_deref_ptr(size_type tmp) const {
+
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!arr))
+				throwRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(actual_size) {
+				if(NODECPP_UNLIKELY(!(tmp < actual_size())))
+					throwRangeException();
+			}
+#endif
+			else if(NODECPP_UNLIKELY(!(tmp < sz)))
+					throwRangeException();
+		}
+
+		return get_raw_unsafe(tmp);
+	}
 };
 
 /**
