@@ -33,10 +33,15 @@
 #include <cstddef>
 #include <safememory/memory_safety.h>
 #include <nodecpp_assert.h>
+#include <safe_memory_error.h>
 
 namespace safememory::detail {
 
+#if !defined(SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+#if defined(SAFEMEMORY_DEZOMBIEFY) && !defined(NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION)
 #define SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#endif
+#endif
 
 /**
  * \brief Safe and generic iterator for arrays.
@@ -81,6 +86,10 @@ namespace safememory::detail {
  * can only be created when the array itself is on the heap, an a \c soft_this_ptr2 is used
  * to create the \c soft_ptr used as \p ArrPtr
  * 
+ * 
+ * For dezombiefy, we call the \c size() method on the container before dereferencing, and
+ * before convert to raw pointers.
+ * For \a stack_only iterators, checker will enforce scope rules, and we can rest 
  */
 
 template <typename T, bool is_const, typename ArrPtr>
@@ -119,7 +128,7 @@ protected:
 
 public:
 	typedef std::random_access_iterator_tag  			iterator_category;
-	typedef std::conditional_t<is_const, const T, T>		value_type;
+	typedef std::conditional_t<is_const, const T, T>	value_type;
 	typedef std::ptrdiff_t                              difference_type;
 	typedef std::size_t                                 size_type;
 	typedef value_type*									pointer;
@@ -133,10 +142,10 @@ protected:
 	size_type sz = 0;
 
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-	std::function<size_type()> actual_size;
+	std::function<size_type()> size_func;
 
-	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz, std::function<size_type()> actual_size)
-		: arr(arr), ix(ix), sz(sz), actual_size(actual_size) {}
+	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz, std::function<size_type()> size_func)
+		: arr(arr), ix(ix), sz(sz), size_func(size_func) {}
 
 #endif
 
@@ -144,13 +153,13 @@ protected:
 	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_type sz)
 		: arr(arr), ix(ix), sz(sz) {}
 
-	[[noreturn]] static void throwRangeException() { throw std::out_of_range("iterator out of capacity range"); }
-	[[noreturn]] static void throwZombieException(const char* msg) { throw std::out_of_range("iterator out of current size range"); }
-	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
+	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
+	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
 
 	static constexpr void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
 
-		if constexpr (false) {
+		if constexpr (true) {
 			// ix must be equal or lower than sz
 			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix <= sz);
 
@@ -189,22 +198,22 @@ public:
 		return makeIx(arr, getIndex(arr, to), sz);
 	}
 
-	template <typename C>
-	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz, const C* container) {
+	template <typename Container>
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz, const Container* container) {
 
 		extraSanityCheck(arr, ix, sz);
 
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
 
-	    std::function<size_type()> actual_size = std::bind( &C::size, container );
-		return this_type(arr, ix, sz, actual_size);
+	    std::function<size_type()> size_func = std::bind(&Container::size, container);
+		return this_type(arr, ix, sz, size_func);
 #else
 		return this_type(arr, ix, sz);
 #endif
 	}
 
-	template <typename C>
-	static constexpr this_type makePtr(array_pointer arr, pointer to, size_type sz, const C* container) {
+	template <typename Container>
+	static constexpr this_type makePtr(array_pointer arr, pointer to, size_type sz, const Container* container) {
 
 		return makeIx(arr, getIndex(arr, to), sz, container);
 	}
@@ -220,7 +229,7 @@ public:
 	template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
 	array_heap_safe_iterator(const Other& ri)
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-		: arr(ri.arr), ix(ri.ix), sz(ri.sz), actual_size(ri.actual_size) {}
+		: arr(ri.arr), ix(ri.ix), sz(ri.sz), size_func(ri.size_func) {}
 #else
 		: arr(ri.arr), ix(ri.ix), sz(ri.sz) {}
 #endif
@@ -232,13 +241,13 @@ public:
 		this->ix = ri.ix;
 		this->sz = ri.sz;
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-		this->actual_size = ri.actual_size;
+		this->size_func = ri.size_func;
 #endif
 		return *this;
 	}
 
-	reference operator*() const { return *get_deref_ptr(ix); }
-	pointer operator->() const { return get_deref_ptr(ix); }
+	reference operator*() const { return *getDereferenceablePtr(ix); }
+	pointer operator->() const { return getDereferenceablePtr(ix); }
 
 	this_type& operator++() noexcept { ++ix; return *this; }
 	this_type& operator--() noexcept { --ix; return *this; }
@@ -252,7 +261,7 @@ public:
 	this_type& operator+=(difference_type n) noexcept {	ix += n; return *this; }
 	this_type& operator-=(difference_type n) noexcept { ix -= n; return *this; }
 
-	constexpr reference operator[](difference_type n) const { return *get_deref_ptr(ix + n); }
+	constexpr reference operator[](difference_type n) const { return *getDereferenceablePtr(ix + n); }
 
 	difference_type operator-(const this_type& ri) const noexcept {
 
@@ -323,19 +332,19 @@ public:
 	pointer toRaw(const T* begin) const {
 
 		if constexpr (is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(!check_begin(begin)))
-				throwRangeException();
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			else if(actual_size) {
-				if(NODECPP_UNLIKELY(!(ix <= actual_size())))
-					throwRangeException();
-			}
-#endif
+			if(NODECPP_UNLIKELY(!checkBegin(begin)))
+				ThrowRangeException();
 			else if(NODECPP_UNLIKELY(!(ix <= sz)))
-					throwRangeException();
+				ThrowRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(NODECPP_UNLIKELY(!isArrNotZombie()))
+				ThrowZombieException();
+			else if(NODECPP_UNLIKELY(size_func && !(ix <= size_func())))
+				ThrowZombieException();
+#endif
 		}
 
-		return get_raw_unsafe();
+		return getRawUnsafe();
 	}
 
 	/**
@@ -349,8 +358,8 @@ public:
 	std::pair<pointer, pointer> toRaw(const T* begin, const this_type& ri) const {
 
 		if constexpr (is_safe == memory_safety::safe) {
-			if(NODECPP_UNLIKELY(!check_begin(begin)))
-				throwRangeException();
+			if(NODECPP_UNLIKELY(!checkBegin(begin)))
+				ThrowRangeException();
 		}
 
 		return toRawOther(ri);
@@ -368,56 +377,65 @@ public:
 
 		if constexpr (is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(arr !=  ri.arr))
-				throwRangeException();
+				ThrowRangeException();
 			else if(NODECPP_UNLIKELY(!(ix <= ri.ix)))
-				throwRangeException();
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			else if(actual_size) {
-				if(NODECPP_UNLIKELY(!(ri.ix <= actual_size())))
-					throwRangeException();
-			}
-#endif
+				ThrowRangeException();
 			else if(NODECPP_UNLIKELY(!(ri.ix <= sz)))
-					throwRangeException();
+				ThrowRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(NODECPP_UNLIKELY(!isArrNotZombie()))
+				ThrowZombieException();
+			else if(NODECPP_UNLIKELY(size_func && !(ri.ix <= size_func())))
+				ThrowZombieException();
+#endif
 		}
-		return {get_raw_unsafe(), ri.get_raw_unsafe()};
+		return {getRawUnsafe(), ri.getRawUnsafe()};
 	}
 
-	bool check_begin(const T* begin) const {
-		if constexpr (is_raw_pointer)
-			return begin == arr;
-		else
-			return begin == (arr ? arr->data() : nullptr);
-	}
-
-	pointer get_raw_unsafe() const { return get_raw_unsafe(ix); }
-
-	pointer get_raw_unsafe(size_type tmp) const {
+	pointer getRawUnsafe() const { return getRawUnsafe(ix); }
+	pointer getRawUnsafe(size_type tmp) const {
 		if constexpr (is_raw_pointer)
 			return arr + tmp; // arr may be null
 		else
 			return arr ? arr->data() + tmp : nullptr;
 	}
 
+	protected:
+
 	/**
 	 * \brief get a pointer to an index that is checked to be dereferenceable.
  	 */
-	pointer get_deref_ptr(size_type tmp) const {
+	pointer getDereferenceablePtr(size_type tmp) const {
 
 		if constexpr (is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(!arr))
-				throwRangeException();
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			else if(actual_size) {
-				if(NODECPP_UNLIKELY(!(tmp < actual_size())))
-					throwRangeException();
-			}
-#endif
+				ThrowRangeException();
 			else if(NODECPP_UNLIKELY(!(tmp < sz)))
-					throwRangeException();
+				ThrowRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(NODECPP_UNLIKELY(!isArrNotZombie()))
+				ThrowZombieException();
+			else if(NODECPP_UNLIKELY(size_func && !(tmp < size_func())))
+				ThrowZombieException();
+#endif
 		}
+		return getRawUnsafe(tmp);
+	}
 
-		return get_raw_unsafe(tmp);
+	bool checkBegin(const T* begin) const {
+		if constexpr (is_raw_pointer)
+			return begin == arr;
+		else
+			return begin == (arr ? arr->data() : nullptr);
+	}
+
+	bool isArrNotZombie() const {
+		if(!arr)
+			return true; //can't be zombie if null
+		if constexpr (is_raw_pointer)
+			return isPointerNotZombie(arr);
+		else
+			return isPointerNotZombie(arr->data());
 	}
 };
 

@@ -35,7 +35,7 @@
 #include <EASTL/vector.h>
 #include <safememory/detail/allocator_to_eastl.h>
 #include <safememory/detail/array_iterator.h>
-
+#include <safe_memory_error.h>
 
 namespace safememory
 {
@@ -348,9 +348,9 @@ namespace safememory
 		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
 
 	protected:
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
-		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
-		[[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw nodecpp::error::out_of_range; }
 
 
         const base_type& toBase() const noexcept { return *this; }

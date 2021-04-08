@@ -30,6 +30,7 @@
 
 #include <safememory/safe_ptr.h>
 #include <safememory/detail/array_iterator.h>
+#include <safe_memory_error.h>
 
 namespace safememory::detail {
 
@@ -148,7 +149,7 @@ namespace safememory::detail {
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(mpNodeBase, mpBucket.get_raw_unsafe());
+			return BaseIt(mpNodeBase, mpBucket.getRawUnsafe());
 		}
 	}; // hashtable_heap_safe_iterator
 
@@ -180,7 +181,7 @@ namespace safememory::detail {
 
 		// typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
 
-		[[noreturn]] static void throwRangeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void throwRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
 
     public:
 		hashtable_stack_only_iterator() :base_type() { }

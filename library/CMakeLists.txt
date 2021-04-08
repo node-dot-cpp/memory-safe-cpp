@@ -84,6 +84,25 @@ target_link_libraries(safememory_no_checks iibmalloc)
 target_link_libraries(safememory_no_checks EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
+
+add_library(safememory_dezombiefy_iterators STATIC
+  src/safe_ptr.cpp
+  src/string.cpp
+  src/nodecpp_error.cpp
+  src/detail/allocator_to_eastl.cpp
+  )
+
+target_compile_definitions(safememory_dezombiefy_iterators PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+
+target_include_directories(safememory_dezombiefy_iterators
+  PUBLIC include
+  PUBLIC src
+  )
+
+target_link_libraries(safememory_dezombiefy_iterators iibmalloc)
+target_link_libraries(safememory_dezombiefy_iterators EASTL EABase)
+
+#-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
 #-------------------------------------------------------------------------------------------
 
@@ -131,5 +150,6 @@ if (SAFEMEMORY_TEST)
 
   add_subdirectory(test/containers/benchmark)
   add_subdirectory(test/containers/test)
+  add_subdirectory(test/containers/dezombiefy)
 
 endif()

@@ -31,6 +31,7 @@
 #include <safememory/memory_safety.h>
 #include <safememory/detail/checker_attributes.h>
 #include <safememory/detail/array_iterator.h>
+#include <safe_memory_error.h>
 #include <EASTL/iterator.h>
 #include <EASTL/string_view.h>
 
@@ -55,7 +56,7 @@ namespace safememory
 		const value_type* str;
 		size_type sz = 0;
 
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
+		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
 		// static size_type GetSize(const value_type* ptr) {
 		// 	auto sz = eastl::CharStrlen(ptr);
 		// 	// TODO add size check in case size_type is different of size_t

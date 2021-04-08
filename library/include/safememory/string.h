@@ -33,6 +33,7 @@
 #include <safememory/detail/array_iterator.h>
 #include <safememory/string_literal.h>
 #include <safememory/functional.h> //for hash
+#include <safe_memory_error.h>
 
 namespace safememory
 {
@@ -631,8 +632,8 @@ namespace safememory
 		}
 
     protected:
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
-		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
 
         const base_type& toBase() const noexcept { return *this; }
 
@@ -746,8 +747,7 @@ namespace safememory
 
 	}; // basic_string
 
-	// non members operators, defined in terms of members ones
-	// to avoid having a lot of friends
+	// non members operators
 
 	template <typename T, memory_safety Safety>
 	inline bool operator==(const basic_string<T, Safety>& a, const basic_string<T, Safety>& b) {

@@ -44,6 +44,7 @@
 #include <safememory/safe_ptr.h>
 #include <safememory/detail/array_iterator.h>
 #include <safememory/detail/allocator_to_eastl.h>
+#include <safe_memory_error.h>
 
 namespace safememory
 {
@@ -275,8 +276,8 @@ public:
 	const_iterator_safe make_safe(const const_iterator& position) const { return makeSafeIt(toBase(position)); }
 
 protected:
-	[[noreturn]] static void ThrowRangeException(const char* msg) { throw std::out_of_range(msg); }
-	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw std::invalid_argument(msg); }
+	[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
+	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
 
 
 	pointer toBase(pointer it) const { return it; }
