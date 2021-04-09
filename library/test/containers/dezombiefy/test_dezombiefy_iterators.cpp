@@ -163,7 +163,7 @@ int testWithLest( int argc, char * argv[] )
 			auto it = m.begin_safe();
 			m.erase_safe(it);
 
-			int i;
+			volatile int i;
 
 			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
 			// hiting stack optimization or not
@@ -189,7 +189,7 @@ int testWithLest( int argc, char * argv[] )
 				m[1] = 1;
 				it = m.begin_safe();
 			}
-			int i;
+			volatile int i;
 			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
 			// hiting stack optimization or not
 			EXPECT_THROWS( i = it->second );
@@ -213,7 +213,8 @@ int testWithLest( int argc, char * argv[] )
 			auto it = m.begin();
 			m.erase(it);
 
-			EXPECT_THROWS_AS( it->first, nodecpp::error::memory_error );
+			volatile int i;
+			EXPECT_THROWS_AS( i = it->first, nodecpp::error::memory_error );
 		},
 
 	};

@@ -1061,15 +1061,11 @@ int TestHashMap()
 			try
 			{
 				hashMap.at(kCount);
-				EASTL_ASSERT_MSG(false, "at accessor did not throw out_of_range exception");
+				EATEST_VERIFY(false);
 			}
-			catch(const std::out_of_range) { }
-			catch(const std::exception& e)
-			{
-				std::string e_msg(e.what());
-				std::string msg = "wrong exception with message \"" + e_msg + "\" thrown";
-				EASTL_ASSERT_MSG(false, msg.c_str());
-			}
+			catch(const std::out_of_range) { EATEST_VERIFY(true); }
+			catch (nodecpp::error::memory_error&) { EATEST_VERIFY(true); }
+			catch(...) { EATEST_VERIFY(false); }
 		#endif
 		// typename HashMapIntInt::insert_return_type result = hashMap.insert(88888);
 		// EATEST_VERIFY(result.second == true);

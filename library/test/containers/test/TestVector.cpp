@@ -443,6 +443,7 @@ int TestVectorImpl()
 			EATEST_VERIFY(!(r01 == TestObject(0)));  // Should not get here, as exception thrown.
 		}
 		catch (std::out_of_range&) { EATEST_VERIFY(true); }
+		catch (nodecpp::error::memory_error&) { EATEST_VERIFY(true); }
 		catch (...) { EATEST_VERIFY(false); }
 #endif
 	}
