@@ -30,6 +30,7 @@
 
 #include <safememory/safe_ptr.h>
 #include <safememory/detail/array_iterator.h>
+#include <safememory/detail/instrument.h>
 #include <safe_memory_error.h>
 
 namespace safememory::detail {
@@ -110,7 +111,6 @@ namespace safememory::detail {
         }
 
 
-
 		hashtable_heap_safe_iterator() {}
 
 		hashtable_heap_safe_iterator(const this_type&) = default;
@@ -131,8 +131,13 @@ namespace safememory::detail {
 			return *this;
 		}
 
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+		reference operator*() const { return dezombiefy(mpNode->mValue); }
+		pointer operator->() const { return dezombiefy(&(mpNode->mValue)); }
+#else
 		reference operator*() const { return mpNode->mValue; }
 		pointer operator->() const { return &(mpNode->mValue); }
+#endif
 
 		this_type& operator++() {
 			increment();
@@ -149,7 +154,7 @@ namespace safememory::detail {
         bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(mpNodeBase, mpBucket.getRawUnsafe());
+			return BaseIt(mpNodeBase, mpBucket.toRaw());
 		}
 	}; // hashtable_heap_safe_iterator
 
@@ -204,7 +209,11 @@ namespace safememory::detail {
 
 		reference operator*() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+				return dezombiefy(base_type::operator*());
+#else
 				return base_type::operator*();
+#endif
 			}
 			else
 				throwRangeException("hashtable_stack_only_iterator::operator*");
@@ -212,7 +221,11 @@ namespace safememory::detail {
 
 		pointer operator->() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+				return dezombiefy(base_type::operator->());
+#else
 				return base_type::operator->();
+#endif
 			}
 			else
 				throwRangeException("hashtable_stack_only_iterator::operator->");
@@ -220,6 +233,9 @@ namespace safememory::detail {
 
 		this_type& operator++() {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+				dezombiefy(base_type::get_bucket());
+#endif
 				base_type::operator++();
 			}
 			return *this;

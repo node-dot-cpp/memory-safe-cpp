@@ -28,7 +28,7 @@
 #ifndef SAFE_MEMORY_DETAIL_INSTRUMENT_H
 #define SAFE_MEMORY_DETAIL_INSTRUMENT_H
 
-#include <safememory/safe_ptr.h>
+#include <safememory/detail/safe_ptr_common.h>
 #include <safe_memory_error.h>
 #include <utility>
 
@@ -40,6 +40,14 @@ using nodecpp::error::early_detected_zombie_pointer_access;
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 template<class T>
 T*& dezombiefy(T*& x) {
+	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
+		return x;
+	else
+		throw early_detected_zombie_pointer_access; 
+}
+
+template<class T>
+T* const & dezombiefy(T* const & x) {
 	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
 		return x;
 	else

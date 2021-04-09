@@ -684,14 +684,14 @@ namespace safememory
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return iterator::makePtr(base_type::data(), it, capacity());
+				return iterator::makePtr(base_type::data(), it, capacity(), static_cast<const base_type*>(this));
 		}
 		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, capacity());
+				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, capacity(), static_cast<const base_type*>(this));
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {

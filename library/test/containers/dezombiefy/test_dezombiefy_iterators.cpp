@@ -31,6 +31,7 @@
 #include <stdio.h>
 #include "../../../3rdparty/lest/include/lest/lest.hpp"
 #include <safememory/vector.h>
+#include <safememory/unordered_map.h>
 #include <safememory/safe_ptr.h>
 #include <iibmalloc.h>
 #include <nodecpp_assert.h>
@@ -40,19 +41,7 @@ int testWithLest( int argc, char * argv[] )
 {
 	const lest::test specification[] =
 	{
-		CASE( "zombie regular iterator" )
-		{
-			safememory::vector<int> v;
-
-			v.push_back(0);
-			auto it = v.begin();
-
-			v.pop_back();
-
-			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
-
-		CASE( "zombie safe iterator on the stack" )
+		CASE( "vector::iterator_safe, pop_back" )
 		{
 			safememory::vector<int> v;
 
@@ -64,21 +53,172 @@ int testWithLest( int argc, char * argv[] )
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
 		},
 
-		CASE( "zombie safe iterator on the stack, container destructed" )
+		CASE( "vector::iterator_safe, increment beyond end" )
+		{
+			safememory::vector<int> v;
+
+			v.reserve(10);
+			v.push_back(0);
+			auto it = v.begin_safe();
+
+			++it;
+
+			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
+		},
+
+		CASE( "vector::iterator_safe, increment end" )
+		{
+			safememory::vector<int> v;
+
+			v.reserve(10);
+			v.push_back(0);
+			auto ite = v.end_safe();
+
+			++ite;
+
+			EXPECT_THROWS_AS( v.insert_safe(ite, 5), nodecpp::error::memory_error );
+		},
+
+		CASE( "vector::iterator_safe, container destructed" )
 		{
 			safememory::vector<int>::iterator_safe it;
 			{
 				safememory::vector<int> v;
 				v.push_back(0);
 				it = v.begin_safe();
-			}
+			} 
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
 		},
 
+		CASE( "vector::iterator_safe, container realloc" )
+		{
+			safememory::vector<int> v;
+			v.push_back(0);
+			auto it = v.begin_safe();
+
+			v.reserve(100);
+
+			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
+		},
+
+////////////////////////////////
+
+		CASE( "vector::iterator, pop_back" )
+		{
+			safememory::vector<int> v;
+
+			v.push_back(0);
+			auto it = v.begin();
+
+			v.pop_back();
+
+			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
+		},
+
+		CASE( "vector::iterator, increment beyond end" )
+		{
+			safememory::vector<int> v;
+
+			v.reserve(10);
+			v.push_back(0);
+			auto it = v.begin();
+
+			++it;
+
+			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
+		},
+
+		CASE( "vector::iterator, increment end" )
+		{
+			safememory::vector<int> v;
+
+			v.reserve(10);
+			v.push_back(0);
+			auto ite = v.end();
+
+			++ite;
+
+			EXPECT_THROWS_AS( v.insert(ite, 5), nodecpp::error::memory_error );
+		},
+
+		CASE( "vector::iterator, container realloc" )
+		{
+			safememory::vector<int> v;
+			v.push_back(0);
+			auto it = v.begin();
+
+			v.reserve(100);
+
+			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
+		},
+
+
+////////////////////////////////
+
+		CASE( "unordered_map::iterator_safe, erase" )
+		{
+			safememory::unordered_map<int, int> m;
+			m[1] = 1;
+			auto it = m.begin_safe();
+			m.erase_safe(it);
+
+			int i;
+
+			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
+			// hiting stack optimization or not
+			EXPECT_THROWS( i = it->first );
+		},
+		CASE( "unordered_map::iterator_safe, container destructed, increment" )
+		{
+			safememory::unordered_map<int, int>::iterator_safe it;
+			{
+				safememory::unordered_map<int, int> m;
+				m[1] = 1;
+				it = m.begin_safe();
+			}
+			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
+			// hiting stack optimization or not
+			EXPECT_THROWS( ++it );
+		},
+		CASE( "unordered_map::iterator_safe, container destructed, deref" )
+		{
+			safememory::unordered_map<int, int>::iterator_safe it;
+			{
+				safememory::unordered_map<int, int> m;
+				m[1] = 1;
+				it = m.begin_safe();
+			}
+			int i;
+			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
+			// hiting stack optimization or not
+			EXPECT_THROWS( i = it->second );
+		},
+		CASE( "unordered_map::iterator, rehash" )
+		{
+			safememory::unordered_map<int, int> m;
+			m[1] = 1;
+			auto it = m.begin();
+
+			// trigger a rehash
+			for( int i = 2; i < 10; ++i)
+				m[i] = i;
+
+			EXPECT_THROWS_AS( ++it, nodecpp::error::memory_error );
+		},
+		CASE( "unordered_map::iterator, erase" )
+		{
+			safememory::unordered_map<int, int> m;
+			m[1] = 1;
+			auto it = m.begin();
+			m.erase(it);
+
+			EXPECT_THROWS_AS( it->first, nodecpp::error::memory_error );
+		},
+
 	};
 
-	int ret = lest::run( specification, argc, argv );
+	int ret = lest::run( specification, argc, argv ); 
 	return ret;
 }
 

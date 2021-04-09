@@ -347,6 +347,25 @@ public:
 		return getRawUnsafe();
 	}
 
+	pointer toRaw() const {
+
+		// currently only called from unordered_map::iterator
+		// the hashmap may have been rehashed, so we may be zombie
+		if constexpr (is_safe == memory_safety::safe) {
+			if(NODECPP_UNLIKELY(!(ix <= sz)))
+				ThrowRangeException();
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			else if(NODECPP_UNLIKELY(!isArrNotZombie()))
+				ThrowZombieException();
+			else if(NODECPP_UNLIKELY(size_func && !(ix <= size_func())))
+				ThrowZombieException();
+#endif
+		}
+
+		return getRawUnsafe();
+	}
+
+
 	/**
 	 * \brief convert a iterator pair to raw pointers.
 	 * 
@@ -400,6 +419,15 @@ public:
 			return arr ? arr->data() + tmp : nullptr;
 	}
 
+	bool isArrNotZombie() const {
+		if(!arr)
+			return true; //can't be zombie if null
+		if constexpr (is_raw_pointer)
+			return isPointerNotZombie(arr);
+		else
+			return isPointerNotZombie(arr->data());
+	}
+
 	protected:
 
 	/**
@@ -429,14 +457,6 @@ public:
 			return begin == (arr ? arr->data() : nullptr);
 	}
 
-	bool isArrNotZombie() const {
-		if(!arr)
-			return true; //can't be zombie if null
-		if constexpr (is_raw_pointer)
-			return isPointerNotZombie(arr);
-		else
-			return isPointerNotZombie(arr->data());
-	}
 };
 
 /**
@@ -477,7 +497,12 @@ protected:
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
 	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, size_type sz)
 		: base_type(arr, ix, sz) {}
-	/// this ctor is private because it is unsafe and shouldn't be reached by user
+
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, size_type sz, std::function<size_type()> size_func)
+		: base_type(arr, ix, sz, size_func) {}
+#endif
+
 	constexpr array_stack_only_iterator(const base_type& ri)
 		: base_type(ri) {}
 	constexpr array_stack_only_iterator(base_type&& ri)
@@ -497,6 +522,27 @@ public:
 
 		return makeIx(arr, base_type::getIndex(arr, to), sz);
 	}
+
+	template <typename Container>
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz, const Container* container) {
+
+		base_type::extraSanityCheck(arr, ix, sz);
+
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+
+	    std::function<size_type()> size_func = std::bind(&Container::size, container);
+		return this_type(arr, ix, sz, size_func);
+#else
+		return this_type(arr, ix, sz);
+#endif
+	}
+
+	template <typename Container>
+	static constexpr this_type makePtr(array_pointer arr, pointer to, size_type sz, const Container* container) {
+
+		return makeIx(arr, base_type::getIndex(arr, to), sz, container);
+	}
+
 
 	array_stack_only_iterator(const array_stack_only_iterator& ri) = default;
 	array_stack_only_iterator& operator=(const array_stack_only_iterator& ri) = default;
