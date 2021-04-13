@@ -299,7 +299,7 @@ protected:
 		if constexpr (use_base_iterator)
 			return it;
 		else
-			return const_iterator::makePtr(const_cast<T*>(data()), it, size());
+			return const_iterator::makePtr(const_cast<this_type*>(this)->data(), it, size());
 	}
 
 	iterator_safe makeSafeIt(pointer it) {

@@ -46,13 +46,13 @@ T*& dezombiefy(T*& x) {
 		throw early_detected_zombie_pointer_access; 
 }
 
-template<class T>
-T* const & dezombiefy(T* const & x) {
-	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
-		return x;
-	else
-		throw early_detected_zombie_pointer_access; 
-}
+// template<class T>
+// T* const & dezombiefy(T* const & x) {
+// 	if ( NODECPP_LIKELY( isPointerNotZombie( x ) ) )
+// 		return x;
+// 	else
+// 		throw early_detected_zombie_pointer_access; 
+// }
 
 // template<class T>
 // const T*& dezombiefy(const T*& x) {
@@ -80,6 +80,31 @@ T& dezombiefy(T& x) {
 #else
 #define dezombiefy( x ) (x)
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
+
+
+/**
+ * \brief Dezombiefy functions used by iterators are enabled by template parameter
+ * 
+ * When a soft_ptr hits stack optimization, it can potencially point to a zombie object
+ * as destruction info is not feed back.
+ * When we are dozombiefying we must either disable stack optimization or dezombiefy \c soft_ptr
+ * same way we do with raw pointers.
+ */
+template<typename> class soft_ptr_no_checks; //fwd
+
+template<class T>
+void dezombiefySoftPtr(const soft_ptr_no_checks<T>& x) { } //TODO
+
+template<typename> class soft_ptr_impl; //fwd
+
+template<class T>
+void dezombiefySoftPtr(const soft_ptr_impl<T>& x) { } //TODO
+
+template<class T>
+void dezombiefyRawPtr(T* x) {
+	if ( NODECPP_UNLIKELY( !isPointerNotZombie( x ) ) )
+		throw early_detected_zombie_pointer_access; 
+}
 
 
 template<class T1, class T2>

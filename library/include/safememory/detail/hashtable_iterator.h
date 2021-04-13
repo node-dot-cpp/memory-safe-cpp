@@ -79,6 +79,12 @@ namespace safememory::detail {
 
 		void increment()
 		{
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			dezombiefySoftPtr(mpNode);
+//			mpBucket.checkArrNotZombie();
+			// mb: mpBucket will do its own dezombiefy
+#endif
+
 			// mb: *mpBucket will be != nullptr at 'end()' sentinel
 			// 		but 'to_soft' will convert it to a null
 			mpNodeBase = mpNode->mpNext;
@@ -131,13 +137,19 @@ namespace safememory::detail {
 			return *this;
 		}
 
+		reference operator*() const {
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-		reference operator*() const { return dezombiefy(mpNode->mValue); }
-		pointer operator->() const { return dezombiefy(&(mpNode->mValue)); }
-#else
-		reference operator*() const { return mpNode->mValue; }
-		pointer operator->() const { return &(mpNode->mValue); }
+			dezombiefySoftPtr(mpNode);
 #endif
+			return mpNode->mValue;
+		}
+
+		pointer operator->() const {
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+			dezombiefySoftPtr(mpNode);
+#endif
+			return std::addressof(mpNode->mValue);
+		}
 
 		this_type& operator++() {
 			increment();
@@ -210,10 +222,9 @@ namespace safememory::detail {
 		reference operator*() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-				return dezombiefy(base_type::operator*());
-#else
-				return base_type::operator*();
+				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif
+				return base_type::operator*();
 			}
 			else
 				throwRangeException("hashtable_stack_only_iterator::operator*");
@@ -222,10 +233,9 @@ namespace safememory::detail {
 		pointer operator->() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-				return dezombiefy(base_type::operator->());
-#else
-				return base_type::operator->();
+				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif
+				return base_type::operator->();
 			}
 			else
 				throwRangeException("hashtable_stack_only_iterator::operator->");
@@ -234,7 +244,8 @@ namespace safememory::detail {
 		this_type& operator++() {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-				dezombiefy(base_type::get_bucket());
+				dezombiefyRawPtr(base_type::mpBucket);
+				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif
 				base_type::operator++();
 			}

@@ -684,14 +684,14 @@ namespace safememory
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return iterator::makePtr(base_type::data(), it, capacity(), static_cast<const base_type*>(this));
+				return iterator::makePtr(base_type::data(), it, static_cast<const base_type*>(this));
 		}
 		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<T*>(base_type::data()), it, capacity(), static_cast<const base_type*>(this));
+				return const_iterator::makePtr(const_cast<this_type*>(this)->base_type::data(), it, static_cast<const base_type*>(this));
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -719,7 +719,7 @@ namespace safememory
 			
 			//mb: now the buffer should be on the heap
 			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, capacity(), static_cast<const base_type*>(this));
+			return iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, static_cast<const base_type*>(this));
 		}
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
@@ -734,7 +734,7 @@ namespace safememory
 
 			//mb: now the buffer should be on the heap
 			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return const_iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, capacity(), static_cast<const base_type*>(this));
+			return const_iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, static_cast<const base_type*>(this));
 		}
 
 		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {
