@@ -267,7 +267,7 @@ public:
 	template<class T>
 	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
 		// for non trivial types, always zero memory
-		return allocate_flexible_array_helper<is_safe, T, !std::is_trivial<T>::value>(count);
+		return allocate_flexible_array_helper<is_safe, T, false>(count);
 	}
 
 	template<class T>

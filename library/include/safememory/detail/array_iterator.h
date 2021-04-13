@@ -34,6 +34,7 @@
 #include <safememory/memory_safety.h>
 #include <nodecpp_assert.h>
 #include <safe_memory_error.h>
+#include <safememory/detail/instrument.h>
 
 namespace safememory::detail {
 
@@ -451,10 +452,10 @@ public:
 	void checkArrNotZombie() const {
 		// assert _array != null
 		if constexpr (is_raw_pointer) {
-			dezombiefyRaw(_array);
+			dezombiefyRawPtr(_array);
 		}
 		else {
-			dezombiefySoft(_array);
+			dezombiefySoftPtr(_array);
 		}
 	}
 

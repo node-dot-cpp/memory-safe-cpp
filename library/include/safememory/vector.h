@@ -80,11 +80,18 @@ namespace safememory
 		typedef typename base_type::allocator_type                         allocator_type;
 		typedef typename base_type::array_type                             array_type;
 
+#ifdef SAFEMEMORY_DEZOMBIEFY_VECTOR_ITERATOR
+		static constexpr bool dz_it = true;
+#else
+		// mb: we use non dezombifing iterator only for trivialy copyable elements
+		static constexpr bool dz_it = !std::is_trivially_copyable<T>::value;
+#endif
+
 		typedef typename allocator_type::template soft_array_pointer<T>            soft_ptr_type;
-		typedef typename detail::array_stack_only_iterator<T, false, T*>           stack_only_iterator;
-		typedef typename detail::array_stack_only_iterator<T, true, T*>            const_stack_only_iterator;
-		typedef typename detail::array_heap_safe_iterator<T, false, soft_ptr_type> heap_safe_iterator;
-		typedef typename detail::array_heap_safe_iterator<T, true, soft_ptr_type>  const_heap_safe_iterator;
+		typedef typename detail::array_stack_only_iterator<T, false, T*, dz_it>           stack_only_iterator;
+		typedef typename detail::array_stack_only_iterator<T, true, T*, dz_it>            const_stack_only_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, false, soft_ptr_type, dz_it> heap_safe_iterator;
+		typedef typename detail::array_heap_safe_iterator<T, true, soft_ptr_type, dz_it>  const_heap_safe_iterator;
 
 		static constexpr bool use_base_iterator = Safety == memory_safety::none;
 		
