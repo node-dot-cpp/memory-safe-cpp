@@ -13,6 +13,7 @@ add_subdirectory(3rdparty/EABase)
 add_subdirectory(3rdparty/EASTL)
 
 target_compile_definitions(EASTL PUBLIC EASTL_EXCEPTIONS_ENABLED)
+target_compile_definitions(EASTL PUBLIC EASTL_STRING_OPT_RANGE_ERRORS=0)
 target_compile_definitions(EASTL PUBLIC EASTL_STD_ITERATOR_CATEGORY_ENABLED)
 target_compile_definitions(EASTL PUBLIC EASTL_EASTDC_VSNPRINTF=0)
 

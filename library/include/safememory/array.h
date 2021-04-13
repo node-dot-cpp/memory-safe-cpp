@@ -188,7 +188,7 @@ public:
 	constexpr reference       operator[](size_type i) {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(i >= size()))
-				ThrowRangeException("array::operator[] -- out of range");
+				ThrowRangeException();
 		}
 
 		return data()[i];
@@ -197,7 +197,7 @@ public:
 	constexpr const_reference operator[](size_type i) const {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(i >= size()))
-				ThrowRangeException("array::operator[] -- out of range");
+				ThrowRangeException();
 		}
 
 		return data()[i];
@@ -206,7 +206,7 @@ public:
 	constexpr const_reference at(size_type i) const {
 		// check regarless of safety
 		if(NODECPP_UNLIKELY(i >= size()))
-			ThrowRangeException("array::at -- out of range");
+			ThrowRangeException();
 
 		return data()[i];
 	}
@@ -214,7 +214,7 @@ public:
 	constexpr reference       at(size_type i) {
 		// check regarless of safety
 		if(NODECPP_UNLIKELY(i >= size()))
-			ThrowRangeException("array::at -- out of range");
+			ThrowRangeException();
 
 		return data()[i];
 	}
@@ -222,7 +222,7 @@ public:
 	constexpr reference       front() {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("array::front -- empty array");
+				ThrowRangeException();
 		}
 
 		return data()[0];
@@ -231,7 +231,7 @@ public:
 	constexpr const_reference front() const {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("array::front -- empty array");
+				ThrowRangeException();
 		}
 
 		return data()[0];
@@ -240,7 +240,7 @@ public:
 	constexpr reference       back() {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("array::front -- empty array");
+				ThrowRangeException();
 		}
 
 		return data()[size() -1];
@@ -249,7 +249,7 @@ public:
 	constexpr const_reference back() const {
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("array::front -- empty array");
+				ThrowRangeException();
 		}
 
 		return data()[size() - 1];
@@ -276,8 +276,7 @@ public:
 	const_iterator_safe make_safe(const const_iterator& position) const { return makeSafeIt(toBase(position)); }
 
 protected:
-	[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
-	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
+	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
 
 	pointer toBase(pointer it) const { return it; }

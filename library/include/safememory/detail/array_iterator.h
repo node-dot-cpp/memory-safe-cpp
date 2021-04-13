@@ -161,8 +161,7 @@ protected:
 
 	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 	[[noreturn]] static void ThrowNullException() { throw nodecpp::error::out_of_range; }
-	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
-	[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
+	[[noreturn]] static void ThrowInvalidArgumentException() { throw nodecpp::error::out_of_range; }
 
 	static constexpr void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
 
@@ -275,7 +274,7 @@ public:
 		if(_array == ri._array)
 			return static_cast<difference_type>(_index) - static_cast<difference_type>(ri._index);
 		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::operator-");
+			ThrowInvalidArgumentException();
 	}
 
 	bool operator==(const this_type& ri) const noexcept {
@@ -285,7 +284,7 @@ public:
 		else if(!_array || !ri._array)
 			return false;
 		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::operator==");
+			ThrowInvalidArgumentException();
 	}
 
 	bool operator!=(const this_type& ri) const noexcept {
@@ -301,7 +300,7 @@ public:
 		else if(!ri._array)
 			return false;
 		else
-			ThrowInvalidArgumentException("array_heap_safe_iterator::operator<");
+			ThrowInvalidArgumentException();
 	}
 
 	bool operator>(const this_type& ri) const noexcept {

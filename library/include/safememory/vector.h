@@ -80,7 +80,7 @@ namespace safememory
 		typedef typename base_type::allocator_type                         allocator_type;
 		typedef typename base_type::array_type                             array_type;
 
-#ifdef SAFEMEMORY_DEZOMBIEFY_VECTOR_ITERATOR
+#ifdef SAFEMEMORY_DEZOMBIEFY
 		static constexpr bool dz_it = true;
 #else
 		// mb: we use non dezombifing iterator only for trivialy copyable elements
@@ -355,9 +355,7 @@ namespace safememory
 		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
 
 	protected:
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
-		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
-		[[noreturn]] static void ThrowMaxSizeException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
 
         const base_type& toBase() const noexcept { return *this; }
@@ -494,7 +492,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(n >= size()))
-				ThrowRangeException("vector::operator[] -- out of range");
+				ThrowRangeException();
 		}
 
 		return base_type::operator[](n);
@@ -507,7 +505,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(n >= size()))
-				ThrowRangeException("vector::operator[] -- out of range");
+				ThrowRangeException();
 		}
 
 		return base_type::operator[](n);
@@ -519,7 +517,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(n >= size()))
-				ThrowRangeException("vector::at -- out of range");
+				ThrowRangeException();
 
 			//now return unckeched
 			return base_type::operator[](n);
@@ -535,7 +533,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(n >= size()))
-				ThrowRangeException("vector::at -- out of range");
+				ThrowRangeException();
 
 			//now return unckeched
 			return base_type::operator[](n);
@@ -551,7 +549,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("vector::front -- empty vector");
+				ThrowRangeException();
 		}
 
 		return base_type::front();
@@ -564,7 +562,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("vector::front -- empty vector");
+				ThrowRangeException();
 		}
 
 		return base_type::front();
@@ -577,7 +575,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("vector::front -- empty vector");
+				ThrowRangeException();
 		}
 
 		return base_type::back();
@@ -590,7 +588,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("vector::front -- empty vector");
+				ThrowRangeException();
 		}
 
 		return base_type::back();
@@ -602,7 +600,7 @@ namespace safememory
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(empty()))
-				ThrowRangeException("vector::pop_back -- empty vector");
+				ThrowRangeException();
 		}
 
 		return base_type::pop_back();

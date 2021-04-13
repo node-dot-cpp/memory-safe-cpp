@@ -28,8 +28,6 @@
 #ifndef SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR
 #define SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR
 
-#include <safememory/safe_ptr.h>
-#include <safememory/detail/array_iterator.h>
 #include <safememory/detail/instrument.h>
 #include <safe_memory_error.h>
 
@@ -60,22 +58,15 @@ namespace safememory::detail {
 		template<typename TT>
 		static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
 
-		// template <typename, typename, typename, typename, memory_safety>
-		// friend class unordered_map;
-
-
-
-        typedef soft_ptr<node_type, allocator_type::is_safe>                        node_ptr;
-		typedef typename allocator_type::template pointer<node_type>                base_node_ptr;
-		typedef typename allocator_type::template array_pointer<base_node_ptr>                 t2;
-		typedef typename allocator_type::template soft_array_pointer<base_node_ptr>            soft_bucket_type;
-		// typedef typename detail::array_heap_safe_iterator<base_node_ptr, false, soft_bucket_type> bucket_iterator;
-
+        typedef typename allocator_type::template soft_pointer<node_type>             soft_node_ptr;
+		typedef typename allocator_type::template pointer<node_type>                  zero_node_ptr;
+		typedef typename allocator_type::template array_pointer<zero_node_ptr>        zero_bucket_arr;
+		typedef typename allocator_type::template soft_array_pointer<zero_node_ptr>   soft_bucket_arr;
 		
 
-		base_node_ptr   mpNodeBase;        // current node, in zero_offset kind
-		node_ptr    	mpNode;            // current node, in soft_ptr kind
-		soft_bucket_type mpBucketArr;      // soft_ptr to bucket array
+		zero_node_ptr    mpNodeBase;        // current node, in zero_offset_ptr
+		soft_node_ptr    mpNode;            // current node, in soft_ptr
+		soft_bucket_arr  mpBucketArr;      // soft_ptr to bucket array
 		uint32_t		 mCurrBucket = 0;  // index of current bucket
 
 
@@ -86,8 +77,6 @@ namespace safememory::detail {
 			dezombiefySoftPtr(mpBucketArr);
 #endif
 
-			// mb: *mpBucket will be != nullptr at 'end()' sentinel
-			// 		but 'to_soft' will convert it to a null
 			mpNodeBase = mpNode->mpNext;
 
 			while(mpNodeBase == NULL) {
@@ -101,16 +90,11 @@ namespace safememory::detail {
 				mpNode = allocator_type::to_soft(mpNodeBase);
 		}
 
-
-		// hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, const node_ptr& node, const bucket_iterator& bucket)
-		// 	: mpNodeBase(nodeBase), mpNode(node), mpBucket(bucket) { }
-
-		hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, node_ptr&& node, const t2& bucketArr, uint32_t currBucket)
+		hashtable_heap_safe_iterator(const zero_node_ptr& nodeBase, soft_node_ptr&& node, const zero_bucket_arr& bucketArr, uint32_t currBucket)
 			: mpNodeBase(nodeBase), mpNode(std::move(node)), mpBucketArr(allocator_type::to_soft(bucketArr)), mCurrBucket(currBucket) { }
 
     public:
-		// template<class Ptr>
-        static this_type makeIt(const BaseIt& it, const t2& heap_zero_ptr, uint32_t sz) {
+        static this_type makeIt(const BaseIt& it, const zero_bucket_arr& heap_zero_ptr, uint32_t sz) {
 
 			if(allocator_type::is_empty_hashtable(heap_zero_ptr))
 				return {};
@@ -125,23 +109,6 @@ namespace safememory::detail {
 				return { it.get_node(), allocator_type::to_soft(it.get_node()), heap_zero_ptr, static_cast<uint32_t>(ix) };
 			}
         }
-
-		// template<class Ptr>
-        // static this_type makeIt(const BaseIt& it, const t2& heap_ptr, uint32_t sz) {
-		// 	//mb: on empty hashtable, heap_ptr will be != nullptr
-		// 	//    but 'to_soft' will convert it to a null
-		// 	// auto node = it.get_node();
-		// 	// auto curr_bucket = it.get_bucket();
-		// 	// auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
-		// 	if(allocator_type::is_empty_hashtable(heap_ptr))
-		// 		return this_type();//empty hashtable
-
-
-		// 	auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz);
-		// 	auto safe_node = allocator_type::to_soft(it.get_node()); 
-		// 	return this_type(it.get_node(), safe_node, safe_it);
-        // }
-
 
 		hashtable_heap_safe_iterator() {}
 
@@ -227,7 +194,7 @@ namespace safememory::detail {
 
 		// typedef typename allocator_type::template pointer_types<node_type>::pointer   node_pointer;
 
-		[[noreturn]] static void throwRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
     public:
 		hashtable_stack_only_iterator() :base_type() { }
@@ -256,7 +223,7 @@ namespace safememory::detail {
 				return base_type::operator*();
 			}
 			else
-				throwRangeException("hashtable_stack_only_iterator::operator*");
+				ThrowRangeException();
 		}
 
 		pointer operator->() const {
@@ -267,7 +234,7 @@ namespace safememory::detail {
 				return base_type::operator->();
 			}
 			else
-				throwRangeException("hashtable_stack_only_iterator::operator->");
+				ThrowRangeException();
 		}
 
 		this_type& operator++() {

@@ -51,8 +51,8 @@
 
 namespace safememory::detail {
 
-extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_impl<char>> gpSafeMemoryEmptyBucketArrayImpl;
-extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_no_checks<char>> gpSafeMemoryEmptyBucketArrayNoChecks;
+extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArrayImpl;
+extern flexible_array_with_memory<2, soft_ptr_with_zero_offset_base> gpSafeMemoryEmptyBucketArrayNoChecks;
 extern void* gpSafeMemoryEmptyBucketArrayRaw[];
 
 
@@ -262,6 +262,9 @@ public:
 	using array_pointer = soft_ptr_with_zero_offset_impl<flexible_array<T>>;
 
 	template<class T>
+	using soft_pointer = soft_ptr_impl<T>;
+
+	template<class T>
 	using soft_array_pointer = soft_ptr_impl<flexible_array<T>>;
 
 	template<class T>
@@ -370,6 +373,9 @@ public:
 
 	template<class T>
 	using array_pointer = soft_ptr_with_zero_offset_no_checks<flexible_array<T>>;
+
+	template<class T>
+	using soft_pointer = soft_ptr_no_checks<T>;
 
 	template<class T>
 	using soft_array_pointer = soft_ptr_no_checks<flexible_array<T>>;

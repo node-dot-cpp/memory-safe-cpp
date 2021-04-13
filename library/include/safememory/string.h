@@ -62,7 +62,7 @@ namespace safememory
 		typedef typename base_type::difference_type             difference_type;
 		typedef typename base_type::allocator_type              allocator_type;
 
-#ifdef SAFEMEMORY_DEZOMBIEFY_STRING_ITERATOR
+#ifdef SAFEMEMORY_DEZOMBIEFY
 		static constexpr bool dz_it = true;
 #else
 		static constexpr bool dz_it = false;
@@ -353,7 +353,7 @@ namespace safememory
 		void pop_back() {
 			if constexpr (Safety == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(empty())) {
-					ThrowRangeException("basic_string::pop_back -- empty string");
+					ThrowRangeException();
 				}
 			}
 			base_type::pop_back();
@@ -637,8 +637,8 @@ namespace safememory
 		}
 
     protected:
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
-		[[noreturn]] static void ThrowInvalidArgumentException(const char* msg) { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowInvalidArgumentException() { throw nodecpp::error::out_of_range; }
 
         const base_type& toBase() const noexcept { return *this; }
 
@@ -675,7 +675,7 @@ namespace safememory
             #if !EASTL_STRING_OPT_RANGE_ERRORS
                 if constexpr (Safety == memory_safety::safe) {
                     if(NODECPP_UNLIKELY(position > size())) {
-                        ThrowInvalidArgumentException("vector -- invalid argument");
+                        ThrowInvalidArgumentException();
                     }
                 }
             #endif

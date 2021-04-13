@@ -56,11 +56,7 @@ namespace safememory
 		const value_type* str;
 		size_type sz = 0;
 
-		[[noreturn]] static void ThrowRangeException(const char* msg) { throw nodecpp::error::out_of_range; }
-		// static size_type GetSize(const value_type* ptr) {
-		// 	auto sz = eastl::CharStrlen(ptr);
-		// 	// TODO add size check in case size_type is different of size_t
-		// 	return static_cast<size_type>(sz); }
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
 	public:
 		
@@ -99,7 +95,7 @@ namespace safememory
 		constexpr const_reference at(size_type i) const {
 			if constexpr(is_safe == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(i >= size()))
-					ThrowRangeException("basic_string_literal::at -- out of range");
+					ThrowRangeException();
 			}
 
 			return str[i];
@@ -109,7 +105,7 @@ namespace safememory
 		constexpr const_reference front() const {
 			if constexpr(is_safe == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(empty()))
-					ThrowRangeException("basic_string_literal::front -- empty vector");
+					ThrowRangeException();
 			}
 
 			return str[0];
@@ -118,7 +114,7 @@ namespace safememory
 		constexpr const_reference back() const {
 			if constexpr(is_safe == memory_safety::safe) {
 				if(NODECPP_UNLIKELY(empty()))
-					ThrowRangeException("basic_string_literal::back -- empty vector");
+					ThrowRangeException();
 			}
 
 			return str[size() - 1];
