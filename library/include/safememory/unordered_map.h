@@ -372,11 +372,11 @@ namespace safememory
         }
 
         iterator_safe makeSafeIt(const iterator_base& it) const {
-			return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
+			return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
         }
 
         const_iterator_safe makeSafeIt(const const_iterator_base& it) const {
-			return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount + 1);
+			return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
         }
 
         insert_return_type_safe makeSafeIt(const insert_return_type_base& r) const {

@@ -68,53 +68,79 @@ namespace safememory::detail {
         typedef soft_ptr<node_type, allocator_type::is_safe>                        node_ptr;
 		typedef typename allocator_type::template pointer<node_type>                base_node_ptr;
 		typedef typename allocator_type::template array_pointer<base_node_ptr>                 t2;
-		typedef typename allocator_type::template soft_array_pointer<base_node_ptr>            soft_ptr_type;
-		typedef typename detail::array_heap_safe_iterator<base_node_ptr, false, soft_ptr_type> bucket_iterator;
+		typedef typename allocator_type::template soft_array_pointer<base_node_ptr>            soft_bucket_type;
+		// typedef typename detail::array_heap_safe_iterator<base_node_ptr, false, soft_bucket_type> bucket_iterator;
 
 		
 
-		base_node_ptr   mpNodeBase;
-		node_ptr    	mpNode;      // Current node within current bucket.
-		bucket_iterator mpBucket;    // Current bucket.
+		base_node_ptr   mpNodeBase;        // current node, in zero_offset kind
+		node_ptr    	mpNode;            // current node, in soft_ptr kind
+		soft_bucket_type mpBucketArr;      // soft_ptr to bucket array
+		uint32_t		 mCurrBucket = 0;  // index of current bucket
+
 
 		void increment()
 		{
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
 			dezombiefySoftPtr(mpNode);
-//			mpBucket.checkArrNotZombie();
-			// mb: mpBucket will do its own dezombiefy
+			dezombiefySoftPtr(mpBucketArr);
 #endif
 
 			// mb: *mpBucket will be != nullptr at 'end()' sentinel
 			// 		but 'to_soft' will convert it to a null
 			mpNodeBase = mpNode->mpNext;
 
-			while(mpNodeBase == NULL)
-				mpNodeBase = *++mpBucket;
+			while(mpNodeBase == NULL) {
+				++mCurrBucket;
+				mpNodeBase = *(mpBucketArr->data() + mCurrBucket);
+			}
 
-			mpNode = allocator_type::to_soft(mpNodeBase);
+			if(allocator_type::is_hashtable_sentinel(mpNodeBase))
+				mpNode = nullptr;
+			else
+				mpNode = allocator_type::to_soft(mpNodeBase);
 		}
 
 
-		hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, const node_ptr& node, const bucket_iterator& bucket)
-			: mpNodeBase(nodeBase), mpNode(node), mpBucket(bucket) { }
+		// hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, const node_ptr& node, const bucket_iterator& bucket)
+		// 	: mpNodeBase(nodeBase), mpNode(node), mpBucket(bucket) { }
+
+		hashtable_heap_safe_iterator(const base_node_ptr& nodeBase, node_ptr&& node, const t2& bucketArr, uint32_t currBucket)
+			: mpNodeBase(nodeBase), mpNode(std::move(node)), mpBucketArr(allocator_type::to_soft(bucketArr)), mCurrBucket(currBucket) { }
 
     public:
 		// template<class Ptr>
-        static this_type makeIt(const BaseIt& it, const t2& heap_ptr, uint32_t sz) {
-			//mb: on empty hashtable, heap_ptr will be != nullptr
-			//    but 'to_soft' will convert it to a null
-			// auto node = it.get_node();
-			// auto curr_bucket = it.get_bucket();
-			// auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
-			if(allocator_type::is_empty_hashtable(heap_ptr))
-				return this_type();//empty hashtable
+        static this_type makeIt(const BaseIt& it, const t2& heap_zero_ptr, uint32_t sz) {
+
+			if(allocator_type::is_empty_hashtable(heap_zero_ptr))
+				return {};
 
 
-			auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz);
-			auto safe_node = allocator_type::to_soft(it.get_node()); 
-			return this_type(it.get_node(), safe_node, safe_it);
+			auto ix = it.get_bucket() - heap_zero_ptr->data();
+			if(allocator_type::is_hashtable_sentinel(it.get_node())) {
+				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix == sz);
+				return { it.get_node(), {nullptr}, heap_zero_ptr, static_cast<uint32_t>(ix) };
+			}
+			else {
+				return { it.get_node(), allocator_type::to_soft(it.get_node()), heap_zero_ptr, static_cast<uint32_t>(ix) };
+			}
         }
+
+		// template<class Ptr>
+        // static this_type makeIt(const BaseIt& it, const t2& heap_ptr, uint32_t sz) {
+		// 	//mb: on empty hashtable, heap_ptr will be != nullptr
+		// 	//    but 'to_soft' will convert it to a null
+		// 	// auto node = it.get_node();
+		// 	// auto curr_bucket = it.get_bucket();
+		// 	// auto soft_heap_ptr = allocator_type::to_soft(heap_ptr);
+		// 	if(allocator_type::is_empty_hashtable(heap_ptr))
+		// 		return this_type();//empty hashtable
+
+
+		// 	auto safe_it = bucket_iterator::makePtr(allocator_type::to_soft(heap_ptr), it.get_bucket(), sz);
+		// 	auto safe_node = allocator_type::to_soft(it.get_node()); 
+		// 	return this_type(it.get_node(), safe_node, safe_it);
+        // }
 
 
 		hashtable_heap_safe_iterator() {}
@@ -127,13 +153,16 @@ namespace safememory::detail {
 
 		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
 		hashtable_heap_safe_iterator(const Other& other)
-			: mpNodeBase(other.mpNodeBase), mpNode(other.mpNode), mpBucket(other.mpBucket) {}
+			: mpNodeBase(other.mpNodeBase), mpNode(other.mpNode), mpBucketArr(other.mpBucketArr),
+				mCurrBucket(other.mCurrBucket) { }
 
 		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
 		hashtable_heap_safe_iterator& operator=(const Other& other) {
 			this->mpNodeBase = other.mpNodeBase;
 			this->mpNode = other.mpNode;
-			this->mpBucket = other.mpBucket;
+			this->mpBucketArr = other.mpBucketArr;
+			this->mCurrBucket = other.mCurrBucket;
+
 			return *this;
 		}
 
@@ -162,11 +191,11 @@ namespace safememory::detail {
 			return temp;
 		}
 
-        bool operator==(const this_type other) const { return mpNode == other.mpNode; }
-        bool operator!=(const this_type other) const { return mpNode != other.mpNode; }
+        bool operator==(const this_type other) const { return mpNode == other.mpNode && mpBucketArr == other.mpBucketArr; }
+        bool operator!=(const this_type other) const { return !operator==(other); }
 
 		BaseIt toBase() const noexcept {
-			return BaseIt(mpNodeBase, mpBucket.toRaw());
+			return BaseIt(mpNodeBase, mpBucketArr->data() + mCurrBucket);
 		}
 	}; // hashtable_heap_safe_iterator
 

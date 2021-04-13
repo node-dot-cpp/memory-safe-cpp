@@ -451,7 +451,8 @@ public:
 
 	template<class T>
 	static soft_ptr_impl<T> to_soft(const pointer<T>& p) {
-		if(p && !is_hashtable_sentinel(p)) {
+		if(p) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, !is_hashtable_sentinel(p));
 			auto ptr = p.get_raw_ptr();
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 			auto allocatorID = p.get_allocator_id();
@@ -467,7 +468,8 @@ public:
 
 	template<class T>
 	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
-		if(p && !is_empty_hashtable(p)) {
+		if(p) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, !is_empty_hashtable(p));
 			auto ptr = p.get_array_of_ptr();
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 			auto allocatorID = p.get_allocator_id();
@@ -511,7 +513,8 @@ public:
 
 	template<class T>
 	static soft_ptr_no_checks<T> to_soft(const pointer<T>& p) {
-		if(p && !is_hashtable_sentinel(p)) {
+		if(p) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, !is_hashtable_sentinel(p));
 			auto ptr =p.get_raw_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
 		}
@@ -521,7 +524,8 @@ public:
 
 	template<class T>
 	static soft_array_pointer<T> to_soft(const array_pointer<T>& p) {
-		if(p && !is_empty_hashtable(p)) {
+		if(p) {
+			NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, !is_empty_hashtable(p));
 			auto ptr = p.get_array_of_ptr();
 			return soft_ptr_helper::make_soft_ptr_no_checks(fbc_ptr_t(), ptr);
 		}
