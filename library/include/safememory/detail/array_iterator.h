@@ -38,14 +38,6 @@
 
 namespace safememory::detail {
 
-//#define SAFEMEMORY_DEZOMBIEFY_ITERATORS
-
-#if !defined(SAFEMEMORY_DEZOMBIEFY_ITERATORS)
-#if defined(SAFEMEMORY_DEZOMBIEFY) && !defined(NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION)
-#define SAFEMEMORY_DEZOMBIEFY_ITERATORS
-#endif
-#endif
-
 /**
  * \brief Safe and generic iterator for arrays.
  * 

@@ -53,7 +53,7 @@ namespace safememory
 		static constexpr memory_safety is_safe = Safety;
 
 	private:
-		const value_type* str;
+		const value_type* str = nullptr;
 		size_type sz = 0;
 
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
@@ -62,12 +62,13 @@ namespace safememory
 		
 		template<size_t N>
 		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) { static_assert(N >= 1); }
-		// basic_string_literal(const value_type* ptr, size_type n) : str(ptr), sz(n) {}
 
 		basic_string_literal(const basic_string_literal& other) = default;
 		basic_string_literal& operator=(const basic_string_literal& other) = default;
 		basic_string_literal(basic_string_literal&& other) = default;
 		basic_string_literal& operator=(basic_string_literal&& other) = default;
+
+		~basic_string_literal() = default; // string literals have infinite lifetime, no need to zero pointers
 
 		constexpr const_iterator_safe begin() const noexcept { return const_iterator_safe::makeIx(str, 0, size()); }
 		constexpr const_iterator_safe cbegin() const noexcept { return const_iterator_safe::makeIx(str, 0, size()); }

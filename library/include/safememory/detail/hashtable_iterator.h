@@ -72,7 +72,7 @@ namespace safememory::detail {
 
 		void increment()
 		{
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 			dezombiefySoftPtr(mpNode);
 			dezombiefySoftPtr(mpBucketArr);
 #endif
@@ -134,14 +134,14 @@ namespace safememory::detail {
 		}
 
 		reference operator*() const {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 			dezombiefySoftPtr(mpNode);
 #endif
 			return mpNode->mValue;
 		}
 
 		pointer operator->() const {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 			dezombiefySoftPtr(mpNode);
 #endif
 			return std::addressof(mpNode->mValue);
@@ -217,7 +217,7 @@ namespace safememory::detail {
 
 		reference operator*() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif
 				return base_type::operator*();
@@ -228,7 +228,7 @@ namespace safememory::detail {
 
 		pointer operator->() const {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif
 				return base_type::operator->();
@@ -239,7 +239,7 @@ namespace safememory::detail {
 
 		this_type& operator++() {
 			if(NODECPP_LIKELY(base_type::mpNode && !allocator_type::is_hashtable_sentinel(base_type::mpNode))) {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+#ifdef SAFEMEMORY_DEZOMBIEFY
 				dezombiefyRawPtr(base_type::mpBucket);
 				dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
 #endif

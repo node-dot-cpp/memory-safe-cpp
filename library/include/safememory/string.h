@@ -152,6 +152,13 @@ namespace safememory
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
 
+	   ~basic_string() {
+		   base_type::internalLayout().ResetToSSO();
+
+			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
+	   }
+
+
 		// unsafe
 		template<class V>
 		static basic_string make_sprintf_unsafe(const value_type* pFormat, V value) {
@@ -159,8 +166,6 @@ namespace safememory
 			str.base_type::append_sprintf(pFormat, value);
 			return str;
 		}
-
-	   ~basic_string() = default;
 
 		// Implicit conversion operator
 		// operator basic_string_view<T>() const EA_NOEXCEPT;

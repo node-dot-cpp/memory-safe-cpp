@@ -123,9 +123,37 @@ public:
 		eastl::uninitialized_default_fill(r, end_unsafe());
 	}
 
+	array(const array& other) {
+		eastl::uninitialized_copy_ptr(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
+	}
+
+	array(array&& other) {
+		eastl::uninitialized_move_ptr(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
+	}
+
+	array& operator=(const array& other) {
+
+		if(this == std::addressof(other))
+			return *this;
+
+		eastl::copy(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
+		return *this;
+	}
+
+	array& operator=(array&& other) {
+
+		if(this == std::addressof(other))
+			return *this;
+
+		eastl::move(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
+		return *this;
+	}
+
 	/* constexpr */
 	~array() {
 		eastl::destruct(begin_unsafe(), end_unsafe());
+
+		forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
 	}
 
 	constexpr bool empty() const noexcept { return N == 0; }

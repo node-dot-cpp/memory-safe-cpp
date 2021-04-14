@@ -63,7 +63,7 @@ index ad20e4d..663783b 100644
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
-index 21767f3..75179ff 100644
+index 21767f3..95d19c5 100644
 --- a/include/EASTL/internal/hashtable.h
 +++ b/include/EASTL/internal/hashtable.h
 @@ -103,34 +103,34 @@ namespace eastl
@@ -260,6 +260,15 @@ index 21767f3..75179ff 100644
 +		pointer_type* get_bucket() const
 +			{ return base_type::mpBucket; }
  	}; // hashtable_iterator
+ 
+ 
+@@ -391,7 +398,7 @@ namespace eastl
+ 	struct mod_range_hashing
+ 	{
+ 		uint32_t operator()(size_t r, uint32_t n) const
+-			{ return r % n; }
++			{ return n != 0 ? r % n : 0; }
+ 	};
  
  
 @@ -511,7 +518,7 @@ namespace eastl

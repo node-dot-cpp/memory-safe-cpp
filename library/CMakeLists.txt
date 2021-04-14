@@ -93,7 +93,7 @@ add_library(safememory_dezombiefy_iterators STATIC
   src/detail/allocator_to_eastl.cpp
   )
 
-target_compile_definitions(safememory_dezombiefy_iterators PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+target_compile_definitions(safememory_dezombiefy_iterators PUBLIC SAFEMEMORY_DEZOMBIEFY)
 
 target_include_directories(safememory_dezombiefy_iterators
   PUBLIC include
