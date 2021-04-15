@@ -357,6 +357,7 @@ public:
 			return {};
 	}
 
+	void forceChangesInDtor(const void* ptr) { forcePreviousChangesToThisInDtor(ptr); };
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_impl&) const { return true; }
@@ -454,6 +455,7 @@ public:
 			return {};
 	}
 
+	void forceChangesInDtor(const void* ptr) { forcePreviousChangesToThisInDtor(ptr); };
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_no_checks&) const { return true; }

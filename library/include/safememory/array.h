@@ -153,7 +153,7 @@ public:
 	~array() {
 		eastl::destruct(begin_unsafe(), end_unsafe());
 
-		forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
+		forcePreviousChangesToThisInDtor(this);
 	}
 
 	constexpr bool empty() const noexcept { return N == 0; }

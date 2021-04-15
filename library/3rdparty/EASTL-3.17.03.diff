@@ -1,8 +1,8 @@
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
-index ad20e4d..663783b 100644
+index ad20e4d..98fba9d 100644
 --- a/include/EASTL/allocator.h
 +++ b/include/EASTL/allocator.h
-@@ -64,6 +64,51 @@ namespace eastl
+@@ -64,6 +64,53 @@ namespace eastl
  		const char* get_name() const;
  		void        set_name(const char* pName);
  
@@ -51,10 +51,12 @@ index ad20e4d..663783b 100644
 +			return 0;
 +		}
 +
++		void forceChangesInDtor(const void*) {}
++
  	protected:
  		#if EASTL_NAME_ENABLED
  			const char* mpName; // Debug name, used to track memory.
-@@ -74,7 +119,6 @@ namespace eastl
+@@ -74,7 +121,6 @@ namespace eastl
  	bool operator!=(const allocator& a, const allocator& b);
  
  
@@ -63,7 +65,7 @@ index ad20e4d..663783b 100644
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
-index 21767f3..95d19c5 100644
+index 21767f3..7cad816 100644
 --- a/include/EASTL/internal/hashtable.h
 +++ b/include/EASTL/internal/hashtable.h
 @@ -103,34 +103,34 @@ namespace eastl
@@ -673,7 +675,14 @@ index 21767f3..95d19c5 100644
  			mnBucketCount(0),
  			mnElementCount(0),
  			mRehashPolicy(x.mRehashPolicy),
-@@ -1569,16 +1578,18 @@ namespace eastl
+@@ -1564,21 +1573,25 @@ namespace eastl
+ 	{
+ 		clear();
+ 		DoFreeBuckets(mpBucketArray, mnBucketCount);
++		reset_lose_memory();
++		mAllocator.forceChangesInDtor(this);
+ 	}
+ 
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -694,7 +703,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNode->mValue)) value_type(pair_first_construct, key);
  				pNode->mpNext = NULL;
  				return pNode;
-@@ -1586,7 +1597,8 @@ namespace eastl
+@@ -1586,7 +1599,8 @@ namespace eastl
  			}
  			catch(...)
  			{
@@ -704,7 +713,7 @@ index 21767f3..95d19c5 100644
  				throw;
  			}
  		#endif
-@@ -1595,16 +1607,18 @@ namespace eastl
+@@ -1595,16 +1609,18 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -725,7 +734,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNode->mValue)) value_type(pair_first_construct, eastl::move(key));
  				pNode->mpNext = NULL;
  				return pNode;
-@@ -1612,7 +1626,8 @@ namespace eastl
+@@ -1612,7 +1628,8 @@ namespace eastl
  			}
  			catch(...)
  			{
@@ -735,7 +744,7 @@ index 21767f3..95d19c5 100644
  				throw;
  			}
  		#endif
-@@ -1621,24 +1636,25 @@ namespace eastl
+@@ -1621,24 +1638,25 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -766,7 +775,7 @@ index 21767f3..95d19c5 100644
  				pNode = pNode->mpNext;
  				DoFreeNode(pTempNode);
  			}
-@@ -1650,17 +1666,18 @@ namespace eastl
+@@ -1650,17 +1668,18 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -789,7 +798,7 @@ index 21767f3..95d19c5 100644
  		return pBucketArray;
  	}
  
-@@ -1668,13 +1685,14 @@ namespace eastl
+@@ -1668,13 +1687,14 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -806,7 +815,7 @@ index 21767f3..95d19c5 100644
  	}
  
  
-@@ -1682,9 +1700,9 @@ namespace eastl
+@@ -1682,9 +1702,9 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::swap(this_type& x)
  	{
@@ -818,7 +827,7 @@ index 21767f3..95d19c5 100644
  		eastl::swap(mnBucketCount, x.mnBucketCount);
  		eastl::swap(mnElementCount, x.mnElementCount);
  
-@@ -1717,7 +1735,7 @@ namespace eastl
+@@ -1717,7 +1737,7 @@ namespace eastl
  		const hash_code_t c = get_hash_code(k);
  		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
  
@@ -827,7 +836,7 @@ index 21767f3..95d19c5 100644
  		return pNode ? iterator(pNode, mpBucketArray + n) : iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
  	}
  
-@@ -1731,7 +1749,7 @@ namespace eastl
+@@ -1731,7 +1751,7 @@ namespace eastl
  		const hash_code_t c = get_hash_code(k);
  		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
  
@@ -836,7 +845,7 @@ index 21767f3..95d19c5 100644
  		return pNode ? const_iterator(pNode, mpBucketArray + n) : const_iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
  	}
  
-@@ -1746,7 +1764,7 @@ namespace eastl
+@@ -1746,7 +1766,7 @@ namespace eastl
  		const hash_code_t c = (hash_code_t)uhash(other);
  		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
  
@@ -845,7 +854,7 @@ index 21767f3..95d19c5 100644
  		return pNode ? iterator(pNode, mpBucketArray + n) : iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
  	}
  
-@@ -1761,7 +1779,7 @@ namespace eastl
+@@ -1761,7 +1781,7 @@ namespace eastl
  		const hash_code_t c = (hash_code_t)uhash(other);
  		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
  
@@ -854,7 +863,7 @@ index 21767f3..95d19c5 100644
  		return pNode ? const_iterator(pNode, mpBucketArray + n) : const_iterator(mpBucketArray + mnBucketCount); // iterator(mpBucketArray + mnBucketCount) == end()
  	}
  
-@@ -1820,7 +1838,7 @@ namespace eastl
+@@ -1820,7 +1840,7 @@ namespace eastl
  	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
  	{
  		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
@@ -863,7 +872,7 @@ index 21767f3..95d19c5 100644
  
  		if (pNodeStart)
  		{
-@@ -1843,7 +1861,7 @@ namespace eastl
+@@ -1843,7 +1863,7 @@ namespace eastl
  	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
  	{
  		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
@@ -872,7 +881,7 @@ index 21767f3..95d19c5 100644
  
  		if (pNodeStart)
  		{
-@@ -1871,9 +1889,9 @@ namespace eastl
+@@ -1871,9 +1891,9 @@ namespace eastl
  
  		// To do: Make a specialization for bU (unique keys) == true and take 
  		// advantage of the fact that the count will always be zero or one in that case. 
@@ -884,7 +893,7 @@ index 21767f3..95d19c5 100644
  				++result;
  		}
  		return result;
-@@ -1889,16 +1907,16 @@ namespace eastl
+@@ -1889,16 +1909,16 @@ namespace eastl
  	{
  		const hash_code_t c     = get_hash_code(k);
  		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -905,7 +914,7 @@ index 21767f3..95d19c5 100644
  					break;
  			}
  
-@@ -1926,16 +1944,16 @@ namespace eastl
+@@ -1926,16 +1946,16 @@ namespace eastl
  	{
  		const hash_code_t c     = get_hash_code(k);
  		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
@@ -926,7 +935,7 @@ index 21767f3..95d19c5 100644
  					break;
  			}
  
-@@ -1956,12 +1974,12 @@ namespace eastl
+@@ -1956,12 +1976,12 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -942,7 +951,7 @@ index 21767f3..95d19c5 100644
  				return pNode;
  		}
  		return NULL;
-@@ -1972,8 +1990,8 @@ namespace eastl
+@@ -1972,8 +1992,8 @@ namespace eastl
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <typename U, typename BinaryPredicate>
@@ -953,7 +962,7 @@ index 21767f3..95d19c5 100644
  	{
  		for(; pNode; pNode = pNode->mpNext)
  		{
-@@ -2002,17 +2020,17 @@ namespace eastl
+@@ -2002,17 +2022,17 @@ namespace eastl
  		// specializations of the insert function for const value_type& and value_type&&, and so the only time this function
  		// should get called is when args refers to arguments to construct a value_type.
  
@@ -974,7 +983,7 @@ index 21767f3..95d19c5 100644
  
  			#if EASTL_EXCEPTIONS_ENABLED
  				try
-@@ -2024,7 +2042,7 @@ namespace eastl
+@@ -2024,7 +2044,7 @@ namespace eastl
  						DoRehash(bRehash.second);
  					}
  
@@ -983,7 +992,7 @@ index 21767f3..95d19c5 100644
  					pNodeNew->mpNext = mpBucketArray[n];
  					mpBucketArray[n] = pNodeNew;
  					++mnElementCount;
-@@ -2066,12 +2084,12 @@ namespace eastl
+@@ -2066,12 +2086,12 @@ namespace eastl
  		if(bRehash.first)
  			DoRehash(bRehash.second);
  
@@ -998,7 +1007,7 @@ index 21767f3..95d19c5 100644
  
  		// To consider: Possibly make this insertion not make equal elements contiguous.
  		// As it stands now, we insert equal values contiguously in the hashtable.
-@@ -2079,11 +2097,11 @@ namespace eastl
+@@ -2079,11 +2099,11 @@ namespace eastl
  		// erase(value) can more quickly find equal values. The downside is that
  		// this insertion operation taking some extra time. How important is it to
  		// us that equal_range span all equal items? 
@@ -1012,7 +1021,7 @@ index 21767f3..95d19c5 100644
  			pNodeNew->mpNext = mpBucketArray[n];
  			mpBucketArray[n] = pNodeNew;
  		}
-@@ -2102,16 +2120,18 @@ namespace eastl
+@@ -2102,16 +2122,18 @@ namespace eastl
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <class... Args>
@@ -1033,7 +1042,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNode->mValue)) value_type(eastl::forward<Args>(args)...);
  				pNode->mpNext = NULL;
  				return pNode;
-@@ -2119,7 +2139,8 @@ namespace eastl
+@@ -2119,7 +2141,8 @@ namespace eastl
  			}
  			catch(...)
  			{
@@ -1043,7 +1052,7 @@ index 21767f3..95d19c5 100644
  				throw;
  			}
  		#endif
-@@ -2139,12 +2160,12 @@ namespace eastl
+@@ -2139,12 +2162,12 @@ namespace eastl
  	template <typename BoolConstantT>
  	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
  	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertValueExtra(BoolConstantT, const key_type& k,
@@ -1058,7 +1067,7 @@ index 21767f3..95d19c5 100644
  
  		if(pNode == NULL) // If value is not present... add it.
  		{
-@@ -2158,6 +2179,7 @@ namespace eastl
+@@ -2158,6 +2181,7 @@ namespace eastl
  
  			if(pNodeNew)
  			{
@@ -1066,7 +1075,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNodeNew->mValue)) value_type(eastl::move(value)); // It's expected that pNodeNew was allocated with allocate_uninitialized_node.
  				#if EASTL_EXCEPTIONS_ENABLED
  					nodeAllocated = false;
-@@ -2171,7 +2193,7 @@ namespace eastl
+@@ -2171,7 +2195,7 @@ namespace eastl
  				#endif
  			}
  
@@ -1075,7 +1084,7 @@ index 21767f3..95d19c5 100644
  
  			#if EASTL_EXCEPTIONS_ENABLED
  				try
-@@ -2183,7 +2205,7 @@ namespace eastl
+@@ -2183,7 +2207,7 @@ namespace eastl
  						DoRehash(bRehash.second);
  					}
  
@@ -1084,7 +1093,7 @@ index 21767f3..95d19c5 100644
  					pNodeNew->mpNext = mpBucketArray[n];
  					mpBucketArray[n] = pNodeNew;
  					++mnElementCount;
-@@ -2222,7 +2244,7 @@ namespace eastl
+@@ -2222,7 +2246,7 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <typename BoolConstantT>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
@@ -1093,7 +1102,7 @@ index 21767f3..95d19c5 100644
  			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
  	{
  		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
-@@ -2232,12 +2254,14 @@ namespace eastl
+@@ -2232,12 +2256,14 @@ namespace eastl
  
  		const size_type n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
  
@@ -1110,7 +1119,7 @@ index 21767f3..95d19c5 100644
  
  		// To consider: Possibly make this insertion not make equal elements contiguous.
  		// As it stands now, we insert equal values contiguously in the hashtable.
-@@ -2245,11 +2269,11 @@ namespace eastl
+@@ -2245,11 +2271,11 @@ namespace eastl
  		// erase(value) can more quickly find equal values. The downside is that
  		// this insertion operation taking some extra time. How important is it to
  		// us that equal_range span all equal items? 
@@ -1124,7 +1133,7 @@ index 21767f3..95d19c5 100644
  			pNodeNew->mpNext = mpBucketArray[n];
  			mpBucketArray[n] = pNodeNew;
  		}
-@@ -2280,16 +2304,18 @@ namespace eastl
+@@ -2280,16 +2306,18 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -1145,7 +1154,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNode->mValue)) value_type(eastl::move(value));
  				pNode->mpNext = NULL;
  				return pNode;
-@@ -2297,7 +2323,8 @@ namespace eastl
+@@ -2297,7 +2325,8 @@ namespace eastl
  			}
  			catch(...)
  			{
@@ -1155,7 +1164,7 @@ index 21767f3..95d19c5 100644
  				throw;
  			}
  		#endif
-@@ -2308,13 +2335,13 @@ namespace eastl
+@@ -2308,13 +2337,13 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template<typename BoolConstantT>
  	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
@@ -1171,7 +1180,7 @@ index 21767f3..95d19c5 100644
  
  		if(pNode == NULL) // If value is not present... add it.
  		{
-@@ -2328,6 +2355,7 @@ namespace eastl
+@@ -2328,6 +2357,7 @@ namespace eastl
  
  			if(pNodeNew)
  			{
@@ -1179,7 +1188,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNodeNew->mValue)) value_type(value); // It's expected that pNodeNew was allocated with allocate_uninitialized_node.
  				#if EASTL_EXCEPTIONS_ENABLED
  					nodeAllocated = false;
-@@ -2341,7 +2369,7 @@ namespace eastl
+@@ -2341,7 +2371,7 @@ namespace eastl
  				#endif
  			}
  
@@ -1188,7 +1197,7 @@ index 21767f3..95d19c5 100644
  
  			#if EASTL_EXCEPTIONS_ENABLED
  				try
-@@ -2353,7 +2381,7 @@ namespace eastl
+@@ -2353,7 +2383,7 @@ namespace eastl
  						DoRehash(bRehash.second);
  					}
  
@@ -1197,7 +1206,7 @@ index 21767f3..95d19c5 100644
  					pNodeNew->mpNext = mpBucketArray[n];
  					mpBucketArray[n] = pNodeNew;
  					++mnElementCount;
-@@ -2392,7 +2420,7 @@ namespace eastl
+@@ -2392,7 +2422,7 @@ namespace eastl
  				typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <typename BoolConstantT>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
@@ -1206,7 +1215,7 @@ index 21767f3..95d19c5 100644
  			DISABLE_IF_TRUETYPE(BoolConstantT)) // false_type means bUniqueKeys is false.
  	{
  		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
-@@ -2402,12 +2430,14 @@ namespace eastl
+@@ -2402,12 +2432,14 @@ namespace eastl
  
  		const size_type n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
  
@@ -1223,7 +1232,7 @@ index 21767f3..95d19c5 100644
  
  		// To consider: Possibly make this insertion not make equal elements contiguous.
  		// As it stands now, we insert equal values contiguously in the hashtable.
-@@ -2415,11 +2445,11 @@ namespace eastl
+@@ -2415,11 +2447,11 @@ namespace eastl
  		// erase(value) can more quickly find equal values. The downside is that
  		// this insertion operation taking some extra time. How important is it to
  		// us that equal_range span all equal items? 
@@ -1237,7 +1246,7 @@ index 21767f3..95d19c5 100644
  			pNodeNew->mpNext = mpBucketArray[n];
  			mpBucketArray[n] = pNodeNew;
  		}
-@@ -2450,16 +2480,18 @@ namespace eastl
+@@ -2450,16 +2482,18 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -1258,7 +1267,7 @@ index 21767f3..95d19c5 100644
  				::new(eastl::addressof(pNode->mValue)) value_type(value);
  				pNode->mpNext = NULL;
  				return pNode;
-@@ -2467,7 +2499,8 @@ namespace eastl
+@@ -2467,7 +2501,8 @@ namespace eastl
  			}
  			catch(...)
  			{
@@ -1268,7 +1277,7 @@ index 21767f3..95d19c5 100644
  				throw;
  			}
  		#endif
-@@ -2476,11 +2509,12 @@ namespace eastl
+@@ -2476,11 +2511,12 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -1283,7 +1292,7 @@ index 21767f3..95d19c5 100644
  		EASTL_ASSERT_MSG(pNode != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
  		// Leave pNode->mValue uninitialized.
  		pNode->mpNext = NULL;
-@@ -2490,10 +2524,11 @@ namespace eastl
+@@ -2490,10 +2526,11 @@ namespace eastl
  
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
@@ -1297,7 +1306,7 @@ index 21767f3..95d19c5 100644
  	}
  
  
-@@ -2503,7 +2538,7 @@ namespace eastl
+@@ -2503,7 +2540,7 @@ namespace eastl
  	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, const key_type& key, const hash_code_t c) // true_type means bUniqueKeys is true.
  	{
  		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
@@ -1306,7 +1315,7 @@ index 21767f3..95d19c5 100644
  
  		if(pNode == NULL)
  		{
-@@ -2511,8 +2546,8 @@ namespace eastl
+@@ -2511,8 +2548,8 @@ namespace eastl
  
  			// Allocate the new node before doing the rehash so that we don't
  			// do a rehash if the allocation throws.
@@ -1317,7 +1326,7 @@ index 21767f3..95d19c5 100644
  
  			#if EASTL_EXCEPTIONS_ENABLED
  				try
-@@ -2524,7 +2559,7 @@ namespace eastl
+@@ -2524,7 +2561,7 @@ namespace eastl
  						DoRehash(bRehash.second);
  					}
  
@@ -1326,7 +1335,7 @@ index 21767f3..95d19c5 100644
  					pNodeNew->mpNext = mpBucketArray[n];
  					mpBucketArray[n] = pNodeNew;
  					++mnElementCount;
-@@ -2557,8 +2592,8 @@ namespace eastl
+@@ -2557,8 +2594,8 @@ namespace eastl
  
  		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
  
@@ -1337,7 +1346,7 @@ index 21767f3..95d19c5 100644
  
  		// To consider: Possibly make this insertion not make equal elements contiguous.
  		// As it stands now, we insert equal values contiguously in the hashtable.
-@@ -2566,11 +2601,11 @@ namespace eastl
+@@ -2566,11 +2603,11 @@ namespace eastl
  		// erase(value) can more quickly find equal values. The downside is that
  		// this insertion operation taking some extra time. How important is it to
  		// us that equal_range span all equal items? 
@@ -1351,7 +1360,7 @@ index 21767f3..95d19c5 100644
  			pNodeNew->mpNext = mpBucketArray[n];
  			mpBucketArray[n] = pNodeNew;
  		}
-@@ -2592,7 +2627,7 @@ namespace eastl
+@@ -2592,7 +2629,7 @@ namespace eastl
  	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoInsertKey(true_type, key_type&& key, const hash_code_t c) // true_type means bUniqueKeys is true.
  	{
  		size_type         n     = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
@@ -1360,7 +1369,7 @@ index 21767f3..95d19c5 100644
  
  		if(pNode == NULL)
  		{
-@@ -2600,8 +2635,8 @@ namespace eastl
+@@ -2600,8 +2637,8 @@ namespace eastl
  
  			// Allocate the new node before doing the rehash so that we don't
  			// do a rehash if the allocation throws.
@@ -1371,7 +1380,7 @@ index 21767f3..95d19c5 100644
  
  			#if EASTL_EXCEPTIONS_ENABLED
  				try
-@@ -2613,7 +2648,7 @@ namespace eastl
+@@ -2613,7 +2650,7 @@ namespace eastl
  						DoRehash(bRehash.second);
  					}
  
@@ -1380,7 +1389,7 @@ index 21767f3..95d19c5 100644
  					pNodeNew->mpNext = mpBucketArray[n];
  					mpBucketArray[n] = pNodeNew;
  					++mnElementCount;
-@@ -2645,8 +2680,8 @@ namespace eastl
+@@ -2645,8 +2682,8 @@ namespace eastl
  
  		const size_type   n = (size_type)bucket_index(key, c, (uint32_t)mnBucketCount);
  
@@ -1391,7 +1400,7 @@ index 21767f3..95d19c5 100644
  
  		// To consider: Possibly make this insertion not make equal elements contiguous.
  		// As it stands now, we insert equal values contiguously in the hashtable.
-@@ -2654,11 +2689,11 @@ namespace eastl
+@@ -2654,11 +2691,11 @@ namespace eastl
  		// erase(value) can more quickly find equal values. The downside is that
  		// this insertion operation taking some extra time. How important is it to
  		// us that equal_range span all equal items? 
@@ -1405,7 +1414,7 @@ index 21767f3..95d19c5 100644
  			pNodeNew->mpNext = mpBucketArray[n];
  			mpBucketArray[n] = pNodeNew;
  		}
-@@ -2755,7 +2790,7 @@ namespace eastl
+@@ -2755,7 +2792,7 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <class P>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
@@ -1414,7 +1423,7 @@ index 21767f3..95d19c5 100644
  	{
  		// pNodeNew->mValue is expected to be uninitialized.
  		value_type value(eastl::forward<P>(otherValue)); // Need to use forward instead of move because P&& is a "universal reference" instead of an rvalue reference.
-@@ -2778,7 +2813,7 @@ namespace eastl
+@@ -2778,7 +2815,7 @@ namespace eastl
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
@@ -1423,7 +1432,7 @@ index 21767f3..95d19c5 100644
  	{
  		return DoInsertValue(has_unique_keys_type(), value);
  	}
-@@ -2787,7 +2822,7 @@ namespace eastl
+@@ -2787,7 +2824,7 @@ namespace eastl
  	template <typename K, typename V, typename A, typename EK, typename Eq,
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
@@ -1432,7 +1441,7 @@ index 21767f3..95d19c5 100644
  	{
  		// pNodeNew->mValue is expected to be uninitialized.
  		const key_type& k = mExtractKey(value);
-@@ -2904,8 +2939,8 @@ namespace eastl
+@@ -2904,8 +2941,8 @@ namespace eastl
  		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
  		++iNext;
  
@@ -1443,7 +1452,7 @@ index 21767f3..95d19c5 100644
  
  		if(pNodeCurrent == pNode)
  			*i.mpBucket = pNodeCurrent->mpNext;
-@@ -2913,7 +2948,7 @@ namespace eastl
+@@ -2913,7 +2950,7 @@ namespace eastl
  		{
  			// We have a singly-linked list, so we have no choice but to
  			// walk down it till we find the node before the node at 'i'.
@@ -1452,7 +1461,7 @@ index 21767f3..95d19c5 100644
  
  			while(pNodeNext != pNode)
  			{
-@@ -2957,14 +2992,14 @@ namespace eastl
+@@ -2957,14 +2994,14 @@ namespace eastl
  		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
  		const size_type   nElementCountSaved = mnElementCount;
  
@@ -1471,7 +1480,7 @@ index 21767f3..95d19c5 100644
  			*pBucketArray = pNode->mpNext;
  			DoFreeNode(pNode);
  			--mnElementCount;
-@@ -3010,12 +3045,12 @@ namespace eastl
+@@ -3010,12 +3047,12 @@ namespace eastl
  		// container built into scratch memory.
  		mnBucketCount  = 1;
  
@@ -1490,7 +1499,7 @@ index 21767f3..95d19c5 100644
  
  		mnElementCount = 0;
  		mRehashPolicy.mnNextResize = 0;
-@@ -3046,19 +3081,19 @@ namespace eastl
+@@ -3046,19 +3083,19 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::DoRehash(size_type nNewBucketCount)
  	{
@@ -1513,7 +1522,7 @@ index 21767f3..95d19c5 100644
  
  						mpBucketArray[i] = pNode->mpNext;
  						pNode->mpNext    = pBucketArray[nNewBucketIndex];
-@@ -3091,10 +3126,11 @@ namespace eastl
+@@ -3091,10 +3128,11 @@ namespace eastl
  	inline bool hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::validate() const
  	{
  		// Verify our empty bucket array is unmodified.
@@ -1527,7 +1536,7 @@ index 21767f3..95d19c5 100644
  			return false;
  
  		// Verify that we have at least one bucket. Calculations can  
-@@ -3104,7 +3140,7 @@ namespace eastl
+@@ -3104,7 +3142,7 @@ namespace eastl
  
  		// Verify that gpEmptyBucketArray is used correctly.
  		// gpEmptyBucketArray is only used when initially empty.
@@ -1550,7 +1559,7 @@ index 6fffd5d..037f95d 100644
  
  
 diff --git a/include/EASTL/string.h b/include/EASTL/string.h
-index 14604ce..ecd212c 100644
+index 14604ce..f895627 100644
 --- a/include/EASTL/string.h
 +++ b/include/EASTL/string.h
 @@ -293,6 +293,9 @@ namespace eastl
@@ -1604,7 +1613,16 @@ index 14604ce..ecd212c 100644
  		size_type   GetNewCapacity(size_type currentCapacity);
  		size_type   GetNewCapacity(size_type currentCapacity, size_type minimumGrowSize);
  		void        AllocateSelf();
-@@ -1408,21 +1412,22 @@ namespace eastl
+@@ -995,6 +999,8 @@ namespace eastl
+ 	inline basic_string<T, Allocator>::~basic_string()
+ 	{
+ 		DeallocateSelf();
++		internalLayout().ResetToSSO();
++		internalAllocator().forceChangesInDtor(this);
+ 	}
+ 
+ 
+@@ -1408,21 +1414,22 @@ namespace eastl
  					// A heap based layout wants to reduce its size to within sso capacity
  					// An sso layout wanting to reduce its capacity will not get in here
  					pointer pOldBegin = internalLayout().BeginPtr();
@@ -1630,7 +1648,7 @@ index 14604ce..ecd212c 100644
  				*pNewEnd = 0;
  
  				DeallocateSelf();
-@@ -1479,7 +1484,7 @@ namespace eastl
+@@ -1479,7 +1486,7 @@ namespace eastl
  		if (internalLayout().IsSSO())
  		{
  			const size_type n = internalLayout().GetSize() + 1; // +1' so that we have room for the terminating 0.
@@ -1639,7 +1657,7 @@ index 14604ce..ecd212c 100644
  			pointer pNewEnd = CharStringUninitializedCopy(internalLayout().BeginPtr(), internalLayout().EndPtr(), pDetached);
  			*pNewEnd = 0;
  		}
-@@ -1718,9 +1723,9 @@ namespace eastl
+@@ -1718,9 +1725,9 @@ namespace eastl
  			{
  				const size_type nLength = GetNewCapacity(nCapacity, nNewSize - nCapacity);
  
@@ -1651,7 +1669,7 @@ index 14604ce..ecd212c 100644
  				pNewEnd         = CharStringUninitializedCopy(pBegin,  pEnd,  pNewEnd);
  			   *pNewEnd         = 0;
  
-@@ -2185,9 +2190,9 @@ namespace eastl
+@@ -2185,9 +2192,9 @@ namespace eastl
  				const size_type nOldCap  = capacity();
  				const size_type nLength  = GetNewCapacity(nOldCap, (nOldSize + n) - nOldCap);
  
@@ -1663,7 +1681,7 @@ index 14604ce..ecd212c 100644
  				pNewEnd          = CharStringUninitializedFillN(pNewEnd, n, c);
  				pNewEnd          = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
  			   *pNewEnd          = 0;
-@@ -2293,9 +2298,9 @@ namespace eastl
+@@ -2293,9 +2300,9 @@ namespace eastl
  				else
  					nLength = GetNewCapacity(nOldCap, (nOldSize + n) - nOldCap);
  
@@ -1675,7 +1693,7 @@ index 14604ce..ecd212c 100644
  				pNewEnd         = CharStringUninitializedCopy(pBegin, pEnd, pNewEnd);
  				pNewEnd         = CharStringUninitializedCopy(p, internalLayout().EndPtr(), pNewEnd);
  			   *pNewEnd         = 0;
-@@ -2572,9 +2577,9 @@ namespace eastl
+@@ -2572,9 +2579,9 @@ namespace eastl
  				const size_type nOldCap      = capacity();
  				const size_type nNewCapacity = GetNewCapacity(nOldCap, (nOldSize + (nLength2 - nLength1)) - nOldCap);
  
@@ -1687,7 +1705,7 @@ index 14604ce..ecd212c 100644
  				pNewEnd         = CharStringUninitializedCopy(pBegin2, pEnd2,   pNewEnd);
  				pNewEnd         = CharStringUninitializedCopy(pEnd1,   internalLayout().EndPtr(),   pNewEnd);
  			   *pNewEnd         = 0;
-@@ -3208,9 +3213,9 @@ namespace eastl
+@@ -3208,9 +3215,9 @@ namespace eastl
  			const size_type nOldCap  = capacity();
  			const size_type nLength = GetNewCapacity(nOldCap, 1);
  
@@ -1699,7 +1717,7 @@ index 14604ce..ecd212c 100644
  		   *pNewPosition = c;
  
  			iterator pNewEnd = pNewPosition + 1;
-@@ -3266,18 +3271,20 @@ namespace eastl
+@@ -3266,18 +3273,20 @@ namespace eastl
  
  
  	template <typename T, typename Allocator>
@@ -1724,7 +1742,7 @@ index 14604ce..ecd212c 100644
  	}
  
  
-@@ -3329,7 +3336,7 @@ namespace eastl
+@@ -3329,7 +3338,7 @@ namespace eastl
  
  		if(n > SSOLayout::SSO_CAPACITY)
  		{
@@ -1733,7 +1751,7 @@ index 14604ce..ecd212c 100644
  			internalLayout().SetHeapBeginPtr(pBegin);
  			internalLayout().SetHeapCapacity(n);
  			internalLayout().SetHeapSize(n);
-@@ -3344,7 +3351,7 @@ namespace eastl
+@@ -3344,7 +3353,7 @@ namespace eastl
  	{
  		if(internalLayout().IsHeap())
  		{
@@ -1742,7 +1760,7 @@ index 14604ce..ecd212c 100644
  		}
  	}
  
-@@ -3760,22 +3767,22 @@ namespace eastl
+@@ -3760,22 +3769,22 @@ namespace eastl
  	}
  
  
@@ -1779,7 +1797,7 @@ index 14604ce..ecd212c 100644
  
  
  	template <typename T, typename Allocator>
-@@ -3785,18 +3792,18 @@ namespace eastl
+@@ -3785,18 +3794,18 @@ namespace eastl
  	}
  
  
@@ -1808,7 +1826,7 @@ index 14604ce..ecd212c 100644
  
  
  	// Operator< (and also >, <=, and >=).
-@@ -3806,22 +3813,22 @@ namespace eastl
+@@ -3806,22 +3815,22 @@ namespace eastl
  		return basic_string<T, Allocator>::compare(a.begin(), a.end(), b.begin(), b.end()) < 0; }
  
  
@@ -1845,7 +1863,7 @@ index 14604ce..ecd212c 100644
  
  
  	template <typename T, typename Allocator>
-@@ -3831,18 +3838,18 @@ namespace eastl
+@@ -3831,18 +3840,18 @@ namespace eastl
  	}
  
  
@@ -1874,7 +1892,7 @@ index 14604ce..ecd212c 100644
  
  
  	template <typename T, typename Allocator>
-@@ -3852,18 +3859,18 @@ namespace eastl
+@@ -3852,18 +3861,18 @@ namespace eastl
  	}
  
  
@@ -1903,7 +1921,7 @@ index 14604ce..ecd212c 100644
  
  
  	template <typename T, typename Allocator>
-@@ -3873,18 +3880,18 @@ namespace eastl
+@@ -3873,18 +3882,18 @@ namespace eastl
  	}
  
  
@@ -1932,7 +1950,7 @@ index 14604ce..ecd212c 100644
  
  
  	template <typename T, typename Allocator>
-@@ -3919,10 +3926,10 @@ namespace eastl
+@@ -3919,10 +3928,10 @@ namespace eastl
  	///
  	template <typename T> struct hash;
  
@@ -1946,7 +1964,7 @@ index 14604ce..ecd212c 100644
  		{
  			const unsigned char* p = (const unsigned char*)x.c_str(); // To consider: limit p to at most 256 chars.
  			unsigned int c, result = 2166136261U; // We implement an FNV-like string hash.
-@@ -3947,10 +3954,10 @@ namespace eastl
+@@ -3947,10 +3956,10 @@ namespace eastl
  		};
  	#endif
  
@@ -1960,7 +1978,7 @@ index 14604ce..ecd212c 100644
  		{
  			const char16_t* p = x.c_str();
  			unsigned int c, result = 2166136261U;
-@@ -3960,10 +3967,10 @@ namespace eastl
+@@ -3960,10 +3969,10 @@ namespace eastl
  		}
  	};
  
@@ -1974,7 +1992,7 @@ index 14604ce..ecd212c 100644
  		{
  			const char32_t* p = x.c_str();
  			unsigned int c, result = 2166136261U;
-@@ -3974,10 +3981,10 @@ namespace eastl
+@@ -3974,10 +3983,10 @@ namespace eastl
  	};
  
  	#if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
@@ -1989,7 +2007,7 @@ index 14604ce..ecd212c 100644
  				const wchar_t* p = x.c_str();
  				unsigned int c, result = 2166136261U;
 diff --git a/include/EASTL/vector.h b/include/EASTL/vector.h
-index c27a6a5..6166fcd 100644
+index c27a6a5..681c4ad 100644
 --- a/include/EASTL/vector.h
 +++ b/include/EASTL/vector.h
 @@ -127,6 +127,7 @@ namespace eastl
@@ -2068,17 +2086,22 @@ index c27a6a5..6166fcd 100644
  		internalCapacityPtr() = mpBegin + n;
  	}
  
-@@ -426,7 +428,8 @@ namespace eastl
+@@ -426,7 +428,13 @@ namespace eastl
  	inline VectorBase<T, Allocator>::~VectorBase()
  	{
  		if(mpBegin)
 -			EASTLFree(internalAllocator(), mpBegin, (internalCapacityPtr() - mpBegin) * sizeof(T));
 +//			EASTLFree(internalAllocator(), mpBegin, (internalCapacityPtr() - mpBegin) * sizeof(T));
 +			internalAllocator().deallocate_array(mpBegin, internalCapacityPtr() - mpBegin);
++
++		mpBegin = nullptr;
++		mpEnd = nullptr;
++		internalCapacityPtr() = nullptr;
++		internalAllocator().forceChangesInDtor(this);
  	}
  
  
-@@ -454,7 +457,7 @@ namespace eastl
+@@ -454,7 +462,7 @@ namespace eastl
  
  
  	template <typename T, typename Allocator>
@@ -2087,7 +2110,7 @@ index c27a6a5..6166fcd 100644
  	{
  		#if EASTL_ASSERT_ENABLED
  			if(EASTL_UNLIKELY(n >= 0x80000000))
-@@ -465,7 +468,8 @@ namespace eastl
+@@ -465,7 +473,8 @@ namespace eastl
  		// This is fine, as our default ctor initializes with NULL pointers. 
  		if(EASTL_LIKELY(n))
  		{
@@ -2097,7 +2120,7 @@ index c27a6a5..6166fcd 100644
  			EASTL_ASSERT_MSG(p != nullptr, "the behaviour of eastl::allocators that return nullptr is not defined.");
  			return p;
  		}
-@@ -477,10 +481,11 @@ namespace eastl
+@@ -477,10 +486,11 @@ namespace eastl
  
  
  	template <typename T, typename Allocator>
@@ -2111,7 +2134,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -519,7 +524,8 @@ namespace eastl
+@@ -519,7 +529,8 @@ namespace eastl
  	inline vector<T, Allocator>::vector(size_type n, const allocator_type& allocator)
  		: base_type(n, allocator)
  	{
@@ -2121,7 +2144,7 @@ index c27a6a5..6166fcd 100644
  		mpEnd = mpBegin + n;
  	}
  
-@@ -528,7 +534,8 @@ namespace eastl
+@@ -528,7 +539,8 @@ namespace eastl
  	inline vector<T, Allocator>::vector(size_type n, const value_type& value, const allocator_type& allocator)
  		: base_type(n, allocator)
  	{
@@ -2131,7 +2154,7 @@ index c27a6a5..6166fcd 100644
  		mpEnd = mpBegin + n;
  	}
  
-@@ -537,7 +544,8 @@ namespace eastl
+@@ -537,7 +549,8 @@ namespace eastl
  	inline vector<T, Allocator>::vector(const this_type& x)
  		: base_type(x.size(), x.internalAllocator())
  	{
@@ -2141,7 +2164,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -545,7 +553,8 @@ namespace eastl
+@@ -545,7 +558,8 @@ namespace eastl
  	inline vector<T, Allocator>::vector(const this_type& x, const allocator_type& allocator)
  		: base_type(x.size(), allocator)
  	{
@@ -2151,7 +2174,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -592,7 +601,7 @@ namespace eastl
+@@ -592,7 +606,7 @@ namespace eastl
  	inline vector<T, Allocator>::~vector()
  	{
  		// Call destructor for the values. Parent class will free the memory.
@@ -2160,7 +2183,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -685,7 +694,7 @@ namespace eastl
+@@ -685,7 +699,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::iterator
  	vector<T, Allocator>::begin() EA_NOEXCEPT
  	{
@@ -2169,7 +2192,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -693,7 +702,7 @@ namespace eastl
+@@ -693,7 +707,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::const_iterator
  	vector<T, Allocator>::begin() const EA_NOEXCEPT
  	{
@@ -2178,7 +2201,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -701,7 +710,7 @@ namespace eastl
+@@ -701,7 +715,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::const_iterator
  	vector<T, Allocator>::cbegin() const EA_NOEXCEPT
  	{
@@ -2187,7 +2210,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -757,7 +766,7 @@ namespace eastl
+@@ -757,7 +771,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::reverse_iterator
  	vector<T, Allocator>::rend() EA_NOEXCEPT
  	{
@@ -2196,7 +2219,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -765,7 +774,7 @@ namespace eastl
+@@ -765,7 +779,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::const_reverse_iterator
  	vector<T, Allocator>::rend() const EA_NOEXCEPT
  	{
@@ -2205,7 +2228,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -773,7 +782,7 @@ namespace eastl
+@@ -773,7 +787,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::const_reverse_iterator
  	vector<T, Allocator>::crend() const EA_NOEXCEPT
  	{
@@ -2214,7 +2237,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -852,8 +861,8 @@ namespace eastl
+@@ -852,8 +866,8 @@ namespace eastl
  		}
  		else // Else new capacity > size.
  		{
@@ -2225,7 +2248,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			const ptrdiff_t nPrevSize = mpEnd - mpBegin;
-@@ -878,7 +887,7 @@ namespace eastl
+@@ -878,7 +892,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::pointer
  	vector<T, Allocator>::data() EA_NOEXCEPT
  	{
@@ -2234,7 +2257,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -886,7 +895,7 @@ namespace eastl
+@@ -886,7 +900,7 @@ namespace eastl
  	inline typename vector<T, Allocator>::const_pointer
  	vector<T, Allocator>::data() const EA_NOEXCEPT
  	{
@@ -2243,7 +2266,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -971,7 +980,7 @@ namespace eastl
+@@ -971,7 +985,7 @@ namespace eastl
  			// We allow the user to reference an empty container.
  		#endif
  
@@ -2252,7 +2275,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -986,7 +995,7 @@ namespace eastl
+@@ -986,7 +1000,7 @@ namespace eastl
  			// We allow the user to reference an empty container.
  		#endif
  
@@ -2261,7 +2284,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -1023,8 +1032,10 @@ namespace eastl
+@@ -1023,8 +1037,10 @@ namespace eastl
  	template <typename T, typename Allocator>
  	inline void vector<T, Allocator>::push_back(const value_type& value)
  	{
@@ -2273,7 +2296,7 @@ index c27a6a5..6166fcd 100644
  		else
  			DoInsertValueEnd(value);
  	}
-@@ -1033,8 +1044,10 @@ namespace eastl
+@@ -1033,8 +1049,10 @@ namespace eastl
  	template <typename T, typename Allocator>
  	inline void vector<T, Allocator>::push_back(value_type&& value)
  	{
@@ -2285,7 +2308,7 @@ index c27a6a5..6166fcd 100644
  		else
  			DoInsertValueEnd(eastl::move(value));
  	}
-@@ -1044,8 +1057,10 @@ namespace eastl
+@@ -1044,8 +1062,10 @@ namespace eastl
  	inline typename vector<T, Allocator>::reference
  	vector<T, Allocator>::push_back()
  	{
@@ -2297,7 +2320,7 @@ index c27a6a5..6166fcd 100644
  		else // Note that in this case we create a temporary, which is less desirable.
  			DoInsertValueEnd(value_type());
  
-@@ -1090,6 +1105,7 @@ namespace eastl
+@@ -1090,6 +1110,7 @@ namespace eastl
  			DoInsertValue(position, eastl::forward<Args>(args)...);
  		else
  		{
@@ -2305,7 +2328,7 @@ index c27a6a5..6166fcd 100644
  			::new((void*)mpEnd) value_type(eastl::forward<Args>(args)...);
  			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
  		}
-@@ -1104,6 +1120,7 @@ namespace eastl
+@@ -1104,6 +1125,7 @@ namespace eastl
  	{
  		if(mpEnd < internalCapacityPtr())
  		{
@@ -2313,7 +2336,7 @@ index c27a6a5..6166fcd 100644
  			::new((void*)mpEnd) value_type(eastl::forward<Args>(args)...);  // If value_type has a move constructor, it will use it and this operation may be faster than otherwise.
  			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
  		}
-@@ -1129,6 +1146,7 @@ namespace eastl
+@@ -1129,6 +1151,7 @@ namespace eastl
  			DoInsertValue(position, value);
  		else
  		{
@@ -2321,7 +2344,7 @@ index c27a6a5..6166fcd 100644
  			::new((void*)mpEnd) value_type(value);
  			++mpEnd; // Increment this after the construction above in case the construction throws an exception.
  		}
-@@ -1325,8 +1343,8 @@ namespace eastl
+@@ -1325,8 +1348,8 @@ namespace eastl
  	template <typename T, typename Allocator>
  	inline void vector<T, Allocator>::clear() EA_NOEXCEPT
  	{
@@ -2332,7 +2355,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -1337,7 +1355,8 @@ namespace eastl
+@@ -1337,7 +1360,8 @@ namespace eastl
  		// resets the container to an empty state without freeing the memory of 
  		// the contained objects. This is useful for very quickly tearing down a 
  		// container built into scratch memory.
@@ -2342,7 +2365,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -1385,22 +1404,24 @@ namespace eastl
+@@ -1385,22 +1409,24 @@ namespace eastl
  
  	template <typename T, typename Allocator>
  	template <typename ForwardIterator>
@@ -2373,7 +2396,7 @@ index c27a6a5..6166fcd 100644
  		return p;
  	}
  
-@@ -1412,9 +1433,10 @@ namespace eastl
+@@ -1412,9 +1438,10 @@ namespace eastl
  		mpBegin    = DoAllocate((size_type)n);
  		internalCapacityPtr() = mpBegin + n;
  		mpEnd      = internalCapacityPtr();
@@ -2385,7 +2408,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -1445,9 +1467,10 @@ namespace eastl
+@@ -1445,9 +1472,10 @@ namespace eastl
  		mpBegin    = DoAllocate(n);
  		internalCapacityPtr() = mpBegin + n;
  		mpEnd      = internalCapacityPtr();
@@ -2397,7 +2420,7 @@ index c27a6a5..6166fcd 100644
  	}
  
  
-@@ -1478,13 +1501,14 @@ namespace eastl
+@@ -1478,13 +1506,14 @@ namespace eastl
  		}
  		else if(n > size_type(mpEnd - mpBegin)) // If n > size ...
  		{
@@ -2414,7 +2437,7 @@ index c27a6a5..6166fcd 100644
  			erase(mpBegin + n, mpEnd);
  		}
  	}
-@@ -1494,7 +1518,7 @@ namespace eastl
+@@ -1494,7 +1523,7 @@ namespace eastl
  	template <typename InputIterator, bool bMove>
  	void vector<T, Allocator>::DoAssignFromIterator(InputIterator first, InputIterator last, EASTL_ITC_NS::input_iterator_tag)
  	{
@@ -2423,7 +2446,7 @@ index c27a6a5..6166fcd 100644
  
  		while((position != mpEnd) && (first != last))
  		{
-@@ -1517,8 +1541,8 @@ namespace eastl
+@@ -1517,8 +1546,8 @@ namespace eastl
  
  		if(n > size_type(internalCapacityPtr() - mpBegin)) // If n > capacity ...
  		{
@@ -2434,7 +2457,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			mpBegin    = pNewData;
-@@ -1527,14 +1551,15 @@ namespace eastl
+@@ -1527,14 +1556,15 @@ namespace eastl
  		}
  		else if(n <= size_type(mpEnd - mpBegin)) // If n <= size ...
  		{
@@ -2452,7 +2475,7 @@ index c27a6a5..6166fcd 100644
  			mpEnd = eastl::uninitialized_copy_ptr(position, last, mpEnd);
  		}
  	}
-@@ -1588,12 +1613,14 @@ namespace eastl
+@@ -1588,12 +1618,14 @@ namespace eastl
  
  				if(n < nExtra) // If the inserted values are entirely within initialized memory (i.e. are before mpEnd)...
  				{
@@ -2467,7 +2490,7 @@ index c27a6a5..6166fcd 100644
  					BidirectionalIterator iTemp = first;
  					eastl::advance(iTemp, nExtra);
  					eastl::uninitialized_copy_ptr(iTemp, last, mpEnd);
-@@ -1608,29 +1635,30 @@ namespace eastl
+@@ -1608,29 +1640,30 @@ namespace eastl
  				const size_type nPrevSize = size_type(mpEnd - mpBegin);
  				const size_type nGrowSize = GetNewCapacity(nPrevSize);
  				const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
@@ -2504,7 +2527,7 @@ index c27a6a5..6166fcd 100644
  				DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  				mpBegin    = pNewData;
-@@ -1662,12 +1690,14 @@ namespace eastl
+@@ -1662,12 +1695,14 @@ namespace eastl
  
  				if(n < nExtra)
  				{
@@ -2519,7 +2542,7 @@ index c27a6a5..6166fcd 100644
  					eastl::uninitialized_fill_n_ptr(mpEnd, n - nExtra, temp);
  					eastl::uninitialized_move_ptr(destPosition, mpEnd, mpEnd + n - nExtra);
  					eastl::fill(destPosition, mpEnd, temp);
-@@ -1681,29 +1711,30 @@ namespace eastl
+@@ -1681,29 +1716,30 @@ namespace eastl
  			const size_type nPrevSize = size_type(mpEnd - mpBegin);
  			const size_type nGrowSize = GetNewCapacity(nPrevSize);
  			const size_type nNewSize  = nGrowSize > (nPrevSize + n) ? nGrowSize : (nPrevSize + n);
@@ -2556,7 +2579,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			mpBegin    = pNewData;
-@@ -1725,11 +1756,12 @@ namespace eastl
+@@ -1725,11 +1761,12 @@ namespace eastl
  	template <typename T, typename Allocator>
  	void vector<T, Allocator>::DoGrow(size_type n)
  	{
@@ -2572,7 +2595,7 @@ index c27a6a5..6166fcd 100644
  		DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  		mpBegin    = pNewData;
-@@ -1756,28 +1788,29 @@ namespace eastl
+@@ -1756,28 +1793,29 @@ namespace eastl
  			const size_type nPrevSize = size_type(mpEnd - mpBegin);
  			const size_type nGrowSize = GetNewCapacity(nPrevSize);
  			const size_type nNewSize = eastl::max(nGrowSize, nPrevSize + n);
@@ -2608,7 +2631,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			mpBegin    = pNewData;
-@@ -1786,6 +1819,7 @@ namespace eastl
+@@ -1786,6 +1824,7 @@ namespace eastl
  		}
  		else
  		{
@@ -2616,7 +2639,7 @@ index c27a6a5..6166fcd 100644
  			eastl::uninitialized_fill_n_ptr(mpEnd, n, value);
  			mpEnd += n;
  		}
-@@ -1799,25 +1833,26 @@ namespace eastl
+@@ -1799,25 +1838,26 @@ namespace eastl
  			const size_type nPrevSize = size_type(mpEnd - mpBegin);
  			const size_type nGrowSize = GetNewCapacity(nPrevSize);
  			const size_type nNewSize = eastl::max(nGrowSize, nPrevSize + n);
@@ -2649,7 +2672,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			mpBegin = pNewData;
-@@ -1826,6 +1861,7 @@ namespace eastl
+@@ -1826,6 +1866,7 @@ namespace eastl
  		}
  		else
  		{
@@ -2657,7 +2680,7 @@ index c27a6a5..6166fcd 100644
  			eastl::uninitialized_default_fill_n(mpEnd, n);
  			mpEnd += n;
  		}
-@@ -1859,6 +1895,7 @@ namespace eastl
+@@ -1859,6 +1900,7 @@ namespace eastl
  			#else
  				value_type  value(eastl::forward<Args>(args)...);           // Need to do this before the move_backward below because maybe args refers to something within the moving range.
  			#endif
@@ -2665,7 +2688,7 @@ index c27a6a5..6166fcd 100644
  			::new(static_cast<void*>(mpEnd)) value_type(eastl::move(*(mpEnd - 1)));      // mpEnd is uninitialized memory, so we must construct into it instead of move into it like we do with the other elements below.
  			eastl::move_backward(destPosition, mpEnd - 1, mpEnd);           // We need to go backward because of potential overlap issues.
  			eastl::destruct(destPosition);
-@@ -1870,34 +1907,35 @@ namespace eastl
+@@ -1870,34 +1912,35 @@ namespace eastl
  			const size_type nPosSize  = size_type(destPosition - mpBegin); // Index of the insertion position.
  			const size_type nPrevSize = size_type(mpEnd - mpBegin);
  			const size_type nNewSize  = GetNewCapacity(nPrevSize);
@@ -2708,7 +2731,7 @@ index c27a6a5..6166fcd 100644
  			DoFree(mpBegin, (size_type)(internalCapacityPtr() - mpBegin));
  
  			mpBegin    = pNewData;
-@@ -1913,29 +1951,30 @@ namespace eastl
+@@ -1913,29 +1956,30 @@ namespace eastl
  	{
  		const size_type nPrevSize = size_type(mpEnd - mpBegin);
  		const size_type nNewSize  = GetNewCapacity(nPrevSize);

@@ -152,12 +152,7 @@ namespace safememory
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
 
-	   ~basic_string() {
-		   base_type::internalLayout().ResetToSSO();
-
-			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
-	   }
-
+	   ~basic_string() = default;
 
 		// unsafe
 		template<class V>

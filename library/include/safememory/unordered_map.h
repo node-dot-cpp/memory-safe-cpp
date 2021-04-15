@@ -92,11 +92,7 @@ namespace safememory
 			: base_type(ilist, nBucketCount, hashFunction, predicate, allocator_type())
             {}
 
-		~unordered_map() {
-			base_type::base_type::reset_lose_memory();
-
-			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
-		}
+		~unordered_map() = default;
 
 		this_type& operator=(const this_type& x) = default;
 		this_type& operator=(this_type&& x) = default;

@@ -126,13 +126,7 @@ namespace safememory
 		vector(std::initializer_list<value_type> ilist) : base_type(ilist, allocator_type()) {}
 //		vector(const_iterator_arg first, const_iterator_arg last);
 
-		~vector() {
-			base_type::mpBegin = nullptr;
-			base_type::mpEnd = nullptr;
-			base_type::internalCapacityPtr() = nullptr;
-
-			forcePreviousChangesToThisInDtor(this); // force compilers to apply the above instruction
-		}
+		~vector() = default;
 
 		this_type& operator=(const this_type& x) { base_type::operator=(x); return *this; }
 		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
