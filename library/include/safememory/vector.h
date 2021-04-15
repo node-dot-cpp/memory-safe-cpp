@@ -37,6 +37,10 @@
 #include <safememory/detail/array_iterator.h>
 #include <safe_memory_error.h>
 
+#ifdef SAFEMEMORY_DEZOMBIEFY
+#include <set>
+#endif
+
 namespace safememory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
@@ -83,8 +87,7 @@ namespace safememory
 #ifdef SAFEMEMORY_DEZOMBIEFY
 		static constexpr bool dz_it = true;
 #else
-		// mb: we use non dezombifing iterator only for trivialy copyable elements
-		static constexpr bool dz_it = !std::is_trivially_copyable<T>::value;
+		static constexpr bool dz_it = false;
 #endif
 
 		typedef typename allocator_type::template soft_array_pointer<T>            soft_ptr_type;
@@ -121,12 +124,21 @@ namespace safememory
 		vector() : base_type(allocator_type()) {}
 		explicit vector(size_type n) : base_type(n, allocator_type()) {}
 		vector(size_type n, const value_type& value) : base_type(n, value, allocator_type()) {}
-		vector(const this_type& x) : base_type(x) {}
-		vector(this_type&& x) noexcept : base_type(std::move(x)) {}
+		vector(const this_type& x) = default;
 		vector(std::initializer_list<value_type> ilist) : base_type(ilist, allocator_type()) {}
 //		vector(const_iterator_arg first, const_iterator_arg last);
 
+#ifdef SAFEMEMORY_DEZOMBIEFY
+		vector(this_type&& x) noexcept : base_type(std::move(x)) {
+			// eastl::set makes a swap on move-ctor
+			// so now we have all iterators, and x has a clean set
+			destroyAllIterators();
+		}
+		~vector() { destroyAllIterators(); }
+#else
+		vector(this_type&&) = default;
 		~vector() = default;
+#endif
 
 		this_type& operator=(const this_type& x) { base_type::operator=(x); return *this; }
 		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
@@ -354,6 +366,25 @@ namespace safememory
 		iterator_safe make_safe(const iterator& position) { return makeSafeIt(toBase(position)); }
 		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
 
+
+#ifdef SAFEMEMORY_DEZOMBIEFY
+		// use eastl::set?
+		template<class T>
+		using set_type = std::set<T, std::less<T>, detail::iiballocator<T>>;
+
+		set_type<detail::size_func_wrapper<size_type>*> itRegistry;
+
+		size_type getDezombiefySize() const noexcept { return base_type::size(); }
+		void registerIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.insert(it); }
+		void unregisterIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.erase(it); }
+		void destroyAllIterators() noexcept {
+			for(auto each : itRegistry)
+				each->destroy();
+			
+			itRegistry.clear();
+		}
+#endif
+
 	protected:
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
@@ -404,14 +435,14 @@ namespace safememory
 			if constexpr (use_base_iterator)
 				return it;
 			else {
-				return iterator::makePtr(base_type::data(), it, static_cast<const base_type*>(this));
+				return iterator::makePtr(base_type::data(), it, this);
 			}
 		}
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<this_type*>(this)->base_type::data(), it, static_cast<const base_type*>(this));
+				return const_iterator::makePtr(const_cast<this_type*>(this)->base_type::data(), it, const_cast<this_type*>(this));
 		}
 
 		// reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -433,14 +464,14 @@ namespace safememory
 			// if constexpr (use_base_iterator)
 			// 	return it;
 			// else
-				return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, static_cast<const base_type*>(this));
+				return iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, this);
 		}
 		
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
 			// if constexpr (use_base_iterator)
 			// 	return it;
 			// else
-				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, static_cast<const base_type*>(this));
+				return const_iterator_safe::makePtr(allocator_type::to_soft(base_type::mpBegin), it, const_cast<this_type*>(this));
 		}
 
 		// reverse_iterator_safe makeSafeIt(const typename base_type::reverse_iterator& it) {

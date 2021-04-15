@@ -35,6 +35,10 @@
 #include <safememory/functional.h> //for hash
 #include <safe_memory_error.h>
 
+#ifdef SAFEMEMORY_DEZOMBIEFY
+#include <set>
+#endif
+
 namespace safememory
 {
 
@@ -137,7 +141,6 @@ namespace safememory
 		// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		basic_string(std::initializer_list<value_type> init) : base_type(init, allocator_type()) {}
-		basic_string(this_type&& x) = default;
 		// basic_string(this_type&& x, const allocator_type& allocator);
 
 		// explicit basic_string(const view_type& sv, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -152,7 +155,17 @@ namespace safememory
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
 
-	   ~basic_string() = default;
+#ifdef SAFEMEMORY_DEZOMBIEFY
+		basic_string(this_type&& x) : base_type(std::move(x)) {
+			// eastl::set makes a swap on move-ctor
+			// so now we have all iterators, and x has a clean set
+			destroyAllIterators();
+		}
+		~basic_string() { destroyAllIterators(); }
+#else
+		basic_string(this_type&& x) = default;
+		~basic_string() = default;
+#endif
 
 		// unsafe
 		template<class V>
@@ -636,6 +649,24 @@ namespace safememory
 			return eastl::basic_string_view<T>(data(), size());
 		}
 
+#ifdef SAFEMEMORY_DEZOMBIEFY
+		// use eastl::set?
+		template<class T>
+		using set_type = std::set<T, std::less<T>, detail::iiballocator<T>>;
+
+		set_type<detail::size_func_wrapper<size_type>*> itRegistry;
+
+		size_type getDezombiefySize() const noexcept { return base_type::size(); }
+		void registerIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.insert(it); }
+		void unregisterIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.erase(it); }
+		void destroyAllIterators() noexcept {
+			for(auto each : itRegistry)
+				each->destroy();
+			
+			itRegistry.clear();
+		}
+#endif
+
     protected:
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 		[[noreturn]] static void ThrowInvalidArgumentException() { throw nodecpp::error::out_of_range; }
@@ -689,14 +720,14 @@ namespace safememory
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return iterator::makePtr(base_type::data(), it, static_cast<const base_type*>(this));
+				return iterator::makePtr(base_type::data(), it, this);
 		}
 		
 		const_iterator makeIt(const_iterator_base it) const {
 			if constexpr (use_base_iterator)
 				return it;
 			else
-				return const_iterator::makePtr(const_cast<this_type*>(this)->base_type::data(), it, static_cast<const base_type*>(this));
+				return const_iterator::makePtr(const_cast<this_type*>(this)->base_type::data(), it, const_cast<this_type*>(this));
 		}
 
 		reverse_iterator makeIt(const reverse_iterator_base& it) {
@@ -724,14 +755,14 @@ namespace safememory
 			
 			//mb: now the buffer should be on the heap
 			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, static_cast<const base_type*>(this));
+			return iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, this);
 		}
 
 		//mb: in case string is usign SSO, we make a 'reserve' to force switch to heap
 		const_iterator_safe makeSafeIt(const_iterator_base it) const {
 			// first calculate index of 'it', in case we move to heap
 			auto ix = static_cast<size_type>(it - base_type::data());
-
+			
 			if(base_type::internalLayout().IsSSO()) {
 				// its on the stack, move it to heap
 				const_cast<this_type*>(this)->base_type::reserve(base_type::SSOLayout::SSO_CAPACITY + 1);
@@ -739,7 +770,7 @@ namespace safememory
 
 			//mb: now the buffer should be on the heap
 			NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::regular, base_type::internalLayout().IsHeap());
-			return const_iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, static_cast<const base_type*>(this));
+			return const_iterator_safe::makeIx(allocator_type::to_soft(base_type::internalLayout().GetHeapBeginPtr()), ix, const_cast<this_type*>(this));
 		}
 
 		reverse_iterator_safe makeSafeIt(const reverse_iterator_base& it) {

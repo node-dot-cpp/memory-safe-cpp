@@ -38,6 +38,67 @@
 
 namespace safememory::detail {
 
+template<typename SZ>
+class size_func_wrapper {
+	std::function<SZ()> sz;
+	std::function<void(size_func_wrapper*)> reg;
+	std::function<void(size_func_wrapper*)> unreg;
+public:
+	size_func_wrapper(int) {}
+
+	template<class Cont>
+	size_func_wrapper(Cont* container) :sz(std::bind(&Cont::getDezombiefySize, container)),
+		reg(std::bind(&Cont::registerIterator, container, std::placeholders::_1)),
+		unreg(std::bind(&Cont::unregisterIterator, container, std::placeholders::_1)) {
+
+		reg(this);
+	}
+
+	size_func_wrapper(const size_func_wrapper& other) : sz(other.sz),
+		reg(other.reg), unreg(other.unreg) {
+			if(reg)
+				reg(this);
+
+	}
+
+	size_func_wrapper& operator=(const size_func_wrapper& other) {
+		if(this == std::addressof(other))
+			return *this;
+
+		if(unreg)
+			unreg(this);
+
+		sz = other.sz;
+		reg = other.reg;
+		unreg = other.unreg;
+
+		if(reg)
+			reg(this);
+
+		return *this;
+	}
+
+	void destroy() {
+		if(unreg) {
+			sz = nullptr;
+			reg = nullptr;
+			unreg = nullptr;
+		}
+	}
+
+	~size_func_wrapper() {
+		if(unreg) {
+			unreg(this);
+			sz = nullptr;
+			reg = nullptr;
+			unreg = nullptr;
+			forcePreviousChangesToThisInDtor(this);
+		}
+	}
+
+	SZ size() const noexcept { return sz(); }
+};
+
 /**
  * \brief Safe and generic iterator for arrays.
  * 
@@ -84,10 +145,9 @@ namespace safememory::detail {
  * 
  * For dezombiefy, we call the \c size() method on the container before dereferencing, and
  * before convert to raw pointers.
- * For \a stack_only iterators, checker will enforce scope rules, and we can rest that
- * if iterator is alive, then container is alive.
- * For \a heap_safe iterators, then \p ArrPtr will be \c soft_ptr and we must check the array
- * itself is not zombie, before making any attempt to call the container size functor.
+ * To be certain that the container is still alive and that such call will not jump into invalid
+ * memory, we use a mechanism of registering iterators to the container that created it.
+ * All iterators are invalidated when the container is moved or destructed.
  */
 
 template <typename T, bool is_const, typename ArrPtr, bool is_dezombiefy = false>
@@ -129,7 +189,6 @@ protected:
 		static constexpr memory_safety is_safe = memory_safety::none;
 	};
 
-
 public:
 	typedef std::random_access_iterator_tag  			iterator_category;
 	typedef std::conditional_t<is_const, const T, T>	value_type;
@@ -140,7 +199,8 @@ public:
 
 	static constexpr memory_safety is_safe = array_heap_safe_iterator_safety_helper<array_pointer>::is_safe;
 
-	using size_f_type = std::conditional_t<is_dezombiefy, std::function<size_type()>, size_type>;
+
+	using size_f_type = std::conditional_t<is_dezombiefy, size_func_wrapper<size_type>, size_type>;
 
 protected:
 	array_pointer  _array = nullptr;
@@ -148,8 +208,8 @@ protected:
 	size_f_type _size = 0;
 
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	constexpr array_heap_safe_iterator(array_pointer _array, size_type _index, size_f_type _size)
-		: _array(_array), _index(_index), _size(_size) {}
+	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_f_type sz)
+		: _array(arr), _index(ix), _size(sz) {}
 
 	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 	[[noreturn]] static void ThrowNullException() { throw nodecpp::error::out_of_range; }
@@ -203,13 +263,13 @@ public:
 	}
 
 	template <typename Container>
-	static constexpr this_type makeIx(array_pointer arr, size_type ix, const Container* container) {
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, Container* container) {
 
 		// extraSanityCheck(arr, ix, sz);
 
 		if constexpr (is_dezombiefy) {
-			std::function<size_type()> _size = std::bind(&Container::size, container);
-			return {arr, ix, _size};
+			// std::function<size_type()> func = std::bind(&Container::size, container);
+			return {arr, ix, size_f_type{container}};
 		}
 		else {
 			return {arr, ix, container->capacity()};
@@ -217,7 +277,7 @@ public:
 	}
 
 	template <typename Container>
-	static constexpr this_type makePtr(array_pointer arr, pointer to, const Container* container) {
+	static constexpr this_type makePtr(array_pointer arr, pointer to, Container* container) {
 
 		return makeIx(arr, getIndex(arr, to), container);
 	}
@@ -408,7 +468,7 @@ public:
 			
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
-				if(NODECPP_UNLIKELY(!(tmp < _size())))
+				if(NODECPP_UNLIKELY(!(tmp < _size.size())))
 					ThrowRangeException();
 			}
 			else {
@@ -428,7 +488,7 @@ public:
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
 				// assert _size != null
-				if(NODECPP_UNLIKELY(!(_index <= _size())))
+				if(NODECPP_UNLIKELY(!(_index <= _size.size())))
 					ThrowRangeException();
 			}
 			else {
@@ -499,8 +559,8 @@ public:
 
 protected:
 	/// this ctor is private because it is unsafe and shouldn't be reached by user
-	constexpr array_stack_only_iterator(array_pointer _array, size_type _index, typename base_type::size_f_type _size)
-		: base_type(_array, _index, _size) {}
+	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, typename base_type::size_f_type sz)
+		: base_type(arr, ix, sz) {}
 
 
 	constexpr array_stack_only_iterator(const base_type& ri)
@@ -529,21 +589,20 @@ public:
 	}
 
 	template <typename Container>
-	static constexpr this_type makeIx(array_pointer arr, size_type ix, const Container* container) {
+	static constexpr this_type makeIx(array_pointer arr, size_type ix, Container* container) {
 
 		// base_type::extraSanityCheck(arr, ix, sz);
 
 		if constexpr (is_dezombiefy) {
-			typename base_type::size_f_type _size = std::bind(&Container::size, container);
-			return this_type(arr, ix, _size);
+			return {arr, ix, typename base_type::size_f_type{container}};
 		}
 		else {
-			return this_type(arr, ix, container->capacity());
+			return {arr, ix, container->capacity()};
 		}
 	}
 
 	template <typename Container>
-	static constexpr this_type makePtr(array_pointer arr, pointer to, const Container* container) {
+	static constexpr this_type makePtr(array_pointer arr, pointer to, Container* container) {
 
 		return makeIx(arr, base_type::getIndex(arr, to), container);
 	}
