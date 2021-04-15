@@ -999,6 +999,8 @@ namespace eastl
 	inline basic_string<T, Allocator>::~basic_string()
 	{
 		DeallocateSelf();
+		internalLayout().ResetToSSO();
+		internalAllocator().forceChangesInDtor(this);
 	}
 
 

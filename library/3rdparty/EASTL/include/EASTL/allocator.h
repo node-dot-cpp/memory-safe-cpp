@@ -109,6 +109,8 @@ namespace eastl
 			return 0;
 		}
 
+		void forceChangesInDtor(const void*) {}
+
 	protected:
 		#if EASTL_NAME_ENABLED
 			const char* mpName; // Debug name, used to track memory.

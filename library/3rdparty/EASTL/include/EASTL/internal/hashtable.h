@@ -398,7 +398,7 @@ namespace eastl
 	struct mod_range_hashing
 	{
 		uint32_t operator()(size_t r, uint32_t n) const
-			{ return r % n; }
+			{ return n != 0 ? r % n : 0; }
 	};
 
 
@@ -1573,6 +1573,8 @@ namespace eastl
 	{
 		clear();
 		DoFreeBuckets(mpBucketArray, mnBucketCount);
+		reset_lose_memory();
+		mAllocator.forceChangesInDtor(this);
 	}
 
 

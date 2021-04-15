@@ -430,6 +430,11 @@ namespace eastl
 		if(mpBegin)
 //			EASTLFree(internalAllocator(), mpBegin, (internalCapacityPtr() - mpBegin) * sizeof(T));
 			internalAllocator().deallocate_array(mpBegin, internalCapacityPtr() - mpBegin);
+
+		mpBegin = nullptr;
+		mpEnd = nullptr;
+		internalCapacityPtr() = nullptr;
+		internalAllocator().forceChangesInDtor(this);
 	}
 
 
