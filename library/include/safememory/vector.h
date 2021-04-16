@@ -37,14 +37,11 @@
 #include <safememory/detail/array_iterator.h>
 #include <safe_memory_error.h>
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
-#include <set>
-#endif
-
 namespace safememory
 {
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
+	SAFEMEMORY_DEZOMBIEFY_ITERATORS_REGISTRY
 	{
 		typedef vector<T, Safety> 										this_type;
 		typedef eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>    base_type;
@@ -84,7 +81,7 @@ namespace safememory
 		typedef typename base_type::allocator_type                         allocator_type;
 		typedef typename base_type::array_type                             array_type;
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
 		static constexpr bool dz_it = true;
 #else
 		static constexpr bool dz_it = false;
@@ -125,20 +122,11 @@ namespace safememory
 		explicit vector(size_type n) : base_type(n, allocator_type()) {}
 		vector(size_type n, const value_type& value) : base_type(n, value, allocator_type()) {}
 		vector(const this_type& x) = default;
+		vector(this_type&&) = default;
 		vector(std::initializer_list<value_type> ilist) : base_type(ilist, allocator_type()) {}
 //		vector(const_iterator_arg first, const_iterator_arg last);
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
-		vector(this_type&& x) noexcept : base_type(std::move(x)) {
-			// eastl::set makes a swap on move-ctor
-			// so now we have all iterators, and x has a clean set
-			destroyAllIterators();
-		}
-		~vector() { destroyAllIterators(); }
-#else
-		vector(this_type&&) = default;
 		~vector() = default;
-#endif
 
 		this_type& operator=(const this_type& x) { base_type::operator=(x); return *this; }
 		this_type& operator=(std::initializer_list<value_type> ilist) { base_type::operator=(ilist); return *this; }
@@ -204,8 +192,13 @@ namespace safememory
 		const_reverse_iterator_safe rend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
 		const_reverse_iterator_safe crend_safe() const noexcept { return const_reverse_iterator_safe(makeSafeIt(begin_unsafe())); }
 
-		using base_type::empty;
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+		size_type size() const noexcept { return base_type::size(); }
+#else
 		using base_type::size;
+#endif
+
+		using base_type::empty;
 		using base_type::capacity;
 
 		//TODO: mb this is not really well checked at eastl::vector
@@ -365,25 +358,6 @@ namespace safememory
 
 		iterator_safe make_safe(const iterator& position) { return makeSafeIt(toBase(position)); }
 		const_iterator_safe make_safe(const const_iterator_arg& position) const { return makeSafeIt(toBase(position)); }
-
-
-#ifdef SAFEMEMORY_DEZOMBIEFY
-		// use eastl::set?
-		template<class T>
-		using set_type = std::set<T, std::less<T>, detail::iiballocator<T>>;
-
-		set_type<detail::size_func_wrapper<size_type>*> itRegistry;
-
-		size_type getDezombiefySize() const noexcept { return base_type::size(); }
-		void registerIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.insert(it); }
-		void unregisterIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.erase(it); }
-		void destroyAllIterators() noexcept {
-			for(auto each : itRegistry)
-				each->destroy();
-			
-			itRegistry.clear();
-		}
-#endif
 
 	protected:
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }

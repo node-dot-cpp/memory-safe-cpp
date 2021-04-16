@@ -37,6 +37,8 @@ add_library(safememory STATIC
 # target_compile_definitions(safememory PUBLIC NODECPP_NOT_USING_IIBMALLOC)
 # target_compile_definitions(foundation PUBLIC NODECPP_SAFE_PTR_DEBUG_MODE)
 # target_compile_definitions(safememory PUBLIC NODECPP_MEMORY_SAFETY=0)
+# target_compile_definitions(safememory PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+
 
 target_include_directories(safememory
   PUBLIC include
@@ -86,22 +88,22 @@ target_link_libraries(safememory_no_checks EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
 
-add_library(safememory_dezombiefy_iterators STATIC
+add_library(safememory_dz_it STATIC
   src/safe_ptr.cpp
   src/string.cpp
   src/nodecpp_error.cpp
   src/detail/allocator_to_eastl.cpp
   )
 
-target_compile_definitions(safememory_dezombiefy_iterators PUBLIC SAFEMEMORY_DEZOMBIEFY)
+target_compile_definitions(safememory_dz_it PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
 
-target_include_directories(safememory_dezombiefy_iterators
+target_include_directories(safememory_dz_it
   PUBLIC include
   PUBLIC src
   )
 
-target_link_libraries(safememory_dezombiefy_iterators iibmalloc)
-target_link_libraries(safememory_dezombiefy_iterators EASTL EABase)
+target_link_libraries(safememory_dz_it iibmalloc)
+target_link_libraries(safememory_dz_it EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
 # gcc_lto_workaround

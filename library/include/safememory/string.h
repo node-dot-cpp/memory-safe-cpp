@@ -35,15 +35,12 @@
 #include <safememory/functional.h> //for hash
 #include <safe_memory_error.h>
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
-#include <set>
-#endif
-
 namespace safememory
 {
 
 	template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 	class SAFEMEMORY_DEEP_CONST_WHEN_PARAMS basic_string : protected eastl::basic_string<T, detail::allocator_to_eastl_string<Safety>>
+	SAFEMEMORY_DEZOMBIEFY_ITERATORS_REGISTRY
 	{
 	public:
 		typedef basic_string<T, Safety>                         this_type;
@@ -66,7 +63,7 @@ namespace safememory
 		typedef typename base_type::difference_type             difference_type;
 		typedef typename base_type::allocator_type              allocator_type;
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
 		static constexpr bool dz_it = true;
 #else
 		static constexpr bool dz_it = false;
@@ -137,6 +134,7 @@ namespace safememory
 		basic_string(const literal_type& l) : base_type(l.c_str(), l.size(), allocator_type()) {}
 		basic_string(size_type n, value_type c) : base_type(n, c, allocator_type()) {}
 		basic_string(const this_type& x) = default;
+		basic_string(this_type&& x) = default;
 	    // basic_string(const this_type& x, const allocator_type& allocator);
 		// basic_string(const value_type* pBegin, const value_type* pEnd, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
 		// basic_string(CtorDoNotInitialize, size_type n, const allocator_type& allocator = EASTL_BASIC_STRING_DEFAULT_ALLOCATOR);
@@ -155,17 +153,7 @@ namespace safememory
 		// template <typename OtherStringType> // Unfortunately we need the CtorConvert here because otherwise this function would collide with the value_type* constructor.
 		// basic_string(CtorConvert, const OtherStringType& x);
 
-#ifdef SAFEMEMORY_DEZOMBIEFY
-		basic_string(this_type&& x) : base_type(std::move(x)) {
-			// eastl::set makes a swap on move-ctor
-			// so now we have all iterators, and x has a clean set
-			destroyAllIterators();
-		}
-		~basic_string() { destroyAllIterators(); }
-#else
-		basic_string(this_type&& x) = default;
 		~basic_string() = default;
-#endif
 
 		// unsafe
 		template<class V>
@@ -266,8 +254,13 @@ namespace safememory
 		const_reverse_iterator_safe crend_safe() const noexcept { return makeSafeIt(base_type::crend()); }
 
 		// Size-related functionality
+#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
+		size_type size() const noexcept { return base_type::size(); }
+#else
+		using base_type::size;
+#endif
+
         using base_type::empty;
-        using base_type::size;
         using base_type::length;
         using base_type::max_size;
         using base_type::capacity;
@@ -648,24 +641,6 @@ namespace safememory
 		eastl::basic_string_view<T> to_string_view_unsafe() const {
 			return eastl::basic_string_view<T>(data(), size());
 		}
-
-#ifdef SAFEMEMORY_DEZOMBIEFY
-		// use eastl::set?
-		template<class T>
-		using set_type = std::set<T, std::less<T>, detail::iiballocator<T>>;
-
-		set_type<detail::size_func_wrapper<size_type>*> itRegistry;
-
-		size_type getDezombiefySize() const noexcept { return base_type::size(); }
-		void registerIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.insert(it); }
-		void unregisterIterator(detail::size_func_wrapper<size_type>* it) noexcept { itRegistry.erase(it); }
-		void destroyAllIterators() noexcept {
-			for(auto each : itRegistry)
-				each->destroy();
-			
-			itRegistry.clear();
-		}
-#endif
 
     protected:
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }

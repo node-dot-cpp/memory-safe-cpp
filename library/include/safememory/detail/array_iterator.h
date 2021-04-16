@@ -35,69 +35,9 @@
 #include <nodecpp_assert.h>
 #include <safe_memory_error.h>
 #include <safememory/detail/instrument.h>
+#include <safememory/detail/dezombiefy_iterators.h>
 
 namespace safememory::detail {
-
-template<typename SZ>
-class size_func_wrapper {
-	std::function<SZ()> sz;
-	std::function<void(size_func_wrapper*)> reg;
-	std::function<void(size_func_wrapper*)> unreg;
-public:
-	size_func_wrapper(int) {}
-
-	template<class Cont>
-	size_func_wrapper(Cont* container) :sz(std::bind(&Cont::getDezombiefySize, container)),
-		reg(std::bind(&Cont::registerIterator, container, std::placeholders::_1)),
-		unreg(std::bind(&Cont::unregisterIterator, container, std::placeholders::_1)) {
-
-		reg(this);
-	}
-
-	size_func_wrapper(const size_func_wrapper& other) : sz(other.sz),
-		reg(other.reg), unreg(other.unreg) {
-			if(reg)
-				reg(this);
-
-	}
-
-	size_func_wrapper& operator=(const size_func_wrapper& other) {
-		if(this == std::addressof(other))
-			return *this;
-
-		if(unreg)
-			unreg(this);
-
-		sz = other.sz;
-		reg = other.reg;
-		unreg = other.unreg;
-
-		if(reg)
-			reg(this);
-
-		return *this;
-	}
-
-	void destroy() {
-		if(unreg) {
-			sz = nullptr;
-			reg = nullptr;
-			unreg = nullptr;
-		}
-	}
-
-	~size_func_wrapper() {
-		if(unreg) {
-			unreg(this);
-			sz = nullptr;
-			reg = nullptr;
-			unreg = nullptr;
-			forcePreviousChangesToThisInDtor(this);
-		}
-	}
-
-	SZ size() const noexcept { return sz(); }
-};
 
 /**
  * \brief Safe and generic iterator for arrays.
@@ -200,7 +140,7 @@ public:
 	static constexpr memory_safety is_safe = array_heap_safe_iterator_safety_helper<array_pointer>::is_safe;
 
 
-	using size_f_type = std::conditional_t<is_dezombiefy, size_func_wrapper<size_type>, size_type>;
+	using size_f_type = std::conditional_t<is_dezombiefy, iterator_dezombiefier, size_type>;
 
 protected:
 	array_pointer  _array = nullptr;
@@ -212,7 +152,8 @@ protected:
 		: _array(arr), _index(ix), _size(sz) {}
 
 	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
-	[[noreturn]] static void ThrowNullException() { throw nodecpp::error::out_of_range; }
+	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
+	[[noreturn]] static void ThrowNullException() { throw nodecpp::error::zero_pointer_access; }
 	[[noreturn]] static void ThrowInvalidArgumentException() { throw nodecpp::error::out_of_range; }
 
 	static constexpr void extraSanityCheck(array_pointer arr, size_type ix, size_type sz) {
@@ -241,6 +182,7 @@ public:
 	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
 
 		if constexpr (is_dezombiefy) {
+			// this factory method is not allowed with dezombiefy
 			ThrowNullException();
 			return {};
 		}
@@ -468,8 +410,10 @@ public:
 			
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
+				if ( NODECPP_UNLIKELY( !_size ) )
+					ThrowZombieException();
 				if(NODECPP_UNLIKELY(!(tmp < _size.size())))
-					ThrowRangeException();
+					ThrowZombieException();
 			}
 			else {
 				if(NODECPP_UNLIKELY(!(tmp < _size)))
@@ -487,9 +431,10 @@ public:
 		if(_array) {
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
-				// assert _size != null
+				if ( NODECPP_UNLIKELY( !_size ) )
+					ThrowZombieException();
 				if(NODECPP_UNLIKELY(!(_index <= _size.size())))
-					ThrowRangeException();
+					ThrowZombieException();
 			}
 			else {
 				if(NODECPP_UNLIKELY(!(_index <= _size)))
@@ -575,6 +520,7 @@ public:
 	static constexpr this_type makeIx(array_pointer arr, size_type ix, size_type sz) {
 
 		if constexpr (is_dezombiefy) {
+			// this factory method is not allowed with dezombiefy
 			base_type::ThrowNullException();
 			return {};
 		}
