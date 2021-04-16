@@ -44,6 +44,8 @@ add_executable(SafeMemoryTestsOnDemandStd ${SafeMemoryTests_Sources})
 target_link_libraries(SafeMemoryTestsOnDemandStd safememory)
 target_compile_definitions(SafeMemoryTestsOnDemandStd PUBLIC SAFEMEMORY_TEST_DONT_INITIALIZE_IIBALLOC)
 
+add_executable(SafeMemoryTestsDzIt ${SafeMemoryTests_Sources})
+target_link_libraries(SafeMemoryTestsDzIt safememory_dz_it)
 
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
@@ -52,3 +54,4 @@ add_test(SafeMemoryTestsRun SafeMemoryTests)
 add_test(SafeMemoryTestsImplRun SafeMemoryTestsImpl)
 add_test(SafeMemoryTestsNoChecksRun SafeMemoryTestsNoChecks)
 add_test(SafeMemoryTestsOnDemandStdRun SafeMemoryTestsOnDemandStd)
+add_test(SafeMemoryTestsDzItRun SafeMemoryTestsDzIt)
