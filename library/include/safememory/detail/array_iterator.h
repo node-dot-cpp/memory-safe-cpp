@@ -133,7 +133,7 @@ public:
 	typedef std::random_access_iterator_tag  			iterator_category;
 	typedef std::conditional_t<is_const, const T, T>	value_type;
 	typedef std::ptrdiff_t                              difference_type;
-	typedef std::size_t                                 size_type;
+	typedef eastl_size_t                                size_type;
 	typedef value_type*									pointer;
 	typedef value_type&									reference;
 

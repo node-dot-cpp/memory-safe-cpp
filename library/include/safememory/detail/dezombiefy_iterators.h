@@ -110,7 +110,7 @@ public:
 
 
 class iterator_dezombiefier {
-	std::function<std::size_t()> sz;
+	std::function<eastl_size_t()> sz;
 	iterator_registry* registry = nullptr;
 public:
 	iterator_dezombiefier(int) {}
@@ -160,7 +160,7 @@ public:
 	}
 
 	operator bool() const noexcept { return static_cast<bool>(registry); }
-	std::size_t size() const noexcept { return sz(); }
+	eastl_size_t size() const noexcept { return sz(); }
 };
 
 

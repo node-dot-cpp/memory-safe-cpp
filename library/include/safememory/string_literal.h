@@ -44,7 +44,7 @@ namespace safememory
 		typedef basic_string_literal<T, Safety>                           this_type;
 		typedef T                                                         value_type;
 		typedef const T&                                                  const_reference;
-		typedef size_t                                                    size_type;
+		typedef eastl_size_t                                              size_type;
 		// string literals have infinite lifetime, so raw pointer iterator is safe
 		typedef detail::array_heap_safe_iterator<T, true, T*>	          const_heap_safe_iterator;
 		typedef const_heap_safe_iterator                                  const_iterator_safe;
@@ -60,8 +60,11 @@ namespace safememory
 
 	public:
 		
-		template<size_t N>
-		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) { static_assert(N >= 1); }
+		template<size_type N>
+		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) {
+			static_assert(N >= 1);
+			static_assert(N < std::numeric_limits<size_type>::max();
+		}
 
 		basic_string_literal(const basic_string_literal& other) = default;
 		basic_string_literal& operator=(const basic_string_literal& other) = default;
@@ -135,115 +138,35 @@ namespace safememory
 	typedef basic_string_literal<char32_t> u32string_literal;
 
 
-	/// user defined literals
-// #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-// 	inline namespace literals
-// 	{
-// 		inline namespace string_literals
-// 		{
-// 			inline string_literal operator"" _lit(const char* str, size_t len) EA_NOEXCEPT { return {str, string_literal::size_type(len)}; }
-// 			inline u16string_literal operator"" _lit(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string_literal::size_type(len)}; }
-// 			inline u32string_literal operator"" _lit(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string_literal::size_type(len)}; }
-// 			inline wstring_literal operator"" _lit(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring_literal::size_type(len)}; }
-
-// 			// C++20 char8_t support.
-// 			#if EA_CHAR8_UNIQUE
-// 				inline u8string_literal operator"" _lit(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, u8string_literal::size_type(len)}; }
-// 			#endif
-// 		}
-// 	}
-// #endif
-
-
 	template<class T, memory_safety S>
 	bool operator==( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator==(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
-
-	// template<class T, memory_safety S>
-	// bool operator==( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator==(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator==( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator==(a.to_string_view_unsafe(), ptr);
-	// }
 
 	template<class T, memory_safety S>
 	bool operator!=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator!=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
-	// template<class T, memory_safety S>
-	// bool operator!=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator!=(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator!=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator!=(a.to_string_view_unsafe(), ptr);
-	// }
-
 	template<class T, memory_safety S>
 	bool operator<( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator<(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
-
-	// template<class T, memory_safety S>
-	// bool operator<( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator<(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator<( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator<(a.to_string_view_unsafe(), ptr);
-	// }
 
 	template<class T, memory_safety S>
 	bool operator<=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator<=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
-	// template<class T, memory_safety S>
-	// bool operator<=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator<=(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator<=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator<=(a.to_string_view_unsafe(), ptr);
-	// }
-
 	template<class T, memory_safety S>
 	bool operator>( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator>(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
 
-	// template<class T, memory_safety S>
-	// bool operator>( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator>(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator>( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator>(a.to_string_view_unsafe(), ptr);
-	// }
-
 	template<class T, memory_safety S>
 	bool operator>=( const basic_string_literal<T, S>& a, const basic_string_literal<T, S>& b ) {
 		return eastl::operator>=(a.to_string_view_unsafe(), b.to_string_view_unsafe());
 	}
-
-	// template<class T, memory_safety S>
-	// bool operator>=( const typename basic_string_literal<T, S>::value_type* ptr, const basic_string_literal<T, S>& b ) {
-	// 	return eastl::operator>=(ptr, b.to_string_view_unsafe());
-	// }
-
-	// template<class T, memory_safety S>
-	// bool operator>=( const basic_string_literal<T, S>& a, const typename basic_string_literal<T, S>::value_type* ptr ) {
-	// 	return eastl::operator>=(a.to_string_view_unsafe(), ptr);
-	// }
 
 } //namespace safememory
 

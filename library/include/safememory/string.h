@@ -940,7 +940,7 @@ namespace safememory
 	struct SAFEMEMORY_DEEP_CONST hash<basic_string<T, memory_safety::none>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type>
 	{
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::none>::base_type> base_type;
-		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::none>& x) const
+		SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(const basic_string<T, memory_safety::none>& x) const
 		{
 			return base_type::operator()(x.to_base_unsafe());
 		}
@@ -950,7 +950,7 @@ namespace safememory
 	struct SAFEMEMORY_DEEP_CONST hash<basic_string<T, memory_safety::safe>> : eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type>
 	{
 		typedef eastl::hash<typename safememory::basic_string<T, safememory::memory_safety::safe>::base_type> base_type;
-		SAFEMEMORY_NO_SIDE_EFFECT size_t operator()(const basic_string<T, memory_safety::safe>& x) const
+		SAFEMEMORY_NO_SIDE_EFFECT std::size_t operator()(const basic_string<T, memory_safety::safe>& x) const
 		{
 			return base_type::operator()(x.to_base_unsafe());
 		}
@@ -1011,26 +1011,6 @@ namespace safememory
 		{ return wstring::make_sprintf_unsafe(L"%f", value); }
 	inline wstring to_wstring(long double value)
 		{ return wstring::make_sprintf_unsafe(L"%Lf", value); }
-
-
-	/// user defined literals
-// #if EASTL_USER_LITERALS_ENABLED && EASTL_INLINE_NAMESPACES_ENABLED
-// 	inline namespace literals
-// 	{
-// 		inline namespace string_literals
-// 		{
-// 			inline string operator"" _str(const char* str, size_t len) EA_NOEXCEPT { return {str, string::size_type(len)}; }
-// 			inline u16string operator"" _str(const char16_t* str, size_t len) EA_NOEXCEPT { return {str, u16string::size_type(len)}; }
-// 			inline u32string operator"" _str(const char32_t* str, size_t len) EA_NOEXCEPT { return {str, u32string::size_type(len)}; }
-// 			inline wstring operator"" _str(const wchar_t* str, size_t len) EA_NOEXCEPT { return {str, wstring::size_type(len)}; }
-
-// 			// C++20 char8_t support.
-// 			#if EA_CHAR8_UNIQUE
-// 				inline u8string operator"" _str(const char8_t* str, size_t len) EA_NOEXCEPT { return {str, u8string::size_type(len)}; }
-// 			#endif
-// 		}
-// 	}
-// #endif
 
 
 	/// erase / erase_if

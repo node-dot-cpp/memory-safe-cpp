@@ -113,7 +113,12 @@ public:
 	
 	constexpr array(std::initializer_list<value_type> init) {
 		
-		eastl_size_t sz = eastl::min_alt(N, init.size());
+		if constexpr (!std::is_same_v<decltype(init.size()), size_type>) {
+			if(init.size() >= std::numeric_limits<size_type>::max()) {
+				ThrowRangeException();
+			}
+		}
+		size_type sz = eastl::min_alt(N, static_cast<size_type>(init.size()));
 		
 		auto it = init.begin();
 		// uninitialized_move_ptr ?
