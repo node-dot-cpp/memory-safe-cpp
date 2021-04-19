@@ -63,7 +63,7 @@ namespace safememory
 		template<size_type N>
 		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) {
 			static_assert(N >= 1);
-			static_assert(N < std::numeric_limits<size_type>::max();
+			static_assert(N < std::numeric_limits<size_type>::max());
 		}
 
 		basic_string_literal(const basic_string_literal& other) = default;

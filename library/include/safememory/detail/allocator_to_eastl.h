@@ -246,7 +246,7 @@ public:
 
 // we can safely use a dummy when the type is trivial.
 template<class T>
-using soft_this_ptr_raii = std::conditional_t<!std::is_trivially_copyable_v<T>>,
+using soft_this_ptr_raii = std::conditional_t<!std::is_trivially_copyable_v<T>,
 			soft_this_ptr_raii_impl, soft_this_ptr_raii_dummy>;
 
 class base_allocator_to_eastl_impl {

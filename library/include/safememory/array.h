@@ -113,11 +113,12 @@ public:
 	
 	constexpr array(std::initializer_list<value_type> init) {
 		
-		if constexpr (!std::is_same_v<decltype(init.size()), size_type>) {
+		if constexpr (is_safe == memory_safety::safe && !std::is_same_v<decltype(init.size()), size_type>) {
 			if(init.size() >= std::numeric_limits<size_type>::max()) {
 				ThrowRangeException();
 			}
 		}
+		
 		size_type sz = eastl::min_alt(N, static_cast<size_type>(init.size()));
 		
 		auto it = init.begin();

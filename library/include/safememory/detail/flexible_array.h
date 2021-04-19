@@ -29,6 +29,7 @@
 #define SAFE_MEMORY_DETAIL_FLEXIBLE_ARRAY_H
 
 #include <initializer_list>
+#include <EASTL/internal/config.h> // for eastl_size_t
 
 namespace safememory::detail {
 

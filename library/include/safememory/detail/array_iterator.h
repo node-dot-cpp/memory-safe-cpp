@@ -132,7 +132,7 @@ protected:
 public:
 	typedef std::random_access_iterator_tag  			iterator_category;
 	typedef std::conditional_t<is_const, const T, T>	value_type;
-	typedef std::ptrdiff_t                              difference_type;
+	typedef eastl_ssize_t                               difference_type;
 	typedef eastl_size_t                                size_type;
 	typedef value_type*									pointer;
 	typedef value_type&									reference;
@@ -141,6 +141,7 @@ public:
 
 
 	using size_f_type = std::conditional_t<is_dezombiefy, iterator_dezombiefier, size_type>;
+
 
 protected:
 	array_pointer  _array = nullptr;
@@ -265,8 +266,11 @@ public:
 	difference_type operator-(const this_type& ri) const noexcept {
 
 		// it1 == it2 => it1 - it2 == 0, even for null iterators
-		if(_array == ri._array)
-			return static_cast<difference_type>(_index) - static_cast<difference_type>(ri._index);
+		if(_array == ri._array) {
+			auto diff = _index - ri._index;
+			//TODO check the value fits the type
+			return static_cast<difference_type>(diff);
+		}
 		else
 			ThrowInvalidArgumentException();
 	}
