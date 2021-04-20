@@ -356,7 +356,10 @@ public:
 			return {};
 	}
 
-	void forceChangesInDtor(const void* ptr) { forcePreviousChangesToThisInDtor(ptr); };
+	static void force_changes_in_dtor(const void*) { forcePreviousChangesToThisInDtor(ptr); }
+
+	template<class T>
+	static void check_not_null(const pointer<T>& p) { checkNotNullAllSizes(to_raw(p)); }
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_impl&) const { return true; }
@@ -454,7 +457,10 @@ public:
 			return {};
 	}
 
-	void forceChangesInDtor(const void* ptr) { forcePreviousChangesToThisInDtor(ptr); };
+	static void force_changes_in_dtor(const void*) {}
+
+	template<class T>
+	static void check_not_null(const pointer<T>& p) {}
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_no_checks&) const { return true; }

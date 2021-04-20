@@ -434,7 +434,7 @@ namespace eastl
 		mpBegin = nullptr;
 		mpEnd = nullptr;
 		internalCapacityPtr() = nullptr;
-		internalAllocator().forceChangesInDtor(this);
+		allocator_type::force_changes_in_dtor(this);
 	}
 
 

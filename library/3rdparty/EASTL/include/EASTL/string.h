@@ -1000,7 +1000,7 @@ namespace eastl
 	{
 		DeallocateSelf();
 		internalLayout().ResetToSSO();
-		internalAllocator().forceChangesInDtor(this);
+		allocator_type::force_changes_in_dtor(this);
 	}
 
 

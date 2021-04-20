@@ -398,7 +398,7 @@ namespace eastl
 	struct mod_range_hashing
 	{
 		uint32_t operator()(size_t r, uint32_t n) const
-			{ return n != 0 ? r % n : 0; }
+			{ return r % n; }
 	};
 
 
@@ -919,6 +919,7 @@ namespace eastl
 
 		iterator begin() EA_NOEXCEPT
 		{
+			allocator_type::check_not_null(mpBucketArray);
 			iterator i(allocator_type::to_raw(mpBucketArray));
 			if(!i.mpNode)
 				i.increment_bucket();
@@ -927,6 +928,7 @@ namespace eastl
 
 		const_iterator begin() const EA_NOEXCEPT
 		{
+			allocator_type::check_not_null(mpBucketArray);
 			const_iterator i(allocator_type::to_raw(mpBucketArray));
 			if(!i.mpNode)
 				i.increment_bucket();
@@ -937,23 +939,23 @@ namespace eastl
 			{ return begin(); }
 
 		iterator end() EA_NOEXCEPT
-			{ return iterator(mpBucketArray + mnBucketCount); }
+			{ allocator_type::check_not_null(mpBucketArray); return iterator(mpBucketArray + mnBucketCount); }
 
 		const_iterator end() const EA_NOEXCEPT
-			{ return const_iterator(mpBucketArray + mnBucketCount); }
+			{ allocator_type::check_not_null(mpBucketArray); return const_iterator(mpBucketArray + mnBucketCount); }
 
 		const_iterator cend() const EA_NOEXCEPT
-			{ return const_iterator(mpBucketArray + mnBucketCount); }
+			{ allocator_type::check_not_null(mpBucketArray); return const_iterator(mpBucketArray + mnBucketCount); }
 
 		// Returns an iterator to the first item in bucket n.
 		local_iterator begin(size_type n) EA_NOEXCEPT
-			{ return local_iterator(mpBucketArray[n]); }
+			{ allocator_type::check_not_null(mpBucketArray); return local_iterator(mpBucketArray[n]); }
 
 		const_local_iterator begin(size_type n) const EA_NOEXCEPT
-			{ return const_local_iterator(mpBucketArray[n]); }
+			{ allocator_type::check_not_null(mpBucketArray); return const_local_iterator(mpBucketArray[n]); }
 
 		const_local_iterator cbegin(size_type n) const EA_NOEXCEPT
-			{ return const_local_iterator(mpBucketArray[n]); }
+			{ allocator_type::check_not_null(mpBucketArray); return const_local_iterator(mpBucketArray[n]); }
 
 		// Returns an iterator to the last item in a bucket returned by begin(n).
 		local_iterator end(size_type) EA_NOEXCEPT
@@ -983,7 +985,7 @@ namespace eastl
 		// Returns the ratio of element count to bucket count. A return value of 1 means 
 		// there's an optimal 1 bucket for each element.
 		float load_factor() const EA_NOEXCEPT
-			{ return (float)mnElementCount / (float)mnBucketCount; }
+			{ return mnBucketCount != 0 ? (float)mnElementCount / (float)mnBucketCount : (float)0; }
 
 		// Inherited from the base class.
 		// Returns the max load factor, which is the load factor beyond
@@ -1121,6 +1123,7 @@ namespace eastl
 				"so it requires cached hash codes.  Consider setting template parameter "
 				"bCacheHashCode to true or using find_by_hash(const key_type& k, hash_code_t c) instead.");
 
+			allocator_type::check_not_null(mpBucketArray);
 			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 			node_pointer const pNode = DoFindNode(mpBucketArray[n], c);
@@ -1137,6 +1140,7 @@ namespace eastl
 								"so it requires cached hash codes.  Consider setting template parameter "
 								"bCacheHashCode to true or using find_by_hash(const key_type& k, hash_code_t c) instead.");
 
+			allocator_type::check_not_null(mpBucketArray);
 			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 			node_pointer const pNode = DoFindNode(mpBucketArray[n], c);
@@ -1148,6 +1152,7 @@ namespace eastl
 
 		iterator find_by_hash(const key_type& k, hash_code_t c)
 		{
+			allocator_type::check_not_null(mpBucketArray);
 			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 			node_pointer const pNode = DoFindNode(mpBucketArray[n], k, c);
@@ -1156,6 +1161,7 @@ namespace eastl
 
 		const_iterator find_by_hash(const key_type& k, hash_code_t c) const
 		{
+			allocator_type::check_not_null(mpBucketArray);
 			const size_type n = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 
 			node_pointer const pNode = DoFindNode(mpBucketArray[n], k, c);
@@ -1574,7 +1580,7 @@ namespace eastl
 		clear();
 		DoFreeBuckets(mpBucketArray, mnBucketCount);
 		reset_lose_memory();
-		mAllocator.forceChangesInDtor(this);
+		allocator_type::force_changes_in_dtor(this);
 	}
 
 
@@ -1734,6 +1740,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
@@ -1748,6 +1755,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find(const key_type& k) const
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c = get_hash_code(k);
 		const size_type   n = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 
@@ -1763,6 +1771,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c = (hash_code_t)uhash(other);
 		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
 
@@ -1778,6 +1787,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_as(const U& other, UHash uhash, BinaryPredicate predicate) const
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c = (hash_code_t)uhash(other);
 		const size_type   n = (size_type)(c % mnBucketCount); // This assumes we are using the mod range policy.
 
@@ -1839,6 +1849,7 @@ namespace eastl
 				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c) const
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 		node_pointer const pNodeStart = mpBucketArray[start];
 
@@ -1862,6 +1873,7 @@ namespace eastl
 				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::find_range_by_hash(hash_code_t c)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const size_type start = (size_type)bucket_index(c, (uint32_t)mnBucketCount);
 		node_pointer const pNodeStart = mpBucketArray[start];
 
@@ -1885,6 +1897,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::count(const key_type& k) const EA_NOEXCEPT
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c      = get_hash_code(k);
 		const size_type   n      = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 		size_type         result = 0;
@@ -1907,6 +1920,7 @@ namespace eastl
 				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator>
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 		node_pointer*       head  = mpBucketArray + n;
@@ -1944,6 +1958,7 @@ namespace eastl
 				typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::const_iterator>
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::equal_range(const key_type& k) const
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const hash_code_t c     = get_hash_code(k);
 		const size_type   n     = (size_type)bucket_index(k, c, (uint32_t)mnBucketCount);
 		node_pointer*       head  = mpBucketArray + n;
@@ -2717,6 +2732,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace(Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		return DoInsertValue(has_unique_keys_type(), eastl::forward<Args>(args)...); // Need to use forward instead of move because Args&& is a "universal reference" instead of an rvalue reference.
 	}
 
@@ -2726,6 +2742,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::emplace_hint(const_iterator, Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// We currently ignore the iterator argument as a hint.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), eastl::forward<Args>(args)...);
 		return DoGetResultIterator(has_unique_keys_type(), result);
@@ -2738,6 +2755,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key),
 		                     forward_as_tuple(forward<Args>(args)...));
 	}
@@ -2749,6 +2767,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)),
 		                     forward_as_tuple(forward<Args>(args)...));
 	}
@@ -2759,6 +2778,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, const key_type& key, Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		insert_return_type result = DoInsertValue(
 		    has_unique_keys_type(),
 		    value_type(piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...)));
@@ -2772,6 +2792,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::try_emplace(const_iterator, key_type&& key, Args&&... args)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		insert_return_type result =
 		    DoInsertValue(has_unique_keys_type(), value_type(piecewise_construct, forward_as_tuple(eastl::move(key)),
 		                                                     forward_as_tuple(forward<Args>(args)...)));
@@ -2784,6 +2805,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(value_type&& otherValue)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		return DoInsertValue(has_unique_keys_type(), eastl::move(otherValue));
 	}
 
@@ -2794,6 +2816,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, node_pointer pNodeNew, P&& otherValue)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// pNodeNew->mValue is expected to be uninitialized.
 		value_type value(eastl::forward<P>(otherValue)); // Need to use forward instead of move because P&& is a "universal reference" instead of an rvalue reference.
 		const key_type& k = mExtractKey(value);
@@ -2806,6 +2829,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, value_type&& value)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// We currently ignore the iterator argument as a hint.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), value_type(eastl::move(value)));
 		return DoGetResultIterator(has_unique_keys_type(), result);
@@ -2817,6 +2841,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const value_type& value)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		return DoInsertValue(has_unique_keys_type(), value);
 	}
 
@@ -2826,6 +2851,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert_return_type
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(hash_code_t c, node_pointer pNodeNew, const value_type& value)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// pNodeNew->mValue is expected to be uninitialized.
 		const key_type& k = mExtractKey(value);
 		return DoInsertValueExtra(has_unique_keys_type(), k, c, pNodeNew, value);
@@ -2847,6 +2873,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(const_iterator, const value_type& value)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// We ignore the first argument (hint iterator). It's not likely to be useful for hashtable containers.
 		insert_return_type result = DoInsertValue(has_unique_keys_type(), value);
 		return DoGetResultIterator(has_unique_keys_type(), result);
@@ -2867,6 +2894,7 @@ namespace eastl
 	void
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::insert(InputIterator first, InputIterator last)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		const uint32_t nElementAdd = (uint32_t)eastl::ht_distance(first, last);
 		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, nElementAdd);
 
@@ -2938,6 +2966,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator i)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		iterator iNext(i.mpNode, i.mpBucket); // Convert from const_iterator to iterator while constructing.
 		++iNext;
 
@@ -2974,6 +3003,7 @@ namespace eastl
 	inline typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const_iterator first, const_iterator last)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		while(first != last)
 			first = erase(first);
 		return iterator(first.mpNode, first.mpBucket);
@@ -2986,6 +3016,7 @@ namespace eastl
 	typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::size_type 
 	hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::erase(const key_type& k)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// To do: Reimplement this function to do a single loop and not try to be 
 		// smart about element contiguity. The mechanism here is only a benefit if the 
 		// buckets are heavily overloaded; otherwise this mechanism may be slightly slower.
@@ -3016,6 +3047,7 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear()
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		DoFreeNodes(mpBucketArray, mnBucketCount);
 		mnElementCount = 0;
 	}
@@ -3026,6 +3058,7 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::clear(bool clearBuckets)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		DoFreeNodes(mpBucketArray, mnBucketCount);
 		if(clearBuckets)
 		{
@@ -3063,6 +3096,7 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::reserve(size_type nElementCount)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		rehash(mRehashPolicy.GetBucketCount(uint32_t(nElementCount)));
 	}
 
@@ -3072,6 +3106,7 @@ namespace eastl
 			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
 	inline void hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::rehash(size_type nBucketCount)
 	{
+		allocator_type::check_not_null(mpBucketArray);
 		// Note that we unilaterally use the passed in bucket count; we do not attempt migrate it
 		// up to the next prime number. We leave it at the user's discretion to do such a thing.
 		DoRehash(nBucketCount);
