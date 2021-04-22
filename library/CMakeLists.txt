@@ -155,5 +155,7 @@ if (SAFEMEMORY_TEST)
   add_subdirectory(test/containers/benchmark)
   add_subdirectory(test/containers/test)
   add_subdirectory(test/containers/dezombiefy)
+  add_subdirectory(test/containers/zeroed)
+
 
 endif()

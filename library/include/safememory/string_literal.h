@@ -59,6 +59,7 @@ namespace safememory
 		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 
 	public:
+		basic_string_literal() {}
 		
 		template<size_type N>
 		basic_string_literal(const value_type (&ptr)[N]) : str(ptr), sz(N - 1) {
@@ -92,9 +93,7 @@ namespace safememory
 		constexpr const T* data() const noexcept { return str; }
 
 		// constexpr reference       operator[](size_type i);
-		constexpr const_reference operator[](size_type i) const {
-			return at(i);
-		}
+		constexpr const_reference operator[](size_type i) const { return at(i); }
 
 		constexpr const_reference at(size_type i) const {
 			if constexpr(is_safe == memory_safety::safe) {

@@ -58,8 +58,8 @@ namespace safememory
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 		typedef typename base_type::insert_return_type                            base_insert_return_type;
 
-		typedef typename detail::hashtable_heap_safe_iterator<base_iterator, base_iterator, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<base_iterator, base_iterator, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, allocator_type>  const_stack_only_iterator;
 
@@ -274,8 +274,8 @@ namespace safememory
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 		typedef typename base_type::insert_return_type                            base_insert_return_type;
 
-		typedef typename detail::hashtable_heap_safe_iterator<base_iterator, base_iterator, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<base_iterator, base_iterator, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<const_base_iterator, base_iterator, allocator_type>   const_heap_safe_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<base_iterator, base_iterator, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_base_iterator, base_iterator, allocator_type>  const_stack_only_iterator;
 
