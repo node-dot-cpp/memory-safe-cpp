@@ -93,15 +93,21 @@ T& dezombiefy(T& x) {
 template<typename> class soft_ptr_no_checks; //fwd
 
 template<class T>
-void dezombiefySoftPtr(const soft_ptr_no_checks<T>& x) { } //TODO
+void checkNotInvalidated(const soft_ptr_no_checks<T>& p) {
+	if (NODECPP_UNLIKELY(p == nullptr))
+		throw early_detected_zombie_pointer_access; 
+}
 
 template<typename> class soft_ptr_impl; //fwd
 
 template<class T>
-void dezombiefySoftPtr(const soft_ptr_impl<T>& x) { } //TODO
+void checkNotInvalidated(const soft_ptr_impl<T>& p) {
+	if (NODECPP_UNLIKELY(p == nullptr))
+		throw early_detected_zombie_pointer_access; 
+}
 
 template<class T>
-void dezombiefyRawPtr(T* x) {
+void checkNotZombie(T* x) {
 	if ( NODECPP_UNLIKELY( !isPointerNotZombie( x ) ) )
 		throw early_detected_zombie_pointer_access; 
 }

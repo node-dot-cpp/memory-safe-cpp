@@ -452,10 +452,10 @@ public:
 	void checkArrNotZombie() const {
 		// assert _array != null
 		if constexpr (is_raw_pointer) {
-			dezombiefyRawPtr(_array);
+			checkNotZombie(_array);
 		}
 		else {
-			dezombiefySoftPtr(_array);
+			checkNotInvalidated(_array);
 		}
 	}
 

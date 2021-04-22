@@ -34,139 +34,6 @@
 namespace safememory::detail {
 
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
-	class hashtable_heap_safe_iterator
-	{
-	public:
-		typedef BaseIt                                                   base_type;
-		typedef Allocator                                                allocator_type;
-		typedef hashtable_heap_safe_iterator<BaseIt, BaseNonConstIt, Allocator>     this_type;
-		typedef hashtable_heap_safe_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>      this_type_non_const;
-		typedef typename base_type::node_type                            node_type;
-		typedef typename base_type::value_type                           value_type;
-		typedef typename base_type::pointer                              pointer;
-		typedef typename base_type::reference                            reference;
-		typedef typename base_type::difference_type                      difference_type;
-		typedef typename base_type::iterator_category                    iterator_category;
-
-	    static constexpr memory_safety is_safe = allocator_type::is_safe;
-	    static constexpr bool is_const = !std::is_same_v<this_type, this_type_non_const>;
-
-    private:
-		template <typename, typename, typename>
-		friend class hashtable_heap_safe_iterator;
-
-		template<typename TT>
-		static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
-
-        typedef typename allocator_type::template soft_pointer<node_type>             soft_node_ptr;
-		typedef typename allocator_type::template pointer<node_type>                  zero_node_ptr;
-		typedef typename allocator_type::template array_pointer<zero_node_ptr>        zero_bucket_arr;
-		typedef typename allocator_type::template soft_array_pointer<zero_node_ptr>   soft_bucket_arr;
-
-
-		zero_node_ptr    mpNodeBase;        // current node, in zero_offset_ptr
-		soft_node_ptr    mpNode;            // current node, in soft_ptr
-		soft_bucket_arr  mpBucketArr;      // soft_ptr to bucket array
-		uint32_t		 mCurrBucket = 0;  // index of current bucket
-
-
-		void increment()
-		{
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			dezombiefySoftPtr(mpNode);
-			dezombiefySoftPtr(mpBucketArr);
-#endif
-
-			mpNodeBase = mpNode->mpNext;
-
-			while(mpNodeBase == NULL) {
-				++mCurrBucket;
-				mpNodeBase = *(mpBucketArr->data() + mCurrBucket);
-			}
-
-			if(allocator_type::is_hashtable_sentinel(mpNodeBase))
-				mpNode = nullptr;
-			else
-				mpNode = allocator_type::to_soft(mpNodeBase);
-		}
-
-		hashtable_heap_safe_iterator(const zero_node_ptr& nodeBase, soft_node_ptr&& node, const zero_bucket_arr& bucketArr, uint32_t currBucket)
-			: mpNodeBase(nodeBase), mpNode(std::move(node)), mpBucketArr(allocator_type::to_soft(bucketArr)), mCurrBucket(currBucket) { }
-
-    public:
-        static this_type makeIt(const BaseIt& it, const zero_bucket_arr& heap_zero_ptr, uint32_t sz) {
-
-			if(allocator_type::is_empty_hashtable(heap_zero_ptr))
-				return {};
-
-
-			auto ix = it.get_bucket() - heap_zero_ptr->data();
-			if(allocator_type::is_hashtable_sentinel(it.get_node())) {
-				NODECPP_ASSERT(module_id, nodecpp::assert::AssertLevel::regular, ix == sz);
-				return { it.get_node(), {nullptr}, heap_zero_ptr, static_cast<uint32_t>(ix) };
-			}
-			else {
-				return { it.get_node(), allocator_type::to_soft(it.get_node()), heap_zero_ptr, static_cast<uint32_t>(ix) };
-			}
-        }
-
-		hashtable_heap_safe_iterator() {}
-
-		hashtable_heap_safe_iterator(const this_type&) = default;
-		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator&) = default;
-
-		hashtable_heap_safe_iterator(hashtable_heap_safe_iterator&&) = default; 
-		hashtable_heap_safe_iterator& operator=(hashtable_heap_safe_iterator&&) = default;
-
-		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
-		hashtable_heap_safe_iterator(const Other& other)
-			: mpNodeBase(other.mpNodeBase), mpNode(other.mpNode), mpBucketArr(other.mpBucketArr),
-				mCurrBucket(other.mCurrBucket) { }
-
-		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
-		hashtable_heap_safe_iterator& operator=(const Other& other) {
-			this->mpNodeBase = other.mpNodeBase;
-			this->mpNode = other.mpNode;
-			this->mpBucketArr = other.mpBucketArr;
-			this->mCurrBucket = other.mCurrBucket;
-
-			return *this;
-		}
-
-		reference operator*() const {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			dezombiefySoftPtr(mpNode);
-#endif
-			return mpNode->mValue;
-		}
-
-		pointer operator->() const {
-#ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			dezombiefySoftPtr(mpNode);
-#endif
-			return std::addressof(mpNode->mValue);
-		}
-
-		this_type& operator++() {
-			increment();
-			return *this;
-		}
-
-		this_type operator++(int) {
-			this_type temp(*this);
-			increment();
-			return temp;
-		}
-
-        bool operator==(const this_type other) const { return mpNode == other.mpNode && mpBucketArr == other.mpBucketArr; }
-        bool operator!=(const this_type other) const { return !operator==(other); }
-
-		BaseIt toBase() const noexcept {
-			return BaseIt(mpNodeBase, mpBucketArr->data() + mCurrBucket);
-		}
-	}; // hashtable_heap_safe_iterator
-
-	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_stack_only_iterator : protected BaseIt
 	{
 	public:
@@ -253,8 +120,8 @@ namespace safememory::detail {
 				ThrowRangeException();
 
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			dezombiefyRawPtr(base_type::mpBucket);
-			dezombiefyRawPtr(allocator_type::to_raw(base_type::mpNode));
+			checkNotZombie(base_type::mpBucket);
+			checkNotZombie(allocator_type::to_raw(base_type::mpNode));
 #endif
 		}
 
@@ -404,10 +271,9 @@ namespace safememory::detail {
 				ThrowNullException();
 			else if(NODECPP_UNLIKELY(allocator_type::is_hashtable_sentinel(base_type::mpNode)))
 				ThrowRangeException();
-			else if(NODECPP_UNLIKELY(!mpSoftBucketArr))
-				ThrowNullException();
-			else if(NODECPP_UNLIKELY(!mpSoftNode))
-				ThrowNullException();
+			
+			checkNotInvalidated(mpSoftBucketArr);
+			checkNotInvalidated(mpSoftNode);
 		}
 
 		void setSoftNode() {
