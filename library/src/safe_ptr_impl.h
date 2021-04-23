@@ -2276,15 +2276,24 @@ public:
 	}
 };
 
+/**
+ * \c soft_this_ptr2_impl has reversed the meanings of \c nullptr and \c NODECPP_SECOND_NULLPTR
+ * with respect to \c soft_this_ptr.
+ * This is because we need it to be safe when memory is zeroed.
+ */ 
 class soft_this_ptr2_impl
 {
 	FirstControlBlock* cbPtr = nullptr;
 
 	static FirstControlBlock* getCbPtr() noexcept {
+		if(thg_stackPtrForMakeOwningCall == NODECPP_SECOND_NULLPTR)
+			return nullptr;
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		return (thg_stackPtrForMakeOwningCall != NODECPP_SECOND_NULLPTR && thg_stackPtrForMakeOwningCall != nullptr) ? getControlBlock_(thg_stackPtrForMakeOwningCall) : (FirstControlBlock*)thg_stackPtrForMakeOwningCall;
+		else if(thg_stackPtrForMakeOwningCall == nullptr)
+			return reinterpret_cast<FirstControlBlock*>(NODECPP_SECOND_NULLPTR);
 #endif
-		return thg_stackPtrForMakeOwningCall != NODECPP_SECOND_NULLPTR ? getControlBlock_(thg_stackPtrForMakeOwningCall) : nullptr;
+		else
+			return getControlBlock_(thg_stackPtrForMakeOwningCall);
 	}
 
 public:
@@ -2307,17 +2316,14 @@ public:
 	template<class T>
 	soft_ptr_impl<T> getSoftPtr(T* ptr) const
 	{
+		if( cbPtr == nullptr )
+			return {};
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
-		if ( cbPtr == nullptr )
+		else if ( cbPtr == NODECPP_SECOND_NULLPTR )
 			return {nullptr, ptr};
 #endif
-		if( cbPtr == NODECPP_SECOND_NULLPTR )
-			return {};
-		else if(static_cast<const void*>(cbPtr) <= static_cast<const void*>(ptr) &&
-			 static_cast<const void*>(ptr) <= static_cast<const void*>(this))
-			return {cbPtr, ptr};
 		else
-			throwPointerOutOfRange();
+			return {cbPtr, ptr};
 	}
 };
 

@@ -33,10 +33,41 @@
 #include <safememory/vector.h>
 #include <safememory/string.h>
 #include <safememory/unordered_map.h>
+#include <safememory/array.h>
 #include <safememory/safe_ptr.h>
 #include <iibmalloc.h>
 #include <nodecpp_assert.h>
 
+
+template<class V>
+bool TestZeroed() {
+	// we need to start with zeroed memory
+	char buff[sizeof(V) * 2] = {'\0'};
+
+	V* vp1 = reinterpret_cast<V*>(&buff[0]);
+	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
+
+	new(vp1) V();
+	new(vp2) V();
+		
+	memset(vp2, 0, sizeof(V));
+	return memcmp(vp1, vp2, sizeof(V)) == 0;
+}
+
+template<class V>
+bool TestDtor() {
+	// we need to start with zeroed memory
+	char buff[sizeof(V) * 2] = {'\0'};
+
+	V* vp1 = reinterpret_cast<V*>(&buff[0]);
+	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
+
+	new(vp1) V();
+	new(vp2) V();
+		
+	vp2->~V();
+	return memcmp(vp1, vp2, sizeof(V)) == 0;
+}
 
 int testWithLest( int argc, char * argv[] )
 {
@@ -44,37 +75,22 @@ int testWithLest( int argc, char * argv[] )
 	{
 
 //////////////////////////////////
-		CASE( "vector, zeroed" )
-		{
-			// we need to start with zeroed memory
-			typedef safememory::vector<int> V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			memset(vp2, 0, sizeof(V));
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
-		},
 		CASE( "vector, dtor" )
 		{
-			// we need to start with zeroed memory
 			typedef safememory::vector<int> V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(TestDtor<V>());
+		},
+		CASE( "vector, zeroed" )
+		{
+			typedef safememory::vector<int> V;
+			EXPECT(TestZeroed<V>());
 		},
 
+		CASE( "string, dtor" )
+		{
+			typedef safememory::string V;
+			EXPECT(TestDtor<V>());
+		},
 		CASE( "string, zeroed" )
 		{
 			// zeroed string bit to bit identical to 15 '\0' chars
@@ -87,198 +103,129 @@ int testWithLest( int argc, char * argv[] )
 			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
 
 			new(vp1) V(15, '\0');
-			new(vp2) V{};
+			new(vp2) V();
 			 
 			memset(vp2, 0, sizeof(V));
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(memcmp(vp1, vp2, sizeof(V)) == 0);
 		},
-		CASE( "string, dtor" )
+		CASE( "wstring, zeroed" )
 		{
+			// zeroed wstring bit to bit identical to 15 '\0' chars
+
 			// we need to start with zeroed memory
-			typedef safememory::string V;
+			typedef safememory::wstring V;
 			char buff[sizeof(V) * 2] = {'\0'};
 
 			V* vp1 = reinterpret_cast<V*>(&buff[0]);
 			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
 
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
-		},
-		CASE( "string_literal, zeroed" )
-		{
-			// zeroed string bit to bit identical to 15 '\0' chars
-
-			// we need to start with zeroed memory
-			typedef safememory::string_literal V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
+			new(vp1) V(7, '\0');
+			new(vp2) V();
 			 
 			memset(vp2, 0, sizeof(V));
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(memcmp(vp1, vp2, sizeof(V)) == 0);
 		},
 		CASE( "string_literal, dtor" )
 		{
-			// we need to start with zeroed memory
 			typedef safememory::string_literal V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(TestDtor<V>());
 		},
-		CASE( "iterator, zeroed" )
+		CASE( "string_literal, zeroed" )
 		{
-			// we need to start with zeroed memory
-			typedef safememory::vector<int>::iterator V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			memset(vp2, 0, sizeof(V));
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			typedef safememory::string_literal V;
+			EXPECT(TestZeroed<V>());
 		},
-		CASE( "iterator, dtor" )
+		CASE( "array, dtor" )
 		{
-			// we need to start with zeroed memory
+			typedef safememory::array<int, 3> V;
+			EXPECT(TestDtor<V>());
+		},
+		CASE( "array, zeroed" )
+		{
+			typedef safememory::array<int, 3> V;
+			EXPECT(TestZeroed<V>());
+		},
+		CASE( "vector::iterator, dtor" )
+		{
 			typedef safememory::vector<int>::iterator V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(TestDtor<V>());
+		},
+		CASE( "vector::iterator, zeroed" )
+		{
+			typedef safememory::vector<int>::iterator V;
+			EXPECT(TestZeroed<V>());
 		},
 
-		// CASE( "iterator_safe, zeroed" )
-		// {
-		// 	// we need to start with zeroed memory
-		// 	typedef safememory::vector<int>::iterator_safe V;
-		// 	char buff[sizeof(V) * 2] = {'\0'};
+		CASE( "vector::iterator_safe, dtor" )
+		{
+			typedef safememory::vector<int>::iterator_safe V;
+			EXPECT(TestDtor<V>());
+		},
 
-		// 	V* vp1 = reinterpret_cast<V*>(&buff[0]);
-		// 	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-		// 	new(vp1) V{};
-		// 	new(vp2) V{};
-			 
-		// 	memset(vp2, 0, sizeof(V));
-		// 	EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
-		// },
-		CASE( "iterator_safe, dtor" )
+		CASE( "vector::iterator_safe, zeroed" )
 		{
 			// we need to start with zeroed memory
 			typedef safememory::vector<int>::iterator_safe V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
+			char buff[sizeof(V)] = {'\0'};
 			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
 			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			memset(vp1, 0, sizeof(V));
+
+			EXPECT_THROWS(*(*vp1));
 		},
 
 		CASE( "unordered_map, dtor" )
 		{
+			typedef safememory::unordered_map<int, int> V;
+			EXPECT(TestDtor<V>());
+		},
+
+		CASE( "unordered_map, zeroed" )
+		{
 			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int> V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
+			char buff[sizeof(V)] = {'\0'};
 			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
 			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			memset(vp1, 0, sizeof(V));
+
+			EXPECT_THROWS(vp1->begin());
+			EXPECT_THROWS(vp1->cbegin());
+			EXPECT_THROWS(vp1->end());
+			EXPECT_THROWS(vp1->cend());
+			EXPECT_THROWS(vp1->find(5));
+			EXPECT_THROWS(vp1->erase(5));
+			EXPECT_THROWS(vp1->count(5));
+			EXPECT_THROWS(vp1->clear());
 		},
 
 		CASE( "unordered_map::iterator, dtor" )
 		{
-			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int>::iterator V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(TestDtor<V>());
 		},
 		CASE( "unordered_map::iterator, zeroed" )
 		{
-			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int>::iterator V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
-			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-			new(vp1) V{};
-			new(vp2) V{};
-			 
-			memset(vp2, 0, sizeof(V));
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			EXPECT(TestZeroed<V>());
 		},
 
 		CASE( "unordered_map::iterator_safe, dtor" )
 		{
+			typedef safememory::unordered_map<int, int>::iterator_safe V;
+			EXPECT(TestDtor<V>());
+		},
+		CASE( "unordered_map::iterator_safe, zeroed" )
+		{
 			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int>::iterator_safe V;
-			char buff[sizeof(V) * 2] = {'\0'};
-
+			char buff[sizeof(V)] = {'\0'};
 			V* vp1 = reinterpret_cast<V*>(&buff[0]);
-			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
 			new(vp1) V{};
-			new(vp2) V{};
-			 
-			vp2->~V();
-			EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
+			memset(vp1, 0, sizeof(V));
+
+			EXPECT_THROWS(*(*vp1));
 		},
-		// CASE( "unordered_map::iterator_safe, zeroed" )
-		// {
-		// 	// we need to start with zeroed memory
-		// 	typedef safememory::unordered_map<int, int>::iterator_safe V;
-		// 	char buff[sizeof(V) * 2] = {'\0'};
-
-		// 	V* vp1 = reinterpret_cast<V*>(&buff[0]);
-		// 	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
-
-		// 	new(vp1) V{};
-		// 	new(vp2) V{};
-			 
-		// 	memset(vp2, 0, sizeof(V));
-		// 	EXPECT( memcmp(vp1, vp2, sizeof(V)) == 0);
-		// },
-
 	};
 
 	int ret = lest::run( specification, argc, argv ); 

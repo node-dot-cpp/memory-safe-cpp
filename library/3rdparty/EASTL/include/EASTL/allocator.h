@@ -111,9 +111,6 @@ namespace eastl
 
 		static void force_changes_in_dtor(const void*) {}
 
-		template<class T>
-		static void check_not_null(T* p) {}
-	
 
 	protected:
 		#if EASTL_NAME_ENABLED

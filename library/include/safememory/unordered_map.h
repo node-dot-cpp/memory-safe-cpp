@@ -65,10 +65,12 @@ namespace safememory
 		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
 		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 
+
+	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 		// mb: for 'memory_safety::none' we can boil down to use the base (eastl) iterator,
 		// or use the same iterator as 'safe' but passing the 'memory_safety::none' parameter
 		// down the line 
-		static constexpr bool use_base_iterator = Safety == memory_safety::none;
+		static constexpr bool use_base_iterator = is_safe == memory_safety::none;
 		
 		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
 		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
@@ -97,237 +99,283 @@ namespace safememory
 		this_type& operator=(const this_type& x) = default;
 		this_type& operator=(this_type&& x) = default;
 		this_type& operator=(std::initializer_list<value_type> ilist) {
+			checkNotNull();
 			base_type::operator=(ilist);
 			return *this;
 		}
 
-		void swap(this_type& x) { base_type::swap(x); }
+		void swap(this_type& x) noexcept { base_type::swap(x); }
 
-		iterator       begin() noexcept { return makeIt(base_type::begin()); }
-		const_iterator begin() const noexcept { return makeIt(base_type::begin()); }
-		const_iterator cbegin() const noexcept { return makeIt(base_type::cbegin()); }
+		iterator       begin() { checkNotNull(); return makeIt(base_type::begin()); }
+		const_iterator begin() const { checkNotNull(); return makeIt(base_type::begin()); }
+		const_iterator cbegin() const { checkNotNull(); return makeIt(base_type::cbegin()); }
 
-		iterator       end() noexcept { return makeIt(base_type::end()); }
-		const_iterator end() const noexcept { return makeIt(base_type::end()); }
-		const_iterator cend() const noexcept { return makeIt(base_type::cend()); }
+		iterator       end() { checkNotNull(); return makeIt(base_type::end()); }
+		const_iterator end() const { checkNotNull(); return makeIt(base_type::end()); }
+		const_iterator cend() const { checkNotNull(); return makeIt(base_type::cend()); }
 
-		iterator_safe       begin_safe() noexcept { return makeSafeIt(base_type::begin()); }
-		const_iterator_safe begin_safe() const noexcept { return makeSafeIt(base_type::begin()); }
-		const_iterator_safe cbegin_safe() const noexcept { return makeSafeIt(base_type::cbegin()); }
+		iterator_safe       begin_safe() { checkNotNull(); return makeSafeIt(base_type::begin()); }
+		const_iterator_safe begin_safe() const { checkNotNull(); return makeSafeIt(base_type::begin()); }
+		const_iterator_safe cbegin_safe() const { checkNotNull(); return makeSafeIt(base_type::cbegin()); }
 
-		iterator_safe       end_safe() noexcept { return makeSafeIt(base_type::end()); }
-		const_iterator_safe end_safe() const noexcept { return makeSafeIt(base_type::end()); }
-		const_iterator_safe cend_safe() const noexcept { return makeSafeIt(base_type::cend()); }
+		iterator_safe       end_safe() { checkNotNull(); return makeSafeIt(base_type::end()); }
+		const_iterator_safe end_safe() const { checkNotNull(); return makeSafeIt(base_type::end()); }
+		const_iterator_safe cend_safe() const { checkNotNull(); return makeSafeIt(base_type::cend()); }
 
-		local_iterator begin(size_type n) noexcept { return base_type::begin(n); }
-		const_local_iterator begin(size_type n) const noexcept { return base_type::begin(n); }
-		const_local_iterator cbegin(size_type n) const noexcept { return base_type::cbegin(n); }
+		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
+		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
+		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::cbegin(n); }
 
-		local_iterator end(size_type n) noexcept { return base_type::end(n); }
-		const_local_iterator end(size_type n) const noexcept { return base_type::end(n); }
-		const_local_iterator cend(size_type n) const noexcept { return base_type::cend(n); }
+		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
+		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
+		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::cend(n); }
 
-        using base_type::at;
-        using base_type::operator[];
+		T& at(const key_type& k) { checkNotNull(); return base_type::at(k); }
+		const T& at(const key_type& k) const { checkNotNull(); return base_type::at(k); }
+		mapped_type& operator[](const key_type& key) { checkNotNull(); return base_type::operator[](key); }
+		mapped_type& operator[](key_type&& key) { checkNotNull(); return base_type::operator[](std::move(key)); }
 
         using base_type::empty;
         using base_type::size;
         using base_type::bucket_count;
-        using base_type::bucket_size;
+		size_type bucket_size(size_type n) const {
+			checkNotNull();
+			checkBucketIx(n);
+			return base_type::bucket_size(n);
+		}
 
-//        using base_type::bucket;
-        using base_type::load_factor;
-        using base_type::get_max_load_factor;
-        using base_type::set_max_load_factor;
-        using base_type::rehash_policy;
+		float load_factor() const { checkNotNull(); return base_type::load_factor(); }
+		float get_max_load_factor() const { checkNotNull(); return base_type::get_max_load_factor(); }
+		void set_max_load_factor(float fMaxLoadFactor) { checkNotNull(); base_type::set_max_load_factor(fMaxLoadFactor); }
 
 		template <class... Args>
 		insert_return_type emplace(Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::emplace(std::forward<Args>(args)...));
         }
 
 		template <class... Args>
 		insert_return_type_safe emplace_safe(Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::emplace(std::forward<Args>(args)...));
         }
 
 		template <class... Args>
 		iterator emplace_hint(const const_iterator& hint, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::emplace_hint(toBase(hint), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
 		iterator_safe emplace_hint_safe(const const_iterator_safe& hint, Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::emplace_hint(toBase(hint), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         insert_return_type try_emplace(const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         insert_return_type_safe try_emplace_safe(const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         insert_return_type try_emplace(key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         insert_return_type_safe try_emplace_safe(key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
         }
 
 		template <class... Args> 
         iterator try_emplace(const const_iterator& hint, const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
         }
 
 		template <class... Args> 
         iterator_safe try_emplace_safe(const const_iterator_safe& hint, const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         iterator try_emplace(const const_iterator& hint, key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         iterator_safe try_emplace_safe(const const_iterator_safe& hint, key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeSafeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
         }
 
 		insert_return_type insert(const value_type& value) {
+			checkNotNull();
             return makeIt(base_type::insert(value));
         }
 
 		insert_return_type_safe insert_safe(const value_type& value) {
+			checkNotNull();
             return makeSafeIt(base_type::insert(value));
         }
 
 		insert_return_type insert(value_type&& value) {
+			checkNotNull();
             return makeIt(base_type::insert(std::move(value)));
         }
 
 		insert_return_type_safe insert_safe(value_type&& value) {
+			checkNotNull();
             return makeSafeIt(base_type::insert(std::move(value)));
         }
 
 		iterator insert(const const_iterator& hint, const value_type& value) {
+			checkNotNull();
             return makeIt(base_type::insert(toBase(hint), value));
         }
 
 		iterator_safe insert_safe(const const_iterator_safe& hint, const value_type& value) {
+			checkNotNull();
             return makeSafeIt(base_type::insert(toBase(hint), value));
         }
 
 		iterator insert(const const_iterator& hint, value_type&& value) {
+			checkNotNull();
             return makeIt(base_type::insert(toBase(hint), std::move(value)));
         }
 
 		iterator_safe insert_safe(const const_iterator_safe& hint, value_type&& value) {
+			checkNotNull();
             return makeIt(base_type::insert(toBase(hint), std::move(value)));
         }
 
 		void insert(std::initializer_list<value_type> ilist) {
+			checkNotNull();
             base_type::insert(ilist);
         }
 
 		template <typename InputIterator>
         void insert_unsafe(InputIterator first, InputIterator last) {
+			checkNotNull();
             base_type::insert(first, last);
         }
 
 		template <class M>
         insert_return_type insert_or_assign(const key_type& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
         }
 
 		template <class M>
         insert_return_type_safe insert_or_assign_safe(const key_type& k, M&& obj) {
+			checkNotNull();
             return makeSafeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
         }
 
 		template <class M>
         insert_return_type insert_or_assign(key_type&& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
         insert_return_type_safe insert_or_assign_safe(key_type&& k, M&& obj) {
+			checkNotNull();
             return makeSafeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator insert_or_assign(const const_iterator& hint, const key_type& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(toBase(hint), k, std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, const key_type& k, M&& obj) {
+			checkNotNull();
             return makeSafeIt(base_type::insert_or_assign(toBase(hint), k, std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator insert_or_assign(const const_iterator& hint, key_type&& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
         iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, key_type&& k, M&& obj) {
+			checkNotNull();
             return makeSafeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
         }
 
 		iterator erase(const const_iterator& position) {
+			checkNotNull();
             return makeIt(base_type::erase(toBase(position)));
         }
 
 		iterator_safe erase_safe(const const_iterator_safe& position) {
+			checkNotNull();
             return makeSafeIt(base_type::erase(toBase(position)));
         }
 
 		iterator erase(const const_iterator& first, const const_iterator& last) {
+			checkNotNull();
             return makeIt(base_type::erase(toBase(first), toBase(last)));
         }
 
 		iterator_safe erase_safe(const const_iterator_safe& first, const const_iterator_safe& last) {
+			checkNotNull();
             return makeSafeIt(base_type::erase(toBase(first), toBase(last)));
         }
 
-		size_type erase(const key_type& k) { return base_type::erase(k); }
+		size_type erase(const key_type& k) {
+			checkNotNull();
+			return base_type::erase(k);
+		}
 
-        using base_type::clear;
-        using base_type::rehash;
-        using base_type::reserve;
+        void clear() { checkNotNull(); base_type::clear(); }
+        void rehash(size_type nBucketCount) { checkNotNull(); base_type::rehash(nBucketCount); }
+        void reserve(size_type nElementCount) { checkNotNull(); base_type::reserve(nElementCount); }
 
-		iterator       find(const key_type& key) { return makeIt(base_type::find(key)); }
-		iterator_safe       find_safe(const key_type& key) { return makeSafeIt(base_type::find(key)); }
+		iterator       find(const key_type& key) { checkNotNull(); return makeIt(base_type::find(key)); }
+		iterator_safe       find_safe(const key_type& key) { checkNotNull(); return makeSafeIt(base_type::find(key)); }
 
-		const_iterator find(const key_type& key) const { return makeIt(base_type::find(key)); }
-		const_iterator_safe find_safe(const key_type& key) const { return makeSafeIt(base_type::find(key)); }
+		const_iterator find(const key_type& key) const { checkNotNull(); return makeIt(base_type::find(key)); }
+		const_iterator_safe find_safe(const key_type& key) const { checkNotNull(); return makeSafeIt(base_type::find(key)); }
 
-        using base_type::count;
+		size_type count(const key_type& k) const { checkNotNull(); return base_type::count(k); }
 
 		eastl::pair<iterator, iterator> equal_range(const key_type& k) {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeIt(p.first), makeIt(p.second) };
         }
 
 		eastl::pair<iterator_safe, iterator_safe> equal_range_safe(const key_type& k) {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeSafeIt(p.first), makeSafeIt(p.second) };
         }
 
 		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeIt(p.first), makeIt(p.second) };
         }
 
 		eastl::pair<const_iterator_safe, const_iterator_safe> equal_range_safe(const key_type& k) const {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeSafeIt(p.first), makeSafeIt(p.second) };
         }
@@ -339,9 +387,13 @@ namespace safememory
 		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
 		bool operator==(const this_type& other) const {
+ 			checkNotNull();
+			other.checkNotNull();
 			return eastl::operator==(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
 		}
 		bool operator!=(const this_type& other) const {
+ 			checkNotNull();
+			other.checkNotNull();
 			return eastl::operator!=(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
 		}
 
@@ -349,6 +401,24 @@ namespace safememory
 		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     protected:
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowNullException() { throw nodecpp::error::zero_pointer_access; }
+
+		void checkNotNull() const {
+			if constexpr (is_safe == memory_safety::safe) {
+				if (!base_type::mpBucketArray)
+					ThrowNullException();
+			}
+		}
+
+		void checkBucketIx(size_type n) {
+			if constexpr (is_safe == memory_safety::safe) {
+				if(n >= base_type::mnBucketCount)
+					ThrowRangeException();
+			}
+		}
+
+
 		const iterator_base& toBase(const iterator_base& it) const { return it; }
 		const const_iterator_base& toBase(const const_iterator_base& it) const { return it; }
 		const iterator_base& toBase(const stack_only_iterator& it) const { return it.toBase(); }
@@ -436,13 +506,13 @@ namespace safememory
 
 		// using base_type::swap;
 
-		iterator       begin() noexcept { return base_type::begin_safe(); }
-		const_iterator begin() const noexcept { return base_type::begin_safe(); }
-		const_iterator cbegin() const noexcept { return base_type::cbegin_safe(); }
+		iterator       begin() { return base_type::begin_safe(); }
+		const_iterator begin() const { return base_type::begin_safe(); }
+		const_iterator cbegin() const { return base_type::cbegin_safe(); }
 
-		iterator       end() noexcept { return base_type::end_safe(); }
-		const_iterator end() const noexcept { return base_type::end_safe(); }
-		const_iterator cend() const noexcept { return base_type::cend_safe(); }
+		iterator       end() { return base_type::end_safe(); }
+		const_iterator end() const { return base_type::end_safe(); }
+		const_iterator cend() const { return base_type::cend_safe(); }
 
 		// local_iterator begin(size_type n) noexcept { return base_type::begin(n); }
 		// const_local_iterator begin(size_type n) const noexcept { return base_type::begin(n); }
@@ -582,17 +652,20 @@ namespace safememory
 		typedef typename base_type::const_local_iterator                          const_local_iterator;
 		typedef typename base_type::insert_return_type                            insert_return_type_base;
 
-		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 
-		typedef stack_only_iterator                                               iterator;
-		typedef const_stack_only_iterator                                         const_iterator;
+	    static constexpr memory_safety is_safe = allocator_type::is_safe;
+		static constexpr bool use_base_iterator = is_safe == memory_safety::none;
+		
+		typedef std::conditional_t<use_base_iterator, iterator_base, stack_only_iterator>               iterator;
+		typedef std::conditional_t<use_base_iterator, const_iterator_base, const_stack_only_iterator>   const_iterator;
 		typedef iterator                                                          insert_return_type;
 
-		typedef heap_safe_iterator                                                iterator_safe;
-		typedef const_heap_safe_iterator                                          const_iterator_safe;
+		typedef heap_safe_iterator                                                    iterator_safe;
+		typedef const_heap_safe_iterator                                              const_iterator_safe;
 		typedef iterator_safe                                                     insert_return_type_safe;
 
 
@@ -611,143 +684,286 @@ namespace safememory
 
 		this_type& operator=(const this_type& x) = default;
 		this_type& operator=(this_type&& x) = default;
-		this_type& operator=(std::initializer_list<value_type> ilist)
-            { return static_cast<this_type&>(base_type::operator=(ilist)); }
+		this_type& operator=(std::initializer_list<value_type> ilist) {
+			checkNotNull();
+			base_type::operator=(ilist);
+			return *this;
+		}
 
-		void swap(this_type& x) { base_type::swap(x); }
+		void swap(this_type& x) noexcept { base_type::swap(x); }
 
-		iterator       begin() noexcept { return makeIt(base_type::begin()); }
-		const_iterator begin() const noexcept { return makeIt(base_type::begin()); }
-		const_iterator cbegin() const noexcept { return makeIt(base_type::cbegin()); }
+		iterator       begin() { checkNotNull(); return makeIt(base_type::begin()); }
+		const_iterator begin() const { checkNotNull(); return makeIt(base_type::begin()); }
+		const_iterator cbegin() const { checkNotNull(); return makeIt(base_type::cbegin()); }
 
-		iterator       end() noexcept { return makeIt(base_type::end()); }
-		const_iterator end() const noexcept { return makeIt(base_type::end()); }
-		const_iterator cend() const noexcept { return makeIt(base_type::cend()); }
+		iterator       end() { checkNotNull(); return makeIt(base_type::end()); }
+		const_iterator end() const { checkNotNull(); return makeIt(base_type::end()); }
+		const_iterator cend() const { checkNotNull(); return makeIt(base_type::cend()); }
 
-		local_iterator begin(size_type n) noexcept { return base_type::begin(n); }
-		const_local_iterator begin(size_type n) const noexcept { return base_type::begin(n); }
-		const_local_iterator cbegin(size_type n) const noexcept { return base_type::cbegin(n); }
+		iterator_safe       begin_safe() { checkNotNull(); return makeSafeIt(base_type::begin()); }
+		const_iterator_safe begin_safe() const { checkNotNull(); return makeSafeIt(base_type::begin()); }
+		const_iterator_safe cbegin_safe() const { checkNotNull(); return makeSafeIt(base_type::cbegin()); }
 
-		local_iterator end(size_type n) noexcept { return base_type::end(n); }
-		const_local_iterator end(size_type n) const noexcept { return base_type::end(n); }
-		const_local_iterator cend(size_type n) const noexcept { return base_type::cend(n); }
+		iterator_safe       end_safe() { checkNotNull(); return makeSafeIt(base_type::end()); }
+		const_iterator_safe end_safe() const { checkNotNull(); return makeSafeIt(base_type::end()); }
+		const_iterator_safe cend_safe() const { checkNotNull(); return makeSafeIt(base_type::cend()); }
 
-        // using base_type::at;
-        // using base_type::operator[];
+		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
+		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
+		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::cbegin(n); }
+
+		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
+		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
+		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::cend(n); }
+
+		// T& at(const key_type& k) { checkNotNull(); return base_type::at(k); }
+		// const T& at(const key_type& k) const { checkNotNull(); return base_type::at(k); }
+		// mapped_type& operator[](const key_type& key) { checkNotNull(); return base_type::operator[](key); }
+		// mapped_type& operator[](key_type&& key) { checkNotNull(); return base_type::operator[](std::move(key)); }
 
         using base_type::empty;
         using base_type::size;
         using base_type::bucket_count;
-        using base_type::bucket_size;
+		size_type bucket_size(size_type n) const {
+			checkNotNull();
+			checkBucketIx(n);
+			return base_type::bucket_size(n);
+		}
 
-//        using base_type::bucket;
-        using base_type::load_factor;
-        using base_type::get_max_load_factor;
-        using base_type::set_max_load_factor;
-        using base_type::rehash_policy;
+		float load_factor() const { checkNotNull(); return base_type::load_factor(); }
+		float get_max_load_factor() const { checkNotNull(); return base_type::get_max_load_factor(); }
+		void set_max_load_factor(float fMaxLoadFactor) { checkNotNull(); base_type::set_max_load_factor(fMaxLoadFactor); }
 
 		template <class... Args>
 		insert_return_type emplace(Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::emplace(std::forward<Args>(args)...));
         }
 
 		template <class... Args>
+		insert_return_type_safe emplace_safe(Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::emplace(std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
 		iterator emplace_hint(const const_iterator& hint, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::emplace_hint(toBase(hint), std::forward<Args>(args)...));
         }
 
 		template <class... Args>
+		iterator_safe emplace_hint_safe(const const_iterator_safe& hint, Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::emplace_hint(toBase(hint), std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
         insert_return_type try_emplace(const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
+        insert_return_type_safe try_emplace_safe(const key_type& k, Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::try_emplace(k, std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
         insert_return_type try_emplace(key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
+        }
+
+		template <class... Args>
+        insert_return_type_safe try_emplace_safe(key_type&& k, Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::try_emplace(std::move(k), std::forward<Args>(args)...));
         }
 
 		template <class... Args> 
         iterator try_emplace(const const_iterator& hint, const key_type& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
+        }
+
+		template <class... Args> 
+        iterator_safe try_emplace_safe(const const_iterator_safe& hint, const key_type& k, Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::try_emplace(toBase(hint), k, std::forward<Args>(args)...));
         }
 
 		template <class... Args>
         iterator try_emplace(const const_iterator& hint, key_type&& k, Args&&... args) {
+			checkNotNull();
             return makeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
         }
 
+		template <class... Args>
+        iterator_safe try_emplace_safe(const const_iterator_safe& hint, key_type&& k, Args&&... args) {
+			checkNotNull();
+            return makeSafeIt(base_type::try_emplace(toBase(hint), std::move(k), std::forward<Args>(args)...));
+        }
+
 		insert_return_type insert(const value_type& value) {
+			checkNotNull();
             return makeIt(base_type::insert(value));
         }
 
+		insert_return_type_safe insert_safe(const value_type& value) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert(value));
+        }
+
 		insert_return_type insert(value_type&& value) {
+			checkNotNull();
             return makeIt(base_type::insert(std::move(value)));
         }
 
+		insert_return_type_safe insert_safe(value_type&& value) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert(std::move(value)));
+        }
+
 		iterator insert(const const_iterator& hint, const value_type& value) {
+			checkNotNull();
             return makeIt(base_type::insert(toBase(hint), value));
         }
 
+		iterator_safe insert_safe(const const_iterator_safe& hint, const value_type& value) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert(toBase(hint), value));
+        }
+
 		iterator insert(const const_iterator& hint, value_type&& value) {
+			checkNotNull();
+            return makeIt(base_type::insert(toBase(hint), std::move(value)));
+        }
+
+		iterator_safe insert_safe(const const_iterator_safe& hint, value_type&& value) {
+			checkNotNull();
             return makeIt(base_type::insert(toBase(hint), std::move(value)));
         }
 
 		void insert(std::initializer_list<value_type> ilist) {
+			checkNotNull();
             base_type::insert(ilist);
         }
 
 		template <typename InputIterator>
         void insert_unsafe(InputIterator first, InputIterator last) {
+			checkNotNull();
             base_type::insert(first, last);
         }
 
 		template <class M>
         insert_return_type insert_or_assign(const key_type& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
         }
 
 		template <class M>
+        insert_return_type_safe insert_or_assign_safe(const key_type& k, M&& obj) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert_or_assign(k, std::forward<M>(obj)));
+        }
+
+		template <class M>
         insert_return_type insert_or_assign(key_type&& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
         }
 
 		template <class M>
+        insert_return_type_safe insert_or_assign_safe(key_type&& k, M&& obj) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert_or_assign(std::move(k), std::forward<M>(obj)));
+        }
+
+		template <class M>
         iterator insert_or_assign(const const_iterator& hint, const key_type& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(toBase(hint), k, std::forward<M>(obj)));
         }
 
 		template <class M>
+        iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, const key_type& k, M&& obj) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert_or_assign(toBase(hint), k, std::forward<M>(obj)));
+        }
+
+		template <class M>
         iterator insert_or_assign(const const_iterator& hint, key_type&& k, M&& obj) {
+			checkNotNull();
             return makeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
         }
 
+		template <class M>
+        iterator_safe insert_or_assign_safe(const const_iterator_safe& hint, key_type&& k, M&& obj) {
+			checkNotNull();
+            return makeSafeIt(base_type::insert_or_assign(toBase(hint), std::move(k), std::forward<M>(obj)));
+        }
+
 		iterator erase(const const_iterator& position) {
+			checkNotNull();
             return makeIt(base_type::erase(toBase(position)));
         }
 
+		iterator_safe erase_safe(const const_iterator_safe& position) {
+			checkNotNull();
+            return makeSafeIt(base_type::erase(toBase(position)));
+        }
+
 		iterator erase(const const_iterator& first, const const_iterator& last) {
+			checkNotNull();
             return makeIt(base_type::erase(toBase(first), toBase(last)));
         }
 
-		size_type erase(const key_type& k) { return base_type::erase(k); }
+		iterator_safe erase_safe(const const_iterator_safe& first, const const_iterator_safe& last) {
+			checkNotNull();
+            return makeSafeIt(base_type::erase(toBase(first), toBase(last)));
+        }
 
-        using base_type::clear;
-        using base_type::rehash;
-        using base_type::reserve;
+		size_type erase(const key_type& k) {
+			checkNotNull();
+			return base_type::erase(k);
+		}
 
-		iterator       find(const key_type& key) { return makeIt(base_type::find(key)); }
-		const_iterator find(const key_type& key) const { return makeIt(base_type::find(key)); }
+        void clear() { checkNotNull(); base_type::clear(); }
+        void rehash(size_type nBucketCount) { checkNotNull(); base_type::rehash(nBucketCount); }
+        void reserve(size_type nElementCount) { checkNotNull(); base_type::reserve(nElementCount); }
 
-        using base_type::count;
+		iterator       find(const key_type& key) { checkNotNull(); return makeIt(base_type::find(key)); }
+		iterator_safe       find_safe(const key_type& key) { checkNotNull(); return makeSafeIt(base_type::find(key)); }
+
+		const_iterator find(const key_type& key) const { checkNotNull(); return makeIt(base_type::find(key)); }
+		const_iterator_safe find_safe(const key_type& key) const { checkNotNull(); return makeSafeIt(base_type::find(key)); }
+
+		size_type count(const key_type& k) const { checkNotNull(); return base_type::count(k); }
 
 		eastl::pair<iterator, iterator> equal_range(const key_type& k) {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeIt(p.first), makeIt(p.second) };
         }
 
+		eastl::pair<iterator_safe, iterator_safe> equal_range_safe(const key_type& k) {
+ 			checkNotNull();
+            auto p = base_type::equal_range(k);
+            return { makeSafeIt(p.first), makeSafeIt(p.second) };
+        }
+
 		eastl::pair<const_iterator, const_iterator> equal_range(const key_type& k) const {
+ 			checkNotNull();
             auto p = base_type::equal_range(k);
             return { makeIt(p.first), makeIt(p.second) };
+        }
+
+		eastl::pair<const_iterator_safe, const_iterator_safe> equal_range_safe(const key_type& k) const {
+ 			checkNotNull();
+            auto p = base_type::equal_range(k);
+            return { makeSafeIt(p.first), makeSafeIt(p.second) };
         }
 
 		using base_type::validate;
@@ -757,9 +973,13 @@ namespace safememory
 		int validate_iterator(const const_heap_safe_iterator& it) const noexcept { return base_type::validate_iterator(toBase(it)); }
 
 		bool operator==(const this_type& other) const {
+ 			checkNotNull();
+			other.checkNotNull();
 			return eastl::operator==(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
 		}
 		bool operator!=(const this_type& other) const {
+ 			checkNotNull();
+			other.checkNotNull();
 			return eastl::operator!=(static_cast<const base_type&>(*this), static_cast<const base_type&>(other));
 		}
 
@@ -767,16 +987,64 @@ namespace safememory
 		const_iterator_safe make_safe(const const_iterator& it) const {	return makeSafeIt(toBase(it)); }
 
     protected:
-		const_iterator_base toBase(const const_iterator& it) const { return it.toBase(); }
-		const_iterator_base toBase(const const_iterator_safe& it) const { return it.toBase(); }
+		[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
+		[[noreturn]] static void ThrowNullException() { throw nodecpp::error::zero_pointer_access; }
 
-        const iterator& makeIt(const iterator_base& it) {
-			return iterator::fromBase(it);
+		void checkNotNull() const {
+			if constexpr (is_safe == memory_safety::safe) {
+				if (!base_type::mpBucketArray)
+					ThrowNullException();
+			}
+		}
+
+		void checkBucketIx(size_type n) {
+			if constexpr (is_safe == memory_safety::safe) {
+				if(n >= base_type::mnBucketCount)
+					ThrowRangeException();
+			}
+		}
+
+
+		const iterator_base& toBase(const iterator_base& it) const { return it; }
+		const const_iterator_base& toBase(const const_iterator_base& it) const { return it; }
+		const iterator_base& toBase(const stack_only_iterator& it) const { return it.toBase(); }
+		const const_iterator_base& toBase(const const_stack_only_iterator& it) const { return it.toBase(); }
+		iterator_base toBase(const heap_safe_iterator& it) const { return it.toBase(); }
+		const_iterator_base toBase(const const_heap_safe_iterator& it) const { return it.toBase(); }
+
+        
+		iterator makeIt(const iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return iterator::fromBase(it);
         }
 
-        const const_iterator& makeIt(const const_iterator_base& it) const {
-			return const_iterator::fromBase(it);
+        const_iterator makeIt(const const_iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return const_iterator::fromBase(it);
         }
+
+        // insert_return_type makeIt(const insert_return_type_base& r) const {
+		// 	if constexpr(use_base_iterator)
+		// 		return r;
+		// 	else
+	    //         return { makeIt(r.first), r.second };
+        // }
+
+        iterator_safe makeSafeIt(const iterator_base& it) const {
+			return iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
+        }
+
+        const_iterator_safe makeSafeIt(const const_iterator_base& it) const {
+			return const_iterator_safe::makeIt(it, base_type::mpBucketArray, base_type::mnBucketCount);
+        }
+
+        // insert_return_type_safe makeSafeIt(const insert_return_type_base& r) const {
+		// 	return { makeSafeIt(r.first), r.second };
+        // }
 	}; // unordered_multimap
 
 	///////////////////////////////////////////////////////////////////////

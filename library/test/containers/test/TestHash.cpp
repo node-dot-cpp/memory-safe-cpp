@@ -6,7 +6,7 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
-#include <safememory/unordered_set.h>
+// #include <safememory/unordered_set.h>
 #include <safememory/unordered_map.h>
 // #include <EASTL/unordered_set.h>
 // #include <EASTL/unordered_map.h>
@@ -20,13 +20,13 @@ EA_DISABLE_ALL_VC_WARNINGS()
 EA_RESTORE_ALL_VC_WARNINGS()
 
 
-using safememory::unordered_map;
-using safememory::unordered_multimap;
+// using safememory::unordered_map;
+// using safememory::unordered_multimap;
 //using safememory::unordered_map;
 //using safememory::unordered_multimap;
 
-using safememory::unordered_set;
-using safememory::unordered_multiset;
+// using safememory::unordered_set;
+// using safememory::unordered_multiset;
 //using safememory::unordered_set;
 //using safememory::unordered_multiset;
 // using safememory::detail::iterator_validity;
@@ -1530,17 +1530,17 @@ int TestHashMultiMap()
 	return nErrorCount;
 }
 
-template <typename Key>
-using SET = safememory::unordered_set<Key>;
+// template <typename Key>
+// using SET = safememory::unordered_set<Key>;
 
-template <typename Key, typename Hash, typename Predicate>
-using SET3 = safememory::unordered_set<Key, Hash, Predicate>;
+// template <typename Key, typename Hash, typename Predicate>
+// using SET3 = safememory::unordered_set<Key, Hash, Predicate>;
 
-template <typename Key>
-using MSET = safememory::unordered_multiset<Key>;
+// template <typename Key>
+// using MSET = safememory::unordered_multiset<Key>;
 
-template <typename Key, typename Hash, typename Predicate>
-using MSET3 = safememory::unordered_multiset<Key, Hash, Predicate>;
+// template <typename Key, typename Hash, typename Predicate>
+// using MSET3 = safememory::unordered_multiset<Key, Hash, Predicate>;
 
 
 template <typename Key, typename T>
@@ -1567,9 +1567,9 @@ int TestHash()
 {
 	int nErrorCount = 0;
 
-	nErrorCount += TestHashSet<SET, SET3>();
+	// nErrorCount += TestHashSet<SET, SET3>();
 
-	nErrorCount += TestHashMultiSet<MSET, MSET3>();
+	// nErrorCount += TestHashMultiSet<MSET, MSET3>();
 
 	nErrorCount += TestHashMap<MAP, MAP4>();
 	nErrorCount += TestHashMap<MAP_SAFE, MAP_SAFE4>();

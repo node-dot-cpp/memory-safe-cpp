@@ -4,35 +4,22 @@ EASTL and containers
 
 This document is a short guide on how `EASTL` containers where _adapted_ into __safe__ containers.
 
-Memory states glosary for this doc:
-* Allocated: memory asigned by the allocator to a pariticular object, may be Valid, Uninitialized, Zeroed or Zombie.
-	+ Valid: contains a valid contructed object.
-	+ Zeroed: self explained.
-	+ Uninitialized: may be zero or may have any kind of garbage.
-	+ Zombie: contains an object that has already been destructed. May or may not already been returned to the allocator, as long as the allocator has not already reasigned it.
-
-Safety on containers
---------------------
-Safety on containers goes around validation of method arguments, and safety of iterators.
-For safety of iterators, we define two kind of iterators for each container: _regular_ iterator and __safe__ iterator.
-
-Under `safememory` context, a _regular_ iterator should be allowed to exist only on the stack and should be enforced lifetime checks, same as raw pointer. Dereference will always point to _allocated_ memory.
-
-A __safe__ iterator on the other hand, has the same set of rules that a `soft_ptr`, can be stored on the heap, and has means to verify where the target memory is still _allocated_ or not.
-
-Each container provides both iterators types, and two sets of methods to work with one or the other kind:
-
-	iterator       		begin() noexcept;
-	iterator_safe       begin_safe() noexcept;
-
-
-
-Also each safe container has also an __\_safe__ sister (i.e. `vector_safe`, `string_safe`, etc) where all methods and iterators are safe. i.e. `vector_safe::iterator` => `vector::iterator_safe`, `vector_safe::begin()` => `vector::begin_safe()`, and so on.
-
-
+Glosary for this doc:
+* invalid memory: memory that has not been allocated, or worse, that belongs to someone else.
+* zombie instance: an object instance whose destructor has already been called.
+* zeroed instance: an object instance whose memory layout has been zeroed.
+* static checker: companion tool to this library that will make checks on the code. 
 
 Implementation of safe containers
 ---------------------------------
+
+Safety on containers goes around 3 items:
+
+1. Validation of method arguments.
+2. Safety of iterators.
+3. Safety of zombie and zeroed instances.
+
+
 To get this working, we modified `eastl` containers as little as possible and implemented a safety layer over them, inheriting privately and passing a very custom allocator that is explained in detail below:
 
 	namespace safememory
@@ -40,29 +27,45 @@ To get this working, we modified `eastl` containers as little as possible and im
 		template <typename T, memory_safety Safety = safeness_declarator<T>::is_safe>
 		class vector : protected eastl::vector<T, detail::allocator_to_eastl_vector<Safety>>
 
+### Validation of method arguments
 
-Some methods require validation of its arguments to be safe, we do that before calling the base container corresponding method:
+We do it before calling the base container corresponding method:
 
 	reference operator[](size_type n)
 	{
 		if constexpr(is_safe == memory_safety::safe) {
 			if(NODECPP_UNLIKELY(n >= size()))
-				ThrowRangeException("vector::operator[] -- out of range");
+				ThrowRangeException();
 		}
 
 		return base_type::operator[](n);
 	}
 
-For _regular_ iterators, since they don't allow to dereference any invalid memory, they can't be implemented with raw pointers. They are a full class that knows the valid iterable range and its current position, quite straight forward and nothing obscure here.
-Only to understand that each time an iterator comes in as argument, it has to be converted to raw pointer, feed to the underlying `eastl` container, and then the returning raw pointer converted back to a _regular_ iterator:
 
+### Safety of iterators
+
+We define two kind of iterators for each container: _regular_ iterator and __safe__ iterator. None of them will dereference invalid memory. However both of them can dereference an _empty slot_, see [dezombiefy iterators](dezombiefy-iterators.md) for more information on this.
+
+1. _Regular_ iterator. Has the same set of rules than a __raw__ pointer, should be allowed to exist only on the stack and lifetime should be validated by _static checker_.
+
+2. __Safe__ iterator. Has the same set of rules that a `soft_ptr`, can be stored on the heap, and has means to verify where the target memory is still valid or not.
+
+Each container provides both iterators types, and two sets of methods to work with one or the other kind:
+
+	iterator       		begin() noexcept;
+	iterator_safe       begin_safe() noexcept;
+
+
+#### _Regular_ iterators
+Since they don't allow to dereference any invalid memory, they can't be implemented with raw pointers. They are a full class that knows the valid iterable range and its current position, quite straight forward to implement.
+Only to understand that each time an iterator comes in as argument, it has to be validated, converted to raw pointer, feed to the underlying `eastl` container, and then the returning raw pointer converted back to a _regular_ iterator:
 
 	iterator insert(const_iterator_arg position, const value_type& value) {
 		return makeIt(base_type::insert(toBase(position), value));
 	}
 
-
-For __safe__ iterators we must merge the properties of _regular_ iterators with the properties of a `soft_ptr`, so so we must first understand how `soft_ptr` works.
+#### __Safe__ iterators
+They must merge the properties of _regular_ iterators with the properties of a `soft_ptr`, so so we must first a quick intro to `soft_ptr`.
 
 Under `safememory` when an object is allocated on the heap, an special allocation function (`make_owning`) will allocate some extra memory to place a `ControlBlock` before the object, and an `owning_ptr` to such object will be returned. Then the `owning_ptr` knows about that `ControlBlock` and allows to create `soft_ptr` that _hook_ on the `ControlBlock`. When the `owning_ptr` is called to destroy the object, it releases its memory and notifies all `soft_ptr` that are still hooked.
 
@@ -71,7 +74,15 @@ First attempt was to put `owning_ptr` inside the underlying containers, but that
 
 Tried again, this time using __custom__ allocation function that makes the same as `make_owning` does, allocating some extra room for `ControlBlock` and initializing it, but it doesn't construct the object, and instead of returning an `owning_ptr`, it returns a `soft_ptr_with_zero_offset`. Then `soft_ptr` can be constructed form `soft_ptr_with_zero_offset` as it knows if there is a `ControlBlock` to hook, but unlike `owning_ptr` it does behave more like a raw pointer to minimize changes needed.
 
-We modified `eastl` containers to use `soft_ptr_with_zero_offset` to hold the allocated pointer, and allocate them throught our __custom__ allocation functions. Then we can create `soft_ptr` from them and __safe__ iterators became a reality.
+We modified `eastl` containers to use `soft_ptr_with_zero_offset` to hold the allocated pointers, and allocate them throught our __custom__ allocation functions. Then we can create `soft_ptr` from them and __safe__ iterators became a reality.
+
+
+### Safety of zombie and zeroed instances
+
+Types must remain safe even after destructor has run or even if we access a zeroed instance.
+For zombie instances is usually enought to modifty the class destructor to put the instance in a valid state.
+For zeored instances sometimes we are lucky enought that a zeroed instance is bit to bit identical to a valid state, but when that is not the case (like `unordered_map`) we must take extra precautions to verify we are not accessing a zeroed instance.
+
 
 
 Container paricularities
@@ -82,12 +93,14 @@ This is the most straight forward of all containers. Only particularity is that 
 Vector allocates memory when the first element is pushed, so iterators to default constructed vector have `nullptr` inside.
 
 ### safememory::string
-Underlying `eastl::basic_string` implements SSO (short string optimization), this means that when the string is short enought characters are stored inside the instance body and not on the heap. This is done using an `union` an putting there all data including the `soft_ptr_with_zero_offset`.
-For _regular_ iterators this works the same, but when a __safe__ iterator is required, data has to be moved to the heap.
+Underlying `eastl::basic_string` implements SSO (short string optimization), this means that when the string is short enought characters are stored inside the instance body and not on the heap. This is done internaly using an `union`.
+For _regular_ iterators this works the same, but for __safe__ iterators, data has to be moved to the heap before.
 Also a particularity of `eastl::basic_string` is that even default constructed instances have one null `'\0'` character in the buffer, so iterators to default constructed string don't have `nullptr` inside.
+A zeroed `eastl::basic_string` is in an strange but valid state, of having 15 `'\0'` characters.
 
 ### safememory::unordered_map
 Here `eastl::hashtable` has a couple of tricks we must address.
+
 First on the table itself, the last pointer is asigned with a non-null but non dereferenceable value:
 
 		void increment_bucket()
@@ -100,7 +113,9 @@ First on the table itself, the last pointer is asigned with a non-null but non d
 
 So `soft_ptr_with_zero_offset` has to live with that, but such value can't propagate into `soft_ptr`.
 
-Second, to avoid allocate on default construct, all instances of `eastl::hashtable` share a common static constant representation of an empty hash table. Only when the first element is inserted, allocation takes place. This is another _special_ value that `soft_ptr_with_zero_offset` has to live with, but can't propagate into `soft_ptr`. And __safe__ iterators to empty hash tables are actually default constructed ones.
+Second, to avoid allocate on default construct, all instances of `eastl::hashtable` share a common static constant representation of an empty hash table. Only when the first element is inserted, allocation takes place. This is another _special_ value that `soft_ptr_with_zero_offset` has to live with, but can't propagate into `soft_ptr`.
+
+Third, also because of point 2, a _zeroed_ instance of `eastl::hashtable` is in an invalid (dangerous) state. So before any access to the underlying `eastl::hashtable` we must verify it is in a valid state.
 
 
 ### safememory::array
@@ -126,12 +141,11 @@ This implementation can't be used in `constexpr` context. And may have other iss
 
 ### safememory::basic_string_literal
 String literal class don't exist on `std` or `eastl` so is fully implemented on `safememory`.
-The important part is that while we can't create `soft_ptr` because literal has no `ControlBlock`, a _regular_ iterator would be __safe__ because literal will live in memory forever. Only need to use some different iterator for _checker_ to understand this diference.
+The important part is that while we can't create `soft_ptr` because literal has no `ControlBlock`, a _regular_ iterator would be __safe__ because literal will live in memory forever. We only need _static checker_ to understand this diference.
 
 
-
-Dependency order
-----------------
+Allocator and dependency order
+------------------------------
 Since `safememory` library depends (or uses) `eastl` containers, that stablishes a dependency order.
 If from `eastl` we try to `#include` something from `safememory` we would be inverting the dependecy order and that would cause `#include` loops (an is very bad practice).
 Then all types and functions from `safememory` that `eastl` containers use must be _injected_, and since adding one more template parameter everywhere whould have required a lot of _intrussion_ at `eastl` we decided to overload the existing __Allocator__ template parameter, to fullfil all the required tasks.
@@ -140,6 +154,8 @@ We know that adding more than one responsability to a single template parameter 
 
 Allocator responsabilities
 --------------------------
+### Safety safe/none
+
 On `safememory` all pointer wrappers support the idea of compile time safety on/off, this is achived throught template parameter enum `memory_safety::none` and `memory_safety::safe`. This idea is forwarded into `eastl` containers throught the allocator type. We use one allocator type when `memory_safety::none` and a different allocator type when `memory_safety::safe`:
 
 
@@ -148,6 +164,7 @@ On `safememory` all pointer wrappers support the idea of compile time safety on/
 			allocator_to_eastl_vector_impl, allocator_to_eastl_vector_no_checks>;
 
 
+### Allocated pointers aliases
 
 On `safememory` we use wrappers for allocated heap memory pointers. More, we make a distiction between a pointer to an object and a pointer to an array of objects (i.e. the later allows `operator[]` while the first not). Allocator provides both type aliases for containers to know about:
 
@@ -157,6 +174,8 @@ On `safememory` we use wrappers for allocated heap memory pointers. More, we mak
 	template<class T>
 	using array_pointer = soft_ptr_with_zero_offset_impl<flexible_array<T>>;
 
+
+### Allocate / deallocate
 
 Allocator of course provides means to allocate / deallocate one object, and also an array of objects:
 
@@ -172,6 +191,7 @@ Allocator of course provides means to allocate / deallocate one object, and also
 	template<class T>
 	void deallocate_array(const array_pointer<T>& p, std::size_t count);
 
+### Allocated pointer conversion
 
 Also provides means to convert allocated wrappers to __raw__ pointers and to `soft_ptr`:
 
@@ -181,6 +201,7 @@ Also provides means to convert allocated wrappers to __raw__ pointers and to `so
 	template<class T>
 	static T* to_raw(const pointer<T>& p);
 
+### Special values
 
 Has knowledge of two _special_ pointer values used by `eastl::hashtable`, that should be supported inside `soft_ptr_with_zero_offset` but can't be mapped to `soft_ptr` because there is no `ControlBlock` to hook.
 
@@ -191,6 +212,8 @@ Has knowledge of two _special_ pointer values used by `eastl::hashtable`, that s
 	template<class T>
 	static array_pointer<T> get_empty_hashtable();
 
+
+### Helper for `soft_this_ptr`
 
 And last, provides a __RAII__ helper to allow `soft_this_ptr` to work when an element is pushed by-value inside an `EASTL::vector`:
 

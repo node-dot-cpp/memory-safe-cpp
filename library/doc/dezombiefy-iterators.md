@@ -3,10 +3,9 @@ Dezombiefy iterators
 ====================
 
 Glosary for this doc:
-* invalid memory access: access to memory that has not been allocated, or that belong to an object different of the intended.
-* containment: don't allow any invalid memory access. Allows to access either valid memory or null dereference.
-* safe zombie state: property of safe object, that access after the destructor is contained.
-* safe zero state: property of a safe object, that access for an non-constructed instance, layed over zeroed memory, is contained.
+* invalid memory: memory that has not been allocated, or worse, that belongs to someone else.
+* zombie instance: an object instance whose destructor has already been called.
+* zeroed instance: an object instance whose memory layout has been zeroed.
 
 
 The problem described here afect iterators of `vector` and `string`, but analisys focus on `vector` because accessing a zombie complex type inside a `vector` adds a little extra complexity than accessing just characters in `string`.
@@ -15,13 +14,12 @@ The problem described here afect iterators of `vector` and `string`, but analisy
 
 Both _regular_ iterators and __safe__ iterators are contained, they will not reference memory outside the __heap buffer__, but they can dereference an _empty slot_, either that never was filled before or that did have an element that was already removed.
 
+1. An slot that did hold and element and was removed and now empty is a __zombie__ instance. All `safememory` pointers and containers have safe zombie state.
 
-1. An slot that did hold and element and was removed and now empty is a classic __zombie__, contains an object whose destructor has already been run. All `safememory` pointers and containers have destructors that put themselves in an safe zombie state (mostly pointers to `nullptr`).
-
-2. An slot that never was filled before has _zeroed_ memory, and all `safememory` pointers and containers never constructed but whose memory has been _zeroed_, are also in a safe zero state.
+2. An slot that never was filled before has _zeroed_ memory, so they are zeroed instances. And all `safememory` pointers and containers have safe zeroed state.
 
 
-Dezombiefy
+Dezombiefy 
 ----------
 To dezombiefy iterators (that is to never dereference an _empty slot_) we must check the actual number of elements in the __heap buffer__ at the moment of dereferencing. And since that information is only know by the container instance, iterator must hold a reference to the container to ask for it.
 The problem is now iterator has two references, one to the heap buffer and other to the container instance, and lifetime of them is not necesarily the same.
@@ -29,9 +27,9 @@ In particular when we look at container move-constructor and move-assignment, we
 
 We came to two posssible solutions to this:
 
-1. Remove move-constructor and move-assignment on container when dezombification is on. But this has issues with `owning_ptr` that is a move only type (can't copy).
+* Remove move-constructor and move-assignment on container when dezombification is on. But this has issues with `owning_ptr` that is a move only type (can't copy).
 
-2. At each container instance, keep a registry where all iterators created for such instance are _subscribed_, when the container is moved (or destructed), we invalidate all existing iterators. This is the current implementation to dezombiefy iterators.
+* At each container instance, keep a registry where all iterators created for such instance are _subscribed_, when the container is moved (or destructed), we invalidate all existing iterators. This is the current implementation to dezombiefy iterators.
 
 This feature has both size and computation overhead, there is a macro define `SAFEMEMORY_DEZOMBIEFY_ITERATORS` to enable it, to avoid any overhead when this feature is not required.
  
