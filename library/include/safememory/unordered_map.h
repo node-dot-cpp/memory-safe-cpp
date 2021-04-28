@@ -56,14 +56,17 @@ namespace safememory
 		typedef typename base_type::node_type                                     node_type;
 		typedef typename base_type::iterator                                      iterator_base;
 		typedef typename base_type::const_iterator                                const_iterator_base;
-		typedef typename base_type::local_iterator                                local_iterator;
-		typedef typename base_type::const_local_iterator                          const_local_iterator;
+		typedef typename base_type::local_iterator                                local_iterator_base;
+		typedef typename base_type::const_local_iterator                          const_local_iterator_base;
 		typedef typename base_type::insert_return_type                            insert_return_type_base;
 
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
 		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
 		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
+
+		typedef typename detail::hashtable_stack_only_iterator<local_iterator_base, local_iterator_base, allocator_type>       stack_only_local_iterator;
+		typedef typename detail::hashtable_stack_only_iterator<const_local_iterator_base, local_iterator_base, allocator_type>  const_stack_only_local_iterator;
 
 
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
@@ -79,6 +82,9 @@ namespace safememory
 		typedef heap_safe_iterator                                                    iterator_safe;
 		typedef const_heap_safe_iterator                                              const_iterator_safe;
 		typedef eastl::pair<iterator_safe, bool>                                      insert_return_type_safe;
+
+		typedef std::conditional_t<use_base_iterator, local_iterator_base, stack_only_local_iterator>               local_iterator;
+		typedef std::conditional_t<use_base_iterator, const_local_iterator_base, const_stack_only_local_iterator>   const_local_iterator;
 
 
 	public:
@@ -122,13 +128,13 @@ namespace safememory
 		const_iterator_safe end_safe() const { checkNotNull(); return makeSafeIt(base_type::end()); }
 		const_iterator_safe cend_safe() const { checkNotNull(); return makeSafeIt(base_type::cend()); }
 
-		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
-		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
-		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::cbegin(n); }
+		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::begin(n)); }
+		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::begin(n)); }
+		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::cbegin(n)); }
 
-		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
-		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
-		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::cend(n); }
+		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::end(n)); }
+		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::end(n)); }
+		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::cend(n)); }
 
 		T& at(const key_type& k) { checkNotNull(); return base_type::at(k); }
 		const T& at(const key_type& k) const { checkNotNull(); return base_type::at(k); }
@@ -459,6 +465,22 @@ namespace safememory
         insert_return_type_safe makeSafeIt(const insert_return_type_base& r) const {
 			return { makeSafeIt(r.first), r.second };
         }
+
+		local_iterator makeLocalIt(const local_iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return local_iterator::fromBase(it);
+        }
+
+        const_local_iterator makeLocalIt(const const_local_iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return const_local_iterator::fromBase(it);
+        }
+
+		
 	}; // unordered_map
 
 
@@ -648,14 +670,17 @@ namespace safememory
 		typedef typename base_type::node_type                                     node_type;
 		typedef typename base_type::iterator                                      iterator_base;
 		typedef typename base_type::const_iterator                                const_iterator_base;
-		typedef typename base_type::local_iterator                                local_iterator;
-		typedef typename base_type::const_local_iterator                          const_local_iterator;
+		typedef typename base_type::local_iterator                                local_iterator_base;
+		typedef typename base_type::const_local_iterator                          const_local_iterator_base;
 		typedef typename base_type::insert_return_type                            insert_return_type_base;
 
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
 		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
 		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
+
+		typedef typename detail::hashtable_stack_only_iterator<local_iterator_base, local_iterator_base, allocator_type>       stack_only_local_iterator;
+		typedef typename detail::hashtable_stack_only_iterator<const_local_iterator_base, local_iterator_base, allocator_type>  const_stack_only_local_iterator;
 
 	    static constexpr memory_safety is_safe = allocator_type::is_safe;
 		static constexpr bool use_base_iterator = is_safe == memory_safety::none;
@@ -667,6 +692,9 @@ namespace safememory
 		typedef heap_safe_iterator                                                    iterator_safe;
 		typedef const_heap_safe_iterator                                              const_iterator_safe;
 		typedef iterator_safe                                                     insert_return_type_safe;
+
+		typedef std::conditional_t<use_base_iterator, local_iterator_base, stack_only_local_iterator>               local_iterator;
+		typedef std::conditional_t<use_base_iterator, const_local_iterator_base, const_stack_only_local_iterator>   const_local_iterator;
 
 
 	public:
@@ -708,13 +736,13 @@ namespace safememory
 		const_iterator_safe end_safe() const { checkNotNull(); return makeSafeIt(base_type::end()); }
 		const_iterator_safe cend_safe() const { checkNotNull(); return makeSafeIt(base_type::cend()); }
 
-		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
-		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::begin(n); }
-		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return base_type::cbegin(n); }
+		local_iterator begin(size_type n) { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::begin(n)); }
+		const_local_iterator begin(size_type n) const { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::begin(n)); }
+		const_local_iterator cbegin(size_type n) const { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::cbegin(n)); }
 
-		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
-		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::end(n); }
-		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return base_type::cend(n); }
+		local_iterator end(size_type n) noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::end(n)); }
+		const_local_iterator end(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::end(n)); }
+		const_local_iterator cend(size_type n) const noexcept { checkNotNull(); checkBucketIx(n); return makeLocalIt(base_type::cend(n)); }
 
 		// T& at(const key_type& k) { checkNotNull(); return base_type::at(k); }
 		// const T& at(const key_type& k) const { checkNotNull(); return base_type::at(k); }
@@ -1045,6 +1073,20 @@ namespace safememory
         // insert_return_type_safe makeSafeIt(const insert_return_type_base& r) const {
 		// 	return { makeSafeIt(r.first), r.second };
         // }
+
+		local_iterator makeLocalIt(const local_iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return local_iterator::fromBase(it);
+        }
+
+        const_local_iterator makeLocalIt(const const_local_iterator_base& it) const {
+			if constexpr(use_base_iterator)
+				return it;
+			else
+				return const_local_iterator::fromBase(it);
+        }
 	}; // unordered_multimap
 
 	///////////////////////////////////////////////////////////////////////

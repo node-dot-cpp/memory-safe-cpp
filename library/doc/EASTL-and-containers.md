@@ -8,7 +8,7 @@ Glosary for this doc:
 * invalid memory: memory that has not been allocated, or worse, that belongs to someone else.
 * zombie instance: an object instance whose destructor has already been called.
 * zeroed instance: an object instance whose memory layout has been zeroed.
-* static checker: companion tool to this library that will make checks on the code. 
+* safememory-checker: companion tool to this library that will make checks on the code. 
 
 Implementation of safe containers
 ---------------------------------
@@ -46,7 +46,7 @@ We do it before calling the base container corresponding method:
 
 We define two kind of iterators for each container: _regular_ iterator and __safe__ iterator. None of them will dereference invalid memory. However both of them can dereference an _empty slot_, see [dezombiefy iterators](dezombiefy-iterators.md) for more information on this.
 
-1. _Regular_ iterator. Has the same set of rules than a __raw__ pointer, should be allowed to exist only on the stack and lifetime should be validated by _static checker_.
+1. _Regular_ iterator. Has the same set of rules than a __raw__ pointer, should be allowed to exist only on the stack and lifetime should be validated by _safememory-checker_.
 
 2. __Safe__ iterator. Has the same set of rules that a `soft_ptr`, can be stored on the heap, and has means to verify where the target memory is still valid or not.
 
@@ -79,7 +79,7 @@ We modified `eastl` containers to use `soft_ptr_with_zero_offset` to hold the al
 
 ### Safety of zombie and zeroed instances
 
-Types must remain safe even after destructor has run or even if we access a zeroed instance.
+Containers must remain safe even after destructor has run or even if we access a zeroed instance.
 For zombie instances is usually enought to modifty the class destructor to put the instance in a valid state.
 For zeored instances sometimes we are lucky enought that a zeroed instance is bit to bit identical to a valid state, but when that is not the case (like `unordered_map`) we must take extra precautions to verify we are not accessing a zeroed instance.
 
@@ -141,7 +141,7 @@ This implementation can't be used in `constexpr` context. And may have other iss
 
 ### safememory::basic_string_literal
 String literal class don't exist on `std` or `eastl` so is fully implemented on `safememory`.
-The important part is that while we can't create `soft_ptr` because literal has no `ControlBlock`, a _regular_ iterator would be __safe__ because literal will live in memory forever. We only need _static checker_ to understand this diference.
+The important part is that while we can't create `soft_ptr` because literal has no `ControlBlock`, a _regular_ iterator would be __safe__ because literal will live in memory forever. We only need _safememory-checker_ to understand this diference.
 
 
 Allocator and dependency order
@@ -215,7 +215,7 @@ Has knowledge of two _special_ pointer values used by `eastl::hashtable`, that s
 
 ### Helper for `soft_this_ptr`
 
-And last, provides a __RAII__ helper to allow `soft_this_ptr` to work when an element is pushed by-value inside an `EASTL::vector`:
+And last, provides a __RAII__ helper to allow `soft_this_ptr` to work when an element is pushed by-value inside an `eastl::vector`:
 
 	template<class T>
 	static soft_this_ptr_raii<T> make_raii(const pointer<T>& p);
@@ -246,15 +246,16 @@ The most critical part are allocation functions at the beginning of the file, th
 
 
 ### `safememory/detail/soft_ptr_with_zero_offset.h`
-All container alocations return an instance of `soft_ptr_with_zero_offset`, and the main function of this class is to be a _marker_ of such thing. There are 4 specializations of this class to match each of the 4 allocators functions described above.
+All container alocations return an instance of `soft_ptr_with_zero_offset`, and the main function of this class is to be a _marker_ of such thing.
 
 Some importan points:
 * Only the allocator creates them.
 * They won't construct or destruct the instance it points.
 * They don't own the memory, can be copied.
-* They can be used inside `union` (`eastl::string` needs that).
+* They don't have a destructor so they can be used inside `union` (`eastl::string` needs that).
 * They can have _special_ values that point to static or invalid memory (`eastl::hashtable` needs that).
-* Allocator can create a `soft_ptr` from them, but first _special_ values are checked.
+* Allocator can create a `soft_ptr` from them.
+* Can keep track of 'id' of the allocator that created it when enabled by compile flags.
 
 
 ### `safememory/detail/flexible_array.h`
@@ -263,5 +264,5 @@ All array allocations return an instance of `soft_ptr_with_zero_offset<flexible_
 Some importan points:
 * Only the allocator creates them.
 * They won't construct or destruct any instance inside such memory array.
-* Specialized `soft_ptr_with_zero_offset<flexible_array<T>>` has array operators overloaded and pointer arithmetics, so simplify changes.
+* Specialized `soft_ptr_with_zero_offset<flexible_array<T>>` has array operators overloaded and pointer arithmetics.
 

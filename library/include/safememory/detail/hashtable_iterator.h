@@ -33,6 +33,10 @@
 
 namespace safememory::detail {
 
+	/**
+	 * \brief Iterator wrapper for \c hashmap stack only iterators
+	 */
+
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_stack_only_iterator : protected BaseIt
 	{
@@ -139,6 +143,9 @@ namespace safememory::detail {
 	}; // hashtable_stack_only_iterator
 
 
+	/**
+	 * \brief Iterator for \c hashmap heap safe iterators
+	 */
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
 	class hashtable_heap_safe_iterator2 : protected BaseIt
 	{

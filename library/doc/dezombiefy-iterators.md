@@ -14,7 +14,7 @@ The problem described here afect iterators of `vector` and `string`, but analisy
 
 Both _regular_ iterators and __safe__ iterators are contained, they will not reference memory outside the __heap buffer__, but they can dereference an _empty slot_, either that never was filled before or that did have an element that was already removed.
 
-1. An slot that did hold and element and was removed and now empty is a __zombie__ instance. All `safememory` pointers and containers have safe zombie state.
+1. An slot that did hold and element, was removed and now is empty, is a __zombie__ instance. All `safememory` pointers and containers have safe zombie state. 
 
 2. An slot that never was filled before has _zeroed_ memory, so they are zeroed instances. And all `safememory` pointers and containers have safe zeroed state.
 

@@ -91,7 +91,7 @@ public:
 template<eastl_size_t SZ, class T>
 struct flexible_array_with_memory : public flexible_array<T>
 {
-	/// we never use this array, is only here to reserve enought memory
+	/// we never access this array, is only here to reserve enought memory
 	char buff[sizeof(T) * SZ];
 
 public:

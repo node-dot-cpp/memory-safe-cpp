@@ -32,6 +32,7 @@
 
 /** \file
  * \brief Pointer wrappers to be used in libraries adaptation to \a safememory
+ * 
  * \c soft_ptr_with_zero_offset_impl is a pointer wrapper used as a bridge between our safety aware code
  * and \c eastl libraries that know nothing about \c soft_ptr_impl
  * 
