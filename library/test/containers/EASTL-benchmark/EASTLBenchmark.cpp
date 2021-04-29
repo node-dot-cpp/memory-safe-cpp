@@ -276,7 +276,7 @@ namespace Benchmark
 		fmt::printf("Others are ratios to the first, under 1 means slower than, over 1 means faster.\n");
 		fmt::printf("\n");
 
-		fmt::printf("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "std", "(no_checks)", "stack_only", "heap_safe");
+		fmt::printf("%-50s | %-20s | %-11s | %-11s | %-11s |\n", "Test", "eastl", "(no_checks)", "stack_only", "heap_safe");
 		fmt::printf("---------------------------------------------------------------------------------------------------------------------\n");
 
 		std::string sTestTypeLast;

@@ -64,6 +64,8 @@ namespace eastl
 		const char* get_name() const;
 		void        set_name(const char* pName);
 
+		//////// safememory methods and aliases below ////////
+
 		template<class T>
 		using pointer = T*;
 
@@ -110,6 +112,28 @@ namespace eastl
 		}
 
 		static void force_changes_in_dtor(const void*) {}
+
+		//////// hashtable special values ////////
+		template<class T>
+		static T* get_hashtable_sentinel() {
+			return reinterpret_cast<T*>((void*)uintptr_t(~0));
+		}
+
+		template<class T>
+		static T* get_empty_hashtable() {
+			extern EASTL_API void* gpEmptyBucketArray[2];
+			return reinterpret_cast<T*>(&gpEmptyBucketArray[0]);
+		}
+
+		template<class T>
+		static bool is_hashtable_sentinel(const T* p) {
+			return p == get_hashtable_sentinel();
+		}
+
+		template<class T>
+		static bool is_empty_hashtable(const T* a) {
+			return a == get_empty_hashtable();
+		}
 
 
 	protected:
