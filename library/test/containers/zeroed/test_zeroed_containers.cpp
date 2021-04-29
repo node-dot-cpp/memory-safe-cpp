@@ -110,7 +110,7 @@ int testWithLest( int argc, char * argv[] )
 		},
 		CASE( "wstring, zeroed" )
 		{
-			// zeroed wstring bit to bit identical to 15 '\0' chars
+			// zeroed wstring bit to bit identical to t '\0' wchars
 
 			// we need to start with zeroed memory
 			typedef safememory::wstring V;

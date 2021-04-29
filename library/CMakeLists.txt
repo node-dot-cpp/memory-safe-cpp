@@ -152,8 +152,8 @@ if (SAFEMEMORY_TEST)
 
   add_subdirectory(samples)
 
-  add_subdirectory(test/containers/benchmark)
-  add_subdirectory(test/containers/test)
+  add_subdirectory(test/containers/EASTL-benchmark)
+  add_subdirectory(test/containers/EASTL-test)
   add_subdirectory(test/containers/dezombiefy)
   add_subdirectory(test/containers/zeroed)
 
