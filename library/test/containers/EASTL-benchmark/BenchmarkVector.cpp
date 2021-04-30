@@ -6,7 +6,8 @@
 #include "EASTLBenchmark.h"
 #include "EASTLTest.h"
 #include "EAStopwatch.h"
-#include <algorithm>
+#include <EASTL/algorithm.h>
+#include <EASTL/sort.h>
 #include <safememory/vector.h>
 #include <EASTL/vector.h>
 
@@ -25,10 +26,6 @@
 
 using namespace EA;
 using EA::StdC::Stopwatch;
-
-
-typedef std::vector<uint64_t>     StdVectorUint64;
-typedef safememory::vector<uint64_t>   EaVectorUint64;
 
 
 namespace
@@ -184,22 +181,22 @@ namespace
 namespace 
 {
 	template <typename Container> 
-	void TestPushBack(EA::StdC::Stopwatch& stopwatch, Container& c, std::vector<uint32_t>& intVector)
+	void TestPushBack(EA::StdC::Stopwatch& stopwatch, Container& c, eastl::vector<uint32_t>& intVector)
 	{
 		stopwatch.Restart();
-		for(std::size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
+		for(size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
 			c.push_back((uint64_t)intVector[j]);
 		stopwatch.Stop();
 	}
 
 
 	template <typename Container>
-	void TestBracket(EA::StdC::Stopwatch& stopwatch, Container& c)
+	void TestBracket(EA::StdC::Stopwatch& stopwatch, Container& c, eastl::vector<uint32_t>& intVector)
 	{
 		uint64_t temp = 0;
 		stopwatch.Restart();
-		for(typename Container::size_type j = 0, jEnd = c.size(); j < jEnd; j++)
-			temp += c[j];
+		for(size_t j = 0, jEnd = intVector.size(); j < jEnd; j++)
+			temp += c[intVector[j]];
 		stopwatch.Stop();
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(temp & 0xffffffff));
 	}
@@ -210,7 +207,7 @@ namespace
 	{
 		stopwatch.Restart();
 		// typedef typename Container::iterator iterator_t;  // This typedef is required to get this code to compile on RVCT
-		auto it = std::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
+		auto it = eastl::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
 		stopwatch.Stop();
 		if(it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);
@@ -223,7 +220,7 @@ namespace
 		// Intentionally use eastl sort in order to measure just  
 		// vector access speed and not be polluted by sort speed.
 		stopwatch.Restart();
-		std::sort(c.begin(), c.end()); 
+		eastl::sort(c.begin(), c.end()); 
 		stopwatch.Stop();
 		sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)(c[0] & 0xffffffff));
 	}
@@ -303,8 +300,8 @@ void BenchmarkVectorTempl()
 	RandGenT<uint32_t> rng(GetRandSeed());
 	Stopwatch              stopwatch1(Stopwatch::kUnitsCPUCycles);
 
-	std::vector<uint32_t> intVector(100000);
-	std::generate(intVector.begin(), intVector.end(), rng);
+	eastl::vector<uint32_t> intVector(100000);
+	eastl::generate(intVector.begin(), intVector.end(), [&]() { return rng(100000); });
 
 	for(int i = 0; i < 2; i++)
 	{
@@ -325,7 +322,7 @@ void BenchmarkVectorTempl()
 		// Test operator[].
 		///////////////////////////////
 
-		TestBracket(stopwatch1, stdVectorUint64);
+		TestBracket(stopwatch1, stdVectorUint64, intVector);
 
 		if(i == 1)
 			Benchmark::AddResult("vector<uint64>/operator[]", IX, stopwatch1);
