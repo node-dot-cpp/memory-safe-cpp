@@ -9,6 +9,7 @@
 #include <EASTL/algorithm.h>
 #include <EASTL/sort.h>
 #include <safememory/vector.h>
+#include <safememory/algorithm.h>
 #include <EASTL/vector.h>
 
 #ifdef _MSC_VER
@@ -207,7 +208,7 @@ namespace
 	{
 		stopwatch.Restart();
 		// typedef typename Container::iterator iterator_t;  // This typedef is required to get this code to compile on RVCT
-		auto it = eastl::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
+		auto it = safememory::find(c.begin(), c.end(), UINT64_C(0xffffffffffff));
 		stopwatch.Stop();
 		if(it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%u", (unsigned)*it);

@@ -8,6 +8,7 @@
 #include "EAStopwatch.h"
 // #include <EASTL/vector.h>
 #include <safememory/unordered_map.h>
+#include <safememory/algorithm.h>
 #include <EASTL/unordered_map.h>
 #include <vector>
 #include <string>
@@ -81,17 +82,17 @@ namespace
 	void TestIteration(EA::StdC::Stopwatch& stopwatch, const Container& c, const Value& findValue)
 	{
 		stopwatch.Restart();
-		//typename Container::const_iterator it = std::find(c.begin(), c.end(), findValue);
-		typename Container::const_iterator it = c.begin();
-		typename Container::const_iterator last = c.end();
-		for (; it != last; ++it) {
-			if (*it == findValue) {
-				break;
-			}
-		}
+		typename Container::const_iterator it = safememory::find(c.begin(), c.end(), findValue);
+		// typename Container::const_iterator it = c.begin();
+		// typename Container::const_iterator last = c.end();
+		// for (; it != last; ++it) {
+		// 	if (*it == findValue) {
+		// 		break;
+		// 	}
+		// }
 
 		stopwatch.Stop();
-		if(it != last)
+		if(it != c.end())
 			sprintf(Benchmark::gScratchBuffer, "%p", &*it);
 	}
 
@@ -470,20 +471,4 @@ void BenchmarkHash()
 	BenchmarkHashTempl<3, SafeMap1, SafeMap2>();
 	BenchmarkHashTempl<4, ReallySafeMap1, ReallySafeMap2>();
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

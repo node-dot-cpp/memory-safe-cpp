@@ -1,5 +1,5 @@
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
-index ad20e4d..272e2a4 100644
+index ad20e4d..7153c25 100644
 --- a/include/EASTL/allocator.h
 +++ b/include/EASTL/allocator.h
 @@ -64,6 +64,78 @@ namespace eastl
@@ -69,12 +69,12 @@ index ad20e4d..272e2a4 100644
 +
 +		template<class T>
 +		static bool is_hashtable_sentinel(const T* p) {
-+			return p == get_hashtable_sentinel();
++			return p == get_hashtable_sentinel<T>();
 +		}
 +
 +		template<class T>
 +		static bool is_empty_hashtable(const T* a) {
-+			return a == get_empty_hashtable();
++			return a == get_empty_hashtable<T>();
 +		}
 +
 +

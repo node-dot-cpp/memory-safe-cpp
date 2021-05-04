@@ -127,12 +127,12 @@ namespace eastl
 
 		template<class T>
 		static bool is_hashtable_sentinel(const T* p) {
-			return p == get_hashtable_sentinel();
+			return p == get_hashtable_sentinel<T>();
 		}
 
 		template<class T>
 		static bool is_empty_hashtable(const T* a) {
-			return a == get_empty_hashtable();
+			return a == get_empty_hashtable<T>();
 		}
 
 

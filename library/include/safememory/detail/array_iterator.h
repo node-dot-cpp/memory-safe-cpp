@@ -221,10 +221,12 @@ public:
 
 	template <typename Container>
 	static constexpr this_type makePtr(array_pointer arr, pointer to, Container* container) {
-
 		return makeIx(arr, getIndex(arr, to), container);
 	}
 
+	static constexpr this_type makeIt(const this_type&  it, pointer to) {
+		return {it._array,  getIndex(it._array, to), it._size};
+	}
 
 	array_heap_safe_iterator(const array_heap_safe_iterator& ri) = default;
 	array_heap_safe_iterator& operator=(const array_heap_safe_iterator& ri) = default;
@@ -557,6 +559,9 @@ public:
 		return makeIx(arr, base_type::getIndex(arr, to), container);
 	}
 
+	static constexpr this_type makeIt(const this_type&  it, pointer to) {
+		return {it._array,  base_type::getIndex(it._array, to), it._size};
+	}
 
 	array_stack_only_iterator(const array_stack_only_iterator& ri) = default;
 	array_stack_only_iterator& operator=(const array_stack_only_iterator& ri) = default;
