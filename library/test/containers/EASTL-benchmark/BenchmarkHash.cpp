@@ -10,6 +10,8 @@
 #include <safememory/unordered_map.h>
 #include <safememory/algorithm.h>
 #include <EASTL/unordered_map.h>
+#include <EASTL/vector.h>
+#include <EASTL/string.h>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -96,7 +98,6 @@ namespace
 			sprintf(Benchmark::gScratchBuffer, "%p", &*it);
 	}
 
-
 	template <typename Container, typename Value>
 	void TestBracket(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
 	{
@@ -109,6 +110,18 @@ namespace
 		stopwatch.Stop();
 	}
 
+	template <typename Container, typename Value>
+	void TestBracket2(EA::StdC::Stopwatch& stopwatch, Container& c, const Value& v)
+	{
+		stopwatch.Restart();
+		Value* r = &c[v];
+		for(std::size_t i = 0; i < c.size(); ++i) {
+			r = &c[*r];
+		}
+		stopwatch.Stop();
+
+		sprintf(Benchmark::gScratchBuffer, "%p", r);
+	}
 
 	template <typename Container, typename Value>
 	void TestFind(EA::StdC::Stopwatch& stopwatch, Container& c, const Value* pArrayBegin, const Value* pArrayEnd)
@@ -121,6 +134,19 @@ namespace
 			++pArrayBegin;
 		}
 		stopwatch.Stop();
+	}
+
+	template <typename Container, typename Value>
+	void TestFind2(EA::StdC::Stopwatch& stopwatch, Container& c, const Value& v)
+	{
+		stopwatch.Restart();
+		typename Container::iterator it = c.find(v);
+		for(std::size_t i = 0; i < c.size(); ++i) {
+			it = c.find(it->second);
+		}
+		stopwatch.Stop();
+
+		sprintf(Benchmark::gScratchBuffer, "%p", &(it->second));
 	}
 
 
@@ -250,29 +276,43 @@ void BenchmarkHashTempl()
 {
 	EASTLTest_Rand  rng(GetRandSeed());
 	EA::StdC::Stopwatch stopwatch1(EA::StdC::Stopwatch::kUnitsCPUCycles);
-	std::vector<   std::pair<uint32_t, TestObject> > stdVectorUT(10000);
-	std::vector<   std::pair<  std::string, uint32_t> > stdVectorSU(10000);
 
-	for(std::size_t i = 0, iEnd = stdVectorUT.size(); i < iEnd; i++)
+	std::size_t sz = 10000;
+	eastl::vector<uint32_t> baseData(sz);
+	for(std::size_t i = 0; i != sz; ++i) {
+		baseData[i] = i;
+	}
+
+	std::size_t n = sz;
+	for(std::size_t i = n - 1; i > 0; --i) {
+		std::size_t j = rng.RandLimit(i + 1);
+        eastl::swap(baseData[i], baseData[j]);
+	}
+
+	eastl::vector<eastl::pair<uint32_t, uint32_t>> stdVectorUT(10000);
+	eastl::vector<eastl::pair<eastl::string, eastl::string>> stdVectorSU(10000);
+
+	for(std::size_t i = 0; i != sz; ++i)
 	{
-		const uint32_t n1 = rng.RandLimit((uint32_t)(iEnd / 2));
-		const uint32_t n2 = rng.Rand();
-
-		stdVectorUT[i] =   std::pair<uint32_t, TestObject>(n1, TestObject(n2));
+		stdVectorUT[i] = eastl::pair<uint32_t, uint32_t>(baseData[i], baseData[baseData[i]]);
 
 		char str_n1[32];
-		sprintf(str_n1, "%u", (unsigned)n1);
+		sprintf(str_n1, "%u", (unsigned)baseData[i]);
+		char str_n2[32];
+		sprintf(str_n2, "%u", (unsigned)baseData[baseData[i]]);
 
-		stdVectorSU[i] =   std::pair<  std::string, uint32_t>(  std::string(str_n1), n2);
+		stdVectorSU[i] = eastl::pair<eastl::string, eastl::string>(eastl::string(str_n1), eastl::string(str_n2));
 	}
+
+
 
 	for(int i = 0; i < 2; i++)
 	{
-		Map1<uint32_t, TestObject> stdMapUint32TO;
-		Map2<std::string, uint32_t, HashString8<std::string>> stdMapStrUint32;
+		Map1<uint32_t, uint32_t> stdMapUint32TO;
+		Map2<eastl::string, eastl::string, HashString8<eastl::string>> stdMapStrUint32;
 
-		typedef typename Map1<uint32_t, TestObject>::value_type Vt1;
-		typedef typename Map2<std::string, uint32_t, HashString8<std::string>>::value_type Vt2;
+		typedef typename Map1<uint32_t, uint32_t>::value_type Vt1;
+		typedef typename Map2<eastl::string, eastl::string, HashString8<eastl::string>>::value_type Vt2;
 
 		///////////////////////////////
 		// Test insert(const value_type&)
@@ -281,27 +321,27 @@ void BenchmarkHashTempl()
 		TestInsertEA<Vt1>(stopwatch1, stdMapUint32TO, stdVectorUT);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/insert", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/insert", IX, stopwatch1);
 
 		TestInsertEA<Vt2>(stopwatch1, stdMapStrUint32, stdVectorSU);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/insert", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/insert", IX, stopwatch1);
 
 
 		///////////////////////////////
 		// Test iteration
 		///////////////////////////////
 
-		TestIteration(stopwatch1, stdMapUint32TO, Vt1(9999999, TestObject(9999999)));
+		TestIteration(stopwatch1, stdMapUint32TO, Vt1(9999999, 9999999));
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/iteration", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/iteration", IX, stopwatch1);
 
-		TestIteration(stopwatch1, stdMapStrUint32, Vt2(  std::string("9999999"), 9999999));
+		TestIteration(stopwatch1, stdMapStrUint32, Vt2(eastl::string("9999999"), eastl::string("9999999")));
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/iteration", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/iteration", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -311,12 +351,26 @@ void BenchmarkHashTempl()
 		TestBracket(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/operator[]", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/operator[]", IX, stopwatch1);
 
 		TestBracket(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/operator[]", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/operator[]", IX, stopwatch1);
+
+		///////////////////////////////
+		// Test operator[]
+		///////////////////////////////
+
+		TestBracket2(stopwatch1, stdMapUint32TO, uint32_t(0));
+
+		if(i == 1)
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/operator[]2", IX, stopwatch1);
+
+		TestBracket2(stopwatch1, stdMapStrUint32, eastl::string("0"));
+
+		if(i == 1)
+			Benchmark::AddResult("unordered_map<string, string>/operator[]2", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -326,12 +380,26 @@ void BenchmarkHashTempl()
 		TestFind(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/find", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/find", IX, stopwatch1);
 
 		TestFind(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/find", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/find", IX, stopwatch1);
+
+		///////////////////////////////
+		// Test find
+		///////////////////////////////
+
+		TestFind2(stopwatch1, stdMapUint32TO, uint32_t(0));
+
+		if(i == 1)
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/find2", IX, stopwatch1);
+
+		TestFind2(stopwatch1, stdMapStrUint32, eastl::string("0"));
+
+		if(i == 1)
+			Benchmark::AddResult("unordered_map<string, string>/find2", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -342,7 +410,7 @@ void BenchmarkHashTempl()
 		// TestFindAsEa(stopwatch2, eaMapStrUint32,    eaVectorSU.data(),  eaVectorSU.data() +  eaVectorSU.size());
 
 		// if(i == 1)
-		// 	Benchmark::AddResult("unordered_map<string, uint32_t>/find_as/char*", IX, stopwatch1);
+		// 	Benchmark::AddResult("unordered_map<string, string>/find_as/char*", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -352,12 +420,12 @@ void BenchmarkHashTempl()
 		TestCount(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + stdVectorUT.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/count", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/count", IX, stopwatch1);
 
 		TestCount(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + stdVectorSU.size());
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/count", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/count", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -367,12 +435,12 @@ void BenchmarkHashTempl()
 		TestEraseValue(stopwatch1, stdMapUint32TO, stdVectorUT.data(), stdVectorUT.data() + (stdVectorUT.size() / 2));
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase val", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/erase val", IX, stopwatch1);
 
 		TestEraseValue(stopwatch1, stdMapStrUint32, stdVectorSU.data(), stdVectorSU.data() + (stdVectorSU.size() / 2));
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/erase val", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/erase val", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -382,12 +450,12 @@ void BenchmarkHashTempl()
 		TestErasePosition(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase pos", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/erase pos", IX, stopwatch1);
 
 		TestErasePosition(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/erase pos", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/erase pos", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -397,12 +465,12 @@ void BenchmarkHashTempl()
 		TestEraseRange(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/erase range", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/erase range", IX, stopwatch1);
 
 		TestEraseRange(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/erase range", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/erase range", IX, stopwatch1);
 
 
 		///////////////////////////////
@@ -421,12 +489,12 @@ void BenchmarkHashTempl()
 		TestClear(stopwatch1, stdMapUint32TO);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<uint32_t, TestObject>/clear", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<uint32_t, uint32_t>/clear", IX, stopwatch1);
 
 		TestClear(stopwatch1, stdMapStrUint32);
 
 		if(i == 1)
-			Benchmark::AddResult("unordered_map<string, uint32_t>/clear", IX, stopwatch1);
+			Benchmark::AddResult("unordered_map<string, string>/clear", IX, stopwatch1);
 
 	}
 }
