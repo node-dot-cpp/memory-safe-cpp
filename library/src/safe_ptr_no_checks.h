@@ -178,9 +178,7 @@ public:
 
 	void swap( owning_ptr_base_no_checks<T>& other )
 	{
-		auto tmp = t_;
-		t_ = other.t_;
-		other.t_ = tmp;
+		t_.swap( other.t_ );
 	}
 
 	nullable_ptr_no_checks<T> get() const
