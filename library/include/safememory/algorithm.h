@@ -71,7 +71,7 @@ namespace safememory {
 	 * \c hashtable_stack_only_iterator can't be optimized, since we can easily check
 	 * the iterator pair is a valid range.
 	 * 
-	 * but \c hashtable_heap_safe_iterator2 can be optimized to \c hashtable_stack_only_iterator
+	 * but \c hashtable_heap_safe_iterator can be optimized to \c hashtable_stack_only_iterator
 	 * 
 	 */
 	template <typename B1, typename B2, typename A, typename T>

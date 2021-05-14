@@ -149,13 +149,13 @@ namespace safememory::detail {
 	 * \brief Iterator for \c hashmap heap safe iterators
 	 */
 	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
-	class hashtable_heap_safe_iterator2 : protected BaseIt
+	class hashtable_heap_safe_iterator : protected BaseIt
 	{
 	public:
 		typedef BaseIt                                                   base_type;
 		typedef Allocator                                                allocator_type;
-		typedef hashtable_heap_safe_iterator2<BaseIt, BaseNonConstIt, Allocator>    this_type;
-		typedef hashtable_heap_safe_iterator2<BaseNonConstIt, BaseNonConstIt, Allocator>     this_type_non_const;
+		typedef hashtable_heap_safe_iterator<BaseIt, BaseNonConstIt, Allocator>    this_type;
+		typedef hashtable_heap_safe_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>     this_type_non_const;
 
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
@@ -169,7 +169,7 @@ namespace safememory::detail {
 	    static constexpr bool is_const = !std::is_same_v<this_type, this_type_non_const>;
 
 		template <typename, typename, typename>
-		friend class hashtable_heap_safe_iterator2;
+		friend class hashtable_heap_safe_iterator;
 
 		template<typename TT>
 		static constexpr bool sfinae = is_const && std::is_same_v<TT, this_type_non_const>;
@@ -188,24 +188,24 @@ namespace safememory::detail {
 		[[noreturn]] static void ThrowNullException() { throw nodecpp::error::zero_pointer_access; }
 
 		// used on empty hashtable (always end)
-		hashtable_heap_safe_iterator2(const BaseIt& it)
+		hashtable_heap_safe_iterator(const BaseIt& it)
 			: base_type(it) { }
 
 		// used on end of any hashtable
-		hashtable_heap_safe_iterator2(const BaseIt& it, const zero_bucket_arr& bucketArr)
+		hashtable_heap_safe_iterator(const BaseIt& it, const zero_bucket_arr& bucketArr)
 			: base_type(it), mpSoftBucketArr(allocator_type::to_soft(bucketArr)) { }
 
 		// used on default case
-		hashtable_heap_safe_iterator2(const BaseIt& it, const zero_bucket_arr& bucketArr, const zero_node_ptr& node)
+		hashtable_heap_safe_iterator(const BaseIt& it, const zero_bucket_arr& bucketArr, const zero_node_ptr& node)
 			: base_type(it), mpSoftBucketArr(allocator_type::to_soft(bucketArr)), mpSoftNode(allocator_type::to_soft(node)) { }
 
 
 		// used on fromBase at end of any hashtable or empty hashtable
-		hashtable_heap_safe_iterator2(const BaseIt& it, const soft_bucket_arr& bucketArr)
+		hashtable_heap_safe_iterator(const BaseIt& it, const soft_bucket_arr& bucketArr)
 			: base_type(it), mpSoftBucketArr(bucketArr) { }
 
 		// used on fromBase on default case
-		hashtable_heap_safe_iterator2(const BaseIt& it, const soft_bucket_arr& bucketArr, const zero_node_ptr& node)
+		hashtable_heap_safe_iterator(const BaseIt& it, const soft_bucket_arr& bucketArr, const zero_node_ptr& node)
 			: base_type(it), mpSoftBucketArr(bucketArr), mpSoftNode(allocator_type::to_soft(node)) { }
 
     public:
@@ -242,22 +242,22 @@ namespace safememory::detail {
 				return { it, other.mpSoftBucketArr, it.get_node() };
         }
 
-		hashtable_heap_safe_iterator2() :base_type() { }
+		hashtable_heap_safe_iterator() :base_type() { }
 
-		hashtable_heap_safe_iterator2(const this_type&) = default;
-		hashtable_heap_safe_iterator2& operator=(const hashtable_heap_safe_iterator2& ri) = default;
+		hashtable_heap_safe_iterator(const this_type&) = default;
+		hashtable_heap_safe_iterator& operator=(const hashtable_heap_safe_iterator& ri) = default;
 
-		hashtable_heap_safe_iterator2(hashtable_heap_safe_iterator2&& ri) = default; 
-		hashtable_heap_safe_iterator2& operator=(hashtable_heap_safe_iterator2&& ri) = default;
+		hashtable_heap_safe_iterator(hashtable_heap_safe_iterator&& ri) = default; 
+		hashtable_heap_safe_iterator& operator=(hashtable_heap_safe_iterator&& ri) = default;
 
-		~hashtable_heap_safe_iterator2() = default;
+		~hashtable_heap_safe_iterator() = default;
 
 		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
-		hashtable_heap_safe_iterator2(const Other& other)
+		hashtable_heap_safe_iterator(const Other& other)
 			: base_type(other), mpSoftBucketArr(other.mpSoftBucketArr), mpSoftNode(other.mpSoftNode) { }
 
 		template<typename Other, std::enable_if_t<sfinae<Other>, bool> = true>
-		hashtable_heap_safe_iterator2& operator=(const Other& other) {
+		hashtable_heap_safe_iterator& operator=(const Other& other) {
 			base_type::operator=(static_cast<const typename Other::base_type&>(other));
 
 			this->mpSoftBucketArr = other.mpSoftBucketArr;
@@ -323,10 +323,7 @@ namespace safememory::detail {
 			
 			return *this;
 		}
-	}; // hashtable_heap_safe_iterator2
-
-	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
-	using hashtable_heap_safe_iterator = hashtable_heap_safe_iterator2<BaseIt, BaseNonConstIt, Allocator>;
+	}; // hashtable_heap_safe_iterator
 } // namespace safememory::detail 
 
 #endif // SAFE_MEMORY_DETAIL_HASHTABLE_ITERATOR

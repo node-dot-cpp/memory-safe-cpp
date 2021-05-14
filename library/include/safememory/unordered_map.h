@@ -62,8 +62,8 @@ namespace safememory
 
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 
 		typedef typename detail::hashtable_stack_only_iterator<local_iterator_base, local_iterator_base, allocator_type>       stack_only_local_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_local_iterator_base, local_iterator_base, allocator_type>  const_stack_only_local_iterator;
@@ -676,8 +676,8 @@ namespace safememory
 
 		typedef typename detail::hashtable_stack_only_iterator<iterator_base, iterator_base, allocator_type>       stack_only_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_iterator_base, iterator_base, allocator_type>  const_stack_only_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator2<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
-		typedef typename detail::hashtable_heap_safe_iterator2<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<iterator_base, iterator_base, allocator_type>        heap_safe_iterator;
+		typedef typename detail::hashtable_heap_safe_iterator<const_iterator_base, iterator_base, allocator_type>   const_heap_safe_iterator;
 
 		typedef typename detail::hashtable_stack_only_iterator<local_iterator_base, local_iterator_base, allocator_type>       stack_only_local_iterator;
 		typedef typename detail::hashtable_stack_only_iterator<const_local_iterator_base, local_iterator_base, allocator_type>  const_stack_only_local_iterator;
