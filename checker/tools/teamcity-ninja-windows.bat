@@ -15,6 +15,11 @@ if not exist "llvm-project\" (
 )
 
 cd ..
+
+if not exist "build\" (
+    mkdir build
+)
+
 cd build
 
 if not exist "teamcity\" (
