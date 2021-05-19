@@ -1,5 +1,6 @@
-rem this scripts need to be run in a previously configured environment
-rem with sccache, ninja, git, cmake, python3 and vcvarsall.bat of VS2019
+rem Build script used by teamcity CI
+rem This script requires a properly configured environment, in particular
+rem vcvars64.bat from Visual Studio and sccache.exe and ninja.exe in the path
 
 
 cd 3rdparty
