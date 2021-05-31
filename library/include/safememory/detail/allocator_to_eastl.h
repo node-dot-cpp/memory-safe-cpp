@@ -245,9 +245,23 @@ public:
 };
 
 // we can safely use a dummy when the type is trivial.
+// but flexible_array<T> is trivial even when T is not, so special case must be checked at user
+
 template<class T>
-using soft_this_ptr_raii = std::conditional_t<!std::is_trivially_copyable_v<T>,
+struct soft_this_ptr_raii_helper {
+	using type = std::conditional_t<!std::is_trivially_copyable_v<T>,
 			soft_this_ptr_raii_impl, soft_this_ptr_raii_dummy>;
+};
+
+template<class T>
+struct soft_this_ptr_raii_helper<flexible_array<T>> {
+	using type = std::conditional_t<!std::is_trivially_copyable_v<T>,
+			soft_this_ptr_raii_impl, soft_this_ptr_raii_dummy>;
+};
+
+template<class T>
+using soft_this_ptr_raii = typename soft_this_ptr_raii_helper<T>::type;
+
 
 class base_allocator_to_eastl_impl {
 public:
