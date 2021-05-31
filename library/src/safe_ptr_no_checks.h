@@ -178,7 +178,13 @@ public:
 
 	void swap( owning_ptr_base_no_checks<T>& other )
 	{
+#ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
 		t_.swap( other.t_ );
+#else // NODECPP_MEMORY_SAFETY_ON_DEMAND
+		T* tmp = t_;
+		t_ = other.t_;
+		other.t_ = tmp;
+#endif // NODECPP_MEMORY_SAFETY_ON_DEMAND
 	}
 
 	nullable_ptr_no_checks<T> get() const
