@@ -235,9 +235,11 @@ extern int gEASTLTest_AllocationCount;
 extern int gEASTLTest_TotalAllocationCount; 
 
 
+int EATEST_VERIFY_IMP(bool bExpression, int& nErrorCount, const char* pFile, int nLine, const char* pMessage);
 
 // For backwards compatibility:
 #define EASTLTest_Printf fmt::printf
+#define EATEST_VERIFY(expression)          EATEST_VERIFY_IMP((expression), nErrorCount, __FILE__, __LINE__, (#expression))
 #define VERIFY           EATEST_VERIFY
 
 

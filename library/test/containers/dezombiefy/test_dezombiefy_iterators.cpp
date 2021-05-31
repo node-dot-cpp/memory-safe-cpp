@@ -41,7 +41,7 @@ int testWithLest( int argc, char * argv[] )
 {
 	const lest::test specification[] =
 	{
-		CASE( "vector::iterator_safe, pop_back" )
+		{ CASE( "vector::iterator_safe, pop_back" )
 		{
 			safememory::vector<int> v;
 
@@ -51,9 +51,9 @@ int testWithLest( int argc, char * argv[] )
 			v.pop_back();
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		}},
 
-		CASE( "vector::iterator_safe, increment beyond end" )
+		{ CASE( "vector::iterator_safe, increment beyond end" )
 		{
 			safememory::vector<int> v;
 
@@ -64,9 +64,9 @@ int testWithLest( int argc, char * argv[] )
 			++it;
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator_safe, increment end" )
+		{ CASE( "vector::iterator_safe, increment end" )
 		{
 			safememory::vector<int> v;
 
@@ -77,9 +77,9 @@ int testWithLest( int argc, char * argv[] )
 			++ite;
 
 			EXPECT_THROWS_AS( v.insert_safe(ite, 5), nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator_safe, container destructed" )
+		{ CASE( "vector::iterator_safe, container destructed" )
 		{
 			safememory::vector<int>::iterator_safe it;
 			{
@@ -89,9 +89,9 @@ int testWithLest( int argc, char * argv[] )
 			} 
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator_safe, container realloc" )
+		{ CASE( "vector::iterator_safe, container realloc" )
 		{
 			safememory::vector<int> v;
 			v.push_back(0);
@@ -100,11 +100,11 @@ int testWithLest( int argc, char * argv[] )
 			v.reserve(100);
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
 ////////////////////////////////
 
-		CASE( "vector::iterator, pop_back" )
+		{ CASE( "vector::iterator, pop_back" )
 		{
 			safememory::vector<int> v;
 
@@ -114,9 +114,9 @@ int testWithLest( int argc, char * argv[] )
 			v.pop_back();
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator, increment beyond end" )
+		{ CASE( "vector::iterator, increment beyond end" )
 		{
 			safememory::vector<int> v;
 
@@ -127,9 +127,9 @@ int testWithLest( int argc, char * argv[] )
 			++it;
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator, increment end" )
+		{ CASE( "vector::iterator, increment end" )
 		{
 			safememory::vector<int> v;
 
@@ -140,9 +140,9 @@ int testWithLest( int argc, char * argv[] )
 			++ite;
 
 			EXPECT_THROWS_AS( v.insert(ite, 5), nodecpp::error::memory_error );
-		},
+		} },
 
-		CASE( "vector::iterator, container realloc" )
+		{ CASE( "vector::iterator, container realloc" )
 		{
 			safememory::vector<int> v;
 			v.push_back(0);
@@ -151,12 +151,12 @@ int testWithLest( int argc, char * argv[] )
 			v.reserve(100);
 
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
-		},
+		} },
 
 
 ////////////////////////////////
 
-		CASE( "unordered_map::iterator_safe, erase" )
+		{ CASE( "unordered_map::iterator_safe, erase" )
 		{
 			safememory::unordered_map<int, int> m;
 			m[1] = 1;
@@ -168,8 +168,8 @@ int testWithLest( int argc, char * argv[] )
 			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
 			// hiting stack optimization or not
 			EXPECT_THROWS( i = it->first );
-		},
-		CASE( "unordered_map::iterator_safe, container destructed, increment" )
+		} },
+		{ CASE( "unordered_map::iterator_safe, container destructed, increment" )
 		{
 			safememory::unordered_map<int, int>::iterator_safe it;
 			{
@@ -180,8 +180,8 @@ int testWithLest( int argc, char * argv[] )
 			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
 			// hiting stack optimization or not
 			EXPECT_THROWS( ++it );
-		},
-		CASE( "unordered_map::iterator_safe, container destructed, deref" )
+		} },
+		{ CASE( "unordered_map::iterator_safe, container destructed, deref" )
 		{
 			safememory::unordered_map<int, int>::iterator_safe it;
 			{
@@ -193,8 +193,8 @@ int testWithLest( int argc, char * argv[] )
 			// may throw 'zombie_access' or 'nullptr_access' depending on soft_ptr
 			// hiting stack optimization or not
 			EXPECT_THROWS( i = it->second );
-		},
-		CASE( "unordered_map::iterator, rehash" )
+		} },
+		{ CASE( "unordered_map::iterator, rehash" )
 		{
 			safememory::unordered_map<int, int> m;
 			m[1] = 1;
@@ -205,8 +205,8 @@ int testWithLest( int argc, char * argv[] )
 				m[i] = i;
 
 			EXPECT_THROWS_AS( ++it, nodecpp::error::memory_error );
-		},
-		CASE( "unordered_map::iterator, erase" )
+		} },
+		{ CASE( "unordered_map::iterator, erase" )
 		{
 			safememory::unordered_map<int, int> m;
 			m[1] = 1;
@@ -215,7 +215,7 @@ int testWithLest( int argc, char * argv[] )
 
 			volatile int i;
 			EXPECT_THROWS_AS( i = it->first, nodecpp::error::memory_error );
-		},
+		} },
 
 	};
 

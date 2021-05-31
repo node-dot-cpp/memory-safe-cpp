@@ -75,23 +75,23 @@ int testWithLest( int argc, char * argv[] )
 	{
 
 //////////////////////////////////
-		CASE( "vector, dtor" )
+		{ CASE( "vector, dtor" )
 		{
 			typedef safememory::vector<int> V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "vector, zeroed" )
+		} },
+		{ CASE( "vector, zeroed" )
 		{
 			typedef safememory::vector<int> V;
 			EXPECT(TestZeroed<V>());
-		},
+		} },
 
-		CASE( "string, dtor" )
+		{ CASE( "string, dtor" )
 		{
 			typedef safememory::string V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "string, zeroed" )
+		} },
+		{ CASE( "string, zeroed" )
 		{
 			// zeroed string bit to bit identical to 15 '\0' chars
 
@@ -107,8 +107,8 @@ int testWithLest( int argc, char * argv[] )
 			 
 			memset(vp2, 0, sizeof(V));
 			EXPECT(memcmp(vp1, vp2, sizeof(V)) == 0);
-		},
-		CASE( "wstring, zeroed" )
+		} },
+		{ CASE( "wstring, zeroed" )
 		{
 			// zeroed wstring bit to bit identical to t '\0' wchars
 
@@ -119,50 +119,56 @@ int testWithLest( int argc, char * argv[] )
 			V* vp1 = reinterpret_cast<V*>(&buff[0]);
 			V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
 
-			new(vp1) V(7, '\0');
+			if constexpr(sizeof(wchar_t) == 2)
+				new(vp1) V(7, '\0');
+			else if constexpr(sizeof(wchar_t) == 4)
+				new(vp1) V(3, L'\0');
+			else
+				EXPECT(true == false);
+
 			new(vp2) V();
 			 
 			memset(vp2, 0, sizeof(V));
 			EXPECT(memcmp(vp1, vp2, sizeof(V)) == 0);
-		},
-		CASE( "string_literal, dtor" )
+		} },
+		{ CASE( "string_literal, dtor" )
 		{
 			typedef safememory::string_literal V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "string_literal, zeroed" )
+		} },
+		{ CASE( "string_literal, zeroed" )
 		{
 			typedef safememory::string_literal V;
 			EXPECT(TestZeroed<V>());
-		},
-		CASE( "array, dtor" )
+		} },
+		{ CASE( "array, dtor" )
 		{
 			typedef safememory::array<int, 3> V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "array, zeroed" )
+		} },
+		{ CASE( "array, zeroed" )
 		{
 			typedef safememory::array<int, 3> V;
 			EXPECT(TestZeroed<V>());
-		},
-		CASE( "vector::iterator, dtor" )
+		} },
+		{ CASE( "vector::iterator, dtor" )
 		{
 			typedef safememory::vector<int>::iterator V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "vector::iterator, zeroed" )
+		} },
+		{ CASE( "vector::iterator, zeroed" )
 		{
 			typedef safememory::vector<int>::iterator V;
 			EXPECT(TestZeroed<V>());
-		},
+		} },
 
-		CASE( "vector::iterator_safe, dtor" )
+		{ CASE( "vector::iterator_safe, dtor" )
 		{
 			typedef safememory::vector<int>::iterator_safe V;
 			EXPECT(TestDtor<V>());
-		},
+		} },
 
-		CASE( "vector::iterator_safe, zeroed" )
+		{ CASE( "vector::iterator_safe, zeroed" )
 		{
 			// we need to start with zeroed memory
 			typedef safememory::vector<int>::iterator_safe V;
@@ -172,15 +178,15 @@ int testWithLest( int argc, char * argv[] )
 			memset(vp1, 0, sizeof(V));
 
 			EXPECT_THROWS(*(*vp1));
-		},
+		} },
 
-		CASE( "unordered_map, dtor" )
+		{ CASE( "unordered_map, dtor" )
 		{
 			typedef safememory::unordered_map<int, int> V;
 			EXPECT(TestDtor<V>());
-		},
+		} },
 
-		CASE( "unordered_map, zeroed" )
+		{ CASE( "unordered_map, zeroed" )
 		{
 			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int> V;
@@ -197,25 +203,25 @@ int testWithLest( int argc, char * argv[] )
 			EXPECT_THROWS(vp1->erase(5));
 			EXPECT_THROWS(vp1->count(5));
 			EXPECT_THROWS(vp1->clear());
-		},
+		} },
 
-		CASE( "unordered_map::iterator, dtor" )
+		{ CASE( "unordered_map::iterator, dtor" )
 		{
 			typedef safememory::unordered_map<int, int>::iterator V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "unordered_map::iterator, zeroed" )
+		} },
+		{ CASE( "unordered_map::iterator, zeroed" )
 		{
 			typedef safememory::unordered_map<int, int>::iterator V;
 			EXPECT(TestZeroed<V>());
-		},
+		} },
 
-		CASE( "unordered_map::iterator_safe, dtor" )
+		{ CASE( "unordered_map::iterator_safe, dtor" )
 		{
 			typedef safememory::unordered_map<int, int>::iterator_safe V;
 			EXPECT(TestDtor<V>());
-		},
-		CASE( "unordered_map::iterator_safe, zeroed" )
+		} },
+		{ CASE( "unordered_map::iterator_safe, zeroed" )
 		{
 			// we need to start with zeroed memory
 			typedef safememory::unordered_map<int, int>::iterator_safe V;
@@ -225,7 +231,7 @@ int testWithLest( int argc, char * argv[] )
 			memset(vp1, 0, sizeof(V));
 
 			EXPECT_THROWS(*(*vp1));
-		},
+		} },
 	};
 
 	int ret = lest::run( specification, argc, argv ); 

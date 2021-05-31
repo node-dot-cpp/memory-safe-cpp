@@ -71,20 +71,20 @@ int TestToString() {
 	}
 
 	// to_wstring
-	{
-		VERIFY(safememory::to_wstring(42)    == L"42");
-		VERIFY(safememory::to_wstring(42l)   == L"42");
-		VERIFY(safememory::to_wstring(42ll)  == L"42");
-		VERIFY(safememory::to_wstring(42u)   == L"42");
-		VERIFY(safememory::to_wstring(42ul)  == L"42");
-		VERIFY(safememory::to_wstring(42ull) == L"42");
-		VERIFY(safememory::to_wstring(42.f)  == L"42.000000");
-		VERIFY(safememory::to_wstring(42.0)  == L"42.000000");
-#ifndef EA_COMPILER_GNUC
-		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
-		VERIFY(safememory::to_wstring(42.0l) == L"42.000000");
-#endif
-	}
+// 	{
+// 		VERIFY(safememory::to_wstring(42)    == L"42");
+// 		VERIFY(safememory::to_wstring(42l)   == L"42");
+// 		VERIFY(safememory::to_wstring(42ll)  == L"42");
+// 		VERIFY(safememory::to_wstring(42u)   == L"42");
+// 		VERIFY(safememory::to_wstring(42ul)  == L"42");
+// 		VERIFY(safememory::to_wstring(42ull) == L"42");
+// 		VERIFY(safememory::to_wstring(42.f)  == L"42.000000");
+// 		VERIFY(safememory::to_wstring(42.0)  == L"42.000000");
+// #ifndef EA_COMPILER_GNUC
+// 		// todo:  long double sprintf functionality is unrealiable on unix-gcc, requires further debugging.  
+// 		VERIFY(safememory::to_wstring(42.0l) == L"42.000000");
+// #endif
+// 	}
 	return nErrorCount;
 }
 

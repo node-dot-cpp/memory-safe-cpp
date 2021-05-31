@@ -54,6 +54,10 @@ struct SomeStr {
     safememory::string name;
     safememory::array<int, 3> anArray;
 
+    SomeStr() = default;
+    SomeStr(safememory::string_literal&& t1, safememory::string&& t2, safememory::array<int, 3>&& t3)
+        :id(std::move(t1)), name(std::move(t2)), anArray(std::move(t3)) {}
+
     void print() const {
         fmt::print("id:{}, name:{}, values:{}, {}, {}\n", id, name, anArray[0], anArray[1], anArray[2]);
     }
