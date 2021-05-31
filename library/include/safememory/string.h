@@ -158,6 +158,11 @@ namespace safememory
 		// unsafe
 		template<class V>
 		static basic_string make_sprintf_unsafe(const value_type* pFormat, V value) {
+			
+			// east::basic_string::append_sprintf is implemented correctly only for char but not for wchar_t
+			// to remove this check, first verify the underlying implementation.
+			if(sizeof(value_type) != 1)
+				ThrowInvalidArgumentException();
 			basic_string str;
 			str.base_type::append_sprintf(pFormat, value);
 			return str;
@@ -475,9 +480,9 @@ namespace safememory
         }
 
 		// this_type&  replace(const_iterator first, const_iterator last, const value_type* p, size_type n) {}
-		this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* p) {
+		this_type&  replace_unsafe(const_iterator first, const_iterator last, const value_type* ptr) {
             auto p = toBase(first, last);
-            base_type::replace(p.first, p.second, p);
+            base_type::replace(p.first, p.second, ptr);
             return *this;
         }
 
@@ -993,24 +998,27 @@ namespace safememory
 	///
 	/// http://en.cppreference.com/w/cpp/string/basic_string/to_wstring
 	///
-	inline wstring to_wstring(int value)
-		{ return wstring::make_sprintf_unsafe(L"%d", value); }
-	inline wstring to_wstring(long value)
-		{ return wstring::make_sprintf_unsafe(L"%ld", value); }
-	inline wstring to_wstring(long long value)
-		{ return wstring::make_sprintf_unsafe(L"%lld", value); }
-	inline wstring to_wstring(unsigned value)
-		{ return wstring::make_sprintf_unsafe(L"%u", value); }
-	inline wstring to_wstring(unsigned long value)
-		{ return wstring::make_sprintf_unsafe(L"%lu", value); }
-	inline wstring to_wstring(unsigned long long value)
-		{ return wstring::make_sprintf_unsafe(L"%llu", value); }
-	inline wstring to_wstring(float value)
-		{ return wstring::make_sprintf_unsafe(L"%f", value); }
-	inline wstring to_wstring(double value)
-		{ return wstring::make_sprintf_unsafe(L"%f", value); }
-	inline wstring to_wstring(long double value)
-		{ return wstring::make_sprintf_unsafe(L"%Lf", value); }
+
+	//mb: to_wstring is only working on Windows
+
+	// inline wstring to_wstring(int value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%d", value); }
+	// inline wstring to_wstring(long value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%ld", value); }
+	// inline wstring to_wstring(long long value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%lld", value); }
+	// inline wstring to_wstring(unsigned value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%u", value); }
+	// inline wstring to_wstring(unsigned long value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%lu", value); }
+	// inline wstring to_wstring(unsigned long long value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%llu", value); }
+	// inline wstring to_wstring(float value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	// inline wstring to_wstring(double value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%f", value); }
+	// inline wstring to_wstring(long double value)
+	// 	{ return wstring::make_sprintf_unsafe(L"%Lf", value); }
 
 
 	/// erase / erase_if
