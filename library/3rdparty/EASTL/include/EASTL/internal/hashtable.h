@@ -190,6 +190,11 @@ namespace eastl
 		node_iterator_base(pointer_type pNode)
 			: mpNode(pNode) { }
 
+		~node_iterator_base() {
+			mpNode = nullptr;
+			Allocator::force_changes_in_dtor(this);
+		}
+
 		void increment()
 			{ mpNode = mpNode->mpNext; }
 	};
@@ -277,6 +282,12 @@ namespace eastl
 	public:
 		hashtable_iterator_base(const pointer_type& pNode, pointer_type* pBucket)
 			: mpNode(pNode), mpBucket(pBucket) { }
+
+		~hashtable_iterator_base() {
+			mpNode = nullptr;
+			mpBucket = nullptr;
+			Allocator::force_changes_in_dtor(this);
+		}
 
 		void increment_bucket()
 		{

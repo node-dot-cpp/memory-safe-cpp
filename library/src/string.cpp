@@ -28,23 +28,34 @@
 #include <EASTL/string.h>
 #include <cstdio>
 #include <cwchar>
+#include <safe_memory_error.h>
 
 // EASTL requires that we provide implementation for this functions, since we don't
-// like to EAStdC
+// link to EAStdC
 
     
 int Vsnprintf8 (char*  pDestination, size_t n, const char*  pFormat, va_list arguments) {
     return std::vsnprintf(pDestination, n, pFormat, arguments);
 }
 
-// extern int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments);
-// extern int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments);
-// #if EA_CHAR8_UNIQUE
-//     extern int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments);
-// #endif
+int Vsnprintf16(char16_t* pDestination, size_t n, const char16_t* pFormat, va_list arguments) {
+    // we don't have an implementation for this
+	throw ::nodecpp::error::out_of_range;
+}
+int Vsnprintf32(char32_t* pDestination, size_t n, const char32_t* pFormat, va_list arguments) {
+    // we don't have an implementation for this
+	throw ::nodecpp::error::out_of_range;
+}
+#if EA_CHAR8_UNIQUE
+int Vsnprintf8 (char8_t*  pDestination, size_t n, const char8_t*  pFormat, va_list arguments) {
+    // we don't have an implementation for this
+	throw ::nodecpp::error::out_of_range;
+}
+#endif
 
 #if defined(EA_WCHAR_UNIQUE) && EA_WCHAR_UNIQUE
 int VsnprintfW(wchar_t* pDestination, size_t n, const wchar_t* pFormat, va_list arguments) {
-    return std::vswprintf(pDestination, n, pFormat, arguments);
+    // std::vswprintf is not really a replacement for VsnprintfW
+	throw ::nodecpp::error::out_of_range;
 }
 #endif

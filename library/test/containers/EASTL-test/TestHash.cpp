@@ -1063,7 +1063,7 @@ int TestHashMap()
 				hashMap.at(kCount);
 				EATEST_VERIFY(false);
 			}
-			catch(const std::out_of_range) { EATEST_VERIFY(true); }
+			catch(std::out_of_range&) { EATEST_VERIFY(true); }
 			catch (nodecpp::error::memory_error&) { EATEST_VERIFY(true); }
 			catch(...) { EATEST_VERIFY(false); }
 		#endif

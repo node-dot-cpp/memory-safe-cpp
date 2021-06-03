@@ -159,6 +159,7 @@ public:
 	~array() {
 		eastl::destruct(begin_unsafe(), end_unsafe());
 
+		using namespace detail;
 		forcePreviousChangesToThisInDtor(this);
 	}
 

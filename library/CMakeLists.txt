@@ -18,6 +18,11 @@ target_compile_definitions(EASTL PUBLIC EASTL_STD_ITERATOR_CATEGORY_ENABLED)
 target_compile_definitions(EASTL PUBLIC EASTL_EASTDC_VSNPRINTF=0)
 target_compile_definitions(EASTL PUBLIC EASTL_SIZE_T_32BIT)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  target_compile_options(EASTL PUBLIC -Wno-unused-but-set-variable )
+  target_compile_options(EASTL PUBLIC -Wno-array-bounds )
+  target_compile_options(EASTL PUBLIC -Wno-strict-aliasing )
+endif()
 
 
 add_subdirectory(src/iibmalloc)
@@ -117,9 +122,10 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     gcc_lto_workaround/gcc_lto_workaround.cpp
     )
 
-  target_link_libraries(gcc_lto_workaround foundation)
   target_link_libraries(safememory gcc_lto_workaround)
-
+  target_link_libraries(safememory_impl gcc_lto_workaround)
+  target_link_libraries(safememory_no_checks gcc_lto_workaround)
+  target_link_libraries(safememory_dz_it gcc_lto_workaround)
 endif()
 
 #-------------------------------------------------------------------------------------------

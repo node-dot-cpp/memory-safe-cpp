@@ -97,6 +97,7 @@ public:
 
 	~iterator_registry() {
 		invalidateAllIterators();
+		forcePreviousChangesToThisInDtor(this);
 	}
 
 	void invalidateAllIterators() noexcept;

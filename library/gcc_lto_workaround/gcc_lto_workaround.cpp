@@ -26,7 +26,8 @@
 * -------------------------------------------------------------------------------*/
 
 
-#include <foundation.h>
+//mb: relative path here because no need to depend of full platform library
+#include "../src/iibmalloc/src/foundation/include/platform_base.h"
 
 namespace safememory::detail {
 

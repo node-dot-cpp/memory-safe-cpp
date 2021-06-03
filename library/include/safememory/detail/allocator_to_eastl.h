@@ -370,7 +370,7 @@ public:
 			return {};
 	}
 
-	static void force_changes_in_dtor(const void*) { forcePreviousChangesToThisInDtor(ptr); }
+	static void force_changes_in_dtor(const void* ptr) { forcePreviousChangesToThisInDtor(const_cast<void*>(ptr)); }
 
 	//stateless
 	bool operator==(const base_allocator_to_eastl_impl&) const { return true; }

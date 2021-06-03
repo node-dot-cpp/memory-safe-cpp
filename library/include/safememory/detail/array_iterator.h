@@ -103,8 +103,8 @@ protected:
 	template<typename> class soft_ptr_impl; //fwd
 
 	static constexpr bool is_raw_pointer = std::is_pointer<array_pointer>::value;
-	static constexpr bool is_soft_flexible = std::is_same_v<array_pointer, soft_ptr_impl<flexible_array<T>>> ||
-											std::is_same_v<array_pointer, soft_ptr_no_checks<flexible_array<T>>>;
+	// static constexpr bool is_soft_flexible = std::is_same_v<array_pointer, soft_ptr_impl<flexible_array<T>>> ||
+	// 										std::is_same_v<array_pointer, soft_ptr_no_checks<flexible_array<T>>>;
 
 	// for non-const to const conversion
 	template<typename, bool, typename, bool>
@@ -246,6 +246,18 @@ public:
 		this->_index = ri._index;
 		this->_size = ri._size;
 		return *this;
+	}
+
+	~array_heap_safe_iterator() {
+		_index = 0;
+		_size = 0;
+
+		// on non raw pointers, forcePreviousChangesToThisInDtor will be called
+		// by _array member destructor
+		if constexpr (is_raw_pointer) {
+			_array = nullptr;
+			forcePreviousChangesToThisInDtor(this);
+		} 
 	}
 
 	reference operator*() const { return *getDereferenceablePtr(_index); }

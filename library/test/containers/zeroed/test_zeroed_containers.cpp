@@ -43,14 +43,17 @@ template<class V>
 bool TestZeroed() {
 	// we need to start with zeroed memory
 	char buff[sizeof(V) * 2] = {'\0'};
+	using namespace safememory::detail;
+	forcePreviousChangesToThisInDtor(buff);
 
 	V* vp1 = reinterpret_cast<V*>(&buff[0]);
 	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
 
 	new(vp1) V();
 	new(vp2) V();
-		
+
 	memset(vp2, 0, sizeof(V));
+
 	return memcmp(vp1, vp2, sizeof(V)) == 0;
 }
 
@@ -58,14 +61,17 @@ template<class V>
 bool TestDtor() {
 	// we need to start with zeroed memory
 	char buff[sizeof(V) * 2] = {'\0'};
+	using namespace safememory::detail;
+	forcePreviousChangesToThisInDtor(buff);
 
 	V* vp1 = reinterpret_cast<V*>(&buff[0]);
 	V* vp2 = reinterpret_cast<V*>(&buff[sizeof(V)]);
 
 	new(vp1) V();
 	new(vp2) V();
-		
+
 	vp2->~V();
+
 	return memcmp(vp1, vp2, sizeof(V)) == 0;
 }
 
