@@ -14,7 +14,7 @@ vector<int>::iterator itFunc(vector<int>::iterator in) {
 vector<int>::iterator itFunc2() {
 	vector<int> vi;
 	return vi.end();
-// CHECK: :[[@LINE-1]]:12: error: (S5.1) return value may extend scope
+// CHECK: :[[@LINE-1]]:9: error: (S5.1) return value may extend scope
 }
 
 void vectorIterator() {
@@ -43,7 +43,7 @@ unordered_map<int,int>::iterator mapFunc(unordered_map<int,int>::iterator in) {
 unordered_map<int,int>::iterator mapFunc2() {
 	unordered_map<int,int> vi;
 	return vi.end();
-// CHECK: :[[@LINE-1]]:12: error: (S5.1) return value may extend scope
+// CHECK: :[[@LINE-1]]:9: error: (S5.1) return value may extend scope
 }
 
 void mapIterator() {
