@@ -6,7 +6,7 @@
 #include "EASTLTest.h"
 #include "TestMap.h"
 #include "TestSet.h"
-// #include <safememory/unordered_set.h>
+#include <safememory/unordered_set.h>
 #include <safememory/unordered_map.h>
 // #include <EASTL/unordered_set.h>
 // #include <EASTL/unordered_map.h>
@@ -213,35 +213,35 @@ int TestHashSet()
 	}
 
 
-	{
-		SET<int> hashSet;
+	// {
+	// 	SET<int> hashSet;
 
-		// Clear a newly constructed, already empty container.
-		hashSet.clear(true);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+	// 	// Clear a newly constructed, already empty container.
+	// 	hashSet.clear(true);
+	// 	EATEST_VERIFY(hashSet.validate());
+	// 	EATEST_VERIFY(hashSet.size() == 0);
+	// 	EATEST_VERIFY(hashSet.bucket_count() == 1);
 
-		for(int i = 0; i < 100; ++i)
-			hashSet.insert(i);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.size() == 100);
+	// 	for(int i = 0; i < 100; ++i)
+	// 		hashSet.insert(i);
+	// 	EATEST_VERIFY(hashSet.validate());
+	// 	EATEST_VERIFY(hashSet.size() == 100);
 
-		hashSet.clear(true);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+	// 	hashSet.clear(true);
+	// 	EATEST_VERIFY(hashSet.validate());
+	// 	EATEST_VERIFY(hashSet.size() == 0);
+	// 	EATEST_VERIFY(hashSet.bucket_count() == 1);
 
-		for(int i = 0; i < 100; ++i)
-			hashSet.insert(i);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.size() == 100);
+	// 	for(int i = 0; i < 100; ++i)
+	// 		hashSet.insert(i);
+	// 	EATEST_VERIFY(hashSet.validate());
+	// 	EATEST_VERIFY(hashSet.size() == 100);
 
-		hashSet.clear(true);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.size() == 0);
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
-	}
+	// 	hashSet.clear(true);
+	// 	EATEST_VERIFY(hashSet.validate());
+	// 	EATEST_VERIFY(hashSet.size() == 0);
+	// 	EATEST_VERIFY(hashSet.bucket_count() == 1);
+	// }
 
 
 	{   // Test unordered_set
@@ -383,9 +383,9 @@ int TestHashSet()
 		EATEST_VERIFY(hashSet.size() == 0);
 		EATEST_VERIFY(hashSet.count(0) == 0);
 
-		hashSet.clear(true);
-		EATEST_VERIFY(hashSet.validate());
-		EATEST_VERIFY(hashSet.bucket_count() == 1);
+		// hashSet.clear(true);
+		// EATEST_VERIFY(hashSet.validate());
+		// EATEST_VERIFY(hashSet.bucket_count() == 1);
 	}
 
 
@@ -1530,17 +1530,23 @@ int TestHashMultiMap()
 	return nErrorCount;
 }
 
-// template <typename Key>
-// using SET = safememory::unordered_set<Key>;
+template <typename Key>
+using SET = safememory::unordered_set<Key>;
 
-// template <typename Key, typename Hash, typename Predicate>
-// using SET3 = safememory::unordered_set<Key, Hash, Predicate>;
+template <typename Key, typename Hash, typename Predicate>
+using SET3 = safememory::unordered_set<Key, Hash, Predicate>;
 
-// template <typename Key>
-// using MSET = safememory::unordered_multiset<Key>;
+template <typename Key>
+using SET_SAFE = safememory::unordered_set_safe<Key>;
 
-// template <typename Key, typename Hash, typename Predicate>
-// using MSET3 = safememory::unordered_multiset<Key, Hash, Predicate>;
+template <typename Key, typename Hash, typename Predicate>
+using SET_SAFE3 = safememory::unordered_set_safe<Key, Hash, Predicate>;
+
+template <typename Key>
+using MSET = safememory::unordered_multiset<Key>;
+
+template <typename Key, typename Hash, typename Predicate>
+using MSET3 = safememory::unordered_multiset<Key, Hash, Predicate>;
 
 
 template <typename Key, typename T>
@@ -1567,9 +1573,10 @@ int TestHash()
 {
 	int nErrorCount = 0;
 
-	// nErrorCount += TestHashSet<SET, SET3>();
+	nErrorCount += TestHashSet<SET, SET3>();
+	nErrorCount += TestHashSet<SET_SAFE, SET_SAFE3>();
 
-	// nErrorCount += TestHashMultiSet<MSET, MSET3>();
+	nErrorCount += TestHashMultiSet<MSET, MSET3>();
 
 	nErrorCount += TestHashMap<MAP, MAP4>();
 	nErrorCount += TestHashMap<MAP_SAFE, MAP_SAFE4>();

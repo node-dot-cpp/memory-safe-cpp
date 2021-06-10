@@ -37,14 +37,14 @@ namespace safememory::detail {
 	 * \brief Iterator wrapper for \c hashmap stack only iterators
 	 */
 
-	template <typename BaseIt, typename BaseNonConstIt, typename Allocator>
+	template <typename BaseIt, typename BaseNonConstIt, typename Allocator, bool IsLocal = false>
 	class hashtable_stack_only_iterator : protected BaseIt
 	{
 	public:
 		typedef BaseIt                                                   base_type;
 		typedef Allocator                                                allocator_type;
-		typedef hashtable_stack_only_iterator<BaseIt, BaseNonConstIt, Allocator>    this_type;
-		typedef hashtable_stack_only_iterator<BaseNonConstIt, BaseNonConstIt, Allocator>     this_type_non_const;
+		typedef hashtable_stack_only_iterator<BaseIt, BaseNonConstIt, Allocator, IsLocal>    this_type;
+		typedef hashtable_stack_only_iterator<BaseNonConstIt, BaseNonConstIt, Allocator, IsLocal>     this_type_non_const;
 
 		typedef typename base_type::node_type                            node_type;
 		typedef typename base_type::value_type                           value_type;
@@ -57,7 +57,7 @@ namespace safememory::detail {
 
 	    static constexpr bool is_const = !std::is_same_v<this_type, this_type_non_const>;
 
-		template <typename, typename, typename>
+		template <typename, typename, typename, bool>
 		friend class hashtable_stack_only_iterator;
 
 		template<typename TT>
@@ -126,7 +126,10 @@ namespace safememory::detail {
 				ThrowRangeException();
 
 #ifdef SAFEMEMORY_DEZOMBIEFY_ITERATORS
-			checkNotZombie(base_type::mpBucket);
+			// hashtable local iterators don't have a bucket
+			if constexpr (!IsLocal)
+				checkNotZombie(base_type::mpBucket);
+
 			checkNotZombie(allocator_type::to_raw(base_type::mpNode));
 #endif
 		}
