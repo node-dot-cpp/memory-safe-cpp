@@ -1,3 +1,16 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index e8700dc..bba15ff 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -20,7 +20,7 @@ include(CommonCppFlags)
+ # Library definition
+ #-------------------------------------------------------------------------------------------
+ file(GLOB EASTL_SOURCES "source/*.cpp")
+-add_library(EASTL ${EASTL_SOURCES})
++add_library(EASTL STATIC ${EASTL_SOURCES})
+ 
+ if(EASTL_BUILD_BENCHMARK)
+     add_subdirectory(benchmark)
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
 index ad20e4d..84d0445 100644
 --- a/include/EASTL/allocator.h

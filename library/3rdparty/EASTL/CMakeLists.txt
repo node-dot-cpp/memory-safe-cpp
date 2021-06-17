@@ -20,7 +20,7 @@ include(CommonCppFlags)
 # Library definition
 #-------------------------------------------------------------------------------------------
 file(GLOB EASTL_SOURCES "source/*.cpp")
-add_library(EASTL ${EASTL_SOURCES})
+add_library(EASTL STATIC ${EASTL_SOURCES})
 
 if(EASTL_BUILD_BENCHMARK)
     add_subdirectory(benchmark)
