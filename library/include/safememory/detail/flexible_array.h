@@ -56,7 +56,7 @@ struct flexible_array
 	alignas(T) char _begin;
 	
 public:
-	flexible_array(size_type capacity) :sz(capacity) {}
+	flexible_array(size_type count) :sz(count) {}
 
 	flexible_array(const flexible_array&) = delete;
 	flexible_array(flexible_array&&) = delete;
@@ -74,9 +74,11 @@ public:
 	constexpr T* data() noexcept { return reinterpret_cast<T*>(&_begin); }
 	constexpr const T* data() const noexcept { return reinterpret_cast<const T*>(&_begin); }
 
-	static size_type calculateSize(size_type size) {
-		// TODO here we should fine tune the sizes of flexible_array<T> 
-		return static_cast<size_type>(sizeof(this_type) + (sizeof(T) * size));
+	// we use 'eastl_size_t' for number of elements and std::size_t for actual memory size 
+	static std::size_t calculateSize(size_type count) {
+		// TODO calculated size is slightly bigger than actually needed, maybe fine tune
+		// TODO also must check that we are not overflowing the size_t
+		return sizeof(this_type) + (sizeof(T) * count);
 	}
 };
 

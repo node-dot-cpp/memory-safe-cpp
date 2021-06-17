@@ -999,7 +999,7 @@ namespace eastl
 	inline basic_string<T, Allocator>::~basic_string()
 	{
 		DeallocateSelf();
-		internalLayout().ResetToSSO();
+		AllocateSelf();
 		allocator_type::force_changes_in_dtor(this);
 	}
 

@@ -73,13 +73,13 @@ namespace eastl
 		using array_pointer = T*;
 
 		template<class T>
-		T* allocate_array(std::size_t count, int flags = 0) {
+		T* allocate_array(eastl_size_t count, int flags = 0) {
 			//TODO use aligned allocate
 			return (T*)allocate(count * sizeof(T), flags);
 		}
 
 		template<class T>
-		T* allocate_array_zeroed(std::size_t count, int flags = 0) {
+		T* allocate_array_zeroed(eastl_size_t count, int flags = 0) {
 			//TODO use aligned allocate
 			auto arr = (T*)allocate(count * sizeof(T), flags);
 			memset(arr, 0, count * sizeof(T));
@@ -87,7 +87,7 @@ namespace eastl
 		}
 
 		template<class T>
-		void deallocate_array(T* p, std::size_t count) {
+		void deallocate_array(T* p, eastl_size_t count) {
 			deallocate(p, count * sizeof(T));
 		}
 

@@ -1,5 +1,5 @@
 diff --git a/include/EASTL/allocator.h b/include/EASTL/allocator.h
-index ad20e4d..7153c25 100644
+index ad20e4d..84d0445 100644
 --- a/include/EASTL/allocator.h
 +++ b/include/EASTL/allocator.h
 @@ -64,6 +64,78 @@ namespace eastl
@@ -15,13 +15,13 @@ index ad20e4d..7153c25 100644
 +		using array_pointer = T*;
 +
 +		template<class T>
-+		T* allocate_array(std::size_t count, int flags = 0) {
++		T* allocate_array(eastl_size_t count, int flags = 0) {
 +			//TODO use aligned allocate
 +			return (T*)allocate(count * sizeof(T), flags);
 +		}
 +
 +		template<class T>
-+		T* allocate_array_zeroed(std::size_t count, int flags = 0) {
++		T* allocate_array_zeroed(eastl_size_t count, int flags = 0) {
 +			//TODO use aligned allocate
 +			auto arr = (T*)allocate(count * sizeof(T), flags);
 +			memset(arr, 0, count * sizeof(T));
@@ -29,7 +29,7 @@ index ad20e4d..7153c25 100644
 +		}
 +
 +		template<class T>
-+		void deallocate_array(T* p, std::size_t count) {
++		void deallocate_array(T* p, eastl_size_t count) {
 +			deallocate(p, count * sizeof(T));
 +		}
 +
@@ -1606,7 +1606,7 @@ index 6fffd5d..037f95d 100644
  
  
 diff --git a/include/EASTL/string.h b/include/EASTL/string.h
-index 14604ce..0fad008 100644
+index 14604ce..ad4c521 100644
 --- a/include/EASTL/string.h
 +++ b/include/EASTL/string.h
 @@ -293,6 +293,9 @@ namespace eastl
@@ -1664,7 +1664,7 @@ index 14604ce..0fad008 100644
  	inline basic_string<T, Allocator>::~basic_string()
  	{
  		DeallocateSelf();
-+		internalLayout().ResetToSSO();
++		AllocateSelf();
 +		allocator_type::force_changes_in_dtor(this);
  	}
  

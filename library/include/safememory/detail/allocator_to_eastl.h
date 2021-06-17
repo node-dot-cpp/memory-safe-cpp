@@ -32,6 +32,7 @@
 #include <safememory/detail/soft_ptr_with_zero_offset.h>
 #include <safememory/detail/flexible_array.h>
 #include <type_traits>
+#include <EASTL/internal/config.h> // for eastl_size_t
 
 /** \file
  * \brief Allocators feed by \a safememory containers into \c eastl ones.
@@ -156,7 +157,7 @@ soft_ptr_with_zero_offset<T, is_safe> allocate_node_helper() {
 }
 
 template<memory_safety is_safe, typename T, bool zeroed>
-soft_ptr_with_zero_offset<flexible_array<T>, is_safe> allocate_flexible_array_helper(std::size_t count) {
+soft_ptr_with_zero_offset<flexible_array<T>, is_safe> allocate_flexible_array_helper(eastl_size_t count) {
 
 	static_assert(std::is_trivially_destructible_v<flexible_array<T>>, "flexible_array must be trivially destructible");
 	
@@ -281,18 +282,18 @@ public:
 	using soft_array_pointer = soft_ptr_impl<flexible_array<T>>;
 
 	template<class T>
-	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
+	array_pointer<T> allocate_array(eastl_size_t count, int flags = 0) {
 		// for non trivial types, always zero memory
 		return allocate_flexible_array_helper<is_safe, T, !std::is_trivially_copyable_v<T>>(count);
 	}
 
 	template<class T>
-	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
+	array_pointer<T> allocate_array_zeroed(eastl_size_t count, int flags = 0) {
 		return allocate_flexible_array_helper<is_safe, T, true>(count);
 	}
 
 	template<class T>
-	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
+	void deallocate_array(const array_pointer<T>& p, eastl_size_t count) {
 		deallocate_helper<is_safe, flexible_array<T>>(p);
 	}
 
@@ -395,17 +396,17 @@ public:
 	using soft_array_pointer = soft_ptr_no_checks<flexible_array<T>>;
 
 	template<class T>
-	array_pointer<T> allocate_array(std::size_t count, int flags = 0) {
+	array_pointer<T> allocate_array(eastl_size_t count, int flags = 0) {
 		return allocate_flexible_array_helper<is_safe, T, false>(count);
 	}
 
 	template<class T>
-	array_pointer<T> allocate_array_zeroed(std::size_t count, int flags = 0) {
+	array_pointer<T> allocate_array_zeroed(eastl_size_t count, int flags = 0) {
 		return allocate_flexible_array_helper<is_safe, T, true>(count);
 	}
 
 	template<class T>
-	void deallocate_array(const array_pointer<T>& p, std::size_t count) {
+	void deallocate_array(const array_pointer<T>& p, eastl_size_t count) {
 		deallocate_helper<is_safe, flexible_array<T>>(p);
 	}
 
