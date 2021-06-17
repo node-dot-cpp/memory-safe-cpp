@@ -345,8 +345,8 @@ int TestHashSet()
 		typename HashSetInt::size_type n = hashSet.bucket_count();
 		EATEST_VERIFY((n >= 20) && (n < 25));
 		
-		for(int i = 0; i < 100000; i++)
-			hashSet.insert(i); // This also tests for high loading.
+		for(int i = 0; i < 10000; i++)
+			hashSet.insert(i);
 
 		typename HashSetInt::size_type n2 = hashSet.bucket_count();
 		EATEST_VERIFY(n2 == n); // Verify no rehashing has occured, due to our high load factor.
