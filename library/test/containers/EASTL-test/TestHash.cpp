@@ -1222,14 +1222,14 @@ int TestHashMap()
 
 	}
 
-	{ 
-		// Regression of user-reported crash.
-		MAP<int, std::string*>* _hmTextureList;
-		_hmTextureList = new MAP<int, std::string*>();
-		std::string* a = NULL;
-		(*_hmTextureList)[0] = a;
-		delete _hmTextureList;
-	}
+	//{ 
+	//	// Regression of user-reported crash.
+	//	MAP<int, std::string*>* _hmTextureList;
+	//	_hmTextureList = new MAP<int, std::string*>();
+	//	std::string* a = NULL;
+	//	(*_hmTextureList)[0] = a;
+	//	delete _hmTextureList;
+	//}
 
 	{
 		// Regression of user-reported GCC 4.8 compile failure.

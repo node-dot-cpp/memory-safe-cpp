@@ -122,7 +122,10 @@ int main(int argc, char* argv[])
 
 	// nErrorCount += EASTLTest_CheckMemory();
 
- 
+#ifndef SAFEMEMORY_TEST_DONT_INITIALIZE_IIBALLOC
+	nodecpp::iibmalloc::setCurrneAllocator(formerAlloc);
+#endif
+
 	return nErrorCount;
 }
 
