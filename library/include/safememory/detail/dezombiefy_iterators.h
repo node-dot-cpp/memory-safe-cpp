@@ -75,21 +75,24 @@ public:
 
 	iterator_registry(const iterator_registry&) {} //don't copy registry
 	
-	iterator_registry& operator=(const iterator_registry& other) {
-		if(this == std::addressof(other))
-			return *this;
-
-		// our iterators are now invalid
-		invalidateAllIterators();
-		return *this;
-	}
-
 	iterator_registry(iterator_registry&& other) {
 		// don't copy registry
 		other.invalidateAllIterators();
 	} 
 
+	iterator_registry& operator=(const iterator_registry& other) {
+		
+		if(this == std::addressof(other))
+			return *this;
+
+		// our iterators are now invalid
+		invalidateAllIterators();
+
+		return *this;
+	}
+
 	iterator_registry& operator=(iterator_registry&& other) {
+
 		if(this == std::addressof(other))
 			return *this;
 
@@ -115,37 +118,37 @@ public:
 
 class iterator_dezombiefier {
 public:
-	iterator_registry* registry = nullptr;
 	iterator_dezombiefier* next = nullptr;
+	iterator_registry* registry = nullptr;
 	std::function<eastl_size_t()> sz;
 
 	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
 
 	iterator_dezombiefier(int) {}
 
-
 	template<class Cont>
-	iterator_dezombiefier(Cont* container) :sz(std::bind(&Cont::size, container)), registry(container) {
+	iterator_dezombiefier(Cont* container) :registry(container), sz(std::bind(&Cont::size, container)) {
 
 		if(registry)
 			registry->addIterator(this);
 	}
 
-	iterator_dezombiefier(const iterator_dezombiefier& other) : sz(other.sz), registry(other.registry) {
+	iterator_dezombiefier(const iterator_dezombiefier& other) : registry(other.registry), sz(other.sz) {
 
 		if(registry)
 			registry->addIterator(this);
 	}
 
 	iterator_dezombiefier& operator=(const iterator_dezombiefier& other) {
+
 		if(this == std::addressof(other))
 			return *this;
 
 		if(registry)
 			registry->removeIterator(this);
 
-		sz = other.sz;
-		registry = other.registry;
+		this->registry = other.registry;
+		this->sz = other.sz;
 
 		if(registry)
 			registry->addIterator(this);
@@ -154,12 +157,14 @@ public:
 	}
 
 	void invalidate() noexcept {
+
 		registry = nullptr;
 		next = nullptr;
 		sz = nullptr;
 	}
 
 	~iterator_dezombiefier() {
+
 		if(registry)
 			registry->removeIterator(this);
 

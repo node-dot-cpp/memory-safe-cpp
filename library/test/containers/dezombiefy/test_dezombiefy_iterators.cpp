@@ -102,6 +102,49 @@ int testWithLest( int argc, char * argv[] )
 			EXPECT_THROWS_AS( *it, nodecpp::error::memory_error );
 		} },
 
+
+		{ CASE( "vector::iterator_safe container move ctor" )
+		{
+			safememory::vector<int> v;
+			safememory::vector<typename safememory::vector<int>::iterator_safe> vIt;
+			v.push_back(0);
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+
+			// this makes a lot of iterators moves, testing the intrusive list implementation
+			vIt.erase(vIt.begin() + 2);
+			vIt.erase(vIt.begin() + 2);
+			vIt.erase(vIt.begin() + 1);
+
+			safememory::vector<int> v2(std::move(v));
+
+			EXPECT_THROWS_AS( *(vIt.back()), nodecpp::error::memory_error );
+		} },
+		{ CASE( "vector::iterator_safe container move assign" )
+		{
+			safememory::vector<int> v;
+			safememory::vector<typename safememory::vector<int>::iterator_safe> vIt;
+			v.push_back(0);
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+			vIt.push_back(v.begin_safe());
+
+			// this makes a lot of iterators moves, testing the intrusive list implementation
+			vIt.erase(vIt.begin() + 2);
+			vIt.erase(vIt.begin() + 2);
+			vIt.erase(vIt.begin() + 1);
+
+			safememory::vector<int> v2;
+			v2 = std::move(v);
+
+			EXPECT_THROWS_AS( *(vIt.back()), nodecpp::error::memory_error );
+		} },
+
 ////////////////////////////////
 
 		{ CASE( "vector::iterator, pop_back" )
@@ -216,6 +259,8 @@ int testWithLest( int argc, char * argv[] )
 			volatile int i;
 			EXPECT_THROWS_AS( i = it->first, nodecpp::error::memory_error );
 		} },
+
+
 
 	};
 

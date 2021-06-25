@@ -152,6 +152,11 @@ protected:
 	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, size_f_type sz)
 		: _array(arr), _index(ix), _size(sz) {}
 
+	template <typename Container>
+	constexpr array_heap_safe_iterator(array_pointer arr, size_type ix, Container* container)
+		: _array(arr), _index(ix), _size(container) {}
+
+
 	[[noreturn]] static void ThrowRangeException() { throw nodecpp::error::out_of_range; }
 	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
 	[[noreturn]] static void ThrowNullException() { throw nodecpp::error::zero_pointer_access; }
@@ -212,7 +217,7 @@ public:
 
 		if constexpr (is_dezombiefy) {
 			// std::function<size_type()> func = std::bind(&Container::size, container);
-			return {arr, ix, size_f_type{container}};
+			return {arr, ix, container};
 		}
 		else {
 			return {arr, ix, container->capacity()};
@@ -249,15 +254,19 @@ public:
 	}
 
 	~array_heap_safe_iterator() {
+		
 		_index = 0;
-		_size = 0;
 
-		// on non raw pointers, forcePreviousChangesToThisInDtor will be called
-		// by _array member destructor
-		if constexpr (is_raw_pointer) {
+		if constexpr (!is_dezombiefy)
+			_size = 0;
+
+		if constexpr (is_raw_pointer)
 			_array = nullptr;
+
+		// on dezombiefy and non raw pointers, forcePreviousChangesToThisInDtor will be called
+		// by each member destructor. both of them executed after this dtor
+		if constexpr (!is_dezombiefy && is_raw_pointer)
 			forcePreviousChangesToThisInDtor(this);
-		} 
 	}
 
 	reference operator*() const { return *getDereferenceablePtr(_index); }
@@ -521,6 +530,9 @@ protected:
 	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, typename base_type::size_f_type sz)
 		: base_type(arr, ix, sz) {}
 
+	template <typename Container>
+	constexpr array_stack_only_iterator(array_pointer arr, size_type ix, Container* container)
+		: base_type(arr, ix, container) {}
 
 	constexpr array_stack_only_iterator(const base_type& ri)
 		: base_type(ri) {}
@@ -554,7 +566,7 @@ public:
 		// base_type::extraSanityCheck(arr, ix, sz);
 
 		if constexpr (is_dezombiefy) {
-			return {arr, ix, typename base_type::size_f_type{container}};
+			return {arr, ix, container};
 		}
 		else {
 			return {arr, ix, container->capacity()};
@@ -633,6 +645,6 @@ typename array_stack_only_iterator<T, is_const, ArrPtr>::difference_type distanc
 }
 
 
-} // namespace safememory::detail 
+} // namespace safememory::detail
 
 #endif // SAFE_MEMORY_DETAIL_ARRAY_ITERATOR_H
