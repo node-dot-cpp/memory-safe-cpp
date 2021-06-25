@@ -28,8 +28,11 @@
 #ifndef SAFE_MEMORY_DETAIL_DEZOMBIEFY_ITERATORS_H
 #define SAFE_MEMORY_DETAIL_DEZOMBIEFY_ITERATORS_H
 
-#include <EASTL/unordered_set.h>
-#include <safememory/detail/allocator_to_eastl.h>
+#include <platform_base.h>
+#include <safe_memory_error.h>
+#include <safememory/detail/safe_ptr_common.h>
+#include <EASTL/internal/config.h> // for eastl_size_t
+
 
 namespace safememory::detail {
 
@@ -50,19 +53,22 @@ class iterator_dezombiefier; //fwd
  * This is because dezombiefy iterators need to call \c size() method on the container before
  * each access to validate the item trying to dereference is still valid inside the container.
  * 
- * The problem shows when we \c move the container, as the heap array remains valid, but we can't
- * no longer call \c size() on the previous instance, as it may have been deallocated, or
+ * The problem shows when we \c move the container, as the heap array remains valid, but we
+ * no longer can call \c size() on the previous instance, as it may have been deallocated, or
  * stack space reused.
  * 
  */
 
+
+
 class iterator_registry {
 
-	//mb: we use unordered_set because we have already customized to our allocators
-	template<class T>
-	using set_type = eastl::unordered_set<T, eastl::hash<T>, eastl::equal_to<T>, allocator_to_eastl_hashtable<memory_safety::none>>;
+	// mb: we don't use a normal container here, because we don't want dezombifing to make
+	// allocations that didn't exist on the non-dezombifing
+	// Because of that we use an intrusive list, and since iterators are expected to be
+	// only a few we use a single linked list.
 
-	set_type<iterator_dezombiefier*> itRegistry{allocator_to_eastl_hashtable<memory_safety::none>()};
+	iterator_dezombiefier* head = nullptr;
 
 public:
 	iterator_registry() {}
@@ -100,32 +106,35 @@ public:
 		forcePreviousChangesToThisInDtor(this);
 	}
 
+	void addIterator(iterator_dezombiefier* it) noexcept;
+	void removeIterator(iterator_dezombiefier* it) noexcept;
 	void invalidateAllIterators() noexcept;
-
-	void registerIterator(iterator_dezombiefier* it) noexcept { itRegistry.insert(it); }
-	void unregisterIterator(iterator_dezombiefier* it) noexcept { itRegistry.erase(it); }
 };
 
 
 
-
-
 class iterator_dezombiefier {
-	std::function<eastl_size_t()> sz;
-	iterator_registry* registry = nullptr;
 public:
+	iterator_registry* registry = nullptr;
+	iterator_dezombiefier* next = nullptr;
+	std::function<eastl_size_t()> sz;
+
+	[[noreturn]] static void ThrowZombieException() { throw nodecpp::error::early_detected_zombie_pointer_access; }
+
 	iterator_dezombiefier(int) {}
+
 
 	template<class Cont>
 	iterator_dezombiefier(Cont* container) :sz(std::bind(&Cont::size, container)), registry(container) {
 
-		registry->registerIterator(this);
+		if(registry)
+			registry->addIterator(this);
 	}
 
 	iterator_dezombiefier(const iterator_dezombiefier& other) : sz(other.sz), registry(other.registry) {
 
 		if(registry)
-			registry->registerIterator(this);
+			registry->addIterator(this);
 	}
 
 	iterator_dezombiefier& operator=(const iterator_dezombiefier& other) {
@@ -133,46 +142,83 @@ public:
 			return *this;
 
 		if(registry)
-			registry->unregisterIterator(this);
+			registry->removeIterator(this);
 
 		sz = other.sz;
 		registry = other.registry;
 
 		if(registry)
-			registry->registerIterator(this);
+			registry->addIterator(this);
 
 		return *this;
 	}
 
-	void invalidate() {
-		if(registry) {
-			sz = nullptr;
-			registry = nullptr;
-		}
+	void invalidate() noexcept {
+		registry = nullptr;
+		next = nullptr;
+		sz = nullptr;
 	}
 
 	~iterator_dezombiefier() {
-		if(registry) {
-			registry->unregisterIterator(this);
-			sz = nullptr;
-			registry = nullptr;
-			forcePreviousChangesToThisInDtor(this);
-		}
+		if(registry)
+			registry->removeIterator(this);
+
+		invalidate();
+		forcePreviousChangesToThisInDtor(this);
 	}
 
-	operator bool() const noexcept { return static_cast<bool>(registry); }
-	eastl_size_t size() const noexcept { return sz(); }
+	eastl_size_t size() const {
+
+		if ( NODECPP_UNLIKELY( !registry ) )
+			ThrowZombieException();
+
+		return sz();
+	}
 };
 
 
 inline
-void iterator_registry::invalidateAllIterators() noexcept {
-	for(auto each : itRegistry)
-		each->invalidate();
-	
-	itRegistry.clear();
+void iterator_registry::addIterator(iterator_dezombiefier* it) noexcept {
+
+	// assert(it != nullptr);
+	// assert(it->next == nullptr);
+	it->next = head;
+	head = it;
 }
 
+inline
+void iterator_registry::removeIterator(iterator_dezombiefier* it) noexcept {
+
+	// assert(it != nullptr);
+	if(it == head) {
+		head = it->next;
+		it->next = nullptr;
+		return;
+	}
+	else {
+		iterator_dezombiefier* current = head;
+		while(current != nullptr && current->next != it)
+			current = current->next;
+
+		if(current == nullptr)
+			return; // not found, error?
+
+		// assert(current->next == it);
+		current->next = it->next;
+		it->next = nullptr;
+		return;
+	}
+}
+
+inline
+void iterator_registry::invalidateAllIterators() noexcept {
+
+	while(head != nullptr) {
+		iterator_dezombiefier* current = head;
+		head = current->next;
+		current->invalidate();
+	}
+}
 
 } // namespace safememory::detail 
 

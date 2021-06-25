@@ -428,8 +428,6 @@ public:
 			
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
-				if ( NODECPP_UNLIKELY( !_size ) )
-					ThrowZombieException();
 				if(NODECPP_UNLIKELY(!(tmp < _size.size())))
 					ThrowZombieException();
 			}
@@ -449,8 +447,6 @@ public:
 		if(_array) {
 			if constexpr (is_dezombiefy) {
 				checkArrNotZombie();
-				if ( NODECPP_UNLIKELY( !_size ) )
-					ThrowZombieException();
 				if(NODECPP_UNLIKELY(!(_index <= _size.size())))
 					ThrowZombieException();
 			}
