@@ -12,6 +12,7 @@
 #include "EAStopwatch.h"
 //#include <EAStdC/EAString.h>
 #include <EASTL/internal/config.h>
+#include <iibmalloc.h>
 #include <string.h>
 #include <stdio.h>
 EA_DISABLE_VC_WARNING(4946)
@@ -117,6 +118,8 @@ int main(int argc, char* argv[])
 	// environment.msSTLName1 = GetStdSTLName();
 	// environment.msSTLName2 = "node-dot-cpp/memory-safe-cpp";
 
+	nodecpp::iibmalloc::ThreadLocalAllocatorT allocManager;
+	nodecpp::iibmalloc::ThreadLocalAllocatorT* formerAlloc = nodecpp::iibmalloc::setCurrneAllocator( &allocManager );
 
 	// Run tests
 	// #ifndef EA_DEBUG
@@ -150,6 +153,8 @@ int main(int argc, char* argv[])
 	std::string sClockTime = Benchmark::WriteTime(stopwatch.GetElapsedTime());
 
 	EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());
+
+	nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
 
 	// Done
 	if(bWaitAtEnd)
