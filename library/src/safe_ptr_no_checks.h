@@ -854,27 +854,27 @@ public:
 	nullable_ptr_no_checks(T* t_) : nullable_ptr_base_no_checks<T>(t_) {}
 
 	template<class T1>
-	nullable_ptr_no_checks<T>( const owning_ptr_no_checks<T1>& owner ) : nullable_ptr_base_no_checks<T>(owner) {}
-	nullable_ptr_no_checks<T>( const owning_ptr_no_checks<T>& owner ) : nullable_ptr_base_no_checks<T>() {*this = owner.get();}
+	nullable_ptr_no_checks( const owning_ptr_no_checks<T1>& owner ) : nullable_ptr_base_no_checks<T>(owner) {}
+	nullable_ptr_no_checks( const owning_ptr_no_checks<T>& owner ) : nullable_ptr_base_no_checks<T>() {*this = owner.get();}
 	template<class T1>
 	nullable_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T1>& owner ) { *this = owner.get(); return *this; }
 	nullable_ptr_no_checks<T>& operator = ( const owning_ptr_no_checks<T>& owner ) { *this = owner.get(); return *this; }
 
 	template<class T1>
-	nullable_ptr_no_checks<T>( const soft_ptr_no_checks<T1>& other ) : nullable_ptr_base_no_checks<T>(other) {}
-	nullable_ptr_no_checks<T>( const soft_ptr_no_checks<T>& other ) : nullable_ptr_base_no_checks<T>(other) {}
+	nullable_ptr_no_checks( const soft_ptr_no_checks<T1>& other ) : nullable_ptr_base_no_checks<T>(other) {}
+	nullable_ptr_no_checks( const soft_ptr_no_checks<T>& other ) : nullable_ptr_base_no_checks<T>(other) {}
 	template<class T1>
 	nullable_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T1>& other ) { *this = other.get(); return *this; }
 	nullable_ptr_no_checks<T>& operator = ( const soft_ptr_no_checks<T>& other ) { *this = other.get(); return *this; }
 
 	template<class T1>
-	nullable_ptr_no_checks<T>( const nullable_ptr_no_checks<T1>& other ) : nullable_ptr_base_no_checks<T>(other) {}
+	nullable_ptr_no_checks( const nullable_ptr_no_checks<T1>& other ) : nullable_ptr_base_no_checks<T>(other) {}
 	template<class T1>
 	nullable_ptr_no_checks<T>& operator = ( const nullable_ptr_no_checks<T1>& other ) { this->t = other.t; return *this; }
-	nullable_ptr_no_checks<T>( const nullable_ptr_no_checks<T>& other ) = default;
+	nullable_ptr_no_checks( const nullable_ptr_no_checks<T>& other ) = default;
 	nullable_ptr_no_checks<T>& operator = ( nullable_ptr_no_checks<T>& other ) = default;
 
-	nullable_ptr_no_checks<T>( nullable_ptr_no_checks<T>&& other ) = default;
+	nullable_ptr_no_checks( nullable_ptr_no_checks<T>&& other ) = default;
 	nullable_ptr_no_checks<T>& operator = ( nullable_ptr_no_checks<T>&& other ) = default;
 
 	nullable_ptr_no_checks( std::nullptr_t nulp ) : nullable_ptr_base_no_checks<T>(nulp) {}
