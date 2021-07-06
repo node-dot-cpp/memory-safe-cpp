@@ -30,12 +30,15 @@ add_subdirectory(src/iibmalloc)
 #-------------------------------------------------------------------------------------------
 # Library definition
 #-------------------------------------------------------------------------------------------
-add_library(safememory STATIC
-  src/safe_ptr.cpp
-  src/string.cpp
-  src/nodecpp_error.cpp
-  src/detail/allocator_to_eastl.cpp
-  )
+SET(safememory_SRC
+    "src/safe_ptr.cpp" 
+    "src/string.cpp" 
+    "src/nodecpp_error.cpp" 
+    "src/detail/allocator_to_eastl.cpp"
+)
+
+
+add_library(safememory STATIC ${safememory_SRC})
 
 # target_compile_definitions(safememory PUBLIC NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION)
 # target_compile_definitions(safememory PUBLIC NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO)
@@ -46,71 +49,44 @@ add_library(safememory STATIC
 # target_compile_definitions(safememory PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
 
 
-target_include_directories(safememory
-  PUBLIC include
-  PUBLIC src
-  )
+target_include_directories(safememory PUBLIC include)
 
 target_link_libraries(safememory iibmalloc)
 target_link_libraries(safememory EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
 
-add_library(safememory_impl STATIC
-  src/safe_ptr.cpp
-  src/string.cpp
-  src/nodecpp_error.cpp
-  src/detail/allocator_to_eastl.cpp
-  )
-
-target_compile_definitions(safememory_impl PUBLIC NODECPP_MEMORY_SAFETY=1)
-
-target_include_directories(safememory_impl
-  PUBLIC include
-  PUBLIC src
-  )
-
-target_link_libraries(safememory_impl iibmalloc)
-target_link_libraries(safememory_impl EASTL EABase)
 
 #-------------------------------------------------------------------------------------------
+# Tests and samples
+#-------------------------------------------------------------------------------------------
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+  set(SAFEMEMORY_TEST ON CACHE BOOL "Enable SafeMemory tests")
+else()
+  set(SAFEMEMORY_TEST OFF CACHE BOOL "Enable SafeMemory tests")
+endif()
 
-add_library(safememory_no_checks STATIC
-  src/safe_ptr.cpp
-  src/string.cpp
-  src/nodecpp_error.cpp
-  src/detail/allocator_to_eastl.cpp
-  )
-
-target_compile_definitions(safememory_no_checks PUBLIC NODECPP_MEMORY_SAFETY=-1)
-
-target_include_directories(safememory_no_checks
-  PUBLIC include
-  PUBLIC src
-  )
-
-target_link_libraries(safememory_no_checks iibmalloc)
-target_link_libraries(safememory_no_checks EASTL EABase)
+if (SAFEMEMORY_TEST)
 
 #-------------------------------------------------------------------------------------------
+  add_library(safememory_impl STATIC ${safememory_SRC})
+  target_compile_definitions(safememory_impl PUBLIC NODECPP_MEMORY_SAFETY=1)
+  target_include_directories(safememory_impl PUBLIC include)
+  target_link_libraries(safememory_impl iibmalloc EASTL EABase)
 
-add_library(safememory_dz_it STATIC
-  src/safe_ptr.cpp
-  src/string.cpp
-  src/nodecpp_error.cpp
-  src/detail/allocator_to_eastl.cpp
-  )
+#-------------------------------------------------------------------------------------------
+  add_library(safememory_no_checks STATIC ${safememory_SRC})
+  target_compile_definitions(safememory_no_checks PUBLIC NODECPP_MEMORY_SAFETY=-1)
+  target_include_directories(safememory_no_checks PUBLIC include)
+  target_link_libraries(safememory_no_checks iibmalloc EASTL EABase)
 
-target_compile_definitions(safememory_dz_it PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+#-------------------------------------------------------------------------------------------
+  add_library(safememory_dz_it STATIC ${safememory_SRC})
+  target_compile_definitions(safememory_dz_it PUBLIC SAFEMEMORY_DEZOMBIEFY_ITERATORS)
+  target_include_directories(safememory_dz_it PUBLIC include)
+  target_link_libraries(safememory_dz_it iibmalloc EASTL EABase)
 
-target_include_directories(safememory_dz_it
-  PUBLIC include
-  PUBLIC src
-  )
-
-target_link_libraries(safememory_dz_it iibmalloc)
-target_link_libraries(safememory_dz_it EASTL EABase)
-
+endif()
 #-------------------------------------------------------------------------------------------
 # gcc_lto_workaround
 #-------------------------------------------------------------------------------------------
@@ -123,19 +99,17 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     )
 
   target_link_libraries(safememory gcc_lto_workaround)
-  target_link_libraries(safememory_impl gcc_lto_workaround)
-  target_link_libraries(safememory_no_checks gcc_lto_workaround)
-  target_link_libraries(safememory_dz_it gcc_lto_workaround)
+
+  if (SAFEMEMORY_TEST)
+    target_link_libraries(safememory_impl gcc_lto_workaround)
+    target_link_libraries(safememory_no_checks gcc_lto_workaround)
+    target_link_libraries(safememory_dz_it gcc_lto_workaround)
+  endif()
 endif()
 
 #-------------------------------------------------------------------------------------------
 # Tests and samples
 #-------------------------------------------------------------------------------------------
-if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  set(SAFEMEMORY_TEST ON CACHE BOOL "Enable SafeMemory tests")
-else()
-  set(SAFEMEMORY_TEST OFF CACHE BOOL "Enable SafeMemory tests")
-endif()
 
 if (SAFEMEMORY_TEST)
   # only when not a subproject
