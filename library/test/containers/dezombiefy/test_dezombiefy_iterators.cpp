@@ -277,18 +277,21 @@ int main( int argc, char * argv[] )
 
 	nodecpp::iibmalloc::ThreadLocalAllocatorT allocManager;
 	nodecpp::iibmalloc::ThreadLocalAllocatorT* formerAlloc = nodecpp::iibmalloc::setCurrneAllocator( &allocManager );
-//	ThreadLocalAllocatorT* formerAlloc = nullptr;
+	
+	int ret = 0;
+	{
 
 #ifndef NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
-	NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail::doZombieEarlyDetection( true ) ); // enabled by default
+		NODECPP_ASSERT(safememory::module_id, nodecpp::assert::AssertLevel::critical, safememory::detail::doZombieEarlyDetection( true ) ); // enabled by default
 #endif // NODECPP_DISABLE_ZOMBIE_ACCESS_EARLY_DETECTION
 
+		ret = testWithLest( argc, argv );
+		safememory::detail::killAllZombies();
 
-	int ret = testWithLest( argc, argv );
-	safememory::detail::killAllZombies();
-
-	nodecpp::log::default_log::fatal( "about to exit..." );
-
+		nodecpp::log::default_log::fatal( "about to exit..." );
+	}
+	
 	setCurrneAllocator( formerAlloc );
+
 	return ret;
 }

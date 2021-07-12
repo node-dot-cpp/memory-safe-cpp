@@ -120,40 +120,41 @@ int main(int argc, char* argv[])
 
 	nodecpp::iibmalloc::ThreadLocalAllocatorT allocManager;
 	nodecpp::iibmalloc::ThreadLocalAllocatorT* formerAlloc = nodecpp::iibmalloc::setCurrneAllocator( &allocManager );
+	{
+		// Run tests
+		// #ifndef EA_DEBUG
+		// 	EA::UnitTest::SetHighThreadPriority();
+		// #endif
 
-	// Run tests
-	// #ifndef EA_DEBUG
-	// 	EA::UnitTest::SetHighThreadPriority();
-	// #endif
+		EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsNanoseconds, true);
 
-	EA::StdC::Stopwatch stopwatch(EA::StdC::Stopwatch::kUnitsNanoseconds, true);
+		// BenchmarkAlgorithm();
+		// BenchmarkList();
+		BenchmarkString();
+		BenchmarkVector();
+		// BenchmarkDeque();
+		// BenchmarkSet();
+		// BenchmarkMap();
+		BenchmarkHash();
+		// BenchmarkHeap();
+		// BenchmarkBitset();
+		// BenchmarkSort();
+		// BenchmarkTupleVector();
 
-	// BenchmarkAlgorithm();
-	// BenchmarkList();
-	BenchmarkString();
-	BenchmarkVector();
-	// BenchmarkDeque();
-	// BenchmarkSet();
-	// BenchmarkMap();
-	BenchmarkHash();
-	// BenchmarkHeap();
-	// BenchmarkBitset();
-	// BenchmarkSort();
-	// BenchmarkTupleVector();
+		stopwatch.Stop();
 
-	stopwatch.Stop();
+		// #ifndef EA_DEBUG
+		// 	EA::UnitTest::SetNormalThreadPriority();
+		// #endif
 
-	// #ifndef EA_DEBUG
-	// 	EA::UnitTest::SetNormalThreadPriority();
-	// #endif
+		Benchmark::PrintResults();
 
-	Benchmark::PrintResults();
+		// eastl::string sClockTime;
+		std::string sClockTime = Benchmark::WriteTime(stopwatch.GetElapsedTime());
 
-	// eastl::string sClockTime;
-	std::string sClockTime = Benchmark::WriteTime(stopwatch.GetElapsedTime());
-
-	EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());
-
+		EASTLTest_Printf("Time to complete all tests: %s.\n", sClockTime.c_str());
+	
+	}
 	nodecpp::iibmalloc::setCurrneAllocator( formerAlloc );
 
 	// Done
