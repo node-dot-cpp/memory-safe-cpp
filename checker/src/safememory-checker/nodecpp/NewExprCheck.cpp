@@ -85,7 +85,8 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
     Rt = Rt.getCanonicalType();
     assert(isSafePtrType(Rt));
 
-    if(isDerivedFromNodeBase(getPointeeType(Rt))) {
+    auto Pointee = getPointeeType(Rt);
+    if(Pointee && isDerivedFromNodeBase(*Pointee)) {
       diag(Expr->getExprLoc(),
            "(node-dot-cpp) clases derived from NodeBase can't be instantiated by user");
 

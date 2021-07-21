@@ -351,8 +351,10 @@ FunctionKind getFunctionKind(QualType Qt) {
     //   if (getQnameForSystemSafeDb(Td) == "nodecpp::function_owned_arg0")
     //     return FunctionKind::OwnedArg0;
     // }
-
-    return getFunctionKind(Ts->desugar());
+    if(Ts->isSugared())
+      return getFunctionKind(Ts->desugar());
+    else
+      return FunctionKind::None;
   } else if (auto Rc = Qt->getAs<RecordType>()) {
     auto Dc = Rc->getDecl();
     assert(Dc);
@@ -427,24 +429,24 @@ bool isCharPointerOrArrayType(QualType Qt) {
   return false;
 }
 
-QualType getPointeeType(QualType Qt) {
+llvm::Optional<QualType> getPointeeType(QualType Qt) {
 
   assert(Qt.isCanonical());
 
   if (Qt->isPointerType())
-    return Qt->getPointeeType().getCanonicalType();
+    return llvm::Optional<QualType>(Qt->getPointeeType().getCanonicalType());
 
   return getTemplateArgType(Qt, 0);
 }
 
-QualType getTemplateArgType(QualType Qt, size_t i) {
+llvm::Optional<QualType> getTemplateArgType(QualType Qt, size_t i) {
 
   assert(Qt.isCanonical());
 
-  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(
-      Qt->getAsCXXRecordDecl());
+  auto Dc = dyn_cast_or_null<ClassTemplateSpecializationDecl>(Qt->getAsCXXRecordDecl());
 
-  assert(Dc);
+  if(!Dc)
+    return llvm::Optional<QualType>();
 
   auto &Args = Dc->getTemplateArgs();
 
@@ -454,7 +456,7 @@ QualType getTemplateArgType(QualType Qt, size_t i) {
 
   assert(Argi.getKind() == TemplateArgument::Type);
 
-  return Argi.getAsType().getCanonicalType();
+  return llvm::Optional<QualType>(Argi.getAsType().getCanonicalType());
 }
 
 
@@ -469,8 +471,8 @@ KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext *Context,
 
   std::string Name = getQnameForSystemSafeDb(Qt);
   if (isNullablePtrName(Name)) {
-    QualType Pointee = getPointeeType(Qt);
-    return KindCheck(true, isSafeType(Pointee, Context, Dh));
+    auto Pointee = getPointeeType(Qt);
+    return KindCheck(true, Pointee ? isSafeType(*Pointee, Context, Dh) : false);
   }
 
   return KindCheck(false, false);
@@ -493,9 +495,14 @@ SourceLocation getLocationForTemplateArg(const CXXRecordDecl *Rd, unsigned I) {
 
 bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
 
-  QualType ArgI = getTemplateArgType(Qt, i);
-  if(!isSafeType(ArgI, Context, Dh)) {
-    std::string Name = ArgI.getAsString();
+  auto ArgI = getTemplateArgType(Qt, i);
+  if(!ArgI) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + "' is not safe");
+    return false;
+  }
+
+  if(!isSafeType(*ArgI, Context, Dh)) {
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' is not safe");
     return false;
   }
@@ -508,16 +515,21 @@ bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext
 
   //mb: while [[deep_const]] already implies type safety, is better to check and report
   // for safety first, as this makes the error message easier to understand.
-  QualType ArgI = getTemplateArgType(Qt, i);
-  if(!isSafeType(ArgI, Context, Dh)) {
-    std::string Name = ArgI.getAsString();
+  auto ArgI = getTemplateArgType(Qt, i);
+  if(!ArgI) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + "' is not safe");
+    return false;
+  }
+
+  if(!isSafeType(*ArgI, Context, Dh)) {
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' is not safe");
     return false;
   }
 
-  auto Kc = isDeepConstType(ArgI, Context, Dh);
+  auto Kc = isDeepConstType(*ArgI, Context, Dh);
   if(!Kc ||!Kc.isOk()) {
-    std::string Name = ArgI.getAsString();
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' is not [[deep_const]]");
     return false;
   }
@@ -529,16 +541,21 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
 
   //mb: while [[deep_const]] already implies type safety, is better to check and report
   // for safety first, as this makes the error message easier to understand.
-  QualType ArgI = getTemplateArgType(Qt, i);
-  if(!isSafeType(ArgI, Context, Dh)) {
-    std::string Name = ArgI.getAsString();
+  auto ArgI = getTemplateArgType(Qt, i);
+  if(!ArgI) {
+    Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + "' is not safe");
+    return false;
+  }
+
+  if(!isSafeType(*ArgI, Context, Dh)) {
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' is not safe");
     return false;
   }
 
-  auto Kc = isDeepConstType(ArgI, Context, Dh);
+  auto Kc = isDeepConstType(*ArgI, Context, Dh);
   if(!Kc ||!Kc.isOk()) {
-    std::string Name = ArgI.getAsString();
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' is not [[deep_const]]");
     return false;
   }
@@ -548,12 +565,12 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
   //   return true;
   // }
 
-  const CXXRecordDecl* Rd = ArgI->getAsCXXRecordDecl();
+  const CXXRecordDecl* Rd = (*ArgI)->getAsCXXRecordDecl();
   if(Rd)
     Rd = getRecordWithDefinition(Rd);
 
   if(!Rd) {
-    std::string Name = ArgI.getAsString();
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' must have a [[no_side_effect]] operator()");
     return false;
   }
@@ -570,7 +587,7 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
         
         auto C = const_cast<ClangTidyContext*>(Context);
         if(!C->getCheckHelper()->isNoSideEffect(Method)) {
-          std::string Name = ArgI.getAsString();
+          std::string Name = ArgI->getAsString();
           Dh.diag(Method->getLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' must have a [[no_side_effect]] operator()");
           return false;
         }
@@ -580,7 +597,7 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
     } 
   }
   if(!Found) {
-    std::string Name = ArgI.getAsString();
+    std::string Name = ArgI->getAsString();
     Dh.diag(SourceLocation(), "template parameter " + std::to_string(i) + ", '" + Name + "' must have a [[no_side_effect]] operator()");
     return false;
   }
@@ -675,8 +692,11 @@ bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, Diag
   if(!isOwningPtrName(Name))
     return false;
 
-  QualType Arg = getTemplateArgType(Qt, 0);
-  auto Kc = isDeepConstType(Arg, Context, Dh);
+  auto Arg = getTemplateArgType(Qt, 0);
+  if(!Arg)
+    return false;
+
+  auto Kc = isDeepConstType(*Arg, Context, Dh);
   if(!Kc)
     return false;
   else if(!Kc.isOk()) {
@@ -685,7 +705,7 @@ bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, Diag
     return false;
   }
 
-  if(!Arg.isConstQualified()) {
+  if(!Arg->isConstQualified()) {
     // SourceLocation Sl = getLocationForTemplateArg(Qt->getAsCXXRecordDecl(), 0);
     // Dh.diag(Sl, "owned type must be 'const' for owning_ptr to meet deep_const requiremenst");
     return false;
@@ -859,7 +879,8 @@ bool TypeChecker::isSafeType(const QualType& Qt) {
   } else if(auto Kc = isSafeHashMapType(Qt, Context, Dh)) {
     return Kc.isOk();
   } else if (isSafePtrType(Qt)) {
-    return isSafeType(getPointeeType(Qt));
+    auto Pointee = getPointeeType(Qt);
+    return Pointee ? isSafeType(*Pointee) : false;
   } else if (auto Rd = Qt->getAsCXXRecordDecl()) {
     return isSafeRecord(Rd);
   } else if (Qt->isTemplateTypeParmType()) {

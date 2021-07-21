@@ -115,8 +115,8 @@ bool isStringLiteralType(QualType Qt);
 bool isBasicStringType(QualType Qt);
 bool isCharPointerOrArrayType(QualType Qt);
 
-QualType getPointeeType(QualType Qt);
-QualType getTemplateArgType(QualType Qt, size_t i);
+llvm::Optional<QualType> getPointeeType(QualType Qt);
+llvm::Optional<QualType> getTemplateArgType(QualType Qt, size_t i);
 
 KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
