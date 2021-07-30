@@ -65,16 +65,16 @@ public:
   bool VisitCXXCatchStmt(clang::CXXCatchStmt *Stmt) {
     
     auto Qt = Stmt->getCaughtType();
-    if(!Qt->isLValueReferenceType()) {
-      diag(Stmt->getExceptionDecl()->getLocation(), "(M1.2) catch type must be reference to nodecpp::error type");
-    }
-    else {
+    if(!Qt.isNull() && Qt->isLValueReferenceType()) {
       auto Qt2 = Qt->getPointeeType();
-      if(!isNodecppErrorType(Qt2)) {
-        diag(Stmt->getExceptionDecl()->getLocation(), "(M1.2) catch type must be reference to nodecpp::error type");
+      if(isNodecppErrorType(Qt2)) {
+        return Super::VisitCXXCatchStmt(Stmt);
       }
     }
 
+    auto ExDecl = Stmt->getExceptionDecl();
+    SourceLocation Loc =  ExDecl ? ExDecl->getLocation() : Stmt->getBeginLoc(); 
+    diag(Loc, "(M1.2) catch type must be reference to nodecpp::error type");
     return Super::VisitCXXCatchStmt(Stmt);
   }
 
