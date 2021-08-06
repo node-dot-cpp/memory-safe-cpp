@@ -27,6 +27,9 @@ void ReturnCheck::registerMatchers(MatchFinder *Finder) {
 void ReturnCheck::check(const MatchFinder::MatchResult &Result) {
   auto St = Result.Nodes.getNodeAs<ReturnStmt>("stmt");
 
+  if(isSystemLocation(getContext(), St->getReturnLoc()))
+    return;
+
   auto Ex = St->getRetValue();
   if (!Ex)
     return;

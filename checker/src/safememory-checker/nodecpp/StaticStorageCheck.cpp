@@ -30,6 +30,9 @@ void StaticStorageCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Decl = Result.Nodes.getNodeAs<VarDecl>("decl");
 
+  if(isSystemLocation(getContext(), Decl->getLocation()))
+    return;
+
   auto Qt = Decl->getType().getCanonicalType();
   if(isEmptyClass(Qt)) {
     return;

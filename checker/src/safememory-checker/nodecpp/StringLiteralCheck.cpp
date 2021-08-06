@@ -48,6 +48,10 @@ void StringLiteralCheck::check(const MatchFinder::MatchResult &Result) {
   //   }
   // } else
   if (auto Ctor = Result.Nodes.getNodeAs<CXXConstructExpr>("ctor")) {
+
+    if(isSystemLocation(getContext(), Ctor->getExprLoc()))
+      return;
+
     if (Ctor->getNumArgs() >= 1) {
       QualType Arg0 = Ctor->getType().getCanonicalType();
       QualType Arg1 = Ctor->getArg(0)->getType().getCanonicalType();

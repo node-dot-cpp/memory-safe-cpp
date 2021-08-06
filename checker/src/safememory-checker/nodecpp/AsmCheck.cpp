@@ -13,6 +13,7 @@
 #include "AsmCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "NakedPtrHelper.h"
 
 using namespace clang::ast_matchers;
 
@@ -27,6 +28,9 @@ void AsmCheck::registerMatchers(MatchFinder *Finder) {
 void AsmCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto St = Result.Nodes.getNodeAs<AsmStmt>("asm");
+
+  if(isSystemLocation(getContext(), St->getAsmLoc()))
+    return;
 
   diag(St->getAsmLoc(), "(S6.1) asm is prohibited");
 }

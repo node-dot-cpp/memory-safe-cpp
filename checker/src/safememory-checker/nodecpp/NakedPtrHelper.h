@@ -86,7 +86,7 @@ bool isNodeBaseName(const std::string& Name);
 // bool isStdHashOrEqualToName(const std::string& Name);
 bool isStdMoveOrForward(const std::string &Name);
 
-bool isSystemLocation(const ClangTidyContext* Context, SourceLocation Loc);
+bool isSystemLocation(ClangTidyContext* Context, SourceLocation Loc);
 bool isSystemSafeTypeName(const ClangTidyContext* Context, const std::string& Name);
 bool isStackOnlyIteratorName(const ClangTidyContext *Context, const std::string &Name);
 bool isSystemSafeFunction(const ClangTidyContext* Context, const std::string& Name);
@@ -97,8 +97,8 @@ std::string getQnameForSystemSafeDb(const NamedDecl *Decl);
 
 const CXXRecordDecl *getDeclWithDefinition(const CXXRecordDecl *Dc);
 
-bool checkNakedStructRecord(const CXXRecordDecl *Dc, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-KindCheck isNakedStructType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool checkNakedStructRecord(const CXXRecordDecl *Dc, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isNakedStructType(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 
 enum class FunctionKind { None = 0, Lambda, StdFunction };
@@ -118,18 +118,18 @@ bool isCharPointerOrArrayType(QualType Qt);
 llvm::Optional<QualType> getPointeeType(QualType Qt);
 llvm::Optional<QualType> getTemplateArgType(QualType Qt, size_t i);
 
-KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isNullablePointerQtype(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 // bool hasDeepConstAttr(const CXXRecordDecl* Decl);
 
-bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsSafe(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
-KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
-KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isSafeVectorType(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+KindCheck isSafeHashMapType(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
-bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
+bool isDeepConstOwningPtrType(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 //bool isImplicitDeepConstStdHashOrEqualTo(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh = NullDiagHelper);
 
 bool isSafePtrType(QualType Qt);
@@ -137,7 +137,7 @@ bool isAwaitableType(QualType Qt);
 bool isNodecppErrorType(QualType Qt);
 
 class TypeChecker {
-  const ClangTidyContext* Context = nullptr;
+  ClangTidyContext* Context = nullptr;
   DiagHelper Dh;
   std::set<const CXXRecordDecl *> alreadyChecking;
   bool isSystemLoc = false;
@@ -166,8 +166,8 @@ class TypeChecker {
   // std::set<const Type *> selfContainedTypes;
 
 public:
-  TypeChecker(const ClangTidyContext* Context) : Context(Context) {}
-  TypeChecker(const ClangTidyContext* Context, const DiagHelper& Dh) :
+  TypeChecker(ClangTidyContext* Context) : Context(Context) {}
+  TypeChecker(ClangTidyContext* Context, const DiagHelper& Dh) :
     Context(Context), Dh(Dh) {}
 
   bool isSafeRecord(const CXXRecordDecl *Dc);
@@ -191,7 +191,7 @@ public:
 };
 
 inline
-bool isSafeType(QualType Qt, const ClangTidyContext* Context,
+bool isSafeType(QualType Qt, ClangTidyContext* Context,
   DiagHelper& Dh = NullDiagHelper) {
 
   TypeChecker Tc(Context, Dh);
@@ -200,7 +200,7 @@ bool isSafeType(QualType Qt, const ClangTidyContext* Context,
 }
 
 inline
-bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
+bool isDeterministicType(QualType Qt, ClangTidyContext* Context,
   DiagHelper& Dh = NullDiagHelper) {
 
   TypeChecker Tc(Context, Dh);
@@ -209,7 +209,7 @@ bool isDeterministicType(QualType Qt, const ClangTidyContext* Context,
 }
 
 inline
-KindCheck isDeepConstType(QualType Qt, const ClangTidyContext* Context,
+KindCheck isDeepConstType(QualType Qt, ClangTidyContext* Context,
   DiagHelper& Dh = NullDiagHelper) {
 
   TypeChecker Tc(Context, Dh);

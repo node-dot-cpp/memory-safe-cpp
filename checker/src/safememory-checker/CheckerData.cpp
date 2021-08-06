@@ -309,6 +309,40 @@ void CheckerData::reportDeepConstDetail(clang::QualType Qt) {
   assert(!Ck.isOk());
 }
 
+bool CheckerData::isSystemLocation(const clang::SourceManager* Sm, clang::SourceLocation Loc) {
+
+
+  if(Loc.isInvalid())
+    return true;
+  if(Sm->isInSystemHeader(Loc))
+    return true;
+  if(!Context->getGlobalOptions().UserCode)
+    return false;
+
+
+  FileID Id = Sm->getFileID(Loc);
+
+  auto It = SystemFiles.find(Id);
+  if(It != SystemFiles.end())
+    return It->second;
+
+
+  StringRef Name = Sm->getFilename(Loc);
+  StringRef UserCode = Context->getGlobalOptions().UserCode.getValue();
+  
+  std::string AsSlash = llvm::sys::path::convert_to_slash(Name);
+  llvm::SmallVector< char, 128 > AsSlash2(AsSlash.begin(), AsSlash.end());
+  llvm::sys::path::remove_dots(AsSlash2, true, llvm::sys::path::Style::posix);
+
+  StringRef AsSlashRef(AsSlash2.data(), AsSlash2.size());
+
+  bool IsSystem = !AsSlashRef.startswith(UserCode);
+
+  SystemFiles.emplace(Id, IsSystem);
+
+  return IsSystem;
+}
+
 
 } // namespace checker
 } // namespace nodecpp

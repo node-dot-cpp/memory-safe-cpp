@@ -29,6 +29,10 @@ void RecordDeclCheck::registerMatchers(MatchFinder *Finder) {
 void RecordDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Rd = Result.Nodes.getNodeAs<CXXRecordDecl>("rd");
+
+  if(isSystemLocation(getContext(), Rd->getLocation()))
+    return;
+
   if (Rd && Rd->hasDefinition()) {
 
     //only check the definition decl

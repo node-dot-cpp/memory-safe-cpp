@@ -84,13 +84,12 @@ bool isStdMoveOrForward(const std::string &Name) {
           Name == "std::__1::forward";
 }
 
-
-bool isSystemLocation(const ClangTidyContext *Context, SourceLocation Loc) {
+bool isSystemLocation(ClangTidyContext *Context, SourceLocation Loc) {
 
   auto Sm = Context->getSourceManager();
   auto ELoc = Sm->getExpansionLoc(Loc);
 
-  return (ELoc.isInvalid() || Sm->isInSystemHeader(ELoc));
+  return Context->getCheckHelper()->isSystemLocation(Sm, ELoc);
 }
 
 bool isSystemSafeTypeName(const ClangTidyContext *Context,
@@ -231,7 +230,7 @@ const CXXRecordDecl *getRecordWithDefinition(const CXXRecordDecl *Dc) {
 }
 
 bool checkNakedStructRecord(const CXXRecordDecl *Dc,
-                            const ClangTidyContext *Context, DiagHelper &Dh) {
+                            ClangTidyContext *Context, DiagHelper &Dh) {
 
   Dc = getRecordWithDefinition(Dc);
   if(!Dc)
@@ -327,7 +326,7 @@ bool checkNakedStructRecord(const CXXRecordDecl *Dc,
   return true;
 }
 
-KindCheck isNakedStructType(QualType Qt, const ClangTidyContext *Context,
+KindCheck isNakedStructType(QualType Qt, ClangTidyContext *Context,
                             DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
@@ -461,7 +460,7 @@ llvm::Optional<QualType> getTemplateArgType(QualType Qt, size_t i) {
 
 
 
-KindCheck isNullablePointerQtype(QualType Qt, const ClangTidyContext *Context,
+KindCheck isNullablePointerQtype(QualType Qt, ClangTidyContext *Context,
                              DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
@@ -493,7 +492,7 @@ SourceLocation getLocationForTemplateArg(const CXXRecordDecl *Rd, unsigned I) {
   return SourceLocation();
 }
 
-bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+bool templateArgIsSafe(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh) {
 
   auto ArgI = getTemplateArgType(Qt, i);
   if(!ArgI) {
@@ -511,7 +510,7 @@ bool templateArgIsSafe(QualType Qt, size_t i, const ClangTidyContext* Context, D
 }
 
 
-bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh) {
 
   //mb: while [[deep_const]] already implies type safety, is better to check and report
   // for safety first, as this makes the error message easier to understand.
@@ -537,7 +536,7 @@ bool templateArgIsSafeAndDeepConst(QualType Qt, size_t i, const ClangTidyContext
   return true;
 }
 
-bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const ClangTidyContext* Context, DiagHelper& Dh) {
+bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, ClangTidyContext* Context, DiagHelper& Dh) {
 
   //mb: while [[deep_const]] already implies type safety, is better to check and report
   // for safety first, as this makes the error message easier to understand.
@@ -604,7 +603,7 @@ bool templateArgIsDeepConstAndNoSideEffectCallOp(QualType Qt, size_t i, const Cl
   return true;
 }
 
-bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, const ClangTidyContext* Context, DiagHelper& Dh) {
+bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, ClangTidyContext* Context, DiagHelper& Dh) {
 
 //  assert(Rd.isCanonical());
 
@@ -637,7 +636,7 @@ bool allTemplateArgsAreDeepConst(const CXXRecordDecl *Rd, const ClangTidyContext
 }
 
 
-KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
+KindCheck isSafeVectorType(QualType Qt, ClangTidyContext* Context,
                              DiagHelper &Dh) {
   
   assert(Qt.isCanonical());
@@ -654,7 +653,7 @@ KindCheck isSafeVectorType(QualType Qt, const ClangTidyContext* Context,
 
 }
 
-KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
+KindCheck isSafeHashMapType(QualType Qt, ClangTidyContext* Context,
                              DiagHelper &Dh) {
 
   assert(Qt.isCanonical());
@@ -684,7 +683,7 @@ KindCheck isSafeHashMapType(QualType Qt, const ClangTidyContext* Context,
 }
 
 
-bool isDeepConstOwningPtrType(QualType Qt, const ClangTidyContext* Context, DiagHelper& Dh) {
+bool isDeepConstOwningPtrType(QualType Qt, ClangTidyContext* Context, DiagHelper& Dh) {
 
   assert(Qt.isCanonical());
 

@@ -31,6 +31,9 @@ void RawPtrExprCheck::registerMatchers(MatchFinder *Finder) {
 void RawPtrExprCheck::check(const MatchFinder::MatchResult &Result) {
   auto Ex = Result.Nodes.getNodeAs<Expr>("expr");
 
+  if(isSystemLocation(getContext(), Ex->getExprLoc()))
+    return;
+
   //first ignore implicits and parens
   if(auto Ic = dyn_cast<ImplicitCastExpr>(Ex)) {
     auto K = Ic->getCastKind();

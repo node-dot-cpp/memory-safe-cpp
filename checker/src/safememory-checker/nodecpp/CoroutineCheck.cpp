@@ -33,6 +33,9 @@ void CoroutineCheck::check(const MatchFinder::MatchResult &Result) {
   // RuleS9 check, so we keep this part here
   if(auto Co = Result.Nodes.getNodeAs<CoroutineBodyStmt>("coro")) {
 
+    if(isSystemLocation(getContext(), Co->getBeginLoc()))
+      return;
+
     auto L = Result.Context->getParents(*Co);
 
     if (L.begin() == L.end())

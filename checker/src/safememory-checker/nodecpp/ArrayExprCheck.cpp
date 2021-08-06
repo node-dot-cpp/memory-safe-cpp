@@ -13,6 +13,7 @@
 #include "ArrayExprCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "NakedPtrHelper.h"
 
 using namespace clang::ast_matchers;
 
@@ -38,6 +39,10 @@ void ArrayExprCheck::check(const MatchFinder::MatchResult &Result) {
   // }
 
   if (auto Ex = Result.Nodes.getNodeAs<ArraySubscriptExpr>("expr")) {
+
+    if(isSystemLocation(getContext(), Ex->getRBracketLoc()))
+      return;
+    
     diag(Ex->getRBracketLoc(), "(S1) array expression not allowed");
     return;
   }

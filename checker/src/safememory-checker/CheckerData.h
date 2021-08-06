@@ -104,11 +104,13 @@ public:
   KindCheck2 checkDeepConst(clang::QualType Qt);
   void reportDeepConstDetail(clang::QualType Qt);
 
+  bool isSystemLocation(const clang::SourceManager* Sm, clang::SourceLocation Loc);
 
 private:
 
   std::set<std::string> UnsafeNamespaces;
   std::set<const clang::FunctionDecl*> NoSideEffectFuncs;
+  std::map<clang::FileID, bool> SystemFiles;
 
   struct TypeData2 {
     bool wasTested = false;

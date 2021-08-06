@@ -30,6 +30,9 @@ void NakedAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Ex = Result.Nodes.getNodeAs<CXXOperatorCallExpr>("expr");
 
+  if(isSystemLocation(getContext(), Ex->getExprLoc()))
+    return;
+
   if (Ex->getNumArgs() == 2) {
     auto Left = Ex->getArg(0);
     auto Right = Ex->getArg(1);

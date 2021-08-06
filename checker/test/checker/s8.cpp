@@ -1,4 +1,4 @@
-// RUN: safememory-checker --safe-library-db=%p/s8.json %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
+// RUN: safememory-checker --library-db=%p/s8.json %s | FileCheck %s -implicit-check-not="{{warning|error}}:"
 
 #include <utility>
 #include <safememory/safe_ptr.h>

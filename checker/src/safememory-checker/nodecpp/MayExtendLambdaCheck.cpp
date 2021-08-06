@@ -134,6 +134,10 @@ bool MayExtendLambdaCheck::isCompositeOfThis(const Expr *Ex) {
 void MayExtendLambdaCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Call = Result.Nodes.getNodeAs<CXXMemberCallExpr>("call");
+
+  if(isSystemLocation(getContext(), Call->getExprLoc()))
+    return;
+
   auto Decl = Call->getMethodDecl();
 
   auto MayExtend = isCompositeOfThis(Call->getCallee());

@@ -55,11 +55,19 @@ static cl::extrahelp CommonHelp(CommonOptionsParser::HelpMessage);
 
 // )");
 
-static cl::opt<std::string> SafeLibraryDb("safe-library-db", cl::desc(R"(
+static cl::opt<std::string> SafeLibraryDb("library-db", cl::desc(R"(
 Specifies a safe library dababase file
 When the value is empty, safememory-checker will
 attempt to find a file named safe_library.json
 in the source and its parent directories.
+)"),
+                                   cl::init(""), cl::cat(NodecppCheckerCategory));
+
+
+static cl::opt<std::string> UserCode("user-code", cl::desc(R"(
+Specifies a path where user code is to be found.
+All code under such path is consider user (not system)
+and thus it should be checked by this tool.
 )"),
                                    cl::init(""), cl::cat(NodecppCheckerCategory));
 
@@ -336,6 +344,7 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
 
   GlobalOptions.DisableRawPointers = NoRawPtr;
   GlobalOptions.DisableLibraryDb = NoLibraryDb;
+  GlobalOptions.UserCode = UserCode;
 
   if(!NoLibraryDb) {
     std::string ErrorMessage;

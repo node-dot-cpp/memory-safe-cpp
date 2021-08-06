@@ -13,6 +13,7 @@
 #include "ConstCheck.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/ASTMatchers/ASTMatchFinder.h"
+#include "NakedPtrHelper.h"
 
 using namespace clang::ast_matchers;
 
@@ -29,8 +30,17 @@ void ConstCheck::registerMatchers(MatchFinder *Finder) {
 void ConstCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto CE = Result.Nodes.getNodeAs<CXXConstCastExpr>("cE")) {
+
+    if(isSystemLocation(getContext(), CE->getExprLoc()))
+      return;
+
     diag(CE->getExprLoc(), "(S2.1) const_cast is prohibited");
   } else if (auto FD = Result.Nodes.getNodeAs<FieldDecl>("fD")) {
+
+    if(isSystemLocation(getContext(), FD->getLocation()))
+      return;
+
+
     if (FD->isMutable()) {
       diag(FD->getLocation(), "(S2.2) mutable members are prohibited");
     }

@@ -57,7 +57,10 @@ const CXXMethodDecl *VarDeclCheck::getParentMethod(ASTContext *Context,
 void VarDeclCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Var = Result.Nodes.getNodeAs<VarDecl>("var");
-  assert(Var);
+
+  if(isSystemLocation(getContext(), Var->getLocation()))
+    return;
+
 
   // any type will also pop-up at constructor and operator assignment
   // declaration, we let both of them go

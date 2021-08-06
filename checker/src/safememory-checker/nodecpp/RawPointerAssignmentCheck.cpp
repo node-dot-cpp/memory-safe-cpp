@@ -33,6 +33,9 @@ void RawPointerAssignmentCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Ex = Result.Nodes.getNodeAs<BinaryOperator>("expr");
 
+  if(isSystemLocation(getContext(), Ex->getExprLoc()))
+    return;
+
   auto Checker = NakedPtrScopeChecker::makeChecker(
       this, getContext(), Result.Context, Ex->getLHS());
 

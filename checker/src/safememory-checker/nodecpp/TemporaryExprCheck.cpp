@@ -40,6 +40,10 @@ void TemporaryExprCheck::check(const MatchFinder::MatchResult &Result) {
     Loc = Tmp2->getExprLoc();
   }
 
+  if(isSystemLocation(getContext(), Loc))
+    return;
+
+
   if (!Qt.isNull()) {
 
     Qt = Qt.getCanonicalType();

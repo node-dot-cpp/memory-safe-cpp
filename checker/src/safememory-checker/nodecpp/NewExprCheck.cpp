@@ -74,11 +74,20 @@ void NewExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   if (auto Expr = Result.Nodes.getNodeAs<CXXNewExpr>("new")) {
 
+    if(isSystemLocation(getContext(), Expr->getExprLoc()))
+      return;
+
     diag(Expr->getExprLoc(), "(S4) operator new is prohibited");
   } else if (auto Expr = Result.Nodes.getNodeAs<CXXDeleteExpr>("delete")) {
 
+    if(isSystemLocation(getContext(), Expr->getExprLoc()))
+      return;
+
     diag(Expr->getExprLoc(), "(S4) operator delete is prohibited");
   } else if (auto Expr = Result.Nodes.getNodeAs<CallExpr>("make")) {
+
+    if(isSystemLocation(getContext(), Expr->getExprLoc()))
+      return;
 
     QualType Rt = Expr->getCallReturnType(*getASTContext());
     

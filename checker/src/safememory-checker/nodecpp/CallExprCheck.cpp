@@ -28,15 +28,18 @@ void CallExprCheck::check(const MatchFinder::MatchResult &Result) {
 
   auto Ex = Result.Nodes.getNodeAs<CallExpr>("call");
 
+  // here we only check calls where caller is in user code and callee is in system code
+
+  if(isSystemLocation(getContext(), Ex->getExprLoc()))
+    return;
+
   auto Decl = Ex->getDirectCallee();
   if (!Decl)
     return;
 
-  SourceManager *Manager = Result.SourceManager;
-  auto ELoc = Manager->getExpansionLoc(Decl->getLocation());
+  if(!isSystemLocation(getContext(), Decl->getLocation()))
+    return;
 
-  if(!isSystemLocation(getContext(), ELoc))
-    return; // this is in user code, then is ok
 
   std::string Name = getQnameForSystemSafeDb(Decl);
 
