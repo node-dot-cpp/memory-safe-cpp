@@ -58,8 +58,13 @@ struct ClangTidyGlobalOptions {
   /// \brief Disable library database checks
   bool DisableLibraryDb = false;
 
-  /// \brief Path to UserCode.
-  llvm::Optional<std::string> UserCode;
+  /// \brief Paths user marked as user-code and that needs to be checked.
+  std::vector<std::string> UserCode;
+
+  static std::string CanonicalUserPath(llvm::StringRef Path);
+
+  void AddUserPath(llvm::StringRef Path);
+  bool IsUserPath(llvm::StringRef Path) const;
 };
 
 /// \brief Contains options for clang-tidy. These options may be read from

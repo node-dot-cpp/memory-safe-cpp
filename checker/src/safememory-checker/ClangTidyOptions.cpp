@@ -101,6 +101,42 @@ template <> struct MappingTraits<ClangTidyOptions> {
 namespace nodecpp {
 namespace checker {
 
+/* static */
+std::string ClangTidyGlobalOptions::CanonicalUserPath(llvm::StringRef Path) {
+
+  llvm::SmallVector< char, 128 > Buff(Path.begin(), Path.end());
+  std::error_code ec = llvm::sys::fs::make_absolute(Buff);
+  if (ec)
+    return {};
+
+  llvm::sys::path::remove_dots(Buff, true);
+
+  return llvm::sys::path::convert_to_slash(StringRef(Buff.begin(), Buff.size()));
+}
+
+void ClangTidyGlobalOptions::AddUserPath(StringRef Path) {
+
+  std::string AsSlash = CanonicalUserPath(Path);
+  if(!AsSlash.empty())
+    UserCode.push_back(AsSlash);
+}
+
+bool ClangTidyGlobalOptions::IsUserPath(llvm::StringRef Path) const {
+  
+  std::string AsSlash = CanonicalUserPath(Path);
+  StringRef AsSlashRef = AsSlash;
+
+
+  if(AsSlash.empty())
+    return false;
+
+  for(StringRef each : UserCode)
+    if(AsSlashRef.startswith(each))
+      return true;
+
+  return false;
+}
+
 ClangTidyOptions ClangTidyOptions::getDefaults() {
   ClangTidyOptions Options;
   Options.Checks = "";

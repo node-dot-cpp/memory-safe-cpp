@@ -64,13 +64,12 @@ in the source and its parent directories.
                                    cl::init(""), cl::cat(NodecppCheckerCategory));
 
 
-static cl::opt<std::string> UserCode("user-code", cl::desc(R"(
+static cl::list<std::string> UserPath("user-path", cl::desc(R"(
 Specifies a path where user code is to be found.
 All code under such path is consider user (not system)
 and thus it should be checked by this tool.
 )"),
-                                   cl::init(""), cl::cat(NodecppCheckerCategory));
-
+                                   cl::ZeroOrMore, cl::cat(NodecppCheckerCategory));
 
 // const char DefaultChecks[] = // Enable these checks by default:
 // //    "clang-diagnostic-*,"    //   * compiler diagnostics
@@ -344,7 +343,9 @@ static std::unique_ptr<ClangTidyOptionsProvider> createOptionsProvider(StringRef
 
   GlobalOptions.DisableRawPointers = NoRawPtr;
   GlobalOptions.DisableLibraryDb = NoLibraryDb;
-  GlobalOptions.UserCode = UserCode;
+
+  for(StringRef each : UserPath)
+    GlobalOptions.AddUserPath(each);
 
   if(!NoLibraryDb) {
     std::string ErrorMessage;

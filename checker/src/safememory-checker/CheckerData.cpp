@@ -316,7 +316,12 @@ bool CheckerData::isSystemLocation(const clang::SourceManager* Sm, clang::Source
     return true;
   if(Sm->isInSystemHeader(Loc))
     return true;
-  if(!Context->getGlobalOptions().UserCode)
+
+  // main cpp file is always assumed to be user
+  if(Sm->isInMainFile(Loc))
+    return false;
+  // if we don't have user folders configuration, then assume is user
+  if(Context->getGlobalOptions().UserCode.empty())
     return false;
 
 
@@ -328,19 +333,12 @@ bool CheckerData::isSystemLocation(const clang::SourceManager* Sm, clang::Source
 
 
   StringRef Name = Sm->getFilename(Loc);
-  StringRef UserCode = Context->getGlobalOptions().UserCode.getValue();
-  
-  std::string AsSlash = llvm::sys::path::convert_to_slash(Name);
-  llvm::SmallVector< char, 128 > AsSlash2(AsSlash.begin(), AsSlash.end());
-  llvm::sys::path::remove_dots(AsSlash2, true, llvm::sys::path::Style::posix);
 
-  StringRef AsSlashRef(AsSlash2.data(), AsSlash2.size());
+  bool IsUser = Context->getGlobalOptions().IsUserPath(Name);
 
-  bool IsSystem = !AsSlashRef.startswith(UserCode);
+  SystemFiles.emplace(Id, !IsUser);
 
-  SystemFiles.emplace(Id, IsSystem);
-
-  return IsSystem;
+  return !IsUser;
 }
 
 
