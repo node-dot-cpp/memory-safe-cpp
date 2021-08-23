@@ -387,11 +387,11 @@ NODECPP_FORCEINLINE size_t allocatorAlignmentSize() { return sizeof(void*); }
 
 namespace safememory::detail
 {
-#ifdef NODECPP_GCC
-extern void forcePreviousChangesToThisInDtor( void* p );
-#else
+//#ifdef NODECPP_GCC
+//extern void forcePreviousChangesToThisInDtor( void* p );
+//#else
 #define forcePreviousChangesToThisInDtor(x)
-#endif
+//#endif
 
 template<class T>
 void destruct( T* t )

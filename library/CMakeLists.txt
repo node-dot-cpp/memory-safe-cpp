@@ -94,16 +94,12 @@ endif()
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
   # using GCC
 
-  add_library(gcc_lto_workaround SHARED
-    gcc_lto_workaround/gcc_lto_workaround.cpp
-    )
-
-  target_link_libraries(safememory gcc_lto_workaround)
+  target_compile_options(safememory PUBLIC -fno-lifetime-dse)
 
   if (SAFEMEMORY_TEST)
-    target_link_libraries(safememory_impl gcc_lto_workaround)
-    target_link_libraries(safememory_no_checks gcc_lto_workaround)
-    target_link_libraries(safememory_dz_it gcc_lto_workaround)
+    target_compile_options(safememory_impl PUBLIC -fno-lifetime-dse)
+    target_compile_options(safememory_no_checks PUBLIC -fno-lifetime-dse)
+    target_compile_options(safememory_dz_it PUBLIC -fno-lifetime-dse)
   endif()
 endif()
 
