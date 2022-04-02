@@ -46,7 +46,7 @@
 #endif
 
 
-#if defined NODECPP_X64 && !defined NODECPP_NOT_USING_IIBMALLOC
+#if ((defined NODECPP_X64) || (defined NODECPP_ARM64)) && (!defined NODECPP_NOT_USING_IIBMALLOC)
 #define NODECPP_USE_IIBMALLOC
 #else
 #define NODECPP_USE_NEW_DELETE_ALLOC
