@@ -102,6 +102,23 @@ index ad20e4d..84d0445 100644
  	/// dummy_allocator
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
+diff --git a/include/EASTL/internal/atomic/atomic_integral.h b/include/EASTL/internal/atomic/atomic_integral.h
+index 060b5b8..9f01c25 100644
+--- a/include/EASTL/internal/atomic/atomic_integral.h
++++ b/include/EASTL/internal/atomic/atomic_integral.h
+@@ -326,9 +326,9 @@ namespace internal
+ 	EASTL_ATOMIC_INTEGRAL_WIDTH_SPECIALIZE(8, 64)
+ #endif
+ 
+-#if defined(EASTL_ATOMIC_HAS_128BIT)
+-	EASTL_ATOMIC_INTEGRAL_WIDTH_SPECIALIZE(16, 128)
+-#endif
++// #if defined(EASTL_ATOMIC_HAS_128BIT)
++// 	EASTL_ATOMIC_INTEGRAL_WIDTH_SPECIALIZE(16, 128)
++// #endif
+ 
+ 
+ } // namespace internal
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
 index 21767f3..772203c 100644
 --- a/include/EASTL/internal/hashtable.h
