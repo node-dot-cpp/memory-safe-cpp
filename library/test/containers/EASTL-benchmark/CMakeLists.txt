@@ -28,5 +28,5 @@ target_link_libraries(SafeMemoryBenchmarks safememory)
 #-------------------------------------------------------------------------------------------
 # Run Unit tests and verify the results.
 #-------------------------------------------------------------------------------------------
-add_test(SafeMemoryBenchmarksRun SafeMemoryBenchmarks)
+# add_test(SafeMemoryBenchmarksRun SafeMemoryBenchmarks)
 
