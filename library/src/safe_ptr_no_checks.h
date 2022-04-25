@@ -30,6 +30,7 @@
 
 #include "safe_ptr_common.h"
 #include "memory_safety.h"
+#include "iibmalloc/src/iibmalloc.h"
 
 // forward declaration
 namespace safememory {

@@ -32,6 +32,8 @@
 #include "memory_safety.h"
 #include "../include/nodecpp_error/nodecpp_error.h"
 #include "safe_memory_error.h"
+#include "iibmalloc/src/iibmalloc.h"
+
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 #include <stack_info.h>
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
