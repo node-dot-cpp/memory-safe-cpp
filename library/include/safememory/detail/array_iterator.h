@@ -236,7 +236,7 @@ public:
 	array_heap_safe_iterator(const array_heap_safe_iterator& ri) = default;
 	array_heap_safe_iterator& operator=(const array_heap_safe_iterator& ri) = default;
 
-	array_heap_safe_iterator(array_heap_safe_iterator&& ri) = default; 
+	array_heap_safe_iterator(array_heap_safe_iterator&& ri) noexcept = default; 
 	array_heap_safe_iterator& operator=(array_heap_safe_iterator&& ri) = default;
 
 	/// allow non-const to const constructor

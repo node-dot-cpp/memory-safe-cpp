@@ -51,6 +51,16 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\3rdparty\EASTL\source\allocator_eastl.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\assert.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\atomic.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\fixed_pool.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\hashtable.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\intrusive_list.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\numeric_limits.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\red_black_tree.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\string.cpp" />
+    <ClCompile Include="..\..\3rdparty\EASTL\source\thread_support.cpp" />
     <ClCompile Include="..\..\gcc_lto_workaround\gcc_lto_workaround.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='debug_with_destruction_info|Win32'">true</ExcludedFromBuild>
@@ -65,6 +75,7 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release_with_destruction_info|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release-No-Safety_Features|x64'">true</ExcludedFromBuild>
     </ClCompile>
+    <ClCompile Include="..\..\src\detail\allocator_to_eastl.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\3rdparty\fmt\src\format.cc" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\log.cpp" />
     <ClCompile Include="..\..\src\iibmalloc\src\foundation\src\nodecpp_assert.cpp" />
@@ -88,6 +99,7 @@
     <ClCompile Include="..\..\src\iibmalloc\src\iibmalloc.cpp" />
     <ClCompile Include="..\..\src\nodecpp_error.cpp" />
     <ClCompile Include="..\..\src\safe_ptr.cpp" />
+    <ClCompile Include="..\..\src\string.cpp" />
     <ClCompile Include="..\test_safe_pointers.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -233,51 +245,51 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug_with_destruction_info|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_with_heneric_ptr_structs|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;../../include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;../../include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='debug_with_destruction_info|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;../../include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;../../include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug_with_heneric_ptr_structs|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_with_destruction_info|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-No-Safety_Features|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release_with_destruction_info|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-No-Safety_Features|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include</IncludePath>
+    <IncludePath>../../src/iibmalloc/src;../../src;../../src/iibmalloc/src/foundation/include;../../src/iibmalloc/src/foundation/3rdparty/fmt/include;$(IncludePath);../../include;../../3rdparty/EASTL/include;../../3rdparty/EABase/include/Common</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -285,9 +297,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -300,9 +313,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -315,9 +329,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;NODECPP_SAFE_PTR_DEBUG_MODE;WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -330,9 +345,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -345,9 +361,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -360,9 +377,10 @@
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_USE_GENERIC_STRUCTS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_USE_GENERIC_STRUCTS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_SAFE_PTR_DEBUG_MODE;NODECPP_MEMORY_SAFETY_DBG_ADD_DESTRUCTION_INFO;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -377,9 +395,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -396,9 +415,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -415,9 +435,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=SAFE;WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -434,9 +455,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NODECPP_SAFE_PTR_USE_ON_STACK_OPTIMIZATION;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -453,9 +475,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=1;NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -472,9 +495,10 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;EASTL_EASTDC_VSNPRINTF=0;NODECPP_MEMORY_SAFETY_EXCLUSIONS="../test/safety_exclusions.h";NODECPP_MEMORY_SAFETY=0;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp17</LanguageStandard>
+      <AdditionalOptions>/analyze %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
