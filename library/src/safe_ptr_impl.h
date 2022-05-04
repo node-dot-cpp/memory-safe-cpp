@@ -680,7 +680,7 @@ public:
 	}
 	owning_ptr_base_impl( const owning_ptr_base_impl<T>& other ) = delete;
 	owning_ptr_base_impl& operator = ( const owning_ptr_base_impl<T>& other ) = delete;
-	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other )
+	owning_ptr_base_impl( owning_ptr_base_impl<T>&& other ) noexcept
 	{
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 		creationInfo = std::move( other.creationInfo );
@@ -694,7 +694,7 @@ public:
 		other.dbgCheckValidity();
 		dbgCheckValidity();
 	}
-	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other )
+	owning_ptr_base_impl& operator = ( owning_ptr_base_impl<T>&& other ) noexcept
 	{
 		if ( this == &other ) return *this;
 #ifdef NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
@@ -909,13 +909,13 @@ public:
 	owning_ptr_impl( make_owning_t mo, T* t_ ) : owning_ptr_base_impl<T>( mo, t_ ) {}
 	owning_ptr_impl() : owning_ptr_base_impl<T>() {}
 	owning_ptr_impl( const owning_ptr_impl<T>& other ) = delete;
-	owning_ptr_impl( owning_ptr_impl<T>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
+	owning_ptr_impl( owning_ptr_impl<T>&& other ) noexcept : owning_ptr_base_impl<T>( std::move(other) ) {}
 	template<class T1>
 	owning_ptr_impl( owning_ptr_impl<T1>&& other ) : owning_ptr_base_impl<T>( std::move(other) ) {}
 	owning_ptr_impl( std::nullptr_t nulp ) : owning_ptr_base_impl<T>( nulp ) {}
 
 	owning_ptr_impl& operator = ( const owning_ptr_impl<T>& other ) = delete;
-	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other ) { 
+	owning_ptr_impl& operator = ( owning_ptr_impl<T>&& other ) noexcept { 
 		if ( this == &other ) return *this;
 		owning_ptr_base_impl<T>::operator = ( std::move( other ) );
 		return *this;
@@ -1343,7 +1343,7 @@ public:
 	}
 
 
-	soft_ptr_base_impl( soft_ptr_base_impl<T>&& other )
+	soft_ptr_base_impl( soft_ptr_base_impl<T>&& other ) noexcept
 	{
 		if ( this == &other ) return;
 #ifdef NODECPP_MEMORY_SAFETY_ON_DEMAND
@@ -1390,7 +1390,7 @@ public:
 #endif // NODECPP_MEMORY_SAFETY_DBG_ADD_PTR_LIFECYCLE_INFO
 	}
 
-	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>&& other )
+	soft_ptr_base_impl<T>& operator = ( soft_ptr_base_impl<T>&& other ) noexcept
 	{
 		// TODO+++: revise
 		if ( this == &other ) return *this;
@@ -1906,9 +1906,9 @@ public:
 	}
 
 
-	soft_ptr_impl( soft_ptr_impl<T>&& other ) : soft_ptr_base_impl<T>( std::move(other) ) {}
+	soft_ptr_impl( soft_ptr_impl<T>&& other ) noexcept : soft_ptr_base_impl<T>( std::move(other) ) {}
 
-	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T>&& other )
+	soft_ptr_impl<T>& operator = ( soft_ptr_impl<T>&& other ) noexcept
 	{
 		if ( this == &other ) return *this;
 		soft_ptr_base_impl<T>::operator = ( std::move(other) );
@@ -2148,9 +2148,9 @@ public:
 	}
 
 
-	soft_ptr_impl( soft_ptr_impl<void>&& other ) : soft_ptr_base_impl<void>(  std::move(other)  ) {}
+	soft_ptr_impl( soft_ptr_impl<void>&& other ) noexcept : soft_ptr_base_impl<void>(  std::move(other)  ) {}
 
-	soft_ptr_impl<void>& operator = ( soft_ptr_impl<void>&& other )
+	soft_ptr_impl<void>& operator = ( soft_ptr_impl<void>&& other ) noexcept
 	{
 		if ( this == &other ) return *this;
 		soft_ptr_base_impl<void>::operator = ( std::move(other) );
@@ -2302,10 +2302,10 @@ public:
 
 	soft_this_ptr2_impl() : cbPtr(getCbPtr()) {}
 	soft_this_ptr2_impl(const soft_this_ptr2_impl&) : cbPtr(getCbPtr()) {}
-	soft_this_ptr2_impl(soft_this_ptr2_impl&&) : cbPtr(getCbPtr()) {}
+	soft_this_ptr2_impl(soft_this_ptr2_impl&&) noexcept : cbPtr(getCbPtr()) {}
 
 	soft_this_ptr2_impl& operator=(const soft_this_ptr2_impl&) { return *this; }
-	soft_this_ptr2_impl& operator=(soft_this_ptr2_impl&&) { return *this; }
+	soft_this_ptr2_impl& operator=(soft_this_ptr2_impl&&) noexcept { return *this; }
 
 	~soft_this_ptr2_impl() = default;
 

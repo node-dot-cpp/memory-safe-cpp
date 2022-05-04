@@ -75,7 +75,7 @@ public:
 
 	iterator_registry(const iterator_registry&) {} //don't copy registry
 	
-	iterator_registry(iterator_registry&& other) {
+	iterator_registry(iterator_registry&& other) noexcept {
 		// don't copy registry
 		other.invalidateAllIterators();
 	} 
@@ -91,7 +91,7 @@ public:
 		return *this;
 	}
 
-	iterator_registry& operator=(iterator_registry&& other) {
+	iterator_registry& operator=(iterator_registry&& other) noexcept {
 
 		if(this == std::addressof(other))
 			return *this;
