@@ -133,7 +133,7 @@ public:
 		eastl::uninitialized_copy_ptr(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
 	}
 
-	array(array&& other) noexcept {
+	array(array&& other) {
 		eastl::uninitialized_move_ptr(other.begin_unsafe(), other.end_unsafe(), begin_unsafe());
 	}
 

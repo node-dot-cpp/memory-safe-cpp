@@ -102,8 +102,8 @@ public:
 	owning_ptr_base_no_checks() { implReset(); }
 	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>& other ) = delete;
 	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>& other ) = delete;
-	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>&& other ) noexcept {implFromOtherBasePtr(other.t_); other.implReset(); }
-	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>&& other ) noexcept
+	owning_ptr_base_no_checks( owning_ptr_base_no_checks<T>&& other ) {implFromOtherBasePtr(other.t_); other.implReset(); }
+	owning_ptr_base_no_checks& operator = ( owning_ptr_base_no_checks<T>&& other )
 	{
 		if ( this == &other ) return *this;
 		implFromOtherBasePtr( other.t_ );
@@ -242,13 +242,13 @@ public:
 	owning_ptr_no_checks( make_owning_t mo, T* t_ ) : owning_ptr_base_no_checks<T>( mo, t_ ) {}
 	owning_ptr_no_checks() : owning_ptr_base_no_checks<T>() {}
 	owning_ptr_no_checks( owning_ptr_no_checks<T>& other ) = delete;
-	owning_ptr_no_checks( owning_ptr_no_checks<T>&& other ) noexcept : owning_ptr_base_no_checks<T>( std::move(other) ) {}
+	owning_ptr_no_checks( owning_ptr_no_checks<T>&& other ) : owning_ptr_base_no_checks<T>( std::move(other) ) {}
 	template<class T1>
 	owning_ptr_no_checks( owning_ptr_no_checks<T1>&& other ) : owning_ptr_base_no_checks<T>( std::move(other) ) {}
 	owning_ptr_no_checks( std::nullptr_t nulp ) : owning_ptr_base_no_checks<T>( nulp ) {}
 
 	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>& other ) = delete;
-	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>&& other ) noexcept { 
+	owning_ptr_no_checks& operator = ( owning_ptr_no_checks<T>&& other ) { 
 		if ( this == &other ) return *this;
 		owning_ptr_base_no_checks<T>::operator = ( std::move( other ) );
 		return *this;
@@ -345,9 +345,9 @@ public:
 	soft_ptr_base_no_checks( const soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); }
 	soft_ptr_base_no_checks<T>& operator = ( const soft_ptr_base_impl<T>& other ) { t = other.getDereferencablePtr(); return *this; }
 
-	soft_ptr_base_no_checks( soft_ptr_base_no_checks<T>&& other ) noexcept { t = other.t; other.t = nullptr; }
+	soft_ptr_base_no_checks( soft_ptr_base_no_checks<T>&& other ) { t = other.t; other.t = nullptr; }
 
-	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>&& other ) noexcept { if ( this == &other ) return *this; t = other.t; other.t = nullptr; return *this; }
+	soft_ptr_base_no_checks<T>& operator = ( soft_ptr_base_no_checks<T>&& other ) { if ( this == &other ) return *this; t = other.t; other.t = nullptr; return *this; }
 
 	template<class T1>
 	soft_ptr_base_no_checks( const owning_ptr_no_checks<T1>& owner, T* t_ ) { t = t_; }
@@ -623,9 +623,9 @@ public:
 	}
 
 
-	soft_ptr_no_checks( soft_ptr_no_checks<void>&& other ) noexcept : soft_ptr_base_no_checks<void>(  std::move(other)  ) {}
+	soft_ptr_no_checks( soft_ptr_no_checks<void>&& other ) : soft_ptr_base_no_checks<void>(  std::move(other)  ) {}
 
-	soft_ptr_no_checks<void>& operator = ( soft_ptr_no_checks<void>&& other ) noexcept
+	soft_ptr_no_checks<void>& operator = ( soft_ptr_no_checks<void>&& other )
 	{
 		if ( this == &other ) return *this;
 		soft_ptr_base_no_checks<void>::operator = ( std::move(other) );

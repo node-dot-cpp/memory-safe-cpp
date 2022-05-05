@@ -75,7 +75,7 @@ namespace safememory::detail {
 		hashtable_stack_only_iterator(const this_type&) = default;
 		hashtable_stack_only_iterator& operator=(const hashtable_stack_only_iterator& ri) = default;
 
-		hashtable_stack_only_iterator(hashtable_stack_only_iterator&& ri) noexcept = default; 
+		hashtable_stack_only_iterator(hashtable_stack_only_iterator&& ri) = default; 
 		hashtable_stack_only_iterator& operator=(hashtable_stack_only_iterator&& ri) = default;
 
 		~hashtable_stack_only_iterator() = default;

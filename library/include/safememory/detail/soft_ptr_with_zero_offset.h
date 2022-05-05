@@ -107,12 +107,12 @@ public:
 		return *this;
 	}
 
-	soft_ptr_with_zero_offset_base( soft_ptr_with_zero_offset_base&& other ) noexcept {
+	soft_ptr_with_zero_offset_base( soft_ptr_with_zero_offset_base&& other ) {
 		// mb: copy is actually more light weight than move, and we don't need real move
 		ptr.copy_from(other.ptr);
 	}
 	
-	soft_ptr_with_zero_offset_base& operator=( soft_ptr_with_zero_offset_base&& other ) noexcept {
+	soft_ptr_with_zero_offset_base& operator=( soft_ptr_with_zero_offset_base&& other ) {
 		// mb: copy is actually more light weight than move, and we don't need real move
 		if(this == std::addressof(other))
 			return *this;
@@ -181,8 +181,8 @@ public:
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& ) = default;
 
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& ) noexcept = default;
-	soft_ptr_with_zero_offset_impl<T>& operator=( soft_ptr_with_zero_offset_impl&& ) noexcept = default;
+	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& ) = default;
+	soft_ptr_with_zero_offset_impl<T>& operator=( soft_ptr_with_zero_offset_impl&& ) = default;
 
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) {}
 	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ) { reset(); return *this; }
@@ -241,8 +241,8 @@ public:
 	soft_ptr_with_zero_offset_impl( const soft_ptr_with_zero_offset_impl& other ) = default;
 	soft_ptr_with_zero_offset_impl& operator=( const soft_ptr_with_zero_offset_impl& other ) = default;
 
-	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& other ) noexcept = default;
-	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl&& other ) noexcept = default;
+	soft_ptr_with_zero_offset_impl( soft_ptr_with_zero_offset_impl&& other ) = default;
+	soft_ptr_with_zero_offset_impl& operator=( soft_ptr_with_zero_offset_impl&& other ) = default;
 
 	soft_ptr_with_zero_offset_impl( std::nullptr_t ) { }
 	soft_ptr_with_zero_offset_impl& operator=( std::nullptr_t ){ reset(); return *this; }
