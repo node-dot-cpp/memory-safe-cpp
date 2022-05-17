@@ -120,6 +120,7 @@ if (SAFEMEMORY_TEST)
       target_compile_options(test_safememory PRIVATE -Wno-missing-braces)
       target_compile_options(test_safememory PRIVATE -Wno-reinterpret-base-class)
       target_compile_options(test_safememory PRIVATE -Wno-deprecated-declarations)
+      target_compile_options(test_safememory PRIVATE -Wno-ambiguous-reversed-operator)
   endif()
 
   target_link_libraries(test_safememory safememory)
