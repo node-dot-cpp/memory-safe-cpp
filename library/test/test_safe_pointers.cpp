@@ -947,7 +947,7 @@ int testWithLest( int argc, char * argv[] )
 
 void test__allocated_ptr_and_ptr_and_data_and_flags()
 {
-#ifdef NODECPP_X64
+#if defined(NODECPP_X64) || defined(NODECPP_ARM64)
 	constexpr size_t maxData = 32;
 #else
 	constexpr size_t maxData = 26;

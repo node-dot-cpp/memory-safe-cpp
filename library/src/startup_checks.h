@@ -50,7 +50,7 @@ namespace dummy_objects {
 		NODECPP_FORCEINLINE uint32_t rng32() { uint64_t ret = seedVal * 0xd989bcacc137dcd5ull; seedVal ^= seedVal >> 11; seedVal ^= seedVal << 31; seedVal ^= seedVal >> 18; return uint32_t(ret >> 32ull); }
 		NODECPP_FORCEINLINE uint64_t rng64() { uint64_t ret = rng32(); ret <<= 32; return ret + rng32(); }
 		NODECPP_FORCEINLINE uint64_t rng64NoNull() { uint64_t ret; do { ret = rng32(); ret <<= 32; ret += rng32(); } while (ret == 0); return ret; }
-#ifdef NODECPP_X64
+#if defined(NODECPP_X64) || defined(NODECPP_ARM64)
 		NODECPP_FORCEINLINE size_t rng() { return rng64(); }
 		NODECPP_FORCEINLINE size_t rngNoNull() { return rng64NoNull(); }
 #elif ( defined NODECPP_X86 )

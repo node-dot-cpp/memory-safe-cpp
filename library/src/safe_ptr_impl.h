@@ -1049,13 +1049,13 @@ class soft_ptr_base_impl
 	friend class safememory::detail::soft_ptr_helper;
 
 #ifdef NODECPP_SAFE_PTR_DEBUG_MODE
-#ifdef NODECPP_X64
+#if defined(NODECPP_X64) || defined(NODECPP_ARM64)
 	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<3,32,1>; 
 #else
 	using PointersT = nodecpp::platform::ptrwithdatastructsdefs::generic_allocated_ptr_and_ptr_and_data_and_flags_<2,26,1>; 
 #endif
 #else
-#ifdef NODECPP_X64
+#if defined(NODECPP_X64) || defined(NODECPP_ARM64)
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<3,32,1>; 
 #else
 	using PointersT = nodecpp::platform::allocated_ptr_and_ptr_and_data_and_flags<2,26,1>; 
