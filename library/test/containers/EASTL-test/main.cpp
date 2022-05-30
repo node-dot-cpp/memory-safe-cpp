@@ -128,6 +128,9 @@ int main(int argc, char* argv[])
 	nodecpp::iibmalloc::setCurrneAllocator(formerAlloc);
 #endif
 
+	if(nErrorCount == 0)
+		printf("Done.\n");
+
 	return nErrorCount;
 }
 
