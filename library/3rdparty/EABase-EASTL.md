@@ -5,7 +5,7 @@ Both libraries, `3rdparty/EABase` and `3rdparty/EASTL` have been cloned _by-valu
 
 **EABase** folder is by-value clone of [https://github.com/electronicarts/EABase.git] initially done at tag `2.09.06`.
 
-**EASTL** folder is by-value clone of [https://github.com/electronicarts/EASTL] initially done at tag `3.17.03` and patched with `EASTL-3.17.03.diff`.
+**EASTL** folder is by-value clone of [https://github.com/electronicarts/EASTL] initially done at tag `3.18.00` and patched with `EASTL-3.18.00.diff`.
 
 
 It is done with `clone-EABase-EASLT.sh` or `clone-EABase-EASTL.bat` scripts.
