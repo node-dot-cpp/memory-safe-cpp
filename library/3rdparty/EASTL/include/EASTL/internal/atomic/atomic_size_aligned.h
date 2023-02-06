@@ -24,40 +24,40 @@ namespace internal
 
 #define EASTL_ATOMIC_SIZE_ALIGNED_STATIC_ASSERT_CMPXCHG_IMPL(funcName)	\
 	template <typename OrderSuccess, typename OrderFailure>				\
-	bool funcName(T& expected, T desired,								\
-				  OrderSuccess orderSuccess,							\
-				  OrderFailure orderFailure) EA_NOEXCEPT				\
+	bool funcName(T& /*expected*/, T /*desired*/,						\
+				  OrderSuccess /*orderSuccess*/,						\
+				  OrderFailure /*orderFailure*/) EA_NOEXCEPT			\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(T);				\
 		return false;													\
 	}																	\
 																		\
 	template <typename OrderSuccess, typename OrderFailure>				\
-	bool funcName(T& expected, T desired,								\
-				  OrderSuccess orderSuccess,							\
-				  OrderFailure orderFailure) volatile EA_NOEXCEPT		\
+	bool funcName(T& /*expected*/, T /*desired*/,						\
+				  OrderSuccess /*orderSuccess*/,						\
+				  OrderFailure /*orderFailure*/) volatile EA_NOEXCEPT	\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);					\
 		return false;													\
 	}																	\
 																		\
 	template <typename Order>											\
-	bool funcName(T& expected, T desired,								\
-				  Order order) EA_NOEXCEPT								\
+	bool funcName(T& /*expected*/, T /*desired*/,						\
+				  Order /*order*/) EA_NOEXCEPT							\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(T);				\
 		return false;													\
 	}																	\
 																		\
 	template <typename Order>											\
-	bool funcName(T& expected, T desired,								\
-				  Order order) volatile EA_NOEXCEPT						\
+	bool funcName(T& /*expected*/, T /*desired*/,						\
+				  Order /*order*/) volatile EA_NOEXCEPT					\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);					\
 		return false;													\
 	}																	\
 																		\
-	bool funcName(T& expected, T desired) volatile EA_NOEXCEPT			\
+	bool funcName(T& /*expected*/, T /*desired*/) volatile EA_NOEXCEPT	\
 	{																	\
 		EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);					\
 		return false;													\
@@ -75,16 +75,14 @@ namespace internal
 	{
 	public: /* ctors */
 
-		atomic_size_aligned(T desired) EA_NOEXCEPT
+		EA_CONSTEXPR atomic_size_aligned(T desired) EA_NOEXCEPT
 			: mAtomic{ desired }
 		{
-			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
 
-		atomic_size_aligned() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>)
+		EA_CONSTEXPR atomic_size_aligned() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<T>)
 			: mAtomic{} /* Value-Initialize which will Zero-Initialize Trivial Constructible types */
 		{
-			EASTL_ATOMIC_ASSERT_ALIGNED(sizeof(T));
 		}
 
 		atomic_size_aligned(const atomic_size_aligned&) EA_NOEXCEPT = delete;
@@ -92,18 +90,18 @@ namespace internal
 	public: /* store */
 
 		template <typename Order>
-		void store(T desired, Order order) EA_NOEXCEPT
+		void store(T /*desired*/, Order /*order*/) EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(T);
 		}
 
 		template <typename Order>
-		void store(T desired, Order order) volatile EA_NOEXCEPT
+		void store(T /*desired*/, Order /*order*/) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
 
-		void store(T desired) volatile EA_NOEXCEPT
+		void store(T /*desired*/) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
@@ -111,13 +109,13 @@ namespace internal
 	public: /* load */
 
 		template <typename Order>
-		T load(Order order) const EA_NOEXCEPT
+		T load(Order /*order*/) const EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(T);
 		}
 
 		template <typename Order>
-		T load(Order order) const volatile EA_NOEXCEPT
+		T load(Order /*order*/) const volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
@@ -130,18 +128,18 @@ namespace internal
 	public: /* exchange */
 
 		template <typename Order>
-		T exchange(T desired, Order order) EA_NOEXCEPT
+		T exchange(T /*desired*/, Order /*order*/) EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_INVALID_MEMORY_ORDER(T);
 		}
 
 		template <typename Order>
-		T exchange(T desired, Order order) volatile EA_NOEXCEPT
+		T exchange(T /*desired*/, Order /*order*/) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
 
-		T exchange(T desired) volatile EA_NOEXCEPT
+		T exchange(T /*desired*/) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}
@@ -156,7 +154,7 @@ namespace internal
 
 	public: /* assignment operator */
 
-		T operator=(T desired) volatile EA_NOEXCEPT
+		T operator=(T /*desired*/) volatile EA_NOEXCEPT
 		{
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(T);
 		}

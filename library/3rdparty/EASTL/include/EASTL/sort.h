@@ -305,7 +305,7 @@ namespace eastl
 					{
 						iBack = iCurrent = iSorted;
 						
-						for(iBack -= nSpace; (iCurrent != iInsertFirst) && compare(*iCurrent, *iBack); iCurrent = iBack, iBack -= nSpace)
+						for(; (iCurrent != iInsertFirst) && compare(*iCurrent, *(iBack -= nSpace)); iCurrent = iBack)
 						{
 							EASTL_VALIDATE_COMPARE(!compare(*iBack, *iCurrent)); // Validate that the compare function is sane.
 							eastl::iter_swap(iCurrent, iBack);
@@ -439,7 +439,7 @@ namespace eastl
 
 			if (lastSortedEnd < 1)
 			{
-				lastSortedEnd = is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(first, last, compare) - first;
+				lastSortedEnd = eastl::is_sorted_until<RandomAccessIterator, StrictWeakOrdering>(first, last, compare) - first;
 			}
 
 			// Sort the region unless lastSortedEnd indicates it is already sorted.
@@ -1178,7 +1178,7 @@ namespace eastl
 				{
 					for(;; ++curr)
 					{
-						if(curr == (size - 1)) // If we are at the end of the data... this run is done.
+						if(curr >= (size - 1)) // If we are at the end of the data... this run is done.
 							break;
 
 						if(compare(*(first + curr), *(first + curr - 1))) // If this item is not in order... this run is done.
@@ -1189,7 +1189,7 @@ namespace eastl
 				{
 					for(;; ++curr)
 					{
-						if(curr == (size - 1))  // If we are at the end of the data... this run is done.
+						if(curr >= (size - 1))  // If we are at the end of the data... this run is done.
 							break;
 
 						if(!compare(*(first + curr), *(first + curr - 1)))  // If this item is not in order... this run is done.
@@ -1653,8 +1653,8 @@ namespace eastl
 			IntegerType)
 		{
 			RandomAccessIterator srcFirst = first;
-			constexpr size_t numBuckets = 1 << DigitBits;
-			constexpr IntegerType bucketMask = numBuckets - 1;
+			EA_CONSTEXPR_OR_CONST size_t numBuckets = 1 << DigitBits;
+			EA_CONSTEXPR_OR_CONST IntegerType bucketMask = numBuckets - 1;
 
 			// The alignment of this variable isn't required; it merely allows the code below to be faster on some platforms.
 			uint32_t EA_PREFIX_ALIGN(EASTL_PLATFORM_PREFERRED_ALIGNMENT) bucketSize[numBuckets];

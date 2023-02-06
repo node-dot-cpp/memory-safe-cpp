@@ -1754,7 +1754,7 @@ namespace eastl
 	{                                            // and some functions that need to clear our capacity (e.g. operator=) aren't supposed to require default-constructibility. 
 		clear();
 		this_type temp(eastl::move(*this));  // This is the simplest way to accomplish this, 
-		swap(temp);             // and it is as efficient as any other.
+		swap(temp);                          // and it is as efficient as any other.
 	}
 
 
@@ -1919,7 +1919,7 @@ namespace eastl
 				pointer pNewEnd = allocator_type::to_raw(pNewData);
 				try
 				{   // To do: We are not handling exceptions properly below.  In particular we don't want to 
-					// call eastl::destruct on the entire range if only the first part of the range was costructed.
+					// call eastl::destruct on the entire range if only the first part of the range was constructed.
 					::new((void*)(pNewData + nPosSize)) value_type(eastl::forward<Args>(args)...);              // Because the old data is potentially being moved rather than copied, we need to move.
 					pNewEnd = NULL;                                                                             // Set to NULL so that in catch we can tell the exception occurred during the next call.
 					pNewEnd = eastl::uninitialized_move_ptr_if_noexcept(allocator_type::to_raw(mpBegin), destPosition, allocator_type::to_raw(pNewData));       // the value first, because it might possibly be a reference to the old data being moved.

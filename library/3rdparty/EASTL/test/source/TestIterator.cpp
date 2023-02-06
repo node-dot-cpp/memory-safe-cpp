@@ -14,6 +14,7 @@
 #include <EASTL/string.h>
 #include <EASTL/intrusive_list.h>
 #include <EASTL/memory.h>
+#include <EASTL/unique_ptr.h>
 
 EA_DISABLE_ALL_VC_WARNINGS()
 #include <stdio.h>
@@ -42,15 +43,15 @@ int TestIterator_advance()
 		for(i = 0; i < num_elements; i++)
 		{
 			EATEST_VERIFY(*it == v[i]);
-			eastl::advance(it, 1);            
+			eastl::advance(it, 1);
 		}
 
 		// test backwards advancement
 		eastl::vector<int>::iterator it2 = v.end();
 		i = num_elements - 1;
 		do
-		{            
-			eastl::advance(it2, -1);            
+		{
+			eastl::advance(it2, -1);
 			EATEST_VERIFY(*it2 == v[i]);
 		}
 		while(i-- != 0);
@@ -114,7 +115,7 @@ int TestIterator_advance()
 
 		eastl::vector<int>::iterator it = v.end();
 		EATEST_VERIFY(*eastl::prev(it, 2) == 42);
-		EATEST_VERIFY(*eastl::prev(it /*testing the iterator distance default value*/) == 2);        
+		EATEST_VERIFY(*eastl::prev(it /*testing the iterator distance default value*/) == 2);
 	}
 
 	return nErrorCount;
@@ -130,13 +131,84 @@ int TestIterator_moveIterator()
 
 		// operator++(int)
 		auto moveIter = constBeginMoveIter;
-		moveIter++; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		moveIter++; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.
 		EATEST_VERIFY(*moveIter != *constBeginMoveIter);
 
 		// operator--(int)
 		moveIter = constBeginMoveIter + 2; // points to '42'
-		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.  
+		moveIter--; // the result of the expression is the incremented value, we need this test to read the existing state of the iterator.
 		EATEST_VERIFY(*moveIter != *(constBeginMoveIter + 2));
+	}
+
+	{
+		// Ensure that move_iterator indeed move yielded value whenever possible.
+		auto x = eastl::make_unique<int>(42);
+		auto* pX = &x;
+		auto moveIter = eastl::make_move_iterator(pX);
+
+		constexpr bool isCorrectReferenceType = eastl::is_same_v<decltype(moveIter)::reference, eastl::unique_ptr<int>&&>;
+		constexpr bool isCorrectReturnType = eastl::is_same_v<decltype(*moveIter), eastl::unique_ptr<int>&&>;
+
+		static_assert(isCorrectReferenceType, "move_iterator::reference has wrong type.");
+		static_assert(isCorrectReturnType, "move_iterator::operator*() has wrong return type.");
+		EATEST_VERIFY(isCorrectReferenceType);
+		EATEST_VERIFY(isCorrectReturnType);
+
+		auto pMoveX = *moveIter;
+		EATEST_VERIFY(*pMoveX == 42);
+	}
+
+	// Bellow are regression tests that ensure we are covering the defect LWG 2106: http://cplusplus.github.io/LWG/lwg-defects.html#2106
+	{
+		// Check that we support iterators yielding const references.
+		const int x = 42;
+		const int* pX = &x;
+		auto moveIter = eastl::make_move_iterator(pX);
+
+		constexpr bool isCorrectReferenceType = eastl::is_same_v<decltype(moveIter)::reference, const int&&>;
+		constexpr bool isCorrectReturnType = eastl::is_same_v<decltype(*moveIter), const int&&>;
+
+		static_assert(isCorrectReferenceType, "move_iterator::reference has wrong type.");
+		static_assert(isCorrectReturnType, "move_iterator::operator*() has wrong return type.");
+		EATEST_VERIFY(isCorrectReferenceType);
+		EATEST_VERIFY(isCorrectReturnType);
+
+		auto pCopiedX = *moveIter;
+		EATEST_VERIFY(pCopiedX == 42);
+	}
+
+	{
+		// Check that we support iterators yielding plain value (typically a proxy-iterator).
+		struct FakeProxyIterator 
+		{
+			using iterator_category = eastl::forward_iterator_tag;
+			using difference_type   = ptrdiff_t;
+			using value_type        = int;
+			using pointer           = int;  // Note that we are yielding by value.
+			using reference         = int;  // Note that we are yielding by value.
+
+			reference operator*() const { return 42; }
+			pointer operator->() { return 42; }
+			FakeProxyIterator& operator++() { return *this; }  
+			FakeProxyIterator operator++(int) { return {}; }
+
+			bool operator==(const FakeProxyIterator& rhs) { return true; };
+			bool operator!=(const FakeProxyIterator& rhs) { return false; };  
+		};
+
+		FakeProxyIterator it = {};
+		auto moveIter = eastl::make_move_iterator(it);
+
+		constexpr bool isCorrectReferenceType = eastl::is_same_v<decltype(moveIter)::reference, int>;
+		constexpr bool isCorrectReturnType = eastl::is_same_v<decltype(*moveIter), int>;
+
+		static_assert(isCorrectReferenceType, "move_iterator::reference has wrong type.");
+		static_assert(isCorrectReturnType, "move_iterator::operator*() has wrong return type.");
+		EATEST_VERIFY(isCorrectReferenceType);
+		EATEST_VERIFY(isCorrectReturnType);
+
+		auto pCopiedX = *moveIter;
+		EATEST_VERIFY(pCopiedX == 42);
 	}
 
 	return nErrorCount;
@@ -152,7 +224,7 @@ int TestIterator()
 	int nErrorCount = 0;
 	nErrorCount += TestIterator_advance();
 	nErrorCount += TestIterator_moveIterator();
-	
+
 	{
 		// reverse_iterator
 		// reverse_iterator<Iterator> make_reverse_iterator(Iterator mi)
@@ -227,8 +299,9 @@ int TestIterator()
 
 	{
 		// difference_type distance(InputIterator first, InputIterator last)
-		// To do.
-	}
+		eastl::vector<int> intVector = {0, 1, 2, 3, 4, 5, 6, 7};
+		EATEST_VERIFY(eastl::distance(intVector.begin(), intVector.end()) == 8);
+    }
 
 
 	{
@@ -260,7 +333,7 @@ int TestIterator()
 			eastl::string8 str8;
 			eastl::string8::iterator string8Iterator = eastl::begin(str8);
 			EATEST_VERIFY(string8Iterator == eastl::end(str8));
-		#endif 
+		#endif
 	}
 
 	// eastl::data
@@ -292,6 +365,7 @@ int TestIterator()
 
 		int intCArray[34];
 		EATEST_VERIFY(eastl::size(intCArray) == 34);
+		static_assert(eastl::size(intCArray) == 34, "eastl::size failure");
 	}
 
 	// eastl::ssize
@@ -304,6 +378,7 @@ int TestIterator()
 
 		int intCArray[34];
 		EATEST_VERIFY(eastl::ssize(intCArray) == (signed)34);
+		static_assert(eastl::ssize(intCArray) == 34, "eastl::ssize failure");
 	}
 
 	// eastl::empty
@@ -311,25 +386,22 @@ int TestIterator()
 		eastl::vector<int> intVector;
 		EATEST_VERIFY(eastl::empty(intVector));
 		intVector.push_back();
-		EATEST_VERIFY(!eastl::empty(intVector)); 
+		EATEST_VERIFY(!eastl::empty(intVector));
 
 		std::initializer_list<int> intInitListEmpty;
 		EATEST_VERIFY(eastl::empty(intInitListEmpty));
-
-		#if !defined(EA_COMPILER_NO_INITIALIZER_LISTS)
-		    EATEST_VERIFY(!eastl::empty({1, 2, 3, 4, 5, 6}));
-		#endif
+		EATEST_VERIFY(!eastl::empty({1, 2, 3, 4, 5, 6}));
 	}
 
 	// Range-based for loops
-	#if !defined(EA_COMPILER_NO_RANGE_BASED_FOR_LOOP)
+	{
 		{
 			eastl::vector<int> v;
 			int I = 0;
 
 			v.push_back(0);
 			v.push_back(1);
- 
+
 			for(int i : v)
 				EATEST_VERIFY(i == I++);
 		}
@@ -340,11 +412,11 @@ int TestIterator()
 
 			s8.push_back('a');
 			s8.push_back('b');
- 
+
 			for(char c : s8)
 				EATEST_VERIFY(c == C++);
 		}
-	#endif
+	}
 
 
 	{
@@ -383,6 +455,17 @@ int TestIterator()
 		intVector[0] = 20;
 		EATEST_VERIFY(*itVector == 20);
 		static_assert((eastl::is_same<decltype(eastl::unwrap_iterator(miIntVector)), eastl::vector<int>::iterator>::value == true),  "unwrap_iterator failure");
+	}
+
+	{
+		// array cbegin - cend
+		int arr[3]{ 1, 2, 3 };
+		auto b = eastl::cbegin(arr);
+		auto e = eastl::cend(arr);
+		EATEST_VERIFY(*b == 1);
+		
+		auto dist = eastl::distance(b,e);
+		EATEST_VERIFY(dist == 3);
 	}
 
 	return nErrorCount;

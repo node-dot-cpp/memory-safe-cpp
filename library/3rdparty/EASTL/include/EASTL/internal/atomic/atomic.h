@@ -62,7 +62,7 @@ namespace internal
 	template <typename T>
 	struct is_atomic_lockfree_size
 	{
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool value = false ||
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool value = false ||
 		#if defined(EASTL_ATOMIC_HAS_8BIT)
 			sizeof(T) == 1 ||
 		#endif
@@ -85,7 +85,7 @@ namespace internal
 	template <typename T>
 	struct is_user_type_suitable_for_primary_template
 	{
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool value = eastl::internal::is_atomic_lockfree_size<T>::value;
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool value = eastl::internal::is_atomic_lockfree_size<T>::value;
 	};
 
 
@@ -116,7 +116,7 @@ namespace internal
 																		\
 	public:																\
 																		\
-		static EASTL_CPP17_INLINE_VARIABLE constexpr bool is_always_lock_free = eastl::internal::is_atomic_lockfree_size<type>::value; \
+		static EASTL_CPP17_INLINE_VARIABLE EA_CONSTEXPR_OR_CONST bool is_always_lock_free = eastl::internal::is_atomic_lockfree_size<type>::value; \
 																		\
 	public: /* deleted ctors && assignment operators */					\
 																		\
@@ -127,12 +127,12 @@ namespace internal
 																		\
 	public: /* ctors */													\
 																		\
-		atomic(type desired) EA_NOEXCEPT								\
+		EA_CONSTEXPR atomic(type desired) EA_NOEXCEPT					\
 			: Base{ desired }											\
 		{																\
 		}																\
 																		\
-		atomic() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<type>) = default; \
+		EA_CONSTEXPR atomic() EA_NOEXCEPT_IF(eastl::is_nothrow_default_constructible_v<type>) = default; \
 																		\
 	public:																\
 																		\
@@ -146,7 +146,6 @@ namespace internal
 			EASTL_ATOMIC_STATIC_ASSERT_VOLATILE_MEM_FN(type);			\
 			return false;												\
 		}
-
 
 
 #define EASTL_ATOMIC_USING_ATOMIC_BASE(type)		\

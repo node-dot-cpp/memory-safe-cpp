@@ -95,7 +95,7 @@ namespace eastl
 		template <typename Functor, int SIZE_IN_BYTES>
 		struct is_functor_inplace_allocatable
 		{
-			static constexpr bool value =
+			static EA_CONSTEXPR bool value =
 			    sizeof(Functor) <= sizeof(functor_storage<SIZE_IN_BYTES>) &&
 			    (eastl::alignment_of_v<functor_storage<SIZE_IN_BYTES>> % eastl::alignment_of_v<Functor>) == 0;
 		};
@@ -649,7 +649,7 @@ namespace eastl
 			// We cannot assume that R is default constructible.
 			// This function is called only when the function object CANNOT be called because it is empty,
 			// it will always throw or assert so we never use the return value anyways and neither should the caller.
-			static R DefaultInvoker(Args... args, const FunctorStorageType& functor)
+			static R DefaultInvoker(Args... /*args*/, const FunctorStorageType& /*functor*/)
 			{
 				#if EASTL_EXCEPTIONS_ENABLED
 					throw eastl::bad_function_call();

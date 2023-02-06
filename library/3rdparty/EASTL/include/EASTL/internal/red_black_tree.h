@@ -169,6 +169,7 @@ namespace eastl
 		rbtree_iterator();
 		explicit rbtree_iterator(const node_type* pNode);
 		rbtree_iterator(const iterator& x);
+		rbtree_iterator& operator=(const iterator& x);
 
 		reference operator*() const;
 		pointer   operator->() const;
@@ -662,6 +663,13 @@ namespace eastl
 	rbtree_iterator<T, Pointer, Reference>::rbtree_iterator(const iterator& x)
 		: mpNode(x.mpNode) { }
 
+	template <typename T, typename Pointer, typename Reference>
+	typename rbtree_iterator<T, Pointer, Reference>::this_type&
+	rbtree_iterator<T, Pointer, Reference>::operator=(const iterator& x)
+	{
+		mpNode = x.mpNode;
+		return *this;
+	}
 
 	template <typename T, typename Pointer, typename Reference>
 	typename rbtree_iterator<T, Pointer, Reference>::reference
@@ -1105,7 +1113,7 @@ namespace eastl
 	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(const key_type& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, eastl::forward_as_tuple(key), eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1113,7 +1121,7 @@ namespace eastl
 	inline eastl::pair<typename rbtree<K, V, C, A, E, bM, bU>::iterator, bool>
 	rbtree<K, V, C, A, E, bM, bU>::try_emplace(key_type&& key, Args&&... args)
 	{
-		return DoInsertValue(has_unique_keys_type(), piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(forward<Args>(args)...));
+		return DoInsertValue(has_unique_keys_type(), piecewise_construct, eastl::forward_as_tuple(eastl::move(key)), eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1123,7 +1131,7 @@ namespace eastl
 	{
 		return DoInsertValueHint(
 		    has_unique_keys_type(), position,
-		    piecewise_construct, forward_as_tuple(key), forward_as_tuple(forward<Args>(args)...));
+		    piecewise_construct, eastl::forward_as_tuple(key), eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 	template <typename K, typename V, typename C, typename A, typename E, bool bM, bool bU>
@@ -1133,7 +1141,7 @@ namespace eastl
 	{
 		return DoInsertValueHint(
 		    has_unique_keys_type(), position,
-		    piecewise_construct, forward_as_tuple(eastl::move(key)), forward_as_tuple(forward<Args>(args)...));
+		    piecewise_construct, eastl::forward_as_tuple(eastl::move(key)), eastl::forward_as_tuple(eastl::forward<Args>(args)...));
 	}
 
 
@@ -1180,7 +1188,7 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(piecewise_construct, eastl::forward_as_tuple(k), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{
@@ -1198,7 +1206,7 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(value_type(piecewise_construct, forward_as_tuple(eastl::move(k)), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(value_type(piecewise_construct, eastl::forward_as_tuple(eastl::move(k)), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{
@@ -1216,7 +1224,7 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(hint, value_type(piecewise_construct, forward_as_tuple(k), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(hint, value_type(piecewise_construct, eastl::forward_as_tuple(k), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{
@@ -1234,7 +1242,7 @@ namespace eastl
 
 		if(iter == end())
 		{
-			return insert(hint, value_type(piecewise_construct, forward_as_tuple(eastl::move(k)), forward_as_tuple(eastl::forward<M>(obj))));
+			return insert(hint, value_type(piecewise_construct, eastl::forward_as_tuple(eastl::move(k)), eastl::forward_as_tuple(eastl::forward<M>(obj))));
 		}
 		else
 		{

@@ -13,6 +13,7 @@
 #include <EASTL/internal/config.h>
 #include <EASTL/internal/move_help.h>
 #include <EASTL/type_traits.h>
+#include <EASTL/iterator.h>
 
 #if defined(EA_PRAGMA_ONCE_SUPPORTED)
 	#pragma once // Some compilers (e.g. VC++) benefit significantly from using this. We've measured 3-4% build speed improvements in apps as a result.
@@ -60,15 +61,15 @@ namespace eastl
 	};
 
 	template <typename Container>
-	auto begin(const reverse_wrapper<Container>& w) -> decltype(rbegin(w.mContainer))
+	auto begin(const reverse_wrapper<Container>& w) -> decltype(eastl::rbegin(w.mContainer))
 	{
-		return rbegin(w.mContainer);
+		return eastl::rbegin(w.mContainer);
 	}
 
 	template <typename Container>
-	auto end(const reverse_wrapper<Container>& w) -> decltype(rend(w.mContainer))
+	auto end(const reverse_wrapper<Container>& w) -> decltype(eastl::rend(w.mContainer))
 	{
-		return rend(w.mContainer);
+		return eastl::rend(w.mContainer);
 	}
 
 	template <typename Container>
