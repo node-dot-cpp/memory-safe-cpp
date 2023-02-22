@@ -102,6 +102,19 @@ index d645466..3c66a4e 100644
  	/// dummy_allocator
  	///
  	/// Defines an allocator which does nothing. It returns NULL from allocate calls.
+diff --git a/include/EASTL/hash_map.h b/include/EASTL/hash_map.h
+index e7cad7b..8b03514 100644
+--- a/include/EASTL/hash_map.h
++++ b/include/EASTL/hash_map.h
+@@ -334,7 +334,7 @@ namespace eastl
+ 			}
+ 			else
+ 			{
+-				node_type* const pNodeNew =
++				auto const pNodeNew =
+ 				    base_type::DoAllocateNode(piecewise_construct, eastl::forward_as_tuple(eastl::forward<K>(k)),
+ 				                              forward_as_tuple(eastl::forward<Args>(args)...));
+ 				// the key might have been moved from above, so we can't use `k` anymore.
 diff --git a/include/EASTL/internal/atomic/atomic_integral.h b/include/EASTL/internal/atomic/atomic_integral.h
 index a9c96c7..674e051 100644
 --- a/include/EASTL/internal/atomic/atomic_integral.h
@@ -120,7 +133,7 @@ index a9c96c7..674e051 100644
  
  } // namespace internal
 diff --git a/include/EASTL/internal/hashtable.h b/include/EASTL/internal/hashtable.h
-index 077f5b4..d4cdfd1 100644
+index 077f5b4..3868634 100644
 --- a/include/EASTL/internal/hashtable.h
 +++ b/include/EASTL/internal/hashtable.h
 @@ -103,34 +103,34 @@ namespace eastl
@@ -477,7 +490,7 @@ index 077f5b4..d4cdfd1 100644
  		typedef typename type_select<bUniqueKeys, eastl::pair<iterator, bool>, iterator>::type      insert_return_type;
  		typedef hashtable<Key, Value, Allocator, ExtractKey, Equal, H1, H2, H, 
  							RehashPolicy, bCacheHashCode, bMutableIterators, bUniqueKeys>           this_type;
-@@ -873,7 +904,7 @@ namespace eastl
+@@ -873,14 +904,14 @@ namespace eastl
  		};
  
  	protected:
@@ -486,6 +499,14 @@ index 077f5b4..d4cdfd1 100644
  		size_type       mnBucketCount;
  		size_type       mnElementCount;
  		RehashPolicy    mRehashPolicy;  // To do: Use base class optimization to make this go away.
+ 		allocator_type  mAllocator;     // To do: Use base class optimization to make this go away.
+ 
+ 		struct NodeFindKeyData {
+-			node_type* node;
++			node_pointer node;
+ 			hash_code_t code;
+ 			size_type bucket_index;
+ 		};
 @@ -916,7 +947,7 @@ namespace eastl
  
  		iterator begin() EA_NOEXCEPT
@@ -1050,7 +1071,7 @@ index 077f5b4..d4cdfd1 100644
  	{
  		for(; pNode; pNode = pNode->mpNext)
  		{
-@@ -2011,7 +2053,7 @@ namespace eastl
+@@ -2011,11 +2053,11 @@ namespace eastl
  			  typename H1, typename H2, typename H, typename RP, bool bC, bool bM, bool bU>
  	template <bool bDeleteOnException, typename Enabled, ENABLE_IF_TRUETYPE(Enabled)> // only enabled when keys are unique
  	eastl::pair<typename hashtable<K, V, A, EK, Eq, H1, H2, H, RP, bC, bM, bU>::iterator, bool>
@@ -1059,6 +1080,20 @@ index 077f5b4..d4cdfd1 100644
  	{
  		const eastl::pair<bool, uint32_t> bRehash = mRehashPolicy.GetRehashRequired((uint32_t)mnBucketCount, (uint32_t)mnElementCount, (uint32_t)1);
  
+-		set_code(pNodeNew, c); // This is a no-op for most hashtables.
++		set_code(allocator_type::to_raw(pNodeNew), c); // This is a no-op for most hashtables.
+ 
+ 		#if EASTL_EXCEPTIONS_ENABLED
+ 			try
+@@ -2027,7 +2069,7 @@ namespace eastl
+ 					DoRehash(bRehash.second);
+ 				}
+ 
+-				EASTL_ASSERT((uintptr_t)mpBucketArray != (uintptr_t)&gpEmptyBucketArray[0]);
++				EASTL_ASSERT(!allocator_type::is_empty_hashtable(mpBucketArray));
+ 				pNodeNew->mpNext = mpBucketArray[n];
+ 				mpBucketArray[n] = pNodeNew;
+ 				++mnElementCount;
 @@ -2060,11 +2102,11 @@ namespace eastl
  		// specializations of the insert function for const value_type& and value_type&&, and so the only time this function
  		// should get called is when args refers to arguments to construct a value_type.
