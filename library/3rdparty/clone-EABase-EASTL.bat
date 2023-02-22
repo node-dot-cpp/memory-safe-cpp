@@ -10,10 +10,10 @@ git apply ..\EABase-2.09.06.diff
 rmdir /S /Q .git
 cd ..
 
-git clone --depth 1 -b 3.18.00 https://github.com/electronicarts/EASTL.git
+git clone --depth 1 -b 3.19.05 https://github.com/electronicarts/EASTL.git
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 cd EASTL
-git apply ..\EASTL-3.18.00.diff
+git apply ..\EASTL-3.19.05.diff
 @if ERRORLEVEL 1 exit /b %ERRORLEVEL%
 rmdir /S /Q .git
 cd ..

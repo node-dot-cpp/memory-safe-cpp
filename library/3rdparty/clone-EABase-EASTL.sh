@@ -10,8 +10,8 @@ git apply ../EABase-2.09.06.diff
 rm -Rf .git
 cd ..
 
-git clone --depth 1 -b 3.18.00 https://github.com/electronicarts/EASTL.git
+git clone --depth 1 -b 3.19.05 https://github.com/electronicarts/EASTL.git
 cd EASTL
-git apply ../EASTL-3.18.00.diff
+git apply ../EASTL-3.19.05.diff
 rm -Rf .git
 cd ..
