@@ -60,7 +60,7 @@ enum class StdAllocEnforcer { enforce };
 
 #ifdef NODECPP_USE_IIBMALLOC
 
-#include <iibmalloc.h>
+#include "iibmalloc/src/iibmalloc.h"
 // using namespace nodecpp::iibmalloc;
 namespace safememory::detail
 {
